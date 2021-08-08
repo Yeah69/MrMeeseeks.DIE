@@ -15,9 +15,11 @@ namespace MrMeeseeks.StaticDelegateGenerator
 
         public void Execute(GeneratorExecutionContext context)
         {
+            var diagLogger = new DiagLogger(context);
             var getAllImplementations = new GetAllImplementations(context);
             var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations);
-            new ExecuteImpl(context, typeToImplementationMapper).Execute();
+            var containerGenerator = new ContainerGenrator(context, diagLogger, typeToImplementationMapper);
+            new ExecuteImpl(context, containerGenerator, diagLogger).Execute();
         }
     }
 }

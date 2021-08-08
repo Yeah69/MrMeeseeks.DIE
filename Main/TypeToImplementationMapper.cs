@@ -4,12 +4,12 @@ using System.Linq;
 
 namespace MrMeeseeks.DIE
 {
-    public interface ITypeToImplementationsMapper
+    internal interface ITypeToImplementationsMapper
     {
         IList<INamedTypeSymbol> Map(INamedTypeSymbol typeSymbol); 
     }
 
-    class TypeToImplementationsMapper : ITypeToImplementationsMapper
+    internal class TypeToImplementationsMapper : ITypeToImplementationsMapper
     {
         private readonly Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> map;
 

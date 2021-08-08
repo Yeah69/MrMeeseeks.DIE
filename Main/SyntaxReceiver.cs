@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MrMeeseeks.DIE
 {
-    public class SyntaxReceiver : ISyntaxReceiver
+    internal class SyntaxReceiver : ISyntaxReceiver
     {
         public List<ClassDeclarationSyntax> Candidates { get; } = new();
 

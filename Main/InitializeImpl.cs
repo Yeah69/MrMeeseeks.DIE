@@ -3,12 +3,12 @@ using System;
 
 namespace MrMeeseeks.DIE
 {
-    public interface IInitialize
+    internal interface IInitialize
     {
         void Initialize();
     }
 
-    class InitializeImpl : IInitialize
+    internal class InitializeImpl : IInitialize
     {
         private readonly GeneratorInitializationContext context;
         private readonly Func<ISyntaxReceiver> syntaxReceiverFactory;

@@ -8,12 +8,12 @@ using System.Text;
 
 namespace MrMeeseeks.DIE
 {
-    public interface IGetAllImplementations
+    internal interface IGetAllImplementations
     {
         IReadOnlyList<INamedTypeSymbol> AllImplementations { get; }
     }
 
-    class GetAllImplementations : IGetAllImplementations
+    internal class GetAllImplementations : IGetAllImplementations
     {
         private GeneratorExecutionContext context;
 

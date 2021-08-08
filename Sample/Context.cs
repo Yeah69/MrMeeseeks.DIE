@@ -10,7 +10,7 @@ namespace MrMeeseeks.StaticDelegate.Sample
     internal class Context : IContext
     {
         public String Text => "Hello, world";
-        public Context()//(Child child)
+        public Context(IChild child)
         {
 
         }

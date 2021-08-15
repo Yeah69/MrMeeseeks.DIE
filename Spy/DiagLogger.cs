@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace MrMeeseeks.DIE
+namespace MrMeeseeks.DIE.Spy
 {
     internal interface IDiagLogger
     {
@@ -22,7 +22,7 @@ namespace MrMeeseeks.DIE
         public void Log(int id, string title, string message, string category, DiagnosticSeverity diagnosticSeverity)
         {
             context.ReportDiagnostic(Diagnostic.Create(
-                   new DiagnosticDescriptor($"DIE{id.ToString().PadLeft(3, '0')}", title, message, category, diagnosticSeverity, true),
+                   new DiagnosticDescriptor($"DIESPY{id.ToString().PadLeft(3, '0')}", title, message, category, diagnosticSeverity, true),
                    Location.None));
         }
 

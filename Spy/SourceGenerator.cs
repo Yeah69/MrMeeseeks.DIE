@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
 
-namespace MrMeeseeks.DIE
+namespace MrMeeseeks.DIE.Spy
 {
     [Generator]
     public class SourceGenerator : ISourceGenerator
@@ -16,8 +16,7 @@ namespace MrMeeseeks.DIE
         {
             var diagLogger = new DiagLogger(context);
             var getAllImplementations = new GetAllImplementations(context);
-            var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations);
-            var containerGenerator = new ContainerGenrator(context, diagLogger, typeToImplementationMapper);
+            var containerGenerator = new ContainerGenerator(context, getAllImplementations);
             new ExecuteImpl(context, containerGenerator, diagLogger).Execute();
         }
     }

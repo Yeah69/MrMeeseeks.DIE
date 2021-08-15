@@ -1,6 +1,7 @@
 ﻿using System;
+using MrMeeseeks.DIE.SampleChild;
 
-namespace MrMeeseeks.StaticDelegate.Sample
+namespace MrMeeseeks.DIE.Sample
 {
     internal interface IContext
     {

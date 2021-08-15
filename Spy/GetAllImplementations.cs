@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace MrMeeseeks.DIE
+namespace MrMeeseeks.DIE.Spy
 {
     internal interface IGetAllImplementations
     {

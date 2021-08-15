@@ -1,4 +1,4 @@
-﻿namespace MrMeeseeks.StaticDelegate.Sample
+﻿namespace MrMeeseeks.DIE.SampleChild
 {
     public interface IChild
     { }

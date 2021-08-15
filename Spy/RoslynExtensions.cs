@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using Microsoft.CodeAnalysis;
 
-namespace MrMeeseeks.DIE
+namespace MrMeeseeks.DIE.Spy
 {
     internal static class RoslynExtensions
     {

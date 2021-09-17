@@ -14,15 +14,15 @@ namespace MrMeeseeks.DIE
 
     internal class GetAllImplementations : IGetAllImplementations
     {
-        private GeneratorExecutionContext context;
+        private GeneratorExecutionContext _context;
 
         public GetAllImplementations(GeneratorExecutionContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
-        public IReadOnlyList<INamedTypeSymbol> AllImplementations => new ReadOnlyCollection<INamedTypeSymbol>(context.Compilation.SyntaxTrees
-                .Select(st => (st, context.Compilation.GetSemanticModel(st)))
+        public IReadOnlyList<INamedTypeSymbol> AllImplementations => new ReadOnlyCollection<INamedTypeSymbol>(_context.Compilation.SyntaxTrees
+                .Select(st => (st, _context.Compilation.GetSemanticModel(st)))
                 .SelectMany(t => t.st
                     .GetRoot()
                     .DescendantNodesAndSelf()

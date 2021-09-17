@@ -11,17 +11,17 @@ namespace MrMeeseeks.DIE.Spy
 
     internal class DiagLogger : IDiagLogger
     {
-        private readonly GeneratorExecutionContext context;
+        private readonly GeneratorExecutionContext _context;
 
         public DiagLogger(
             GeneratorExecutionContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         public void Log(int id, string title, string message, string category, DiagnosticSeverity diagnosticSeverity)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            _context.ReportDiagnostic(Diagnostic.Create(
                    new DiagnosticDescriptor($"DIESPY{id.ToString().PadLeft(3, '0')}", title, message, category, diagnosticSeverity, true),
                    Location.None));
         }

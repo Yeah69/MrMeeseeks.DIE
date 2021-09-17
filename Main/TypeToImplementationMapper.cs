@@ -11,11 +11,11 @@ namespace MrMeeseeks.DIE
 
     internal class TypeToImplementationsMapper : ITypeToImplementationsMapper
     {
-        private readonly Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> map;
+        private readonly Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> _map;
 
         public TypeToImplementationsMapper(
             IGetAllImplementations getAllImplementations) => 
-            map = getAllImplementations
+            _map = getAllImplementations
                 .AllImplementations
                 .SelectMany(i =>
                 {
@@ -26,7 +26,7 @@ namespace MrMeeseeks.DIE
 
         public IList<INamedTypeSymbol> Map(INamedTypeSymbol typeSymbol)
         {
-            if(map.TryGetValue(typeSymbol, out var implementations))
+            if(_map.TryGetValue(typeSymbol, out var implementations))
             {
                 return implementations;
             }

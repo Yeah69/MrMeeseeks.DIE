@@ -4,28 +4,28 @@ namespace MrMeeseeks.DIE
 {
     internal interface IDiagLogger
     {
-        void Log(int id, string message);
+        void Log(string message);
 
         void Log(int id, string title, string message, string category, DiagnosticSeverity diagnosticSeverity);
     }
 
     internal class DiagLogger : IDiagLogger
     {
-        private readonly GeneratorExecutionContext context;
+        private readonly GeneratorExecutionContext _context;
 
         public DiagLogger(
             GeneratorExecutionContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         public void Log(int id, string title, string message, string category, DiagnosticSeverity diagnosticSeverity)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            _context.ReportDiagnostic(Diagnostic.Create(
                    new DiagnosticDescriptor($"DIE{id.ToString().PadLeft(3, '0')}", title, message, category, diagnosticSeverity, true),
                    Location.None));
         }
 
-        public void Log(int id, string message) => Log(id, "INFO", message, "INFO", DiagnosticSeverity.Warning);
+        public void Log(string message) => Log(0, "INFO", message, "INFO", DiagnosticSeverity.Warning);
     }
 }

@@ -10,17 +10,17 @@ namespace MrMeeseeks.DIE
 
     internal class InitializeImpl : IInitialize
     {
-        private readonly GeneratorInitializationContext context;
-        private readonly Func<ISyntaxReceiver> syntaxReceiverFactory;
+        private readonly GeneratorInitializationContext _context;
+        private readonly Func<ISyntaxReceiver> _syntaxReceiverFactory;
 
         public InitializeImpl(
             GeneratorInitializationContext context,
             Func<ISyntaxReceiver> syntaxReceiverFactory)
         {
-            this.context = context;
-            this.syntaxReceiverFactory = syntaxReceiverFactory;
+            _context = context;
+            _syntaxReceiverFactory = syntaxReceiverFactory;
         }
 
-        public void Initialize() => context.RegisterForSyntaxNotifications(() => syntaxReceiverFactory());
+        public void Initialize() => _context.RegisterForSyntaxNotifications(() => _syntaxReceiverFactory());
     }
 }

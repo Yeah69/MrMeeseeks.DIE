@@ -13,15 +13,15 @@ namespace MrMeeseeks.DIE.Spy
 
     internal class ContainerGenerator : IContainerGenerator
     {
-        private readonly GeneratorExecutionContext context;
-        private readonly IGetAllImplementations getAllImplementations;
+        private readonly GeneratorExecutionContext _context;
+        private readonly IGetAllImplementations _getAllImplementations;
 
         public ContainerGenerator(
             GeneratorExecutionContext context,
             IGetAllImplementations getAllImplementations)
         {
-            this.context = context;
-            this.getAllImplementations = getAllImplementations;
+            _context = context;
+            _getAllImplementations = getAllImplementations;
         }
 
         public void Generate(string namespaceName)
@@ -34,7 +34,7 @@ namespace MrMeeseeks.DIE.Spy
                 ;
 
             var i = -1;
-            foreach (var type in getAllImplementations.AllImplementations.Where(t => t.DeclaredAccessibility == Accessibility.Public))
+            foreach (var type in _getAllImplementations.AllImplementations.Where(t => t.DeclaredAccessibility == Accessibility.Public))
             {
                 generatedContainer = generatedContainer
                     .AppendLine($"        public {type.FullName()} Type{++i} {{ get; }}")
@@ -48,7 +48,7 @@ namespace MrMeeseeks.DIE.Spy
                 ;
             
             i = -1;
-            foreach (var type in getAllImplementations.AllImplementations.Where(t => t.DeclaredAccessibility == Accessibility.Internal))
+            foreach (var type in _getAllImplementations.AllImplementations.Where(t => t.DeclaredAccessibility == Accessibility.Internal))
             {
                 generatedContainer = generatedContainer
                     .AppendLine($"        internal {type.FullName()} Type{++i} {{ get; }}")
@@ -66,7 +66,7 @@ namespace MrMeeseeks.DIE.Spy
                 .NormalizeWhitespace()
                 .SyntaxTree
                 .GetText();
-            context.AddSource($"PublicTypes.g.cs", containerSource);
+            _context.AddSource($"PublicTypes.g.cs", containerSource);
         }
     }
 }

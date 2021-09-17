@@ -1,11 +1,16 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace MrMeeseeks.DIE
 {
     internal static class RoslynExtensions
     {
-
+        public static INamedTypeSymbol? GetTypeOrReport(this Compilation compilation, string metadataName)
+        {
+            var typeSymbol = compilation.GetTypeByMetadataName(metadataName);
+            return typeSymbol;
+        }
         // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
         public static bool IsOrReferencesErrorType(this ITypeSymbol type)
         {

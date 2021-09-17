@@ -17,8 +17,9 @@ namespace MrMeeseeks.DIE
             var diagLogger = new DiagLogger(context);
             var getAllImplementations = new GetAllImplementations(context);
             var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations);
-            var containerGenerator = new ContainerGenrator(context, diagLogger, typeToImplementationMapper);
-            new ExecuteImpl(context, containerGenerator, diagLogger).Execute();
+            var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
+            var containerGenerator = new ContainerGenerator(context, diagLogger, wellKnownTypes, typeToImplementationMapper);
+            new ExecuteImpl(context, wellKnownTypes, containerGenerator, diagLogger).Execute();
         }
     }
 }

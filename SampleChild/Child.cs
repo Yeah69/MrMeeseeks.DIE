@@ -5,5 +5,7 @@
 
     public class Child : IChild
     {
+        internal Child(
+            IInternalChild innerChild){}
     }
 }

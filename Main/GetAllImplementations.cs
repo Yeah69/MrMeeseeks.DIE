@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -14,7 +13,7 @@ namespace MrMeeseeks.DIE
 
     internal class GetAllImplementations : IGetAllImplementations
     {
-        private GeneratorExecutionContext _context;
+        private readonly GeneratorExecutionContext _context;
 
         public GetAllImplementations(GeneratorExecutionContext context)
         {

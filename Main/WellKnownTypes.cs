@@ -4,6 +4,7 @@ namespace MrMeeseeks.DIE
 {
     internal record WellKnownTypes(
         INamedTypeSymbol Container,
+        INamedTypeSymbol SpyAttribute,
         INamedTypeSymbol Disposable,
         INamedTypeSymbol AsyncDisposable,
         INamedTypeSymbol ValueTask,
@@ -21,7 +22,11 @@ namespace MrMeeseeks.DIE
             var task1 = compilation.GetTypeOrReport("System.Threading.Tasks.Task`1");
             var objectDisposedException = compilation.GetTypeOrReport("System.ObjectDisposedException");
 
+            var spyAttribute = compilation
+                .GetTypeByMetadataName(typeof(SpyAttribute).FullName ?? "");
+
             if (iContainer is null
+                || spyAttribute is null
                 || iDisposable is null
                 || iAsyncDisposable is null
                 || valueTask is null
@@ -35,6 +40,7 @@ namespace MrMeeseeks.DIE
 
             wellKnownTypes = new WellKnownTypes(
                 Container: iContainer,
+                SpyAttribute: spyAttribute,
                 Disposable: iDisposable,
                 AsyncDisposable: iAsyncDisposable,
                 ValueTask: valueTask,

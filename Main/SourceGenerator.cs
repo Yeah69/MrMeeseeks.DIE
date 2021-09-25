@@ -16,8 +16,9 @@ namespace MrMeeseeks.DIE
         {
             var diagLogger = new DiagLogger(context);
             var getAllImplementations = new GetAllImplementations(context);
-            var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations);
+            var getAssemblyAttributes = new GetAssemblyAttributes(context);
             var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
+            var typeToImplementationMapper = new TypeToImplementationsMapper(wellKnownTypes, diagLogger, getAllImplementations, getAssemblyAttributes);
             var containerGenerator = new ContainerGenerator(context, diagLogger, wellKnownTypes, typeToImplementationMapper);
             new ExecuteImpl(context, wellKnownTypes, containerGenerator, diagLogger).Execute();
         }

@@ -25,12 +25,12 @@ namespace MrMeeseeks.DIE.Spy
 
         public void Execute()
         {
-            _diagLogger.Log(0, "Start Execute");
+            _diagLogger.Log("Start Execute");
 
             _containerGenerator.Generate(
                 _context.Compilation.Assembly.Name);
 
-            _diagLogger.Log(2, "End Execute");
+            _diagLogger.Log("End Execute");
         }
     }
 }

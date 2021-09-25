@@ -1,13 +1,11 @@
-﻿using System;
+using System;
 
-namespace MrMeeseeks.DIE.Spy
+namespace MrMeeseeks.DIE
 {
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-    public class ContainerAttribute : Attribute
+    public class SpyAttribute : Attribute
     {
         // ReSharper disable once UnusedParameter.Local *** Is used in the generator
-        public ContainerAttribute(Type type)
-        {
-        }
+        public SpyAttribute(params Type[] type) {}
     }
 }

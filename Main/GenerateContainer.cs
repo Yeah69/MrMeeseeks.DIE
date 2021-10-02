@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
@@ -9,58 +10,46 @@ namespace MrMeeseeks.DIE
 {
     internal interface IContainerGenerator 
     {
-        void Generate(INamedTypeSymbol containerClass);
+        void Generate(IContainerInfo containerInfo, ResolutionBase resolutionBase);
     }
 
     internal class ContainerGenerator : IContainerGenerator
     {
         private readonly GeneratorExecutionContext _context;
         private readonly IDiagLogger _diagLogger;
-        private readonly WellKnownTypes _wellKnownTypes;
-        private readonly ITypeToImplementationsMapper _typeToImplementationsMapper;
 
         public ContainerGenerator(
             GeneratorExecutionContext context,
-            IDiagLogger diagLogger,
-            WellKnownTypes wellKnownTypes,
-            ITypeToImplementationsMapper typeToImplementationsMapper)
+            IDiagLogger diagLogger)
         {
             _context = context;
             _diagLogger = diagLogger;
-            _wellKnownTypes = wellKnownTypes;
-            _typeToImplementationsMapper = typeToImplementationsMapper;
         }
 
-        public void Generate(INamedTypeSymbol containerClass)
+        public void Generate(IContainerInfo containerInfo, ResolutionBase resolutionBase)
         {
-            var namedTypeSymbol = containerClass.AllInterfaces.Single(x => x.OriginalDefinition.Equals(_wellKnownTypes.Container, SymbolEqualityComparer.Default));
-            _diagLogger.Log($"Interface type {namedTypeSymbol.FullName()}");
-            var typeParameterSymbol = namedTypeSymbol.TypeArguments.Single();
-            _diagLogger.Log($"Generic type {typeParameterSymbol.FullName()}");
-            if (typeParameterSymbol is not INamedTypeSymbol { } type 
-                || type.IsUnboundGenericType
-                || !type.IsAccessibleInternally())
+            if (!containerInfo.IsValid || containerInfo.ResolutionRootType is null)
             {
                 _diagLogger.Log($"return generation");
                 return;
             }
-
-            var typeToInject = _typeToImplementationsMapper.Map(type).First();
-
+            
             var generatedContainer = new StringBuilder()
-                .AppendLine($"namespace MrMeeseeks.DIE")
+                .AppendLine($"namespace {containerInfo.Namespace}")
                 .AppendLine($"{{")
-                .AppendLine($"    internal partial class {containerClass.Name}")
-                .AppendLine($"    {{");
+                .AppendLine($"partial class {containerInfo.Name}")
+                .AppendLine($"{{")
+                .AppendLine($"public {resolutionBase.TypeFullName} Resolve()")
+                .AppendLine($"{{");
 
-            generatedContainer = GenerateResolveFunction(generatedContainer, type, typeToInject, _typeToImplementationsMapper);
-
-            generatedContainer = generatedContainer
-                .AppendLine($"            return _0;")
-                .AppendLine($"        }}");
+            generatedContainer = GenerateResolveFunctionAlternative(generatedContainer, resolutionBase);
 
             generatedContainer = generatedContainer
-                .AppendLine($"    }}")
+                .AppendLine($"return {resolutionBase.Reference};")
+                .AppendLine($"}}");
+
+            generatedContainer = generatedContainer
+                .AppendLine($"}}")
                 .AppendLine($"}}")
                 ;
 
@@ -70,46 +59,29 @@ namespace MrMeeseeks.DIE
                     .NormalizeWhitespace()
                     .SyntaxTree
                     .GetText();
-            _context.AddSource($"{type.Name}.g.cs", containerSource);
+            _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
 
-            static StringBuilder GenerateResolveFunction(
-                StringBuilder stringBuilder, 
-                INamedTypeSymbol namedTypeSymbol,
-                INamedTypeSymbol typeToInject,
-                ITypeToImplementationsMapper typeToImplementationsMapper)
+            static StringBuilder GenerateResolveFunctionAlternative(
+                StringBuilder stringBuilder,
+                ResolutionBase resolution)
             {
-                stringBuilder = stringBuilder
-                    .AppendLine($"        public {namedTypeSymbol.FullName()} Resolve()")
-                    .AppendLine($"        {{");
-
-                var id = -1;
-                var stack = new Stack<DependencyWrapper>();
-                stack.Push(new DependencyWrapper(ResolutionStage.Prefix, ++id, namedTypeSymbol, typeToInject, new List<int>()));
-                while (stack.Any())
+                switch (resolution)
                 {
-                    var subject = stack.Pop();
-                    if (subject is { ResolutionStage: ResolutionStage.Prefix })
-                    {
-                        var parameterIds = new List<int>();
-                        stack.Push(subject with { ResolutionStage = ResolutionStage.Postfix, ParameterIds = parameterIds });
-                        var ctor = subject.ImplementationType.Constructors.First();
-                        foreach (var parameter in ctor.Parameters.Select(p => p.Type))
+                    case InterfaceResolution interfaceResolution:
+                        stringBuilder = GenerateResolveFunctionAlternative(stringBuilder, interfaceResolution.Dependency);
+                        stringBuilder = stringBuilder.AppendLine(
+                            $"var {interfaceResolution.Reference} = ({interfaceResolution.TypeFullName}) {interfaceResolution.Dependency.Reference};");              
+                        break;
+                    case ConstructorResolution constructorResolution:
+                        foreach (var parameterResolution in constructorResolution.Dependencies)
                         {
-                            var namedParameter = (INamedTypeSymbol)parameter;
-                            var typeToInjectParameter = typeToImplementationsMapper.Map(namedParameter).First();
-                            var parameterWrapper = new DependencyWrapper(ResolutionStage.Prefix, ++id, namedParameter,
-                                typeToInjectParameter, new List<int>());
-                            stack.Push(parameterWrapper);
-                            parameterIds.Add(parameterWrapper.Id);
+                            stringBuilder = GenerateResolveFunctionAlternative(stringBuilder, parameterResolution);
                         }
-                    }
-                    else if (subject is { ResolutionStage: ResolutionStage.Postfix })
-                    {
-                        stringBuilder = stringBuilder
-                                .AppendLine(
-                                    $"            var _{subject.Id} = new {subject.ImplementationType.FullName()}({string.Join(", ", subject.ParameterIds.Select(id => $"_{id}"))});")
-                            ;
-                    }
+                        stringBuilder = stringBuilder.AppendLine(
+                            $"var {constructorResolution.Reference} = new {constructorResolution.TypeFullName}({string.Join(", ", constructorResolution.Dependencies.Select(d => d.Reference))});");
+                        break;
+                    default:
+                        throw new Exception("Unexpected case or not implemented.");
                 }
 
                 return stringBuilder;

@@ -14,5 +14,20 @@ namespace MrMeeseeks.DIE
         int Id, 
         INamedTypeSymbol InjectedType, 
         INamedTypeSymbol ImplementationType,
+        string ImplementationTypeFullName,
         IReadOnlyList<int> ParameterIds);
+
+    internal abstract record ResolutionBase(
+        string Reference,
+        string TypeFullName); 
+
+    internal record InterfaceResolution(
+        string Reference,
+        string TypeFullName,
+        ResolutionBase Dependency) : ResolutionBase(Reference, TypeFullName);
+
+    internal record ConstructorResolution(
+        string Reference,
+        string TypeFullName,
+        IReadOnlyList<ResolutionBase> Dependencies) : ResolutionBase(Reference, TypeFullName);
 }

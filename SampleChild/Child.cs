@@ -5,7 +5,7 @@
 
     public class Child : IChild
     {
-        internal Child(
+        public Child(
             IInternalChild innerChild){}
     }
 }

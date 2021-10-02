@@ -5,13 +5,13 @@ namespace MrMeeseeks.DIE.Sample
 {
     internal interface IContext
     {
-        String Text { get; }
+        string Text { get; }
     }
 
     internal class Context : IContext
     {
-        public String Text => "Hello, world";
-        public Context(IChild child)
+        public string Text => "Hello, world!";
+        public Context(Child child)
         {
 
         }

@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE.SampleChild
 {
-    internal interface IInternalChild
+    public interface IInternalChild
     {}
     internal class InternalChild : IInternalChild
     {

@@ -5,7 +5,7 @@ using SampleChild;
 
 namespace MrMeeseeks.DIE.Sample
 {
-    public partial class Container : IContainer<IContext>
+    internal partial class Container : IContainer<IContext>
     {
     }
 }

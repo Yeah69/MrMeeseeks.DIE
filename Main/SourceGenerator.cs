@@ -19,8 +19,11 @@ namespace MrMeeseeks.DIE
             var getAssemblyAttributes = new GetAssemblyAttributes(context);
             var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
             var typeToImplementationMapper = new TypeToImplementationsMapper(wellKnownTypes, diagLogger, getAllImplementations, getAssemblyAttributes);
-            var containerGenerator = new ContainerGenerator(context, diagLogger, wellKnownTypes, typeToImplementationMapper);
-            new ExecuteImpl(context, wellKnownTypes, containerGenerator, diagLogger).Execute();
+            var containerGenerator = new ContainerGenerator(context, diagLogger);
+            var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper);
+            new ExecuteImpl(context, wellKnownTypes, containerGenerator, resolutionTreeFactory, ContainerInfoFactory, diagLogger).Execute();
+            
+            IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         }
     }
 }

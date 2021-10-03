@@ -8,8 +8,9 @@ namespace MrMeeseeks.DIE
     {
         public void Initialize(GeneratorInitializationContext context)
         {
-            Func<ISyntaxReceiver> syntaxReceiverFactory = () => new SyntaxReceiver();
-            new InitializeImpl(context, syntaxReceiverFactory).Initialize();
+            new InitializeImpl(context, SyntaxReceiverFactory).Initialize();
+            
+            ISyntaxReceiver SyntaxReceiverFactory() => new SyntaxReceiver();
         }
 
         public void Execute(GeneratorExecutionContext context)
@@ -20,10 +21,12 @@ namespace MrMeeseeks.DIE
             var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
             var typeToImplementationMapper = new TypeToImplementationsMapper(wellKnownTypes, diagLogger, getAllImplementations, getAssemblyAttributes);
             var containerGenerator = new ContainerGenerator(context, diagLogger);
-            var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper);
+            var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
+            var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper, referenceGeneratorFactory, wellKnownTypes);
             new ExecuteImpl(context, wellKnownTypes, containerGenerator, resolutionTreeFactory, ContainerInfoFactory, diagLogger).Execute();
             
             IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
+            IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
         }
     }
 }

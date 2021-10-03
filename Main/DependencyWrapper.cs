@@ -1,22 +1,7 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace MrMeeseeks.DIE
 {
-    internal enum ResolutionStage
-    {
-        Prefix,
-        Postfix
-    }
-
-    internal record DependencyWrapper(
-        ResolutionStage ResolutionStage, 
-        int Id, 
-        INamedTypeSymbol InjectedType, 
-        INamedTypeSymbol ImplementationType,
-        string ImplementationTypeFullName,
-        IReadOnlyList<int> ParameterIds);
-
     internal abstract record ResolutionBase(
         string Reference,
         string TypeFullName); 
@@ -29,5 +14,5 @@ namespace MrMeeseeks.DIE
     internal record ConstructorResolution(
         string Reference,
         string TypeFullName,
-        IReadOnlyList<ResolutionBase> Dependencies) : ResolutionBase(Reference, TypeFullName);
+        IReadOnlyList<(string name, ResolutionBase Dependency)> Parameter) : ResolutionBase(Reference, TypeFullName);
 }

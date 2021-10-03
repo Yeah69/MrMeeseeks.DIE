@@ -41,9 +41,7 @@ namespace MrMeeseeks.DIE
                 .AppendLine($"public {resolutionBase.TypeFullName} Resolve()")
                 .AppendLine($"{{");
 
-            generatedContainer = GenerateResolveFunctionFields(generatedContainer, resolutionBase);
-
-            generatedContainer = GenerateResolveFunction(generatedContainer, resolutionBase);
+            generatedContainer = GenerateResolutionFunction(generatedContainer, resolutionBase);
 
             generatedContainer = generatedContainer
                 .AppendLine($"return {resolutionBase.Reference};")
@@ -62,19 +60,34 @@ namespace MrMeeseeks.DIE
                     .GetText();
             _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
 
-            static StringBuilder GenerateResolveFunctionFields(
+
+
+            static StringBuilder GenerateResolutionFunction(
+                StringBuilder stringBuilder,
+                ResolutionBase resolution)
+            {
+                stringBuilder = GenerateFields(stringBuilder, resolution);
+                stringBuilder = GenerateResolutions(stringBuilder, resolution);
+                
+                return stringBuilder;
+            }
+
+            static StringBuilder GenerateFields(
                 StringBuilder stringBuilder,
                 ResolutionBase resolution)
             {
                 switch (resolution)
                 {
                     case InterfaceResolution(var reference, var typeFullName, var resolutionBase):
-                        stringBuilder = GenerateResolveFunctionFields(stringBuilder, resolutionBase);
+                        stringBuilder = GenerateFields(stringBuilder, resolutionBase);
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                         break;
                     case ConstructorResolution(var reference, var typeFullName, var parameters):
                         stringBuilder = parameters.Aggregate(stringBuilder,
-                            (builder, tuple) => GenerateResolveFunctionFields(builder, tuple.Dependency));
+                            (builder, tuple) => GenerateFields(builder, tuple.Dependency));
+                        stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                        break;
+                    case FuncResolution(var reference, var typeFullName, _):
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                         break;
                     default:
@@ -84,22 +97,29 @@ namespace MrMeeseeks.DIE
                 return stringBuilder;
             }
 
-            static StringBuilder GenerateResolveFunction(
+            static StringBuilder GenerateResolutions(
                 StringBuilder stringBuilder,
                 ResolutionBase resolution)
             {
                 switch (resolution)
                 {
                     case InterfaceResolution(var reference, var typeFullName, var resolutionBase):
-                        stringBuilder = GenerateResolveFunction(stringBuilder, resolutionBase);
+                        stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
                         stringBuilder = stringBuilder.AppendLine(
                             $"{reference} = ({typeFullName}) {resolutionBase.Reference};");              
                         break;
                     case ConstructorResolution(var reference, var typeFullName, var parameters):
                         stringBuilder = parameters.Aggregate(stringBuilder,
-                            (builder, tuple) => GenerateResolveFunction(builder, tuple.Dependency));
+                            (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
                         stringBuilder = stringBuilder.AppendLine(
                             $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {d.Dependency.Reference}"))});");
+                        break;
+                    case FuncResolution(var reference, var typeFullName, var resolutionBase):
+                        stringBuilder = stringBuilder.AppendLine($"{reference} = () =>");
+                        stringBuilder = stringBuilder.AppendLine($"{{");
+                        GenerateResolutionFunction(stringBuilder, resolutionBase);
+                        stringBuilder = stringBuilder.AppendLine($"return {resolutionBase.Reference};");
+                        stringBuilder = stringBuilder.AppendLine($"}};");
                         break;
                     default:
                         throw new Exception("Unexpected case or not implemented.");

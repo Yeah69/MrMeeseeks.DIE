@@ -7,6 +7,7 @@ namespace MrMeeseeks.DIE
         INamedTypeSymbol SpyAttribute,
         INamedTypeSymbol Disposable,
         INamedTypeSymbol AsyncDisposable,
+        INamedTypeSymbol Lazy1,
         INamedTypeSymbol ValueTask,
         INamedTypeSymbol ValueTask1,
         INamedTypeSymbol Task1,
@@ -17,6 +18,7 @@ namespace MrMeeseeks.DIE
             var iContainer = compilation.GetTypeOrReport("MrMeeseeks.DIE.IContainer`1");
             var iDisposable = compilation.GetTypeOrReport("System.IDisposable");
             var iAsyncDisposable = compilation.GetTypeOrReport("System.IAsyncDisposable");
+            var lazy1 = compilation.GetTypeOrReport("System.Lazy`1");
             var valueTask = compilation.GetTypeOrReport("System.Threading.Tasks.ValueTask");
             var valueTask1 = compilation.GetTypeOrReport("System.Threading.Tasks.ValueTask`1");
             var task1 = compilation.GetTypeOrReport("System.Threading.Tasks.Task`1");
@@ -29,6 +31,7 @@ namespace MrMeeseeks.DIE
                 || spyAttribute is null
                 || iDisposable is null
                 || iAsyncDisposable is null
+                || lazy1 is null
                 || valueTask is null
                 || valueTask1 is null
                 || task1 is null
@@ -43,6 +46,7 @@ namespace MrMeeseeks.DIE
                 SpyAttribute: spyAttribute,
                 Disposable: iDisposable,
                 AsyncDisposable: iAsyncDisposable,
+                Lazy1: lazy1,
                 ValueTask: valueTask,
                 ValueTask1: valueTask1,
                 Task1: task1,

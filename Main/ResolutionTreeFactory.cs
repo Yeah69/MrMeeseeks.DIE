@@ -30,7 +30,7 @@ namespace MrMeeseeks.DIE
                     .Map(type)
                     .FirstOrDefault() ?? throw new NotImplementedException("What if several possible implementations exist");
                 return new InterfaceResolution(
-                    $"_{++_id}",
+                    GenerateReference(type.Name),
                     type.FullName(),
                     Create(implementationType));
             }
@@ -41,14 +41,22 @@ namespace MrMeeseeks.DIE
                     .FirstOrDefault() ?? throw new NotImplementedException("What if several possible implementations exist");
                 var constructor = implementationType.Constructors.FirstOrDefault()
                     ?? throw new NotImplementedException("What if no constructor exists or several possible constructors exist");
+                
                 return new ConstructorResolution(
-                    $"_{++_id}",
+                    GenerateReference(implementationType.Name),
                     implementationType.FullName(),
-                    new ReadOnlyCollection<ResolutionBase>(
-                        constructor.Parameters.Select(p => Create(p.Type as INamedTypeSymbol ?? throw new NotImplementedException("What if parameter type is not INamedTypeSymbol?"))).ToList()));
+                    new ReadOnlyCollection<(string Name, ResolutionBase Dependency)>(constructor
+                        .Parameters
+                        .Select(p => (
+                            p.Name, 
+                            Create(p.Type as INamedTypeSymbol 
+                                   ?? throw new NotImplementedException("What if parameter type is not INamedTypeSymbol?"))))
+                        .ToList()));
             }
 
             throw new NotImplementedException("What if type neither interface nor class");
+
+            string GenerateReference(string name) => $"{char.ToLower(name[0])}{name.Substring(1)}_0_{++_id}";
         }
     }
 }

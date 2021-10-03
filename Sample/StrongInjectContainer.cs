@@ -1,11 +1,13 @@
 using MrMeeseeks.DIE.SampleChild;
 using StrongInject;
+using StrongInject.Modules;
 
 namespace MrMeeseeks.DIE.Sample
 {
     [Register(typeof(Context), typeof(IContext))]
     [Register(typeof(Child), typeof(Child), typeof(IChild))]
     [Register(typeof(InternalChild), typeof(IInternalChild))]
+    [RegisterModule(typeof(StandardModule))]
     internal partial class StrongInjectContainer : StrongInject.IContainer<IContext>
     {
         

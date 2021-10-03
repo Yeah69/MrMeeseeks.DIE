@@ -11,7 +11,7 @@ namespace MrMeeseeks.DIE.Sample
     internal class Context : IContext
     {
         public string Text => "Hello, world!";
-        public Context(Child child)
+        public Context(IChild child)//Lazy<IChild> child)
         {
 
         }

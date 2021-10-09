@@ -1,6 +1,10 @@
 {
   "profiles": {
     "Main": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\Sample\\Sample.csproj"
+    },
+    "Profile 1": {
       "commandName": "Executable"
     }
   }

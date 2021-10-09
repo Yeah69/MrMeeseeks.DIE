@@ -87,8 +87,10 @@ namespace MrMeeseeks.DIE
                             (builder, tuple) => GenerateFields(builder, tuple.Dependency));
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                         break;
-                    case FuncResolution(var reference, var typeFullName, _):
+                    case FuncResolution(var reference, var typeFullName, _, _):
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                        break;
+                    case FuncParameterResolution:
                         break;
                     default:
                         throw new Exception("Unexpected case or not implemented.");
@@ -114,12 +116,14 @@ namespace MrMeeseeks.DIE
                         stringBuilder = stringBuilder.AppendLine(
                             $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {d.Dependency.Reference}"))});");
                         break;
-                    case FuncResolution(var reference, var typeFullName, var resolutionBase):
-                        stringBuilder = stringBuilder.AppendLine($"{reference} = () =>");
+                    case FuncResolution(var reference, var typeFullName, var parameter, var resolutionBase):
+                        stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", parameter.Select(fpr => fpr.Reference))}) =>");
                         stringBuilder = stringBuilder.AppendLine($"{{");
                         GenerateResolutionFunction(stringBuilder, resolutionBase);
                         stringBuilder = stringBuilder.AppendLine($"return {resolutionBase.Reference};");
                         stringBuilder = stringBuilder.AppendLine($"}};");
+                        break;
+                    case FuncParameterResolution:
                         break;
                     default:
                         throw new Exception("Unexpected case or not implemented.");

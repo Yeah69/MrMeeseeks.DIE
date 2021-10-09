@@ -25,4 +25,10 @@ namespace MrMeeseeks.DIE
         string TypeFullName,
         IReadOnlyList<FuncParameterResolution> Parameter,
         ResolutionBase Dependency) : ResolutionBase(Reference, TypeFullName);
+
+    internal record CollectionResolution(
+        string Reference,
+        string TypeFullName,
+        string ItemFullName,
+        IReadOnlyList<ResolutionBase> Parameter) : ResolutionBase(Reference, TypeFullName);
 }

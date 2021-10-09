@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using MrMeeseeks.DIE.SampleChild;
 
 namespace MrMeeseeks.DIE.Sample
@@ -11,7 +11,7 @@ namespace MrMeeseeks.DIE.Sample
     internal class Context : IContext
     {
         public string Text => "Hello, world!";
-        public Context(Func<IYetAnotherInternalChild, IChild> child)
+        public Context(IReadOnlyList<IChild> child)
         {
 
         }

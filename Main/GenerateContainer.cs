@@ -92,6 +92,10 @@ namespace MrMeeseeks.DIE
                         break;
                     case FuncParameterResolution:
                         break;
+                    case CollectionResolution(var reference, var typeFullName, _, var items):
+                        stringBuilder = items.Aggregate(stringBuilder, GenerateFields);
+                        stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                        break;
                     default:
                         throw new Exception("Unexpected case or not implemented.");
                 }
@@ -116,7 +120,7 @@ namespace MrMeeseeks.DIE
                         stringBuilder = stringBuilder.AppendLine(
                             $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {d.Dependency.Reference}"))});");
                         break;
-                    case FuncResolution(var reference, var typeFullName, var parameter, var resolutionBase):
+                    case FuncResolution(var reference, _, var parameter, var resolutionBase):
                         stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", parameter.Select(fpr => fpr.Reference))}) =>");
                         stringBuilder = stringBuilder.AppendLine($"{{");
                         GenerateResolutionFunction(stringBuilder, resolutionBase);
@@ -124,6 +128,11 @@ namespace MrMeeseeks.DIE
                         stringBuilder = stringBuilder.AppendLine($"}};");
                         break;
                     case FuncParameterResolution:
+                        break;
+                    case CollectionResolution(var reference, _, var itemFullName, var items):
+                        stringBuilder = items.Aggregate(stringBuilder, GenerateResolutions);
+                        stringBuilder = stringBuilder.AppendLine(
+                            $"{reference} = new {itemFullName}[]{{{string.Join(", ", items.Select(d => $"({itemFullName}) {d.Reference}"))}}};");
                         break;
                     default:
                         throw new Exception("Unexpected case or not implemented.");

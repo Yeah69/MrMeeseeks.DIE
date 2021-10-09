@@ -38,17 +38,6 @@ namespace MrMeeseeks.DIE
             {
                 return funcParameter.Resolution;
             }
-            
-            if (type.TypeKind == TypeKind.Interface)
-            {
-                var implementationType = _typeToImplementationsMapper
-                    .Map(type)
-                    .SingleOrDefault() ?? throw new NotImplementedException($"What if several possible implementations exist (interface;{type.FullName()})");
-                return new InterfaceResolution(
-                    referenceGenerator.Generate(type),
-                    type.FullName(),
-                    Create(implementationType, referenceGenerator, currentFuncParameters));
-            }
 
             if (type.OriginalDefinition.Equals(_wellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
                 && type is INamedTypeSymbol namedTypeSymbol)
@@ -75,6 +64,34 @@ namespace MrMeeseeks.DIE
                                     dependency)
                             )
                         }));
+            }
+
+            if (type.OriginalDefinition.Equals(_wellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
+            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
+            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default))
+            {
+                var itemType = (type as INamedTypeSymbol)?.TypeArguments.SingleOrDefault() ?? throw new Exception();
+                var itemFullName = itemType.FullName();
+                var items = _typeToImplementationsMapper
+                    .Map(itemType)
+                    .Select(i => Create(i, referenceGenerator, currentFuncParameters))
+                    .ToList();
+                return new CollectionResolution(
+                    referenceGenerator.Generate(type),
+                    type.FullName(),
+                    itemFullName,
+                    items);
+            }
+
+            if (type.TypeKind == TypeKind.Interface)
+            {
+                var implementationType = _typeToImplementationsMapper
+                    .Map(type)
+                    .SingleOrDefault() ?? throw new NotImplementedException($"What if several possible implementations exist (interface;{type.FullName()})");
+                return new InterfaceResolution(
+                    referenceGenerator.Generate(type),
+                    type.FullName(),
+                    Create(implementationType, referenceGenerator, currentFuncParameters));
             }
 
             if (type.TypeKind == TypeKind.Class)

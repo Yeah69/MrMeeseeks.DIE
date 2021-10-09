@@ -11,7 +11,10 @@ namespace MrMeeseeks.DIE
         INamedTypeSymbol ValueTask,
         INamedTypeSymbol ValueTask1,
         INamedTypeSymbol Task1,
-        INamedTypeSymbol ObjectDisposedException)
+        INamedTypeSymbol ObjectDisposedException,
+        INamedTypeSymbol Enumerable1,
+        INamedTypeSymbol ReadOnlyCollection1,
+        INamedTypeSymbol ReadOnlyList1)
     {
         public static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
         {
@@ -23,6 +26,9 @@ namespace MrMeeseeks.DIE
             var valueTask1 = compilation.GetTypeOrReport("System.Threading.Tasks.ValueTask`1");
             var task1 = compilation.GetTypeOrReport("System.Threading.Tasks.Task`1");
             var objectDisposedException = compilation.GetTypeOrReport("System.ObjectDisposedException");
+            var iEnumerable1 = compilation.GetTypeOrReport("System.Collections.Generic.IEnumerable`1");
+            var iReadOnlyCollection1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyCollection`1");
+            var iReadOnlyList1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyList`1");
 
             var spyAttribute = compilation
                 .GetTypeByMetadataName(typeof(SpyAttribute).FullName ?? "");
@@ -35,7 +41,10 @@ namespace MrMeeseeks.DIE
                 || valueTask is null
                 || valueTask1 is null
                 || task1 is null
-                || objectDisposedException is null)
+                || objectDisposedException is null
+                || iEnumerable1 is null
+                || iReadOnlyCollection1 is null
+                || iReadOnlyList1 is null)
             {
                 wellKnownTypes = null!;
                 return false;
@@ -50,7 +59,10 @@ namespace MrMeeseeks.DIE
                 ValueTask: valueTask,
                 ValueTask1: valueTask1,
                 Task1: task1,
-                ObjectDisposedException: objectDisposedException);
+                ObjectDisposedException: objectDisposedException,
+                Enumerable1: iEnumerable1,
+                ReadOnlyCollection1: iReadOnlyCollection1,
+                ReadOnlyList1: iReadOnlyList1);
 
             return true;
         }

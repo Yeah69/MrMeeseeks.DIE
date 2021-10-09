@@ -5,7 +5,7 @@ namespace MrMeeseeks.DIE
 {
     public interface IReferenceGenerator
     {
-        string Generate(INamedTypeSymbol type);
+        string Generate(ITypeSymbol type);
         string Generate(string hardcodedName);
     }
 
@@ -16,7 +16,7 @@ namespace MrMeeseeks.DIE
 
         public ReferenceGenerator(int j) => _j = j;
 
-        public string Generate(INamedTypeSymbol type) => 
+        public string Generate(ITypeSymbol type) => 
             Generate($"{char.ToLower(type.Name[0])}{type.Name.Substring(1)}");
 
         public string Generate(string hardcodedName) => 

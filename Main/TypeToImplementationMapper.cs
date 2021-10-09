@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -8,16 +7,15 @@ namespace MrMeeseeks.DIE
 {
     internal interface ITypeToImplementationsMapper
     {
-        IList<INamedTypeSymbol> Map(INamedTypeSymbol typeSymbol); 
+        IList<ITypeSymbol> Map(ITypeSymbol typeSymbol); 
     }
 
     internal class TypeToImplementationsMapper : ITypeToImplementationsMapper
     {
-        private readonly Dictionary<INamedTypeSymbol, List<INamedTypeSymbol>> _map;
+        private readonly Dictionary<ITypeSymbol, List<ITypeSymbol>> _map;
 
         public TypeToImplementationsMapper(
             WellKnownTypes wellKnownTypes,
-            IDiagLogger diagLogger,
             IGetAllImplementations getAllImplementations,
             IGetAssemblyAttributes getAssemblyAttributes)
         {
@@ -25,11 +23,11 @@ namespace MrMeeseeks.DIE
             _map = getAllImplementations
                 .AllImplementations
                 .Concat(GetSpiedImplementations())
-                .SelectMany(i => { return i.AllInterfaces.Select(ii => (ii, i)).Prepend((i, i)); })
+                .SelectMany(i => { return i.AllInterfaces.OfType<ITypeSymbol>().Select(ii => (ii, i)).Prepend((i, i)); })
                 .GroupBy(t => t.Item1, t => t.Item2)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            IEnumerable<INamedTypeSymbol> GetSpiedImplementations() => getAssemblyAttributes
+            IEnumerable<ITypeSymbol> GetSpiedImplementations() => getAssemblyAttributes
                 .AllAssemblyAttributes
                 .Where(ad =>
                     ad.AttributeClass?.Equals(wellKnownTypes.SpyAttribute, SymbolEqualityComparer.Default) ?? false)
@@ -61,8 +59,7 @@ namespace MrMeeseeks.DIE
                     return type;
                 })
                 .Where(t => t is not null)
-                .OfType<INamedTypeSymbol>()
-                .SelectMany(t => t.GetMembers()
+                .SelectMany(t => t?.GetMembers()
                     .OfType<IPropertySymbol>()
                     .Select(p => p.Type)
                     .OfType<INamedTypeSymbol>());
@@ -84,14 +81,14 @@ namespace MrMeeseeks.DIE
             }
         }
 
-        public IList<INamedTypeSymbol> Map(INamedTypeSymbol typeSymbol)
+        public IList<ITypeSymbol> Map(ITypeSymbol typeSymbol)
         {
             if(_map.TryGetValue(typeSymbol, out var implementations))
             {
                 return implementations;
             }
 
-            return new List<INamedTypeSymbol>();
+            return new List<ITypeSymbol>();
         }
     }
 }

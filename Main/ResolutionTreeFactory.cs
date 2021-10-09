@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE
 {
     internal interface IResolutionTreeFactory
     {
-        ResolutionBase Create(INamedTypeSymbol root);
+        ResolutionBase Create(ITypeSymbol root);
     }
 
     internal class ResolutionTreeFactory : IResolutionTreeFactory
@@ -27,27 +27,39 @@ namespace MrMeeseeks.DIE
             _wellKnownTypes = wellKnownTypes;
         }
 
-        public ResolutionBase Create(INamedTypeSymbol type) => Create(type, _referenceGeneratorFactory.Create());
+        public ResolutionBase Create(ITypeSymbol type) => Create(
+            type,
+            _referenceGeneratorFactory.Create(), 
+            Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>());
         
-        private ResolutionBase Create(INamedTypeSymbol type, IReferenceGenerator referenceGenerator)
+        private ResolutionBase Create(ITypeSymbol type, IReferenceGenerator referenceGenerator, IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> currentFuncParameters)
         {
+            if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
+            {
+                return funcParameter.Resolution;
+            }
+            
             if (type.TypeKind == TypeKind.Interface)
             {
                 var implementationType = _typeToImplementationsMapper
                     .Map(type)
-                    .FirstOrDefault() ?? throw new NotImplementedException($"What if several possible implementations exist (interface;{type.FullName()})");
+                    .SingleOrDefault() ?? throw new NotImplementedException($"What if several possible implementations exist (interface;{type.FullName()})");
                 return new InterfaceResolution(
                     referenceGenerator.Generate(type),
                     type.FullName(),
-                    Create(implementationType, referenceGenerator));
+                    Create(implementationType, referenceGenerator, currentFuncParameters));
             }
 
-            if (type.OriginalDefinition.Equals(_wellKnownTypes.Lazy1, SymbolEqualityComparer.Default))
+            if (type.OriginalDefinition.Equals(_wellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
+                && type is INamedTypeSymbol namedTypeSymbol)
             {
-                var genericType = type.TypeArguments.FirstOrDefault() as INamedTypeSymbol ??
-                                      throw new NotImplementedException("What if not castable?");
+                var genericType = namedTypeSymbol.TypeArguments.SingleOrDefault() as INamedTypeSymbol ??
+                                  throw new NotImplementedException("What if not castable?");
 
-                var dependency = Create(genericType, _referenceGeneratorFactory.Create());
+                var dependency = Create(
+                    genericType, 
+                    _referenceGeneratorFactory.Create(), 
+                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>());
                 return new ConstructorResolution(
                     referenceGenerator.Generate(type),
                     type.FullName(),
@@ -59,6 +71,7 @@ namespace MrMeeseeks.DIE
                                 new FuncResolution(
                                     referenceGenerator.Generate("func"),
                                     $"global::System.Func<{genericType.FullName()}>",
+                                    Array.Empty<FuncParameterResolution>(),
                                     dependency)
                             )
                         }));
@@ -68,8 +81,8 @@ namespace MrMeeseeks.DIE
             {
                 var implementationType = _typeToImplementationsMapper
                     .Map(type)
-                    .FirstOrDefault() ?? throw new NotImplementedException($"What if several possible implementations exist (class;{type.FullName()})");
-                var constructor = implementationType.Constructors.FirstOrDefault()
+                    .SingleOrDefault() as INamedTypeSymbol ?? throw new NotImplementedException($"What if several possible implementations exist (class;{type.FullName()})");
+                var constructor = implementationType.Constructors.SingleOrDefault()
                     ?? throw new NotImplementedException("What if no constructor exists or several possible constructors exist");
                 
                 return new ConstructorResolution(
@@ -81,11 +94,35 @@ namespace MrMeeseeks.DIE
                             p.Name, 
                             Create(p.Type as INamedTypeSymbol 
                                    ?? throw new NotImplementedException("What if parameter type is not INamedTypeSymbol?"),
-                                referenceGenerator)))
+                                referenceGenerator,
+                                currentFuncParameters)))
                         .ToList()));
             }
 
-            throw new NotImplementedException("What if type neither interface nor class");
+            if (type.TypeKind == TypeKind.Delegate 
+                && type.FullName().StartsWith("global::System.Func<")
+                && type is INamedTypeSymbol namedTypeSymbol0)
+            {
+                var returnType = namedTypeSymbol0.TypeArguments.Last();
+                var innerReferenceGenerator = _referenceGeneratorFactory.Create();
+                var parameterTypes = namedTypeSymbol0
+                    .TypeArguments
+                    .Take(namedTypeSymbol0.TypeArguments.Length - 1)
+                    .Select(ts => (Type: ts, Resolution: new FuncParameterResolution(innerReferenceGenerator.Generate(ts), ts.FullName())))
+                    .ToArray();
+
+                var dependency = Create(
+                    returnType, 
+                    innerReferenceGenerator, 
+                    parameterTypes);
+                return new FuncResolution(
+                    referenceGenerator.Generate(type),
+                    type.FullName(),
+                    parameterTypes.Select(t => t.Resolution).ToArray(),
+                    dependency);
+            }
+
+            throw new NotImplementedException("What if type neither interface nor class nor delegate");
         }
     }
 }

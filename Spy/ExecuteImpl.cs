@@ -10,16 +10,16 @@ namespace MrMeeseeks.DIE.Spy
     internal class ExecuteImpl : IExecute
     {
         private readonly GeneratorExecutionContext _context;
-        private readonly IContainerGenerator _containerGenerator;
+        private readonly ITypeReportGenerator _typeReportGenerator;
         private readonly IDiagLogger _diagLogger;
 
         public ExecuteImpl(
             GeneratorExecutionContext context,
-            IContainerGenerator containerGenerator,
+            ITypeReportGenerator typeReportGenerator,
             IDiagLogger diagLogger)
         {
             _context = context;
-            _containerGenerator = containerGenerator;
+            _typeReportGenerator = typeReportGenerator;
             _diagLogger = diagLogger;
         }
 
@@ -27,7 +27,7 @@ namespace MrMeeseeks.DIE.Spy
         {
             _diagLogger.Log("Start Execute");
 
-            _containerGenerator.Generate(
+            _typeReportGenerator.Generate(
                 _context.Compilation.Assembly.Name);
 
             _diagLogger.Log("End Execute");

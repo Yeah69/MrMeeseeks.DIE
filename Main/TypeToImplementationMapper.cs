@@ -25,7 +25,7 @@ namespace MrMeeseeks.DIE
                 .Concat(GetSpiedImplementations())
                 .SelectMany(i => { return i.AllInterfaces.OfType<ITypeSymbol>().Select(ii => (ii, i)).Prepend((i, i)); })
                 .GroupBy(t => t.Item1, t => t.Item2)
-                .ToDictionary(g => g.Key, g => g.ToList());
+                .ToDictionary(g => g.Key, g => g.Distinct().ToList());
 
             IEnumerable<ITypeSymbol> GetSpiedImplementations() => getAssemblyAttributes
                 .AllAssemblyAttributes
@@ -60,8 +60,9 @@ namespace MrMeeseeks.DIE
                 })
                 .Where(t => t is not null)
                 .SelectMany(t => t?.GetMembers()
-                    .OfType<IPropertySymbol>()
-                    .Select(p => p.Type)
+                    .OfType<IMethodSymbol>()
+                    .Where(ms => !ms.ReturnsVoid)
+                    .Select(ms => ms.ReturnType)
                     .OfType<INamedTypeSymbol>());
 
             bool CheckValidType(TypedConstant typedConstant, out INamedTypeSymbol type)

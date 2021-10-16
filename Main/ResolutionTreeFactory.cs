@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE
 {
     internal interface IResolutionTreeFactory
     {
-        ResolutionBase Create(ITypeSymbol root);
+        ResolutionTreeItem Create(ITypeSymbol root);
     }
 
     internal class ResolutionTreeFactory : IResolutionTreeFactory
@@ -27,12 +27,12 @@ namespace MrMeeseeks.DIE
             _wellKnownTypes = wellKnownTypes;
         }
 
-        public ResolutionBase Create(ITypeSymbol type) => Create(
+        public ResolutionTreeItem Create(ITypeSymbol type) => Create(
             type,
             _referenceGeneratorFactory.Create(), 
             Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>());
         
-        private ResolutionBase Create(ITypeSymbol type, IReferenceGenerator referenceGenerator, IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> currentFuncParameters)
+        private ResolutionTreeItem Create(ITypeSymbol type, IReferenceGenerator referenceGenerator, IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> currentFuncParameters)
         {
             if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
             {
@@ -42,8 +42,15 @@ namespace MrMeeseeks.DIE
             if (type.OriginalDefinition.Equals(_wellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
                 && type is INamedTypeSymbol namedTypeSymbol)
             {
-                var genericType = namedTypeSymbol.TypeArguments.SingleOrDefault() as INamedTypeSymbol ??
-                                  throw new NotImplementedException("What if not castable?");
+                if (namedTypeSymbol.TypeArguments.SingleOrDefault() is not INamedTypeSymbol genericType)
+                {
+                    return new ErrorTreeItem(namedTypeSymbol.TypeArguments.Length switch
+                    {
+                        0 => $"[{type.FullName()}] Lazy: No type argument",
+                        > 1 => $"[{type.FullName()}] Lazy: more than one type argument",
+                        _ => $"[{type.FullName()}] Lazy: {namedTypeSymbol.TypeArguments[0].FullName()} is not a named type symbol"
+                    });
+                }
 
                 var dependency = Create(
                     genericType, 
@@ -52,8 +59,8 @@ namespace MrMeeseeks.DIE
                 return new ConstructorResolution(
                     referenceGenerator.Generate(type),
                     type.FullName(),
-                    new ReadOnlyCollection<(string Name, ResolutionBase Dependency)>(
-                        new List<(string Name, ResolutionBase Dependency)> 
+                    new ReadOnlyCollection<(string Name, ResolutionTreeItem Dependency)>(
+                        new List<(string Name, ResolutionTreeItem Dependency)> 
                         { 
                             (
                                 "valueFactory", 
@@ -70,7 +77,19 @@ namespace MrMeeseeks.DIE
             || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
             || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default))
             {
-                var itemType = (type as INamedTypeSymbol)?.TypeArguments.SingleOrDefault() ?? throw new Exception();
+                if (type is not INamedTypeSymbol collectionType)
+                {
+                    return new ErrorTreeItem($"[{type.FullName()}] Collection: Collection is not a named type symbol");
+                }
+                if (collectionType.TypeArguments.SingleOrDefault() is not INamedTypeSymbol itemType)
+                {
+                    return new ErrorTreeItem(collectionType.TypeArguments.Length switch
+                    {
+                        0 => $"[{type.FullName()}] Collection: No item type argument",
+                        > 1 => $"[{type.FullName()}] Collection: More than one item type argument",
+                        _ => $"[{type.FullName()}] Collection: {collectionType.TypeArguments[0].FullName()} is not a named type symbol"
+                    });
+                }
                 var itemFullName = itemType.FullName();
                 var items = _typeToImplementationsMapper
                     .Map(itemType)
@@ -85,9 +104,18 @@ namespace MrMeeseeks.DIE
 
             if (type.TypeKind == TypeKind.Interface)
             {
-                var implementationType = _typeToImplementationsMapper
-                    .Map(type)
-                    .SingleOrDefault() ?? throw new NotImplementedException($"What if several possible implementations exist (interface;{type.FullName()})");
+                var implementations = _typeToImplementationsMapper
+                    .Map(type);
+                if (implementations
+                    .SingleOrDefault() is not INamedTypeSymbol implementationType)
+                {
+                    return new ErrorTreeItem(implementations.Count switch
+                    {
+                        0 => $"[{type.FullName()}] Interface: No implementation found",
+                        > 1 => $"[{type.FullName()}] Interface: more than one implementation found",
+                        _ => $"[{type.FullName()}] Interface: Found single implementation {implementations[0].FullName()} is not a named type symbol"
+                    });
+                }
                 return new InterfaceResolution(
                     referenceGenerator.Generate(type),
                     type.FullName(),
@@ -96,23 +124,45 @@ namespace MrMeeseeks.DIE
 
             if (type.TypeKind == TypeKind.Class)
             {
-                var implementationType = _typeToImplementationsMapper
-                    .Map(type)
-                    .SingleOrDefault() as INamedTypeSymbol ?? throw new NotImplementedException($"What if several possible implementations exist (class;{type.FullName()})");
-                var constructor = implementationType.Constructors.SingleOrDefault()
-                    ?? throw new NotImplementedException("What if no constructor exists or several possible constructors exist");
+                var implementations = _typeToImplementationsMapper
+                    .Map(type);
+                if (implementations
+                    .SingleOrDefault() is not INamedTypeSymbol implementationType)
+                {
+                    return new ErrorTreeItem(implementations.Count switch
+                    {
+                        0 => $"[{type.FullName()}] Class: No implementation found",
+                        > 1 => $"[{type.FullName()}] Class: more than one implementation found",
+                        _ => $"[{type.FullName()}] Class: Found single implementation{implementations[0].FullName()} is not a named type symbol"
+                    });
+                }
+                if (implementationType.Constructors.SingleOrDefault() is not { } constructor)
+                {
+                    return new ErrorTreeItem(implementations.Count switch
+                    {
+                        0 => $"[{type.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                        > 1 => $"[{type.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                        _ => $"[{type.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
+                    });
+                }
                 
                 return new ConstructorResolution(
                     referenceGenerator.Generate(implementationType),
                     implementationType.FullName(),
-                    new ReadOnlyCollection<(string Name, ResolutionBase Dependency)>(constructor
+                    new ReadOnlyCollection<(string Name, ResolutionTreeItem Dependency)>(constructor
                         .Parameters
-                        .Select(p => (
-                            p.Name, 
-                            Create(p.Type as INamedTypeSymbol 
-                                   ?? throw new NotImplementedException("What if parameter type is not INamedTypeSymbol?"),
-                                referenceGenerator,
-                                currentFuncParameters)))
+                        .Select(p =>
+                        {
+                            if (p.Type is not INamedTypeSymbol parameterType)
+                            {
+                                return ("", new ErrorTreeItem($"[{type.FullName()}] Class.Constructor.Parameter: Parameter type {p.Type.FullName()} is not a named type symbol"));
+                            }
+                            return (
+                                p.Name,
+                                Create(parameterType,
+                                    referenceGenerator,
+                                    currentFuncParameters));
+                        })
                         .ToList()));
             }
 
@@ -139,7 +189,7 @@ namespace MrMeeseeks.DIE
                     dependency);
             }
 
-            throw new NotImplementedException("What if type neither interface nor class nor delegate");
+            return new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation.");
         }
     }
 }

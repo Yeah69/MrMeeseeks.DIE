@@ -15,7 +15,9 @@ namespace MrMeeseeks.DIE
         private readonly GeneratorExecutionContext _context;
         private readonly WellKnownTypes _wellKnownTypes;
         private readonly IContainerGenerator _containerGenerator;
+        private readonly IContainerErrorGenerator _containerErrorGenerator;
         private readonly IResolutionTreeFactory _resolutionTreeFactory;
+        private readonly IResolutionTreeCreationErrorHarvester _resolutionTreeCreationErrorHarvester;
         private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
         private readonly IDiagLogger _diagLogger;
 
@@ -23,14 +25,18 @@ namespace MrMeeseeks.DIE
             GeneratorExecutionContext context,
             WellKnownTypes wellKnownTypes,
             IContainerGenerator containerGenerator,
+            IContainerErrorGenerator containerErrorGenerator,
             IResolutionTreeFactory resolutionTreeFactory,
+            IResolutionTreeCreationErrorHarvester resolutionTreeCreationErrorHarvester,
             Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
             IDiagLogger diagLogger)
         {
             _context = context;
             _wellKnownTypes = wellKnownTypes;
             _containerGenerator = containerGenerator;
+            _containerErrorGenerator = containerErrorGenerator;
             _resolutionTreeFactory = resolutionTreeFactory;
+            _resolutionTreeCreationErrorHarvester = resolutionTreeCreationErrorHarvester;
             _containerInfoFactory = containerInfoFactory;
             _diagLogger = diagLogger;
         }
@@ -55,7 +61,11 @@ namespace MrMeeseeks.DIE
                     if (containerInfo.IsValid && containerInfo.ResolutionRootType is { })
                     {
                         var resolutionRoot = _resolutionTreeFactory.Create(containerInfo.ResolutionRootType);
-                        _containerGenerator.Generate(containerInfo, resolutionRoot);
+                        var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(resolutionRoot);
+                        if (errorTreeItems.Any())
+                            _containerErrorGenerator.Generate(containerInfo, errorTreeItems);
+                        else
+                            _containerGenerator.Generate(containerInfo, resolutionRoot as Resolvable ?? throw new Exception());
                     }
                     else throw new NotImplementedException("Handle non-valid container information");
                 }

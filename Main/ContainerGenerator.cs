@@ -9,7 +9,7 @@ namespace MrMeeseeks.DIE
 {
     internal interface IContainerGenerator 
     {
-        void Generate(IContainerInfo containerInfo, ResolutionBase resolutionBase);
+        void Generate(IContainerInfo containerInfo, Resolvable resolvable);
     }
 
     internal class ContainerGenerator : IContainerGenerator
@@ -25,7 +25,7 @@ namespace MrMeeseeks.DIE
             _diagLogger = diagLogger;
         }
 
-        public void Generate(IContainerInfo containerInfo, ResolutionBase resolutionBase)
+        public void Generate(IContainerInfo containerInfo, Resolvable resolvable)
         {
             if (!containerInfo.IsValid || containerInfo.ResolutionRootType is null)
             {
@@ -38,13 +38,13 @@ namespace MrMeeseeks.DIE
                 .AppendLine($"{{")
                 .AppendLine($"partial class {containerInfo.Name}")
                 .AppendLine($"{{")
-                .AppendLine($"public {resolutionBase.TypeFullName} Resolve()")
+                .AppendLine($"public {resolvable.TypeFullName} Resolve()")
                 .AppendLine($"{{");
 
-            generatedContainer = GenerateResolutionFunction(generatedContainer, resolutionBase);
+            generatedContainer = GenerateResolutionFunction(generatedContainer, resolvable);
 
             generatedContainer = generatedContainer
-                .AppendLine($"return {resolutionBase.Reference};")
+                .AppendLine($"return {resolvable.Reference};")
                 .AppendLine($"}}");
 
             generatedContainer = generatedContainer
@@ -64,7 +64,7 @@ namespace MrMeeseeks.DIE
 
             static StringBuilder GenerateResolutionFunction(
                 StringBuilder stringBuilder,
-                ResolutionBase resolution)
+                Resolvable resolution)
             {
                 stringBuilder = GenerateFields(stringBuilder, resolution);
                 stringBuilder = GenerateResolutions(stringBuilder, resolution);
@@ -74,17 +74,17 @@ namespace MrMeeseeks.DIE
 
             static StringBuilder GenerateFields(
                 StringBuilder stringBuilder,
-                ResolutionBase resolution)
+                Resolvable resolution)
             {
                 switch (resolution)
                 {
-                    case InterfaceResolution(var reference, var typeFullName, var resolutionBase):
+                    case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                         stringBuilder = GenerateFields(stringBuilder, resolutionBase);
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                         break;
                     case ConstructorResolution(var reference, var typeFullName, var parameters):
                         stringBuilder = parameters.Aggregate(stringBuilder,
-                            (builder, tuple) => GenerateFields(builder, tuple.Dependency));
+                            (builder, tuple) => GenerateFields(builder, tuple.Dependency as Resolvable ?? throw new Exception()));
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                         break;
                     case FuncResolution(var reference, var typeFullName, _, _):
@@ -93,7 +93,7 @@ namespace MrMeeseeks.DIE
                     case FuncParameterResolution:
                         break;
                     case CollectionResolution(var reference, var typeFullName, _, var items):
-                        stringBuilder = items.Aggregate(stringBuilder, GenerateFields);
+                        stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateFields);
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                         break;
                     default:
@@ -105,22 +105,22 @@ namespace MrMeeseeks.DIE
 
             static StringBuilder GenerateResolutions(
                 StringBuilder stringBuilder,
-                ResolutionBase resolution)
+                Resolvable resolution)
             {
                 switch (resolution)
                 {
-                    case InterfaceResolution(var reference, var typeFullName, var resolutionBase):
+                    case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                         stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
                         stringBuilder = stringBuilder.AppendLine(
                             $"{reference} = ({typeFullName}) {resolutionBase.Reference};");              
                         break;
                     case ConstructorResolution(var reference, var typeFullName, var parameters):
                         stringBuilder = parameters.Aggregate(stringBuilder,
-                            (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
+                            (builder, tuple) => GenerateResolutions(builder, tuple.Dependency as Resolvable ?? throw new Exception()));
                         stringBuilder = stringBuilder.AppendLine(
-                            $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {d.Dependency.Reference}"))});");
+                            $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {(d.Dependency as Resolvable)?.Reference}"))});");
                         break;
-                    case FuncResolution(var reference, _, var parameter, var resolutionBase):
+                    case FuncResolution(var reference, _, var parameter, Resolvable resolutionBase):
                         stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", parameter.Select(fpr => fpr.Reference))}) =>");
                         stringBuilder = stringBuilder.AppendLine($"{{");
                         GenerateResolutionFunction(stringBuilder, resolutionBase);
@@ -130,9 +130,9 @@ namespace MrMeeseeks.DIE
                     case FuncParameterResolution:
                         break;
                     case CollectionResolution(var reference, _, var itemFullName, var items):
-                        stringBuilder = items.Aggregate(stringBuilder, GenerateResolutions);
+                        stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateResolutions);
                         stringBuilder = stringBuilder.AppendLine(
-                            $"{reference} = new {itemFullName}[]{{{string.Join(", ", items.Select(d => $"({itemFullName}) {d.Reference}"))}}};");
+                            $"{reference} = new {itemFullName}[]{{{string.Join(", ", items.Select(d => $"({itemFullName}) {(d as Resolvable)?.Reference}"))}}};");
                         break;
                     default:
                         throw new Exception("Unexpected case or not implemented.");

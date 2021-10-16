@@ -13,8 +13,8 @@ namespace MrMeeseeks.DIE.Spy
         {
             IDiagLogger diagLogger = new DiagLogger(context);
             IGetAllImplementations getAllImplementations = new GetAllImplementations(context);
-            IContainerGenerator containerGenerator = new ContainerGenerator(context, getAllImplementations);
-            IExecute execute = new ExecuteImpl(context, containerGenerator, diagLogger);
+            ITypeReportGenerator typeReportGenerator = new TypeReportGenerator(context, getAllImplementations);
+            IExecute execute = new ExecuteImpl(context, typeReportGenerator, diagLogger);
             
             execute.Execute();
         }

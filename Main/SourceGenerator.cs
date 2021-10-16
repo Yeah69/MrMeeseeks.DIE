@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
 
 namespace MrMeeseeks.DIE
 {
@@ -23,7 +22,17 @@ namespace MrMeeseeks.DIE
             var containerGenerator = new ContainerGenerator(context, diagLogger);
             var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
             var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper, referenceGeneratorFactory, wellKnownTypes);
-            new ExecuteImpl(context, wellKnownTypes, containerGenerator, resolutionTreeFactory, ContainerInfoFactory, diagLogger).Execute();
+            var containerErrorGenerator = new ContainerErrorGenerator(context);
+            var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
+            new ExecuteImpl(
+                context,
+                wellKnownTypes,
+                containerGenerator, 
+                containerErrorGenerator,
+                resolutionTreeFactory,
+                resolutionTreeCreationErrorHarvester,
+                ContainerInfoFactory, 
+                diagLogger).Execute();
             
             IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
             IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);

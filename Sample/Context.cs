@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using MrMeeseeks.DIE.SampleChild;
 
 namespace MrMeeseeks.DIE.Sample
@@ -8,12 +9,16 @@ namespace MrMeeseeks.DIE.Sample
         string Text { get; }
     }
 
-    internal class Context : IContext
+    internal class Context : IContext, IDisposable
     {
         public string Text => "Hello, world!";
         public Context(IReadOnlyList<IChild> child)
         {
 
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

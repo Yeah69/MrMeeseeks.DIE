@@ -8,19 +8,19 @@ namespace MrMeeseeks.DIE.Spy
 {
     internal interface IGetAllImplementations
     {
-        IReadOnlyList<INamedTypeSymbol> AllImplementations { get; }
+        IReadOnlyList<INamedTypeSymbol> AllNonStaticImplementations { get; }
     }
 
     internal class GetAllImplementations : IGetAllImplementations
     {
-        private GeneratorExecutionContext _context;
+        private readonly GeneratorExecutionContext _context;
 
         public GetAllImplementations(GeneratorExecutionContext context)
         {
             _context = context;
         }
 
-        public IReadOnlyList<INamedTypeSymbol> AllImplementations => new ReadOnlyCollection<INamedTypeSymbol>(_context.Compilation.SyntaxTrees
+        public IReadOnlyList<INamedTypeSymbol> AllNonStaticImplementations => new ReadOnlyCollection<INamedTypeSymbol>(_context.Compilation.SyntaxTrees
                 .Select(st => (st, _context.Compilation.GetSemanticModel(st)))
                 .SelectMany(t => t.st
                     .GetRoot()
@@ -29,6 +29,7 @@ namespace MrMeeseeks.DIE.Spy
                     .Select(c => t.Item2.GetDeclaredSymbol(c))
                     .Where(c => c is not null)
                     .OfType<INamedTypeSymbol>())
+                .Where(nts => !nts.IsStatic)
                 .ToList());
     }
 }

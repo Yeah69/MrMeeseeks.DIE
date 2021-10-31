@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE
 {
     internal interface IResolutionTreeFactory
     {
-        ResolutionTreeItem Create(ITypeSymbol root);
+        ContainerResolution Create(ITypeSymbol root);
     }
 
     internal class ResolutionTreeFactory : IResolutionTreeFactory
@@ -27,12 +27,28 @@ namespace MrMeeseeks.DIE
             _wellKnownTypes = wellKnownTypes;
         }
 
-        public ResolutionTreeItem Create(ITypeSymbol type) => Create(
-            type,
-            _referenceGeneratorFactory.Create(), 
-            Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>());
-        
-        private ResolutionTreeItem Create(ITypeSymbol type, IReferenceGenerator referenceGenerator, IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> currentFuncParameters)
+        public ContainerResolution Create(ITypeSymbol type)
+        {
+            var referenceGenerator = _referenceGeneratorFactory.Create();
+            var disposableCollectionResolution = new DisposableCollectionResolution(
+                referenceGenerator.Generate(_wellKnownTypes.ConcurrentBagOfDisposable),
+                _wellKnownTypes.ConcurrentBagOfDisposable.FullName());
+            var rootResolution = Create(
+                type,
+                referenceGenerator,
+                Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
+                disposableCollectionResolution);
+
+            return new ContainerResolution(
+                rootResolution,
+                disposableCollectionResolution);
+        }
+
+        private Resolvable Create(
+            ITypeSymbol type, 
+            IReferenceGenerator referenceGenerator, 
+            IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> currentFuncParameters,
+            DisposableCollectionResolution disposableCollectionResolution)
         {
             if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
             {
@@ -46,21 +62,23 @@ namespace MrMeeseeks.DIE
                 {
                     return new ErrorTreeItem(namedTypeSymbol.TypeArguments.Length switch
                     {
-                        0 => $"[{type.FullName()}] Lazy: No type argument",
-                        > 1 => $"[{type.FullName()}] Lazy: more than one type argument",
-                        _ => $"[{type.FullName()}] Lazy: {namedTypeSymbol.TypeArguments[0].FullName()} is not a named type symbol"
+                        0 => $"[{namedTypeSymbol.FullName()}] Lazy: No type argument",
+                        > 1 => $"[{namedTypeSymbol.FullName()}] Lazy: more than one type argument",
+                        _ => $"[{namedTypeSymbol.FullName()}] Lazy: {namedTypeSymbol.TypeArguments[0].FullName()} is not a named type symbol"
                     });
                 }
 
                 var dependency = Create(
                     genericType, 
                     _referenceGeneratorFactory.Create(), 
-                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>());
+                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
+                    disposableCollectionResolution);
                 return new ConstructorResolution(
-                    referenceGenerator.Generate(type),
-                    type.FullName(),
-                    new ReadOnlyCollection<(string Name, ResolutionTreeItem Dependency)>(
-                        new List<(string Name, ResolutionTreeItem Dependency)> 
+                    referenceGenerator.Generate(namedTypeSymbol),
+                    namedTypeSymbol.FullName(),
+                    ImplementsIDisposable(namedTypeSymbol, _wellKnownTypes, disposableCollectionResolution),
+                    new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
+                        new List<(string Name, Resolvable Dependency)> 
                         { 
                             (
                                 "valueFactory", 
@@ -93,7 +111,7 @@ namespace MrMeeseeks.DIE
                 var itemFullName = itemType.FullName();
                 var items = _typeToImplementationsMapper
                     .Map(itemType)
-                    .Select(i => Create(i, referenceGenerator, currentFuncParameters))
+                    .Select(i => Create(i, referenceGenerator, currentFuncParameters, disposableCollectionResolution))
                     .ToList();
                 return new CollectionResolution(
                     referenceGenerator.Generate(type),
@@ -119,7 +137,7 @@ namespace MrMeeseeks.DIE
                 return new InterfaceResolution(
                     referenceGenerator.Generate(type),
                     type.FullName(),
-                    Create(implementationType, referenceGenerator, currentFuncParameters));
+                    Create(implementationType, referenceGenerator, currentFuncParameters, disposableCollectionResolution));
             }
 
             if (type.TypeKind == TypeKind.Class)
@@ -149,7 +167,8 @@ namespace MrMeeseeks.DIE
                 return new ConstructorResolution(
                     referenceGenerator.Generate(implementationType),
                     implementationType.FullName(),
-                    new ReadOnlyCollection<(string Name, ResolutionTreeItem Dependency)>(constructor
+                    ImplementsIDisposable(implementationType, _wellKnownTypes, disposableCollectionResolution),
+                    new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                         .Parameters
                         .Select(p =>
                         {
@@ -161,7 +180,8 @@ namespace MrMeeseeks.DIE
                                 p.Name,
                                 Create(parameterType,
                                     referenceGenerator,
-                                    currentFuncParameters));
+                                    currentFuncParameters,
+                                    disposableCollectionResolution));
                         })
                         .ToList()));
             }
@@ -181,7 +201,8 @@ namespace MrMeeseeks.DIE
                 var dependency = Create(
                     returnType, 
                     innerReferenceGenerator, 
-                    parameterTypes);
+                    parameterTypes,
+                    disposableCollectionResolution);
                 return new FuncResolution(
                     referenceGenerator.Generate(type),
                     type.FullName(),
@@ -190,6 +211,9 @@ namespace MrMeeseeks.DIE
             }
 
             return new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation.");
+
+            static DisposableCollectionResolution? ImplementsIDisposable(INamedTypeSymbol type, WellKnownTypes wellKnownTypes, DisposableCollectionResolution disposableCollectionResolution) =>
+                type.AllInterfaces.Contains(wellKnownTypes.Disposable) ? disposableCollectionResolution : null;
         }
     }
 }

@@ -9,45 +9,74 @@ namespace MrMeeseeks.DIE
 {
     internal interface IContainerGenerator 
     {
-        void Generate(IContainerInfo containerInfo, Resolvable resolvable);
+        void Generate(IContainerInfo containerInfo, ContainerResolution resolvable);
     }
 
     internal class ContainerGenerator : IContainerGenerator
     {
         private readonly GeneratorExecutionContext _context;
+        private readonly WellKnownTypes _wellKnownTypes;
         private readonly IDiagLogger _diagLogger;
 
         public ContainerGenerator(
             GeneratorExecutionContext context,
+            WellKnownTypes wellKnownTypes,
             IDiagLogger diagLogger)
         {
             _context = context;
+            _wellKnownTypes = wellKnownTypes;
             _diagLogger = diagLogger;
         }
 
-        public void Generate(IContainerInfo containerInfo, Resolvable resolvable)
+        public void Generate(IContainerInfo containerInfo, ContainerResolution containerResolution)
         {
             if (!containerInfo.IsValid || containerInfo.ResolutionRootType is null)
             {
                 _diagLogger.Log($"return generation");
                 return;
             }
+
+            var funcName = _wellKnownTypes.Func.ToDisplayString(new SymbolDisplayFormat(
+                globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+                typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+                parameterOptions: SymbolDisplayParameterOptions.IncludeType |
+                                  SymbolDisplayParameterOptions.IncludeParamsRefOut,
+                memberOptions: SymbolDisplayMemberOptions.IncludeRef));
             
             var generatedContainer = new StringBuilder()
                 .AppendLine($"namespace {containerInfo.Namespace}")
                 .AppendLine($"{{")
                 .AppendLine($"partial class {containerInfo.Name}")
                 .AppendLine($"{{")
-                .AppendLine($"public {resolvable.TypeFullName} Resolve()")
+                .AppendLine($"public TResult Run<TResult, TParam>({funcName}<{containerResolution.TypeFullName}, TParam, TResult> func, TParam param)")
                 .AppendLine($"{{");
-
-            generatedContainer = GenerateResolutionFunction(generatedContainer, resolvable);
+            
+            generatedContainer = GenerateResolutionFunction(generatedContainer, containerResolution.DisposableCollection);
+                
+            generatedContainer = generatedContainer
+                .AppendLine($"try")
+                .AppendLine($"{{");
+            
+            generatedContainer = GenerateResolutionFunction(generatedContainer, containerResolution);
 
             generatedContainer = generatedContainer
-                .AppendLine($"return {resolvable.Reference};")
-                .AppendLine($"}}");
-
-            generatedContainer = generatedContainer
+                .AppendLine($"return func({containerResolution.Reference}, param);")
+                .AppendLine($"}}")
+                .AppendLine($"finally")
+                .AppendLine($"{{")
+                .AppendLine($"foreach(var disposable in {containerResolution.DisposableCollection.Reference})")
+                .AppendLine($"{{")
+                .AppendLine($"try")
+                .AppendLine($"{{")
+                .AppendLine($"disposable.Dispose();")
+                .AppendLine($"}}")
+                .AppendLine($"catch({_wellKnownTypes.Exception.FullName()})")
+                .AppendLine($"{{")
+                .AppendLine($"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
+                .AppendLine($"}}")
+                .AppendLine($"}}")
+                .AppendLine($"}}")
+                .AppendLine($"}}")
                 .AppendLine($"}}")
                 .AppendLine($"}}")
                 ;
@@ -62,7 +91,7 @@ namespace MrMeeseeks.DIE
 
 
 
-            static StringBuilder GenerateResolutionFunction(
+            StringBuilder GenerateResolutionFunction(
                 StringBuilder stringBuilder,
                 Resolvable resolution)
             {
@@ -72,19 +101,22 @@ namespace MrMeeseeks.DIE
                 return stringBuilder;
             }
 
-            static StringBuilder GenerateFields(
+            StringBuilder GenerateFields(
                 StringBuilder stringBuilder,
                 Resolvable resolution)
             {
                 switch (resolution)
                 {
+                    case ContainerResolution(var rootResolution, _):
+                        stringBuilder = GenerateFields(stringBuilder, rootResolution);
+                        break;
                     case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                         stringBuilder = GenerateFields(stringBuilder, resolutionBase);
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                         break;
-                    case ConstructorResolution(var reference, var typeFullName, var parameters):
+                    case ConstructorResolution(var reference, var typeFullName, _, var parameters):
                         stringBuilder = parameters.Aggregate(stringBuilder,
-                            (builder, tuple) => GenerateFields(builder, tuple.Dependency as Resolvable ?? throw new Exception()));
+                            (builder, tuple) => GenerateFields(builder, tuple.Dependency));
                         stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                         break;
                     case FuncResolution(var reference, var typeFullName, _, _):
@@ -103,22 +135,28 @@ namespace MrMeeseeks.DIE
                 return stringBuilder;
             }
 
-            static StringBuilder GenerateResolutions(
+            StringBuilder GenerateResolutions(
                 StringBuilder stringBuilder,
                 Resolvable resolution)
             {
                 switch (resolution)
                 {
+                    case ContainerResolution(var rootResolution, var disposableCollectionResolution):
+                        stringBuilder = GenerateResolutions(stringBuilder, rootResolution);
+                        break;
                     case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                         stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
                         stringBuilder = stringBuilder.AppendLine(
                             $"{reference} = ({typeFullName}) {resolutionBase.Reference};");              
                         break;
-                    case ConstructorResolution(var reference, var typeFullName, var parameters):
+                    case ConstructorResolution(var reference, var typeFullName, var disposableCollectionResolution, var parameters):
                         stringBuilder = parameters.Aggregate(stringBuilder,
-                            (builder, tuple) => GenerateResolutions(builder, tuple.Dependency as Resolvable ?? throw new Exception()));
+                            (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
                         stringBuilder = stringBuilder.AppendLine(
-                            $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {(d.Dependency as Resolvable)?.Reference}"))});");
+                            $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {d.Dependency?.Reference}"))});");
+                        if (disposableCollectionResolution is {})
+                            stringBuilder = stringBuilder.AppendLine(
+                                $"{disposableCollectionResolution.Reference}.Add(({_wellKnownTypes.Disposable.FullName()}) {reference});");
                         break;
                     case FuncResolution(var reference, _, var parameter, Resolvable resolutionBase):
                         stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", parameter.Select(fpr => fpr.Reference))}) =>");

@@ -1,15 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MrMeeseeks.DIE
 {
     internal abstract record ResolutionTreeItem;
-
-    internal record ErrorTreeItem(
-        string Message) : ResolutionTreeItem;
     
     internal abstract record Resolvable(
         string Reference,
         string TypeFullName) : ResolutionTreeItem; 
+
+    internal record ErrorTreeItem(
+        string Message) : Resolvable("error_99_99", "Error");
 
     internal record InterfaceResolution(
         string Reference,
@@ -19,7 +20,8 @@ namespace MrMeeseeks.DIE
     internal record ConstructorResolution(
         string Reference,
         string TypeFullName,
-        IReadOnlyList<(string name, ResolutionTreeItem Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
+        DisposableCollectionResolution? DisposableCollectionResolution,
+        IReadOnlyList<(string name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
 
     internal record FuncParameterResolution(
         string Reference,
@@ -36,4 +38,12 @@ namespace MrMeeseeks.DIE
         string TypeFullName,
         string ItemFullName,
         IReadOnlyList<ResolutionTreeItem> Parameter) : Resolvable(Reference, TypeFullName);
+
+    internal record DisposableCollectionResolution(
+        string Reference,
+        string TypeFullName) : ConstructorResolution(Reference, TypeFullName, null, Array.Empty<(string name, Resolvable Dependency)>());
+
+    internal record ContainerResolution(
+        Resolvable RootResolution,
+        DisposableCollectionResolution DisposableCollection) : Resolvable(RootResolution.Reference, RootResolution.TypeFullName);
 }

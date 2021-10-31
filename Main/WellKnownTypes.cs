@@ -14,7 +14,11 @@ namespace MrMeeseeks.DIE
         INamedTypeSymbol ObjectDisposedException,
         INamedTypeSymbol Enumerable1,
         INamedTypeSymbol ReadOnlyCollection1,
-        INamedTypeSymbol ReadOnlyList1)
+        INamedTypeSymbol ReadOnlyList1,
+        INamedTypeSymbol ConcurrentBagOfDisposable,
+        INamedTypeSymbol Action,
+        INamedTypeSymbol Func,
+        INamedTypeSymbol Exception)
     {
         public static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
         {
@@ -29,6 +33,13 @@ namespace MrMeeseeks.DIE
             var iEnumerable1 = compilation.GetTypeOrReport("System.Collections.Generic.IEnumerable`1");
             var iReadOnlyCollection1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyCollection`1");
             var iReadOnlyList1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyList`1");
+            var concurrentBag = compilation.GetTypeOrReport("System.Collections.Concurrent.ConcurrentBag`1");
+            var concurrentBagOfDisposable = iDisposable is null
+                ? null
+                : concurrentBag?.Construct(iDisposable);
+            var action = compilation.GetTypeOrReport("System.Action");
+            var func = compilation.GetTypeOrReport("System.Func`3");
+            var exception = compilation.GetTypeOrReport("System.Exception");
 
             var spyAttribute = compilation
                 .GetTypeByMetadataName(typeof(SpyAttribute).FullName ?? "");
@@ -44,7 +55,11 @@ namespace MrMeeseeks.DIE
                 || objectDisposedException is null
                 || iEnumerable1 is null
                 || iReadOnlyCollection1 is null
-                || iReadOnlyList1 is null)
+                || iReadOnlyList1 is null
+                || concurrentBagOfDisposable is null
+                || action is null
+                || func is null
+                || exception is null)
             {
                 wellKnownTypes = null!;
                 return false;
@@ -62,7 +77,11 @@ namespace MrMeeseeks.DIE
                 ObjectDisposedException: objectDisposedException,
                 Enumerable1: iEnumerable1,
                 ReadOnlyCollection1: iReadOnlyCollection1,
-                ReadOnlyList1: iReadOnlyList1);
+                ReadOnlyList1: iReadOnlyList1,
+                ConcurrentBagOfDisposable: concurrentBagOfDisposable,
+                Action: action,
+                Func: func,
+                Exception: exception);
 
             return true;
         }

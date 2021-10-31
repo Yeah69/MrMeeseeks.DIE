@@ -60,12 +60,12 @@ namespace MrMeeseeks.DIE
                     var containerInfo = _containerInfoFactory(namedTypeSymbol);
                     if (containerInfo.IsValid && containerInfo.ResolutionRootType is { })
                     {
-                        var resolutionRoot = _resolutionTreeFactory.Create(containerInfo.ResolutionRootType);
-                        var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(resolutionRoot);
+                        var containerResolution = _resolutionTreeFactory.Create(containerInfo.ResolutionRootType);
+                        var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
                         if (errorTreeItems.Any())
                             _containerErrorGenerator.Generate(containerInfo, errorTreeItems);
                         else
-                            _containerGenerator.Generate(containerInfo, resolutionRoot as Resolvable ?? throw new Exception());
+                            _containerGenerator.Generate(containerInfo, containerResolution);
                     }
                     else throw new NotImplementedException("Handle non-valid container information");
                 }

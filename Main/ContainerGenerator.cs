@@ -49,7 +49,8 @@ namespace MrMeeseeks.DIE
                 .AppendLine($"partial class {containerInfo.Name}")
                 .AppendLine($"{{")
                 .AppendLine($"public TResult Run<TResult, TParam>({funcName}<{containerResolution.TypeFullName}, TParam, TResult> func, TParam param)")
-                .AppendLine($"{{");
+                .AppendLine($"{{")
+                .AppendLine($"TResult ret;");
             
             generatedContainer = GenerateResolutionFunction(generatedContainer, containerResolution.DisposableCollection);
                 
@@ -60,7 +61,7 @@ namespace MrMeeseeks.DIE
             generatedContainer = GenerateResolutionFunction(generatedContainer, containerResolution);
 
             generatedContainer = generatedContainer
-                .AppendLine($"return func({containerResolution.Reference}, param);")
+                .AppendLine($"ret = func({containerResolution.Reference}, param);")
                 .AppendLine($"}}")
                 .AppendLine($"finally")
                 .AppendLine($"{{")
@@ -76,6 +77,7 @@ namespace MrMeeseeks.DIE
                 .AppendLine($"}}")
                 .AppendLine($"}}")
                 .AppendLine($"}}")
+                .AppendLine($"return ret;")
                 .AppendLine($"}}")
                 .AppendLine($"}}")
                 .AppendLine($"}}")

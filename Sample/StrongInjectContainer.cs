@@ -5,7 +5,7 @@ using StrongInject.Modules;
 namespace MrMeeseeks.DIE.Sample
 {
     [Register(typeof(Context), typeof(IContext))]
-    [Register(typeof(Child), typeof(Child), typeof(IChild))]
+    [Register(typeof(Child), Scope.SingleInstance, typeof(Child), typeof(IChild))]
     [Register(typeof(InternalChild), typeof(IInternalChild))]
     [Register(typeof(YetAnotherInternalChild), typeof(IYetAnotherInternalChild))]
     [RegisterModule(typeof(StandardModule))]

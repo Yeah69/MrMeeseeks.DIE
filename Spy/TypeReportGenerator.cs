@@ -63,7 +63,7 @@ namespace MrMeeseeks.DIE.Spy
                 generatedContainer = types.Aggregate(
                     generatedContainer, 
                     (current, type) => current.AppendLine(
-                        $"{lowerCaseAccessModifier} {FullName(type)} Type{++i}{(type.TypeArguments.Length > 0 ? $"<{string.Join(", ", type.TypeArguments.Select(t => t.Name))}>" : "")}(){TypeArgumentsConstraintsString(type)};"));
+                        $"{FullName(type)} Type{++i}{(type.TypeArguments.Length > 0 ? $"<{string.Join(", ", type.TypeArguments.Select(t => t.Name))}>" : "")}(){TypeArgumentsConstraintsString(type)};"));
 
                 generatedContainer = generatedContainer
                         .AppendLine("}");

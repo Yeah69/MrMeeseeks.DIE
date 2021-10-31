@@ -19,7 +19,7 @@ namespace MrMeeseeks.DIE
             var getAssemblyAttributes = new GetAssemblyAttributes(context);
             var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
             var typeToImplementationMapper = new TypeToImplementationsMapper(wellKnownTypes, getAllImplementations, getAssemblyAttributes);
-            var containerGenerator = new ContainerGenerator(context, diagLogger);
+            var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
             var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
             var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper, referenceGeneratorFactory, wellKnownTypes);
             var containerErrorGenerator = new ContainerErrorGenerator(context);

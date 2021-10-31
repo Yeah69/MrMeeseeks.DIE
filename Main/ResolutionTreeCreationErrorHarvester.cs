@@ -20,6 +20,9 @@ namespace MrMeeseeks.DIE
             {
                 switch (item)
                 {
+                    case ContainerResolution containerResolution:
+                        Inner(containerResolution.RootResolution, errorTreeItems);
+                        break;
                     case ErrorTreeItem errorTreeItem:
                         errorTreeItems.Add(errorTreeItem);
                         break;

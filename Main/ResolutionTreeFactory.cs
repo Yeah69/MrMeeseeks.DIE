@@ -15,15 +15,18 @@ namespace MrMeeseeks.DIE
     {
         private readonly ITypeToImplementationsMapper _typeToImplementationsMapper;
         private readonly IReferenceGeneratorFactory _referenceGeneratorFactory;
+        private readonly ICheckDisposalManagement _checkDisposalManagement;
         private readonly WellKnownTypes _wellKnownTypes;
 
         public ResolutionTreeFactory(
             ITypeToImplementationsMapper typeToImplementationsMapper,
             IReferenceGeneratorFactory referenceGeneratorFactory,
+            ICheckDisposalManagement checkDisposalManagement,
             WellKnownTypes wellKnownTypes)
         {
             _typeToImplementationsMapper = typeToImplementationsMapper;
             _referenceGeneratorFactory = referenceGeneratorFactory;
+            _checkDisposalManagement = checkDisposalManagement;
             _wellKnownTypes = wellKnownTypes;
         }
 
@@ -76,7 +79,7 @@ namespace MrMeeseeks.DIE
                 return new ConstructorResolution(
                     referenceGenerator.Generate(namedTypeSymbol),
                     namedTypeSymbol.FullName(),
-                    ImplementsIDisposable(namedTypeSymbol, _wellKnownTypes, disposableCollectionResolution),
+                    ImplementsIDisposable(namedTypeSymbol, _wellKnownTypes, disposableCollectionResolution, _checkDisposalManagement),
                     new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
                         new List<(string Name, Resolvable Dependency)> 
                         { 
@@ -167,7 +170,7 @@ namespace MrMeeseeks.DIE
                 return new ConstructorResolution(
                     referenceGenerator.Generate(implementationType),
                     implementationType.FullName(),
-                    ImplementsIDisposable(implementationType, _wellKnownTypes, disposableCollectionResolution),
+                    ImplementsIDisposable(implementationType, _wellKnownTypes, disposableCollectionResolution, _checkDisposalManagement),
                     new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                         .Parameters
                         .Select(p =>
@@ -212,8 +215,14 @@ namespace MrMeeseeks.DIE
 
             return new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation.");
 
-            static DisposableCollectionResolution? ImplementsIDisposable(INamedTypeSymbol type, WellKnownTypes wellKnownTypes, DisposableCollectionResolution disposableCollectionResolution) =>
-                type.AllInterfaces.Contains(wellKnownTypes.Disposable) ? disposableCollectionResolution : null;
+            static DisposableCollectionResolution? ImplementsIDisposable(
+                INamedTypeSymbol type, 
+                WellKnownTypes wellKnownTypes, 
+                DisposableCollectionResolution disposableCollectionResolution,
+                ICheckDisposalManagement checkDisposalManagement) =>
+                type.AllInterfaces.Contains(wellKnownTypes.Disposable) && checkDisposalManagement.ShouldBeManaged(type) 
+                    ? disposableCollectionResolution 
+                    : null;
         }
     }
 }

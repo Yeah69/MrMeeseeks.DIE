@@ -5,6 +5,7 @@ namespace MrMeeseeks.DIE
     internal record WellKnownTypes(
         INamedTypeSymbol Container,
         INamedTypeSymbol SpyAttribute,
+        INamedTypeSymbol TransientAttribute,
         INamedTypeSymbol Disposable,
         INamedTypeSymbol AsyncDisposable,
         INamedTypeSymbol Lazy1,
@@ -44,8 +45,12 @@ namespace MrMeeseeks.DIE
             var spyAttribute = compilation
                 .GetTypeByMetadataName(typeof(SpyAttribute).FullName ?? "");
 
+            var transientAttribute = compilation
+                .GetTypeByMetadataName(typeof(TransientAttribute).FullName ?? "");
+
             if (iContainer is null
                 || spyAttribute is null
+                || transientAttribute is null
                 || iDisposable is null
                 || iAsyncDisposable is null
                 || lazy1 is null
@@ -68,6 +73,7 @@ namespace MrMeeseeks.DIE
             wellKnownTypes = new WellKnownTypes(
                 Container: iContainer,
                 SpyAttribute: spyAttribute,
+                TransientAttribute: transientAttribute,
                 Disposable: iDisposable,
                 AsyncDisposable: iAsyncDisposable,
                 Lazy1: lazy1,

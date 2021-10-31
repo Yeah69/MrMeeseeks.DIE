@@ -15,13 +15,15 @@ namespace MrMeeseeks.DIE
         public void Execute(GeneratorExecutionContext context)
         {
             var diagLogger = new DiagLogger(context);
-            var getAllImplementations = new GetAllImplementations(context);
-            var getAssemblyAttributes = new GetAssemblyAttributes(context);
             var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
-            var typeToImplementationMapper = new TypeToImplementationsMapper(wellKnownTypes, getAllImplementations, getAssemblyAttributes);
+            var getAssemblyAttributes = new GetAssemblyAttributes(context);
+            var typesFromAttributes = new TypesFromAttributes(wellKnownTypes, getAssemblyAttributes);
+            var getAllImplementations = new GetAllImplementations(context, typesFromAttributes);
+            var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations);
             var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
             var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
-            var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper, referenceGeneratorFactory, wellKnownTypes);
+            var checkDisposalManagement = new CheckDisposalManagement(getAllImplementations, typesFromAttributes);
+            var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper, referenceGeneratorFactory, checkDisposalManagement, wellKnownTypes);
             var containerErrorGenerator = new ContainerErrorGenerator(context);
             var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
             new ExecuteImpl(

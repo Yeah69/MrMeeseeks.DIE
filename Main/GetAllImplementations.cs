@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace MrMeeseeks.DIE
@@ -13,22 +12,31 @@ namespace MrMeeseeks.DIE
 
     internal class GetAllImplementations : IGetAllImplementations
     {
-        private readonly GeneratorExecutionContext _context;
-
-        public GetAllImplementations(GeneratorExecutionContext context)
+        public GetAllImplementations(
+            GeneratorExecutionContext context,
+            ITypesFromAttributes typesFromAttributes)
         {
-            _context = context;
-        }
-
-        public IReadOnlyList<INamedTypeSymbol> AllImplementations => new ReadOnlyCollection<INamedTypeSymbol>(_context.Compilation.SyntaxTrees
-                .Select(st => (st, _context.Compilation.GetSemanticModel(st)))
+            var implementationsOfThisAssembly = context.Compilation.SyntaxTrees
+                .Select(st => (st, context.Compilation.GetSemanticModel(st)))
                 .SelectMany(t => t.st
                     .GetRoot()
                     .DescendantNodesAndSelf()
                     .OfType<ClassDeclarationSyntax>()
                     .Select(c => t.Item2.GetDeclaredSymbol(c))
                     .Where(c => c is not null)
-                    .OfType<INamedTypeSymbol>())
-                .ToList());
+                    .OfType<INamedTypeSymbol>());
+
+            var spiedImplementations = typesFromAttributes
+                .Spy
+                .SelectMany(t => t?.GetMembers()
+                    .OfType<IMethodSymbol>()
+                    .Where(ms => !ms.ReturnsVoid)
+                    .Select(ms => ms.ReturnType)
+                    .OfType<INamedTypeSymbol>());
+
+            AllImplementations = implementationsOfThisAssembly.Concat(spiedImplementations).ToList();
+        }
+
+        public IReadOnlyList<INamedTypeSymbol> AllImplementations { get; }
     }
 }

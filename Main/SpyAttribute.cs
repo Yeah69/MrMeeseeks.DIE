@@ -8,4 +8,11 @@ namespace MrMeeseeks.DIE
         // ReSharper disable once UnusedParameter.Local *** Is used in the generator
         public SpyAttribute(params Type[] type) {}
     }
+    
+    [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+    public class TransientAttribute : Attribute
+    {
+        // ReSharper disable once UnusedParameter.Local *** Is used in the generator
+        public TransientAttribute(params Type[] type) {}
+    }
 }

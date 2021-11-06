@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
@@ -10,6 +9,7 @@ namespace MrMeeseeks.DIE
     {
         IReadOnlyList<INamedTypeSymbol> Spy { get; }
         IReadOnlyList<INamedTypeSymbol> Transient { get; }
+        IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
     }
 
     internal class TypesFromAttributes : ITypesFromAttributes
@@ -20,6 +20,7 @@ namespace MrMeeseeks.DIE
         {
             Spy = GetTypesFromAttribute(wellKnownTypes.SpyAttribute).ToList();
             Transient = GetTypesFromAttribute(wellKnownTypes.TransientAttribute).ToList();
+            SingleInstance = GetTypesFromAttribute(wellKnownTypes.SingleInstanceAttribute).ToList();
             
             IEnumerable<INamedTypeSymbol> GetTypesFromAttribute(INamedTypeSymbol attribute) => getAssemblyAttributes
                 .AllAssemblyAttributes
@@ -57,5 +58,6 @@ namespace MrMeeseeks.DIE
         
         public IReadOnlyList<INamedTypeSymbol> Spy { get; }
         public IReadOnlyList<INamedTypeSymbol> Transient { get; }
+        public IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
     }
 }

@@ -1,7 +1,10 @@
 ﻿using MrMeeseeks.DIE;
+using MrMeeseeks.DIE.SampleChild;
 using SampleChild;
 
 [assembly:Spy(typeof(IPublicTypeReport), typeof(IInternalTypeReport))]
+[assembly:SingleInstance(typeof(ISingleInstance))]
+[assembly:Transient(typeof(ITransient))]
 
 namespace MrMeeseeks.DIE.Sample
 {

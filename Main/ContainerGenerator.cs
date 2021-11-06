@@ -36,48 +36,51 @@ namespace MrMeeseeks.DIE
                 return;
             }
 
-            var funcName = _wellKnownTypes.Func.ToDisplayString(new SymbolDisplayFormat(
-                globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
-                typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-                parameterOptions: SymbolDisplayParameterOptions.IncludeType |
-                                  SymbolDisplayParameterOptions.IncludeParamsRefOut,
-                memberOptions: SymbolDisplayMemberOptions.IncludeRef));
-            
             var generatedContainer = new StringBuilder()
                 .AppendLine($"namespace {containerInfo.Namespace}")
                 .AppendLine($"{{")
-                .AppendLine($"partial class {containerInfo.Name}")
-                .AppendLine($"{{")
-                .AppendLine($"public TResult Run<TResult, TParam>({funcName}<{containerResolution.TypeFullName}, TParam, TResult> func, TParam param)")
-                .AppendLine($"{{")
-                .AppendLine($"TResult ret;");
-            
-            generatedContainer = GenerateResolutionFunction(generatedContainer, containerResolution.DisposableCollection);
-                
-            generatedContainer = generatedContainer
-                .AppendLine($"try")
+                .AppendLine($"partial class {containerInfo.Name} : {_wellKnownTypes.Disposable.FullName()}")
                 .AppendLine($"{{");
+
+            generatedContainer = GenerateContainerDisposalFunction(
+                generatedContainer,
+                containerResolution.DisposalHandling);
+            
+            foreach (var singleInstanceResolution in containerResolution.SingleInstanceResolutions)
+            {
+                generatedContainer = generatedContainer
+                    .AppendLine($"private {singleInstanceResolution.Function.TypeFullName} {singleInstanceResolution.Function.FieldReference};")
+                    .AppendLine($"private {_wellKnownTypes.SemaphoreSlim.FullName()} {singleInstanceResolution.Function.LockReference} = new {_wellKnownTypes.SemaphoreSlim.FullName()}(1);")
+                    .AppendLine($"public {singleInstanceResolution.Function.TypeFullName} {singleInstanceResolution.Function.Reference}()")
+                    .AppendLine($"{{")
+                    .AppendLine($"if (!object.ReferenceEquals({singleInstanceResolution.Function.FieldReference}, null)) return {singleInstanceResolution.Function.FieldReference};")
+                    .AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Wait();")
+                    .AppendLine($"try")
+                    .AppendLine($"{{")
+                    .AppendLine($"if (this.{containerResolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({containerInfo.Name}));");
+            
+                generatedContainer = GenerateResolutionFunction(generatedContainer, singleInstanceResolution.Dependency);
+
+                generatedContainer = generatedContainer
+                    .AppendLine($"this.{singleInstanceResolution.Function.FieldReference} = {singleInstanceResolution.Dependency.Reference};")
+                    .AppendLine($"}}")
+                    .AppendLine($"finally")
+                    .AppendLine($"{{")
+                    .AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Release();")
+                    .AppendLine($"}}")
+                    .AppendLine($"return this.{singleInstanceResolution.Function.FieldReference};")
+                    .AppendLine($"}}");
+            }
+            
+            generatedContainer = generatedContainer
+                .AppendLine($"public {containerResolution.TypeFullName} Resolve()")
+                .AppendLine($"{{")
+                .AppendLine($"if (this.{containerResolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({containerInfo.Name}));");
             
             generatedContainer = GenerateResolutionFunction(generatedContainer, containerResolution);
 
             generatedContainer = generatedContainer
-                .AppendLine($"ret = func({containerResolution.Reference}, param);")
-                .AppendLine($"}}")
-                .AppendLine($"finally")
-                .AppendLine($"{{")
-                .AppendLine($"foreach(var disposable in {containerResolution.DisposableCollection.Reference})")
-                .AppendLine($"{{")
-                .AppendLine($"try")
-                .AppendLine($"{{")
-                .AppendLine($"disposable.Dispose();")
-                .AppendLine($"}}")
-                .AppendLine($"catch({_wellKnownTypes.Exception.FullName()})")
-                .AppendLine($"{{")
-                .AppendLine($"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
-                .AppendLine($"}}")
-                .AppendLine($"}}")
-                .AppendLine($"}}")
-                .AppendLine($"return ret;")
+                .AppendLine($"return {containerResolution.Reference};")
                 .AppendLine($"}}")
                 .AppendLine($"}}")
                 .AppendLine($"}}")
@@ -91,7 +94,30 @@ namespace MrMeeseeks.DIE
                     .GetText();
             _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
 
-
+            
+            StringBuilder GenerateContainerDisposalFunction(
+                StringBuilder stringBuilder,
+                ContainerResolutionDisposalHandling disposalHandling) =>
+                stringBuilder
+                    .AppendLine($"private {disposalHandling.DisposableCollection.TypeFullName} {disposalHandling.DisposableCollection.Reference} = new {disposalHandling.DisposableCollection.TypeFullName}();")
+                    .AppendLine($"private int {disposalHandling.DisposedFieldReference} = 0;")
+                    .AppendLine($"private bool {disposalHandling.DisposedPropertyReference} => {disposalHandling.DisposedFieldReference} != 0;")
+                    .AppendLine($"public void Dispose()")
+                    .AppendLine($"{{")
+                    .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
+                    .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;")
+                    .AppendLine($"foreach(var {disposalHandling.DisposableLocalReference} in {disposalHandling.DisposableCollection.Reference})")
+                    .AppendLine($"{{")
+                    .AppendLine($"try")
+                    .AppendLine($"{{")
+                    .AppendLine($"{disposalHandling.DisposableLocalReference}.Dispose();")
+                    .AppendLine($"}}")
+                    .AppendLine($"catch({_wellKnownTypes.Exception.FullName()})")
+                    .AppendLine($"{{")
+                    .AppendLine($"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
+                    .AppendLine($"}}")
+                    .AppendLine($"}}")
+                    .AppendLine($"}}");
 
             StringBuilder GenerateResolutionFunction(
                 StringBuilder stringBuilder,
@@ -109,7 +135,10 @@ namespace MrMeeseeks.DIE
             {
                 switch (resolution)
                 {
-                    case ContainerResolution(var rootResolution, _):
+                    case SingleInstanceReferenceResolution(var reference, { TypeFullName: {} typeFullName}):
+                        stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};"); 
+                        break;
+                    case ContainerResolution(var rootResolution, _, _):
                         stringBuilder = GenerateFields(stringBuilder, rootResolution);
                         break;
                     case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
@@ -143,7 +172,10 @@ namespace MrMeeseeks.DIE
             {
                 switch (resolution)
                 {
-                    case ContainerResolution(var rootResolution, var disposableCollectionResolution):
+                    case SingleInstanceReferenceResolution(var reference, { Reference: {} functionReference}):
+                        stringBuilder = stringBuilder.AppendLine($"{reference} = {functionReference}();"); 
+                        break;
+                    case ContainerResolution(var rootResolution, _, _):
                         stringBuilder = GenerateResolutions(stringBuilder, rootResolution);
                         break;
                     case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):

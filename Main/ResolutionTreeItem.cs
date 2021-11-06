@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis;
 
 namespace MrMeeseeks.DIE
 {
@@ -23,9 +24,24 @@ namespace MrMeeseeks.DIE
         DisposableCollectionResolution? DisposableCollectionResolution,
         IReadOnlyList<(string name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
 
+    internal record SingleInstance(
+        SingleInstanceFunction Function,
+        Resolvable Dependency);
+
     internal record FuncParameterResolution(
         string Reference,
         string TypeFullName) : Resolvable(Reference, TypeFullName);
+
+    internal record SingleInstanceFunction(
+        string Reference,
+        string TypeFullName,
+        INamedTypeSymbol Type,
+        string FieldReference,
+        string LockReference);
+
+    internal record SingleInstanceReferenceResolution(
+        string Reference,
+        SingleInstanceFunction Function) : Resolvable(Reference, Function.TypeFullName);
 
     internal record FuncResolution(
         string Reference,
@@ -45,5 +61,13 @@ namespace MrMeeseeks.DIE
 
     internal record ContainerResolution(
         Resolvable RootResolution,
-        DisposableCollectionResolution DisposableCollection) : Resolvable(RootResolution.Reference, RootResolution.TypeFullName);
+        ContainerResolutionDisposalHandling DisposalHandling,
+        IReadOnlyList<SingleInstance> SingleInstanceResolutions) : Resolvable(RootResolution.Reference, RootResolution.TypeFullName);
+
+    internal record ContainerResolutionDisposalHandling(
+        DisposableCollectionResolution DisposableCollection,
+        string DisposedFieldReference,
+        string DisposedLocalReference,
+        string DisposedPropertyReference,
+        string DisposableLocalReference);
 }

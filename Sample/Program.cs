@@ -2,6 +2,13 @@
 using StrongInject;
 
 System.Console.WriteLine("Hello, world!");
-System.Console.WriteLine(new Container().Run((c, _) => c.Text, new object()));
-System.Console.WriteLine(new StrongInjectContainer().Run(c => c.Text));
+{
+    using var container = new Container();
+    System.Console.WriteLine(container.Resolve().Text);
+}
+{
+    using var strongInjectContainer = new StrongInjectContainer();
+    using var owned = strongInjectContainer.Resolve();
+    System.Console.WriteLine(owned.Value.Text);
+}
 

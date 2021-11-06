@@ -9,7 +9,7 @@ namespace MrMeeseeks.DIE.Sample
         string Text { get; }
     }
 
-    internal class Context : IContext, IDisposable
+    internal class Context : IContext, IDisposable, ISingleInstance
     {
         public string Text => "Hello, world!";
         public Context(IReadOnlyList<IChild> child)

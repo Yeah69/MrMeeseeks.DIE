@@ -6,6 +6,7 @@ namespace MrMeeseeks.DIE
         INamedTypeSymbol Container,
         INamedTypeSymbol SpyAttribute,
         INamedTypeSymbol TransientAttribute,
+        INamedTypeSymbol SingleInstanceAttribute,
         INamedTypeSymbol Disposable,
         INamedTypeSymbol AsyncDisposable,
         INamedTypeSymbol Lazy1,
@@ -19,7 +20,8 @@ namespace MrMeeseeks.DIE
         INamedTypeSymbol ConcurrentBagOfDisposable,
         INamedTypeSymbol Action,
         INamedTypeSymbol Func,
-        INamedTypeSymbol Exception)
+        INamedTypeSymbol Exception,
+        INamedTypeSymbol SemaphoreSlim)
     {
         public static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
         {
@@ -41,6 +43,7 @@ namespace MrMeeseeks.DIE
             var action = compilation.GetTypeOrReport("System.Action");
             var func = compilation.GetTypeOrReport("System.Func`3");
             var exception = compilation.GetTypeOrReport("System.Exception");
+            var semaphoreSlim = compilation.GetTypeOrReport("System.Threading.SemaphoreSlim");
 
             var spyAttribute = compilation
                 .GetTypeByMetadataName(typeof(SpyAttribute).FullName ?? "");
@@ -48,9 +51,13 @@ namespace MrMeeseeks.DIE
             var transientAttribute = compilation
                 .GetTypeByMetadataName(typeof(TransientAttribute).FullName ?? "");
 
+            var singleInstanceAttribute = compilation
+                .GetTypeByMetadataName(typeof(SingleInstanceAttribute).FullName ?? "");
+
             if (iContainer is null
                 || spyAttribute is null
                 || transientAttribute is null
+                || singleInstanceAttribute is null
                 || iDisposable is null
                 || iAsyncDisposable is null
                 || lazy1 is null
@@ -64,7 +71,8 @@ namespace MrMeeseeks.DIE
                 || concurrentBagOfDisposable is null
                 || action is null
                 || func is null
-                || exception is null)
+                || exception is null
+                || semaphoreSlim is null)
             {
                 wellKnownTypes = null!;
                 return false;
@@ -74,6 +82,7 @@ namespace MrMeeseeks.DIE
                 Container: iContainer,
                 SpyAttribute: spyAttribute,
                 TransientAttribute: transientAttribute,
+                SingleInstanceAttribute: singleInstanceAttribute,
                 Disposable: iDisposable,
                 AsyncDisposable: iAsyncDisposable,
                 Lazy1: lazy1,
@@ -87,7 +96,8 @@ namespace MrMeeseeks.DIE
                 ConcurrentBagOfDisposable: concurrentBagOfDisposable,
                 Action: action,
                 Func: func,
-                Exception: exception);
+                Exception: exception,
+                SemaphoreSlim: semaphoreSlim);
 
             return true;
         }

@@ -15,36 +15,62 @@ namespace MrMeeseeks.DIE
     {
         private readonly ITypeToImplementationsMapper _typeToImplementationsMapper;
         private readonly IReferenceGeneratorFactory _referenceGeneratorFactory;
-        private readonly ICheckDisposalManagement _checkDisposalManagement;
+        private readonly ICheckTypeProperties _checkTypeProperties;
         private readonly WellKnownTypes _wellKnownTypes;
+
+        private readonly IDictionary<INamedTypeSymbol, SingleInstanceFunction> _singleInstanceReferenceResolutions =
+            new Dictionary<INamedTypeSymbol, SingleInstanceFunction>(SymbolEqualityComparer.Default);
+        private readonly Queue<SingleInstanceFunction> _singleInstanceResolutionsQueue = new();
+
+        private readonly IReferenceGenerator _singleInstanceReferenceGenerator;
 
         public ResolutionTreeFactory(
             ITypeToImplementationsMapper typeToImplementationsMapper,
             IReferenceGeneratorFactory referenceGeneratorFactory,
-            ICheckDisposalManagement checkDisposalManagement,
+            ICheckTypeProperties checkTypeProperties,
             WellKnownTypes wellKnownTypes)
         {
             _typeToImplementationsMapper = typeToImplementationsMapper;
             _referenceGeneratorFactory = referenceGeneratorFactory;
-            _checkDisposalManagement = checkDisposalManagement;
+            _checkTypeProperties = checkTypeProperties;
             _wellKnownTypes = wellKnownTypes;
+            _singleInstanceReferenceGenerator = referenceGeneratorFactory.Create();
         }
 
         public ContainerResolution Create(ITypeSymbol type)
         {
-            var referenceGenerator = _referenceGeneratorFactory.Create();
             var disposableCollectionResolution = new DisposableCollectionResolution(
-                referenceGenerator.Generate(_wellKnownTypes.ConcurrentBagOfDisposable),
+                _singleInstanceReferenceGenerator.Generate(_wellKnownTypes.ConcurrentBagOfDisposable),
                 _wellKnownTypes.ConcurrentBagOfDisposable.FullName());
+            var referenceGenerator = _referenceGeneratorFactory.Create();
             var rootResolution = Create(
                 type,
                 referenceGenerator,
                 Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
                 disposableCollectionResolution);
+            var singleInstances = new List<SingleInstance>();
+
+            while (_singleInstanceResolutionsQueue.Any())
+            {
+                var singleInstanceFunction = _singleInstanceResolutionsQueue.Dequeue();
+                var resolvable = CreateConstructorResolution(
+                    singleInstanceFunction.Type,
+                    _referenceGeneratorFactory.Create(),
+                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
+                    disposableCollectionResolution,
+                    true);
+                singleInstances.Add(new SingleInstance(singleInstanceFunction, resolvable));
+            }
 
             return new ContainerResolution(
                 rootResolution,
-                disposableCollectionResolution);
+                new ContainerResolutionDisposalHandling(
+                    disposableCollectionResolution,
+                    _singleInstanceReferenceGenerator.Generate("_disposed"),
+                    _singleInstanceReferenceGenerator.Generate("disposed"),
+                    _singleInstanceReferenceGenerator.Generate("Disposed"),
+                    _singleInstanceReferenceGenerator.Generate("disposable")),
+                singleInstances);
         }
 
         private Resolvable Create(
@@ -79,7 +105,7 @@ namespace MrMeeseeks.DIE
                 return new ConstructorResolution(
                     referenceGenerator.Generate(namedTypeSymbol),
                     namedTypeSymbol.FullName(),
-                    ImplementsIDisposable(namedTypeSymbol, _wellKnownTypes, disposableCollectionResolution, _checkDisposalManagement),
+                    ImplementsIDisposable(namedTypeSymbol, _wellKnownTypes, disposableCollectionResolution, _checkTypeProperties),
                     new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
                         new List<(string Name, Resolvable Dependency)> 
                         { 
@@ -128,7 +154,7 @@ namespace MrMeeseeks.DIE
                 var implementations = _typeToImplementationsMapper
                     .Map(type);
                 if (implementations
-                    .SingleOrDefault() is not INamedTypeSymbol implementationType)
+                    .SingleOrDefault() is not { } implementationType)
                 {
                     return new ErrorTreeItem(implementations.Count switch
                     {
@@ -144,50 +170,7 @@ namespace MrMeeseeks.DIE
             }
 
             if (type.TypeKind == TypeKind.Class)
-            {
-                var implementations = _typeToImplementationsMapper
-                    .Map(type);
-                if (implementations
-                    .SingleOrDefault() is not INamedTypeSymbol implementationType)
-                {
-                    return new ErrorTreeItem(implementations.Count switch
-                    {
-                        0 => $"[{type.FullName()}] Class: No implementation found",
-                        > 1 => $"[{type.FullName()}] Class: more than one implementation found",
-                        _ => $"[{type.FullName()}] Class: Found single implementation{implementations[0].FullName()} is not a named type symbol"
-                    });
-                }
-                if (implementationType.Constructors.SingleOrDefault() is not { } constructor)
-                {
-                    return new ErrorTreeItem(implementations.Count switch
-                    {
-                        0 => $"[{type.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                        > 1 => $"[{type.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                        _ => $"[{type.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
-                    });
-                }
-                
-                return new ConstructorResolution(
-                    referenceGenerator.Generate(implementationType),
-                    implementationType.FullName(),
-                    ImplementsIDisposable(implementationType, _wellKnownTypes, disposableCollectionResolution, _checkDisposalManagement),
-                    new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
-                        .Parameters
-                        .Select(p =>
-                        {
-                            if (p.Type is not INamedTypeSymbol parameterType)
-                            {
-                                return ("", new ErrorTreeItem($"[{type.FullName()}] Class.Constructor.Parameter: Parameter type {p.Type.FullName()} is not a named type symbol"));
-                            }
-                            return (
-                                p.Name,
-                                Create(parameterType,
-                                    referenceGenerator,
-                                    currentFuncParameters,
-                                    disposableCollectionResolution));
-                        })
-                        .ToList()));
-            }
+                return CreateConstructorResolution(type, referenceGenerator, currentFuncParameters, disposableCollectionResolution);
 
             if (type.TypeKind == TypeKind.Delegate 
                 && type.FullName().StartsWith("global::System.Func<")
@@ -214,15 +197,100 @@ namespace MrMeeseeks.DIE
             }
 
             return new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation.");
-
-            static DisposableCollectionResolution? ImplementsIDisposable(
-                INamedTypeSymbol type, 
-                WellKnownTypes wellKnownTypes, 
-                DisposableCollectionResolution disposableCollectionResolution,
-                ICheckDisposalManagement checkDisposalManagement) =>
-                type.AllInterfaces.Contains(wellKnownTypes.Disposable) && checkDisposalManagement.ShouldBeManaged(type) 
-                    ? disposableCollectionResolution 
-                    : null;
         }
+        
+        private Resolvable CreateConstructorResolution(
+                ITypeSymbol typeSymbol, 
+                IReferenceGenerator referenceGenerator,
+                IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> readOnlyList, 
+                DisposableCollectionResolution disposableCollectionResolution,
+                bool skipSingleInstanceCheck = false)
+            {
+                var implementations = _typeToImplementationsMapper
+                    .Map(typeSymbol);
+                if (implementations
+                    .SingleOrDefault() is not { } implementationType)
+                {
+                    return new ErrorTreeItem(implementations.Count switch
+                    {
+                        0 => $"[{typeSymbol.FullName()}] Class: No implementation found",
+                        > 1 => $"[{typeSymbol.FullName()}] Class: more than one implementation found",
+                        _ =>
+                            $"[{typeSymbol.FullName()}] Class: Found single implementation{implementations[0].FullName()} is not a named type symbol"
+                    });
+                }
+
+                if (!skipSingleInstanceCheck && _checkTypeProperties.ShouldBeSingleInstance(implementationType))
+                    return CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator);
+
+                if (implementationType.Constructors.SingleOrDefault() is not { } constructor)
+                {
+                    return new ErrorTreeItem(implementations.Count switch
+                    {
+                        0 =>
+                            $"[{typeSymbol.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                        > 1 =>
+                            $"[{typeSymbol.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                        _ =>
+                            $"[{typeSymbol.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
+                    });
+                }
+
+                return new ConstructorResolution(
+                    referenceGenerator.Generate(implementationType),
+                    implementationType.FullName(),
+                    ImplementsIDisposable(implementationType, _wellKnownTypes, disposableCollectionResolution,
+                        _checkTypeProperties),
+                    new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
+                        .Parameters
+                        .Select(p =>
+                        {
+                            if (p.Type is not INamedTypeSymbol parameterType)
+                            {
+                                return ("",
+                                    new ErrorTreeItem(
+                                        $"[{typeSymbol.FullName()}] Class.Constructor.Parameter: Parameter type {p.Type.FullName()} is not a named type symbol"));
+                            }
+
+                            return (
+                                p.Name,
+                                Create(parameterType,
+                                    referenceGenerator,
+                                    readOnlyList,
+                                    disposableCollectionResolution));
+                        })
+                        .ToList()));
+            }
+
+        private SingleInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
+            INamedTypeSymbol implementationType,
+            IReferenceGenerator referenceGenerator)
+        {
+            if (!_singleInstanceReferenceResolutions.TryGetValue(
+                implementationType,
+                out SingleInstanceFunction function))
+            {
+                function = new SingleInstanceFunction(
+                    _singleInstanceReferenceGenerator.Generate("GetSingleInstance", implementationType),
+                    implementationType.FullName(),
+                    implementationType,
+                    _singleInstanceReferenceGenerator.Generate("_singleInstanceField", implementationType),
+                    _singleInstanceReferenceGenerator.Generate("_singleInstanceLock"));
+                _singleInstanceReferenceResolutions[implementationType] = function;
+                _singleInstanceResolutionsQueue.Enqueue(function);
+            }
+            return new SingleInstanceReferenceResolution(
+                referenceGenerator.Generate(implementationType),
+                function);
+        }
+
+        private static DisposableCollectionResolution? ImplementsIDisposable(
+            INamedTypeSymbol type, 
+            WellKnownTypes wellKnownTypes, 
+            DisposableCollectionResolution disposableCollectionResolution,
+            ICheckTypeProperties checkDisposalManagement) =>
+            type.AllInterfaces.Contains(wellKnownTypes.Disposable) && checkDisposalManagement.ShouldBeManaged(type) 
+                ? disposableCollectionResolution 
+                : null;
     }
 }

@@ -22,7 +22,7 @@ namespace MrMeeseeks.DIE
             var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations);
             var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
             var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
-            var checkDisposalManagement = new CheckDisposalManagement(getAllImplementations, typesFromAttributes);
+            var checkDisposalManagement = new CheckTypeProperties(getAllImplementations, typesFromAttributes);
             var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper, referenceGeneratorFactory, checkDisposalManagement, wellKnownTypes);
             var containerErrorGenerator = new ContainerErrorGenerator(context);
             var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();

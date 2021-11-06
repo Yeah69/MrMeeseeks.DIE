@@ -44,7 +44,8 @@ namespace MrMeeseeks.DIE
 
             generatedContainer = GenerateContainerDisposalFunction(
                 generatedContainer,
-                containerResolution.DisposalHandling);
+                containerResolution.DisposalHandling,
+                containerResolution);
             
             foreach (var singleInstanceResolution in containerResolution.SingleInstanceResolutions)
             {
@@ -97,15 +98,28 @@ namespace MrMeeseeks.DIE
             
             StringBuilder GenerateContainerDisposalFunction(
                 StringBuilder stringBuilder,
-                ContainerResolutionDisposalHandling disposalHandling) =>
-                stringBuilder
+                ContainerResolutionDisposalHandling disposalHandling,
+                ContainerResolution containerResolution)
+            {
+                stringBuilder = stringBuilder
                     .AppendLine($"private {disposalHandling.DisposableCollection.TypeFullName} {disposalHandling.DisposableCollection.Reference} = new {disposalHandling.DisposableCollection.TypeFullName}();")
                     .AppendLine($"private int {disposalHandling.DisposedFieldReference} = 0;")
                     .AppendLine($"private bool {disposalHandling.DisposedPropertyReference} => {disposalHandling.DisposedFieldReference} != 0;")
                     .AppendLine($"public void Dispose()")
                     .AppendLine($"{{")
                     .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
-                    .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;")
+                    .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;");
+
+                foreach (var singleInstanceResolution in containerResolution.SingleInstanceResolutions)
+                {
+                    stringBuilder = stringBuilder
+                        .AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Wait();");
+
+                }
+                
+                stringBuilder = stringBuilder
+                    .AppendLine($"try")
+                    .AppendLine($"{{")
                     .AppendLine($"foreach(var {disposalHandling.DisposableLocalReference} in {disposalHandling.DisposableCollection.Reference})")
                     .AppendLine($"{{")
                     .AppendLine($"try")
@@ -117,7 +131,22 @@ namespace MrMeeseeks.DIE
                     .AppendLine($"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
                     .AppendLine($"}}")
                     .AppendLine($"}}")
+                    .AppendLine($"}}")
+                    .AppendLine($"finally")
+                    .AppendLine($"{{");
+
+                foreach (var singleInstanceResolution in containerResolution.SingleInstanceResolutions)
+                {
+                    stringBuilder = stringBuilder
+                        .AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Release();");
+                }
+                
+                stringBuilder = stringBuilder
+                    .AppendLine($"}}")
                     .AppendLine($"}}");
+
+                return stringBuilder;
+            }
 
             StringBuilder GenerateResolutionFunction(
                 StringBuilder stringBuilder,

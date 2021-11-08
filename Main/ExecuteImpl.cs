@@ -1,77 +1,73 @@
-﻿using System;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Linq;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace MrMeeseeks.DIE
+namespace MrMeeseeks.DIE;
+
+internal interface IExecute 
 {
-    internal interface IExecute 
+    void Execute();
+}
+
+internal class ExecuteImpl : IExecute
+{
+    private readonly GeneratorExecutionContext _context;
+    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly IContainerGenerator _containerGenerator;
+    private readonly IContainerErrorGenerator _containerErrorGenerator;
+    private readonly IResolutionTreeFactory _resolutionTreeFactory;
+    private readonly IResolutionTreeCreationErrorHarvester _resolutionTreeCreationErrorHarvester;
+    private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
+    private readonly IDiagLogger _diagLogger;
+
+    public ExecuteImpl(
+        GeneratorExecutionContext context,
+        WellKnownTypes wellKnownTypes,
+        IContainerGenerator containerGenerator,
+        IContainerErrorGenerator containerErrorGenerator,
+        IResolutionTreeFactory resolutionTreeFactory,
+        IResolutionTreeCreationErrorHarvester resolutionTreeCreationErrorHarvester,
+        Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
+        IDiagLogger diagLogger)
     {
-        void Execute();
+        _context = context;
+        _wellKnownTypes = wellKnownTypes;
+        _containerGenerator = containerGenerator;
+        _containerErrorGenerator = containerErrorGenerator;
+        _resolutionTreeFactory = resolutionTreeFactory;
+        _resolutionTreeCreationErrorHarvester = resolutionTreeCreationErrorHarvester;
+        _containerInfoFactory = containerInfoFactory;
+        _diagLogger = diagLogger;
     }
 
-    internal class ExecuteImpl : IExecute
+    public void Execute()
     {
-        private readonly GeneratorExecutionContext _context;
-        private readonly WellKnownTypes _wellKnownTypes;
-        private readonly IContainerGenerator _containerGenerator;
-        private readonly IContainerErrorGenerator _containerErrorGenerator;
-        private readonly IResolutionTreeFactory _resolutionTreeFactory;
-        private readonly IResolutionTreeCreationErrorHarvester _resolutionTreeCreationErrorHarvester;
-        private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
-        private readonly IDiagLogger _diagLogger;
-
-        public ExecuteImpl(
-            GeneratorExecutionContext context,
-            WellKnownTypes wellKnownTypes,
-            IContainerGenerator containerGenerator,
-            IContainerErrorGenerator containerErrorGenerator,
-            IResolutionTreeFactory resolutionTreeFactory,
-            IResolutionTreeCreationErrorHarvester resolutionTreeCreationErrorHarvester,
-            Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
-            IDiagLogger diagLogger)
+        _diagLogger.Log("Start Execute");
+        foreach (var syntaxTree in _context.Compilation.SyntaxTrees)
         {
-            _context = context;
-            _wellKnownTypes = wellKnownTypes;
-            _containerGenerator = containerGenerator;
-            _containerErrorGenerator = containerErrorGenerator;
-            _resolutionTreeFactory = resolutionTreeFactory;
-            _resolutionTreeCreationErrorHarvester = resolutionTreeCreationErrorHarvester;
-            _containerInfoFactory = containerInfoFactory;
-            _diagLogger = diagLogger;
-        }
-
-        public void Execute()
-        {
-            _diagLogger.Log("Start Execute");
-            foreach (var syntaxTree in _context.Compilation.SyntaxTrees)
+            var semanticModel = _context.Compilation.GetSemanticModel(syntaxTree);
+            var containerClasses = syntaxTree
+                .GetRoot()
+                .DescendantNodesAndSelf()
+                .OfType<ClassDeclarationSyntax>()
+                .Select(x => semanticModel.GetDeclaredSymbol(x))
+                .Where(x => x != null)
+                .OfType<INamedTypeSymbol>()
+                .Where(x => x.AllInterfaces.Any(x => x.OriginalDefinition.Equals(_wellKnownTypes.Container, SymbolEqualityComparer.Default)));
+            foreach (var namedTypeSymbol in containerClasses)
             {
-                var semanticModel = _context.Compilation.GetSemanticModel(syntaxTree);
-                var containerClasses = syntaxTree
-                    .GetRoot()
-                    .DescendantNodesAndSelf()
-                    .OfType<ClassDeclarationSyntax>()
-                    .Select(x => semanticModel.GetDeclaredSymbol(x))
-                    .Where(x => x != null)
-                    .OfType<INamedTypeSymbol>()
-                    .Where(x => x.AllInterfaces.Any(x => x.OriginalDefinition.Equals(_wellKnownTypes.Container, SymbolEqualityComparer.Default)));
-                foreach (var namedTypeSymbol in containerClasses)
+                var containerInfo = _containerInfoFactory(namedTypeSymbol);
+                if (containerInfo.IsValid && containerInfo.ResolutionRootType is { })
                 {
-                    var containerInfo = _containerInfoFactory(namedTypeSymbol);
-                    if (containerInfo.IsValid && containerInfo.ResolutionRootType is { })
-                    {
-                        var containerResolution = _resolutionTreeFactory.Create(containerInfo.ResolutionRootType);
-                        var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
-                        if (errorTreeItems.Any())
-                            _containerErrorGenerator.Generate(containerInfo, errorTreeItems);
-                        else
-                            _containerGenerator.Generate(containerInfo, containerResolution);
-                    }
-                    else throw new NotImplementedException("Handle non-valid container information");
+                    var containerResolution = _resolutionTreeFactory.Create(containerInfo.ResolutionRootType);
+                    var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
+                    if (errorTreeItems.Any())
+                        _containerErrorGenerator.Generate(containerInfo, errorTreeItems);
+                    else
+                        _containerGenerator.Generate(containerInfo, containerResolution);
                 }
+                else throw new NotImplementedException("Handle non-valid container information");
             }
-            
-            _diagLogger.Log("End Execute");
         }
+            
+        _diagLogger.Log("End Execute");
     }
 }

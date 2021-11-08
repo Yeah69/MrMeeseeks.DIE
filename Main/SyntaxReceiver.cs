@@ -1,19 +1,16 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Collections.Generic;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace MrMeeseeks.DIE
+namespace MrMeeseeks.DIE;
+
+internal class SyntaxReceiver : ISyntaxReceiver
 {
-    internal class SyntaxReceiver : ISyntaxReceiver
-    {
-        public List<ClassDeclarationSyntax> Candidates { get; } = new();
+    public List<ClassDeclarationSyntax> Candidates { get; } = new();
 
-        public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
+    public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
+    {
+        if (syntaxNode is ClassDeclarationSyntax classDeclarationSyntax)
         {
-            if (syntaxNode is ClassDeclarationSyntax classDeclarationSyntax)
-            {
-                Candidates.Add(classDeclarationSyntax);
-            }
+            Candidates.Add(classDeclarationSyntax);
         }
     }
 }

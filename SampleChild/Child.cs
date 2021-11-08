@@ -1,17 +1,16 @@
 ﻿using System;
 
-namespace MrMeeseeks.DIE.SampleChild
+namespace MrMeeseeks.DIE.SampleChild;
+
+public interface IChild
+{ }
+
+public class Child : IChild, IDisposable, ISingleInstance
 {
-    public interface IChild
-    { }
+    public Child(
+        IInternalChild innerChild){}
 
-    public class Child : IChild, IDisposable, ISingleInstance
+    public void Dispose()
     {
-        public Child(
-            IInternalChild innerChild){}
-
-        public void Dispose()
-        {
-        }
     }
 }

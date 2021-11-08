@@ -6,9 +6,8 @@ using SampleChild;
 [assembly:SingleInstance(typeof(ISingleInstance))]
 [assembly:Transient(typeof(ITransient))]
 
-namespace MrMeeseeks.DIE.Sample
+namespace MrMeeseeks.DIE.Sample;
+
+internal partial class Container : IContainer<IContext>
 {
-    internal partial class Container : IContainer<IContext>
-    {
-    }
 }

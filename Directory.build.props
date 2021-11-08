@@ -4,7 +4,7 @@
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <Version>$(MinVerVersion)</Version>
     <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
-    <LangVersion>9</LangVersion>
+    <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <Authors>Yeah69</Authors>

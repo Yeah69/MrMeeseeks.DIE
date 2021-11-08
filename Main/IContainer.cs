@@ -1,6 +1,5 @@
-﻿namespace MrMeeseeks.DIE
+﻿namespace MrMeeseeks.DIE;
+
+public partial interface IContainer<T>
 {
-    public partial interface IContainer<T>
-    {
-    }
 }

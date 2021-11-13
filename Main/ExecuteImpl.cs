@@ -57,7 +57,7 @@ internal class ExecuteImpl : IExecute
                 var containerInfo = _containerInfoFactory(namedTypeSymbol);
                 if (containerInfo.IsValid)
                 {
-                    _containerResolutionBuilder.AddCreateFunctions(containerInfo.ResolutionRootTypes);
+                    _containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.ResolutionRootTypes);
                     var containerResolution = _containerResolutionBuilder.Build();
                     var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
                     if (errorTreeItems.Any())

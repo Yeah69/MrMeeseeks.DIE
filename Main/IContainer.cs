@@ -1,5 +1,6 @@
 ﻿namespace MrMeeseeks.DIE;
 
-public partial interface IContainer<T>
+public interface IContainer<T>
 {
+    T Resolve();
 }

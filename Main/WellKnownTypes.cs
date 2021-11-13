@@ -5,6 +5,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol SpyAttribute,
     INamedTypeSymbol TransientAttribute,
     INamedTypeSymbol SingleInstanceAttribute,
+    INamedTypeSymbol ScopedInstanceAttribute,
+    INamedTypeSymbol ScopeRootAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -52,10 +54,18 @@ internal record WellKnownTypes(
         var singleInstanceAttribute = compilation
             .GetTypeByMetadataName(typeof(SingleInstanceAttribute).FullName ?? "");
 
+        var scopedInstanceAttribute = compilation
+            .GetTypeByMetadataName(typeof(ScopedInstanceAttribute).FullName ?? "");
+
+        var scopeRootAttribute = compilation
+            .GetTypeByMetadataName(typeof(ScopeRootAttribute).FullName ?? "");
+
         if (iContainer is null
             || spyAttribute is null
             || transientAttribute is null
             || singleInstanceAttribute is null
+            || scopedInstanceAttribute is null
+            || scopeRootAttribute is null
             || iDisposable is null
             || iAsyncDisposable is null
             || lazy1 is null
@@ -81,6 +91,8 @@ internal record WellKnownTypes(
             SpyAttribute: spyAttribute,
             TransientAttribute: transientAttribute,
             SingleInstanceAttribute: singleInstanceAttribute,
+            ScopedInstanceAttribute: scopedInstanceAttribute,
+            ScopeRootAttribute: scopeRootAttribute,
             Disposable: iDisposable,
             AsyncDisposable: iAsyncDisposable,
             Lazy1: lazy1,

@@ -5,6 +5,8 @@ public interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> Spy { get; }
     IReadOnlyList<INamedTypeSymbol> Transient { get; }
     IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
+    IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
+    IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
 }
 
 internal class TypesFromAttributes : ITypesFromAttributes
@@ -16,6 +18,8 @@ internal class TypesFromAttributes : ITypesFromAttributes
         Spy = GetTypesFromAttribute(wellKnownTypes.SpyAttribute).ToList();
         Transient = GetTypesFromAttribute(wellKnownTypes.TransientAttribute).ToList();
         SingleInstance = GetTypesFromAttribute(wellKnownTypes.SingleInstanceAttribute).ToList();
+        ScopedInstance = GetTypesFromAttribute(wellKnownTypes.ScopedInstanceAttribute).ToList();
+        ScopeRoot = GetTypesFromAttribute(wellKnownTypes.ScopeRootAttribute).ToList();
             
         IEnumerable<INamedTypeSymbol> GetTypesFromAttribute(INamedTypeSymbol attribute) => getAssemblyAttributes
             .AllAssemblyAttributes
@@ -54,4 +58,6 @@ internal class TypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> Spy { get; }
     public IReadOnlyList<INamedTypeSymbol> Transient { get; }
     public IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
+    public IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
+    public IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
 }

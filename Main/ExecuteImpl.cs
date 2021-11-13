@@ -13,7 +13,7 @@ internal class ExecuteImpl : IExecute
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly IContainerGenerator _containerGenerator;
     private readonly IContainerErrorGenerator _containerErrorGenerator;
-    private readonly IResolutionTreeFactory _resolutionTreeFactory;
+    private readonly IContainerResolutionBuilder _containerResolutionBuilder;
     private readonly IResolutionTreeCreationErrorHarvester _resolutionTreeCreationErrorHarvester;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
     private readonly IDiagLogger _diagLogger;
@@ -23,7 +23,7 @@ internal class ExecuteImpl : IExecute
         WellKnownTypes wellKnownTypes,
         IContainerGenerator containerGenerator,
         IContainerErrorGenerator containerErrorGenerator,
-        IResolutionTreeFactory resolutionTreeFactory,
+        IContainerResolutionBuilder containerResolutionBuilder,
         IResolutionTreeCreationErrorHarvester resolutionTreeCreationErrorHarvester,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
         IDiagLogger diagLogger)
@@ -32,7 +32,7 @@ internal class ExecuteImpl : IExecute
         _wellKnownTypes = wellKnownTypes;
         _containerGenerator = containerGenerator;
         _containerErrorGenerator = containerErrorGenerator;
-        _resolutionTreeFactory = resolutionTreeFactory;
+        _containerResolutionBuilder = containerResolutionBuilder;
         _resolutionTreeCreationErrorHarvester = resolutionTreeCreationErrorHarvester;
         _containerInfoFactory = containerInfoFactory;
         _diagLogger = diagLogger;
@@ -55,9 +55,10 @@ internal class ExecuteImpl : IExecute
             foreach (var namedTypeSymbol in containerClasses)
             {
                 var containerInfo = _containerInfoFactory(namedTypeSymbol);
-                if (containerInfo.IsValid && containerInfo.ResolutionRootType is { })
+                if (containerInfo.IsValid)
                 {
-                    var containerResolution = _resolutionTreeFactory.Create(containerInfo.ResolutionRootType);
+                    _containerResolutionBuilder.AddCreateFunctions(containerInfo.ResolutionRootTypes);
+                    var containerResolution = _containerResolutionBuilder.Build();
                     var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
                     if (errorTreeItems.Any())
                         _containerErrorGenerator.Generate(containerInfo, errorTreeItems);

@@ -1,73 +1,51 @@
 namespace MrMeeseeks.DIE;
 
-internal interface IResolutionTreeFactory
+internal interface IContainerResolutionBuilder
 {
-    ContainerResolution Create(ITypeSymbol root);
+    void AddCreateFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes);
+
+    ContainerResolution Build();
 }
 
-internal class ResolutionTreeFactory : IResolutionTreeFactory
+internal interface IScopeResolutionBuilder
 {
-    private readonly ITypeToImplementationsMapper _typeToImplementationsMapper;
-    private readonly IReferenceGeneratorFactory _referenceGeneratorFactory;
-    private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly WellKnownTypes _wellKnownTypes;
+    void AddCreateFunction(INamedTypeSymbol rootType);
 
-    private readonly IDictionary<INamedTypeSymbol, SingleInstanceFunction> _singleInstanceReferenceResolutions =
-        new Dictionary<INamedTypeSymbol, SingleInstanceFunction>(SymbolEqualityComparer.Default);
-    private readonly Queue<SingleInstanceFunction> _singleInstanceResolutionsQueue = new();
+    ScopeResolution Build();
+}
 
-    private readonly IReferenceGenerator _singleInstanceReferenceGenerator;
+internal abstract class RangeResolutionBaseBuilder
+{
+    protected readonly WellKnownTypes WellKnownTypes;
+    protected readonly ITypeToImplementationsMapper TypeToImplementationsMapper;
+    protected readonly IReferenceGeneratorFactory ReferenceGeneratorFactory;
+    protected readonly ICheckTypeProperties CheckTypeProperties;
 
-    public ResolutionTreeFactory(
+    private readonly IDictionary<INamedTypeSymbol, ScopedInstanceFunction>
+        _containerScopedInstanceReferenceResolutions =
+            new Dictionary<INamedTypeSymbol, ScopedInstanceFunction>(SymbolEqualityComparer.Default);
+    private readonly Queue<ScopedInstanceFunction> _scopedInstanceResolutionsQueue = new();
+    
+    protected readonly List<ScopedInstance> ScopedInstances = new ();
+
+
+    protected RangeResolutionBaseBuilder(
+        WellKnownTypes wellKnownTypes,
         ITypeToImplementationsMapper typeToImplementationsMapper,
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        ICheckTypeProperties checkTypeProperties,
-        WellKnownTypes wellKnownTypes)
+        ICheckTypeProperties checkTypeProperties)
     {
-        _typeToImplementationsMapper = typeToImplementationsMapper;
-        _referenceGeneratorFactory = referenceGeneratorFactory;
-        _checkTypeProperties = checkTypeProperties;
-        _wellKnownTypes = wellKnownTypes;
-        _singleInstanceReferenceGenerator = referenceGeneratorFactory.Create();
+        WellKnownTypes = wellKnownTypes;
+        TypeToImplementationsMapper = typeToImplementationsMapper;
+        ReferenceGeneratorFactory = referenceGeneratorFactory;
+        CheckTypeProperties = checkTypeProperties;
     }
 
-    public ContainerResolution Create(ITypeSymbol type)
-    {
-        var disposableCollectionResolution = new DisposableCollectionResolution(
-            _singleInstanceReferenceGenerator.Generate(_wellKnownTypes.ConcurrentBagOfDisposable),
-            _wellKnownTypes.ConcurrentBagOfDisposable.FullName());
-        var referenceGenerator = _referenceGeneratorFactory.Create();
-        var rootResolution = Create(
-            type,
-            referenceGenerator,
-            Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
-            disposableCollectionResolution);
-        var singleInstances = new List<SingleInstance>();
+    protected abstract SingleInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
+        INamedTypeSymbol implementationType,
+        IReferenceGenerator referenceGenerator);
 
-        while (_singleInstanceResolutionsQueue.Any())
-        {
-            var singleInstanceFunction = _singleInstanceResolutionsQueue.Dequeue();
-            var resolvable = CreateConstructorResolution(
-                singleInstanceFunction.Type,
-                _referenceGeneratorFactory.Create(),
-                Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
-                disposableCollectionResolution,
-                true);
-            singleInstances.Add(new SingleInstance(singleInstanceFunction, resolvable));
-        }
-
-        return new ContainerResolution(
-            rootResolution,
-            new ContainerResolutionDisposalHandling(
-                disposableCollectionResolution,
-                _singleInstanceReferenceGenerator.Generate("_disposed"),
-                _singleInstanceReferenceGenerator.Generate("disposed"),
-                _singleInstanceReferenceGenerator.Generate("Disposed"),
-                _singleInstanceReferenceGenerator.Generate("disposable")),
-            singleInstances);
-    }
-
-    private Resolvable Create(
+    protected Resolvable Create(
         ITypeSymbol type, 
         IReferenceGenerator referenceGenerator, 
         IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> currentFuncParameters,
@@ -78,7 +56,7 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
             return funcParameter.Resolution;
         }
 
-        if (type.OriginalDefinition.Equals(_wellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
+        if (type.OriginalDefinition.Equals(WellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
             && type is INamedTypeSymbol namedTypeSymbol)
         {
             if (namedTypeSymbol.TypeArguments.SingleOrDefault() is not INamedTypeSymbol genericType)
@@ -93,13 +71,13 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
 
             var dependency = Create(
                 genericType, 
-                _referenceGeneratorFactory.Create(), 
+                ReferenceGeneratorFactory.Create(), 
                 Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
                 disposableCollectionResolution);
             return new ConstructorResolution(
                 referenceGenerator.Generate(namedTypeSymbol),
                 namedTypeSymbol.FullName(),
-                ImplementsIDisposable(namedTypeSymbol, _wellKnownTypes, disposableCollectionResolution, _checkTypeProperties),
+                ImplementsIDisposable(namedTypeSymbol, WellKnownTypes, disposableCollectionResolution, CheckTypeProperties),
                 new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
                     new List<(string Name, Resolvable Dependency)> 
                     { 
@@ -114,9 +92,9 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
                     }));
         }
 
-        if (type.OriginalDefinition.Equals(_wellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
-            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
-            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default))
+        if (type.OriginalDefinition.Equals(WellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
+            || type.OriginalDefinition.Equals(WellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
+            || type.OriginalDefinition.Equals(WellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default))
         {
             if (type is not INamedTypeSymbol collectionType)
             {
@@ -132,7 +110,7 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
                 });
             }
             var itemFullName = itemType.FullName();
-            var items = _typeToImplementationsMapper
+            var items = TypeToImplementationsMapper
                 .Map(itemType)
                 .Select(i => Create(i, referenceGenerator, currentFuncParameters, disposableCollectionResolution))
                 .ToList();
@@ -145,7 +123,7 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
 
         if (type.TypeKind == TypeKind.Interface)
         {
-            var implementations = _typeToImplementationsMapper
+            var implementations = TypeToImplementationsMapper
                 .Map(type);
             if (implementations
                     .SingleOrDefault() is not { } implementationType)
@@ -171,7 +149,7 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
             && type is INamedTypeSymbol namedTypeSymbol0)
         {
             var returnType = namedTypeSymbol0.TypeArguments.Last();
-            var innerReferenceGenerator = _referenceGeneratorFactory.Create();
+            var innerReferenceGenerator = ReferenceGeneratorFactory.Create();
             var parameterTypes = namedTypeSymbol0
                 .TypeArguments
                 .Take(namedTypeSymbol0.TypeArguments.Length - 1)
@@ -192,15 +170,15 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
 
         return new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation.");
     }
-        
-    private Resolvable CreateConstructorResolution(
-        ITypeSymbol typeSymbol, 
+
+    protected Resolvable CreateConstructorResolution(
+        ITypeSymbol typeSymbol,
         IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> readOnlyList, 
+        IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> readOnlyList,
         DisposableCollectionResolution disposableCollectionResolution,
         bool skipSingleInstanceCheck = false)
     {
-        var implementations = _typeToImplementationsMapper
+        var implementations = TypeToImplementationsMapper
             .Map(typeSymbol);
         if (implementations
                 .SingleOrDefault() is not { } implementationType)
@@ -214,7 +192,7 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
             });
         }
 
-        if (!skipSingleInstanceCheck && _checkTypeProperties.ShouldBeSingleInstance(implementationType))
+        if (!skipSingleInstanceCheck && CheckTypeProperties.ShouldBeSingleInstance(implementationType))
             return CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator);
 
         if (implementationType.Constructors.SingleOrDefault() is not { } constructor)
@@ -233,8 +211,8 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
         return new ConstructorResolution(
             referenceGenerator.Generate(implementationType),
             implementationType.FullName(),
-            ImplementsIDisposable(implementationType, _wellKnownTypes, disposableCollectionResolution,
-                _checkTypeProperties),
+            ImplementsIDisposable(implementationType, WellKnownTypes, disposableCollectionResolution,
+                CheckTypeProperties),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                 .Parameters
                 .Select(p =>
@@ -256,7 +234,67 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
                 .ToList()));
     }
 
-    private SingleInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
+    private static DisposableCollectionResolution? ImplementsIDisposable(
+        INamedTypeSymbol type, 
+        WellKnownTypes wellKnownTypes, 
+        DisposableCollectionResolution disposableCollectionResolution,
+        ICheckTypeProperties checkDisposalManagement) =>
+        type.AllInterfaces.Contains(wellKnownTypes.Disposable) && checkDisposalManagement.ShouldBeManaged(type) 
+            ? disposableCollectionResolution 
+            : null;
+}
+
+internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContainerResolutionBuilder
+{
+    private readonly IDictionary<INamedTypeSymbol, SingleInstanceFunction> _singleInstanceReferenceResolutions =
+        new Dictionary<INamedTypeSymbol, SingleInstanceFunction>(SymbolEqualityComparer.Default);
+    private readonly Queue<SingleInstanceFunction> _singleInstanceResolutionsQueue = new();
+
+    private readonly IReferenceGenerator _singleInstanceReferenceGenerator;
+    private readonly List<(Resolvable, INamedTypeSymbol)> _rootResolutions = new ();
+    private readonly List<SingleInstance> _singleInstances = new ();
+    private readonly DisposableCollectionResolution _disposableCollectionResolution;
+    private readonly IScopeResolutionBuilder _scopeResolutionBuilder;
+
+    public ContainerResolutionBuilder(
+        ITypeToImplementationsMapper typeToImplementationsMapper,
+        IReferenceGeneratorFactory referenceGeneratorFactory,
+        ICheckTypeProperties checkTypeProperties,
+        WellKnownTypes wellKnownTypes,
+        Func<IScopeResolutionBuilder> scopeResolutionBuilderFactory) : base(wellKnownTypes, typeToImplementationsMapper, referenceGeneratorFactory,
+        checkTypeProperties)
+    {
+        _singleInstanceReferenceGenerator = referenceGeneratorFactory.Create();
+        _disposableCollectionResolution = new DisposableCollectionResolution(
+            _singleInstanceReferenceGenerator.Generate(WellKnownTypes.ConcurrentBagOfDisposable),
+            WellKnownTypes.ConcurrentBagOfDisposable.FullName());
+        _scopeResolutionBuilder = scopeResolutionBuilderFactory();
+    }
+
+    public void AddCreateFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes)
+    {
+        foreach (var typeSymbol in rootTypes)
+            _rootResolutions.Add((Create(
+                typeSymbol,
+                ReferenceGeneratorFactory.Create(),
+                Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
+                _disposableCollectionResolution),
+                    typeSymbol));
+
+        while (_singleInstanceResolutionsQueue.Any())
+        {
+            var singleInstanceFunction = _singleInstanceResolutionsQueue.Dequeue();
+            var resolvable = CreateConstructorResolution(
+                singleInstanceFunction.Type,
+                ReferenceGeneratorFactory.Create(),
+                Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
+                _disposableCollectionResolution,
+                true);
+            _singleInstances.Add(new SingleInstance(singleInstanceFunction, resolvable));
+        }
+    }
+
+    protected override SingleInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
         INamedTypeSymbol implementationType,
         IReferenceGenerator referenceGenerator)
     {
@@ -273,17 +311,61 @@ internal class ResolutionTreeFactory : IResolutionTreeFactory
             _singleInstanceReferenceResolutions[implementationType] = function;
             _singleInstanceResolutionsQueue.Enqueue(function);
         }
+
         return new SingleInstanceReferenceResolution(
             referenceGenerator.Generate(implementationType),
             function);
     }
 
-    private static DisposableCollectionResolution? ImplementsIDisposable(
-        INamedTypeSymbol type, 
+    public ContainerResolution Build() =>
+        new(_rootResolutions,
+            new DisposalHandling(
+                _disposableCollectionResolution,
+                _singleInstanceReferenceGenerator.Generate("_disposed"),
+                _singleInstanceReferenceGenerator.Generate("disposed"),
+                _singleInstanceReferenceGenerator.Generate("Disposed"),
+                _singleInstanceReferenceGenerator.Generate("disposable")),
+            ScopedInstances,
+            _singleInstances,
+            _scopeResolutionBuilder.Build());
+}
+
+internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolutionBuilder
+{
+    private readonly IReferenceGenerator _scopeInstanceReferenceGenerator;
+    private readonly List<(Resolvable, INamedTypeSymbol)> _rootResolutions = new ();
+    private readonly DisposableCollectionResolution _disposableCollectionResolution;
+    
+    public ScopeResolutionBuilder(
         WellKnownTypes wellKnownTypes, 
-        DisposableCollectionResolution disposableCollectionResolution,
-        ICheckTypeProperties checkDisposalManagement) =>
-        type.AllInterfaces.Contains(wellKnownTypes.Disposable) && checkDisposalManagement.ShouldBeManaged(type) 
-            ? disposableCollectionResolution 
-            : null;
+        ITypeToImplementationsMapper typeToImplementationsMapper, 
+        IReferenceGeneratorFactory referenceGeneratorFactory, 
+        ICheckTypeProperties checkTypeProperties) : base(wellKnownTypes, typeToImplementationsMapper, referenceGeneratorFactory, checkTypeProperties)
+    {
+        _scopeInstanceReferenceGenerator = referenceGeneratorFactory.Create();
+        _disposableCollectionResolution = new DisposableCollectionResolution(
+            _scopeInstanceReferenceGenerator.Generate(WellKnownTypes.ConcurrentBagOfDisposable),
+            WellKnownTypes.ConcurrentBagOfDisposable.FullName());
+    }
+
+    protected override SingleInstanceReferenceResolution CreateSingleInstanceReferenceResolution(INamedTypeSymbol implementationType,
+        IReferenceGenerator referenceGenerator)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void AddCreateFunction(INamedTypeSymbol rootType)
+    {
+        throw new NotImplementedException();
+    }
+
+    public ScopeResolution Build() =>
+        new(_rootResolutions,
+            new DisposalHandling(
+                _disposableCollectionResolution,
+                _scopeInstanceReferenceGenerator.Generate("_disposed"),
+                _scopeInstanceReferenceGenerator.Generate("disposed"),
+                _scopeInstanceReferenceGenerator.Generate("Disposed"),
+                _scopeInstanceReferenceGenerator.Generate("disposable")),
+            ScopedInstances);
 }

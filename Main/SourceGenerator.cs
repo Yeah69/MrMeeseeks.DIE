@@ -21,7 +21,16 @@ public class SourceGenerator : ISourceGenerator
         var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var checkDisposalManagement = new CheckTypeProperties(getAllImplementations, typesFromAttributes);
-        var resolutionTreeFactory = new ResolutionTreeFactory(typeToImplementationMapper, referenceGeneratorFactory, checkDisposalManagement, wellKnownTypes);
+        var resolutionTreeFactory = new ContainerResolutionBuilder(
+            typeToImplementationMapper, 
+            referenceGeneratorFactory, 
+            checkDisposalManagement, 
+            wellKnownTypes,
+            () => new ScopeResolutionBuilder(
+                wellKnownTypes, 
+                typeToImplementationMapper, 
+                referenceGeneratorFactory, 
+                checkDisposalManagement));
         var containerErrorGenerator = new ContainerErrorGenerator(context);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
         new ExecuteImpl(

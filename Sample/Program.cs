@@ -4,7 +4,7 @@ using StrongInject;
 System.Console.WriteLine("Hello, world!");
 {
     using var container = new Container();
-    System.Console.WriteLine(container.Resolve().Text);
+    System.Console.WriteLine(((MrMeeseeks.DIE.IContainer<IContext>) container).Resolve().Text);
 }
 {
     using var strongInjectContainer = new StrongInjectContainer();

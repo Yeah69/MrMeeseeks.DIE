@@ -26,7 +26,7 @@ internal class ContainerGenerator : IContainerGenerator
 
     public void Generate(IContainerInfo containerInfo, ContainerResolution containerResolution)
     {
-        if (!containerInfo.IsValid || containerInfo.ResolutionRootType is null)
+        if (!containerInfo.IsValid)
         {
             _diagLogger.Log($"return generation");
             return;
@@ -56,7 +56,7 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine($"{{")
                 .AppendLine($"if (this.{containerResolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({containerInfo.Name}));");
             
-            generatedContainer = GenerateResolutionFunction(generatedContainer, singleInstanceResolution.Dependency);
+            generatedContainer = GenerateResolutionFunctionContent(generatedContainer, singleInstanceResolution.Dependency);
 
             generatedContainer = generatedContainer
                 .AppendLine($"this.{singleInstanceResolution.Function.FieldReference} = {singleInstanceResolution.Dependency.Reference};")
@@ -68,20 +68,10 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine($"return this.{singleInstanceResolution.Function.FieldReference};")
                 .AppendLine($"}}");
         }
-            
-        generatedContainer = generatedContainer
-            .AppendLine($"public {containerResolution.TypeFullName} Resolve()")
-            .AppendLine($"{{")
-            .AppendLine($"if (this.{containerResolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({containerInfo.Name}));");
-            
-        generatedContainer = GenerateResolutionFunction(generatedContainer, containerResolution);
 
-        generatedContainer = generatedContainer
-                .AppendLine($"return {containerResolution.Reference};")
-                .AppendLine($"}}")
-                .AppendLine($"}}")
-                .AppendLine($"}}")
-            ;
+        generatedContainer = containerResolution.RootResolutions.Aggregate(generatedContainer, GenerateResolutionFunction)
+            .AppendLine($"}}")
+            .AppendLine($"}}");
 
         var containerSource = CSharpSyntaxTree
             .ParseText(SourceText.From(generatedContainer.ToString(), Encoding.UTF8))
@@ -94,7 +84,7 @@ internal class ContainerGenerator : IContainerGenerator
             
         StringBuilder GenerateContainerDisposalFunction(
             StringBuilder stringBuilder,
-            ContainerResolutionDisposalHandling disposalHandling,
+            DisposalHandling disposalHandling,
             ContainerResolution containerResolution)
         {
             stringBuilder = stringBuilder
@@ -137,21 +127,32 @@ internal class ContainerGenerator : IContainerGenerator
                     .AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Release();");
             }
                 
-            stringBuilder = stringBuilder
+            return stringBuilder
                 .AppendLine($"}}")
                 .AppendLine($"}}");
-
-            return stringBuilder;
         }
 
         StringBuilder GenerateResolutionFunction(
             StringBuilder stringBuilder,
+            (Resolvable, INamedTypeSymbol) resolution)
+        {
+            var (resolvable, type) = resolution;
+            stringBuilder = stringBuilder
+                .AppendLine($"{resolvable.TypeFullName} {_wellKnownTypes.Container.Construct(type).FullName()}.Resolve()")
+                .AppendLine($"{{")
+                .AppendLine($"if (this.{containerResolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({containerInfo.Name}));");
+            
+            return GenerateResolutionFunctionContent(stringBuilder, resolvable)
+                .AppendLine($"return {resolvable.Reference};")
+                .AppendLine($"}}");
+        }
+
+        StringBuilder GenerateResolutionFunctionContent(
+            StringBuilder stringBuilder,
             Resolvable resolution)
         {
             stringBuilder = GenerateFields(stringBuilder, resolution);
-            stringBuilder = GenerateResolutions(stringBuilder, resolution);
-                
-            return stringBuilder;
+            return GenerateResolutions(stringBuilder, resolution);
         }
 
         StringBuilder GenerateFields(
@@ -162,9 +163,6 @@ internal class ContainerGenerator : IContainerGenerator
             {
                 case SingleInstanceReferenceResolution(var reference, { TypeFullName: {} typeFullName}):
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};"); 
-                    break;
-                case ContainerResolution(var rootResolution, _, _):
-                    stringBuilder = GenerateFields(stringBuilder, rootResolution);
                     break;
                 case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                     stringBuilder = GenerateFields(stringBuilder, resolutionBase);
@@ -200,9 +198,6 @@ internal class ContainerGenerator : IContainerGenerator
                 case SingleInstanceReferenceResolution(var reference, { Reference: {} functionReference}):
                     stringBuilder = stringBuilder.AppendLine($"{reference} = {functionReference}();"); 
                     break;
-                case ContainerResolution(var rootResolution, _, _):
-                    stringBuilder = GenerateResolutions(stringBuilder, rootResolution);
-                    break;
                 case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                     stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
                     stringBuilder = stringBuilder.AppendLine(
@@ -220,7 +215,7 @@ internal class ContainerGenerator : IContainerGenerator
                 case FuncResolution(var reference, _, var parameter, Resolvable resolutionBase):
                     stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", parameter.Select(fpr => fpr.Reference))}) =>");
                     stringBuilder = stringBuilder.AppendLine($"{{");
-                    GenerateResolutionFunction(stringBuilder, resolutionBase);
+                    GenerateResolutionFunctionContent(stringBuilder, resolutionBase);
                     stringBuilder = stringBuilder.AppendLine($"return {resolutionBase.Reference};");
                     stringBuilder = stringBuilder.AppendLine($"}};");
                     break;

@@ -4,7 +4,7 @@ namespace MrMeeseeks.DIE.SampleChild;
 
 public interface IInternalChild
 {}
-internal class InternalChild : IInternalChild, IDisposable
+internal class InternalChild : IInternalChild, IDisposable, IScopedInstance
 {
     public InternalChild(Lazy<IYetAnotherInternalChild> yetAnotherInternalChild)
     {
@@ -18,7 +18,7 @@ internal class InternalChild : IInternalChild, IDisposable
     
 public interface IYetAnotherInternalChild
 {}
-internal class YetAnotherInternalChild : IYetAnotherInternalChild, IDisposable
+internal class YetAnotherInternalChild : IYetAnotherInternalChild, IDisposable, IScopedInstance
 {
     public void Dispose()
     {

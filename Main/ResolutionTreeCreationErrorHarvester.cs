@@ -19,6 +19,8 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
             {
                 case SingleInstanceReferenceResolution:
                     break;
+                case ScopedInstanceReferenceResolution:
+                    break;
                 case ContainerResolution containerResolution:
                     foreach (var singleInstance in containerResolution.SingleInstanceResolutions)
                         Inner(singleInstance.Dependency, errorTreeItems);

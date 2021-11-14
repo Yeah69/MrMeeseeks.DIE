@@ -8,6 +8,8 @@ namespace MrMeeseeks.DIE.Sample;
 [Register(typeof(Child), Scope.SingleInstance, typeof(Child), typeof(IChild))]
 [Register(typeof(InternalChild), typeof(IInternalChild))]
 [Register(typeof(YetAnotherInternalChild), typeof(IYetAnotherInternalChild))]
+[Register(typeof(AndThenSingleInstance), typeof(IAndThenSingleInstance))]
+[Register(typeof(AndThenAnotherScope), typeof(IAndThenAnotherScope))]
 [RegisterModule(typeof(StandardModule))]
 internal partial class StrongInjectContainer : StrongInject.IContainer<IContext>
 {

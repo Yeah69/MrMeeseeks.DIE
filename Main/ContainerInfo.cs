@@ -4,6 +4,7 @@ public interface IContainerInfo
 {
     string Name { get; }
     string Namespace { get; }
+    string FullName { get; }
     bool IsValid { get; }
     IReadOnlyList<INamedTypeSymbol> ResolutionRootTypes { get; }
 }
@@ -19,6 +20,7 @@ internal class ContainerInfo : IContainerInfo
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();
+        FullName = containerClass.FullName();
             
         ResolutionRootTypes = containerClass
             .AllInterfaces
@@ -40,6 +42,7 @@ internal class ContainerInfo : IContainerInfo
 
     public string Name { get; }
     public string Namespace { get; }
+    public string FullName { get; }
     public bool IsValid { get; }
     public IReadOnlyList<INamedTypeSymbol> ResolutionRootTypes { get; }
 }

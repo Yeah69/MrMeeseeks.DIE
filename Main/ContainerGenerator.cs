@@ -38,15 +38,28 @@ internal class ContainerGenerator : IContainerGenerator
             .AppendLine($"partial class {containerInfo.Name} : {_wellKnownTypes.Disposable.FullName()}")
             .AppendLine($"{{");
 
-        generatedContainer = GenerateContainerDisposalFunction(
+        generatedContainer = GenerateResolutionRange(
             generatedContainer,
-            containerResolution.DisposalHandling,
             containerResolution);
 
-        generatedContainer = containerResolution.SingleInstanceResolutions.Aggregate(generatedContainer, GenerateRangedInstanceFunction);
-        generatedContainer = containerResolution.ScopedInstanceResolutions.Aggregate(generatedContainer, GenerateRangedInstanceFunction);
+        var defaultScopeResolution = containerResolution.DefaultScope;
+        generatedContainer = generatedContainer
+            .AppendLine($"internal partial class {defaultScopeResolution.Name} : {_wellKnownTypes.Disposable.FullName()}")
+            .AppendLine($"{{")
+            .AppendLine($"private readonly {containerInfo.FullName} {defaultScopeResolution.ContainerReference};")
+            .AppendLine($"internal {defaultScopeResolution.Name}({containerInfo.FullName} {defaultScopeResolution.ContainerParameterReference})")
+            .AppendLine($"{{")
+            .AppendLine($"{defaultScopeResolution.ContainerReference} = {defaultScopeResolution.ContainerParameterReference};")
+            .AppendLine($"}}");
 
-        generatedContainer = containerResolution.RootResolutions.Aggregate(generatedContainer, GenerateResolutionFunction)
+        generatedContainer = GenerateResolutionRange(
+            generatedContainer,
+            defaultScopeResolution);
+        
+        generatedContainer = generatedContainer
+            .AppendLine($"}}");
+            
+        generatedContainer = generatedContainer
             .AppendLine($"}}")
             .AppendLine($"}}");
 
@@ -57,12 +70,25 @@ internal class ContainerGenerator : IContainerGenerator
             .SyntaxTree
             .GetText();
         _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
+
+        StringBuilder GenerateResolutionRange(
+            StringBuilder stringBuilder,
+            RangeResolution rangeResolution)
+        {
+            stringBuilder = GenerateContainerDisposalFunction(
+                stringBuilder,
+                rangeResolution);
+
+            stringBuilder = rangeResolution.AllRangedInstances.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
+
+            return rangeResolution.RootResolutions.Aggregate(stringBuilder, GenerateResolutionFunction);
+        }
         
         StringBuilder GenerateContainerDisposalFunction(
             StringBuilder stringBuilder,
-            DisposalHandling disposalHandling,
-            ContainerResolution containerResolution)
+            RangeResolution rangeResolution)
         {
+            var disposalHandling = rangeResolution.DisposalHandling;
             stringBuilder = stringBuilder
                 .AppendLine($"private {disposalHandling.DisposableCollection.TypeFullName} {disposalHandling.DisposableCollection.Reference} = new {disposalHandling.DisposableCollection.TypeFullName}();")
                 .AppendLine($"private int {disposalHandling.DisposedFieldReference} = 0;")
@@ -72,11 +98,7 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
                 .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;");
 
-            stringBuilder = containerResolution.SingleInstanceResolutions.Aggregate(
-                stringBuilder, 
-                (current, singleInstanceResolution) => current.AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Wait();"));
-
-            stringBuilder = containerResolution.ScopedInstanceResolutions.Aggregate(
+            stringBuilder = rangeResolution.AllRangedInstances.Aggregate(
                 stringBuilder, 
                 (current, singleInstanceResolution) => current.AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Wait();"));
 
@@ -98,12 +120,10 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine($"finally")
                 .AppendLine($"{{");
 
-            foreach (var singleInstanceResolution in containerResolution.SingleInstanceResolutions)
-            {
-                stringBuilder = stringBuilder
-                    .AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Release();");
-            }
-                
+            stringBuilder = rangeResolution.AllRangedInstances.Aggregate(
+                stringBuilder, 
+                (current, singleInstanceResolution) => current.AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Release();"));
+
             return stringBuilder
                 .AppendLine($"}}")
                 .AppendLine($"}}");
@@ -111,16 +131,15 @@ internal class ContainerGenerator : IContainerGenerator
 
         StringBuilder GenerateResolutionFunction(
             StringBuilder stringBuilder,
-            (Resolvable, INamedTypeSymbol) resolution)
+            RootResolutionFunction resolution)
         {
-            var (resolvable, type) = resolution;
             stringBuilder = stringBuilder
-                .AppendLine($"{resolvable.TypeFullName} {_wellKnownTypes.Container.Construct(type).FullName()}.Resolve()")
+                .AppendLine($"{resolution.AccessModifier} {resolution.TypeFullName} {resolution.ExplicitImplementationFullName}{(string.IsNullOrWhiteSpace(resolution.ExplicitImplementationFullName) ? "" : ".")}{resolution.Reference}()")
                 .AppendLine($"{{")
-                .AppendLine($"if (this.{containerResolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({containerInfo.Name}));");
+                .AppendLine($"if (this.{resolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({resolution.RangeName}));");
             
-            return GenerateResolutionFunctionContent(stringBuilder, resolvable)
-                .AppendLine($"return {resolvable.Reference};")
+            return GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
+                .AppendLine($"return {resolution.Resolvable.Reference};")
                 .AppendLine($"}}");
         }
 
@@ -138,11 +157,10 @@ internal class ContainerGenerator : IContainerGenerator
         {
             switch (resolution)
             {
-                case SingleInstanceReferenceResolution(var reference, { TypeFullName: {} typeFullName}):
-                    stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};"); 
-                    break;
-                case ScopedInstanceReferenceResolution(var reference, { TypeFullName: {} typeFullName}):
-                    stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};"); 
+                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, _, _, _):
+                    stringBuilder = stringBuilder
+                        .AppendLine($"{scopeTypeFullName} {scopeReference};")
+                        .AppendLine($"{typeFullName} {reference};");  
                     break;
                 case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                     stringBuilder = GenerateFields(stringBuilder, resolutionBase);
@@ -162,6 +180,9 @@ internal class ContainerGenerator : IContainerGenerator
                     stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateFields);
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                     break;
+                case var (reference, typeFullName):
+                    stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};"); 
+                    break;
                 default:
                     throw new Exception("Unexpected case or not implemented.");
             }
@@ -175,11 +196,14 @@ internal class ContainerGenerator : IContainerGenerator
         {
             switch (resolution)
             {
-                case SingleInstanceReferenceResolution(var reference, { Reference: {} functionReference}):
-                    stringBuilder = stringBuilder.AppendLine($"{reference} = {functionReference}();"); 
+                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var singleInstanceScopeReference, var (disposableCollectionReference, _, _, _), var (createFunctionReference, _, _)):
+                    stringBuilder = stringBuilder
+                        .AppendLine($"{scopeReference} = new {scopeTypeFullName}({singleInstanceScopeReference});")
+                        .AppendLine($"{disposableCollectionReference}.Add(({_wellKnownTypes.Disposable.FullName()}) {scopeReference});")
+                        .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}();"); 
                     break;
-                case ScopedInstanceReferenceResolution(var reference, { Reference: {} functionReference}):
-                    stringBuilder = stringBuilder.AppendLine($"{reference} = {functionReference}();"); 
+                case RangedInstanceReferenceResolution(var reference, { Reference: {} functionReference}, var owningObjectReference):
+                    stringBuilder = stringBuilder.AppendLine($"{reference} = {owningObjectReference}.{functionReference}();"); 
                     break;
                 case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                     stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
@@ -216,8 +240,7 @@ internal class ContainerGenerator : IContainerGenerator
             return stringBuilder;
         }
 
-        StringBuilder GenerateRangedInstanceFunction<T>(StringBuilder stringBuilder, RangedInstanceBase<T> rangedInstance) 
-            where T : RangedInstanceFunctionBase
+        StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstance rangedInstance)
         {
             stringBuilder = stringBuilder
                 .AppendLine(
@@ -233,7 +256,7 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine($"try")
                 .AppendLine($"{{")
                 .AppendLine(
-                    $"if (this.{containerResolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({containerInfo.Name}));");
+                    $"if (this.{rangedInstance.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({rangedInstance.DisposalHandling.RangeName}));");
 
             stringBuilder = GenerateResolutionFunctionContent(stringBuilder, rangedInstance.Dependency);
 

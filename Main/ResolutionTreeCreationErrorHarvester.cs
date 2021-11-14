@@ -17,23 +17,19 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
         {
             switch (item)
             {
-                case SingleInstanceReferenceResolution:
+                case RootResolutionFunction:
                     break;
-                case ScopedInstanceReferenceResolution:
+                case RangedInstanceReferenceResolution:
                     break;
-                case ContainerResolution containerResolution:
-                    foreach (var singleInstance in containerResolution.SingleInstanceResolutions)
+                case ScopeRootFunction:
+                    break;
+                case ScopeRootResolution:
+                    break;
+                case RangeResolution containerResolution:
+                    foreach (var singleInstance in containerResolution.AllRangedInstances)
                         Inner(singleInstance.Dependency, errorTreeItems);
-                    foreach (var scopedInstance in containerResolution.ScopedInstanceResolutions)
-                        Inner(scopedInstance.Dependency, errorTreeItems);
                     foreach (var rootResolution in containerResolution.RootResolutions)
-                        Inner(rootResolution.Item1, errorTreeItems);
-                    break;
-                case ScopeResolution scopeResolution:
-                    foreach (var scopedInstance in scopeResolution.ScopedInstanceResolutions)
-                        Inner(scopedInstance.Dependency, errorTreeItems);
-                    foreach (var rootResolution in scopeResolution.RootResolutions)
-                        Inner(rootResolution.Item1, errorTreeItems);
+                        Inner(rootResolution, errorTreeItems);
                     break;
                 case ErrorTreeItem errorTreeItem:
                     errorTreeItems.Add(errorTreeItem);

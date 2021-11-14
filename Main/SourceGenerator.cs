@@ -21,16 +21,6 @@ public class SourceGenerator : ISourceGenerator
         var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var checkDisposalManagement = new CheckTypeProperties(getAllImplementations, typesFromAttributes);
-        var resolutionTreeFactory = new ContainerResolutionBuilder(
-            typeToImplementationMapper, 
-            referenceGeneratorFactory, 
-            checkDisposalManagement, 
-            wellKnownTypes,
-            () => new ScopeResolutionBuilder(
-                wellKnownTypes, 
-                typeToImplementationMapper, 
-                referenceGeneratorFactory, 
-                checkDisposalManagement));
         var containerErrorGenerator = new ContainerErrorGenerator(context);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
         new ExecuteImpl(
@@ -38,11 +28,24 @@ public class SourceGenerator : ISourceGenerator
             wellKnownTypes,
             containerGenerator, 
             containerErrorGenerator,
-            resolutionTreeFactory,
+            ResolutionTreeFactory,
             resolutionTreeCreationErrorHarvester,
             ContainerInfoFactory, 
             diagLogger).Execute();
             
+        IContainerResolutionBuilder ResolutionTreeFactory(IContainerInfo ci) => new ContainerResolutionBuilder(
+            ci,
+            typeToImplementationMapper,
+            referenceGeneratorFactory,
+            checkDisposalManagement,
+            wellKnownTypes,
+            ScopeResolutionBuilderFactory);
+        IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder) => new ScopeResolutionBuilder(
+            containerBuilder,
+            wellKnownTypes, 
+            typeToImplementationMapper, 
+            referenceGeneratorFactory, 
+            checkDisposalManagement);
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
     }

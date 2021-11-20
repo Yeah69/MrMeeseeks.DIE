@@ -1,6 +1,6 @@
 ﻿namespace MrMeeseeks.DIE;
 
-internal static class RoslynExtensions
+public static class RoslynExtensions
 {
     internal static INamedTypeSymbol? GetTypeOrReport(this Compilation compilation, string metadataName)
     {

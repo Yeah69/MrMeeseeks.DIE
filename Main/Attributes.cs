@@ -62,3 +62,11 @@ public class DecoratorSequenceChoiceAttribute : Attribute
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public DecoratorSequenceChoiceAttribute(Type decoratedType, params Type[] types) {}
 }
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Assembly | AttributeTargets.Class)]
+public class ConstructorReferenceAttribute : Attribute
+{
+    public ConstructorReferenceAttribute(Type implementationType, params Type[] parameterTypes)
+    {
+    }
+}

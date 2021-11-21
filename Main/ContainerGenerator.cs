@@ -133,8 +133,9 @@ internal class ContainerGenerator : IContainerGenerator
             StringBuilder stringBuilder,
             RootResolutionFunction resolution)
         {
+            var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
-                .AppendLine($"{resolution.AccessModifier} {resolution.TypeFullName} {resolution.ExplicitImplementationFullName}{(string.IsNullOrWhiteSpace(resolution.ExplicitImplementationFullName) ? "" : ".")}{resolution.Reference}()")
+                .AppendLine($"{resolution.AccessModifier} {resolution.TypeFullName} {resolution.ExplicitImplementationFullName}{(string.IsNullOrWhiteSpace(resolution.ExplicitImplementationFullName) ? "" : ".")}{resolution.Reference}({parameter})")
                 .AppendLine($"{{")
                 .AppendLine($"if (this.{resolution.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({resolution.RangeName}));");
             
@@ -157,7 +158,7 @@ internal class ContainerGenerator : IContainerGenerator
         {
             switch (resolution)
             {
-                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, _, _, _):
+                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, _, _, _, _):
                     stringBuilder = stringBuilder
                         .AppendLine($"{scopeTypeFullName} {scopeReference};")
                         .AppendLine($"{typeFullName} {reference};");  
@@ -196,11 +197,11 @@ internal class ContainerGenerator : IContainerGenerator
         {
             switch (resolution)
             {
-                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var singleInstanceScopeReference, var (disposableCollectionReference, _, _, _), var (createFunctionReference, _, _)):
+                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var singleInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _), var (createFunctionReference, _)):
                     stringBuilder = stringBuilder
                         .AppendLine($"{scopeReference} = new {scopeTypeFullName}({singleInstanceScopeReference});")
                         .AppendLine($"{disposableCollectionReference}.Add(({_wellKnownTypes.Disposable.FullName()}) {scopeReference});")
-                        .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}();"); 
+                        .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});"); 
                     break;
                 case RangedInstanceReferenceResolution(var reference, { Reference: {} functionReference}, var parameter, var owningObjectReference):
                     stringBuilder = stringBuilder.AppendLine($"{reference} = {owningObjectReference}.{functionReference}({string.Join(", ", parameter.Select(p => p.Reference))});"); 

@@ -11,6 +11,7 @@ internal record RootResolutionFunction(
     string TypeFullName,
     string AccessModifier,
     Resolvable Resolvable,
+    IReadOnlyList<ParameterResolution> Parameter,
     string ExplicitImplementationFullName,
     string RangeName,
     DisposalHandling DisposalHandling) : Resolvable(Reference, TypeFullName);
@@ -35,13 +36,13 @@ internal record ScopeRootResolution(
     string ScopeReference,
     string ScopeTypeFullName,
     string SingleInstanceScopeReference,
+    IReadOnlyList<ParameterResolution> Parameter,
     DisposableCollectionResolution DisposableCollectionResolution,
     ScopeRootFunction ScopeRootFunction) : Resolvable(Reference, TypeFullName);
 
 internal record ScopeRootFunction(
     string Reference,
-    string TypeFullName,
-    INamedTypeSymbol Type) : Resolvable(Reference, TypeFullName);
+    string TypeFullName) : Resolvable(Reference, TypeFullName);
 
 internal record RangedInstance(
     RangedInstanceFunction Function,

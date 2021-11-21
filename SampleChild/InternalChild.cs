@@ -8,7 +8,8 @@ internal class InternalChild : IInternalChild, IDisposable, IScopedInstance
 {
     public InternalChild(
         Lazy<IYetAnotherInternalChild> yetAnotherInternalChild,
-        IAndThenAnotherScope andThenAnotherScope)
+        Func<IA, IAndThenAnotherScope> andThenAnotherScopeA,
+        Func<IB, IAndThenAnotherScope> andThenAnotherScopeB)
     {
             
     }
@@ -22,6 +23,9 @@ public interface IAndThenAnotherScope
 {}
 internal class AndThenAnotherScope : IAndThenAnotherScope, IDisposable, IScopedInstance, IScopeRoot
 {
+    public AndThenAnotherScope(
+        IA a,
+        IB b){}
     public void Dispose()
     {
     }

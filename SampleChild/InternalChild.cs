@@ -32,7 +32,8 @@ public interface IYetAnotherInternalChild
 internal class YetAnotherInternalChild : IYetAnotherInternalChild, IDisposable, IScopedInstance
 {
     public YetAnotherInternalChild(
-        IAndThenSingleInstance andThenSingleInstance)
+        Func<IA, IAndThenSingleInstance> andThenSingleInstanceA,
+        Func<IB, IAndThenSingleInstance> andThenSingleInstanceB)
     {}
     public void Dispose()
     {
@@ -43,7 +44,16 @@ public interface IAndThenSingleInstance
 {}
 internal class AndThenSingleInstance : IAndThenSingleInstance, IDisposable, ISingleInstance
 {
+    public AndThenSingleInstance(
+        IA a,
+        IB b){}
     public void Dispose()
     {
     }
 }
+
+public interface IA {}
+public interface IB {}
+
+public class A : IA {}
+public class B : IB {}

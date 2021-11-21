@@ -26,8 +26,8 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
                 case ScopeRootResolution:
                     break;
                 case RangeResolution containerResolution:
-                    foreach (var singleInstance in containerResolution.AllRangedInstances)
-                        Inner(singleInstance.Dependency, errorTreeItems);
+                    foreach (var overload in containerResolution.RangedInstances.SelectMany(ri => ri.Overloads))
+                        Inner(overload.Dependency, errorTreeItems);
                     foreach (var rootResolution in containerResolution.RootResolutions)
                         Inner(rootResolution, errorTreeItems);
                     break;
@@ -42,7 +42,7 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
                     foreach (var resolutionTreeItem in collectionResolution.Parameter)
                         Inner(resolutionTreeItem, errorTreeItems);
                     break;
-                case FuncParameterResolution:
+                case ParameterResolution:
                     break;
                 case FuncResolution funcResolution:
                     foreach (var funcParameterResolution in funcResolution.Parameter)

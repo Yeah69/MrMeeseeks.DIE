@@ -79,7 +79,7 @@ internal class ContainerGenerator : IContainerGenerator
                 stringBuilder,
                 rangeResolution);
 
-            stringBuilder = rangeResolution.AllRangedInstances.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
+            stringBuilder = rangeResolution.RangedInstances.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
 
             return rangeResolution.RootResolutions.Aggregate(stringBuilder, GenerateResolutionFunction);
         }
@@ -98,7 +98,7 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
                 .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;");
 
-            stringBuilder = rangeResolution.AllRangedInstances.Aggregate(
+            stringBuilder = rangeResolution.RangedInstances.Aggregate(
                 stringBuilder, 
                 (current, singleInstanceResolution) => current.AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Wait();"));
 
@@ -120,7 +120,7 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine($"finally")
                 .AppendLine($"{{");
 
-            stringBuilder = rangeResolution.AllRangedInstances.Aggregate(
+            stringBuilder = rangeResolution.RangedInstances.Aggregate(
                 stringBuilder, 
                 (current, singleInstanceResolution) => current.AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Release();"));
 
@@ -174,7 +174,7 @@ internal class ContainerGenerator : IContainerGenerator
                 case FuncResolution(var reference, var typeFullName, _, _):
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                     break;
-                case FuncParameterResolution:
+                case ParameterResolution:
                     break;
                 case CollectionResolution(var reference, var typeFullName, _, var items):
                     stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateFields);
@@ -202,8 +202,8 @@ internal class ContainerGenerator : IContainerGenerator
                         .AppendLine($"{disposableCollectionReference}.Add(({_wellKnownTypes.Disposable.FullName()}) {scopeReference});")
                         .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}();"); 
                     break;
-                case RangedInstanceReferenceResolution(var reference, { Reference: {} functionReference}, var owningObjectReference):
-                    stringBuilder = stringBuilder.AppendLine($"{reference} = {owningObjectReference}.{functionReference}();"); 
+                case RangedInstanceReferenceResolution(var reference, { Reference: {} functionReference}, var parameter, var owningObjectReference):
+                    stringBuilder = stringBuilder.AppendLine($"{reference} = {owningObjectReference}.{functionReference}({string.Join(", ", parameter.Select(p => p.Reference))});"); 
                     break;
                 case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                     stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
@@ -226,7 +226,7 @@ internal class ContainerGenerator : IContainerGenerator
                     stringBuilder = stringBuilder.AppendLine($"return {resolutionBase.Reference};");
                     stringBuilder = stringBuilder.AppendLine($"}};");
                     break;
-                case FuncParameterResolution:
+                case ParameterResolution:
                     break;
                 case CollectionResolution(var reference, _, var itemFullName, var items):
                     stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateResolutions);
@@ -246,30 +246,37 @@ internal class ContainerGenerator : IContainerGenerator
                 .AppendLine(
                     $"private {rangedInstance.Function.TypeFullName} {rangedInstance.Function.FieldReference};")
                 .AppendLine(
-                    $"private {_wellKnownTypes.SemaphoreSlim.FullName()} {rangedInstance.Function.LockReference} = new {_wellKnownTypes.SemaphoreSlim.FullName()}(1);")
-                .AppendLine(
-                    $"public {rangedInstance.Function.TypeFullName} {rangedInstance.Function.Reference}()")
-                .AppendLine($"{{")
-                .AppendLine(
-                    $"if (!object.ReferenceEquals({rangedInstance.Function.FieldReference}, null)) return {rangedInstance.Function.FieldReference};")
-                .AppendLine($"this.{rangedInstance.Function.LockReference}.Wait();")
-                .AppendLine($"try")
-                .AppendLine($"{{")
-                .AppendLine(
-                    $"if (this.{rangedInstance.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({rangedInstance.DisposalHandling.RangeName}));");
+                    $"private {_wellKnownTypes.SemaphoreSlim.FullName()} {rangedInstance.Function.LockReference} = new {_wellKnownTypes.SemaphoreSlim.FullName()}(1);");
+                
+            foreach (var (resolvable, funcParameterResolutions) in rangedInstance.Overloads)
+            {
+                var parameters = string.Join(", ",
+                    funcParameterResolutions.Select(p => $"{p.TypeFullName} {p.Reference}"));
+                stringBuilder = stringBuilder.AppendLine(
+                        $"public {rangedInstance.Function.TypeFullName} {rangedInstance.Function.Reference}({parameters})")
+                    .AppendLine($"{{")
+                    .AppendLine($"this.{rangedInstance.Function.LockReference}.Wait();")
+                    .AppendLine($"try")
+                    .AppendLine($"{{")
+                    .AppendLine(
+                        $"if (this.{rangedInstance.DisposalHandling.DisposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(nameof({rangedInstance.DisposalHandling.RangeName}));")
+                    .AppendLine(
+                        $"if (!object.ReferenceEquals({rangedInstance.Function.FieldReference}, null)) return {rangedInstance.Function.FieldReference};");
 
-            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, rangedInstance.Dependency);
+                stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolvable);
 
-            stringBuilder = stringBuilder
-                .AppendLine(
-                    $"this.{rangedInstance.Function.FieldReference} = {rangedInstance.Dependency.Reference};")
-                .AppendLine($"}}")
-                .AppendLine($"finally")
-                .AppendLine($"{{")
-                .AppendLine($"this.{rangedInstance.Function.LockReference}.Release();")
-                .AppendLine($"}}")
-                .AppendLine($"return this.{rangedInstance.Function.FieldReference};")
-                .AppendLine($"}}");
+                stringBuilder = stringBuilder
+                    .AppendLine(
+                        $"this.{rangedInstance.Function.FieldReference} = {resolvable.Reference};")
+                    .AppendLine($"}}")
+                    .AppendLine($"finally")
+                    .AppendLine($"{{")
+                    .AppendLine($"this.{rangedInstance.Function.LockReference}.Release();")
+                    .AppendLine($"}}")
+                    .AppendLine($"return this.{rangedInstance.Function.FieldReference};")
+                    .AppendLine($"}}");
+            }
+            
             return stringBuilder;
         }
     }

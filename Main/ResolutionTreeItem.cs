@@ -45,29 +45,33 @@ internal record ScopeRootFunction(
 
 internal record RangedInstance(
     RangedInstanceFunction Function,
-    Resolvable Dependency,
+    IReadOnlyList<RangedInstanceFunctionOverload> Overloads,
     DisposalHandling DisposalHandling);
 
-internal record FuncParameterResolution(
+internal record ParameterResolution(
     string Reference,
     string TypeFullName) : Resolvable(Reference, TypeFullName);
 
 internal record RangedInstanceFunction(
     string Reference,
     string TypeFullName,
-    INamedTypeSymbol Type,
     string FieldReference,
     string LockReference);
+
+internal record RangedInstanceFunctionOverload(
+    Resolvable Dependency,
+    IReadOnlyList<ParameterResolution> Parameter);
 
 internal record RangedInstanceReferenceResolution(
     string Reference,
     RangedInstanceFunction Function,
-    string owningObjectReference) : Resolvable(Reference, Function.TypeFullName);
+    IReadOnlyList<Resolvable> Parameter,
+    string OwningObjectReference) : Resolvable(Reference, Function.TypeFullName);
 
 internal record FuncResolution(
     string Reference,
     string TypeFullName,
-    IReadOnlyList<FuncParameterResolution> Parameter,
+    IReadOnlyList<ParameterResolution> Parameter,
     ResolutionTreeItem Dependency) : Resolvable(Reference, TypeFullName);
 
 internal record CollectionResolution(
@@ -83,24 +87,23 @@ internal record DisposableCollectionResolution(
 internal abstract record RangeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> AllRangedInstances) : ResolutionTreeItem;
+    IReadOnlyList<RangedInstance> RangedInstances) : ResolutionTreeItem;
 
 internal record ScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> ScopedInstanceResolutions,
+    IReadOnlyList<RangedInstance> RangedInstances,
     string ContainerReference,
     string ContainerParameterReference,
     string Name) 
-    : RangeResolution(RootResolutions, DisposalHandling, ScopedInstanceResolutions);
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
 
 internal record ContainerResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> ScopedInstanceResolutions,
-    IReadOnlyList<RangedInstance> SingleInstanceResolutions,
+    IReadOnlyList<RangedInstance> RangedInstances,
     ScopeResolution DefaultScope)
-    : RangeResolution(RootResolutions, DisposalHandling, SingleInstanceResolutions.Concat(ScopedInstanceResolutions).ToList());
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
 
 internal record DisposalHandling(
     DisposableCollectionResolution DisposableCollection,

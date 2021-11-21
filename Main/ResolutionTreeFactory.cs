@@ -5,9 +5,10 @@ internal interface IContainerResolutionBuilder
     void AddCreateResolveFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes);
 
     RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
-        INamedTypeSymbol type,
+        INamedTypeSymbol implementationType,
         IReferenceGenerator referenceGenerator,
-        string containerReference);
+        string containerReference,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 
     ContainerResolution Build();
 }
@@ -35,11 +36,13 @@ internal abstract class RangeResolutionBaseBuilder
     protected readonly ICheckTypeProperties CheckTypeProperties;
     
     protected readonly IReferenceGenerator RootReferenceGenerator;
-    protected readonly IDictionary<INamedTypeSymbol, RangedInstanceFunction> ScopedInstanceReferenceResolutions =
-            new Dictionary<INamedTypeSymbol, RangedInstanceFunction>(SymbolEqualityComparer.Default);
-    protected readonly Queue<RangedInstanceFunction> ScopedInstanceResolutionsQueue = new();
+    protected readonly IDictionary<INamedTypeSymbol, RangedInstanceFunction> RangedInstanceReferenceResolutions =
+        new Dictionary<INamedTypeSymbol, RangedInstanceFunction>(SymbolEqualityComparer.Default);
+    protected readonly HashSet<(RangedInstanceFunction, string)> RangedInstanceQueuedOverloads = new ();
+    protected readonly HashSet<(RangedInstanceFunction, string)> RangedInstanceDoneOverloads = new ();
+    protected readonly Queue<(RangedInstanceFunction, IReadOnlyList<(ITypeSymbol, ParameterResolution)>, INamedTypeSymbol)> RangedInstanceResolutionsQueue = new();
     
-    protected readonly List<RangedInstance> ScopedInstances = new ();
+    protected readonly List<(RangedInstanceFunction, RangedInstanceFunctionOverload)> RangedInstances = new ();
     protected readonly DisposableCollectionResolution DisposableCollectionResolution;
     protected readonly DisposalHandling DisposalHandling;
     protected readonly string Name;
@@ -76,7 +79,8 @@ internal abstract class RangeResolutionBaseBuilder
 
     protected abstract RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
         INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator);
+        IReferenceGenerator referenceGenerator,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
     
     protected abstract ScopeRootResolution CreateScopeRootResolution(
         INamedTypeSymbol rootType,
@@ -86,7 +90,7 @@ internal abstract class RangeResolutionBaseBuilder
     protected Resolvable Create(
         ITypeSymbol type, 
         IReferenceGenerator referenceGenerator, 
-        IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> currentFuncParameters)
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentFuncParameters)
     {
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
         {
@@ -109,7 +113,7 @@ internal abstract class RangeResolutionBaseBuilder
             var dependency = Create(
                 genericType, 
                 ReferenceGeneratorFactory.Create(), 
-                Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>());
+                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>());
             return new ConstructorResolution(
                 referenceGenerator.Generate(namedTypeSymbol),
                 namedTypeSymbol.FullName(),
@@ -122,7 +126,7 @@ internal abstract class RangeResolutionBaseBuilder
                             new FuncResolution(
                                 referenceGenerator.Generate("func"),
                                 $"global::System.Func<{genericType.FullName()}>",
-                                Array.Empty<FuncParameterResolution>(),
+                                Array.Empty<ParameterResolution>(),
                                 dependency)
                         )
                     }));
@@ -189,7 +193,7 @@ internal abstract class RangeResolutionBaseBuilder
             var parameterTypes = namedTypeSymbol0
                 .TypeArguments
                 .Take(namedTypeSymbol0.TypeArguments.Length - 1)
-                .Select(ts => (Type: ts, Resolution: new FuncParameterResolution(innerReferenceGenerator.Generate(ts), ts.FullName())))
+                .Select(ts => (Type: ts, Resolution: new ParameterResolution(innerReferenceGenerator.Generate(ts), ts.FullName())))
                 .ToArray();
 
             var dependency = Create(
@@ -209,7 +213,7 @@ internal abstract class RangeResolutionBaseBuilder
     protected Resolvable CreateConstructorResolution(
         ITypeSymbol typeSymbol,
         IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, FuncParameterResolution Resolution)> readOnlyList,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
         bool skipRangedInstanceCheck = false,
         bool skipScopeRootCheck = false)
     {
@@ -228,13 +232,13 @@ internal abstract class RangeResolutionBaseBuilder
         }
 
         if (!skipRangedInstanceCheck && CheckTypeProperties.ShouldBeSingleInstance(implementationType))
-            return CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator);
+            return CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator, currentParameters);
 
         if (!skipScopeRootCheck && CheckTypeProperties.ShouldBeScopeRoot(implementationType))
             return CreateScopeRootResolution(implementationType, referenceGenerator, DisposableCollectionResolution);
         
         if (!skipRangedInstanceCheck && CheckTypeProperties.ShouldBeScopedInstance(implementationType))
-            return CreateScopedInstanceReferenceResolution(implementationType, referenceGenerator);
+            return CreateScopedInstanceReferenceResolution(implementationType, referenceGenerator, currentParameters);
 
         if (implementationType.Constructors.SingleOrDefault() is not { } constructor)
         {
@@ -272,33 +276,83 @@ internal abstract class RangeResolutionBaseBuilder
                         p.Name,
                         Create(parameterType,
                             referenceGenerator,
-                            readOnlyList));
+                            currentParameters));
                 })
                 .ToList()));
     }
 
-    protected RangedInstanceReferenceResolution CreateScopedInstanceReferenceResolution(
+    private RangedInstanceReferenceResolution CreateScopedInstanceReferenceResolution(
         INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator)
+        IReferenceGenerator referenceGenerator,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        CreateRangedInstanceReferenceResolution(
+            implementationType,
+            referenceGenerator,
+            currentParameters,
+            "Scoped",
+            "this");
+
+    protected RangedInstanceReferenceResolution CreateRangedInstanceReferenceResolution(
+        INamedTypeSymbol implementationType,
+        IReferenceGenerator referenceGenerator,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
+        string label,
+        string owningObjectReference)
     {
-        if (!ScopedInstanceReferenceResolutions.TryGetValue(
+        if (!RangedInstanceReferenceResolutions.TryGetValue(
                 implementationType,
                 out RangedInstanceFunction function))
         {
             function = new RangedInstanceFunction(
-                RootReferenceGenerator.Generate("GetScopedInstance", implementationType),
+                RootReferenceGenerator.Generate($"Get{label}Instance", implementationType),
                 implementationType.FullName(),
-                implementationType,
-                RootReferenceGenerator.Generate("_scopedInstanceField", implementationType),
-                RootReferenceGenerator.Generate("_scopedInstanceLock"));
-            ScopedInstanceReferenceResolutions[implementationType] = function;
-            ScopedInstanceResolutionsQueue.Enqueue(function);
+                RootReferenceGenerator.Generate($"_{label.ToLower()}InstanceField", implementationType),
+                RootReferenceGenerator.Generate($"_{label.ToLower()}InstanceLock"));
+            RangedInstanceReferenceResolutions[implementationType] = function;
+            var parameter = currentParameters
+                .Select(t => (t.Type, new ParameterResolution(RootReferenceGenerator.Generate(t.Type), t.Type.FullName())))
+                .ToList();
+            RangedInstanceResolutionsQueue.Enqueue((function, parameter, implementationType));
+        }
+
+        var listedParameterTypes = string.Join(",", currentParameters.Select(p => p.Item2.TypeFullName));
+        if (!RangedInstanceQueuedOverloads.Contains((function, listedParameterTypes)))
+        {
+            var parameter = currentParameters
+                .Select(t => (t.Type, new ParameterResolution(RootReferenceGenerator.Generate(t.Type), t.Type.FullName())))
+                .ToList();
+            RangedInstanceResolutionsQueue.Enqueue((function, parameter, implementationType));
+            RangedInstanceQueuedOverloads.Add((function, listedParameterTypes));
         }
 
         return new RangedInstanceReferenceResolution(
             referenceGenerator.Generate(implementationType),
             function,
-            "this");
+            currentParameters.Select(t => t.Resolution).ToList(),
+            owningObjectReference);
+    }
+
+    protected void DoRangedInstancesWork()
+    {
+        while (RangedInstanceResolutionsQueue.Any())
+        {
+            var (scopedInstanceFunction, parameter, type) = RangedInstanceResolutionsQueue.Dequeue();
+            var listedParameterTypes = string.Join(",", parameter.Select(p => p.Item2.TypeFullName));
+            if (RangedInstanceDoneOverloads.Contains((scopedInstanceFunction, listedParameterTypes)))
+                continue;
+            var referenceGenerator = ReferenceGeneratorFactory.Create();
+            var resolvable = CreateConstructorResolution(
+                type,
+                referenceGenerator,
+                parameter,
+                true);
+            RangedInstances.Add((
+                scopedInstanceFunction, 
+                new RangedInstanceFunctionOverload(
+                    resolvable, 
+                    parameter.Select(t => t.Item2).ToList())));
+            RangedInstanceDoneOverloads.Add((scopedInstanceFunction, listedParameterTypes));
+        }
     }
 
     private static DisposableCollectionResolution? ImplementsIDisposable(
@@ -314,13 +368,8 @@ internal abstract class RangeResolutionBaseBuilder
 internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContainerResolutionBuilder
 {
     private readonly IContainerInfo _containerInfo;
-
-    private readonly IDictionary<INamedTypeSymbol, RangedInstanceFunction> _singleInstanceReferenceResolutions =
-        new Dictionary<INamedTypeSymbol, RangedInstanceFunction>(SymbolEqualityComparer.Default);
-    private readonly Queue<RangedInstanceFunction> _singleInstanceResolutionsQueue = new();
     
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
-    private readonly List<RangedInstance> _singleInstances = new ();
     private readonly IScopeResolutionBuilder _scopeResolutionBuilder;
 
     public ContainerResolutionBuilder(
@@ -350,41 +399,29 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     Create(
                         typeSymbol,
                         ReferenceGeneratorFactory.Create(),
-                        Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>()),
+                        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>()),
                     WellKnownTypes.Container.Construct(typeSymbol).FullName(),
                     _containerInfo.Name,
                     DisposalHandling));
     }
 
     public RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
-        INamedTypeSymbol type,
+        INamedTypeSymbol implementationType,
         IReferenceGenerator referenceGenerator,
-        string containerReference)
-    {
-        if (!_singleInstanceReferenceResolutions.TryGetValue(
-                type,
-                out RangedInstanceFunction function))
-        {
-            function = new RangedInstanceFunction(
-                RootReferenceGenerator.Generate("GetSingleInstance", type),
-                type.FullName(),
-                type,
-                RootReferenceGenerator.Generate("_singleInstanceField", type),
-                RootReferenceGenerator.Generate("_singleInstanceLock"));
-            _singleInstanceReferenceResolutions[type] = function;
-            _singleInstanceResolutionsQueue.Enqueue(function);
-        }
-
-        return new RangedInstanceReferenceResolution(
-            referenceGenerator.Generate(type),
-            function,
+        string containerReference,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        CreateRangedInstanceReferenceResolution(
+            implementationType,
+            referenceGenerator,
+            currentParameters,
+            "Single",
             containerReference);
-    }
 
     protected override RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
         INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator) =>
-        CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator, "this");
+        IReferenceGenerator referenceGenerator,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator, "this", currentParameters);
 
     protected override ScopeRootResolution CreateScopeRootResolution(INamedTypeSymbol rootType, IReferenceGenerator referenceGenerator,
         DisposableCollectionResolution disposableCollectionResolution) =>
@@ -392,38 +429,22 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
 
     public ContainerResolution Build()
     {
-        while (_singleInstanceResolutionsQueue.Any() || ScopedInstanceResolutionsQueue.Any() || _scopeResolutionBuilder.HasWorkToDo)
+        while (RangedInstanceResolutionsQueue.Any() || _scopeResolutionBuilder.HasWorkToDo)
         {
-            while (_singleInstanceResolutionsQueue.Any())
-            {
-                var singleInstanceFunction = _singleInstanceResolutionsQueue.Dequeue();
-                var resolvable = CreateConstructorResolution(
-                    singleInstanceFunction.Type,
-                    ReferenceGeneratorFactory.Create(),
-                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
-                    true);
-                _singleInstances.Add(new RangedInstance(singleInstanceFunction, resolvable, DisposalHandling));
-            }
-            
-            while (ScopedInstanceResolutionsQueue.Any())
-            {
-                var scopedInstanceFunction = ScopedInstanceResolutionsQueue.Dequeue();
-                var resolvable = CreateConstructorResolution(
-                    scopedInstanceFunction.Type,
-                    ReferenceGeneratorFactory.Create(),
-                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
-                    true);
-                ScopedInstances.Add(new RangedInstance(scopedInstanceFunction, resolvable, DisposalHandling));
-            }
-            
+            DoRangedInstancesWork();
             _scopeResolutionBuilder.DoWork();
         }
         
         return new(
             _rootResolutions,
             DisposalHandling,
-            ScopedInstances,
-            _singleInstances,
+            RangedInstances
+                .GroupBy(t => t.Item1)
+                .Select(g => new RangedInstance(
+                    g.Key,
+                    g.Select(t => t.Item2).ToList(),
+                    DisposalHandling))
+                .ToList(),
             _scopeResolutionBuilder.Build());
     }
 }
@@ -456,17 +477,19 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
 
     protected override RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
         INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator) =>
+        IReferenceGenerator referenceGenerator,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _containerResolutionBuilder.CreateSingleInstanceReferenceResolution(
             implementationType,
             referenceGenerator,
-            _containerReference);
+            _containerReference,
+            currentParameters);
 
     protected override ScopeRootResolution CreateScopeRootResolution(INamedTypeSymbol rootType, IReferenceGenerator referenceGenerator,
         DisposableCollectionResolution disposableCollectionResolution) =>
         AddCreateResolveFunction(rootType, referenceGenerator, _containerReference, disposableCollectionResolution);
 
-    public bool HasWorkToDo => _scopeRootFunctionResolutionsQueue.Any() || ScopedInstanceResolutionsQueue.Any();
+    public bool HasWorkToDo => _scopeRootFunctionResolutionsQueue.Any() || RangedInstanceResolutionsQueue.Any();
 
     public ScopeRootResolution AddCreateResolveFunction(
         INamedTypeSymbol rootType,
@@ -506,7 +529,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                 var resolvable = CreateConstructorResolution(
                     scopeRootFunction.Type,
                     ReferenceGeneratorFactory.Create(),
-                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
+                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
                     skipScopeRootCheck: true);
                 _rootResolutions.Add(new RootResolutionFunction(
                     scopeRootFunction.Reference,
@@ -518,23 +541,20 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                     DisposalHandling));
             }
             
-            while (ScopedInstanceResolutionsQueue.Any())
-            {
-                var scopedInstanceFunction = ScopedInstanceResolutionsQueue.Dequeue();
-                var resolvable = CreateConstructorResolution(
-                    scopedInstanceFunction.Type,
-                    ReferenceGeneratorFactory.Create(),
-                    Array.Empty<(ITypeSymbol Type, FuncParameterResolution Resolution)>(),
-                    true);
-                ScopedInstances.Add(new RangedInstance(scopedInstanceFunction, resolvable, DisposalHandling));
-            }
+            DoRangedInstancesWork();
         }
     }
 
     public ScopeResolution Build() =>
         new(_rootResolutions,
             DisposalHandling,
-            ScopedInstances,
+            RangedInstances
+                .GroupBy(t => t.Item1)
+                .Select(g => new RangedInstance(
+                    g.Key,
+                    g.Select(t => t.Item2).ToList(),
+                    DisposalHandling))
+                .ToList(),
             _containerReference,
             _containerParameterReference,
             Name);

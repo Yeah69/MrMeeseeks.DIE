@@ -1,23 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using MrMeeseeks.DIE.SampleChild;
+﻿namespace MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Sample;
-
-internal interface IContext
+internal interface IDecoratedScopeRoot
 {
-    string Text { get; }
+    IDecoratedScopeRoot Decorated { get; }
 }
 
-internal class Context : IContext, IDisposable, ISingleInstance
+internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot
 {
-    public string Text => "Hello, world!";
-    public Context(IReadOnlyList<IChild> child)
-    {
+    public IDecoratedScopeRoot Decorated => this;
+}
 
-    }
+internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedScopeRoot>
+{
+    public DecoratorScopeRoot(IDecoratedScopeRoot decorated) => 
+        Decorated = decorated;
 
-    public void Dispose()
-    {
-    }
+    public IDecoratedScopeRoot Decorated { get; }
+}
+
+internal partial class DecoratorScopeRootContainer : IContainer<IDecoratedScopeRoot>
+{
+    
 }

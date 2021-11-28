@@ -4,6 +4,7 @@ public interface IReferenceGenerator
 {
     string Generate(ITypeSymbol type);
     string Generate(string prefix, ITypeSymbol type);
+    string Generate(string prefix, ITypeSymbol type, string suffix);
     string Generate(string hardcodedName);
 }
 
@@ -15,13 +16,19 @@ internal class ReferenceGenerator : IReferenceGenerator
     public ReferenceGenerator(int j) => _j = j;
 
     public string Generate(ITypeSymbol type) => 
-        Generate($"{char.ToLower(type.Name[0])}{type.Name.Substring(1)}");
+        GenerateInner(string.Empty, $"{char.ToLower(type.Name[0])}{type.Name.Substring(1)}", string.Empty);
 
     public string Generate(string prefix, ITypeSymbol type) =>
-        Generate($"{prefix}{type.Name}");
+        GenerateInner(prefix, type.Name, string.Empty);
+
+    public string Generate(string prefix, ITypeSymbol type, string suffix) =>
+        GenerateInner(prefix, type.Name, suffix);
 
     public string Generate(string hardcodedName) => 
-        $"{hardcodedName}_{_j}_{++_i}";
+        GenerateInner(string.Empty, hardcodedName, string.Empty);
+    
+    private string GenerateInner(string prefix, string inner, string suffix) => 
+        $"{prefix}{inner}{suffix}_{_j}_{++_i}";
 }
     
 public interface IReferenceGeneratorFactory

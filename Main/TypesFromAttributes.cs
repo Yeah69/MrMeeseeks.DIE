@@ -7,6 +7,7 @@ public interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
     IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
     IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
+    IReadOnlyList<INamedTypeSymbol> Decorator { get; }
 }
 
 internal class TypesFromAttributes : ITypesFromAttributes
@@ -20,6 +21,7 @@ internal class TypesFromAttributes : ITypesFromAttributes
         SingleInstance = GetTypesFromAttribute(wellKnownTypes.SingleInstanceAttribute).ToList();
         ScopedInstance = GetTypesFromAttribute(wellKnownTypes.ScopedInstanceAttribute).ToList();
         ScopeRoot = GetTypesFromAttribute(wellKnownTypes.ScopeRootAttribute).ToList();
+        Decorator = GetTypesFromAttribute(wellKnownTypes.DecoratorAttribute).ToList();
             
         IEnumerable<INamedTypeSymbol> GetTypesFromAttribute(INamedTypeSymbol attribute) => getAssemblyAttributes
             .AllAssemblyAttributes
@@ -41,14 +43,13 @@ internal class TypesFromAttributes : ITypesFromAttributes
                 return type;
             })
             .Where(t => t is not null)
-            .OfType<INamedTypeSymbol>();
+            .OfType<INamedTypeSymbol>()
+            .Select(t => t.OriginalDefinition);
 
         bool CheckValidType(TypedConstant typedConstant, out INamedTypeSymbol type)
         {
             type = (typedConstant.Value as INamedTypeSymbol)!;
             if (typedConstant.Value is null)
-                return false;
-            if (type.IsUnboundGenericType)
                 return false;
 
             return true;
@@ -60,4 +61,5 @@ internal class TypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
     public IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
     public IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
+    public IReadOnlyList<INamedTypeSymbol> Decorator { get; }
 }

@@ -31,7 +31,9 @@ internal class GetAllImplementations : IGetAllImplementations
                 .Select(ms => ms.ReturnType)
                 .OfType<INamedTypeSymbol>());
 
-        AllImplementations = implementationsOfThisAssembly.Concat(spiedImplementations).ToList();
+        AllImplementations = implementationsOfThisAssembly
+            .Concat(spiedImplementations)
+            .ToList();
     }
 
     public IReadOnlyList<INamedTypeSymbol> AllImplementations { get; }

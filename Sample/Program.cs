@@ -1,16 +1,5 @@
 ﻿using MrMeeseeks.DIE.Sample;
-using StrongInject;
 
 System.Console.WriteLine("Hello, world!");
-{
-    using var container = new Container();
-    System.Console.WriteLine(((MrMeeseeks.DIE.IContainer<IContext>) container).Resolve().Text);
-}
-{
-    /*
-    using var strongInjectContainer = new StrongInjectContainer();
-    using var owned = strongInjectContainer.Resolve();
-    System.Console.WriteLine(owned.Value.Text);
-    */
-}
-
+using var container = new DecoratorScopeRootContainer();
+System.Console.WriteLine(((MrMeeseeks.DIE.IContainer<IDecoratedScopeRoot>) container).Resolve());

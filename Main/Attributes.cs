@@ -34,3 +34,10 @@ public class ScopeRootAttribute : Attribute
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public ScopeRootAttribute(params Type[] type) {}
 }
+    
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class DecoratorAttribute : Attribute
+{
+    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
+    public DecoratorAttribute(params Type[] type) {}
+}

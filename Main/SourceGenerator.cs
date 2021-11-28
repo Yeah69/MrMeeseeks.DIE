@@ -1,4 +1,6 @@
-﻿namespace MrMeeseeks.DIE;
+﻿using MrMeeseeks.DIE.ResolutionBuilding;
+
+namespace MrMeeseeks.DIE;
 
 [Generator]
 public class SourceGenerator : ISourceGenerator
@@ -17,10 +19,10 @@ public class SourceGenerator : ISourceGenerator
         var getAssemblyAttributes = new GetAssemblyAttributes(context);
         var typesFromAttributes = new TypesFromAttributes(wellKnownTypes, getAssemblyAttributes);
         var getAllImplementations = new GetAllImplementations(context, typesFromAttributes);
-        var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations);
+        var checkTypeProperties = new CheckTypeProperties(getAllImplementations, typesFromAttributes);
+        var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkTypeProperties);
         var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
-        var checkDisposalManagement = new CheckTypeProperties(getAllImplementations, typesFromAttributes);
         var containerErrorGenerator = new ContainerErrorGenerator(context);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
         new ExecuteImpl(
@@ -37,15 +39,15 @@ public class SourceGenerator : ISourceGenerator
             ci,
             typeToImplementationMapper,
             referenceGeneratorFactory,
-            checkDisposalManagement,
+            checkTypeProperties,
             wellKnownTypes,
             ScopeResolutionBuilderFactory);
         IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder) => new ScopeResolutionBuilder(
             containerBuilder,
             wellKnownTypes, 
             typeToImplementationMapper, 
-            referenceGeneratorFactory, 
-            checkDisposalManagement);
+            referenceGeneratorFactory,
+            checkTypeProperties);
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
     }

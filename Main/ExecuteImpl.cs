@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using MrMeeseeks.DIE.ResolutionBuilding;
 
 namespace MrMeeseeks.DIE;
 
@@ -49,7 +50,7 @@ internal class ExecuteImpl : IExecute
                 .DescendantNodesAndSelf()
                 .OfType<ClassDeclarationSyntax>()
                 .Select(x => semanticModel.GetDeclaredSymbol(x))
-                .Where(x => x != null)
+                .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
                 .Where(x => x.AllInterfaces.Any(x => x.OriginalDefinition.Equals(_wellKnownTypes.Container, SymbolEqualityComparer.Default)));
             foreach (var namedTypeSymbol in containerClasses)

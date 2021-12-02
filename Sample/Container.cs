@@ -2,8 +2,10 @@
 using MrMeeseeks.DIE.Sample;
 
 //[assembly:Spy(typeof(IPublicTypeReport), typeof(IInternalTypeReport))]
-[assembly:SingleInstance(typeof(ISingleInstance))]
-[assembly:ScopedInstance(typeof(IScopedInstance))]
-[assembly:ScopeRoot(typeof(IScopeRoot))]
-[assembly:Transient(typeof(ITransient))]
-[assembly:Decorator(typeof(IDecorator<>))]
+[assembly:SingleInstanceAggregation(typeof(ISingleInstance))]
+[assembly:ScopedInstanceAggregation(typeof(IScopedInstance))]
+[assembly:ScopeRootAggregation(typeof(IScopeRoot))]
+[assembly:TransientAggregation(typeof(ITransient))]
+[assembly:DecoratorAggregation(typeof(IDecorator<>))]
+[assembly:DecoratorSequenceChoice(typeof(IDecoratedMulti))]
+[assembly:DecoratorSequenceChoice(typeof(DecoratorMultiBasisB), typeof(DecoratorMultiA), typeof(DecoratorMultiB))]

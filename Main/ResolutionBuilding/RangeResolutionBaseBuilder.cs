@@ -23,7 +23,8 @@ internal abstract class RangeResolutionBaseBuilder
     protected readonly ITypeToImplementationsMapper TypeToImplementationsMapper;
     protected readonly IReferenceGeneratorFactory ReferenceGeneratorFactory;
     protected readonly ICheckTypeProperties CheckTypeProperties;
-    
+    protected readonly ICheckDecorators CheckDecorators;
+
     protected readonly IReferenceGenerator RootReferenceGenerator;
     protected readonly IDictionary<string, RangedInstanceFunction> RangedInstanceReferenceResolutions =
         new Dictionary<string, RangedInstanceFunction>();
@@ -43,12 +44,14 @@ internal abstract class RangeResolutionBaseBuilder
         WellKnownTypes wellKnownTypes,
         ITypeToImplementationsMapper typeToImplementationsMapper,
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        ICheckTypeProperties checkTypeProperties)
+        ICheckTypeProperties checkTypeProperties,
+        ICheckDecorators checkDecorators)
     {
         WellKnownTypes = wellKnownTypes;
         TypeToImplementationsMapper = typeToImplementationsMapper;
         ReferenceGeneratorFactory = referenceGeneratorFactory;
         CheckTypeProperties = checkTypeProperties;
+        CheckDecorators = checkDecorators;
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
         DisposableCollectionResolution = new DisposableCollectionResolution(
@@ -220,7 +223,7 @@ internal abstract class RangeResolutionBaseBuilder
         IReferenceGenerator referenceGenerator,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
-        var shouldBeDecorated = CheckTypeProperties.ShouldBeDecorated(interfaceType);
+        var shouldBeDecorated = CheckDecorators.ShouldBeDecorated(interfaceType);
 
         if (shouldBeDecorated && CheckTypeProperties.ShouldBeScopeRoot(implementationType))
         {
@@ -243,10 +246,10 @@ internal abstract class RangeResolutionBaseBuilder
 
         if (shouldBeDecorated)
         {
-            var decorators = new Stack<INamedTypeSymbol>(CheckTypeProperties.GetDecorators(interfaceType));
+            var decorators = new Queue<INamedTypeSymbol>(CheckDecorators.GetSequenceFor(interfaceType, implementationType));
             while (decorators.Any())
             {
-                var decorator = decorators.Pop();
+                var decorator = decorators.Dequeue();
                 var decoratorResolution = CreateDecoratorConstructorResolution(
                     new Decoration(interfaceType, implementationType, decorator, currentInterfaceResolution),
                     referenceGenerator,

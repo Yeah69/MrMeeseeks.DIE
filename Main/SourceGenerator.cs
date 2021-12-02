@@ -17,10 +17,12 @@ public class SourceGenerator : ISourceGenerator
         var diagLogger = new DiagLogger(context);
         var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
         var getAssemblyAttributes = new GetAssemblyAttributes(context);
-        var typesFromAttributes = new TypesFromAttributes(wellKnownTypes, getAssemblyAttributes);
-        var getAllImplementations = new GetAllImplementations(context, typesFromAttributes);
-        var checkTypeProperties = new CheckTypeProperties(getAllImplementations, typesFromAttributes);
-        var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkTypeProperties);
+        var typesFromTypeAggregatingAttributes = new TypesFromTypeAggregatingAttributes(wellKnownTypes, getAssemblyAttributes);
+        var getAllImplementations = new GetAllImplementations(context, typesFromTypeAggregatingAttributes);
+        var getSetOfTypesWithProperties = new GetSetOfTypesWithProperties(getAllImplementations);
+        var checkDecorators = new CheckDecorators(wellKnownTypes, getAssemblyAttributes, typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
+        var checkTypeProperties = new CheckTypeProperties(typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
+        var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkDecorators);
         var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerErrorGenerator = new ContainerErrorGenerator(context);
@@ -40,6 +42,7 @@ public class SourceGenerator : ISourceGenerator
             typeToImplementationMapper,
             referenceGeneratorFactory,
             checkTypeProperties,
+            checkDecorators,
             wellKnownTypes,
             ScopeResolutionBuilderFactory);
         IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder) => new ScopeResolutionBuilder(
@@ -47,7 +50,8 @@ public class SourceGenerator : ISourceGenerator
             wellKnownTypes, 
             typeToImplementationMapper, 
             referenceGeneratorFactory,
-            checkTypeProperties);
+            checkTypeProperties,
+            checkDecorators);
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
     }

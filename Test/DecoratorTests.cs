@@ -3,11 +3,12 @@ using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Sample;
 using Xunit;
 
-[assembly:SingleInstance(typeof(ISingleInstance))]
-[assembly:ScopedInstance(typeof(IScopedInstance))]
-[assembly:ScopeRoot(typeof(IScopeRoot))]
-[assembly:Transient(typeof(ITransient))]
-[assembly:Decorator(typeof(IDecorator<>))]
+[assembly:SingleInstanceAggregation(typeof(ISingleInstance))]
+[assembly:ScopedInstanceAggregation(typeof(IScopedInstance))]
+[assembly:ScopeRootAggregation(typeof(IScopeRoot))]
+[assembly:TransientAggregation(typeof(ITransient))]
+[assembly:DecoratorAggregation(typeof(IDecorator<>))]
+[assembly:DecoratorSequenceChoice(typeof(IDecoratedMulti), typeof(DecoratorMultiA), typeof(DecoratorMultiB))]
 
 namespace MrMeeseeks.DIE.Sample;
 
@@ -138,7 +139,7 @@ internal class DecoratorMultiBasis : IDecoratedMulti
 
 internal class DecoratorMultiA : IDecoratedMulti, IDecorator<IDecoratedMulti>
 {
-    public DecoratorMultiA(IDecoratedMulti decorated) => 
+    public DecoratorMultiA(IDecoratedMulti decorated) =>
         Decorated = decorated;
 
     public IDecoratedMulti Decorated { get; }
@@ -146,7 +147,7 @@ internal class DecoratorMultiA : IDecoratedMulti, IDecorator<IDecoratedMulti>
 
 internal class DecoratorMultiB : IDecoratedMulti, IDecorator<IDecoratedMulti>
 {
-    public DecoratorMultiB(IDecoratedMulti decorated) => 
+    public DecoratorMultiB(IDecoratedMulti decorated) =>
         Decorated = decorated;
 
     public IDecoratedMulti Decorated { get; }

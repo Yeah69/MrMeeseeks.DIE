@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Sample;
 using Xunit;
@@ -122,5 +123,105 @@ public partial class DecoratorTests
         
         // There is yet no way to check scopes externally
         Assert.True(false);
+    }
+}
+
+internal interface IDecoratedMulti
+{
+    IDecoratedMulti Decorated { get; }
+}
+
+internal class DecoratorMultiBasis : IDecoratedMulti
+{
+    public IDecoratedMulti Decorated => this;
+}
+
+internal class DecoratorMultiA : IDecoratedMulti, IDecorator<IDecoratedMulti>
+{
+    public DecoratorMultiA(IDecoratedMulti decorated) => 
+        Decorated = decorated;
+
+    public IDecoratedMulti Decorated { get; }
+}
+
+internal class DecoratorMultiB : IDecoratedMulti, IDecorator<IDecoratedMulti>
+{
+    public DecoratorMultiB(IDecoratedMulti decorated) => 
+        Decorated = decorated;
+
+    public IDecoratedMulti Decorated { get; }
+}
+
+internal partial class DecoratorMultiContainer : IContainer<IDecoratedMulti>
+{
+    
+}
+
+public partial class DecoratorTests
+{
+    [Fact]
+    public void Multi()
+    {
+        using var container = new DecoratorMultiContainer();
+        var decorated = ((IContainer<IDecoratedMulti>) container).Resolve();
+        var decoratedB = decorated;
+        var decoratedA = decorated.Decorated;
+        var decoratedBasis = decoratedA.Decorated;
+        Assert.NotEqual(decoratedBasis, decoratedA);
+        Assert.NotEqual(decoratedBasis, decoratedB);
+        Assert.NotEqual(decoratedA, decoratedB);
+        Assert.IsType<DecoratorMultiBasis>(decoratedBasis);
+        Assert.IsType<DecoratorMultiA>(decoratedA);
+        Assert.IsType<DecoratorMultiB>(decoratedB);
+    }
+}
+
+internal interface IDecoratedList
+{
+    IDecoratedList Decorated { get; }
+}
+
+internal class DecoratedListBasisA : IDecoratedList
+{
+    public IDecoratedList Decorated => this;
+}
+
+internal class DecoratedListBasisB : IDecoratedList
+{
+    public IDecoratedList Decorated => this;
+}
+
+internal class DecoratorList : IDecoratedList, IDecorator<IDecoratedList>
+{
+    public DecoratorList(IDecoratedList decorated) => 
+        Decorated = decorated;
+
+    public IDecoratedList Decorated { get; }
+}
+
+internal partial class DecoratorListContainer : IContainer<IReadOnlyList<IDecoratedList>>
+{
+    
+}
+
+public partial class DecoratorTests
+{
+    [Fact]
+    public void List()
+    {
+        using var container = new DecoratorListContainer();
+        var decorated = ((IContainer<IReadOnlyList<IDecoratedList>>) container).Resolve();
+        var decoratedOfA = decorated[0];
+        var decoratedOfB = decorated[1];
+        var decoratedBasisA = decoratedOfA.Decorated;
+        var decoratedBasisB = decoratedOfB.Decorated;
+        Assert.NotEqual(decoratedOfA, decoratedBasisA);
+        Assert.NotEqual(decoratedOfB, decoratedBasisB);
+        Assert.NotEqual(decoratedOfA, decoratedOfB);
+        Assert.NotEqual(decoratedBasisA, decoratedBasisB);
+        Assert.IsType<DecoratorList>(decoratedOfA);
+        Assert.IsType<DecoratorList>(decoratedOfB);
+        Assert.IsType<DecoratedListBasisA>(decoratedBasisA);
+        Assert.IsType<DecoratedListBasisB>(decoratedBasisB);
     }
 }

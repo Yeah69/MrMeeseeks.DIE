@@ -36,7 +36,15 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         WellKnownTypes wellKnownTypes, 
         ITypeToImplementationsMapper typeToImplementationsMapper, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
-        ICheckTypeProperties checkTypeProperties) : base(("DefaultScope", true), wellKnownTypes, typeToImplementationsMapper, referenceGeneratorFactory, checkTypeProperties)
+        ICheckTypeProperties checkTypeProperties,
+        ICheckDecorators checkDecorators) 
+        : base(
+            ("DefaultScope", true), 
+            wellKnownTypes, 
+            typeToImplementationsMapper, 
+            referenceGeneratorFactory, 
+            checkTypeProperties, 
+            checkDecorators)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
         _containerReference = RootReferenceGenerator.Generate("_container");
@@ -137,10 +145,10 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                         referenceGenerator.Generate(interfaceType),
                         interfaceType.FullName(),
                         resolvable);
-                    var decorators = new Stack<INamedTypeSymbol>(CheckTypeProperties.GetDecorators(interfaceType));
+                    var decorators = new Queue<INamedTypeSymbol>(CheckDecorators.GetSequenceFor(interfaceType, implementationType));
                     while (decorators.Any())
                     {
-                        var decorator = decorators.Pop();
+                        var decorator = decorators.Dequeue();
                         var decoratorResolution = CreateDecoratorConstructorResolution(
                             new Decoration(
                                 interfaceType, 

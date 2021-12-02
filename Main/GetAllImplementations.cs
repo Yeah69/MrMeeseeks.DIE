@@ -11,7 +11,7 @@ internal class GetAllImplementations : IGetAllImplementations
 {
     public GetAllImplementations(
         GeneratorExecutionContext context,
-        ITypesFromAttributes typesFromAttributes)
+        ITypesFromTypeAggregatingAttributes typesFromTypeAggregatingAttributes)
     {
         var implementationsOfThisAssembly = context.Compilation.SyntaxTrees
             .Select(st => (st, context.Compilation.GetSemanticModel(st)))
@@ -23,7 +23,7 @@ internal class GetAllImplementations : IGetAllImplementations
                 .Where(c => c is not null)
                 .OfType<INamedTypeSymbol>());
 
-        var spiedImplementations = typesFromAttributes
+        var spiedImplementations = typesFromTypeAggregatingAttributes
             .Spy
             .SelectMany(t => t?.GetMembers()
                 .OfType<IMethodSymbol>()

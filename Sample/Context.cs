@@ -1,24 +1,39 @@
-﻿namespace MrMeeseeks.DIE.Sample;
+﻿using System.Collections.Generic;
 
-internal interface IDecoratedScopeRoot
+namespace MrMeeseeks.DIE.Sample;
+
+internal interface IDecoratedMulti
 {
-    IDecoratedScopeRoot Decorated { get; }
+    IDecoratedMulti Decorated { get; }
 }
 
-internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot
+internal class DecoratorMultiBasisA : IDecoratedMulti
 {
-    public IDecoratedScopeRoot Decorated => this;
+    public IDecoratedMulti Decorated => this;
 }
 
-internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedScopeRoot>
+internal class DecoratorMultiBasisB : IDecoratedMulti
 {
-    public DecoratorScopeRoot(IDecoratedScopeRoot decorated) => 
+    public IDecoratedMulti Decorated => this;
+}
+
+internal class DecoratorMultiA : IDecoratedMulti, IDecorator<IDecoratedMulti>
+{
+    public DecoratorMultiA(IDecoratedMulti decorated) =>
         Decorated = decorated;
 
-    public IDecoratedScopeRoot Decorated { get; }
+    public IDecoratedMulti Decorated { get; }
 }
 
-internal partial class DecoratorScopeRootContainer : IContainer<IDecoratedScopeRoot>
+internal class DecoratorMultiB : IDecoratedMulti, IDecorator<IDecoratedMulti>
+{
+    public DecoratorMultiB(IDecoratedMulti decorated) =>
+        Decorated = decorated;
+
+    public IDecoratedMulti Decorated { get; }
+}
+
+internal partial class DecoratorMultiContainer : IContainer<IReadOnlyList<IDecoratedMulti>>
 {
     
 }

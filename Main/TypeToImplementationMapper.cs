@@ -11,10 +11,10 @@ internal class TypeToImplementationsMapper : ITypeToImplementationsMapper
 
     public TypeToImplementationsMapper(
         IGetAllImplementations getAllImplementations,
-        ICheckTypeProperties checkTypeProperties) =>
+        ICheckDecorators checkDecorators) =>
         _map = getAllImplementations
             .AllImplementations
-            .Where(t => !checkTypeProperties.IsDecorator(t.OriginalDefinition))
+            .Where(t => !checkDecorators.IsDecorator(t.OriginalDefinition))
             .SelectMany(i => { return i.AllInterfaces.OfType<ITypeSymbol>().Select(ii => (ii, i)).Prepend((i, i)); })
             .GroupBy(t => t.Item1, t => t.Item2)
             .ToDictionary(g => g.Key, g => g.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>().ToList());

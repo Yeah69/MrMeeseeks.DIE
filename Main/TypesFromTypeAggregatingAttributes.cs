@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-public interface ITypesFromAttributes
+public interface ITypesFromTypeAggregatingAttributes
 {
     IReadOnlyList<INamedTypeSymbol> Spy { get; }
     IReadOnlyList<INamedTypeSymbol> Transient { get; }
@@ -10,18 +10,18 @@ public interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> Decorator { get; }
 }
 
-internal class TypesFromAttributes : ITypesFromAttributes
+internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAttributes
 {
-    public TypesFromAttributes(
+    public TypesFromTypeAggregatingAttributes(
         WellKnownTypes wellKnownTypes,
         IGetAssemblyAttributes getAssemblyAttributes)
     {
-        Spy = GetTypesFromAttribute(wellKnownTypes.SpyAttribute).ToList();
-        Transient = GetTypesFromAttribute(wellKnownTypes.TransientAttribute).ToList();
-        SingleInstance = GetTypesFromAttribute(wellKnownTypes.SingleInstanceAttribute).ToList();
-        ScopedInstance = GetTypesFromAttribute(wellKnownTypes.ScopedInstanceAttribute).ToList();
-        ScopeRoot = GetTypesFromAttribute(wellKnownTypes.ScopeRootAttribute).ToList();
-        Decorator = GetTypesFromAttribute(wellKnownTypes.DecoratorAttribute).ToList();
+        Spy = GetTypesFromAttribute(wellKnownTypes.SpyAggregationAttribute).ToList();
+        Transient = GetTypesFromAttribute(wellKnownTypes.TransientAggregationAttribute).ToList();
+        SingleInstance = GetTypesFromAttribute(wellKnownTypes.SingleInstanceAggregationAttribute).ToList();
+        ScopedInstance = GetTypesFromAttribute(wellKnownTypes.ScopedInstanceAggregationAttribute).ToList();
+        ScopeRoot = GetTypesFromAttribute(wellKnownTypes.ScopeRootAggregationAttribute).ToList();
+        Decorator = GetTypesFromAttribute(wellKnownTypes.DecoratorAggregationAttribute).ToList();
             
         IEnumerable<INamedTypeSymbol> GetTypesFromAttribute(INamedTypeSymbol attribute) => getAssemblyAttributes
             .AllAssemblyAttributes

@@ -2,12 +2,13 @@
 
 internal record WellKnownTypes(
     INamedTypeSymbol Container,
-    INamedTypeSymbol SpyAttribute,
-    INamedTypeSymbol TransientAttribute,
-    INamedTypeSymbol SingleInstanceAttribute,
-    INamedTypeSymbol ScopedInstanceAttribute,
-    INamedTypeSymbol ScopeRootAttribute,
-    INamedTypeSymbol DecoratorAttribute,
+    INamedTypeSymbol SpyAggregationAttribute,
+    INamedTypeSymbol TransientAggregationAttribute,
+    INamedTypeSymbol SingleInstanceAggregationAttribute,
+    INamedTypeSymbol ScopedInstanceAggregationAttribute,
+    INamedTypeSymbol ScopeRootAggregationAttribute,
+    INamedTypeSymbol DecoratorAggregationAttribute,
+    INamedTypeSymbol DecoratorSequenceChoiceAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -46,31 +47,35 @@ internal record WellKnownTypes(
         var exception = compilation.GetTypeOrReport("System.Exception");
         var semaphoreSlim = compilation.GetTypeOrReport("System.Threading.SemaphoreSlim");
 
-        var spyAttribute = compilation
-            .GetTypeByMetadataName(typeof(SpyAttribute).FullName ?? "");
+        var spyAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(SpyAggregationAttribute).FullName ?? "");
 
-        var transientAttribute = compilation
-            .GetTypeByMetadataName(typeof(TransientAttribute).FullName ?? "");
+        var transientAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(TransientAggregationAttribute).FullName ?? "");
 
-        var singleInstanceAttribute = compilation
-            .GetTypeByMetadataName(typeof(SingleInstanceAttribute).FullName ?? "");
+        var singleInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(SingleInstanceAggregationAttribute).FullName ?? "");
 
-        var scopedInstanceAttribute = compilation
-            .GetTypeByMetadataName(typeof(ScopedInstanceAttribute).FullName ?? "");
+        var scopedInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(ScopedInstanceAggregationAttribute).FullName ?? "");
 
-        var scopeRootAttribute = compilation
-            .GetTypeByMetadataName(typeof(ScopeRootAttribute).FullName ?? "");
+        var scopeRootAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(ScopeRootAggregationAttribute).FullName ?? "");
 
-        var decoratorAttribute = compilation
-            .GetTypeByMetadataName(typeof(DecoratorAttribute).FullName ?? "");
+        var decoratorAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(DecoratorAggregationAttribute).FullName ?? "");
+
+        var decoratorSequenceChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(DecoratorSequenceChoiceAttribute).FullName ?? "");
 
         if (iContainer is null
-            || spyAttribute is null
-            || transientAttribute is null
-            || singleInstanceAttribute is null
-            || scopedInstanceAttribute is null
-            || scopeRootAttribute is null
-            || decoratorAttribute is null
+            || spyAggregationAttribute is null
+            || transientAggregationAttribute is null
+            || singleInstanceAggregationAttribute is null
+            || scopedInstanceAggregationAttribute is null
+            || scopeRootAggregationAttribute is null
+            || decoratorAggregationAttribute is null
+            || decoratorSequenceChoiceAttribute is null
             || iDisposable is null
             || iAsyncDisposable is null
             || lazy1 is null
@@ -93,12 +98,13 @@ internal record WellKnownTypes(
 
         wellKnownTypes = new WellKnownTypes(
             Container: iContainer,
-            SpyAttribute: spyAttribute,
-            TransientAttribute: transientAttribute,
-            SingleInstanceAttribute: singleInstanceAttribute,
-            ScopedInstanceAttribute: scopedInstanceAttribute,
-            ScopeRootAttribute: scopeRootAttribute,
-            DecoratorAttribute: decoratorAttribute,
+            SpyAggregationAttribute: spyAggregationAttribute,
+            TransientAggregationAttribute: transientAggregationAttribute,
+            SingleInstanceAggregationAttribute: singleInstanceAggregationAttribute,
+            ScopedInstanceAggregationAttribute: scopedInstanceAggregationAttribute,
+            ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
+            DecoratorAggregationAttribute: decoratorAggregationAttribute,
+            DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
             Disposable: iDisposable,
             AsyncDisposable: iAsyncDisposable,
             Lazy1: lazy1,

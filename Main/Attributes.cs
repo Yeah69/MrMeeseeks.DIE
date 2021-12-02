@@ -1,43 +1,50 @@
 namespace MrMeeseeks.DIE;
 
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class SpyAttribute : Attribute
+public class SpyAggregationAttribute : Attribute
 {
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
-    public SpyAttribute(params Type[] type) {}
+    public SpyAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class TransientAttribute : Attribute
+public class TransientAggregationAttribute : Attribute
 {
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
-    public TransientAttribute(params Type[] type) {}
+    public TransientAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class SingleInstanceAttribute : Attribute
+public class SingleInstanceAggregationAttribute : Attribute
 {
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
-    public SingleInstanceAttribute(params Type[] type) {}
+    public SingleInstanceAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class ScopedInstanceAttribute : Attribute
+public class ScopedInstanceAggregationAttribute : Attribute
 {
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
-    public ScopedInstanceAttribute(params Type[] type) {}
+    public ScopedInstanceAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class ScopeRootAttribute : Attribute
+public class ScopeRootAggregationAttribute : Attribute
 {
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
-    public ScopeRootAttribute(params Type[] type) {}
+    public ScopeRootAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class DecoratorAttribute : Attribute
+public class DecoratorAggregationAttribute : Attribute
 {
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
-    public DecoratorAttribute(params Type[] type) {}
+    public DecoratorAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class DecoratorSequenceChoiceAttribute : Attribute
+{
+    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
+    public DecoratorSequenceChoiceAttribute(Type decoratedType, params Type[] types) {}
 }

@@ -100,7 +100,7 @@ internal abstract class RangeResolutionBaseBuilder
                     _ => $"[{namedTypeSymbol.FullName()}] Lazy: {namedTypeSymbol.TypeArguments[0].FullName()} is not a named type symbol"
                 });
             }
-
+            
             var dependency = Create(
                 genericType, 
                 ReferenceGeneratorFactory.Create(), 
@@ -141,10 +141,14 @@ internal abstract class RangeResolutionBaseBuilder
                 });
             }
             var itemFullName = itemType.FullName();
+            var itemTypeIsInterface = itemType.TypeKind == TypeKind.Interface;
             var items = TypeToImplementationsMapper
                 .Map(itemType)
-                .Select(i => Create(i, referenceGenerator, currentFuncParameters))
+                .Select(i => itemTypeIsInterface
+                    ? CreateInterfaceResolution(itemType, i, referenceGenerator, currentFuncParameters)
+                    : Create(i, referenceGenerator, currentFuncParameters))
                 .ToList();
+
             return new CollectionResolution(
                 referenceGenerator.Generate(type),
                 type.FullName(),
@@ -203,6 +207,19 @@ internal abstract class RangeResolutionBaseBuilder
             });
         }
 
+        return CreateInterfaceResolution(
+            interfaceType,
+            implementationType,
+            referenceGenerator,
+            currentParameters);
+    }
+
+    private Resolvable CreateInterfaceResolution(
+        INamedTypeSymbol interfaceType,
+        INamedTypeSymbol implementationType,
+        IReferenceGenerator referenceGenerator,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
+    {
         var shouldBeDecorated = CheckTypeProperties.ShouldBeDecorated(interfaceType);
 
         if (shouldBeDecorated && CheckTypeProperties.ShouldBeScopeRoot(implementationType))
@@ -214,14 +231,14 @@ internal abstract class RangeResolutionBaseBuilder
                 currentParameters,
                 new DecorationScopeRoot(interfaceType, implementationType));
             return new InterfaceResolution(
-                referenceGenerator.Generate(typeSymbol),
-                typeSymbol.FullName(),
+                referenceGenerator.Generate(interfaceType),
+                interfaceType.FullName(),
                 rootResolution);
         }
 
         var currentInterfaceResolution = new InterfaceResolution(
-            referenceGenerator.Generate(typeSymbol),
-            typeSymbol.FullName(),
+            referenceGenerator.Generate(interfaceType),
+            interfaceType.FullName(),
             Create(implementationType, referenceGenerator, currentParameters));
 
         if (shouldBeDecorated)
@@ -236,8 +253,8 @@ internal abstract class RangeResolutionBaseBuilder
                     currentParameters,
                     Skip.None);
                 currentInterfaceResolution = new InterfaceResolution(
-                    referenceGenerator.Generate(typeSymbol),
-                    typeSymbol.FullName(),
+                    referenceGenerator.Generate(interfaceType),
+                    interfaceType.FullName(),
                     decoratorResolution);
             }
         }

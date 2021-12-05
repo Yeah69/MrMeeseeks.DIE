@@ -12,7 +12,7 @@ internal class ContainerErrorGenerator : IContainerErrorGenerator
 {
     private readonly GeneratorExecutionContext _context;
 
-    public ContainerErrorGenerator(
+    internal ContainerErrorGenerator(
         GeneratorExecutionContext context) =>
         _context = context;
 

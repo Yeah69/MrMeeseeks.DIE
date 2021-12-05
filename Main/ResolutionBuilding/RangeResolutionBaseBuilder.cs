@@ -2,26 +2,41 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal abstract class RangeResolutionBaseBuilder
 {
-    public record DecorationScopeRoot(
-        INamedTypeSymbol InterfaceType,
-        INamedTypeSymbol ImplementationType);
-    public record Decoration(
+
+    internal abstract record InterfaceExtension(
+        INamedTypeSymbol InterfaceType)
+    {
+        internal string KeySuffix() =>
+            this switch
+            {
+                DecorationInterfaceExtension decoration => $":::{decoration.ImplementationType.FullName()}",
+                CompositionInterfaceExtension composition => string.Join(":::", composition.ImplementationTypes.Select(i => i.FullName())),
+                _ => throw new ArgumentException()
+            };
+        
+        internal string RangedNameSuffix() =>
+            this switch
+            {
+                DecorationInterfaceExtension decoration => $"_{decoration.ImplementationType.Name}",
+                CompositionInterfaceExtension =>  "_Composite",
+                _ => throw new ArgumentException()
+            };
+    }
+    internal record DecorationInterfaceExtension(
         INamedTypeSymbol InterfaceType,
         INamedTypeSymbol ImplementationType,
         INamedTypeSymbol DecoratorType,
-        InterfaceResolution CurrentInterfaceResolution);
-
-    [Flags]
-    public enum Skip
-    {
-        None = 1<<0,
-        RangedInstanceCheck = 1<<1,
-        ScopeRootCheck = 1<<2
-    }
+        InterfaceResolution CurrentInterfaceResolution)
+        : InterfaceExtension(InterfaceType);
+    internal record CompositionInterfaceExtension(
+        INamedTypeSymbol InterfaceType,
+        IReadOnlyList<INamedTypeSymbol> ImplementationTypes,
+        INamedTypeSymbol CompositeType,
+        IReadOnlyList<InterfaceResolution> InterfaceResolutionComposition)
+        : InterfaceExtension(InterfaceType);
     
     protected readonly WellKnownTypes WellKnownTypes;
     protected readonly ITypeToImplementationsMapper TypeToImplementationsMapper;
-    protected readonly IReferenceGeneratorFactory ReferenceGeneratorFactory;
     protected readonly ICheckTypeProperties CheckTypeProperties;
     protected readonly ICheckDecorators CheckDecorators;
 
@@ -29,7 +44,7 @@ internal abstract class RangeResolutionBaseBuilder
     protected readonly IDictionary<string, RangedInstanceFunction> RangedInstanceReferenceResolutions =
         new Dictionary<string, RangedInstanceFunction>();
     protected readonly HashSet<(RangedInstanceFunction, string)> RangedInstanceQueuedOverloads = new ();
-    protected readonly Queue<(RangedInstanceFunction, IReadOnlyList<(ITypeSymbol, ParameterResolution)>, INamedTypeSymbol, Decoration?)> RangedInstanceResolutionsQueue = new();
+    protected readonly Queue<(RangedInstanceFunction, IReadOnlyList<(ITypeSymbol, ParameterResolution)>, INamedTypeSymbol, InterfaceExtension?)> RangedInstanceResolutionsQueue = new();
     
     protected readonly List<(RangedInstanceFunction, RangedInstanceFunctionOverload)> RangedInstances = new ();
     protected readonly DisposableCollectionResolution DisposableCollectionResolution;
@@ -49,7 +64,6 @@ internal abstract class RangeResolutionBaseBuilder
     {
         WellKnownTypes = wellKnownTypes;
         TypeToImplementationsMapper = typeToImplementationsMapper;
-        ReferenceGeneratorFactory = referenceGeneratorFactory;
         CheckTypeProperties = checkTypeProperties;
         CheckDecorators = checkDecorators;
 
@@ -68,24 +82,24 @@ internal abstract class RangeResolutionBaseBuilder
             RootReferenceGenerator.Generate("disposable"));
     }
 
-    protected abstract RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        Decoration? decoration);
+    protected abstract RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(ForConstructorParameter parameter);
     
     protected abstract ScopeRootResolution CreateScopeRootResolution(
+        IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        IReferenceGenerator referenceGenerator,
         DisposableCollectionResolution disposableCollectionResolution,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        DecorationScopeRoot? decoration);
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 
-    protected Resolvable Create(
-        ITypeSymbol type, 
-        IReferenceGenerator referenceGenerator, 
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentFuncParameters)
+    internal record Parameter;
+
+    internal record SwitchTypeParameter(
+        ITypeSymbol Type,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters)
+        : Parameter;
+    
+    protected Resolvable SwitchType(SwitchTypeParameter parameter)
     {
+        var (type, currentFuncParameters) = parameter;
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
         {
             return funcParameter.Resolution;
@@ -104,12 +118,11 @@ internal abstract class RangeResolutionBaseBuilder
                 });
             }
             
-            var dependency = Create(
+            var dependency = SwitchType(new SwitchTypeParameter(
                 genericType, 
-                ReferenceGeneratorFactory.Create(), 
-                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>());
+                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>()));
             return new ConstructorResolution(
-                referenceGenerator.Generate(namedTypeSymbol),
+                RootReferenceGenerator.Generate(namedTypeSymbol),
                 namedTypeSymbol.FullName(),
                 ImplementsIDisposable(namedTypeSymbol, WellKnownTypes, DisposableCollectionResolution, CheckTypeProperties),
                 new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
@@ -118,7 +131,7 @@ internal abstract class RangeResolutionBaseBuilder
                         (
                             "valueFactory", 
                             new FuncResolution(
-                                referenceGenerator.Generate("func"),
+                                RootReferenceGenerator.Generate("func"),
                                 $"global::System.Func<{genericType.FullName()}>",
                                 Array.Empty<ParameterResolution>(),
                                 dependency)
@@ -148,41 +161,39 @@ internal abstract class RangeResolutionBaseBuilder
             var items = TypeToImplementationsMapper
                 .Map(itemType)
                 .Select(i => itemTypeIsInterface
-                    ? CreateInterfaceResolution(itemType, i, referenceGenerator, currentFuncParameters)
-                    : Create(i, referenceGenerator, currentFuncParameters))
+                    ? SwitchInterfaceForSpecificImplementation(new SwitchInterfaceForSpecificImplementationParameter(itemType, i, currentFuncParameters))
+                    : SwitchClass(new SwitchClassParameter(i, currentFuncParameters)))
                 .ToList();
 
             return new CollectionResolution(
-                referenceGenerator.Generate(type),
+                RootReferenceGenerator.Generate(type),
                 type.FullName(),
                 itemFullName,
                 items);
         }
 
         if (type.TypeKind == TypeKind.Interface)
-            return CreateInterfaceResolution(type, referenceGenerator, currentFuncParameters);
+            return SwitchInterface(new SwitchInterfaceParameter(type, currentFuncParameters));
 
         if (type.TypeKind == TypeKind.Class)
-            return CreateConstructorResolution(type, referenceGenerator, currentFuncParameters, Skip.None);
+            return SwitchClass(new SwitchClassParameter(type, currentFuncParameters));
 
         if (type.TypeKind == TypeKind.Delegate 
             && type.FullName().StartsWith("global::System.Func<")
             && type is INamedTypeSymbol namedTypeSymbol0)
         {
             var returnType = namedTypeSymbol0.TypeArguments.Last();
-            var innerReferenceGenerator = ReferenceGeneratorFactory.Create();
             var parameterTypes = namedTypeSymbol0
                 .TypeArguments
                 .Take(namedTypeSymbol0.TypeArguments.Length - 1)
-                .Select(ts => (Type: ts, Resolution: new ParameterResolution(innerReferenceGenerator.Generate(ts), ts.FullName())))
+                .Select(ts => (Type: ts, Resolution: new ParameterResolution(RootReferenceGenerator.Generate(ts), ts.FullName())))
                 .ToArray();
 
-            var dependency = Create(
+            var dependency = SwitchType(new SwitchTypeParameter(
                 returnType, 
-                innerReferenceGenerator, 
-                parameterTypes);
+                parameterTypes));
             return new FuncResolution(
-                referenceGenerator.Generate(type),
+                RootReferenceGenerator.Generate(type),
                 type.FullName(),
                 parameterTypes.Select(t => t.Resolution).ToArray(),
                 dependency);
@@ -191,58 +202,163 @@ internal abstract class RangeResolutionBaseBuilder
         return new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation.");
     }
 
-    private Resolvable CreateInterfaceResolution(
-        ITypeSymbol typeSymbol,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
+    internal record SwitchInterfaceParameter(
+        ITypeSymbol Type,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters)
+        : Parameter;
+
+    private Resolvable SwitchInterface(SwitchInterfaceParameter parameter)
     {
+        var (typeSymbol, currentParameters) = parameter;
         var interfaceType = (INamedTypeSymbol) typeSymbol;
         var implementations = TypeToImplementationsMapper
             .Map(typeSymbol);
-        if (implementations
-                .SingleOrDefault() is not { } implementationType)
+        var shouldBeScopeRoot = implementations.Any(i => CheckTypeProperties.ShouldBeScopeRoot(i));
+
+        var nextParameter = new SwitchInterfaceAfterScopeRootParameter(
+            interfaceType,
+            implementations,
+            currentParameters);
+        
+        if (shouldBeScopeRoot)
+        {
+            return CreateScopeRootResolution(
+                nextParameter,
+                interfaceType,
+                DisposableCollectionResolution,
+                currentParameters);
+        }
+
+        return SwitchInterfaceAfterScopeRoot(nextParameter);
+    }
+
+    internal interface IScopeRootParameter
+    {
+        string KeySuffix();
+        string RootFunctionSuffix();
+    }
+
+    internal record SwitchInterfaceAfterScopeRootParameter(
+        INamedTypeSymbol InterfaceType,
+        IList<INamedTypeSymbol> ImplementationTypes,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters) 
+        : IScopeRootParameter
+    {
+        public string KeySuffix() => ":::InterfaceAfterRoot";
+
+        public string RootFunctionSuffix() => "_InterfaceAfterRoot";
+    }
+
+    protected Resolvable SwitchInterfaceAfterScopeRoot(
+        SwitchInterfaceAfterScopeRootParameter parameter)
+    {
+        var (interfaceType, implementations, currentParameters) = parameter;
+        if (CheckTypeProperties.ShouldBeComposite(interfaceType))
+        {
+            var compositeImplementationType = CheckTypeProperties.GetCompositeFor(interfaceType);
+            var interfaceResolutions = implementations.Select(i => CreateInterface(new CreateInterfaceParameter(
+                interfaceType,
+                i,
+                currentParameters))).ToList();
+            var composition = new CompositionInterfaceExtension(
+                interfaceType,
+                implementations.ToList(),
+                compositeImplementationType,
+                interfaceResolutions);
+            return CreateInterface(new CreateInterfaceParameterAsComposition(
+                interfaceType, 
+                compositeImplementationType,
+                currentParameters, 
+                composition));
+        }
+        if (implementations.SingleOrDefault() is not { } implementationType)
         {
             return new ErrorTreeItem(implementations.Count switch
             {
-                0 => $"[{typeSymbol.FullName()}] Interface: No implementation found",
-                > 1 => $"[{typeSymbol.FullName()}] Interface: more than one implementation found",
-                _ => $"[{typeSymbol.FullName()}] Interface: Found single implementation {implementations[0].FullName()} is not a named type symbol"
+                0 => $"[{interfaceType.FullName()}] Interface: No implementation found",
+                > 1 => $"[{interfaceType.FullName()}] Interface: more than one implementation found",
+                _ =>
+                    $"[{interfaceType.FullName()}] Interface: Found single implementation {implementations[0].FullName()} is not a named type symbol"
             });
         }
 
-        return CreateInterfaceResolution(
+        return CreateInterface(new CreateInterfaceParameter(
             interfaceType,
             implementationType,
-            referenceGenerator,
-            currentParameters);
+            currentParameters));
     }
 
-    private Resolvable CreateInterfaceResolution(
-        INamedTypeSymbol interfaceType,
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
-    {
-        var shouldBeDecorated = CheckDecorators.ShouldBeDecorated(interfaceType);
 
-        if (shouldBeDecorated && CheckTypeProperties.ShouldBeScopeRoot(implementationType))
+    internal record SwitchInterfaceForSpecificImplementationParameter(
+        INamedTypeSymbol InterfaceType,
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
+
+    private Resolvable SwitchInterfaceForSpecificImplementation(
+        SwitchInterfaceForSpecificImplementationParameter parameter)
+    {
+        var (interfaceType, implementationType, currentParameters) = parameter;
+        
+        var nextParameter = new CreateInterfaceParameter(
+            interfaceType,
+            implementationType,
+            currentParameters);
+        
+        if (CheckTypeProperties.ShouldBeScopeRoot(implementationType))
         {
-            var rootResolution = CreateScopeRootResolution(
+            return CreateScopeRootResolution(
+                nextParameter,
                 interfaceType,
-                referenceGenerator,
                 DisposableCollectionResolution,
-                currentParameters,
-                new DecorationScopeRoot(interfaceType, implementationType));
-            return new InterfaceResolution(
-                referenceGenerator.Generate(interfaceType),
-                interfaceType.FullName(),
-                rootResolution);
+                currentParameters);
         }
 
+        return CreateInterface(nextParameter);
+    }
+
+    internal record CreateInterfaceParameter(
+        INamedTypeSymbol InterfaceType,
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
+        : IScopeRootParameter
+    {
+        public virtual string KeySuffix() => ":::NormalInterface";
+
+        public virtual string RootFunctionSuffix() => "_NormalInterface";
+    }
+
+    internal record CreateInterfaceParameterAsComposition(
+        INamedTypeSymbol InterfaceType,
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+        CompositionInterfaceExtension Composition)
+        : CreateInterfaceParameter(InterfaceType, ImplementationType, CurrentParameters)
+    {
+        public override string KeySuffix() => ":::CompositeInterface";
+
+        public override string RootFunctionSuffix() => "_CompositeInterface";
+    }
+
+    internal InterfaceResolution CreateInterface(CreateInterfaceParameter parameter)
+    {
+        var (interfaceType, implementationType, currentParameters) = parameter;
+        var shouldBeDecorated = CheckDecorators.ShouldBeDecorated(interfaceType);
+
+        var nextParameter = parameter switch
+        {
+            CreateInterfaceParameterAsComposition asComposition => new SwitchImplementationParameterWithComposition(
+                asComposition.Composition.CompositeType,
+                currentParameters,
+                asComposition.Composition),
+            _ => new SwitchImplementationParameter(
+                implementationType,
+                currentParameters)
+        };
+
         var currentInterfaceResolution = new InterfaceResolution(
-            referenceGenerator.Generate(interfaceType),
+            RootReferenceGenerator.Generate(interfaceType),
             interfaceType.FullName(),
-            Create(implementationType, referenceGenerator, currentParameters));
+            SwitchImplementation(nextParameter));
 
         if (shouldBeDecorated)
         {
@@ -250,13 +366,14 @@ internal abstract class RangeResolutionBaseBuilder
             while (decorators.Any())
             {
                 var decorator = decorators.Dequeue();
-                var decoratorResolution = CreateDecoratorConstructorResolution(
-                    new Decoration(interfaceType, implementationType, decorator, currentInterfaceResolution),
-                    referenceGenerator,
+                var decoration = new DecorationInterfaceExtension(interfaceType, implementationType, decorator,
+                    currentInterfaceResolution);
+                var decoratorResolution = SwitchImplementation(new SwitchImplementationParameterWithDecoration(
+                    decorator,
                     currentParameters,
-                    Skip.None);
+                    decoration));
                 currentInterfaceResolution = new InterfaceResolution(
-                    referenceGenerator.Generate(interfaceType),
+                    RootReferenceGenerator.Generate(interfaceType),
                     interfaceType.FullName(),
                     decoratorResolution);
             }
@@ -265,12 +382,13 @@ internal abstract class RangeResolutionBaseBuilder
         return currentInterfaceResolution;
     }
 
-    protected Resolvable CreateConstructorResolution(
-        ITypeSymbol typeSymbol,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        Skip skip)
+    internal record SwitchClassParameter(
+        ITypeSymbol TypeSymbol,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
+
+    protected Resolvable SwitchClass(SwitchClassParameter parameter)
     {
+        var (typeSymbol, currentParameters) = parameter;
         var implementations = TypeToImplementationsMapper
             .Map(typeSymbol);
         var implementationType = implementations.SingleOrDefault();
@@ -285,27 +403,126 @@ internal abstract class RangeResolutionBaseBuilder
             });
         }
 
-        if (!skip.HasFlag(Skip.RangedInstanceCheck) && CheckTypeProperties.ShouldBeSingleInstance(implementationType))
-            return CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator, currentParameters, null);
+        var nextParameter = new SwitchImplementationParameter(
+            implementationType,
+            currentParameters);
 
-        if (!skip.HasFlag(Skip.ScopeRootCheck) && CheckTypeProperties.ShouldBeScopeRoot(implementationType))
-            return CreateScopeRootResolution(implementationType, referenceGenerator, DisposableCollectionResolution, currentParameters, null);
+        if (CheckTypeProperties.ShouldBeScopeRoot(implementationType))
+            return CreateScopeRootResolution(nextParameter, implementationType, DisposableCollectionResolution, currentParameters);
+
+        return SwitchImplementation(nextParameter);
+    }
+    
+    internal record SwitchImplementationParameter(
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
+        : IScopeRootParameter
+    {
+        public virtual string KeySuffix() => ":::Implementation";
+
+        public virtual string RootFunctionSuffix() => "";
+    }
+    
+    internal record SwitchImplementationParameterWithDecoration(
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+        DecorationInterfaceExtension Decoration)
+        : SwitchImplementationParameter(ImplementationType, CurrentParameters);
+    
+    internal record SwitchImplementationParameterWithComposition(
+            INamedTypeSymbol ImplementationType,
+            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+            CompositionInterfaceExtension Composition)
+        : SwitchImplementationParameter(ImplementationType, CurrentParameters);
+
+    protected Resolvable SwitchImplementation(SwitchImplementationParameter parameter)
+    {
+        var (implementationType, currentParameters) = parameter;
+        var scopeLevel = parameter switch
+        {
+            SwitchImplementationParameterWithComposition withComposition =>
+                withComposition.Composition.ImplementationTypes.Select(i => CheckTypeProperties.GetScopeLevelFor(i))
+                    .Min(),
+            SwitchImplementationParameterWithDecoration withDecoration => CheckTypeProperties.GetScopeLevelFor(
+                withDecoration.Decoration.ImplementationType),
+            _ => CheckTypeProperties.GetScopeLevelFor(parameter.ImplementationType)
+        };
+        var nextParameter = parameter switch
+        {
+            SwitchImplementationParameterWithComposition withComposition => new ForConstructorParameterWithComposition(
+                withComposition.Composition.CompositeType, 
+                currentParameters,
+                withComposition.Composition),
+            SwitchImplementationParameterWithDecoration withDecoration => new ForConstructorParameterWithDecoration(
+                withDecoration.Decoration.DecoratorType,
+                currentParameters,
+                withDecoration.Decoration),
+            _ => new ForConstructorParameter(implementationType, currentParameters)
+        };
+        return scopeLevel switch
+        {
+            ScopeLevel.SingleInstance => CreateSingleInstanceReferenceResolution(nextParameter),
+            ScopeLevel.Scope => CreateScopedInstanceReferenceResolution(nextParameter),
+            _ => CreateConstructorResolution(nextParameter)
+        };
+    }
+
+    internal record ForConstructorParameter(
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters);
+
+    internal abstract record ForConstructorParameterWithInterfaceExtension(
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters,
+        InterfaceExtension InterfaceExtension)
+        : ForConstructorParameter(ImplementationType, CurrentFuncParameters);
+
+    internal record ForConstructorParameterWithDecoration(
+        INamedTypeSymbol ImplementationType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters,
+        DecorationInterfaceExtension Decoration)
+        : ForConstructorParameterWithInterfaceExtension(ImplementationType, CurrentFuncParameters, Decoration);
+
+    internal record ForConstructorParameterWithComposition(
+            INamedTypeSymbol ImplementationType,
+            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters,
+            CompositionInterfaceExtension Composition)
+        : ForConstructorParameterWithInterfaceExtension(ImplementationType, CurrentFuncParameters, Composition);
+
+    protected Resolvable CreateConstructorResolution(ForConstructorParameter parameter)
+    {
+        var (implementationType, currentParameters) = parameter;
         
-        if (!skip.HasFlag(Skip.RangedInstanceCheck) && CheckTypeProperties.ShouldBeScopedInstance(implementationType))
-            return CreateScopedInstanceReferenceResolution(implementationType, referenceGenerator, currentParameters, null);
-
         if (implementationType.Constructors.SingleOrDefault() is not { } constructor)
         {
             return new ErrorTreeItem(implementationType.Constructors.Length switch
             {
-                0 => $"[{typeSymbol.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                > 1 => $"[{typeSymbol.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                _ => $"[{typeSymbol.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
+                0 => $"[{implementationType.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                > 1 => $"[{implementationType.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                _ => $"[{implementationType.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
             });
         }
 
+        var checkForDecoration = false;
+        DecorationInterfaceExtension? decoration = null;
+        
+        if (parameter is ForConstructorParameterWithDecoration withDecoration)
+        {
+            checkForDecoration = true;
+            decoration = withDecoration.Decoration;
+        }
+        
+        var checkForComposition = false;
+        CompositionInterfaceExtension? composition = null;
+        
+        if (parameter is ForConstructorParameterWithComposition withComposition)
+        {
+            checkForComposition = true;
+            composition = withComposition.Composition;
+        }
+        
         return new ConstructorResolution(
-            referenceGenerator.Generate(implementationType),
+            RootReferenceGenerator.Generate(implementationType),
             implementationType.FullName(),
             ImplementsIDisposable(
                 implementationType, 
@@ -316,115 +533,65 @@ internal abstract class RangeResolutionBaseBuilder
                 .Parameters
                 .Select(p =>
                 {
-                    if (p.Type is not INamedTypeSymbol parameterType)
-                    {
-                        return ("",
-                            new ErrorTreeItem(
-                                $"[{typeSymbol.FullName()}] Class.Constructor.Parameter: Parameter type {p.Type.FullName()} is not a named type symbol"));
-                    }
-
-                    return (
-                        p.Name,
-                        Create(parameterType,
-                            referenceGenerator,
-                            currentParameters));
-                })
-                .ToList()));
-    }
-
-    protected Resolvable CreateDecoratorConstructorResolution(
-        Decoration decoration,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        Skip skip)
-    {
-        var decoratorType = decoration.DecoratorType;
-        if (!skip.HasFlag(Skip.RangedInstanceCheck) && CheckTypeProperties.ShouldBeSingleInstance(decoration.ImplementationType))
-            return CreateSingleInstanceReferenceResolution(decoratorType, referenceGenerator, currentParameters, decoration);
-
-        //if (!skipScopeRootCheck && CheckTypeProperties.ShouldBeScopeRoot(implementationType))
-        //    return CreateScopeRootResolution(implementationType, referenceGenerator, DisposableCollectionResolution, currentParameters);
-        
-        if (!skip.HasFlag(Skip.RangedInstanceCheck) && CheckTypeProperties.ShouldBeScopedInstance(decoration.ImplementationType))
-            return CreateScopedInstanceReferenceResolution(decoratorType, referenceGenerator, currentParameters, decoration);
-
-        if (decoratorType.Constructors.SingleOrDefault() is not { } constructor)
-        {
-            return new ErrorTreeItem(decoratorType.Constructors.Length switch
-            {
-                0 =>
-                    $"[{decoratorType.FullName()}] Class.Constructor: No constructor found for implementation {decoratorType.FullName()}",
-                > 1 =>
-                    $"[{decoratorType.FullName()}] Class.Constructor: More than one constructor found for implementation {decoratorType.FullName()}",
-                _ =>
-                    $"[{decoratorType.FullName()}] Class.Constructor: {decoratorType.Constructors[0].Name} is not a method symbol"
-            });
-        }
-
-        return new ConstructorResolution(
-            referenceGenerator.Generate(decoratorType),
-            decoratorType.FullName(),
-            ImplementsIDisposable(
-                decoratorType, 
-                WellKnownTypes, 
-                DisposableCollectionResolution,
-                CheckTypeProperties),
-            new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
-                .Parameters
-                .Select(p =>
-                {
-                    if (p.Type.Equals(decoration.InterfaceType, SymbolEqualityComparer.Default))
+                    if (checkForDecoration && p.Type.Equals(decoration?.InterfaceType, SymbolEqualityComparer.Default))
                     {
                         return (p.Name, decoration.CurrentInterfaceResolution);
                     }
+                    if (checkForComposition 
+                        && composition is {} 
+                        && (p.Type.Equals(WellKnownTypes.Enumerable1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
+                        || p.Type.Equals(WellKnownTypes.ReadOnlyCollection1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
+                        || p.Type.Equals(WellKnownTypes.ReadOnlyList1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)))
+                    {
+                        
+                        return (p.Name, new CollectionResolution(
+                            RootReferenceGenerator.Generate(p.Type),
+                            p.Type.FullName(),
+                            composition.InterfaceType.FullName(),
+                            composition.InterfaceResolutionComposition));
+                    }
                     if (p.Type is not INamedTypeSymbol parameterType)
                     {
                         return ("",
                             new ErrorTreeItem(
-                                $"[{decoratorType.FullName()}] Class.Constructor.Parameter: Parameter type {p.Type.FullName()} is not a named type symbol"));
+                                $"[{implementationType.FullName()}] Class.Constructor.Parameter: Parameter type {p.Type.FullName()} is not a named type symbol"));
                     }
 
                     return (
                         p.Name,
-                        Create(parameterType,
-                            referenceGenerator,
-                            currentParameters));
+                        SwitchType(new SwitchTypeParameter(
+                            parameterType,
+                            currentParameters)));
                 })
                 .ToList()));
     }
 
+
     private RangedInstanceReferenceResolution CreateScopedInstanceReferenceResolution(
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        Decoration? decoration) =>
+        ForConstructorParameter parameter) =>
         CreateRangedInstanceReferenceResolution(
-            implementationType,
-            referenceGenerator,
-            currentParameters,
+            parameter,
             "Scoped",
-            "this",
-            decoration);
+            "this");
 
     protected RangedInstanceReferenceResolution CreateRangedInstanceReferenceResolution(
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
+        ForConstructorParameter parameter,
         string label,
-        string owningObjectReference,
-        Decoration? decoration)
+        string owningObjectReference)
     {
-        var decorationKeySuffix = decoration is { }
-            ? $":::{decoration.ImplementationType}"
-            : "";
-        var key = $"{implementationType.FullName()}{decorationKeySuffix}";
+        var (implementationType, currentParameters) = parameter;
+        InterfaceExtension? interfaceExtension = parameter switch
+        {
+            ForConstructorParameterWithComposition withComposition => withComposition.Composition,
+            ForConstructorParameterWithDecoration withDecoration => withDecoration.Decoration,
+            _ => null
+        };
+        var key = $"{implementationType.FullName()}{interfaceExtension?.KeySuffix() ?? ""}";
         if (!RangedInstanceReferenceResolutions.TryGetValue(
                 key,
                 out RangedInstanceFunction function))
         {
-            var decorationSuffix = decoration is { }
-                ? $"_{decoration.ImplementationType.Name}"
-                : "";
+            var decorationSuffix = interfaceExtension?.RangedNameSuffix() ?? "";
             function = new RangedInstanceFunction(
                 RootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix),
                 implementationType.FullName(),
@@ -436,15 +603,15 @@ internal abstract class RangeResolutionBaseBuilder
         var listedParameterTypes = string.Join(",", currentParameters.Select(p => p.Item2.TypeFullName));
         if (!RangedInstanceQueuedOverloads.Contains((function, listedParameterTypes)))
         {
-            var parameter = currentParameters
+            var tempParameter = currentParameters
                 .Select(t => (t.Type, new ParameterResolution(RootReferenceGenerator.Generate(t.Type), t.Type.FullName())))
                 .ToList();
-            RangedInstanceResolutionsQueue.Enqueue((function, parameter, implementationType, decoration));
+            RangedInstanceResolutionsQueue.Enqueue((function, tempParameter, implementationType, interfaceExtension));
             RangedInstanceQueuedOverloads.Add((function, listedParameterTypes));
         }
 
         return new RangedInstanceReferenceResolution(
-            referenceGenerator.Generate(implementationType),
+            RootReferenceGenerator.Generate(implementationType),
             function,
             currentParameters.Select(t => t.Resolution).ToList(),
             owningObjectReference);
@@ -454,15 +621,15 @@ internal abstract class RangeResolutionBaseBuilder
     {
         while (RangedInstanceResolutionsQueue.Any())
         {
-            var (scopedInstanceFunction, parameter, type, decoration) = RangedInstanceResolutionsQueue.Dequeue();
-            var referenceGenerator = ReferenceGeneratorFactory.Create();
-            var resolvable = decoration is {}
-                ? CreateDecoratorConstructorResolution(decoration, referenceGenerator, parameter, Skip.RangedInstanceCheck)
-                : CreateConstructorResolution(
-                    type,
-                    referenceGenerator,
-                    parameter,
-                    Skip.RangedInstanceCheck);
+            var (scopedInstanceFunction, parameter, type, interfaceExtension) = RangedInstanceResolutionsQueue.Dequeue();
+            var resolvable = interfaceExtension switch
+            {
+                DecorationInterfaceExtension decoration => CreateConstructorResolution(new ForConstructorParameterWithDecoration(
+                    decoration.DecoratorType, parameter, decoration)),
+                CompositionInterfaceExtension composition => CreateConstructorResolution(new ForConstructorParameterWithComposition(
+                    composition.CompositeType, parameter, composition)),
+                _ => CreateConstructorResolution(new ForConstructorParameter(type, parameter))
+            };
             RangedInstances.Add((
                 scopedInstanceFunction, 
                 new RangedInstanceFunctionOverload(

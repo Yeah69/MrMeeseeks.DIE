@@ -8,6 +8,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol ScopedInstanceAggregationAttribute,
     INamedTypeSymbol ScopeRootAggregationAttribute,
     INamedTypeSymbol DecoratorAggregationAttribute,
+    INamedTypeSymbol CompositeAggregationAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
@@ -25,7 +26,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol Exception,
     INamedTypeSymbol SemaphoreSlim)
 {
-    public static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
+    internal static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
     {
         var iContainer = compilation.GetTypeOrReport("MrMeeseeks.DIE.IContainer`1");
         var iDisposable = compilation.GetTypeOrReport("System.IDisposable");
@@ -65,6 +66,9 @@ internal record WellKnownTypes(
         var decoratorAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(DecoratorAggregationAttribute).FullName ?? "");
 
+        var compositeAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(CompositeAggregationAttribute).FullName ?? "");
+
         var decoratorSequenceChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(DecoratorSequenceChoiceAttribute).FullName ?? "");
 
@@ -75,6 +79,7 @@ internal record WellKnownTypes(
             || scopedInstanceAggregationAttribute is null
             || scopeRootAggregationAttribute is null
             || decoratorAggregationAttribute is null
+            || compositeAggregationAttribute is null
             || decoratorSequenceChoiceAttribute is null
             || iDisposable is null
             || iAsyncDisposable is null
@@ -104,6 +109,7 @@ internal record WellKnownTypes(
             ScopedInstanceAggregationAttribute: scopedInstanceAggregationAttribute,
             ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
             DecoratorAggregationAttribute: decoratorAggregationAttribute,
+            CompositeAggregationAttribute: compositeAggregationAttribute,
             DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
             Disposable: iDisposable,
             AsyncDisposable: iAsyncDisposable,

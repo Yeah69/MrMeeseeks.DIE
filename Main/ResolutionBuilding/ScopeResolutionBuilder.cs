@@ -5,12 +5,11 @@ internal interface IScopeResolutionBuilder
     bool HasWorkToDo { get; }
     
     ScopeRootResolution AddCreateResolveFunction(
+        RangeResolutionBaseBuilder.IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        IReferenceGenerator referenceGenerator,
         string singleInstanceScopeReference,
         DisposableCollectionResolution disposableCollectionResolution,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        RangeResolutionBaseBuilder.DecorationScopeRoot? decoration);
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 
     void DoWork();
 
@@ -26,9 +25,9 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     
     private readonly Dictionary<string, ScopeRootFunction> _scopeRootFunctionResolutions = new ();
     private readonly HashSet<(ScopeRootFunction, string)> _scopeRootFunctionQueuedOverloads = new ();
-    private readonly Queue<(ScopeRootFunction, IReadOnlyList<(ITypeSymbol, ParameterResolution)>, INamedTypeSymbol, DecorationScopeRoot?)> _scopeRootFunctionResolutionsQueue = new();
+    private readonly Queue<(ScopeRootFunction, IReadOnlyList<ParameterResolution>, INamedTypeSymbol, IScopeRootParameter)> _scopeRootFunctionResolutionsQueue = new();
     
-    public ScopeResolutionBuilder(
+    internal ScopeResolutionBuilder(
         // parameter
         IContainerResolutionBuilder containerResolutionBuilder,        
         
@@ -52,54 +51,39 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     }
 
     protected override RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        Decoration? decoration) =>
+        ForConstructorParameter parameter) =>
         _containerResolutionBuilder.CreateSingleInstanceReferenceResolution(
-            implementationType,
-            referenceGenerator,
-            _containerReference,
-            currentParameters,
-            decoration);
+            parameter,
+            _containerReference);
 
     protected override ScopeRootResolution CreateScopeRootResolution(
+        IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
-        IReferenceGenerator referenceGenerator,
         DisposableCollectionResolution disposableCollectionResolution,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        DecorationScopeRoot? decoration) =>
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         AddCreateResolveFunction(
+            parameter,
             rootType, 
-            referenceGenerator, 
             _containerReference, 
             disposableCollectionResolution,
-            currentParameters,
-            decoration);
+            currentParameters);
 
     public bool HasWorkToDo => _scopeRootFunctionResolutionsQueue.Any() || RangedInstanceResolutionsQueue.Any();
 
     public ScopeRootResolution AddCreateResolveFunction(
+        IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        IReferenceGenerator referenceGenerator,
         string singleInstanceScopeReference,
         DisposableCollectionResolution disposableCollectionResolution,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        DecorationScopeRoot? decoration)
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
-        var decorationKeySuffix = decoration is { }
-            ? $":::{decoration.ImplementationType}"
-            : "";
-        var key = $"{rootType.FullName()}{decorationKeySuffix}";
+        var key = $"{rootType.FullName()}{parameter.KeySuffix()}";
         if (!_scopeRootFunctionResolutions.TryGetValue(
                 key,
                 out ScopeRootFunction function))
         {
-            var decorationSuffix = decoration is { }
-                ? $"_{decoration.ImplementationType.Name}"
-                : "";
             function = new ScopeRootFunction(
-                RootReferenceGenerator.Generate("Create", rootType, decorationSuffix),
+                RootReferenceGenerator.Generate("Create", rootType, parameter.RootFunctionSuffix()),
                 rootType.FullName());
             _scopeRootFunctionResolutions[key] = function;
         }
@@ -107,17 +91,17 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         var listedParameterTypes = string.Join(",", currentParameters.Select(p => p.Item2.TypeFullName));
         if (!_scopeRootFunctionQueuedOverloads.Contains((function, listedParameterTypes)))
         {
-            var parameter = currentParameters
-                .Select(t => (t.Type, new ParameterResolution(RootReferenceGenerator.Generate(t.Type), t.Type.FullName())))
+            var currParameter = currentParameters
+                .Select(t => new ParameterResolution(RootReferenceGenerator.Generate(t.Type), t.Type.FullName()))
                 .ToList();
-            _scopeRootFunctionResolutionsQueue.Enqueue((function, parameter, rootType, decoration));
+            _scopeRootFunctionResolutionsQueue.Enqueue((function, currParameter, rootType, parameter));
             _scopeRootFunctionQueuedOverloads.Add((function, listedParameterTypes));
         }
 
         return new ScopeRootResolution(
-            referenceGenerator.Generate(rootType),
+            RootReferenceGenerator.Generate(rootType),
             rootType.FullName(),
-            referenceGenerator.Generate("scopeRoot"),
+            RootReferenceGenerator.Generate("scopeRoot"),
             Name,
             singleInstanceScopeReference,
             currentParameters.Select(t => t.Resolution).ToList(),
@@ -131,48 +115,22 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         {
             while (_scopeRootFunctionResolutionsQueue.Any())
             {
-                var (scopeRootFunction, parameter, type, decorationScopeRoot) = _scopeRootFunctionResolutionsQueue.Dequeue();
-                var referenceGenerator = ReferenceGeneratorFactory.Create();
-                var resolvable = CreateConstructorResolution(
-                    decorationScopeRoot?.ImplementationType ?? type,
-                    referenceGenerator,
-                    parameter,
-                    Skip.ScopeRootCheck);
-                
-                if (decorationScopeRoot is {InterfaceType: {} interfaceType, ImplementationType: {} implementationType})
-                {
-                    var currentInterfaceResolution = new InterfaceResolution(
-                        referenceGenerator.Generate(interfaceType),
-                        interfaceType.FullName(),
-                        resolvable);
-                    var decorators = new Queue<INamedTypeSymbol>(CheckDecorators.GetSequenceFor(interfaceType, implementationType));
-                    while (decorators.Any())
-                    {
-                        var decorator = decorators.Dequeue();
-                        var decoratorResolution = CreateDecoratorConstructorResolution(
-                            new Decoration(
-                                interfaceType, 
-                                implementationType, 
-                                decorator, 
-                                currentInterfaceResolution),
-                            referenceGenerator,
-                            parameter,
-                            Skip.None);
-                        currentInterfaceResolution = new InterfaceResolution(
-                            referenceGenerator.Generate(interfaceType),
-                            interfaceType.FullName(),
-                            decoratorResolution);
-                    }
+                var (scopeRootFunction, parameter, type, functionParameter) = _scopeRootFunctionResolutionsQueue.Dequeue();
 
-                    resolvable = currentInterfaceResolution;
-                }
+                var resolvable = functionParameter switch
+                {
+                    CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter),
+                    SwitchImplementationParameter switchImplementationParameter => SwitchImplementation(switchImplementationParameter),
+                    SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => SwitchInterfaceAfterScopeRoot(switchInterfaceAfterScopeRootParameter),
+                    _ => throw new ArgumentOutOfRangeException(nameof(functionParameter))
+                };
                 
                 _rootResolutions.Add(new RootResolutionFunction(
                     scopeRootFunction.Reference,
                     type.FullName(),
                     "internal",
                     resolvable,
-                    parameter.Select(t => t.Item2).ToList(),
+                    parameter,
                     "",
                     Name,
                     DisposalHandling));

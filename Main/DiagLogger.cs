@@ -11,7 +11,7 @@ internal class DiagLogger : IDiagLogger
 {
     private readonly GeneratorExecutionContext _context;
 
-    public DiagLogger(
+    internal DiagLogger(
         GeneratorExecutionContext context)
     {
         _context = context;

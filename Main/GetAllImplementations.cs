@@ -9,7 +9,7 @@ internal interface IGetAllImplementations
 
 internal class GetAllImplementations : IGetAllImplementations
 {
-    public GetAllImplementations(
+    internal GetAllImplementations(
         GeneratorExecutionContext context,
         ITypesFromTypeAggregatingAttributes typesFromTypeAggregatingAttributes)
     {
@@ -18,7 +18,9 @@ internal class GetAllImplementations : IGetAllImplementations
             .SelectMany(t => t.st
                 .GetRoot()
                 .DescendantNodesAndSelf()
-                .OfType<ClassDeclarationSyntax>()
+                .Where(e => typeof(ClassDeclarationSyntax) == e.GetType() 
+                    || typeof(StructDeclarationSyntax) == e.GetType()
+                    || typeof(RecordDeclarationSyntax) == e.GetType())
                 .Select(c => t.Item2.GetDeclaredSymbol(c))
                 .Where(c => c is not null)
                 .OfType<INamedTypeSymbol>());

@@ -1,39 +1,39 @@
-﻿using System.Collections.Generic;
+﻿namespace MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Sample;
-
-internal interface IDecoratedMulti
+internal interface IDecoratedScopeRoot
 {
-    IDecoratedMulti Decorated { get; }
+    IDecoratedScopeRootDependency Dependency { get; }
+    IDecoratedScopeRoot Decorated { get; }
 }
 
-internal class DecoratorMultiBasisA : IDecoratedMulti
+internal interface IDecoratedScopeRootDependency {}
+
+internal class DecoratedScopeRootDependency : IDecoratedScopeRootDependency, IScopedInstance { }
+
+internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot, IScopedInstance
 {
-    public IDecoratedMulti Decorated => this;
+    public IDecoratedScopeRootDependency Dependency { get; }
+
+    public IDecoratedScopeRoot Decorated => this;
+
+    public DecoratorScopeRootBasis(
+        IDecoratedScopeRootDependency dependency) =>
+        Dependency = dependency;
 }
 
-internal class DecoratorMultiBasisB : IDecoratedMulti
+internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedScopeRoot>
 {
-    public IDecoratedMulti Decorated => this;
-}
-
-internal class DecoratorMultiA : IDecoratedMulti, IDecorator<IDecoratedMulti>
-{
-    public DecoratorMultiA(IDecoratedMulti decorated) =>
+    public DecoratorScopeRoot(IDecoratedScopeRoot decorated, IDecoratedScopeRootDependency dependency)
+    {
         Decorated = decorated;
+        Dependency = dependency;
+    }
 
-    public IDecoratedMulti Decorated { get; }
+    public IDecoratedScopeRootDependency Dependency { get; }
+    public IDecoratedScopeRoot Decorated { get; }
 }
 
-internal class DecoratorMultiB : IDecoratedMulti, IDecorator<IDecoratedMulti>
-{
-    public DecoratorMultiB(IDecoratedMulti decorated) =>
-        Decorated = decorated;
-
-    public IDecoratedMulti Decorated { get; }
-}
-
-internal partial class DecoratorMultiContainer : IContainer<IReadOnlyList<IDecoratedMulti>>
+internal partial class DecoratorScopeRootContainer : IContainer<IDecoratedScopeRoot>
 {
     
 }

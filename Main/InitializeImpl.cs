@@ -10,7 +10,7 @@ internal class InitializeImpl : IInitialize
     private readonly GeneratorInitializationContext _context;
     private readonly Func<ISyntaxReceiver> _syntaxReceiverFactory;
 
-    public InitializeImpl(
+    internal InitializeImpl(
         GeneratorInitializationContext context,
         Func<ISyntaxReceiver> syntaxReceiverFactory)
     {

@@ -14,7 +14,7 @@ internal class ContainerGenerator : IContainerGenerator
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly IDiagLogger _diagLogger;
 
-    public ContainerGenerator(
+    internal ContainerGenerator(
         GeneratorExecutionContext context,
         WellKnownTypes wellKnownTypes,
         IDiagLogger diagLogger)

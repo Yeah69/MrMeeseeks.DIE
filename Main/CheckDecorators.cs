@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-public interface ICheckDecorators
+internal interface ICheckDecorators
 {
     bool ShouldBeDecorated(INamedTypeSymbol interfaceType);
     bool IsDecorator(INamedTypeSymbol implementationType);
@@ -14,7 +14,7 @@ internal class CheckDecorators : ICheckDecorators
     private readonly IDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> _interfaceSequenceChoices;
     private readonly IDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> _implementationSequenceChoices;
 
-    public CheckDecorators(
+    internal CheckDecorators(
         WellKnownTypes wellKnownTypes,
         IGetAssemblyAttributes getAssemblyAttributes,
         ITypesFromTypeAggregatingAttributes typesFromTypeAggregatingAttributes,

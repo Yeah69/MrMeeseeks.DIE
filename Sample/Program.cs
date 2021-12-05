@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-using MrMeeseeks.DIE.Sample;
+﻿using MrMeeseeks.DIE.Sample;
 
 System.Console.WriteLine("Hello, world!");
-using var container = new DecoratorMultiContainer();
-System.Console.WriteLine(((MrMeeseeks.DIE.IContainer<IReadOnlyList<IDecoratedMulti>>) container).Resolve());
+using var container = new DecoratorScopeRootContainer();
+System.Console.WriteLine(((MrMeeseeks.DIE.IContainer<IDecoratedScopeRoot>) container).Resolve());

@@ -9,12 +9,14 @@ internal class TypeToImplementationsMapper : ITypeToImplementationsMapper
 {
     private readonly Dictionary<ITypeSymbol, List<INamedTypeSymbol>> _map;
 
-    public TypeToImplementationsMapper(
+    internal TypeToImplementationsMapper(
         IGetAllImplementations getAllImplementations,
-        ICheckDecorators checkDecorators) =>
+        ICheckDecorators checkDecorators,
+        ICheckTypeProperties checkTypeProperties) =>
         _map = getAllImplementations
             .AllImplementations
             .Where(t => !checkDecorators.IsDecorator(t.OriginalDefinition))
+            .Where(t => !checkTypeProperties.IsComposite(t.OriginalDefinition))
             .SelectMany(i => { return i.AllInterfaces.OfType<ITypeSymbol>().Select(ii => (ii, i)).Prepend((i, i)); })
             .GroupBy(t => t.Item1, t => t.Item2)
             .ToDictionary(g => g.Key, g => g.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>().ToList());

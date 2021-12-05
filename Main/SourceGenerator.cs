@@ -22,7 +22,7 @@ public class SourceGenerator : ISourceGenerator
         var getSetOfTypesWithProperties = new GetSetOfTypesWithProperties(getAllImplementations);
         var checkDecorators = new CheckDecorators(wellKnownTypes, getAssemblyAttributes, typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
         var checkTypeProperties = new CheckTypeProperties(typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
-        var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkDecorators);
+        var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkDecorators, checkTypeProperties);
         var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerErrorGenerator = new ContainerErrorGenerator(context);

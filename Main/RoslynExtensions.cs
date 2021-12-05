@@ -2,13 +2,13 @@
 
 internal static class RoslynExtensions
 {
-    public static INamedTypeSymbol? GetTypeOrReport(this Compilation compilation, string metadataName)
+    internal static INamedTypeSymbol? GetTypeOrReport(this Compilation compilation, string metadataName)
     {
         var typeSymbol = compilation.GetTypeByMetadataName(metadataName);
         return typeSymbol;
     }
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
-    public static bool IsOrReferencesErrorType(this ITypeSymbol type)
+    internal static bool IsOrReferencesErrorType(this ITypeSymbol type)
     {
         if (!type.ContainingType?.IsOrReferencesErrorType() ?? false)
             return false;
@@ -23,7 +23,7 @@ internal static class RoslynExtensions
     }
 
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
-    public static bool IsAccessibleInternally(this ITypeSymbol type)
+    internal static bool IsAccessibleInternally(this ITypeSymbol type)
     {
         if (type is ITypeParameterSymbol)
             return true;
@@ -40,7 +40,7 @@ internal static class RoslynExtensions
     }
 
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
-    public static string FullName(this ITypeSymbol type) =>
+    internal static string FullName(this ITypeSymbol type) =>
         type.ToDisplayString(new SymbolDisplayFormat(
             globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
@@ -49,6 +49,6 @@ internal static class RoslynExtensions
             memberOptions: SymbolDisplayMemberOptions.IncludeRef));
 
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
-    public static string FullName(this INamespaceSymbol @namespace) =>
+    internal static string FullName(this INamespaceSymbol @namespace) =>
         @namespace.ToDisplayString(new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
 }

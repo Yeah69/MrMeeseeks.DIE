@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-public interface ITypesFromTypeAggregatingAttributes
+internal interface ITypesFromTypeAggregatingAttributes
 {
     IReadOnlyList<INamedTypeSymbol> Spy { get; }
     IReadOnlyList<INamedTypeSymbol> Transient { get; }
@@ -8,11 +8,12 @@ public interface ITypesFromTypeAggregatingAttributes
     IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
     IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
     IReadOnlyList<INamedTypeSymbol> Decorator { get; }
+    IReadOnlyList<INamedTypeSymbol> Composite { get; }
 }
 
 internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAttributes
 {
-    public TypesFromTypeAggregatingAttributes(
+    internal TypesFromTypeAggregatingAttributes(
         WellKnownTypes wellKnownTypes,
         IGetAssemblyAttributes getAssemblyAttributes)
     {
@@ -22,6 +23,7 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
         ScopedInstance = GetTypesFromAttribute(wellKnownTypes.ScopedInstanceAggregationAttribute).ToList();
         ScopeRoot = GetTypesFromAttribute(wellKnownTypes.ScopeRootAggregationAttribute).ToList();
         Decorator = GetTypesFromAttribute(wellKnownTypes.DecoratorAggregationAttribute).ToList();
+        Composite = GetTypesFromAttribute(wellKnownTypes.CompositeAggregationAttribute).ToList();
             
         IEnumerable<INamedTypeSymbol> GetTypesFromAttribute(INamedTypeSymbol attribute) => getAssemblyAttributes
             .AllAssemblyAttributes
@@ -62,4 +64,5 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
     public IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
     public IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
     public IReadOnlyList<INamedTypeSymbol> Decorator { get; }
+    public IReadOnlyList<INamedTypeSymbol> Composite { get; }
 }

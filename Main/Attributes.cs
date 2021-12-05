@@ -43,6 +43,13 @@ public class DecoratorAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class CompositeAggregationAttribute : Attribute
+{
+    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
+    public CompositeAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class DecoratorSequenceChoiceAttribute : Attribute
 {
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator

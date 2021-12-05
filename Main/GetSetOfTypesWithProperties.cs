@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-public interface IGetSetOfTypesWithProperties
+internal interface IGetSetOfTypesWithProperties
 {
     IImmutableSet<ISymbol?> Get(IReadOnlyList<INamedTypeSymbol> propertyGivingTypes);
 }
@@ -9,7 +9,7 @@ internal class GetSetOfTypesWithProperties : IGetSetOfTypesWithProperties
 {
     private readonly IGetAllImplementations _getAllImplementations;
 
-    public GetSetOfTypesWithProperties(IGetAllImplementations getAllImplementations)
+    internal GetSetOfTypesWithProperties(IGetAllImplementations getAllImplementations)
     {
         _getAllImplementations = getAllImplementations;
     }

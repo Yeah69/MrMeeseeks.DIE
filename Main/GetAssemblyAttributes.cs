@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-public interface IGetAssemblyAttributes
+internal interface IGetAssemblyAttributes
 {
     IReadOnlyList<AttributeData> AllAssemblyAttributes { get; }
 }
@@ -9,7 +9,7 @@ internal class GetAssemblyAttributes : IGetAssemblyAttributes
 {
     private readonly GeneratorExecutionContext _context;
 
-    public GetAssemblyAttributes(GeneratorExecutionContext context)
+    internal GetAssemblyAttributes(GeneratorExecutionContext context)
     {
         _context = context;
     }

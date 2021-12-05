@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-public interface IContainerInfo
+internal interface IContainerInfo
 {
     string Name { get; }
     string Namespace { get; }
@@ -11,7 +11,7 @@ public interface IContainerInfo
 
 internal class ContainerInfo : IContainerInfo
 {
-    public ContainerInfo(
+    internal ContainerInfo(
         // parameters
         INamedTypeSymbol containerClass,
             

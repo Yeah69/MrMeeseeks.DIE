@@ -3,11 +3,6 @@ using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Sample;
 using Xunit;
 
-[assembly:SingleInstanceAggregation(typeof(ISingleInstance))]
-[assembly:ScopedInstanceAggregation(typeof(IScopedInstance))]
-[assembly:ScopeRootAggregation(typeof(IScopeRoot))]
-[assembly:TransientAggregation(typeof(ITransient))]
-[assembly:DecoratorAggregation(typeof(IDecorator<>))]
 [assembly:DecoratorSequenceChoice(typeof(IDecoratedMulti), typeof(DecoratorMultiA), typeof(DecoratorMultiB))]
 
 namespace MrMeeseeks.DIE.Sample;
@@ -90,19 +85,34 @@ public partial class DecoratorTests
 
 internal interface IDecoratedScopeRoot
 {
+    IDecoratedScopeRootDependency Dependency { get; }
     IDecoratedScopeRoot Decorated { get; }
 }
 
-internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot
+internal interface IDecoratedScopeRootDependency {}
+
+internal class DecoratedScopeRootDependency : IDecoratedScopeRootDependency, IScopedInstance {}
+
+internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot, IScopedInstance
 {
+    public IDecoratedScopeRootDependency Dependency { get; }
+
     public IDecoratedScopeRoot Decorated => this;
+
+    public DecoratorScopeRootBasis(
+        IDecoratedScopeRootDependency dependency) =>
+        Dependency = dependency;
 }
 
 internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedScopeRoot>
 {
-    public DecoratorScopeRoot(IDecoratedScopeRoot decorated) => 
+    public DecoratorScopeRoot(IDecoratedScopeRoot decorated, IDecoratedScopeRootDependency dependency)
+    {
         Decorated = decorated;
+        Dependency = dependency;
+    }
 
+    public IDecoratedScopeRootDependency Dependency { get; }
     public IDecoratedScopeRoot Decorated { get; }
 }
 
@@ -119,11 +129,14 @@ public partial class DecoratorTests
         using var container = new DecoratorScopeRootContainer();
         var decorated = ((IContainer<IDecoratedScopeRoot>) container).Resolve();
         Assert.NotEqual(decorated, decorated.Decorated);
+        Assert.Equal(decorated.Dependency, decorated.Decorated.Dependency);
         Assert.IsType<DecoratorScopeRoot>(decorated);
         Assert.IsType<DecoratorScopeRootBasis>(decorated.Decorated);
         
         // There is yet no way to check scopes externally
-        Assert.True(false);
+        var next = ((IContainer<IDecoratedScopeRoot>) container).Resolve();
+        Assert.NotEqual(decorated, next);
+        Assert.NotEqual(decorated.Dependency, next.Dependency);
     }
 }
 

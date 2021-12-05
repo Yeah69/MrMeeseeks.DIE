@@ -19,7 +19,7 @@ internal class ExecuteImpl : IExecute
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
     private readonly IDiagLogger _diagLogger;
 
-    public ExecuteImpl(
+    internal ExecuteImpl(
         GeneratorExecutionContext context,
         WellKnownTypes wellKnownTypes,
         IContainerGenerator containerGenerator,

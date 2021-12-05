@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-public interface IReferenceGenerator
+internal interface IReferenceGenerator
 {
     string Generate(ITypeSymbol type);
     string Generate(string prefix, ITypeSymbol type);
@@ -13,7 +13,7 @@ internal class ReferenceGenerator : IReferenceGenerator
     private int _i = -1;
     private readonly int _j;
 
-    public ReferenceGenerator(int j) => _j = j;
+    internal ReferenceGenerator(int j) => _j = j;
 
     public string Generate(ITypeSymbol type) => 
         GenerateInner(string.Empty, $"{char.ToLower(type.Name[0])}{type.Name.Substring(1)}", string.Empty);
@@ -31,7 +31,7 @@ internal class ReferenceGenerator : IReferenceGenerator
         $"{prefix}{inner}{suffix}_{_j}_{++_i}";
 }
     
-public interface IReferenceGeneratorFactory
+internal interface IReferenceGeneratorFactory
 {
     IReferenceGenerator Create();
 }

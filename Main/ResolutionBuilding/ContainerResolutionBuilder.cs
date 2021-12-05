@@ -5,11 +5,8 @@ internal interface IContainerResolutionBuilder
     void AddCreateResolveFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes);
 
     RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        string containerReference,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        RangeResolutionBaseBuilder.Decoration? decoration);
+        RangeResolutionBaseBuilder.ForConstructorParameter parameter,
+        string containerReference);
 
     ContainerResolution Build();
 }
@@ -21,7 +18,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
     private readonly IScopeResolutionBuilder _scopeResolutionBuilder;
 
-    public ContainerResolutionBuilder(
+    internal ContainerResolutionBuilder(
         // parameters
         IContainerInfo containerInfo,
         
@@ -51,50 +48,35 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 nameof(IContainer<object>.Resolve),
                 typeSymbol.FullName(),
                 "",
-                Create(
+                SwitchType(new SwitchTypeParameter(
                     typeSymbol,
-                    ReferenceGeneratorFactory.Create(),
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>()),
+                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())),
                 Array.Empty<ParameterResolution>(),
                 WellKnownTypes.Container.Construct(typeSymbol).FullName(),
                 _containerInfo.Name,
                 DisposalHandling));
     }
 
-    public RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        string containerReference,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        Decoration? decoration) =>
+    public RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(ForConstructorParameter parameter, string containerReference) =>
         CreateRangedInstanceReferenceResolution(
-            implementationType,
-            referenceGenerator,
-            currentParameters,
+            parameter,
             "Single",
-            containerReference,
-            decoration);
+            containerReference);
 
-    protected override RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
-        INamedTypeSymbol implementationType,
-        IReferenceGenerator referenceGenerator,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        Decoration? decoration) =>
-        CreateSingleInstanceReferenceResolution(implementationType, referenceGenerator, "this", currentParameters, decoration);
+    protected override RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(ForConstructorParameter parameter) =>
+        CreateSingleInstanceReferenceResolution(parameter, "this");
 
     protected override ScopeRootResolution CreateScopeRootResolution(
+        IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
-        IReferenceGenerator referenceGenerator,
         DisposableCollectionResolution disposableCollectionResolution,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
-        DecorationScopeRoot? decoration) =>
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeResolutionBuilder.AddCreateResolveFunction(
+            parameter,
             rootType, 
-            referenceGenerator, 
             "this",
             disposableCollectionResolution,
-            currentParameters,
-            decoration);
+            currentParameters);
 
     public ContainerResolution Build()
     {

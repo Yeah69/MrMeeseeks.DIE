@@ -3,6 +3,7 @@ namespace MrMeeseeks.DIE;
 internal interface ITypesFromTypeAggregatingAttributes
 {
     IReadOnlyList<INamedTypeSymbol> Spy { get; }
+    IReadOnlyList<INamedTypeSymbol> Implementation { get; }
     IReadOnlyList<INamedTypeSymbol> Transient { get; }
     IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
     IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
@@ -18,6 +19,7 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
         IGetAssemblyAttributes getAssemblyAttributes)
     {
         Spy = GetTypesFromAttribute(wellKnownTypes.SpyAggregationAttribute).ToList();
+        Implementation = GetTypesFromAttribute(wellKnownTypes.ImplementationAggregationAttribute).ToList();
         Transient = GetTypesFromAttribute(wellKnownTypes.TransientAggregationAttribute).ToList();
         SingleInstance = GetTypesFromAttribute(wellKnownTypes.SingleInstanceAggregationAttribute).ToList();
         ScopedInstance = GetTypesFromAttribute(wellKnownTypes.ScopedInstanceAggregationAttribute).ToList();
@@ -59,6 +61,7 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
     }
         
     public IReadOnlyList<INamedTypeSymbol> Spy { get; }
+    public IReadOnlyList<INamedTypeSymbol> Implementation { get; }
     public IReadOnlyList<INamedTypeSymbol> Transient { get; }
     public IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
     public IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }

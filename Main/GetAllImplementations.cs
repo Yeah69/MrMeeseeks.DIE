@@ -18,9 +18,7 @@ internal class GetAllImplementations : IGetAllImplementations
             .SelectMany(t => t.st
                 .GetRoot()
                 .DescendantNodesAndSelf()
-                .Where(e => typeof(ClassDeclarationSyntax) == e.GetType() 
-                    || typeof(StructDeclarationSyntax) == e.GetType()
-                    || typeof(RecordDeclarationSyntax) == e.GetType())
+                .Where(e => e is ClassDeclarationSyntax or StructDeclarationSyntax or RecordDeclarationSyntax)
                 .Select(c => t.Item2.GetDeclaredSymbol(c))
                 .Where(c => c is not null)
                 .OfType<INamedTypeSymbol>());
@@ -34,6 +32,7 @@ internal class GetAllImplementations : IGetAllImplementations
                 .OfType<INamedTypeSymbol>());
 
         AllImplementations = implementationsOfThisAssembly
+            .Concat(typesFromTypeAggregatingAttributes.Implementation)
             .Concat(spiedImplementations)
             .ToList();
     }

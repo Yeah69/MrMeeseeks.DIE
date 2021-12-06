@@ -6,6 +6,13 @@ public class SpyAggregationAttribute : Attribute
     // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public SpyAggregationAttribute(params Type[] types) {}
 }
+
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class ImplementationAggregationAttribute : Attribute
+{
+    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
+    public ImplementationAggregationAttribute(params Type[] types) {}
+}
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class TransientAggregationAttribute : Attribute

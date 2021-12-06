@@ -3,6 +3,7 @@
 internal record WellKnownTypes(
     INamedTypeSymbol Container,
     INamedTypeSymbol SpyAggregationAttribute,
+    INamedTypeSymbol ImplementationAggregationAttribute,
     INamedTypeSymbol TransientAggregationAttribute,
     INamedTypeSymbol SingleInstanceAggregationAttribute,
     INamedTypeSymbol ScopedInstanceAggregationAttribute,
@@ -51,6 +52,9 @@ internal record WellKnownTypes(
         var spyAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(SpyAggregationAttribute).FullName ?? "");
 
+        var implementationAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(ImplementationAggregationAttribute).FullName ?? "");
+
         var transientAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(TransientAggregationAttribute).FullName ?? "");
 
@@ -74,6 +78,7 @@ internal record WellKnownTypes(
 
         if (iContainer is null
             || spyAggregationAttribute is null
+            || implementationAggregationAttribute is null
             || transientAggregationAttribute is null
             || singleInstanceAggregationAttribute is null
             || scopedInstanceAggregationAttribute is null
@@ -104,6 +109,7 @@ internal record WellKnownTypes(
         wellKnownTypes = new WellKnownTypes(
             Container: iContainer,
             SpyAggregationAttribute: spyAggregationAttribute,
+            ImplementationAggregationAttribute: implementationAggregationAttribute,
             TransientAggregationAttribute: transientAggregationAttribute,
             SingleInstanceAggregationAttribute: singleInstanceAggregationAttribute,
             ScopedInstanceAggregationAttribute: scopedInstanceAggregationAttribute,

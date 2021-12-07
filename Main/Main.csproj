@@ -4,7 +4,7 @@
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>MrMeeseeks.DIE</RootNamespace>
-    <AssemblyName>$(RootNamespace)</AssemblyName>
+    <AssemblyName>MrMeeseeks.DIE</AssemblyName>
 
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild> <!-- Generates a package at build -->
     <IsRoslynComponent>true</IsRoslynComponent>

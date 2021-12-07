@@ -21,7 +21,7 @@ public class SourceGenerator : ISourceGenerator
         var getAllImplementations = new GetAllImplementations(context, typesFromTypeAggregatingAttributes);
         var getSetOfTypesWithProperties = new GetSetOfTypesWithProperties(getAllImplementations);
         var checkDecorators = new CheckDecorators(wellKnownTypes, getAssemblyAttributes, typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
-        var checkTypeProperties = new CheckTypeProperties(typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
+        var checkTypeProperties = new CheckTypeProperties(typesFromTypeAggregatingAttributes, getAssemblyAttributes, wellKnownTypes, getSetOfTypesWithProperties);
         var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkDecorators, checkTypeProperties);
         var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);

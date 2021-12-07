@@ -83,7 +83,7 @@ internal class TypeReportGenerator : ITypeReportGenerator
                         : g.Select((t, i) => (t.c, $"{t.Item2}_{i}")))
                 .Select(t => @$"
 [global::{typeof(EnumMemberAttribute).FullName}({nameof(EnumMemberAttribute.Value)} = ""{t.c.ToDisplayString()}"")]
-[global::{typeof(ConstructorReferenceAttribute).FullName}(typeof({t.c.ContainingType.FullName()}){(t.c.Parameters.Any() ? $", {string.Join(", ", t.c.Parameters.Select(p => $"typeof({p.Type.FullName()})"))}" : "")})]
+[global::{typeof(ConstructorChoiceAttribute).FullName}(typeof({t.c.ContainingType.FullName()}){(t.c.Parameters.Any() ? $", {string.Join(", ", t.c.Parameters.Select(p => $"typeof({p.Type.FullName()})"))}" : "")})]
 {t.Item2},")
                 .Aggregate(
                     generatedContainer,

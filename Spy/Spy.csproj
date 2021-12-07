@@ -35,9 +35,5 @@
   <ItemGroup>
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
-	
-  <ItemGroup>
-    <ProjectReference Include="..\Main\Main.csproj" PrivateAssets="all" />
-  </ItemGroup>	
 
 </Project>

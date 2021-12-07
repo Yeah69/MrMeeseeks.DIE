@@ -1,5 +1,7 @@
-﻿using MrMeeseeks.DIE.Sample;
+﻿using System;
+using MrMeeseeks.DIE;
+using MrMeeseeks.DIE.Sample;
 
-System.Console.WriteLine("Hello, world!");
-using var container = new DecoratorScopeRootContainer();
-System.Console.WriteLine(((MrMeeseeks.DIE.IContainer<IDecoratedScopeRoot>) container).Resolve());
+Console.WriteLine("Hello, world!");
+var container = new ConstructorChoiceContainer();
+Console.WriteLine(((IContainer<DateTime>) container).Resolve());

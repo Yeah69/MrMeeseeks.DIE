@@ -175,7 +175,7 @@ internal abstract class RangeResolutionBaseBuilder
         if (type.TypeKind == TypeKind.Interface)
             return SwitchInterface(new SwitchInterfaceParameter(type, currentFuncParameters));
 
-        if (type.TypeKind == TypeKind.Class)
+        if (type.TypeKind == TypeKind.Class || type.TypeKind == TypeKind.Struct)
             return SwitchClass(new SwitchClassParameter(type, currentFuncParameters));
 
         if (type.TypeKind == TypeKind.Delegate 
@@ -493,7 +493,7 @@ internal abstract class RangeResolutionBaseBuilder
     {
         var (implementationType, currentParameters) = parameter;
         
-        if (implementationType.Constructors.SingleOrDefault() is not { } constructor)
+        if (CheckTypeProperties.GetConstructorChoiceFor(implementationType) is not { } constructor)
         {
             return new ErrorTreeItem(implementationType.Constructors.Length switch
             {

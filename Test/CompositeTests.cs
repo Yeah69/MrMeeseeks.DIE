@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using MrMeeseeks.DIE;
-using MrMeeseeks.DIE.Sample;
+using MrMeeseeks.DIE.Test;
 using Xunit;
 
 [assembly:DecoratorSequenceChoice(typeof(ICompositeDecorated), typeof(CompositeDecoratedDecoratorA), typeof(CompositeDecoratedDecoratorB))]
 [assembly:DecoratorSequenceChoice(typeof(CompositeDecorated), typeof(CompositeDecoratedDecoratorB))]
 
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test;
 
 internal interface ICompositeNormal
 {

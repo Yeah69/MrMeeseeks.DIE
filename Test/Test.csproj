@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         
-        <RootNamespace>MrMeeseeks.DIE.Sample</RootNamespace>
+        <RootNamespace>MrMeeseeks.DIE.Test</RootNamespace>
         <IsPackable>false</IsPackable>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
@@ -28,6 +28,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </ProjectReference>
+        <ProjectReference Include="..\TestChild\TestChild.csproj" />
     </ItemGroup>
 
 </Project>

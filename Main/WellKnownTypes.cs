@@ -3,6 +3,7 @@
 internal record WellKnownTypes(
     INamedTypeSymbol Container,
     INamedTypeSymbol SpyAggregationAttribute,
+    INamedTypeSymbol SpyConstructorChoiceAggregationAttribute,
     INamedTypeSymbol ImplementationAggregationAttribute,
     INamedTypeSymbol TransientAggregationAttribute,
     INamedTypeSymbol SingleInstanceAggregationAttribute,
@@ -11,6 +12,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol DecoratorAggregationAttribute,
     INamedTypeSymbol CompositeAggregationAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,
+    INamedTypeSymbol ConstructorChoiceAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -52,6 +54,9 @@ internal record WellKnownTypes(
         var spyAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(SpyAggregationAttribute).FullName ?? "");
 
+        var spyConstructorChoiceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(SpyConstructorChoiceAggregationAttribute).FullName ?? "");
+
         var implementationAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ImplementationAggregationAttribute).FullName ?? "");
 
@@ -76,8 +81,12 @@ internal record WellKnownTypes(
         var decoratorSequenceChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(DecoratorSequenceChoiceAttribute).FullName ?? "");
 
+        var constructorChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(ConstructorChoiceAttribute).FullName ?? "");
+
         if (iContainer is null
             || spyAggregationAttribute is null
+            || spyConstructorChoiceAggregationAttribute is null
             || implementationAggregationAttribute is null
             || transientAggregationAttribute is null
             || singleInstanceAggregationAttribute is null
@@ -86,6 +95,7 @@ internal record WellKnownTypes(
             || decoratorAggregationAttribute is null
             || compositeAggregationAttribute is null
             || decoratorSequenceChoiceAttribute is null
+            || constructorChoiceAttribute is null
             || iDisposable is null
             || iAsyncDisposable is null
             || lazy1 is null
@@ -109,6 +119,7 @@ internal record WellKnownTypes(
         wellKnownTypes = new WellKnownTypes(
             Container: iContainer,
             SpyAggregationAttribute: spyAggregationAttribute,
+            SpyConstructorChoiceAggregationAttribute: spyConstructorChoiceAggregationAttribute,
             ImplementationAggregationAttribute: implementationAggregationAttribute,
             TransientAggregationAttribute: transientAggregationAttribute,
             SingleInstanceAggregationAttribute: singleInstanceAggregationAttribute,
@@ -117,6 +128,7 @@ internal record WellKnownTypes(
             DecoratorAggregationAttribute: decoratorAggregationAttribute,
             CompositeAggregationAttribute: compositeAggregationAttribute,
             DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
+            ConstructorChoiceAttribute: constructorChoiceAttribute,
             Disposable: iDisposable,
             AsyncDisposable: iAsyncDisposable,
             Lazy1: lazy1,

@@ -55,19 +55,26 @@ internal class ExecuteImpl : IExecute
                 .Where(x => x.AllInterfaces.Any(x => x.OriginalDefinition.Equals(_wellKnownTypes.Container, SymbolEqualityComparer.Default)));
             foreach (var namedTypeSymbol in containerClasses)
             {
-                var containerInfo = _containerInfoFactory(namedTypeSymbol);
-                if (containerInfo.IsValid)
+                try
                 {
-                    var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
-                    containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.ResolutionRootTypes);
-                    var containerResolution = containerResolutionBuilder.Build();
-                    var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
-                    if (errorTreeItems.Any())
-                        _containerErrorGenerator.Generate(containerInfo, errorTreeItems);
-                    else
-                        _containerGenerator.Generate(containerInfo, containerResolution);
+                    var containerInfo = _containerInfoFactory(namedTypeSymbol);
+                    if (containerInfo.IsValid)
+                    {
+                        var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
+                        containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.ResolutionRootTypes);
+                        var containerResolution = containerResolutionBuilder.Build();
+                        var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
+                        if (errorTreeItems.Any())
+                            _containerErrorGenerator.Generate(containerInfo, errorTreeItems);
+                        else
+                            _containerGenerator.Generate(containerInfo, containerResolution);
+                    }
+                    else throw new NotImplementedException("Handle non-valid container information");
                 }
-                else throw new NotImplementedException("Handle non-valid container information");
+                catch (Exception)
+                {
+                    // ignore
+                }
             }
         }
             

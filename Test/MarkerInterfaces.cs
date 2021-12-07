@@ -1,4 +1,4 @@
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test;
 
 public interface ISingleInstance { }
 public interface IScopedInstance { }

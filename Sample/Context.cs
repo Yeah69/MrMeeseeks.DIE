@@ -1,39 +1,14 @@
-﻿namespace MrMeeseeks.DIE.Sample;
+﻿using System;
+using MrMeeseeks.DIE;
+//using SampleChild;
 
-internal interface IDecoratedScopeRoot
+[assembly:ImplementationAggregation(typeof(DateTime))]
+[assembly:ConstructorChoice(typeof(DateTime))]
+//[assembly:SpyAggregation(typeof(IPublicTypeReport))]
+//[assembly:SpyConstructorChoiceAggregationAttribute( PublicConstructorReport.ClassToo, PublicConstructorReport.Class_Int32)]
+
+namespace MrMeeseeks.DIE.Sample;
+
+internal partial class ConstructorChoiceContainer : IContainer<DateTime>
 {
-    IDecoratedScopeRootDependency Dependency { get; }
-    IDecoratedScopeRoot Decorated { get; }
-}
-
-internal interface IDecoratedScopeRootDependency {}
-
-internal class DecoratedScopeRootDependency : IDecoratedScopeRootDependency, IScopedInstance { }
-
-internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot, IScopedInstance
-{
-    public IDecoratedScopeRootDependency Dependency { get; }
-
-    public IDecoratedScopeRoot Decorated => this;
-
-    public DecoratorScopeRootBasis(
-        IDecoratedScopeRootDependency dependency) =>
-        Dependency = dependency;
-}
-
-internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedScopeRoot>
-{
-    public DecoratorScopeRoot(IDecoratedScopeRoot decorated, IDecoratedScopeRootDependency dependency)
-    {
-        Decorated = decorated;
-        Dependency = dependency;
-    }
-
-    public IDecoratedScopeRootDependency Dependency { get; }
-    public IDecoratedScopeRoot Decorated { get; }
-}
-
-internal partial class DecoratorScopeRootContainer : IContainer<IDecoratedScopeRoot>
-{
-    
 }

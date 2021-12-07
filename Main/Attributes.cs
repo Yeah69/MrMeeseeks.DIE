@@ -1,72 +1,71 @@
 namespace MrMeeseeks.DIE;
 
+// ReSharper disable UnusedParameter.Local *** The constructor parameters of the attributes will be used. Trust me, imma dev.
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class SpyAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public SpyAggregationAttribute(params Type[] types) {}
+}
+
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class SpyConstructorChoiceAggregationAttribute : Attribute
+{
+    public SpyConstructorChoiceAggregationAttribute(params Enum[] references) {}
 }
 
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class ImplementationAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public ImplementationAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class TransientAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public TransientAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class SingleInstanceAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public SingleInstanceAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class ScopedInstanceAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public ScopedInstanceAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class ScopeRootAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public ScopeRootAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class DecoratorAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public DecoratorAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class CompositeAggregationAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public CompositeAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class DecoratorSequenceChoiceAttribute : Attribute
 {
-    // ReSharper disable once UnusedParameter.Local *** Is used in the generator
     public DecoratorSequenceChoiceAttribute(Type decoratedType, params Type[] types) {}
 }
 
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Assembly | AttributeTargets.Class)]
-public class ConstructorReferenceAttribute : Attribute
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class ConstructorChoiceAttribute : Attribute
 {
-    public ConstructorReferenceAttribute(Type implementationType, params Type[] parameterTypes)
+    public ConstructorChoiceAttribute(Type implementationType, params Type[] parameterTypes)
     {
     }
 }
+// ReSharper enable UnusedParameter.Local

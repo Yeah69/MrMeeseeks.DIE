@@ -21,10 +21,7 @@ internal partial class InstanceContainer : IContainer<IInstanceClass>
 {
     private readonly string DIE_Dependency;
 
-    public InstanceContainer(string dieDependency)
-    {
-        DIE_Dependency = dieDependency;
-    }
+    public InstanceContainer(string dieDependency) => DIE_Dependency = dieDependency;
 }
 
 public partial class InstanceTests

@@ -108,6 +108,9 @@ internal abstract class RangeResolutionBaseBuilder
 
         if (UserProvidedScopeElements.GetInstanceFor(type) is { } field)
             return new FieldResolution(field.Name, field.Type.FullName());
+        
+        if (UserProvidedScopeElements.GetPropertyFor(type) is { } property)
+            return new FieldResolution(property.Name, property.Type.FullName());
 
         if (type.OriginalDefinition.Equals(WellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
             && type is INamedTypeSymbol namedTypeSymbol)

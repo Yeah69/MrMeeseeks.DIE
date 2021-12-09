@@ -36,14 +36,16 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         ITypeToImplementationsMapper typeToImplementationsMapper, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
         ICheckTypeProperties checkTypeProperties,
-        ICheckDecorators checkDecorators) 
+        ICheckDecorators checkDecorators, 
+        IUserProvidedScopeElements userProvidedScopeElements) 
         : base(
             ("DefaultScope", true), 
             wellKnownTypes, 
             typeToImplementationsMapper, 
             referenceGeneratorFactory, 
             checkTypeProperties, 
-            checkDecorators)
+            checkDecorators,
+            userProvidedScopeElements)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
         _containerReference = RootReferenceGenerator.Generate("_container");

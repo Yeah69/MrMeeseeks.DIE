@@ -25,6 +25,8 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
                     break;
                 case ScopeRootResolution:
                     break;
+                case FieldResolution:
+                    break;
                 case RangeResolution containerResolution:
                     foreach (var overload in containerResolution.RangedInstances.SelectMany(ri => ri.Overloads))
                         Inner(overload.Dependency, errorTreeItems);

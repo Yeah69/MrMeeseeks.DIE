@@ -28,14 +28,16 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         ICheckTypeProperties checkTypeProperties,
         ICheckDecorators checkDecorators,
         WellKnownTypes wellKnownTypes,
-        Func<IContainerResolutionBuilder, IScopeResolutionBuilder> scopeResolutionBuilderFactory) 
+        Func<IContainerResolutionBuilder, IScopeResolutionBuilder> scopeResolutionBuilderFactory, 
+        IUserProvidedScopeElements userProvidedScopeElements) 
         : base(
             (containerInfo.Name, false), 
             wellKnownTypes, 
             typeToImplementationsMapper,
             referenceGeneratorFactory, 
             checkTypeProperties,
-            checkDecorators)
+            checkDecorators,
+            userProvidedScopeElements)
     {
         _containerInfo = containerInfo;
         _scopeResolutionBuilder = scopeResolutionBuilderFactory(this);

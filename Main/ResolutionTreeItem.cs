@@ -113,3 +113,7 @@ internal record DisposalHandling(
     string DisposedLocalReference,
     string DisposedPropertyReference,
     string DisposableLocalReference);
+
+internal record FieldResolution(
+    string FieldReferenceName,
+    string TypeFullName) : Resolvable($"this.{FieldReferenceName}", TypeFullName);

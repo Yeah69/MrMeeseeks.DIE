@@ -176,7 +176,9 @@ internal class ContainerGenerator : IContainerGenerator
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                     break;
                 case ParameterResolution:
-                    break;
+                    break; // the parameter is the field
+                case FieldResolution:
+                    break; // the scope already contains the field
                 case CollectionResolution(var reference, var typeFullName, _, var items):
                     stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateFields);
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
@@ -228,7 +230,9 @@ internal class ContainerGenerator : IContainerGenerator
                     stringBuilder = stringBuilder.AppendLine($"}};");
                     break;
                 case ParameterResolution:
-                    break;
+                    break; // parameter exists already
+                case FieldResolution:
+                    break; // field exists already
                 case CollectionResolution(var reference, _, var itemFullName, var items):
                     stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateResolutions);
                     stringBuilder = stringBuilder.AppendLine(

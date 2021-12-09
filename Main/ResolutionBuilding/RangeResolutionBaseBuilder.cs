@@ -48,6 +48,7 @@ internal abstract class RangeResolutionBaseBuilder
     
     protected readonly List<(RangedInstanceFunction, RangedInstanceFunctionOverload)> RangedInstances = new ();
     protected readonly DisposableCollectionResolution DisposableCollectionResolution;
+    protected readonly IUserProvidedScopeElements UserProvidedScopeElements;
     protected readonly DisposalHandling DisposalHandling;
     protected readonly string Name;
 
@@ -60,12 +61,14 @@ internal abstract class RangeResolutionBaseBuilder
         ITypeToImplementationsMapper typeToImplementationsMapper,
         IReferenceGeneratorFactory referenceGeneratorFactory,
         ICheckTypeProperties checkTypeProperties,
-        ICheckDecorators checkDecorators)
+        ICheckDecorators checkDecorators, 
+        IUserProvidedScopeElements userProvidedScopeElements)
     {
         WellKnownTypes = wellKnownTypes;
         TypeToImplementationsMapper = typeToImplementationsMapper;
         CheckTypeProperties = checkTypeProperties;
         CheckDecorators = checkDecorators;
+        UserProvidedScopeElements = userProvidedScopeElements;
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
         DisposableCollectionResolution = new DisposableCollectionResolution(
@@ -101,9 +104,10 @@ internal abstract class RangeResolutionBaseBuilder
     {
         var (type, currentFuncParameters) = parameter;
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
-        {
             return funcParameter.Resolution;
-        }
+
+        if (UserProvidedScopeElements.GetInstanceFor(type) is { } field)
+            return new FieldResolution(field.Name, field.Type.FullName());
 
         if (type.OriginalDefinition.Equals(WellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
             && type is INamedTypeSymbol namedTypeSymbol)

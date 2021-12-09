@@ -44,14 +44,16 @@ public class SourceGenerator : ISourceGenerator
             checkTypeProperties,
             checkDecorators,
             wellKnownTypes,
-            ScopeResolutionBuilderFactory);
+            ScopeResolutionBuilderFactory,
+            new UserProvidedScopeElements(ci.ContainerType));
         IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder) => new ScopeResolutionBuilder(
             containerBuilder,
             wellKnownTypes, 
             typeToImplementationMapper, 
             referenceGeneratorFactory,
             checkTypeProperties,
-            checkDecorators);
+            checkDecorators,
+            new EmptyUserProvidedScopeElements()); // todo Replace EmptyUserProvidedScopeElements with one for the scope specifically
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
     }

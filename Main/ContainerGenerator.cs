@@ -171,8 +171,10 @@ internal class ContainerGenerator : IContainerGenerator
                     stringBuilder = GenerateFields(stringBuilder, resolutionBase);
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                     break;
-                case ConstructorResolution(var reference, var typeFullName, _, var parameters):
+                case ConstructorResolution(var reference, var typeFullName, _, var parameters, var initializedProperties):
                     stringBuilder = parameters.Aggregate(stringBuilder,
+                        (builder, tuple) => GenerateFields(builder, tuple.Dependency));
+                    stringBuilder = initializedProperties.Aggregate(stringBuilder,
                         (builder, tuple) => GenerateFields(builder, tuple.Dependency));
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                     break;
@@ -209,7 +211,7 @@ internal class ContainerGenerator : IContainerGenerator
         {
             switch (resolution)
             {
-                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var singleInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _), var (createFunctionReference, _)):
+                case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var singleInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
                     stringBuilder = stringBuilder
                         .AppendLine($"{scopeReference} = new {scopeTypeFullName}({singleInstanceScopeReference});")
                         .AppendLine($"{disposableCollectionReference}.Add(({_wellKnownTypes.Disposable.FullName()}) {scopeReference});")
@@ -223,11 +225,18 @@ internal class ContainerGenerator : IContainerGenerator
                     stringBuilder = stringBuilder.AppendLine(
                         $"{reference} = ({typeFullName}) {resolutionBase.Reference};");              
                     break;
-                case ConstructorResolution(var reference, var typeFullName, var disposableCollectionResolution, var parameters):
+                case ConstructorResolution(var reference, var typeFullName, var disposableCollectionResolution, var parameters, var initializedProperties):
                     stringBuilder = parameters.Aggregate(stringBuilder,
-                        (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
+                        (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
+                    stringBuilder = initializedProperties.Aggregate(stringBuilder,
+                        (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
+                    var constructorParameter =
+                        string.Join(", ", parameters.Select(d => $"{d.Name}: {d.Dependency.Reference}"));
+                    var objectInitializerParameter = initializedProperties.Any()
+                        ? $" {{ {string.Join(", ", initializedProperties.Select(p => $"{p.Name} = {p.Dependency.Reference}"))} }}"
+                        : "";
                     stringBuilder = stringBuilder.AppendLine(
-                        $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.Name}: {d.Dependency?.Reference}"))});");
+                        $"{reference} = new {typeFullName}({constructorParameter}){objectInitializerParameter};");
                     if (disposableCollectionResolution is {})
                         stringBuilder = stringBuilder.AppendLine(
                             $"{disposableCollectionResolution.Reference}.Add(({_wellKnownTypes.Disposable.FullName()}) {reference});");

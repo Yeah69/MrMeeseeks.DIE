@@ -28,7 +28,8 @@ internal record ConstructorResolution(
     string Reference,
     string TypeFullName,
     DisposableCollectionResolution? DisposableCollectionResolution,
-    IReadOnlyList<(string Name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
+    IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties) : Resolvable(Reference, TypeFullName);
 
 internal record ScopeRootResolution(
     string Reference,
@@ -89,7 +90,13 @@ internal record CollectionResolution(
 
 internal record DisposableCollectionResolution(
     string Reference,
-    string TypeFullName) : ConstructorResolution(Reference, TypeFullName, null, Array.Empty<(string name, Resolvable Dependency)>());
+    string TypeFullName) 
+    : ConstructorResolution(
+        Reference,
+        TypeFullName, 
+        null, 
+        Array.Empty<(string Name, Resolvable Dependency)>(), 
+        Array.Empty<(string Name, Resolvable Dependency)>());
 
 internal abstract record RangeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,

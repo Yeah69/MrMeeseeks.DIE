@@ -159,7 +159,8 @@ internal abstract class RangeResolutionBaseBuilder
                                 Array.Empty<ParameterResolution>(),
                                 dependency)
                         )
-                    }));
+                    }),
+                Array.Empty<(string Name, Resolvable Dependency)>());
         }
 
         if (type.OriginalDefinition.Equals(WellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
@@ -554,39 +555,47 @@ internal abstract class RangeResolutionBaseBuilder
                 CheckTypeProperties),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                 .Parameters
-                .Select(p =>
-                {
-                    if (checkForDecoration && p.Type.Equals(decoration?.InterfaceType, SymbolEqualityComparer.Default))
-                    {
-                        return (p.Name, decoration.CurrentInterfaceResolution);
-                    }
-                    if (checkForComposition 
-                        && composition is {} 
-                        && (p.Type.Equals(WellKnownTypes.Enumerable1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
-                        || p.Type.Equals(WellKnownTypes.ReadOnlyCollection1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
-                        || p.Type.Equals(WellKnownTypes.ReadOnlyList1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)))
-                    {
-                        
-                        return (p.Name, new CollectionResolution(
-                            RootReferenceGenerator.Generate(p.Type),
-                            p.Type.FullName(),
-                            composition.InterfaceType.FullName(),
-                            composition.InterfaceResolutionComposition));
-                    }
-                    if (p.Type is not INamedTypeSymbol parameterType)
-                    {
-                        return ("",
-                            new ErrorTreeItem(
-                                $"[{implementationType.FullName()}] Class.Constructor.Parameter: Parameter type {p.Type.FullName()} is not a named type symbol"));
-                    }
-
-                    return (
-                        p.Name,
-                        SwitchType(new SwitchTypeParameter(
-                            parameterType,
-                            currentParameters)));
-                })
+                .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
+                .ToList()),
+            new ReadOnlyCollection<(string Name, Resolvable Dependency)>(implementationType
+                .GetMembers()
+                .OfType<IPropertySymbol>()
+                .Where(p => p.SetMethod?.IsInitOnly ?? false)
+                .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
                 .ToList()));
+
+        (string Name, Resolvable Dependency) ProcessChildType(ITypeSymbol typeSymbol, string parameterName, INamedTypeSymbol impType, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currParameter)
+        {
+            if (checkForDecoration && typeSymbol.Equals(decoration?.InterfaceType, SymbolEqualityComparer.Default))
+            {
+                return (parameterName, decoration.CurrentInterfaceResolution);
+            }
+            if (checkForComposition 
+                && composition is {} 
+                && (typeSymbol.Equals(WellKnownTypes.Enumerable1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
+                    || typeSymbol.Equals(WellKnownTypes.ReadOnlyCollection1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
+                    || typeSymbol.Equals(WellKnownTypes.ReadOnlyList1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)))
+            {
+                        
+                return (parameterName, new CollectionResolution(
+                    RootReferenceGenerator.Generate(typeSymbol),
+                    typeSymbol.FullName(),
+                    composition.InterfaceType.FullName(),
+                    composition.InterfaceResolutionComposition));
+            }
+            if (typeSymbol is not INamedTypeSymbol parameterType)
+            {
+                return ("",
+                    new ErrorTreeItem(
+                        $"[{impType.FullName()}] Class.Constructor.Parameter: Parameter type {typeSymbol.FullName()} is not a named type symbol"));
+            }
+
+            return (
+                parameterName,
+                SwitchType(new SwitchTypeParameter(
+                    parameterType,
+                    currParameter)));
+        }
     }
 
 

@@ -181,8 +181,14 @@ internal class ContainerGenerator : IContainerGenerator
                     break;
                 case ParameterResolution:
                     break; // the parameter is the field
-                case FieldResolution:
-                    break; // the scope already contains the field
+                case FieldResolution(var reference, var typeFullName, _):
+                    stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                    break;
+                case FactoryResolution(var reference, var typeFullName, _, var parameters):
+                    stringBuilder = parameters.Aggregate(stringBuilder,
+                        (builder, tuple) => GenerateFields(builder, tuple.Dependency));
+                    stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                    break;
                 case CollectionResolution(var reference, var typeFullName, _, var items):
                     stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateFields);
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
@@ -221,7 +227,7 @@ internal class ContainerGenerator : IContainerGenerator
                     stringBuilder = parameters.Aggregate(stringBuilder,
                         (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
                     stringBuilder = stringBuilder.AppendLine(
-                        $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.name}: {d.Dependency?.Reference}"))});");
+                        $"{reference} = new {typeFullName}({string.Join(", ", parameters.Select(d => $"{d.Name}: {d.Dependency?.Reference}"))});");
                     if (disposableCollectionResolution is {})
                         stringBuilder = stringBuilder.AppendLine(
                             $"{disposableCollectionResolution.Reference}.Add(({_wellKnownTypes.Disposable.FullName()}) {reference});");
@@ -235,8 +241,14 @@ internal class ContainerGenerator : IContainerGenerator
                     break;
                 case ParameterResolution:
                     break; // parameter exists already
-                case FieldResolution:
-                    break; // field exists already
+                case FieldResolution(var reference, _, var fieldName):
+                    stringBuilder = stringBuilder.AppendLine($"{reference} = this.{fieldName};");
+                    break;
+                case FactoryResolution(var reference, _, var functionName, var parameters):
+                    stringBuilder = parameters.Aggregate(stringBuilder,
+                        (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
+                    stringBuilder = stringBuilder.AppendLine($"{reference} = this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");
+                    break;
                 case CollectionResolution(var reference, _, var itemFullName, var items):
                     stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateResolutions);
                     stringBuilder = stringBuilder.AppendLine(

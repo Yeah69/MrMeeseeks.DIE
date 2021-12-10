@@ -42,22 +42,26 @@ internal class ContainerGenerator : IContainerGenerator
             generatedContainer,
             containerResolution);
 
-        var defaultScopeResolution = containerResolution.DefaultScope;
-        generatedContainer = generatedContainer
-            .AppendLine($"internal partial class {defaultScopeResolution.Name} : {_wellKnownTypes.Disposable.FullName()}")
-            .AppendLine($"{{")
-            .AppendLine($"private readonly {containerInfo.FullName} {defaultScopeResolution.ContainerReference};")
-            .AppendLine($"internal {defaultScopeResolution.Name}({containerInfo.FullName} {defaultScopeResolution.ContainerParameterReference})")
-            .AppendLine($"{{")
-            .AppendLine($"{defaultScopeResolution.ContainerReference} = {defaultScopeResolution.ContainerParameterReference};")
-            .AppendLine($"}}");
+        if (containerResolution.DefaultScope.RootResolutions.Any()
+            || containerResolution.DefaultScope.RangedInstances.Any())
+        {
+            var defaultScopeResolution = containerResolution.DefaultScope;
+            generatedContainer = generatedContainer
+                .AppendLine($"internal partial class {defaultScopeResolution.Name} : {_wellKnownTypes.Disposable.FullName()}")
+                .AppendLine($"{{")
+                .AppendLine($"private readonly {containerInfo.FullName} {defaultScopeResolution.ContainerReference};")
+                .AppendLine($"internal {defaultScopeResolution.Name}({containerInfo.FullName} {defaultScopeResolution.ContainerParameterReference})")
+                .AppendLine($"{{")
+                .AppendLine($"{defaultScopeResolution.ContainerReference} = {defaultScopeResolution.ContainerParameterReference};")
+                .AppendLine($"}}");
 
-        generatedContainer = GenerateResolutionRange(
-            generatedContainer,
-            defaultScopeResolution);
+            generatedContainer = GenerateResolutionRange(
+                generatedContainer,
+                defaultScopeResolution);
         
-        generatedContainer = generatedContainer
-            .AppendLine($"}}");
+            generatedContainer = generatedContainer
+                .AppendLine($"}}");
+        }
             
         generatedContainer = generatedContainer
             .AppendLine($"}}")

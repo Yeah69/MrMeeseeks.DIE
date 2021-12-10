@@ -28,7 +28,7 @@ internal record ConstructorResolution(
     string Reference,
     string TypeFullName,
     DisposableCollectionResolution? DisposableCollectionResolution,
-    IReadOnlyList<(string name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
 
 internal record ScopeRootResolution(
     string Reference,
@@ -75,6 +75,12 @@ internal record FuncResolution(
     IReadOnlyList<ParameterResolution> Parameter,
     ResolutionTreeItem Dependency) : Resolvable(Reference, TypeFullName);
 
+internal record FactoryResolution(
+    string Reference,
+    string TypeFullName,
+    string FunctionName,
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
+
 internal record CollectionResolution(
     string Reference,
     string TypeFullName,
@@ -115,5 +121,6 @@ internal record DisposalHandling(
     string DisposableLocalReference);
 
 internal record FieldResolution(
-    string FieldReferenceName,
-    string TypeFullName) : Resolvable($"this.{FieldReferenceName}", TypeFullName);
+    string Reference,
+    string TypeFullName,
+    string FieldName) : Resolvable(Reference, TypeFullName);

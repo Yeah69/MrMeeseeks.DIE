@@ -128,6 +128,50 @@ internal abstract class RangeResolutionBaseBuilder
                     .Select(p => (p.Name, SwitchType(new SwitchTypeParameter(p.Type, currentFuncParameters))))
                     .ToList());
 
+        if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
+        {
+            return new ConstructorResolution(
+                RootReferenceGenerator.Generate(valueTupleType),
+                valueTupleType.FullName(),
+                ImplementsIDisposable(valueTupleType, WellKnownTypes, DisposableCollectionResolution, CheckTypeProperties),
+                valueTupleType
+                    .TypeArguments
+                    .Select((t, i) => ($"item{(i + 1)}", SwitchType(new SwitchTypeParameter(t, currentFuncParameters))))
+                    .ToList(),
+                Array.Empty<(string Name, Resolvable Dependency)>());
+        }
+
+        if (type.FullName().StartsWith("(") && type.FullName().EndsWith(")") && type is INamedTypeSymbol syntaxValueTupleType)
+        {
+            var itemTypes = GetTypeArguments(syntaxValueTupleType).ToList();
+            
+            return new SyntaxValueTupleResolution(
+                RootReferenceGenerator.Generate("syntaxValueTuple"),
+                syntaxValueTupleType.FullName(),
+                itemTypes
+                    .Select(t => SwitchType(new SwitchTypeParameter(t, currentFuncParameters)))
+                    .ToList());
+
+            IEnumerable<ITypeSymbol> GetTypeArguments(INamedTypeSymbol currentSyntaxValueTupleType)
+            {
+                foreach (var typeArgument in currentSyntaxValueTupleType.TypeArguments)
+                {
+                    if (typeArgument.FullName().StartsWith("(") && typeArgument.FullName().EndsWith(")") &&
+                        typeArgument is INamedTypeSymbol nextSyntaxValueTupleType)
+                    {
+                        foreach (var typeSymbol in GetTypeArguments(nextSyntaxValueTupleType))
+                        {
+                            yield return typeSymbol;
+                        }
+                    }
+                    else
+                    {
+                        yield return typeArgument;
+                    }
+                }
+            }
+        }
+
         if (type.OriginalDefinition.Equals(WellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
             && type is INamedTypeSymbol namedTypeSymbol)
         {
@@ -199,7 +243,7 @@ internal abstract class RangeResolutionBaseBuilder
         if (type.TypeKind == TypeKind.Interface)
             return SwitchInterface(new SwitchInterfaceParameter(type, currentFuncParameters));
 
-        if (type.TypeKind == TypeKind.Class || type.TypeKind == TypeKind.Struct)
+        if (type.TypeKind is TypeKind.Class or TypeKind.Struct)
             return SwitchClass(new SwitchClassParameter(type, currentFuncParameters));
 
         if (type.TypeKind == TypeKind.Delegate 

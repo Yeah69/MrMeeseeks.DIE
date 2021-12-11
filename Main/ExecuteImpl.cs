@@ -52,7 +52,8 @@ internal class ExecuteImpl : IExecute
                 .Select(x => semanticModel.GetDeclaredSymbol(x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x.AllInterfaces.Any(x => x.OriginalDefinition.Equals(_wellKnownTypes.Container, SymbolEqualityComparer.Default)));
+                .Where(x => x.AllInterfaces.Any(x => x.OriginalDefinition.Equals(_wellKnownTypes.Container, SymbolEqualityComparer.Default)))
+                .ToList();
             foreach (var namedTypeSymbol in containerClasses)
             {
                 try

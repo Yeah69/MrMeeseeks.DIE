@@ -31,6 +31,11 @@ internal record ConstructorResolution(
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties) : Resolvable(Reference, TypeFullName);
 
+internal record SyntaxValueTupleResolution(
+    string Reference,
+    string TypeFullName,
+    IReadOnlyList<Resolvable> Items) : Resolvable(Reference, TypeFullName);
+
 internal record ScopeRootResolution(
     string Reference,
     string TypeFullName,

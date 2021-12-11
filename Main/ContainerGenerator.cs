@@ -178,6 +178,10 @@ internal class ContainerGenerator : IContainerGenerator
                         (builder, tuple) => GenerateFields(builder, tuple.Dependency));
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                     break;
+                case SyntaxValueTupleResolution(var reference, var typeFullName, var items):
+                    stringBuilder = items.Aggregate(stringBuilder, GenerateFields);
+                    stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                    break;
                 case FuncResolution(var reference, var typeFullName, _, _):
                     stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                     break;
@@ -240,6 +244,10 @@ internal class ContainerGenerator : IContainerGenerator
                     if (disposableCollectionResolution is {})
                         stringBuilder = stringBuilder.AppendLine(
                             $"{disposableCollectionResolution.Reference}.Add(({_wellKnownTypes.Disposable.FullName()}) {reference});");
+                    break;
+                case SyntaxValueTupleResolution(var reference, var typeFullName, var items):
+                    stringBuilder = items.Aggregate(stringBuilder, GenerateResolutions);
+                    stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", items.Select(d => d.Reference))});");
                     break;
                 case FuncResolution(var reference, _, var parameter, Resolvable resolutionBase):
                     stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", parameter.Select(fpr => fpr.Reference))}) =>");

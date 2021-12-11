@@ -40,6 +40,10 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
                     foreach (var valueTuple in constructorResolution.Parameter)
                         Inner(valueTuple.Dependency, errorTreeItems);
                     break;
+                case SyntaxValueTupleResolution syntaxValueTupleResolution:
+                    foreach (var resolvable in syntaxValueTupleResolution.Items)
+                        Inner(resolvable, errorTreeItems);
+                    break;
                 case CollectionResolution collectionResolution:
                     foreach (var resolutionTreeItem in collectionResolution.Parameter)
                         Inner(resolutionTreeItem, errorTreeItems);

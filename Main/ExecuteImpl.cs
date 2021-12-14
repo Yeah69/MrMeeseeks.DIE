@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using MrMeeseeks.DIE.CodeBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding;
 
 namespace MrMeeseeks.DIE;

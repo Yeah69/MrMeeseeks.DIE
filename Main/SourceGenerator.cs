@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.ResolutionBuilding;
+﻿using MrMeeseeks.DIE.CodeBuilding;
+using MrMeeseeks.DIE.ResolutionBuilding;
 
 namespace MrMeeseeks.DIE;
 
@@ -23,7 +24,7 @@ public class SourceGenerator : ISourceGenerator
         var checkDecorators = new CheckDecorators(wellKnownTypes, getAssemblyAttributes, typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
         var checkTypeProperties = new CheckTypeProperties(typesFromTypeAggregatingAttributes, getAssemblyAttributes, wellKnownTypes, getSetOfTypesWithProperties);
         var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkDecorators, checkTypeProperties);
-        var containerGenerator = new ContainerGenerator(context, wellKnownTypes, diagLogger);
+        var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerErrorGenerator = new ContainerErrorGenerator(context);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
@@ -56,5 +57,21 @@ public class SourceGenerator : ISourceGenerator
             new EmptyUserProvidedScopeElements()); // todo Replace EmptyUserProvidedScopeElements with one for the scope specifically
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
+
+        IContainerCodeBuilder ContainerCodeBuilderFactory(
+            IContainerInfo containerInfo,
+            ContainerResolution containerResolution,
+            IScopeCodeBuilder scopeCodeBuilder) => new ContainerCodeBuilder(
+            containerInfo,
+            containerResolution,
+            scopeCodeBuilder,
+            wellKnownTypes);
+
+        IScopeCodeBuilder ScopeCodeBuilderFactory(
+            IContainerInfo containerInfo,
+            ScopeResolution containerResolution) => new ScopeCodeBuilder(
+            containerInfo,
+            containerResolution,
+            wellKnownTypes);
     }
 }

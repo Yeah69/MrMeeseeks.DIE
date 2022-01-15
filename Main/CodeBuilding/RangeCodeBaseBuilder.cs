@@ -47,7 +47,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             stringBuilder = rangeResolution.RangedInstances.Aggregate(
                 stringBuilder, 
-                (current, singleInstanceResolution) => current.AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Wait();"));
+                (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.Function.LockReference}.Wait();"));
 
             stringBuilder = stringBuilder
                 .AppendLine($"try")
@@ -69,7 +69,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
             stringBuilder = rangeResolution.RangedInstances.Aggregate(
                 stringBuilder, 
-                (current, singleInstanceResolution) => current.AppendLine($"this.{singleInstanceResolution.Function.LockReference}.Release();"));
+                (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.Function.LockReference}.Release();"));
 
             return stringBuilder
                 .AppendLine($"}}")
@@ -162,9 +162,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
-            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var singleInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
+            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
                 stringBuilder = stringBuilder
-                    .AppendLine($"{scopeReference} = new {scopeTypeFullName}({singleInstanceScopeReference});")
+                    .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference});")
                     .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});")
                     .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
                 IsDisposalHandlingRequired = true;

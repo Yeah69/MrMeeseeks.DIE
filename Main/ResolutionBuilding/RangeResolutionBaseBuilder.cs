@@ -85,7 +85,7 @@ internal abstract class RangeResolutionBaseBuilder
             RootReferenceGenerator.Generate("disposable"));
     }
 
-    protected abstract RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(ForConstructorParameter parameter);
+    protected abstract RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter);
     
     protected abstract ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
@@ -529,8 +529,8 @@ internal abstract class RangeResolutionBaseBuilder
         };
         return scopeLevel switch
         {
-            ScopeLevel.SingleInstance => CreateSingleInstanceReferenceResolution(nextParameter),
-            ScopeLevel.Scope => CreateScopedInstanceReferenceResolution(nextParameter),
+            ScopeLevel.Container => CreateContainerInstanceReferenceResolution(nextParameter),
+            ScopeLevel.Scope => CreateScopeInstanceReferenceResolution(nextParameter),
             _ => CreateConstructorResolution(nextParameter)
         };
     }
@@ -643,11 +643,11 @@ internal abstract class RangeResolutionBaseBuilder
     }
 
 
-    private RangedInstanceReferenceResolution CreateScopedInstanceReferenceResolution(
+    private RangedInstanceReferenceResolution CreateScopeInstanceReferenceResolution(
         ForConstructorParameter parameter) =>
         CreateRangedInstanceReferenceResolution(
             parameter,
-            "Scoped",
+            "Scope",
             "this");
 
     protected RangedInstanceReferenceResolution CreateRangedInstanceReferenceResolution(
@@ -697,7 +697,7 @@ internal abstract class RangeResolutionBaseBuilder
     {
         while (RangedInstanceResolutionsQueue.Any())
         {
-            var (scopedInstanceFunction, parameter, type, interfaceExtension) = RangedInstanceResolutionsQueue.Dequeue();
+            var (scopeInstanceFunction, parameter, type, interfaceExtension) = RangedInstanceResolutionsQueue.Dequeue();
             var resolvable = interfaceExtension switch
             {
                 DecorationInterfaceExtension decoration => CreateConstructorResolution(new ForConstructorParameterWithDecoration(
@@ -707,7 +707,7 @@ internal abstract class RangeResolutionBaseBuilder
                 _ => CreateConstructorResolution(new ForConstructorParameter(type, parameter))
             };
             RangedInstances.Add((
-                scopedInstanceFunction, 
+                scopeInstanceFunction, 
                 new RangedInstanceFunctionOverload(
                     resolvable, 
                     parameter.Select(t => t.Item2).ToList())));

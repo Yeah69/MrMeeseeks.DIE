@@ -65,30 +65,30 @@ public partial class CompositeTests
     }
 }
 
-internal interface ICompositeSingleInstance
+internal interface ICompositeContainerInstance
 {
-    IReadOnlyList<ICompositeSingleInstance> Composites { get; }
+    IReadOnlyList<ICompositeContainerInstance> Composites { get; }
 }
 
-internal class CompositeSingleInstanceBasisA : ICompositeSingleInstance, ISingleInstance
+internal class CompositeContainerInstanceBasisA : ICompositeContainerInstance, IContainerInstance
 {
-    public IReadOnlyList<ICompositeSingleInstance> Composites => new List<ICompositeSingleInstance> { this };
+    public IReadOnlyList<ICompositeContainerInstance> Composites => new List<ICompositeContainerInstance> { this };
 }
 
-internal class CompositeSingleInstanceBasisB : ICompositeSingleInstance, ISingleInstance
+internal class CompositeContainerInstanceBasisB : ICompositeContainerInstance, IContainerInstance
 {
-    public IReadOnlyList<ICompositeSingleInstance> Composites => new List<ICompositeSingleInstance> { this };
+    public IReadOnlyList<ICompositeContainerInstance> Composites => new List<ICompositeContainerInstance> { this };
 }
 
-internal class CompositeSingleInstance : ICompositeSingleInstance, IComposite<ICompositeSingleInstance>
+internal class CompositeContainerInstance : ICompositeContainerInstance, IComposite<ICompositeContainerInstance>
 {
-    public CompositeSingleInstance(IReadOnlyList<ICompositeSingleInstance> composites) => 
+    public CompositeContainerInstance(IReadOnlyList<ICompositeContainerInstance> composites) => 
         Composites = composites;
 
-    public IReadOnlyList<ICompositeSingleInstance> Composites { get; }
+    public IReadOnlyList<ICompositeContainerInstance> Composites { get; }
 }
 
-internal partial class CompositeSingleInstanceContainer : IContainer<ICompositeSingleInstance>, IContainer<IReadOnlyList<ICompositeSingleInstance>>
+internal partial class CompositeContainerInstanceContainer : IContainer<ICompositeContainerInstance>, IContainer<IReadOnlyList<ICompositeContainerInstance>>
 {
     
 }
@@ -96,32 +96,32 @@ internal partial class CompositeSingleInstanceContainer : IContainer<ICompositeS
 public partial class CompositeTests
 {
     [Fact]
-    public void SingleInstance()
+    public void ContainerInstance()
     {
-        using var container = new CompositeSingleInstanceContainer();
-        var composite = ((IContainer<ICompositeSingleInstance>) container).Resolve();
+        using var container = new CompositeContainerInstanceContainer();
+        var composite = ((IContainer<ICompositeContainerInstance>) container).Resolve();
         foreach (var compositeComposite in composite.Composites)
         {
             Assert.NotEqual(composite, compositeComposite);
             var type = compositeComposite.GetType();
-            Assert.True(type == typeof(CompositeSingleInstanceBasisA) || type == typeof(CompositeSingleInstanceBasisB));
+            Assert.True(type == typeof(CompositeContainerInstanceBasisA) || type == typeof(CompositeContainerInstanceBasisB));
         }
-        var nextComposite = ((IContainer<ICompositeSingleInstance>) container).Resolve();
+        var nextComposite = ((IContainer<ICompositeContainerInstance>) container).Resolve();
         Assert.Equal(composite, nextComposite);
     }
     
     [Fact]
-    public void SingleInstanceList()
+    public void ContainerInstanceList()
     {
-        using var container = new CompositeSingleInstanceContainer();
-        var composites = ((IContainer<IReadOnlyList<ICompositeSingleInstance>>) container).Resolve();
+        using var container = new CompositeContainerInstanceContainer();
+        var composites = ((IContainer<IReadOnlyList<ICompositeContainerInstance>>) container).Resolve();
         foreach (var compositeComposite in composites)
         {
             var type = compositeComposite.GetType();
-            Assert.True(type == typeof(CompositeSingleInstanceBasisA) || type == typeof(CompositeSingleInstanceBasisB));
+            Assert.True(type == typeof(CompositeContainerInstanceBasisA) || type == typeof(CompositeContainerInstanceBasisB));
         }
         Assert.Equal(2, composites.Count);
-        var nextComposites = ((IContainer<IReadOnlyList<ICompositeSingleInstance>>) container).Resolve();
+        var nextComposites = ((IContainer<IReadOnlyList<ICompositeContainerInstance>>) container).Resolve();
         Assert.Equal(composites[0], nextComposites[0]);
         Assert.Equal(composites[1], nextComposites[1]);
     }
@@ -132,7 +132,7 @@ internal interface ICompositeMixedScoping
     IReadOnlyList<ICompositeMixedScoping> Composites { get; }
 }
 
-internal class CompositeMixedScopingBasisA : ICompositeMixedScoping, ISingleInstance
+internal class CompositeMixedScopingBasisA : ICompositeMixedScoping, IContainerInstance
 {
     public IReadOnlyList<ICompositeMixedScoping> Composites => new List<ICompositeMixedScoping> { this };
 }
@@ -197,7 +197,7 @@ internal interface ICompositeScopeRoot
 
 internal interface ICompositeScopeRootDependency { }
 
-internal class CompositeScopeRootDependency : ICompositeScopeRootDependency, IScopedInstance { }
+internal class CompositeScopeRootDependency : ICompositeScopeRootDependency, IScopeInstance { }
 
 internal class CompositeScopeRootBasisA : ICompositeScopeRoot, IScopeRoot
 {

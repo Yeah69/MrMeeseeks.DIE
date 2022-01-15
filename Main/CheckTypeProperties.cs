@@ -5,7 +5,7 @@ internal enum ScopeLevel
     None,
     Scope,
     TransientScope,
-    SingleInstance
+    Container
 }
 
 internal interface ICheckTypeProperties
@@ -22,8 +22,8 @@ internal interface ICheckTypeProperties
 internal class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly IImmutableSet<ISymbol?> _transientTypes;
-    private readonly IImmutableSet<ISymbol?> _singleInstanceTypes;
-    private readonly IImmutableSet<ISymbol?> _scopedInstanceTypes;
+    private readonly IImmutableSet<ISymbol?> _containerInstanceTypes;
+    private readonly IImmutableSet<ISymbol?> _scopeInstanceTypes;
     private readonly IImmutableSet<ISymbol?> _scopeRootTypes;
     private readonly IImmutableSet<ISymbol?> _compositeTypes;
     private readonly Dictionary<ISymbol?, INamedTypeSymbol> _interfaceToComposite;
@@ -36,8 +36,8 @@ internal class CheckTypeProperties : ICheckTypeProperties
         IGetSetOfTypesWithProperties getSetOfTypesWithProperties)
     {
         _transientTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.Transient);
-        _singleInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.SingleInstance);
-        _scopedInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ScopedInstance);
+        _containerInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ContainerInstance);
+        _scopeInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ScopeInstance);
         _scopeRootTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ScopeRoot);
         _compositeTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.Composite);
         _interfaceToComposite = _compositeTypes
@@ -104,9 +104,9 @@ internal class CheckTypeProperties : ICheckTypeProperties
     public bool ShouldBeComposite(INamedTypeSymbol interfaceType) => _interfaceToComposite.ContainsKey(interfaceType);
     public ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType)
     {
-        if (_singleInstanceTypes.Contains(implementationType))
-            return ScopeLevel.SingleInstance;
-        if (_scopedInstanceTypes.Contains(implementationType))
+        if (_containerInstanceTypes.Contains(implementationType))
+            return ScopeLevel.Container;
+        if (_scopeInstanceTypes.Contains(implementationType))
             return ScopeLevel.Scope;
         return ScopeLevel.None;
     }

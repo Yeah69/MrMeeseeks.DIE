@@ -5,8 +5,8 @@ internal interface ITypesFromTypeAggregatingAttributes
     IReadOnlyList<INamedTypeSymbol> Spy { get; }
     IReadOnlyList<INamedTypeSymbol> Implementation { get; }
     IReadOnlyList<INamedTypeSymbol> Transient { get; }
-    IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
-    IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
+    IReadOnlyList<INamedTypeSymbol> ContainerInstance { get; }
+    IReadOnlyList<INamedTypeSymbol> ScopeInstance { get; }
     IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
     IReadOnlyList<INamedTypeSymbol> Decorator { get; }
     IReadOnlyList<INamedTypeSymbol> Composite { get; }
@@ -21,8 +21,8 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
         Spy = GetTypesFromAttribute(wellKnownTypes.SpyAggregationAttribute).ToList();
         Implementation = GetTypesFromAttribute(wellKnownTypes.ImplementationAggregationAttribute).ToList();
         Transient = GetTypesFromAttribute(wellKnownTypes.TransientAggregationAttribute).ToList();
-        SingleInstance = GetTypesFromAttribute(wellKnownTypes.SingleInstanceAggregationAttribute).ToList();
-        ScopedInstance = GetTypesFromAttribute(wellKnownTypes.ScopedInstanceAggregationAttribute).ToList();
+        ContainerInstance = GetTypesFromAttribute(wellKnownTypes.ContainerInstanceAggregationAttribute).ToList();
+        ScopeInstance = GetTypesFromAttribute(wellKnownTypes.ScopeInstanceAggregationAttribute).ToList();
         ScopeRoot = GetTypesFromAttribute(wellKnownTypes.ScopeRootAggregationAttribute).ToList();
         Decorator = GetTypesFromAttribute(wellKnownTypes.DecoratorAggregationAttribute).ToList();
         Composite = GetTypesFromAttribute(wellKnownTypes.CompositeAggregationAttribute).ToList();
@@ -63,8 +63,8 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
     public IReadOnlyList<INamedTypeSymbol> Spy { get; }
     public IReadOnlyList<INamedTypeSymbol> Implementation { get; }
     public IReadOnlyList<INamedTypeSymbol> Transient { get; }
-    public IReadOnlyList<INamedTypeSymbol> SingleInstance { get; }
-    public IReadOnlyList<INamedTypeSymbol> ScopedInstance { get; }
+    public IReadOnlyList<INamedTypeSymbol> ContainerInstance { get; }
+    public IReadOnlyList<INamedTypeSymbol> ScopeInstance { get; }
     public IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
     public IReadOnlyList<INamedTypeSymbol> Decorator { get; }
     public IReadOnlyList<INamedTypeSymbol> Composite { get; }

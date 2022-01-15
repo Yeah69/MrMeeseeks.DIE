@@ -41,7 +41,7 @@ internal record ScopeRootResolution(
     string TypeFullName,
     string ScopeReference,
     string ScopeTypeFullName,
-    string SingleInstanceScopeReference,
+    string ContainerInstanceScopeReference,
     IReadOnlyList<ParameterResolution> Parameter,
     DisposableCollectionResolution DisposableCollectionResolution,
     ScopeRootFunction ScopeRootFunction) : Resolvable(Reference, TypeFullName);

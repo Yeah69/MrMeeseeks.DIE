@@ -4,7 +4,7 @@ internal interface IContainerResolutionBuilder
 {
     void AddCreateResolveFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes);
 
-    RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
+    RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(
         RangeResolutionBaseBuilder.ForConstructorParameter parameter,
         string containerReference);
 
@@ -59,14 +59,14 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 DisposalHandling));
     }
 
-    public RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(ForConstructorParameter parameter, string containerReference) =>
+    public RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter, string containerReference) =>
         CreateRangedInstanceReferenceResolution(
             parameter,
-            "Single",
+            "Container",
             containerReference);
 
-    protected override RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(ForConstructorParameter parameter) =>
-        CreateSingleInstanceReferenceResolution(parameter, "this");
+    protected override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
+        CreateContainerInstanceReferenceResolution(parameter, "this");
 
     protected override ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,

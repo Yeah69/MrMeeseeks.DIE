@@ -7,7 +7,7 @@ internal interface IScopeResolutionBuilder
     ScopeRootResolution AddCreateResolveFunction(
         RangeResolutionBaseBuilder.IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        string singleInstanceScopeReference,
+        string containerInstanceScopeReference,
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 
@@ -52,9 +52,9 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         _containerParameterReference = RootReferenceGenerator.Generate("container");
     }
 
-    protected override RangedInstanceReferenceResolution CreateSingleInstanceReferenceResolution(
+    protected override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter) =>
-        _containerResolutionBuilder.CreateSingleInstanceReferenceResolution(
+        _containerResolutionBuilder.CreateContainerInstanceReferenceResolution(
             parameter,
             _containerReference);
 
@@ -75,7 +75,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     public ScopeRootResolution AddCreateResolveFunction(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        string singleInstanceScopeReference,
+        string containerInstanceScopeReference,
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
@@ -105,7 +105,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             rootType.FullName(),
             RootReferenceGenerator.Generate("scopeRoot"),
             Name,
-            singleInstanceScopeReference,
+            containerInstanceScopeReference,
             currentParameters.Select(t => t.Resolution).ToList(),
             disposableCollectionResolution,
             function);

@@ -43,25 +43,25 @@ public partial class DecoratorTests
     }
 }
 
-internal interface IDecoratedSingleInstance
+internal interface IDecoratedContainerInstance
 {
-    IDecoratedSingleInstance Decorated { get; }
+    IDecoratedContainerInstance Decorated { get; }
 }
 
-internal class DecoratorSingleInstanceBasis : IDecoratedSingleInstance, ISingleInstance
+internal class DecoratorContainerInstanceBasis : IDecoratedContainerInstance, IContainerInstance
 {
-    public IDecoratedSingleInstance Decorated => this;
+    public IDecoratedContainerInstance Decorated => this;
 }
 
-internal class DecoratorSingleInstance : IDecoratedSingleInstance, IDecorator<IDecoratedSingleInstance>
+internal class DecoratorContainerInstance : IDecoratedContainerInstance, IDecorator<IDecoratedContainerInstance>
 {
-    public DecoratorSingleInstance(IDecoratedSingleInstance decoratedSingleInstance) => 
-        Decorated = decoratedSingleInstance;
+    public DecoratorContainerInstance(IDecoratedContainerInstance decoratedContainerInstance) => 
+        Decorated = decoratedContainerInstance;
 
-    public IDecoratedSingleInstance Decorated { get; }
+    public IDecoratedContainerInstance Decorated { get; }
 }
 
-internal partial class DecoratorSingleInstanceContainer : IContainer<IDecoratedSingleInstance>
+internal partial class DecoratorContainerInstanceContainer : IContainer<IDecoratedContainerInstance>
 {
     
 }
@@ -69,15 +69,15 @@ internal partial class DecoratorSingleInstanceContainer : IContainer<IDecoratedS
 public partial class DecoratorTests
 {
     [Fact]
-    public void SingleInstance()
+    public void ContainerInstance()
     {
-        using var container = new DecoratorSingleInstanceContainer();
-        var decorated = ((IContainer<IDecoratedSingleInstance>) container).Resolve();
+        using var container = new DecoratorContainerInstanceContainer();
+        var decorated = ((IContainer<IDecoratedContainerInstance>) container).Resolve();
         Assert.NotEqual(decorated, decorated.Decorated);
-        Assert.IsType<DecoratorSingleInstance>(decorated);
-        Assert.IsType<DecoratorSingleInstanceBasis>(decorated.Decorated);
+        Assert.IsType<DecoratorContainerInstance>(decorated);
+        Assert.IsType<DecoratorContainerInstanceBasis>(decorated.Decorated);
         
-        var decoratedNextReference = ((IContainer<IDecoratedSingleInstance>) container).Resolve();
+        var decoratedNextReference = ((IContainer<IDecoratedContainerInstance>) container).Resolve();
         Assert.Equal(decorated, decoratedNextReference);
         Assert.Equal(decorated.Decorated, decoratedNextReference.Decorated);
     }
@@ -91,9 +91,9 @@ internal interface IDecoratedScopeRoot
 
 internal interface IDecoratedScopeRootDependency {}
 
-internal class DecoratedScopeRootDependency : IDecoratedScopeRootDependency, IScopedInstance {}
+internal class DecoratedScopeRootDependency : IDecoratedScopeRootDependency, IScopeInstance {}
 
-internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot, IScopedInstance
+internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot, IScopeInstance
 {
     public IDecoratedScopeRootDependency Dependency { get; }
 

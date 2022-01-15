@@ -26,15 +26,15 @@ public class TransientAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class SingleInstanceAggregationAttribute : Attribute
+public class ContainerInstanceAggregationAttribute : Attribute
 {
-    public SingleInstanceAggregationAttribute(params Type[] types) {}
+    public ContainerInstanceAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-public class ScopedInstanceAggregationAttribute : Attribute
+public class ScopeInstanceAggregationAttribute : Attribute
 {
-    public ScopedInstanceAggregationAttribute(params Type[] types) {}
+    public ScopeInstanceAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]

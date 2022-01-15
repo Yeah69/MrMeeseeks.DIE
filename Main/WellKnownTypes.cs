@@ -6,8 +6,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol SpyConstructorChoiceAggregationAttribute,
     INamedTypeSymbol ImplementationAggregationAttribute,
     INamedTypeSymbol TransientAggregationAttribute,
-    INamedTypeSymbol SingleInstanceAggregationAttribute,
-    INamedTypeSymbol ScopedInstanceAggregationAttribute,
+    INamedTypeSymbol ContainerInstanceAggregationAttribute,
+    INamedTypeSymbol ScopeInstanceAggregationAttribute,
     INamedTypeSymbol ScopeRootAggregationAttribute,
     INamedTypeSymbol DecoratorAggregationAttribute,
     INamedTypeSymbol CompositeAggregationAttribute,
@@ -63,11 +63,11 @@ internal record WellKnownTypes(
         var transientAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(TransientAggregationAttribute).FullName ?? "");
 
-        var singleInstanceAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(SingleInstanceAggregationAttribute).FullName ?? "");
+        var containerInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(ContainerInstanceAggregationAttribute).FullName ?? "");
 
-        var scopedInstanceAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(ScopedInstanceAggregationAttribute).FullName ?? "");
+        var scopeInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(ScopeInstanceAggregationAttribute).FullName ?? "");
 
         var scopeRootAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ScopeRootAggregationAttribute).FullName ?? "");
@@ -89,8 +89,8 @@ internal record WellKnownTypes(
             || spyConstructorChoiceAggregationAttribute is null
             || implementationAggregationAttribute is null
             || transientAggregationAttribute is null
-            || singleInstanceAggregationAttribute is null
-            || scopedInstanceAggregationAttribute is null
+            || containerInstanceAggregationAttribute is null
+            || scopeInstanceAggregationAttribute is null
             || scopeRootAggregationAttribute is null
             || decoratorAggregationAttribute is null
             || compositeAggregationAttribute is null
@@ -122,8 +122,8 @@ internal record WellKnownTypes(
             SpyConstructorChoiceAggregationAttribute: spyConstructorChoiceAggregationAttribute,
             ImplementationAggregationAttribute: implementationAggregationAttribute,
             TransientAggregationAttribute: transientAggregationAttribute,
-            SingleInstanceAggregationAttribute: singleInstanceAggregationAttribute,
-            ScopedInstanceAggregationAttribute: scopedInstanceAggregationAttribute,
+            ContainerInstanceAggregationAttribute: containerInstanceAggregationAttribute,
+            ScopeInstanceAggregationAttribute: scopeInstanceAggregationAttribute,
             ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
             DecoratorAggregationAttribute: decoratorAggregationAttribute,
             CompositeAggregationAttribute: compositeAggregationAttribute,

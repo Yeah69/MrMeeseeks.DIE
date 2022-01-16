@@ -1,6 +1,7 @@
 namespace MrMeeseeks.DIE.Sample;
 
 public interface IContainerInstance { }
+public interface ITransientScopeInstance { }
 public interface IScopeInstance { }
 public interface IScopeRoot { }
 public interface ITransient { }

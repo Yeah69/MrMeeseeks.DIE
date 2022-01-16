@@ -32,6 +32,12 @@ public class ContainerInstanceAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class TransientScopeInstanceAggregationAttribute : Attribute
+{
+    public TransientScopeInstanceAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class ScopeInstanceAggregationAttribute : Attribute
 {
     public ScopeInstanceAggregationAttribute(params Type[] types) {}

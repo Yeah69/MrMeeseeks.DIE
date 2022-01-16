@@ -65,6 +65,11 @@ internal record RangedInstanceFunction(
     string FieldReference,
     string LockReference);
 
+internal record TransientScopeInstanceInterfaceFunction(
+    IReadOnlyList<ParameterResolution> Parameter,
+    string Reference,
+    string TypeFullName);
+
 internal record RangedInstanceFunctionOverload(
     Resolvable Dependency,
     IReadOnlyList<ParameterResolution> Parameter);
@@ -108,12 +113,19 @@ internal abstract record RangeResolution(
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstance> RangedInstances) : ResolutionTreeItem;
 
+internal record TransientScopeInterfaceResolution(
+    IReadOnlyList<TransientScopeInstanceInterfaceFunction> Functions,
+    string Name,
+    string ContainerAdapterName);
+
 internal record ScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstance> RangedInstances,
     string ContainerReference,
     string ContainerParameterReference,
+    string TransientScopeReference,
+    string TransientScopeParameterReference,
     string Name) 
     : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
 
@@ -121,6 +133,8 @@ internal record ContainerResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstance> RangedInstances,
+    TransientScopeInterfaceResolution TransientScopeInterface,
+    string TransientScopeAdapterReference,
     ScopeResolution DefaultScope)
     : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
 

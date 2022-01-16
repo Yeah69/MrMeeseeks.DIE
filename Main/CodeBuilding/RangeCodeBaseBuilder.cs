@@ -16,6 +16,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         WellKnownTypes = wellKnownTypes;
     }
     
+    protected abstract string TransientScopeReference { get; }
+    
     protected StringBuilder GenerateResolutionRange(
         StringBuilder stringBuilder,
         RangeResolution rangeResolution)
@@ -164,7 +166,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
                 stringBuilder = stringBuilder
-                    .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference});")
+                    .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {TransientScopeReference});")
                     .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});")
                     .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
                 IsDisposalHandlingRequired = true;

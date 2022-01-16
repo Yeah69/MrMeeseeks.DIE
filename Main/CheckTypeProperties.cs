@@ -23,6 +23,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly IImmutableSet<ISymbol?> _transientTypes;
     private readonly IImmutableSet<ISymbol?> _containerInstanceTypes;
+    private readonly IImmutableSet<ISymbol?> _transientScopeInstanceTypes;
     private readonly IImmutableSet<ISymbol?> _scopeInstanceTypes;
     private readonly IImmutableSet<ISymbol?> _scopeRootTypes;
     private readonly IImmutableSet<ISymbol?> _compositeTypes;
@@ -37,6 +38,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
     {
         _transientTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.Transient);
         _containerInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ContainerInstance);
+        _transientScopeInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.TransientScopeInstance);
         _scopeInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ScopeInstance);
         _scopeRootTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ScopeRoot);
         _compositeTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.Composite);
@@ -106,6 +108,8 @@ internal class CheckTypeProperties : ICheckTypeProperties
     {
         if (_containerInstanceTypes.Contains(implementationType))
             return ScopeLevel.Container;
+        if (_transientScopeInstanceTypes.Contains(implementationType))
+            return ScopeLevel.TransientScope;
         if (_scopeInstanceTypes.Contains(implementationType))
             return ScopeLevel.Scope;
         return ScopeLevel.None;

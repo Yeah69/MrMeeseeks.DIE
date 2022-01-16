@@ -13,13 +13,13 @@ internal class ContainerGenerator : IContainerGenerator
     private readonly GeneratorExecutionContext _context;
     private readonly IDiagLogger _diagLogger;
     private readonly Func<IContainerInfo, ContainerResolution, IScopeCodeBuilder, IContainerCodeBuilder> _containerCodeBuilderFactory;
-    private readonly Func<IContainerInfo, ScopeResolution, IScopeCodeBuilder> _scopeCodeBuilderFactory;
+    private readonly Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, IScopeCodeBuilder> _scopeCodeBuilderFactory;
 
     internal ContainerGenerator(
         GeneratorExecutionContext context,
         IDiagLogger diagLogger,
         Func<IContainerInfo, ContainerResolution, IScopeCodeBuilder, IContainerCodeBuilder> containerCodeBuilderFactory,
-        Func<IContainerInfo, ScopeResolution, IScopeCodeBuilder> scopeCodeBuilderFactory)
+        Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, IScopeCodeBuilder> scopeCodeBuilderFactory)
     {
         _context = context;
         _diagLogger = diagLogger;
@@ -36,7 +36,7 @@ internal class ContainerGenerator : IContainerGenerator
         }
 
         var containerCodeBuilder = _containerCodeBuilderFactory(containerInfo, containerResolution,
-            _scopeCodeBuilderFactory(containerInfo, containerResolution.DefaultScope));
+            _scopeCodeBuilderFactory(containerInfo, containerResolution.DefaultScope, containerResolution.TransientScopeInterface));
 
         var generatedContainer = containerCodeBuilder.Build(new StringBuilder());
 

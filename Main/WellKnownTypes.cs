@@ -7,6 +7,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol ImplementationAggregationAttribute,
     INamedTypeSymbol TransientAggregationAttribute,
     INamedTypeSymbol ContainerInstanceAggregationAttribute,
+    INamedTypeSymbol TransientScopeInstanceAggregationAttribute,
     INamedTypeSymbol ScopeInstanceAggregationAttribute,
     INamedTypeSymbol ScopeRootAggregationAttribute,
     INamedTypeSymbol DecoratorAggregationAttribute,
@@ -66,6 +67,9 @@ internal record WellKnownTypes(
         var containerInstanceAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ContainerInstanceAggregationAttribute).FullName ?? "");
 
+        var transientScopeInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(TransientScopeInstanceAggregationAttribute).FullName ?? "");
+
         var scopeInstanceAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ScopeInstanceAggregationAttribute).FullName ?? "");
 
@@ -90,6 +94,7 @@ internal record WellKnownTypes(
             || implementationAggregationAttribute is null
             || transientAggregationAttribute is null
             || containerInstanceAggregationAttribute is null
+            || transientScopeInstanceAggregationAttribute is null
             || scopeInstanceAggregationAttribute is null
             || scopeRootAggregationAttribute is null
             || decoratorAggregationAttribute is null
@@ -123,6 +128,7 @@ internal record WellKnownTypes(
             ImplementationAggregationAttribute: implementationAggregationAttribute,
             TransientAggregationAttribute: transientAggregationAttribute,
             ContainerInstanceAggregationAttribute: containerInstanceAggregationAttribute,
+            TransientScopeInstanceAggregationAttribute: transientScopeInstanceAggregationAttribute,
             ScopeInstanceAggregationAttribute: scopeInstanceAggregationAttribute,
             ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
             DecoratorAggregationAttribute: decoratorAggregationAttribute,

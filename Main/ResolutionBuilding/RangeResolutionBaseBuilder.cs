@@ -2,38 +2,6 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal abstract class RangeResolutionBaseBuilder
 {
-
-    internal abstract record InterfaceExtension(
-        INamedTypeSymbol InterfaceType)
-    {
-        internal string KeySuffix() =>
-            this switch
-            {
-                DecorationInterfaceExtension decoration => $":::{decoration.ImplementationType.FullName()}",
-                CompositionInterfaceExtension composition => string.Join(":::", composition.ImplementationTypes.Select(i => i.FullName())),
-                _ => throw new ArgumentException()
-            };
-        
-        internal string RangedNameSuffix() =>
-            this switch
-            {
-                DecorationInterfaceExtension decoration => $"_{decoration.ImplementationType.Name}",
-                CompositionInterfaceExtension =>  "_Composite",
-                _ => throw new ArgumentException()
-            };
-    }
-    internal record DecorationInterfaceExtension(
-        INamedTypeSymbol InterfaceType,
-        INamedTypeSymbol ImplementationType,
-        INamedTypeSymbol DecoratorType,
-        InterfaceResolution CurrentInterfaceResolution)
-        : InterfaceExtension(InterfaceType);
-    internal record CompositionInterfaceExtension(
-        INamedTypeSymbol InterfaceType,
-        IReadOnlyList<INamedTypeSymbol> ImplementationTypes,
-        INamedTypeSymbol CompositeType,
-        IReadOnlyList<InterfaceResolution> InterfaceResolutionComposition)
-        : InterfaceExtension(InterfaceType);
     
     protected readonly WellKnownTypes WellKnownTypes;
     protected readonly ITypeToImplementationsMapper TypeToImplementationsMapper;
@@ -44,7 +12,7 @@ internal abstract class RangeResolutionBaseBuilder
     protected readonly IDictionary<string, RangedInstanceFunction> RangedInstanceReferenceResolutions =
         new Dictionary<string, RangedInstanceFunction>();
     protected readonly HashSet<(RangedInstanceFunction, string)> RangedInstanceQueuedOverloads = new ();
-    protected readonly Queue<(RangedInstanceFunction, IReadOnlyList<(ITypeSymbol, ParameterResolution)>, INamedTypeSymbol, InterfaceExtension?)> RangedInstanceResolutionsQueue = new();
+    protected readonly Queue<RangedInstanceResolutionsQueueItem> RangedInstanceResolutionsQueue = new();
     
     protected readonly List<(RangedInstanceFunction, RangedInstanceFunctionOverload)> RangedInstances = new ();
     protected readonly DisposableCollectionResolution DisposableCollectionResolution;
@@ -86,19 +54,14 @@ internal abstract class RangeResolutionBaseBuilder
     }
 
     protected abstract RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter);
+
+    protected abstract RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter);
     
     protected abstract ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
-
-    internal record Parameter;
-
-    internal record SwitchTypeParameter(
-        ITypeSymbol Type,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters)
-        : Parameter;
     
     protected Resolvable SwitchType(SwitchTypeParameter parameter)
     {
@@ -270,11 +233,6 @@ internal abstract class RangeResolutionBaseBuilder
         return new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation.");
     }
 
-    internal record SwitchInterfaceParameter(
-        ITypeSymbol Type,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters)
-        : Parameter;
-
     private Resolvable SwitchInterface(SwitchInterfaceParameter parameter)
     {
         var (typeSymbol, currentParameters) = parameter;
@@ -298,23 +256,6 @@ internal abstract class RangeResolutionBaseBuilder
         }
 
         return SwitchInterfaceAfterScopeRoot(nextParameter);
-    }
-
-    internal interface IScopeRootParameter
-    {
-        string KeySuffix();
-        string RootFunctionSuffix();
-    }
-
-    internal record SwitchInterfaceAfterScopeRootParameter(
-        INamedTypeSymbol InterfaceType,
-        IList<INamedTypeSymbol> ImplementationTypes,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters) 
-        : IScopeRootParameter
-    {
-        public string KeySuffix() => ":::InterfaceAfterRoot";
-
-        public string RootFunctionSuffix() => "_InterfaceAfterRoot";
     }
 
     protected Resolvable SwitchInterfaceAfterScopeRoot(
@@ -356,12 +297,6 @@ internal abstract class RangeResolutionBaseBuilder
             currentParameters));
     }
 
-
-    internal record SwitchInterfaceForSpecificImplementationParameter(
-        INamedTypeSymbol InterfaceType,
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
-
     private Resolvable SwitchInterfaceForSpecificImplementation(
         SwitchInterfaceForSpecificImplementationParameter parameter)
     {
@@ -382,29 +317,6 @@ internal abstract class RangeResolutionBaseBuilder
         }
 
         return CreateInterface(nextParameter);
-    }
-
-    internal record CreateInterfaceParameter(
-        INamedTypeSymbol InterfaceType,
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
-        : IScopeRootParameter
-    {
-        public virtual string KeySuffix() => ":::NormalInterface";
-
-        public virtual string RootFunctionSuffix() => "_NormalInterface";
-    }
-
-    internal record CreateInterfaceParameterAsComposition(
-        INamedTypeSymbol InterfaceType,
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
-        CompositionInterfaceExtension Composition)
-        : CreateInterfaceParameter(InterfaceType, ImplementationType, CurrentParameters)
-    {
-        public override string KeySuffix() => ":::CompositeInterface";
-
-        public override string RootFunctionSuffix() => "_CompositeInterface";
     }
 
     internal InterfaceResolution CreateInterface(CreateInterfaceParameter parameter)
@@ -450,10 +362,6 @@ internal abstract class RangeResolutionBaseBuilder
         return currentInterfaceResolution;
     }
 
-    internal record SwitchClassParameter(
-        ITypeSymbol TypeSymbol,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
-
     protected Resolvable SwitchClass(SwitchClassParameter parameter)
     {
         var (typeSymbol, currentParameters) = parameter;
@@ -480,28 +388,6 @@ internal abstract class RangeResolutionBaseBuilder
 
         return SwitchImplementation(nextParameter);
     }
-    
-    internal record SwitchImplementationParameter(
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
-        : IScopeRootParameter
-    {
-        public virtual string KeySuffix() => ":::Implementation";
-
-        public virtual string RootFunctionSuffix() => "";
-    }
-    
-    internal record SwitchImplementationParameterWithDecoration(
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
-        DecorationInterfaceExtension Decoration)
-        : SwitchImplementationParameter(ImplementationType, CurrentParameters);
-    
-    internal record SwitchImplementationParameterWithComposition(
-            INamedTypeSymbol ImplementationType,
-            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
-            CompositionInterfaceExtension Composition)
-        : SwitchImplementationParameter(ImplementationType, CurrentParameters);
 
     protected Resolvable SwitchImplementation(SwitchImplementationParameter parameter)
     {
@@ -530,32 +416,11 @@ internal abstract class RangeResolutionBaseBuilder
         return scopeLevel switch
         {
             ScopeLevel.Container => CreateContainerInstanceReferenceResolution(nextParameter),
+            ScopeLevel.TransientScope => CreateTransientScopeInstanceReferenceResolution(nextParameter),
             ScopeLevel.Scope => CreateScopeInstanceReferenceResolution(nextParameter),
             _ => CreateConstructorResolution(nextParameter)
         };
     }
-
-    internal record ForConstructorParameter(
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters);
-
-    internal abstract record ForConstructorParameterWithInterfaceExtension(
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters,
-        InterfaceExtension InterfaceExtension)
-        : ForConstructorParameter(ImplementationType, CurrentFuncParameters);
-
-    internal record ForConstructorParameterWithDecoration(
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters,
-        DecorationInterfaceExtension Decoration)
-        : ForConstructorParameterWithInterfaceExtension(ImplementationType, CurrentFuncParameters, Decoration);
-
-    internal record ForConstructorParameterWithComposition(
-            INamedTypeSymbol ImplementationType,
-            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters,
-            CompositionInterfaceExtension Composition)
-        : ForConstructorParameterWithInterfaceExtension(ImplementationType, CurrentFuncParameters, Composition);
 
     protected Resolvable CreateConstructorResolution(ForConstructorParameter parameter)
     {
@@ -682,7 +547,7 @@ internal abstract class RangeResolutionBaseBuilder
             var tempParameter = currentParameters
                 .Select(t => (t.Type, new ParameterResolution(RootReferenceGenerator.Generate(t.Type), t.Type.FullName())))
                 .ToList();
-            RangedInstanceResolutionsQueue.Enqueue((function, tempParameter, implementationType, interfaceExtension));
+            RangedInstanceResolutionsQueue.Enqueue(new RangedInstanceResolutionsQueueItem(function, tempParameter, implementationType, interfaceExtension));
             RangedInstanceQueuedOverloads.Add((function, listedParameterTypes));
         }
 

@@ -40,6 +40,8 @@ public class SourceGenerator : ISourceGenerator
             
         IContainerResolutionBuilder ResolutionTreeFactory(IContainerInfo ci) => new ContainerResolutionBuilder(
             ci,
+            
+            new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory),
             typeToImplementationMapper,
             referenceGeneratorFactory,
             checkTypeProperties,
@@ -47,8 +49,10 @@ public class SourceGenerator : ISourceGenerator
             wellKnownTypes,
             ScopeResolutionBuilderFactory,
             new UserProvidedScopeElements(ci.ContainerType));
-        IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder) => new ScopeResolutionBuilder(
+        IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder, ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder) => new ScopeResolutionBuilder(
             containerBuilder,
+            transientScopeInterfaceResolutionBuilder,
+            
             wellKnownTypes, 
             typeToImplementationMapper, 
             referenceGeneratorFactory,
@@ -69,9 +73,11 @@ public class SourceGenerator : ISourceGenerator
 
         IScopeCodeBuilder ScopeCodeBuilderFactory(
             IContainerInfo containerInfo,
-            ScopeResolution containerResolution) => new ScopeCodeBuilder(
+            ScopeResolution containerResolution,
+            TransientScopeInterfaceResolution transientScopeInterfaceResolution) => new ScopeCodeBuilder(
             containerInfo,
             containerResolution,
+            transientScopeInterfaceResolution,
             wellKnownTypes);
     }
 }

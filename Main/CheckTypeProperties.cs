@@ -11,7 +11,7 @@ internal enum ScopeLevel
 internal interface ICheckTypeProperties
 {
     bool ShouldBeManaged(INamedTypeSymbol implementationType);
-    bool ShouldBeScopeRoot(INamedTypeSymbol implementationType);
+    ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType);
     bool ShouldBeComposite(INamedTypeSymbol interfaceType);
     ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType);
     INamedTypeSymbol GetCompositeFor(INamedTypeSymbol interfaceType);
@@ -25,6 +25,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
     private readonly IImmutableSet<ISymbol?> _containerInstanceTypes;
     private readonly IImmutableSet<ISymbol?> _transientScopeInstanceTypes;
     private readonly IImmutableSet<ISymbol?> _scopeInstanceTypes;
+    private readonly IImmutableSet<ISymbol?> _transientScopeRootTypes;
     private readonly IImmutableSet<ISymbol?> _scopeRootTypes;
     private readonly IImmutableSet<ISymbol?> _compositeTypes;
     private readonly Dictionary<ISymbol?, INamedTypeSymbol> _interfaceToComposite;
@@ -40,6 +41,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
         _containerInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ContainerInstance);
         _transientScopeInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.TransientScopeInstance);
         _scopeInstanceTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ScopeInstance);
+        _transientScopeRootTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.TransientScopeRoot);
         _scopeRootTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.ScopeRoot);
         _compositeTypes = getSetOfTypesWithProperties.Get(typesFromTypeAggregatingAttributes.Composite);
         _interfaceToComposite = _compositeTypes
@@ -102,7 +104,12 @@ internal class CheckTypeProperties : ICheckTypeProperties
     }
 
     public bool ShouldBeManaged(INamedTypeSymbol implementationType) => !_transientTypes.Contains(implementationType);
-    public bool ShouldBeScopeRoot(INamedTypeSymbol implementationType) => _scopeRootTypes.Contains(implementationType);
+    public ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType)
+    {
+        if (_transientScopeRootTypes.Contains(implementationType)) return ScopeLevel.TransientScope;
+        return _scopeRootTypes.Contains(implementationType) ? ScopeLevel.Scope : ScopeLevel.None;
+    }
+
     public bool ShouldBeComposite(INamedTypeSymbol interfaceType) => _interfaceToComposite.ContainsKey(interfaceType);
     public ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType)
     {

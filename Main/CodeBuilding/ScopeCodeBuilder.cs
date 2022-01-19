@@ -11,8 +11,6 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
     private readonly ScopeResolution _scopeResolution;
     private readonly TransientScopeInterfaceResolution _transientScopeInterfaceResolution;
 
-    protected override string TransientScopeReference { get; }
-
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         if (!_scopeResolution.RootResolutions.Any() && !_scopeResolution.RangedInstances.Any()) 
@@ -23,13 +21,13 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
                 $"internal partial class {_scopeResolution.Name} : {WellKnownTypes.Disposable.FullName()}")
             .AppendLine($"{{")
             .AppendLine($"private readonly {_containerInfo.FullName} {_scopeResolution.ContainerReference};")
-            .AppendLine($"private readonly {_transientScopeInterfaceResolution.Name} {TransientScopeReference};")
+            .AppendLine($"private readonly {_transientScopeInterfaceResolution.Name} {_scopeResolution.TransientScopeReference};")
             .AppendLine($"internal {_scopeResolution.Name}(")
             .AppendLine($"{_containerInfo.FullName} {_scopeResolution.ContainerParameterReference},")
             .AppendLine($"{_transientScopeInterfaceResolution.Name} {_scopeResolution.TransientScopeParameterReference})")
             .AppendLine($"{{")
             .AppendLine($"{_scopeResolution.ContainerReference} = {_scopeResolution.ContainerParameterReference};")
-            .AppendLine($"{TransientScopeReference} = {_scopeResolution.TransientScopeParameterReference};")
+            .AppendLine($"{_scopeResolution.TransientScopeReference} = {_scopeResolution.TransientScopeParameterReference};")
             .AppendLine($"}}");
 
         stringBuilder = GenerateResolutionRange(
@@ -55,6 +53,5 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
         _containerInfo = containerInfo;
         _scopeResolution = scopeResolution;
         _transientScopeInterfaceResolution = transientScopeInterfaceResolution;
-        TransientScopeReference = _scopeResolution.TransientScopeReference;
     }
 }

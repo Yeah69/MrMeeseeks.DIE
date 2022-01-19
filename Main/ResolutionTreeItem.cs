@@ -36,12 +36,23 @@ internal record SyntaxValueTupleResolution(
     string TypeFullName,
     IReadOnlyList<Resolvable> Items) : Resolvable(Reference, TypeFullName);
 
+internal record TransientScopeRootResolution(
+    string Reference,
+    string TypeFullName,
+    string TransientScopeReference,
+    string TransientScopeTypeFullName,
+    string ContainerInstanceScopeReference,
+    IReadOnlyList<ParameterResolution> Parameter,
+    DisposableCollectionResolution DisposableCollectionResolution,
+    ScopeRootFunction ScopeRootFunction) : Resolvable(Reference, TypeFullName);
+
 internal record ScopeRootResolution(
     string Reference,
     string TypeFullName,
     string ScopeReference,
     string ScopeTypeFullName,
     string ContainerInstanceScopeReference,
+    string TransientInstanceScopeReference,
     IReadOnlyList<ParameterResolution> Parameter,
     DisposableCollectionResolution DisposableCollectionResolution,
     ScopeRootFunction ScopeRootFunction) : Resolvable(Reference, TypeFullName);
@@ -129,12 +140,22 @@ internal record ScopeResolution(
     string Name) 
     : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
 
+internal record TransientScopeResolution(
+    IReadOnlyList<RootResolutionFunction> RootResolutions,
+    DisposalHandling DisposalHandling,
+    IReadOnlyList<RangedInstance> RangedInstances,
+    string ContainerReference,
+    string ContainerParameterReference,
+    string Name) 
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
+
 internal record ContainerResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstance> RangedInstances,
     TransientScopeInterfaceResolution TransientScopeInterface,
     string TransientScopeAdapterReference,
+    TransientScopeResolution DefaultTransientScope,
     ScopeResolution DefaultScope)
     : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
 

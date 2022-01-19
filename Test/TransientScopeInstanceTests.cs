@@ -63,3 +63,25 @@ public partial class TransientScopeInstanceTests
         var _ = ((IContainer<IScopeWithTransientScopeInstanceAbove>) container).Resolve();
     }
 }
+
+internal interface ITransientScopeWithTransientScopeInstance {}
+
+internal class TransientScopeWithTransientScopeInstance : ITransientScopeWithTransientScopeInstance, ITransientScopeRoot
+{
+    public TransientScopeWithTransientScopeInstance(ITransientScopeInstanceInner _) {}
+}
+
+internal partial class TransientScopeInstanceContainer : IContainer<ITransientScopeWithTransientScopeInstance>
+{
+    
+}
+
+public partial class TransientScopeInstanceTests
+{
+    [Fact]
+    public void InTransientScope()
+    {
+        using var container = new TransientScopeInstanceContainer();
+        var _ = ((IContainer<ITransientScopeWithTransientScopeInstance>) container).Resolve();
+    }
+}

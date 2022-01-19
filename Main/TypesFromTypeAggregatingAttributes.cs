@@ -8,6 +8,7 @@ internal interface ITypesFromTypeAggregatingAttributes
     IReadOnlyList<INamedTypeSymbol> ContainerInstance { get; }
     IReadOnlyList<INamedTypeSymbol> TransientScopeInstance { get; }
     IReadOnlyList<INamedTypeSymbol> ScopeInstance { get; }
+    IReadOnlyList<INamedTypeSymbol> TransientScopeRoot { get; }
     IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
     IReadOnlyList<INamedTypeSymbol> Decorator { get; }
     IReadOnlyList<INamedTypeSymbol> Composite { get; }
@@ -25,6 +26,7 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
         ContainerInstance = GetTypesFromAttribute(wellKnownTypes.ContainerInstanceAggregationAttribute).ToList();
         TransientScopeInstance = GetTypesFromAttribute(wellKnownTypes.TransientScopeInstanceAggregationAttribute).ToList();
         ScopeInstance = GetTypesFromAttribute(wellKnownTypes.ScopeInstanceAggregationAttribute).ToList();
+        TransientScopeRoot = GetTypesFromAttribute(wellKnownTypes.TransientScopeRootAggregationAttribute).ToList();
         ScopeRoot = GetTypesFromAttribute(wellKnownTypes.ScopeRootAggregationAttribute).ToList();
         Decorator = GetTypesFromAttribute(wellKnownTypes.DecoratorAggregationAttribute).ToList();
         Composite = GetTypesFromAttribute(wellKnownTypes.CompositeAggregationAttribute).ToList();
@@ -68,6 +70,7 @@ internal class TypesFromTypeAggregatingAttributes : ITypesFromTypeAggregatingAtt
     public IReadOnlyList<INamedTypeSymbol> ContainerInstance { get; }
     public IReadOnlyList<INamedTypeSymbol> TransientScopeInstance { get; }
     public IReadOnlyList<INamedTypeSymbol> ScopeInstance { get; }
+    public IReadOnlyList<INamedTypeSymbol> TransientScopeRoot { get; }
     public IReadOnlyList<INamedTypeSymbol> ScopeRoot { get; }
     public IReadOnlyList<INamedTypeSymbol> Decorator { get; }
     public IReadOnlyList<INamedTypeSymbol> Composite { get; }

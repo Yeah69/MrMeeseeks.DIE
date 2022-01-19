@@ -24,7 +24,7 @@ public class SourceGenerator : ISourceGenerator
         var checkDecorators = new CheckDecorators(wellKnownTypes, getAssemblyAttributes, typesFromTypeAggregatingAttributes, getSetOfTypesWithProperties);
         var checkTypeProperties = new CheckTypeProperties(typesFromTypeAggregatingAttributes, getAssemblyAttributes, wellKnownTypes, getSetOfTypesWithProperties);
         var typeToImplementationMapper = new TypeToImplementationsMapper(getAllImplementations, checkDecorators, checkTypeProperties);
-        var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, ScopeCodeBuilderFactory);
+        var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerErrorGenerator = new ContainerErrorGenerator(context);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
@@ -47,10 +47,22 @@ public class SourceGenerator : ISourceGenerator
             checkTypeProperties,
             checkDecorators,
             wellKnownTypes,
+            TransientScopeResolutionBuilderFactory,
             ScopeResolutionBuilderFactory,
             new UserProvidedScopeElements(ci.ContainerType));
-        IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder, ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder) => new ScopeResolutionBuilder(
+        ITransientScopeResolutionBuilder TransientScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder, ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder) => new TransientScopeResolutionBuilder(
             containerBuilder,
+            transientScopeInterfaceResolutionBuilder,
+            
+            wellKnownTypes, 
+            typeToImplementationMapper, 
+            referenceGeneratorFactory,
+            checkTypeProperties,
+            checkDecorators,
+            new EmptyUserProvidedScopeElements()); // todo Replace EmptyUserProvidedScopeElements with one for the scope specifically
+        IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder, ITransientScopeResolutionBuilder transientScopeResolutionBuilder, ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder) => new ScopeResolutionBuilder(
+            containerBuilder,
+            transientScopeResolutionBuilder,
             transientScopeInterfaceResolutionBuilder,
             
             wellKnownTypes, 
@@ -65,18 +77,27 @@ public class SourceGenerator : ISourceGenerator
         IContainerCodeBuilder ContainerCodeBuilderFactory(
             IContainerInfo containerInfo,
             ContainerResolution containerResolution,
+            ITransientScopeCodeBuilder transientScopeCodeBuilder,
             IScopeCodeBuilder scopeCodeBuilder) => new ContainerCodeBuilder(
             containerInfo,
             containerResolution,
+            transientScopeCodeBuilder,
             scopeCodeBuilder,
+            wellKnownTypes);
+
+        ITransientScopeCodeBuilder TransientScopeCodeBuilderFactory(
+            IContainerInfo containerInfo,
+            TransientScopeResolution transientScopeResolution) => new TransientScopeCodeBuilder(
+            containerInfo,
+            transientScopeResolution,
             wellKnownTypes);
 
         IScopeCodeBuilder ScopeCodeBuilderFactory(
             IContainerInfo containerInfo,
-            ScopeResolution containerResolution,
+            ScopeResolution scopeResolution,
             TransientScopeInterfaceResolution transientScopeInterfaceResolution) => new ScopeCodeBuilder(
             containerInfo,
-            containerResolution,
+            scopeResolution,
             transientScopeInterfaceResolution,
             wellKnownTypes);
     }

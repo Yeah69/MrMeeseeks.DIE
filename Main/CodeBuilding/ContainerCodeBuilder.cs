@@ -9,9 +9,8 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 {
     private readonly IContainerInfo _containerInfo;
     private readonly ContainerResolution _containerResolution;
+    private readonly ITransientScopeCodeBuilder _defaultTransientScopeCodeBuilder;
     private readonly IScopeCodeBuilder _defaultScopeBuilder;
-
-    protected override string TransientScopeReference { get; }
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
@@ -51,9 +50,11 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         
         stringBuilder = stringBuilder
             .AppendLine($"}}")
-            .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} _{TransientScopeReference};")
-            .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} {TransientScopeReference} => _{TransientScopeReference} ??= new {_containerResolution.TransientScopeInterface.ContainerAdapterName}(this);");
+            .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} _{_containerResolution.TransientScopeAdapterReference};")
+            .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} {_containerResolution.TransientScopeAdapterReference} => _{_containerResolution.TransientScopeAdapterReference} ??= new {_containerResolution.TransientScopeInterface.ContainerAdapterName}(this);");
 
+        stringBuilder = _defaultTransientScopeCodeBuilder.Build(stringBuilder);
+        
         stringBuilder = _defaultScopeBuilder.Build(stringBuilder);
 
         return stringBuilder
@@ -65,6 +66,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         // parameter
         IContainerInfo containerInfo,
         ContainerResolution containerResolution,
+        ITransientScopeCodeBuilder defaultTransientScopeCodeBuilder,
         IScopeCodeBuilder defaultScopeBuilder,
         
         // dependencies
@@ -73,8 +75,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
     {
         _containerInfo = containerInfo;
         _containerResolution = containerResolution;
+        _defaultTransientScopeCodeBuilder = defaultTransientScopeCodeBuilder;
         _defaultScopeBuilder = defaultScopeBuilder;
-
-        TransientScopeReference = containerResolution.TransientScopeAdapterReference;
     }
 }

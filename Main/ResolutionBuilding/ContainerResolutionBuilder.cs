@@ -19,6 +19,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
     private readonly IScopeResolutionBuilder _scopeResolutionBuilder;
     private readonly string _transientScopeAdapterReference;
+    private readonly ITransientScopeResolutionBuilder _transientScopeResolutionBuilder;
 
     internal ContainerResolutionBuilder(
         // parameters
@@ -31,7 +32,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         ICheckTypeProperties checkTypeProperties,
         ICheckDecorators checkDecorators,
         WellKnownTypes wellKnownTypes,
-        Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeResolutionBuilder> scopeResolutionBuilderFactory, 
+        Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, ITransientScopeResolutionBuilder> transientScopeResolutionBuilderFactory, 
+        Func<IContainerResolutionBuilder, ITransientScopeResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeResolutionBuilder> scopeResolutionBuilderFactory, 
         IUserProvidedScopeElements userProvidedScopeElements) 
         : base(
             (containerInfo.Name, false), 
@@ -44,9 +46,13 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     {
         _containerInfo = containerInfo;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
-        _scopeResolutionBuilder = scopeResolutionBuilderFactory(this, transientScopeInterfaceResolutionBuilder);
+        _transientScopeResolutionBuilder = transientScopeResolutionBuilderFactory(this, _transientScopeInterfaceResolutionBuilder);
+        _scopeResolutionBuilder = scopeResolutionBuilderFactory(this, _transientScopeResolutionBuilder, _transientScopeInterfaceResolutionBuilder);
+        if (_transientScopeResolutionBuilder is TransientScopeResolutionBuilder transientScopeResolutionBuilder)
+            transientScopeResolutionBuilder.ScopeResolutionBuilder = _scopeResolutionBuilder;
         
         transientScopeInterfaceResolutionBuilder.AddImplementation(this);
+        transientScopeInterfaceResolutionBuilder.AddImplementation(_transientScopeResolutionBuilder);
         _transientScopeAdapterReference = RootReferenceGenerator.Generate("TransientScopeAdapter");
     }
 
@@ -78,6 +84,15 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     protected override RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, "this");
 
+    protected override TransientScopeRootResolution CreateTransientScopeRootResolution(IScopeRootParameter parameter, INamedTypeSymbol rootType,
+        DisposableCollectionResolution disposableCollectionResolution, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        _transientScopeResolutionBuilder.AddCreateResolveFunction(
+            parameter,
+            rootType, 
+            "this",
+            disposableCollectionResolution,
+            currentParameters);
+
     protected override ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
@@ -87,14 +102,18 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             parameter,
             rootType, 
             "this",
+            _transientScopeAdapterReference,
             disposableCollectionResolution,
             currentParameters);
 
     public ContainerResolution Build()
     {
-        while (RangedInstanceResolutionsQueue.Any() || _scopeResolutionBuilder.HasWorkToDo)
+        while (RangedInstanceResolutionsQueue.Any() 
+               || _transientScopeResolutionBuilder.HasWorkToDo 
+               || _scopeResolutionBuilder.HasWorkToDo)
         {
             DoRangedInstancesWork();
+            _transientScopeResolutionBuilder.DoWork();
             _scopeResolutionBuilder.DoWork();
         }
         
@@ -110,6 +129,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 .ToList(),
             _transientScopeInterfaceResolutionBuilder.Build(),
             _transientScopeAdapterReference,
+            _transientScopeResolutionBuilder.Build(),
             _scopeResolutionBuilder.Build());
     }
 

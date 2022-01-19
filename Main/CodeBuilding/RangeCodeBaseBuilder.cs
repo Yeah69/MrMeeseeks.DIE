@@ -16,8 +16,6 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         WellKnownTypes = wellKnownTypes;
     }
     
-    protected abstract string TransientScopeReference { get; }
-    
     protected StringBuilder GenerateResolutionRange(
         StringBuilder stringBuilder,
         RangeResolution rangeResolution)
@@ -111,7 +109,12 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
-            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, _, _, _, _):
+            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, _, _, _, _):
+                stringBuilder = stringBuilder
+                    .AppendLine($"{transientScopeTypeFullName} {transientScopeReference};")
+                    .AppendLine($"{typeFullName} {reference};");
+                break;
+            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, _, _, _, _, _):
                 stringBuilder = stringBuilder
                     .AppendLine($"{scopeTypeFullName} {scopeReference};")
                     .AppendLine($"{typeFullName} {reference};");  
@@ -164,9 +167,16 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
-            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
+            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
                 stringBuilder = stringBuilder
-                    .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {TransientScopeReference});")
+                    .AppendLine($"{transientScopeReference} = new {transientScopeTypeFullName}({containerInstanceScopeReference});")
+                    .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {transientScopeReference});")
+                    .AppendLine($"{reference} = ({typeFullName}) {transientScopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
+                IsDisposalHandlingRequired = true;
+                break;
+            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
+                stringBuilder = stringBuilder
+                    .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});")
                     .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});")
                     .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
                 IsDisposalHandlingRequired = true;

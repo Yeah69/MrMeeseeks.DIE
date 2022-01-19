@@ -1,41 +1,38 @@
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
-internal interface IScopeResolutionBuilder
+internal interface ITransientScopeResolutionBuilder : ITransientScopeImplementationResolutionBuilder
 {
     bool HasWorkToDo { get; }
     
-    ScopeRootResolution AddCreateResolveFunction(
+    TransientScopeRootResolution AddCreateResolveFunction(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
-        string transientInstanceScopeReference,
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 
     void DoWork();
 
-    ScopeResolution Build();
+    TransientScopeResolution Build();
 }
 
-internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolutionBuilder
+internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITransientScopeResolutionBuilder
 {
     private readonly IContainerResolutionBuilder _containerResolutionBuilder;
-    private readonly ITransientScopeResolutionBuilder _transientScopeResolutionBuilder;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
     private readonly string _containerReference;
     private readonly string _containerParameterReference;
-    private readonly string _transientScopeReference;
-    private readonly string _transientScopeParameterReference;
     
-    private readonly Dictionary<string, ScopeRootFunction> _scopeRootFunctionResolutions = new ();
-    private readonly HashSet<(ScopeRootFunction, string)> _scopeRootFunctionQueuedOverloads = new ();
-    private readonly Queue<(ScopeRootFunction, IReadOnlyList<ParameterResolution>, INamedTypeSymbol, IScopeRootParameter)> _scopeRootFunctionResolutionsQueue = new();
+    private readonly Dictionary<string, ScopeRootFunction> _transientScopeRootFunctionResolutions = new ();
+    private readonly HashSet<(ScopeRootFunction, string)> _transientScopeRootFunctionQueuedOverloads = new ();
+    private readonly Queue<(ScopeRootFunction, IReadOnlyList<ParameterResolution>, INamedTypeSymbol, IScopeRootParameter)> _transientScopeRootFunctionResolutionsQueue = new();
     
-    internal ScopeResolutionBuilder(
+    public IScopeResolutionBuilder? ScopeResolutionBuilder { get; set; }
+    
+    internal TransientScopeResolutionBuilder(
         // parameter
         IContainerResolutionBuilder containerResolutionBuilder,
-        ITransientScopeResolutionBuilder transientScopeResolutionBuilder,
         ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder,
         
         // dependencies
@@ -46,7 +43,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         ICheckDecorators checkDecorators, 
         IUserProvidedScopeElements userProvidedScopeElements) 
         : base(
-            ("DefaultScope", true), 
+            ("DefaultTransientScope", true), 
             wellKnownTypes, 
             typeToImplementationsMapper, 
             referenceGeneratorFactory, 
@@ -55,29 +52,23 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             userProvidedScopeElements)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
-        _transientScopeResolutionBuilder = transientScopeResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
         _containerReference = RootReferenceGenerator.Generate("_container");
         _containerParameterReference = RootReferenceGenerator.Generate("container");
-        _transientScopeReference = RootReferenceGenerator.Generate("_transientScope");
-        _transientScopeParameterReference = RootReferenceGenerator.Generate("transientScope");
     }
 
     protected override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _containerResolutionBuilder.CreateContainerInstanceReferenceResolution(parameter, _containerReference);
 
     protected override RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
-        _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, _transientScopeReference);
+        _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, "this");
 
-    protected override TransientScopeRootResolution CreateTransientScopeRootResolution(
-        IScopeRootParameter parameter,
-        INamedTypeSymbol rootType,
-        DisposableCollectionResolution disposableCollectionResolution,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
-        _transientScopeResolutionBuilder.AddCreateResolveFunction(
+    protected override TransientScopeRootResolution CreateTransientScopeRootResolution(IScopeRootParameter parameter, INamedTypeSymbol rootType,
+        DisposableCollectionResolution disposableCollectionResolution, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        AddCreateResolveFunction(
             parameter,
             rootType,
-            _containerReference,
+            _containerReference, 
             disposableCollectionResolution,
             currentParameters);
 
@@ -86,52 +77,50 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         INamedTypeSymbol rootType, 
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
-        AddCreateResolveFunction(
+        ScopeResolutionBuilder!.AddCreateResolveFunction(
             parameter,
             rootType, 
-            _containerReference, 
-            _transientScopeReference,
+            _containerReference,
+            "this",
             disposableCollectionResolution,
             currentParameters);
 
-    public bool HasWorkToDo => _scopeRootFunctionResolutionsQueue.Any() || RangedInstanceResolutionsQueue.Any();
+    public bool HasWorkToDo => _transientScopeRootFunctionResolutionsQueue.Any() || RangedInstanceResolutionsQueue.Any();
 
-    public ScopeRootResolution AddCreateResolveFunction(
+    public TransientScopeRootResolution AddCreateResolveFunction(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
-        string transientInstanceScopeReference,
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
         var key = $"{rootType.FullName()}{parameter.KeySuffix()}";
-        if (!_scopeRootFunctionResolutions.TryGetValue(
+        if (!_transientScopeRootFunctionResolutions.TryGetValue(
                 key,
                 out ScopeRootFunction function))
         {
             function = new ScopeRootFunction(
                 RootReferenceGenerator.Generate("Create", rootType, parameter.RootFunctionSuffix()),
                 rootType.FullName());
-            _scopeRootFunctionResolutions[key] = function;
+            _transientScopeRootFunctionResolutions[key] = function;
         }
 
         var listedParameterTypes = string.Join(",", currentParameters.Select(p => p.Item2.TypeFullName));
-        if (!_scopeRootFunctionQueuedOverloads.Contains((function, listedParameterTypes)))
+        if (!_transientScopeRootFunctionQueuedOverloads.Contains((function, listedParameterTypes)))
         {
             var currParameter = currentParameters
                 .Select(t => new ParameterResolution(RootReferenceGenerator.Generate(t.Type), t.Type.FullName()))
                 .ToList();
-            _scopeRootFunctionResolutionsQueue.Enqueue((function, currParameter, rootType, parameter));
-            _scopeRootFunctionQueuedOverloads.Add((function, listedParameterTypes));
+            _transientScopeRootFunctionResolutionsQueue.Enqueue((function, currParameter, rootType, parameter));
+            _transientScopeRootFunctionQueuedOverloads.Add((function, listedParameterTypes));
         }
 
-        return new ScopeRootResolution(
+        return new TransientScopeRootResolution(
             RootReferenceGenerator.Generate(rootType),
             rootType.FullName(),
-            RootReferenceGenerator.Generate("scopeRoot"),
+            RootReferenceGenerator.Generate("transientScopeRoot"),
             Name,
             containerInstanceScopeReference,
-            transientInstanceScopeReference,
             currentParameters.Select(t => t.Resolution).ToList(),
             disposableCollectionResolution,
             function);
@@ -141,9 +130,9 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     {
         while (HasWorkToDo)
         {
-            while (_scopeRootFunctionResolutionsQueue.Any())
+            while (_transientScopeRootFunctionResolutionsQueue.Any())
             {
-                var (scopeRootFunction, parameter, type, functionParameter) = _scopeRootFunctionResolutionsQueue.Dequeue();
+                var (scopeRootFunction, parameter, type, functionParameter) = _transientScopeRootFunctionResolutionsQueue.Dequeue();
 
                 var resolvable = functionParameter switch
                 {
@@ -168,7 +157,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         }
     }
 
-    public ScopeResolution Build() =>
+    public TransientScopeResolution Build() =>
         new(_rootResolutions,
             DisposalHandling,
             RangedInstances
@@ -180,7 +169,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                 .ToList(),
             _containerReference,
             _containerParameterReference,
-            _transientScopeReference,
-            _transientScopeParameterReference,
             Name);
+
+    public void EnqueueRangedInstanceResolution(RangedInstanceResolutionsQueueItem item) => RangedInstanceResolutionsQueue.Enqueue(item);
 }

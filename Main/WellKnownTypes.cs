@@ -9,6 +9,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol ContainerInstanceAggregationAttribute,
     INamedTypeSymbol TransientScopeInstanceAggregationAttribute,
     INamedTypeSymbol ScopeInstanceAggregationAttribute,
+    INamedTypeSymbol TransientScopeRootAggregationAttribute,
     INamedTypeSymbol ScopeRootAggregationAttribute,
     INamedTypeSymbol DecoratorAggregationAttribute,
     INamedTypeSymbol CompositeAggregationAttribute,
@@ -73,6 +74,9 @@ internal record WellKnownTypes(
         var scopeInstanceAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ScopeInstanceAggregationAttribute).FullName ?? "");
 
+        var transientScopeRootAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(TransientScopeRootAggregationAttribute).FullName ?? "");
+
         var scopeRootAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ScopeRootAggregationAttribute).FullName ?? "");
 
@@ -96,6 +100,7 @@ internal record WellKnownTypes(
             || containerInstanceAggregationAttribute is null
             || transientScopeInstanceAggregationAttribute is null
             || scopeInstanceAggregationAttribute is null
+            || transientScopeRootAggregationAttribute is null
             || scopeRootAggregationAttribute is null
             || decoratorAggregationAttribute is null
             || compositeAggregationAttribute is null
@@ -130,6 +135,7 @@ internal record WellKnownTypes(
             ContainerInstanceAggregationAttribute: containerInstanceAggregationAttribute,
             TransientScopeInstanceAggregationAttribute: transientScopeInstanceAggregationAttribute,
             ScopeInstanceAggregationAttribute: scopeInstanceAggregationAttribute,
+            TransientScopeRootAggregationAttribute: transientScopeRootAggregationAttribute,
             ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
             DecoratorAggregationAttribute: decoratorAggregationAttribute,
             CompositeAggregationAttribute: compositeAggregationAttribute,

@@ -44,6 +44,12 @@ public class ScopeInstanceAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+public class TransientScopeRootAggregationAttribute : Attribute
+{
+    public TransientScopeRootAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 public class ScopeRootAggregationAttribute : Attribute
 {
     public ScopeRootAggregationAttribute(params Type[] types) {}

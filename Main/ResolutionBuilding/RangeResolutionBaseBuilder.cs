@@ -57,6 +57,12 @@ internal abstract class RangeResolutionBaseBuilder
 
     protected abstract RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter);
     
+    protected abstract TransientScopeRootResolution CreateTransientScopeRootResolution(
+        IScopeRootParameter parameter,
+        INamedTypeSymbol rootType,
+        DisposableCollectionResolution disposableCollectionResolution,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+    
     protected abstract ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
@@ -239,23 +245,27 @@ internal abstract class RangeResolutionBaseBuilder
         var interfaceType = (INamedTypeSymbol) typeSymbol;
         var implementations = TypeToImplementationsMapper
             .Map(typeSymbol);
-        var shouldBeScopeRoot = implementations.Any(i => CheckTypeProperties.ShouldBeScopeRoot(i));
+        var shouldBeScopeRoot = implementations.Max(i => CheckTypeProperties.ShouldBeScopeRoot(i));
 
         var nextParameter = new SwitchInterfaceAfterScopeRootParameter(
             interfaceType,
             implementations,
             currentParameters);
         
-        if (shouldBeScopeRoot)
+        return shouldBeScopeRoot switch
         {
-            return CreateScopeRootResolution(
+            ScopeLevel.TransientScope => CreateTransientScopeRootResolution(
                 nextParameter,
                 interfaceType,
                 DisposableCollectionResolution,
-                currentParameters);
-        }
-
-        return SwitchInterfaceAfterScopeRoot(nextParameter);
+                currentParameters),
+            ScopeLevel.Scope => CreateScopeRootResolution(
+                nextParameter,
+                interfaceType,
+                DisposableCollectionResolution,
+                currentParameters),
+            _ => SwitchInterfaceAfterScopeRoot(nextParameter)
+        };
     }
 
     protected Resolvable SwitchInterfaceAfterScopeRoot(
@@ -306,17 +316,21 @@ internal abstract class RangeResolutionBaseBuilder
             interfaceType,
             implementationType,
             currentParameters);
-        
-        if (CheckTypeProperties.ShouldBeScopeRoot(implementationType))
+
+        return CheckTypeProperties.ShouldBeScopeRoot(implementationType) switch
         {
-            return CreateScopeRootResolution(
+            ScopeLevel.TransientScope => CreateTransientScopeRootResolution(
                 nextParameter,
                 interfaceType,
                 DisposableCollectionResolution,
-                currentParameters);
-        }
-
-        return CreateInterface(nextParameter);
+                currentParameters),
+            ScopeLevel.Scope => CreateScopeRootResolution(
+                nextParameter,
+                interfaceType,
+                DisposableCollectionResolution,
+                currentParameters),
+            _ => CreateInterface(nextParameter)
+        };
     }
 
     internal InterfaceResolution CreateInterface(CreateInterfaceParameter parameter)
@@ -382,11 +396,21 @@ internal abstract class RangeResolutionBaseBuilder
         var nextParameter = new SwitchImplementationParameter(
             implementationType,
             currentParameters);
-
-        if (CheckTypeProperties.ShouldBeScopeRoot(implementationType))
-            return CreateScopeRootResolution(nextParameter, implementationType, DisposableCollectionResolution, currentParameters);
-
-        return SwitchImplementation(nextParameter);
+        
+        return CheckTypeProperties.ShouldBeScopeRoot(implementationType) switch
+        {
+            ScopeLevel.TransientScope => CreateTransientScopeRootResolution(
+                nextParameter,
+                implementationType, 
+                DisposableCollectionResolution, 
+                currentParameters),
+            ScopeLevel.Scope => CreateScopeRootResolution(
+                nextParameter, 
+                implementationType, 
+                DisposableCollectionResolution, 
+                currentParameters),
+            _ => SwitchImplementation(nextParameter)
+        };
     }
 
     protected Resolvable SwitchImplementation(SwitchImplementationParameter parameter)

@@ -9,6 +9,7 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
 {
     private readonly IContainerInfo _containerInfo;
     private readonly TransientScopeResolution _transientScopeResolution;
+    private readonly ContainerResolution _containerResolution;
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
@@ -17,7 +18,7 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
         
         stringBuilder = stringBuilder
             .AppendLine(
-                $"internal partial class {_transientScopeResolution.Name} : {WellKnownTypes.Disposable.FullName()}")
+                $"internal partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}, {WellKnownTypes.Disposable.FullName()}")
             .AppendLine($"{{")
             .AppendLine($"private readonly {_containerInfo.FullName} {_transientScopeResolution.ContainerReference};")
             .AppendLine($"internal {_transientScopeResolution.Name}(")
@@ -40,12 +41,14 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
         // parameter
         IContainerInfo containerInfo,
         TransientScopeResolution transientScopeResolution,
+        ContainerResolution containerResolution,
         
         // dependencies
         WellKnownTypes wellKnownTypes) 
-        : base(wellKnownTypes)
+        : base(transientScopeResolution, containerResolution, wellKnownTypes)
     {
         _containerInfo = containerInfo;
         _transientScopeResolution = transientScopeResolution;
+        _containerResolution = containerResolution;
     }
 }

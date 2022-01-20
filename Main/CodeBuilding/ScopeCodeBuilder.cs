@@ -45,10 +45,11 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
         IContainerInfo containerInfo,
         ScopeResolution scopeResolution,
         TransientScopeInterfaceResolution transientScopeInterfaceResolution,
+        ContainerResolution containerResolution,
         
         // dependencies
         WellKnownTypes wellKnownTypes) 
-        : base(wellKnownTypes)
+        : base(scopeResolution, containerResolution, wellKnownTypes)
     {
         _containerInfo = containerInfo;
         _scopeResolution = scopeResolution;

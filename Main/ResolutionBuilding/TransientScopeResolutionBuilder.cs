@@ -23,6 +23,8 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
     private readonly string _containerReference;
     private readonly string _containerParameterReference;
+    private readonly string _parentDisposablesReference;
+    private readonly string _parentDisposablesParameterReference;
     
     private readonly Dictionary<string, ScopeRootFunction> _transientScopeRootFunctionResolutions = new ();
     private readonly HashSet<(ScopeRootFunction, string)> _transientScopeRootFunctionQueuedOverloads = new ();
@@ -55,6 +57,8 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
         _containerReference = RootReferenceGenerator.Generate("_container");
         _containerParameterReference = RootReferenceGenerator.Generate("container");
+        _parentDisposablesReference = RootReferenceGenerator.Generate("_parentDisposables");
+        _parentDisposablesParameterReference = RootReferenceGenerator.Generate("parentDisposables");
     }
 
     protected override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>

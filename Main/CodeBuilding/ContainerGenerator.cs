@@ -13,15 +13,15 @@ internal class ContainerGenerator : IContainerGenerator
     private readonly GeneratorExecutionContext _context;
     private readonly IDiagLogger _diagLogger;
     private readonly Func<IContainerInfo, ContainerResolution, ITransientScopeCodeBuilder, IScopeCodeBuilder, IContainerCodeBuilder> _containerCodeBuilderFactory;
-    private readonly Func<IContainerInfo, TransientScopeResolution, ITransientScopeCodeBuilder> _transientScopeCodeBuilderFactory;
-    private readonly Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, IScopeCodeBuilder> _scopeCodeBuilderFactory;
+    private readonly Func<IContainerInfo, TransientScopeResolution, ContainerResolution, ITransientScopeCodeBuilder> _transientScopeCodeBuilderFactory;
+    private readonly Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, ContainerResolution, IScopeCodeBuilder> _scopeCodeBuilderFactory;
 
     internal ContainerGenerator(
         GeneratorExecutionContext context,
         IDiagLogger diagLogger,
         Func<IContainerInfo, ContainerResolution, ITransientScopeCodeBuilder, IScopeCodeBuilder, IContainerCodeBuilder> containerCodeBuilderFactory,
-        Func<IContainerInfo, TransientScopeResolution, ITransientScopeCodeBuilder> transientScopeCodeBuilderFactory,
-        Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, IScopeCodeBuilder> scopeCodeBuilderFactory)
+        Func<IContainerInfo, TransientScopeResolution, ContainerResolution, ITransientScopeCodeBuilder> transientScopeCodeBuilderFactory,
+        Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, ContainerResolution, IScopeCodeBuilder> scopeCodeBuilderFactory)
     {
         _context = context;
         _diagLogger = diagLogger;
@@ -41,8 +41,8 @@ internal class ContainerGenerator : IContainerGenerator
         var containerCodeBuilder = _containerCodeBuilderFactory(
             containerInfo, 
             containerResolution,
-            _transientScopeCodeBuilderFactory(containerInfo, containerResolution.DefaultTransientScope),
-            _scopeCodeBuilderFactory(containerInfo, containerResolution.DefaultScope, containerResolution.TransientScopeInterface));
+            _transientScopeCodeBuilderFactory(containerInfo, containerResolution.DefaultTransientScope, containerResolution),
+            _scopeCodeBuilderFactory(containerInfo, containerResolution.DefaultScope, containerResolution.TransientScopeInterface, containerResolution));
 
         var generatedContainer = containerCodeBuilder.Build(new StringBuilder());
 

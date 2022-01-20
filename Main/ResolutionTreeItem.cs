@@ -16,6 +16,10 @@ internal record RootResolutionFunction(
     string RangeName,
     DisposalHandling DisposalHandling) : Resolvable(Reference, TypeFullName);
 
+internal record TransientScopeAsDisposableResolution(
+    string Reference,
+    string TypeFullName) : Resolvable(Reference, TypeFullName);
+
 internal record ErrorTreeItem(
     string Message) : Resolvable("error_99_99", "Error");
 
@@ -122,7 +126,8 @@ internal record DisposableCollectionResolution(
 internal abstract record RangeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> RangedInstances) : ResolutionTreeItem;
+    IReadOnlyList<RangedInstance> RangedInstances,
+    string ContainerReference) : ResolutionTreeItem;
 
 internal record TransientScopeInterfaceResolution(
     IReadOnlyList<TransientScopeInstanceInterfaceFunction> Functions,
@@ -138,7 +143,7 @@ internal record ScopeResolution(
     string TransientScopeReference,
     string TransientScopeParameterReference,
     string Name) 
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances, ContainerReference);
 
 internal record TransientScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
@@ -147,7 +152,7 @@ internal record TransientScopeResolution(
     string ContainerReference,
     string ContainerParameterReference,
     string Name) 
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances, ContainerReference);
 
 internal record ContainerResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
@@ -157,7 +162,7 @@ internal record ContainerResolution(
     string TransientScopeAdapterReference,
     TransientScopeResolution DefaultTransientScope,
     ScopeResolution DefaultScope)
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances);
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances, "this");
 
 internal record DisposalHandling(
     DisposableCollectionResolution DisposableCollection,

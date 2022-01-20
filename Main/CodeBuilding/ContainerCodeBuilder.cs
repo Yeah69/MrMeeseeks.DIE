@@ -71,7 +71,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         
         // dependencies
         WellKnownTypes wellKnownTypes) 
-        : base(wellKnownTypes)
+        : base(containerResolution, containerResolution, wellKnownTypes)
     {
         _containerInfo = containerInfo;
         _containerResolution = containerResolution;

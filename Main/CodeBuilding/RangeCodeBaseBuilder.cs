@@ -7,12 +7,18 @@ internal interface IRangeCodeBaseBuilder
 
 internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 {
+    private readonly RangeResolution _rangeResolution;
+    private readonly ContainerResolution _containerResolution;
     protected readonly WellKnownTypes WellKnownTypes;
-    protected bool IsDisposalHandlingRequired = false;
+    private bool _isDisposalHandlingRequired;
 
     internal RangeCodeBaseBuilder(
+        RangeResolution rangeResolution,
+        ContainerResolution containerResolution,
         WellKnownTypes wellKnownTypes)
     {
+        _rangeResolution = rangeResolution;
+        _containerResolution = containerResolution;
         WellKnownTypes = wellKnownTypes;
     }
     
@@ -28,8 +34,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             stringBuilder,
             rangeResolution);
     }
-    
-    protected StringBuilder GenerateContainerDisposalFunction(
+
+    private StringBuilder GenerateContainerDisposalFunction(
         StringBuilder stringBuilder,
         RangeResolution rangeResolution)
     {
@@ -42,8 +48,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             .AppendLine($"{{")
             .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
             .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;");
-        
-        if (IsDisposalHandlingRequired)
+
+        if (_isDisposalHandlingRequired)
         {
             stringBuilder = rangeResolution.RangedInstances.Aggregate(
                 stringBuilder, 
@@ -80,7 +86,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             .AppendLine($"}}");
     }
 
-    protected StringBuilder GenerateResolutionFunction(
+    private StringBuilder GenerateResolutionFunction(
         StringBuilder stringBuilder,
         RootResolutionFunction resolution)
     {
@@ -95,7 +101,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             .AppendLine($"}}");
     }
 
-    protected StringBuilder GenerateResolutionFunctionContent(
+    private StringBuilder GenerateResolutionFunctionContent(
         StringBuilder stringBuilder,
         Resolvable resolution)
     {
@@ -103,7 +109,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         return GenerateResolutions(stringBuilder, resolution);
     }
 
-    protected StringBuilder GenerateFields(
+    private static StringBuilder GenerateFields(
         StringBuilder stringBuilder,
         Resolvable resolution)
     {
@@ -118,6 +124,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder
                     .AppendLine($"{scopeTypeFullName} {scopeReference};")
                     .AppendLine($"{typeFullName} {reference};");  
+                break;
+            case TransientScopeAsDisposableResolution(var reference, var typeFullName):
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                 break;
             case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                 stringBuilder = GenerateFields(stringBuilder, resolutionBase);
@@ -161,25 +170,25 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         return stringBuilder;
     }
 
-    protected StringBuilder GenerateResolutions(
+    private StringBuilder GenerateResolutions(
         StringBuilder stringBuilder,
         Resolvable resolution)
     {
         switch (resolution)
         {
-            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
+            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var parameter, var (_, _, _, _, _), var (createFunctionReference, _)):
                 stringBuilder = stringBuilder
                     .AppendLine($"{transientScopeReference} = new {transientScopeTypeFullName}({containerInstanceScopeReference});")
-                    .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {transientScopeReference});")
+                    .AppendLine($"{_rangeResolution.ContainerReference}.{_containerResolution.DisposalHandling.DisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {transientScopeReference});")
                     .AppendLine($"{reference} = ({typeFullName}) {transientScopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
-                IsDisposalHandlingRequired = true;
+                _isDisposalHandlingRequired = true;
                 break;
             case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
                 stringBuilder = stringBuilder
                     .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});")
                     .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});")
                     .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
-                IsDisposalHandlingRequired = true;
+                _isDisposalHandlingRequired = true;
                 break;
             case RangedInstanceReferenceResolution(var reference, { Reference: {} functionReference}, var parameter, var owningObjectReference):
                 stringBuilder = stringBuilder.AppendLine($"{reference} = {owningObjectReference}.{functionReference}({string.Join(", ", parameter.Select(p => p.Reference))});"); 
@@ -188,6 +197,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
                 stringBuilder = stringBuilder.AppendLine(
                     $"{reference} = ({typeFullName}) {resolutionBase.Reference};");              
+                break;
+            case TransientScopeAsDisposableResolution(var reference, var typeFullName):
+                stringBuilder = stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;");              
                 break;
             case ConstructorResolution(var reference, var typeFullName, var disposableCollectionResolution, var parameters, var initializedProperties):
                 stringBuilder = parameters.Aggregate(stringBuilder,
@@ -205,10 +217,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 {
                     stringBuilder = stringBuilder.AppendLine(
                         $"{disposableCollectionResolution.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {reference});");
-                    IsDisposalHandlingRequired = true;
+                    _isDisposalHandlingRequired = true;
                 }
                 break;
-            case SyntaxValueTupleResolution(var reference, var typeFullName, var items):
+            case SyntaxValueTupleResolution(var reference, _, var items):
                 stringBuilder = items.Aggregate(stringBuilder, GenerateResolutions);
                 stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", items.Select(d => d.Reference))});");
                 break;
@@ -241,7 +253,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         return stringBuilder;
     }
 
-    protected StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstance rangedInstance)
+    private StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstance rangedInstance)
     {
         stringBuilder = stringBuilder
             .AppendLine(

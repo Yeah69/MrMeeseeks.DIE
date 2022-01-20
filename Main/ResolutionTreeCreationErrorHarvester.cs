@@ -19,6 +19,8 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
             {
                 case RootResolutionFunction:
                     break;
+                case TransientScopeAsDisposableResolution:
+                    break;
                 case RangedInstanceReferenceResolution:
                     break;
                 case ScopeRootFunction:

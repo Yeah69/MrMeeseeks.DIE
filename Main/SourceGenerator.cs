@@ -87,18 +87,22 @@ public class SourceGenerator : ISourceGenerator
 
         ITransientScopeCodeBuilder TransientScopeCodeBuilderFactory(
             IContainerInfo containerInfo,
-            TransientScopeResolution transientScopeResolution) => new TransientScopeCodeBuilder(
+            TransientScopeResolution transientScopeResolution,
+            ContainerResolution containerResolution) => new TransientScopeCodeBuilder(
             containerInfo,
             transientScopeResolution,
+            containerResolution,
             wellKnownTypes);
 
         IScopeCodeBuilder ScopeCodeBuilderFactory(
             IContainerInfo containerInfo,
             ScopeResolution scopeResolution,
-            TransientScopeInterfaceResolution transientScopeInterfaceResolution) => new ScopeCodeBuilder(
+            TransientScopeInterfaceResolution transientScopeInterfaceResolution,
+            ContainerResolution containerResolution) => new ScopeCodeBuilder(
             containerInfo,
             scopeResolution,
             transientScopeInterfaceResolution,
+            containerResolution,
             wellKnownTypes);
     }
 }

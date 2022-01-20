@@ -477,6 +477,9 @@ internal abstract class RangeResolutionBaseBuilder
             checkForComposition = true;
             composition = withComposition.Composition;
         }
+
+        var isTransientScopeRoot =
+            CheckTypeProperties.ShouldBeScopeRoot(implementationType) == ScopeLevel.TransientScope;
         
         return new ConstructorResolution(
             RootReferenceGenerator.Generate(implementationType),
@@ -497,31 +500,34 @@ internal abstract class RangeResolutionBaseBuilder
                 .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
                 .ToList()));
 
-        (string Name, Resolvable Dependency) ProcessChildType(ITypeSymbol typeSymbol, string parameterName, INamedTypeSymbol impType, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currParameter)
+        (string Name, Resolvable Dependency) ProcessChildType(
+            ITypeSymbol typeSymbol, 
+            string parameterName, 
+            INamedTypeSymbol impType, 
+            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currParameter)
         {
             if (checkForDecoration && typeSymbol.Equals(decoration?.InterfaceType, SymbolEqualityComparer.Default))
-            {
                 return (parameterName, decoration.CurrentInterfaceResolution);
-            }
             if (checkForComposition 
                 && composition is {} 
                 && (typeSymbol.Equals(WellKnownTypes.Enumerable1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
                     || typeSymbol.Equals(WellKnownTypes.ReadOnlyCollection1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
                     || typeSymbol.Equals(WellKnownTypes.ReadOnlyList1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)))
-            {
-                        
                 return (parameterName, new CollectionResolution(
                     RootReferenceGenerator.Generate(typeSymbol),
                     typeSymbol.FullName(),
                     composition.InterfaceType.FullName(),
                     composition.InterfaceResolutionComposition));
-            }
+
+            if (isTransientScopeRoot
+                && typeSymbol.Equals(WellKnownTypes.Disposable, SymbolEqualityComparer.Default))
+                return (parameterName, new TransientScopeAsDisposableResolution(
+                    RootReferenceGenerator.Generate(WellKnownTypes.Disposable),
+                    WellKnownTypes.Disposable.FullName()));
             if (typeSymbol is not INamedTypeSymbol parameterType)
-            {
                 return ("",
                     new ErrorTreeItem(
                         $"[{impType.FullName()}] Class.Constructor.Parameter: Parameter type {typeSymbol.FullName()} is not a named type symbol"));
-            }
 
             return (
                 parameterName,

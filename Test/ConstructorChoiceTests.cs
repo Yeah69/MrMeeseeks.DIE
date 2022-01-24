@@ -1,5 +1,6 @@
 using System;
 using MrMeeseeks.DIE;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 [assembly:ImplementationAggregation(typeof(DateTime))]

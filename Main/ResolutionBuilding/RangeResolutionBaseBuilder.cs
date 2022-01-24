@@ -1,12 +1,12 @@
+using MrMeeseeks.DIE.Configuration;
+
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal abstract class RangeResolutionBaseBuilder
 {
     
     protected readonly WellKnownTypes WellKnownTypes;
-    protected readonly ITypeToImplementationsMapper TypeToImplementationsMapper;
     protected readonly ICheckTypeProperties CheckTypeProperties;
-    protected readonly ICheckDecorators CheckDecorators;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
     protected readonly IDictionary<string, RangedInstanceFunction> RangedInstanceReferenceResolutions =
@@ -22,20 +22,16 @@ internal abstract class RangeResolutionBaseBuilder
 
     protected RangeResolutionBaseBuilder(
         // parameters
-        (string, bool) name,
+        string name,
         
         // dependencies
         WellKnownTypes wellKnownTypes,
-        ITypeToImplementationsMapper typeToImplementationsMapper,
         IReferenceGeneratorFactory referenceGeneratorFactory,
         ICheckTypeProperties checkTypeProperties,
-        ICheckDecorators checkDecorators, 
         IUserProvidedScopeElements userProvidedScopeElements)
     {
         WellKnownTypes = wellKnownTypes;
-        TypeToImplementationsMapper = typeToImplementationsMapper;
         CheckTypeProperties = checkTypeProperties;
-        CheckDecorators = checkDecorators;
         UserProvidedScopeElements = userProvidedScopeElements;
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
@@ -43,7 +39,7 @@ internal abstract class RangeResolutionBaseBuilder
             RootReferenceGenerator.Generate(WellKnownTypes.ConcurrentBagOfDisposable),
             WellKnownTypes.ConcurrentBagOfDisposable.FullName());
         
-        Name = name.Item2 ? RootReferenceGenerator.Generate(name.Item1) : name.Item1;
+        Name = name;
         DisposalHandling = new DisposalHandling(
             DisposableCollectionResolution,
             Name,
@@ -195,8 +191,8 @@ internal abstract class RangeResolutionBaseBuilder
             }
             var itemFullName = itemType.FullName();
             var itemTypeIsInterface = itemType.TypeKind == TypeKind.Interface;
-            var items = TypeToImplementationsMapper
-                .Map(itemType)
+            var items = CheckTypeProperties
+                .MapToImplementations(itemType)
                 .Select(i => itemTypeIsInterface
                     ? SwitchInterfaceForSpecificImplementation(new SwitchInterfaceForSpecificImplementationParameter(itemType, i, currentFuncParameters))
                     : SwitchClass(new SwitchClassParameter(i, currentFuncParameters)))
@@ -243,8 +239,8 @@ internal abstract class RangeResolutionBaseBuilder
     {
         var (typeSymbol, currentParameters) = parameter;
         var interfaceType = (INamedTypeSymbol) typeSymbol;
-        var implementations = TypeToImplementationsMapper
-            .Map(typeSymbol);
+        var implementations = CheckTypeProperties
+            .MapToImplementations(typeSymbol);
         var shouldBeScopeRoot = implementations.Max(i => CheckTypeProperties.ShouldBeScopeRoot(i));
 
         var nextParameter = new SwitchInterfaceAfterScopeRootParameter(
@@ -336,7 +332,7 @@ internal abstract class RangeResolutionBaseBuilder
     internal InterfaceResolution CreateInterface(CreateInterfaceParameter parameter)
     {
         var (interfaceType, implementationType, currentParameters) = parameter;
-        var shouldBeDecorated = CheckDecorators.ShouldBeDecorated(interfaceType);
+        var shouldBeDecorated = CheckTypeProperties.ShouldBeDecorated(interfaceType);
 
         var nextParameter = parameter switch
         {
@@ -356,7 +352,7 @@ internal abstract class RangeResolutionBaseBuilder
 
         if (shouldBeDecorated)
         {
-            var decorators = new Queue<INamedTypeSymbol>(CheckDecorators.GetSequenceFor(interfaceType, implementationType));
+            var decorators = new Queue<INamedTypeSymbol>(CheckTypeProperties.GetSequenceFor(interfaceType, implementationType));
             while (decorators.Any())
             {
                 var decorator = decorators.Dequeue();
@@ -379,8 +375,8 @@ internal abstract class RangeResolutionBaseBuilder
     protected Resolvable SwitchClass(SwitchClassParameter parameter)
     {
         var (typeSymbol, currentParameters) = parameter;
-        var implementations = TypeToImplementationsMapper
-            .Map(typeSymbol);
+        var implementations = CheckTypeProperties
+            .MapToImplementations(typeSymbol);
         var implementationType = implementations.SingleOrDefault();
         if (implementationType is not { })
         {

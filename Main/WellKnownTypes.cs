@@ -1,4 +1,6 @@
-﻿namespace MrMeeseeks.DIE;
+﻿using MrMeeseeks.DIE.Configuration;
+
+namespace MrMeeseeks.DIE;
 
 internal record WellKnownTypes(
     INamedTypeSymbol Container,

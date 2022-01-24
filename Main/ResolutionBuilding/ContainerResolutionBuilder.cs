@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Configuration;
+
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface IContainerResolutionBuilder
@@ -27,21 +29,17 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         
         // dependencies
         ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder,
-        ITypeToImplementationsMapper typeToImplementationsMapper,
         IReferenceGeneratorFactory referenceGeneratorFactory,
         ICheckTypeProperties checkTypeProperties,
-        ICheckDecorators checkDecorators,
         WellKnownTypes wellKnownTypes,
         Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, ITransientScopeResolutionBuilder> transientScopeResolutionBuilderFactory, 
         Func<IContainerResolutionBuilder, ITransientScopeResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeResolutionBuilder> scopeResolutionBuilderFactory, 
         IUserProvidedScopeElements userProvidedScopeElements) 
         : base(
-            (containerInfo.Name, false), 
+            containerInfo.Name, 
             wellKnownTypes, 
-            typeToImplementationsMapper,
             referenceGeneratorFactory, 
             checkTypeProperties,
-            checkDecorators,
             userProvidedScopeElements)
     {
         _containerInfo = containerInfo;

@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Configuration;
+
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface IScopeResolutionBuilder
@@ -40,18 +42,14 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
-        ITypeToImplementationsMapper typeToImplementationsMapper, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
         ICheckTypeProperties checkTypeProperties,
-        ICheckDecorators checkDecorators, 
         IUserProvidedScopeElements userProvidedScopeElements) 
         : base(
-            ("DefaultScope", true), 
+            Constants.DefaultScopeName, 
             wellKnownTypes, 
-            typeToImplementationsMapper, 
             referenceGeneratorFactory, 
             checkTypeProperties, 
-            checkDecorators,
             userProvidedScopeElements)
     {
         _containerResolutionBuilder = containerResolutionBuilder;

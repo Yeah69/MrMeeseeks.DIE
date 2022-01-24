@@ -53,7 +53,7 @@ internal interface IScopeRootParameter
 
 internal record SwitchInterfaceAfterScopeRootParameter(
         INamedTypeSymbol InterfaceType,
-        IList<INamedTypeSymbol> ImplementationTypes,
+        IReadOnlyList<INamedTypeSymbol> ImplementationTypes,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters) 
     : IScopeRootParameter
 {

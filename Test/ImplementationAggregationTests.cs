@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using MrMeeseeks.DIE;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 [assembly:ImplementationAggregation(typeof(FileInfo))]

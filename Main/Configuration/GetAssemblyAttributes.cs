@@ -1,4 +1,4 @@
-namespace MrMeeseeks.DIE;
+namespace MrMeeseeks.DIE.Configuration;
 
 internal interface IGetAssemblyAttributes
 {

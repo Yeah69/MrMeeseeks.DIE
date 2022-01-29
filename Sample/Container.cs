@@ -1,5 +1,4 @@
-﻿using MrMeeseeks.DIE;
-using MrMeeseeks.DIE.Configuration;
+﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Sample;
 
 [assembly:ContainerInstanceAggregation(typeof(IContainerInstance))]

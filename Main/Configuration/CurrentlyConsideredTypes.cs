@@ -38,6 +38,9 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         
         foreach (var types in typesFromAttributes)
         {
+            foreach (var filterType in types.FilterSpy.Concat(types.FilterImplementation))
+                tempAllImplementations.Remove(filterType);
+            
             var spiedImplementations = types
                 .Spy
                 .SelectMany(t => t?.GetMembers()
@@ -52,20 +55,21 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
 
         var allImplementations = tempAllImplementations;
         
-        TransientTypes = GetSetOfTypesWithProperties(t => t.Transient);
-        ContainerInstanceTypes = GetSetOfTypesWithProperties(t => t.ContainerInstance);
-        TransientScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.TransientScopeInstance);
-        ScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.ScopeInstance);
-        TransientScopeRootTypes = GetSetOfTypesWithProperties(t => t.TransientScopeRoot);
-        ScopeRootTypes = GetSetOfTypesWithProperties(t => t.ScopeRoot);
+        TransientTypes = GetSetOfTypesWithProperties(t => t.Transient, t => t.FilterTransient);
+        ContainerInstanceTypes = GetSetOfTypesWithProperties(t => t.ContainerInstance, t => t.FilterContainerInstance);
+        TransientScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.TransientScopeInstance, t => t.FilterTransientScopeInstance);
+        ScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.ScopeInstance, t => t.FilterScopeInstance);
+        TransientScopeRootTypes = GetSetOfTypesWithProperties(t => t.TransientScopeRoot, t => t.FilterTransientScopeRoot);
+        ScopeRootTypes = GetSetOfTypesWithProperties(t => t.ScopeRoot, t => t.FilterScopeRoot);
 
         var compositeInterfaces = ImmutableHashSet<INamedTypeSymbol>.Empty;
         foreach (var types in typesFromAttributes)
         {
+            compositeInterfaces = compositeInterfaces.Except(types.FilterComposite);
             compositeInterfaces = compositeInterfaces.Union(types.Composite);
         }
         
-        var compositeTypes = GetSetOfTypesWithProperties(t => t.Composite);
+        var compositeTypes = GetSetOfTypesWithProperties(t => t.Composite, t => t.FilterComposite);
         InterfaceToComposite = compositeTypes
             .OfType<INamedTypeSymbol>()
             .GroupBy(nts =>
@@ -81,10 +85,11 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         
         foreach (var types in typesFromAttributes)
         {
-            foreach (var constructorChoice in types.ConstructorChoices)
-            {
-                constructorChoices[constructorChoice.Item1] = constructorChoice.Item2;
-            }
+            foreach (var filterConstructorChoice in types.FilterConstructorChoices)
+                constructorChoices.Remove(filterConstructorChoice);
+
+            foreach (var (implementationType, constructor) in types.ConstructorChoices)
+                constructorChoices[implementationType] = constructor;
         }
         
         ImplementationToConstructorChoice = constructorChoices;
@@ -92,10 +97,11 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         var decoratorInterfaces = ImmutableHashSet<INamedTypeSymbol>.Empty;
         foreach (var types in typesFromAttributes)
         {
+            decoratorInterfaces = decoratorInterfaces.Except(types.FilterDecorator);
             decoratorInterfaces = decoratorInterfaces.Union(types.Decorator);
         }
         
-        var decoratorTypes = GetSetOfTypesWithProperties(t => t.Decorator);
+        var decoratorTypes = GetSetOfTypesWithProperties(t => t.Decorator, t => t.FilterDecorator);
         InterfaceToDecorators = decoratorTypes
             .OfType<INamedTypeSymbol>()
             .GroupBy(nts =>
@@ -110,10 +116,11 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         
         foreach (var types in typesFromAttributes)
         {
-            foreach (var decoratorSequenceChoice in types.DecoratorSequenceChoices)
-            {
-                decoratorSequenceChoices[decoratorSequenceChoice.Item1] = decoratorSequenceChoice.Item2;
-            }
+            foreach (var filterDecoratorSequenceChoice in types.FilterDecoratorSequenceChoices)
+                decoratorSequenceChoices.Remove(filterDecoratorSequenceChoice);
+
+            foreach (var (decoratedType, decoratorSequence) in types.DecoratorSequenceChoices)
+                decoratorSequenceChoices[decoratedType] = decoratorSequence;
         }
 
         InterfaceSequenceChoices = decoratorSequenceChoices
@@ -131,13 +138,17 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             .GroupBy(t => t.Item1, t => t.Item2)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>().ToList());
         
-        IImmutableSet<ISymbol?> GetSetOfTypesWithProperties(Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> propertyGivingTypesGetter)
+        IImmutableSet<ISymbol?> GetSetOfTypesWithProperties(
+            Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> propertyGivingTypesGetter,
+        Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> filteredPropertyGivingTypesGetter)
         {
-            var tempSet = ImmutableHashSet<ISymbol?>.Empty;
+            var ret = ImmutableHashSet<ISymbol?>.Empty;
             foreach (var types in typesFromAttributes)
             {
+                ret = ret.Except(filteredPropertyGivingTypesGetter(types));
+                
                 var propertyGivingTypes = propertyGivingTypesGetter(types);
-                tempSet = tempSet.Union(allImplementations
+                ret = ret.Union(allImplementations
                     .Where(i =>
                     {
                         var derivedTypes = AllDerivedTypes(i).Select(t => t.OriginalDefinition).ToList();
@@ -148,7 +159,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                     .ToImmutableHashSet(SymbolEqualityComparer.Default));
             }
             
-            return tempSet;
+            return ret;
         
 
             IEnumerable<INamedTypeSymbol> AllDerivedTypes(INamedTypeSymbol type)

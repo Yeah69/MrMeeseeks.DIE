@@ -1,16 +1,44 @@
-﻿namespace MrMeeseeks.DIE.Sample;
+﻿using System.Collections.Generic;
+using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Sample;
 
-internal interface ITransientScopeInstanceInner {}
-internal class TransientScopeInstance : ITransientScopeInstanceInner, ITransientScopeInstance {}
+namespace MrMeeseeks.DIE.Test.ScopeSpecificAttributesTestsWithImplementations;
 
-internal interface ITransientScopeWithTransientScopeInstance {}
+internal interface IDependency {}
 
-internal class TransientScopeWithTransientScopeInstance : ITransientScopeWithTransientScopeInstance, ITransientScopeRoot
+internal class DependencyContainer : IDependency {}
+
+internal class DependencyTransientScope : IDependency {}
+
+internal class DependencyScope : IDependency {}
+
+internal class TransientScope : ITransientScopeRoot
 {
-    public TransientScopeWithTransientScopeInstance(ITransientScopeInstanceInner _) {}
+    public TransientScope(IReadOnlyList<IDependency> dependencies) => Dependencies = dependencies;
+
+    public IReadOnlyList<IDependency> Dependencies { get; }
 }
 
-internal partial class TransientScopeInstanceContainer : IContainer<ITransientScopeWithTransientScopeInstance>
+internal class Scope : IScopeRoot
 {
-    
+    public Scope(IReadOnlyList<IDependency> dependencies) => Dependencies = dependencies;
+
+    public IReadOnlyList<IDependency> Dependencies { get; }
+}
+
+internal partial class Container : IContainer<IReadOnlyList<IDependency>>, IContainer<TransientScope>, IContainer<Scope>
+{
+    [FilterImplementationAggregation(typeof(DependencyContainer))]
+    [FilterImplementationAggregation(typeof(DependencyScope))]
+    internal partial class DIE_DefaultTransientScope
+    {
+        
+    }
+
+    [FilterImplementationAggregation(typeof(DependencyContainer))]
+    [FilterImplementationAggregation(typeof(DependencyTransientScope))]
+    internal partial class DIE_DefaultScope
+    {
+        
+    }
 }

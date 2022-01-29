@@ -17,6 +17,19 @@ internal record WellKnownTypes(
     INamedTypeSymbol CompositeAggregationAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,
     INamedTypeSymbol ConstructorChoiceAttribute,
+    INamedTypeSymbol FilterSpyAggregationAttribute,
+    INamedTypeSymbol FilterSpyConstructorChoiceAggregationAttribute,
+    INamedTypeSymbol FilterImplementationAggregationAttribute,
+    INamedTypeSymbol FilterTransientAggregationAttribute,
+    INamedTypeSymbol FilterContainerInstanceAggregationAttribute,
+    INamedTypeSymbol FilterTransientScopeInstanceAggregationAttribute,
+    INamedTypeSymbol FilterScopeInstanceAggregationAttribute,
+    INamedTypeSymbol FilterTransientScopeRootAggregationAttribute,
+    INamedTypeSymbol FilterScopeRootAggregationAttribute,
+    INamedTypeSymbol FilterDecoratorAggregationAttribute,
+    INamedTypeSymbol FilterCompositeAggregationAttribute,
+    INamedTypeSymbol FilterDecoratorSequenceChoiceAttribute,
+    INamedTypeSymbol FilterConstructorChoiceAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -94,6 +107,45 @@ internal record WellKnownTypes(
         var constructorChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(ConstructorChoiceAttribute).FullName ?? "");
 
+        var filterSpyAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterSpyAggregationAttribute).FullName ?? "");
+
+        var filterSpyConstructorChoiceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterSpyConstructorChoiceAggregationAttribute).FullName ?? "");
+
+        var filterImplementationAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterImplementationAggregationAttribute).FullName ?? "");
+
+        var filterTransientAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterTransientAggregationAttribute).FullName ?? "");
+
+        var filterContainerInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterContainerInstanceAggregationAttribute).FullName ?? "");
+
+        var filterTransientScopeInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterTransientScopeInstanceAggregationAttribute).FullName ?? "");
+
+        var filterScopeInstanceAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterScopeInstanceAggregationAttribute).FullName ?? "");
+
+        var filterTransientScopeRootAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterTransientScopeRootAggregationAttribute).FullName ?? "");
+
+        var filterScopeRootAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterScopeRootAggregationAttribute).FullName ?? "");
+
+        var filterDecoratorAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterDecoratorAggregationAttribute).FullName ?? "");
+
+        var filterCompositeAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterCompositeAggregationAttribute).FullName ?? "");
+
+        var filterDecoratorSequenceChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterDecoratorSequenceChoiceAttribute).FullName ?? "");
+
+        var filterConstructorChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterConstructorChoiceAttribute).FullName ?? "");
+
         if (iContainer is null
             || spyAggregationAttribute is null
             || spyConstructorChoiceAggregationAttribute is null
@@ -108,6 +160,19 @@ internal record WellKnownTypes(
             || compositeAggregationAttribute is null
             || decoratorSequenceChoiceAttribute is null
             || constructorChoiceAttribute is null
+            || filterSpyAggregationAttribute is null
+            || filterSpyConstructorChoiceAggregationAttribute is null
+            || filterImplementationAggregationAttribute is null
+            || filterTransientAggregationAttribute is null
+            || filterContainerInstanceAggregationAttribute is null
+            || filterTransientScopeInstanceAggregationAttribute is null
+            || filterScopeInstanceAggregationAttribute is null
+            || filterTransientScopeRootAggregationAttribute is null
+            || filterScopeRootAggregationAttribute is null
+            || filterDecoratorAggregationAttribute is null
+            || filterCompositeAggregationAttribute is null
+            || filterDecoratorSequenceChoiceAttribute is null
+            || filterConstructorChoiceAttribute is null
             || iDisposable is null
             || iAsyncDisposable is null
             || lazy1 is null
@@ -143,6 +208,19 @@ internal record WellKnownTypes(
             CompositeAggregationAttribute: compositeAggregationAttribute,
             DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
             ConstructorChoiceAttribute: constructorChoiceAttribute,
+            FilterSpyAggregationAttribute: filterSpyAggregationAttribute,
+            FilterSpyConstructorChoiceAggregationAttribute: filterSpyConstructorChoiceAggregationAttribute,
+            FilterImplementationAggregationAttribute: filterImplementationAggregationAttribute,
+            FilterTransientAggregationAttribute: filterTransientAggregationAttribute,
+            FilterContainerInstanceAggregationAttribute: filterContainerInstanceAggregationAttribute,
+            FilterTransientScopeInstanceAggregationAttribute: filterTransientScopeInstanceAggregationAttribute,
+            FilterScopeInstanceAggregationAttribute: filterScopeInstanceAggregationAttribute,
+            FilterTransientScopeRootAggregationAttribute: filterTransientScopeRootAggregationAttribute,
+            FilterScopeRootAggregationAttribute: filterScopeRootAggregationAttribute,
+            FilterDecoratorAggregationAttribute: filterDecoratorAggregationAttribute,
+            FilterCompositeAggregationAttribute: filterCompositeAggregationAttribute,
+            FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
+            FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
             Disposable: iDisposable,
             AsyncDisposable: iAsyncDisposable,
             Lazy1: lazy1,

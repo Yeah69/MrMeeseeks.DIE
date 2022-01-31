@@ -1,5 +1,5 @@
-﻿using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Sample;
+using MrMeeseeks.DIE.Configuration;
+using Xunit;
 
 namespace MrMeeseeks.DIE.Test.ScopeSpecificAttributesTestsWithDecorator;
 
@@ -25,6 +25,13 @@ internal class ScopeDecorator : IInterface, IDecorator<IInterface>
     public int CheckNumber => 3;
     
     internal ScopeDecorator(IInterface _) {}
+}
+
+internal class ScopeSpecificDecorator : IInterface, IDecorator<IInterface>
+{
+    public int CheckNumber => 13;
+    
+    internal ScopeSpecificDecorator(IInterface _) {}
 }
 
 internal class TransientScopeDecorator : IInterface, IDecorator<IInterface>
@@ -61,6 +68,16 @@ internal class TransientScopeRootSpecific : ITransientScopeRoot
     }
 }
 
+internal class ScopeRootSpecific  : IScopeRoot
+{
+    public IInterface Dep { get; }
+    
+    internal ScopeRootSpecific (IInterface dep)
+    {
+        Dep = dep;
+    }
+}
+
 internal class ScopeRoot : IScopeRoot
 {
     public IInterface Dep { get; }
@@ -77,13 +94,15 @@ internal partial class Container
     : IContainer<IInterface>, 
         IContainer<TransientScopeRoot>, 
         IContainer<TransientScopeRootSpecific>, 
-        IContainer<ScopeRoot>
+        IContainer<ScopeRoot>, 
+        IContainer<ScopeRootSpecific>
 {
     [DecoratorSequenceChoice(typeof(IInterface), typeof(TransientScopeDecorator))]
     internal partial class DIE_DefaultTransientScope
     {
         
     }
+    
     [DecoratorSequenceChoice(typeof(IInterface), typeof(TransientScopeSpecificDecorator))]
     [CustomScopeForRootTypes(typeof(TransientScopeRootSpecific))]
     internal partial class DIE_TransientScope_A
@@ -95,5 +114,51 @@ internal partial class Container
     internal partial class DIE_DefaultScope
     {
         
+    }
+    
+    [DecoratorSequenceChoice(typeof(IInterface), typeof(ScopeSpecificDecorator))]
+    [CustomScopeForRootTypes(typeof(ScopeRootSpecific))]
+    internal partial class DIE_Scope_A
+    {
+        
+    }
+}
+
+public partial class ScopeSpecificAttributesTests
+{
+    [Fact]
+    public void Container()
+    {
+        using var container = new Container();
+        var instance = ((IContainer<IInterface>) container).Resolve();
+        Assert.Equal(69, instance.CheckNumber);
+    }
+    [Fact]
+    public void TransientScope()
+    {
+        using var container = new Container();
+        var instance = ((IContainer<TransientScopeRoot>) container).Resolve();
+        Assert.Equal(23, instance.Dep.CheckNumber);
+    }
+    [Fact]
+    public void TransientScopeSpecific()
+    {
+        using var container = new Container();
+        var instance = ((IContainer<TransientScopeRootSpecific>) container).Resolve();
+        Assert.Equal(7, instance.Dep.CheckNumber);
+    }
+    [Fact]
+    public void Scope()
+    {
+        using var container = new Container();
+        var instance = ((IContainer<ScopeRoot>) container).Resolve();
+        Assert.Equal(3, instance.Dep.CheckNumber);
+    }
+    [Fact]
+    public void ScopeSpecific()
+    {
+        using var container = new Container();
+        var instance = ((IContainer<ScopeRootSpecific>) container).Resolve();
+        Assert.Equal(13, instance.Dep.CheckNumber);
     }
 }

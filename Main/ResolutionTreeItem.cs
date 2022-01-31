@@ -160,8 +160,8 @@ internal record ContainerResolution(
     IReadOnlyList<RangedInstance> RangedInstances,
     TransientScopeInterfaceResolution TransientScopeInterface,
     string TransientScopeAdapterReference,
-    TransientScopeResolution DefaultTransientScope,
-    ScopeResolution DefaultScope)
+    IReadOnlyList<TransientScopeResolution> TransientScopes,
+    IReadOnlyList<ScopeResolution> Scopes)
     : RangeResolution(RootResolutions, DisposalHandling, RangedInstances, "this");
 
 internal record DisposalHandling(

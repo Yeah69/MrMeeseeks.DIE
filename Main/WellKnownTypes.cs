@@ -30,6 +30,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterCompositeAggregationAttribute,
     INamedTypeSymbol FilterDecoratorSequenceChoiceAttribute,
     INamedTypeSymbol FilterConstructorChoiceAttribute,
+    INamedTypeSymbol CustomScopeForRootTypesAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -146,6 +147,9 @@ internal record WellKnownTypes(
         var filterConstructorChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterConstructorChoiceAttribute).FullName ?? "");
 
+        var customScopeForRootTypesAttribute = compilation
+            .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
+
         if (iContainer is null
             || spyAggregationAttribute is null
             || spyConstructorChoiceAggregationAttribute is null
@@ -173,6 +177,7 @@ internal record WellKnownTypes(
             || filterCompositeAggregationAttribute is null
             || filterDecoratorSequenceChoiceAttribute is null
             || filterConstructorChoiceAttribute is null
+            || customScopeForRootTypesAttribute is null
             || iDisposable is null
             || iAsyncDisposable is null
             || lazy1 is null
@@ -221,6 +226,7 @@ internal record WellKnownTypes(
             FilterCompositeAggregationAttribute: filterCompositeAggregationAttribute,
             FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
             FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
+            CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
             Disposable: iDisposable,
             AsyncDisposable: iAsyncDisposable,
             Lazy1: lazy1,

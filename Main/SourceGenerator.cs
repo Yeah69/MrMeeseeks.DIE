@@ -39,12 +39,6 @@ public class SourceGenerator : ISourceGenerator
                 (ITypesFromAttributes) attributeTypesFromAttributes,
                 new TypesFromAttributes(ci.ContainerType.GetAttributes(), wellKnownTypes));
 
-            var defaultTransientScopeType = ci.ContainerType.GetTypeMembers(Constants.DefaultTransientScopeName).FirstOrDefault();
-            var defaultTransientScopeTypesFromAttributes = new ScopeTypesFromAttributes(defaultTransientScopeType?.GetAttributes() ?? ImmutableArray<AttributeData>.Empty, wellKnownTypes);
-
-            var defaultScopeType = ci.ContainerType.GetTypeMembers(Constants.DefaultScopeName).FirstOrDefault();
-            var defaultScopeTypesFromAttributes = new ScopeTypesFromAttributes(defaultScopeType?.GetAttributes() ?? ImmutableArray<AttributeData>.Empty, wellKnownTypes);
-
             return new ContainerResolutionBuilder(
                 ci,
                 
@@ -52,39 +46,56 @@ public class SourceGenerator : ISourceGenerator
                 referenceGeneratorFactory,
                 new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, context)),
                 wellKnownTypes,
-                TransientScopeResolutionBuilderFactory,
-                ScopeResolutionBuilderFactory,
+                ScopeManagerFactory,
                 new UserProvidedScopeElements(ci.ContainerType));
 
-            ITransientScopeResolutionBuilder TransientScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder, ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder) => new TransientScopeResolutionBuilder(
+            IScopeManager ScopeManagerFactory(
+                IContainerResolutionBuilder containerResolutionBuilder,
+                ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder) => new ScopeManager(
+                ci,
+                containerResolutionBuilder,
+                transientScopeInterfaceResolutionBuilder,
+                containerTypesFromAttributesList,
+                TransientScopeResolutionBuilderFactory,
+                ScopeResolutionBuilderFactory,
+                ad => new ScopeTypesFromAttributes(ad, wellKnownTypes),
+                tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, context)),
+                st => new UserProvidedScopeElements(st),
+                new EmptyUserProvidedScopeElements(),
+                wellKnownTypes);
+
+            ITransientScopeResolutionBuilder TransientScopeResolutionBuilderFactory(
+                string name,
+                IContainerResolutionBuilder containerBuilder, 
+                ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder, 
+                IScopeManager scopeManager,
+                IUserProvidedScopeElements userProvidedScopeElements,
+                ICheckTypeProperties checkTypeProperties) => new TransientScopeResolutionBuilder(
+                name,
                 containerBuilder,
                 transientScopeInterfaceResolutionBuilder,
+                scopeManager,
+                userProvidedScopeElements,
+                checkTypeProperties,
             
                 wellKnownTypes, 
-                referenceGeneratorFactory,
-                new CheckTypeProperties(
-                    new CurrentlyConsideredTypes(
-                        containerTypesFromAttributesList.Add(defaultTransientScopeTypesFromAttributes), 
-                        context)),
-                defaultTransientScopeType is {} 
-                    ? new UserProvidedScopeElements(defaultTransientScopeType) 
-                    : new EmptyUserProvidedScopeElements());
-            IScopeResolutionBuilder ScopeResolutionBuilderFactory(IContainerResolutionBuilder containerBuilder, ITransientScopeResolutionBuilder transientScopeResolutionBuilder, ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder) => new ScopeResolutionBuilder(
+                referenceGeneratorFactory);
+            IScopeResolutionBuilder ScopeResolutionBuilderFactory(
+                string name,
+                IContainerResolutionBuilder containerBuilder, 
+                ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder, 
+                IScopeManager scopeManager,
+                IUserProvidedScopeElements userProvidedScopeElements,
+                ICheckTypeProperties checkTypeProperties) => new ScopeResolutionBuilder(
+                name,
                 containerBuilder,
-                transientScopeResolutionBuilder,
                 transientScopeInterfaceResolutionBuilder,
+                scopeManager,
+                userProvidedScopeElements,
+                checkTypeProperties,
             
                 wellKnownTypes, 
-                referenceGeneratorFactory,
-                new CheckTypeProperties(
-                    new CurrentlyConsideredTypes(
-                        containerTypesFromAttributesList.Add(defaultScopeTypesFromAttributes), 
-                        context)),
-                defaultScopeType is {} 
-                    ? new UserProvidedScopeElements(defaultScopeType) 
-                    : new EmptyUserProvidedScopeElements());
-            
-            
+                referenceGeneratorFactory);
         }
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
@@ -92,12 +103,12 @@ public class SourceGenerator : ISourceGenerator
         IContainerCodeBuilder ContainerCodeBuilderFactory(
             IContainerInfo containerInfo,
             ContainerResolution containerResolution,
-            ITransientScopeCodeBuilder transientScopeCodeBuilder,
-            IScopeCodeBuilder scopeCodeBuilder) => new ContainerCodeBuilder(
+            IReadOnlyList<ITransientScopeCodeBuilder> transientScopeCodeBuilders,
+            IReadOnlyList<IScopeCodeBuilder> scopeCodeBuilders) => new ContainerCodeBuilder(
             containerInfo,
             containerResolution,
-            transientScopeCodeBuilder,
-            scopeCodeBuilder,
+            transientScopeCodeBuilders,
+            scopeCodeBuilders,
             wellKnownTypes);
 
         ITransientScopeCodeBuilder TransientScopeCodeBuilderFactory(

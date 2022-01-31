@@ -161,4 +161,12 @@ public class FilterConstructorChoiceAttribute : Attribute
     {
     }
 }
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class CustomScopeForRootTypesAttribute : Attribute
+{
+    public CustomScopeForRootTypesAttribute(params Type[] types)
+    {
+    }
+}
 // ReSharper enable UnusedParameter.Local

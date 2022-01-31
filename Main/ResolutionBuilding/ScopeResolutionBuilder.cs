@@ -22,8 +22,8 @@ internal interface IScopeResolutionBuilder
 internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolutionBuilder
 {
     private readonly IContainerResolutionBuilder _containerResolutionBuilder;
-    private readonly ITransientScopeResolutionBuilder _transientScopeResolutionBuilder;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
+    private readonly IScopeManager _scopeManager;
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
     private readonly string _containerReference;
     private readonly string _containerParameterReference;
@@ -36,25 +36,26 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     
     internal ScopeResolutionBuilder(
         // parameter
+        string name,
         IContainerResolutionBuilder containerResolutionBuilder,
-        ITransientScopeResolutionBuilder transientScopeResolutionBuilder,
         ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder,
+        IScopeManager scopeManager,
+        IUserProvidedScopeElements userProvidedScopeElements, 
+        ICheckTypeProperties checkTypeProperties,
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
-        IReferenceGeneratorFactory referenceGeneratorFactory, 
-        ICheckTypeProperties checkTypeProperties,
-        IUserProvidedScopeElements userProvidedScopeElements) 
+        IReferenceGeneratorFactory referenceGeneratorFactory) 
         : base(
-            Constants.DefaultScopeName, 
+            name, //Constants.DefaultScopeName, 
             wellKnownTypes, 
             referenceGeneratorFactory, 
             checkTypeProperties, 
             userProvidedScopeElements)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
-        _transientScopeResolutionBuilder = transientScopeResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
+        _scopeManager = scopeManager;
         _containerReference = RootReferenceGenerator.Generate("_container");
         _containerParameterReference = RootReferenceGenerator.Generate("container");
         _transientScopeReference = RootReferenceGenerator.Generate("_transientScope");
@@ -72,25 +73,29 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         INamedTypeSymbol rootType,
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
-        _transientScopeResolutionBuilder.AddCreateResolveFunction(
-            parameter,
-            rootType,
-            _containerReference,
-            disposableCollectionResolution,
-            currentParameters);
+        _scopeManager
+            .GetTransientScopeBuilder(rootType)
+            .AddCreateResolveFunction(
+                parameter,
+                rootType,
+                _containerReference,
+                disposableCollectionResolution,
+                currentParameters);
 
     protected override ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
-        AddCreateResolveFunction(
-            parameter,
-            rootType, 
-            _containerReference, 
-            _transientScopeReference,
-            disposableCollectionResolution,
-            currentParameters);
+        _scopeManager
+            .GetScopeBuilder(rootType)
+            .AddCreateResolveFunction(
+                parameter,
+                rootType, 
+                _containerReference, 
+                _transientScopeReference,
+                disposableCollectionResolution,
+                currentParameters);
 
     public bool HasWorkToDo => _scopeRootFunctionResolutionsQueue.Any() || RangedInstanceResolutionsQueue.Any();
 

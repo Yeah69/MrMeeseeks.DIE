@@ -28,12 +28,37 @@ internal record InterfaceResolution(
     string TypeFullName,
     ResolutionTreeItem Dependency) : Resolvable(Reference, TypeFullName);
 
+internal interface ITypeInitializationResolution {}
+
+internal record SyncTypeInitializationResolution(
+    string TypeFullName,
+    string MethodName) : ITypeInitializationResolution;
+
+internal record TaskBaseTypeInitializationResolution(
+    string TypeFullName,
+    string MethodName,
+    string TaskTypeFullName,
+    string TaskReference) : ITypeInitializationResolution;
+
+internal record TaskTypeInitializationResolution(
+    string TypeFullName,
+    string MethodName,
+    string TaskTypeFullName,
+    string TaskReference) : TaskBaseTypeInitializationResolution(TypeFullName, MethodName, TaskTypeFullName, TaskReference);
+
+internal record ValueTaskTypeInitializationResolution(
+    string TypeFullName,
+    string MethodName,
+    string TaskTypeFullName,
+    string TaskReference) : TaskBaseTypeInitializationResolution(TypeFullName, MethodName, TaskTypeFullName, TaskReference);
+
 internal record ConstructorResolution(
     string Reference,
     string TypeFullName,
     DisposableCollectionResolution? DisposableCollectionResolution,
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
-    IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties) : Resolvable(Reference, TypeFullName);
+    IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
+    ITypeInitializationResolution? Initialization) : Resolvable(Reference, TypeFullName);
 
 internal record SyntaxValueTupleResolution(
     string Reference,
@@ -121,7 +146,8 @@ internal record DisposableCollectionResolution(
         TypeFullName, 
         null, 
         Array.Empty<(string Name, Resolvable Dependency)>(), 
-        Array.Empty<(string Name, Resolvable Dependency)>());
+        Array.Empty<(string Name, Resolvable Dependency)>(),
+        null);
 
 internal abstract record RangeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,

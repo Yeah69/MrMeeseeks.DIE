@@ -98,27 +98,27 @@ internal partial class Container
         IContainer<ScopeRootSpecific>
 {
     [DecoratorSequenceChoice(typeof(IInterface), typeof(TransientScopeDecorator))]
-    internal partial class DIE_DefaultTransientScope
+    partial class DIE_DefaultTransientScope
     {
         
     }
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(TransientScopeSpecificDecorator))]
     [CustomScopeForRootTypes(typeof(TransientScopeRootSpecific))]
-    internal partial class DIE_TransientScope_A
+    partial class DIE_TransientScope_A
     {
         
     }
 
     [DecoratorSequenceChoice(typeof(IInterface), typeof(ScopeDecorator))]
-    internal partial class DIE_DefaultScope
+    partial class DIE_DefaultScope
     {
         
     }
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(ScopeSpecificDecorator))]
     [CustomScopeForRootTypes(typeof(ScopeRootSpecific))]
-    internal partial class DIE_Scope_A
+    partial class DIE_Scope_A
     {
         
     }

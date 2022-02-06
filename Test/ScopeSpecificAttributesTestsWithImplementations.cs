@@ -31,14 +31,14 @@ internal partial class Container : IContainer<IDependency>, IContainer<Transient
 {
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyTransientScope))]
-    internal partial class DIE_DefaultTransientScope
+    partial class DIE_DefaultTransientScope
     {
         
     }
 
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyScope))]
-    internal partial class DIE_DefaultScope
+    partial class DIE_DefaultScope
     {
         
     }

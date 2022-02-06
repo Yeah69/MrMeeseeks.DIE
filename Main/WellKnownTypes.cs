@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.Configuration;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration;
 
 namespace MrMeeseeks.DIE;
 
@@ -17,6 +18,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol CompositeAggregationAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,
     INamedTypeSymbol ConstructorChoiceAttribute,
+    INamedTypeSymbol TypeInitializerAttribute,
     INamedTypeSymbol FilterSpyAggregationAttribute,
     INamedTypeSymbol FilterSpyConstructorChoiceAggregationAttribute,
     INamedTypeSymbol FilterImplementationAggregationAttribute,
@@ -30,12 +32,14 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterCompositeAggregationAttribute,
     INamedTypeSymbol FilterDecoratorSequenceChoiceAttribute,
     INamedTypeSymbol FilterConstructorChoiceAttribute,
+    INamedTypeSymbol FilterTypeInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
     INamedTypeSymbol ValueTask,
     INamedTypeSymbol ValueTask1,
+    INamedTypeSymbol Task,
     INamedTypeSymbol Task1,
     INamedTypeSymbol ObjectDisposedException,
     INamedTypeSymbol Enumerable1,
@@ -55,6 +59,7 @@ internal record WellKnownTypes(
         var lazy1 = compilation.GetTypeOrReport("System.Lazy`1");
         var valueTask = compilation.GetTypeOrReport("System.Threading.Tasks.ValueTask");
         var valueTask1 = compilation.GetTypeOrReport("System.Threading.Tasks.ValueTask`1");
+        var task = compilation.GetTypeOrReport("System.Threading.Tasks.Task");
         var task1 = compilation.GetTypeOrReport("System.Threading.Tasks.Task`1");
         var objectDisposedException = compilation.GetTypeOrReport("System.ObjectDisposedException");
         var iEnumerable1 = compilation.GetTypeOrReport("System.Collections.Generic.IEnumerable`1");
@@ -148,7 +153,13 @@ internal record WellKnownTypes(
             .GetTypeByMetadataName(typeof(FilterConstructorChoiceAttribute).FullName ?? "");
 
         var customScopeForRootTypesAttribute = compilation
-            .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
+            .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");;
+
+        var typeInitializerAttribute = compilation
+            .GetTypeByMetadataName(typeof(TypeInitializerAttribute).FullName ?? "");;
+
+        var filterTypeInitializerAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterTypeInitializerAttribute).FullName ?? "");
 
         if (iContainer is null
             || spyAggregationAttribute is null
@@ -164,6 +175,7 @@ internal record WellKnownTypes(
             || compositeAggregationAttribute is null
             || decoratorSequenceChoiceAttribute is null
             || constructorChoiceAttribute is null
+            || typeInitializerAttribute is null
             || filterSpyAggregationAttribute is null
             || filterSpyConstructorChoiceAggregationAttribute is null
             || filterImplementationAggregationAttribute is null
@@ -177,11 +189,13 @@ internal record WellKnownTypes(
             || filterCompositeAggregationAttribute is null
             || filterDecoratorSequenceChoiceAttribute is null
             || filterConstructorChoiceAttribute is null
+            || filterTypeInitializerAttribute is null
             || customScopeForRootTypesAttribute is null
             || iDisposable is null
             || iAsyncDisposable is null
             || lazy1 is null
             || valueTask is null
+            || task is null
             || valueTask1 is null
             || task1 is null
             || objectDisposedException is null
@@ -213,6 +227,7 @@ internal record WellKnownTypes(
             CompositeAggregationAttribute: compositeAggregationAttribute,
             DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
             ConstructorChoiceAttribute: constructorChoiceAttribute,
+            TypeInitializerAttribute: typeInitializerAttribute,
             FilterSpyAggregationAttribute: filterSpyAggregationAttribute,
             FilterSpyConstructorChoiceAggregationAttribute: filterSpyConstructorChoiceAggregationAttribute,
             FilterImplementationAggregationAttribute: filterImplementationAggregationAttribute,
@@ -226,12 +241,14 @@ internal record WellKnownTypes(
             FilterCompositeAggregationAttribute: filterCompositeAggregationAttribute,
             FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
             FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
+            FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
             CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
             Disposable: iDisposable,
             AsyncDisposable: iAsyncDisposable,
             Lazy1: lazy1,
             ValueTask: valueTask,
             ValueTask1: valueTask1,
+            Task: task,
             Task1: task1,
             ObjectDisposedException: objectDisposedException,
             Enumerable1: iEnumerable1,

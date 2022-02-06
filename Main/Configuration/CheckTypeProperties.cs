@@ -20,7 +20,8 @@ internal interface ICheckTypeProperties
     bool ShouldBeDecorated(INamedTypeSymbol interfaceType);
     IReadOnlyList<INamedTypeSymbol> GetSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType);
     
-    IReadOnlyList<INamedTypeSymbol> MapToImplementations(ITypeSymbol typeSymbol); 
+    IReadOnlyList<INamedTypeSymbol> MapToImplementations(ITypeSymbol typeSymbol);
+    (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType);
 }
 
 internal class CheckTypeProperties : ICheckTypeProperties
@@ -82,4 +83,9 @@ internal class CheckTypeProperties : ICheckTypeProperties
         _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol, out var implementations) 
             ? implementations 
             : new List<INamedTypeSymbol>();
+
+    public (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType) =>
+        _currentlyConsideredTypes.ImplementationToInitializer.TryGetValue(implementationType, out var tuple)
+            ? tuple
+            : null;
 }

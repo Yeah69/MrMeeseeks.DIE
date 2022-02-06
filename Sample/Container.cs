@@ -9,3 +9,6 @@ using MrMeeseeks.DIE.Sample;
 [assembly:TransientAggregation(typeof(ITransient))]
 [assembly:DecoratorAggregation(typeof(IDecorator<>))]
 [assembly:CompositeAggregation(typeof(IComposite<>))]
+[assembly:TypeInitializer(typeof(ITypeInitializer), nameof(ITypeInitializer.Initialize))]
+[assembly:TypeInitializer(typeof(ITaskTypeInitializer), nameof(ITaskTypeInitializer.InitializeAsync))]
+[assembly:TypeInitializer(typeof(IValueTaskTypeInitializer), nameof(IValueTaskTypeInitializer.InitializeAsync))]

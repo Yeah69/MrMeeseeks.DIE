@@ -30,12 +30,12 @@ internal partial class FactoryContainer : IContainer<FileInfo>, IContainer<Facto
 
     public FactoryContainer(string diePath) => DIE_Path = diePath;
 
-    internal partial class DIE_DefaultTransientScope
+    partial class DIE_DefaultTransientScope
     {
         private int DIE_Num => 69;
     }
 
-    internal partial class DIE_DefaultScope
+    partial class DIE_DefaultScope
     {
         private string DIE_Yeah => "Yeah";
     }

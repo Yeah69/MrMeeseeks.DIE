@@ -132,12 +132,14 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = GenerateFields(stringBuilder, resolutionBase);
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                 break;
-            case ConstructorResolution(var reference, var typeFullName, _, var parameters, var initializedProperties):
+            case ConstructorResolution(var reference, var typeFullName, _, var parameters, var initializedProperties, var initialization):
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateFields(builder, tuple.Dependency));
                 stringBuilder = initializedProperties.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateFields(builder, tuple.Dependency));
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                if (initialization is TaskBaseTypeInitializationResolution taskInit)
+                    stringBuilder = stringBuilder.AppendLine($"{taskInit.TaskTypeFullName} {taskInit.TaskReference};");
                 break;
             case SyntaxValueTupleResolution(var reference, var typeFullName, var items):
                 stringBuilder = items.Aggregate(stringBuilder, GenerateFields);
@@ -176,14 +178,14 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
-            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var parameter, var (_, _, _, _, _), var (createFunctionReference, _)):
+            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var parameter, var (_, _, _, _, _, _), var (createFunctionReference, _)):
                 stringBuilder = stringBuilder
                     .AppendLine($"{transientScopeReference} = new {transientScopeTypeFullName}({containerInstanceScopeReference});")
                     .AppendLine($"{_rangeResolution.ContainerReference}.{_containerResolution.DisposalHandling.DisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {transientScopeReference});")
                     .AppendLine($"{reference} = ({typeFullName}) {transientScopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
                 _isDisposalHandlingRequired = true;
                 break;
-            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _), var (createFunctionReference, _)):
+            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _, _), var (createFunctionReference, _)):
                 stringBuilder = stringBuilder
                     .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});")
                     .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});")
@@ -201,7 +203,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case TransientScopeAsDisposableResolution(var reference, var typeFullName):
                 stringBuilder = stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;");              
                 break;
-            case ConstructorResolution(var reference, var typeFullName, var disposableCollectionResolution, var parameters, var initializedProperties):
+            case ConstructorResolution(var reference, var typeFullName, var disposableCollectionResolution, var parameters, var initializedProperties, var initialization):
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
                 stringBuilder = initializedProperties.Aggregate(stringBuilder,
@@ -218,6 +220,18 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     stringBuilder = stringBuilder.AppendLine(
                         $"{disposableCollectionResolution.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {reference});");
                     _isDisposalHandlingRequired = true;
+                }
+
+                if (initialization is {} init)
+                {
+                    stringBuilder = init switch
+                    {
+                        SyncTypeInitializationResolution (var initInterfaceTypeName, var initMethodName) => 
+                            stringBuilder.AppendLine($"(({initInterfaceTypeName}) {reference}).{initMethodName}();"),
+                        TaskBaseTypeInitializationResolution(var initInterfaceTypeName, var initMethodName, _, var taskReference) => 
+                            stringBuilder.AppendLine($"{taskReference} = (({initInterfaceTypeName}) {reference}).{initMethodName}();"),
+                        _ => stringBuilder
+                    };
                 }
                 break;
             case SyntaxValueTupleResolution(var reference, _, var items):

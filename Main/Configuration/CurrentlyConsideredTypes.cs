@@ -16,6 +16,7 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> InterfaceSequenceChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> ImplementationSequenceChoices { get; }
     IReadOnlyDictionary<ITypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
 }
 
 internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
@@ -24,9 +25,9 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         IReadOnlyList<ITypesFromAttributes> typesFromAttributes,
         GeneratorExecutionContext context)
     {
-        var tempAllImplementations = new List<INamedTypeSymbol>();
+        var allImplementations = new List<INamedTypeSymbol>();
         
-        tempAllImplementations.AddRange(context.Compilation.SyntaxTrees
+        allImplementations.AddRange(context.Compilation.SyntaxTrees
             .Select(st => (st, context.Compilation.GetSemanticModel(st)))
             .SelectMany(t => t.st
                 .GetRoot()
@@ -39,7 +40,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         foreach (var types in typesFromAttributes)
         {
             foreach (var filterType in types.FilterSpy.Concat(types.FilterImplementation))
-                tempAllImplementations.Remove(filterType);
+                allImplementations.Remove(filterType);
             
             var spiedImplementations = types
                 .Spy
@@ -49,12 +50,10 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                     .Select(ms => ms.ReturnType)
                     .OfType<INamedTypeSymbol>());
 
-            tempAllImplementations.AddRange(types.Implementation
+            allImplementations.AddRange(types.Implementation
                 .Concat(spiedImplementations));
         }
 
-        var allImplementations = tempAllImplementations;
-        
         TransientTypes = GetSetOfTypesWithProperties(t => t.Transient, t => t.FilterTransient);
         ContainerInstanceTypes = GetSetOfTypesWithProperties(t => t.ContainerInstance, t => t.FilterContainerInstance);
         TransientScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.TransientScopeInstance, t => t.FilterTransientScopeInstance);
@@ -138,6 +137,61 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             .GroupBy(t => t.Item1, t => t.Item2)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>().ToList());
         
+        var initializers = new Dictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)>(SymbolEqualityComparer.Default);
+        
+        foreach (var types in typesFromAttributes)
+        {
+            var filterInterfaceTypes = types
+                .FilterTypeInitializers
+                .Where(t => t.TypeKind is TypeKind.Interface)
+                .ToImmutableHashSet(SymbolEqualityComparer.Default);
+            
+            foreach (var filterConcreteType in allImplementations
+                         .Where(i => AllDerivedTypes(i)
+                             .Select(t => t.OriginalDefinition)
+                             .Any(inter => filterInterfaceTypes.Contains(inter))))
+                initializers.Remove(filterConcreteType);
+
+            var filterConcreteTypes = types
+                .FilterTypeInitializers
+                .Where(t => t.TypeKind is TypeKind.Class or TypeKind.Struct)
+                .ToList();
+            
+            foreach (var filterConcreteType in filterConcreteTypes)
+                initializers.Remove(filterConcreteType);
+            
+            var interfaceTypes = types
+                .TypeInitializers
+                .Where(ti => ti.Item1.TypeKind is TypeKind.Interface)
+                .ToList();
+
+            foreach (var (implementationType, interfaceType, initializerMethod) in allImplementations
+                         .Select(i =>
+                         {
+                             foreach (var (interfaceType, initializer) in interfaceTypes)
+                             {
+                                 if (AllDerivedTypes(i).Select(d => d.OriginalDefinition).Contains(interfaceType, SymbolEqualityComparer.Default))
+                                 {
+                                     return ((INamedTypeSymbol, INamedTypeSymbol, IMethodSymbol)?) (i, interfaceType, initializer);
+                                 }
+                             }
+
+                             return null;
+                         })
+                         .OfType<(INamedTypeSymbol, INamedTypeSymbol, IMethodSymbol)>())
+                initializers[implementationType] = (interfaceType, initializerMethod);
+
+            var concreteTypes = types
+                .TypeInitializers
+                .Where(ti => ti.Item1.TypeKind is TypeKind.Class or TypeKind.Struct)
+                .ToList();
+            
+            foreach (var (implementation, initializer) in concreteTypes)
+                initializers[implementation] = (implementation, initializer);
+        }
+
+        ImplementationToInitializer = initializers;
+        
         IImmutableSet<ISymbol?> GetSetOfTypesWithProperties(
             Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> propertyGivingTypesGetter,
         Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> filteredPropertyGivingTypesGetter)
@@ -160,22 +214,21 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             }
             
             return ret;
+        }
         
-
-            IEnumerable<INamedTypeSymbol> AllDerivedTypes(INamedTypeSymbol type)
+        IEnumerable<INamedTypeSymbol> AllDerivedTypes(INamedTypeSymbol type)
+        {
+            var concreteTypes = new List<INamedTypeSymbol>();
+            var temp = type;
+            while (temp is {})
             {
-                var concreteTypes = new List<INamedTypeSymbol>();
-                var temp = type;
-                while (temp is {})
-                {
-                    concreteTypes.Add(temp);
-                    temp = temp.BaseType;
-                }
-                return type
-                    .AllInterfaces
-                    .Append(type)
-                    .Concat(concreteTypes);
+                concreteTypes.Add(temp);
+                temp = temp.BaseType;
             }
+            return type
+                .AllInterfaces
+                .Append(type)
+                .Concat(concreteTypes);
         }
     }
     
@@ -191,4 +244,5 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> InterfaceSequenceChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationSequenceChoices { get; }
     public IReadOnlyDictionary<ITypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
 }

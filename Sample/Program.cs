@@ -1,7 +1,7 @@
 ﻿using System;
 using MrMeeseeks.DIE;
-using MrMeeseeks.DIE.Test.ScopeSpecificAttributesTestsWithDecorator;
+using MrMeeseeks.DIE.Sample;
 
 Console.WriteLine("Hello, world!");
 var container = new Container();
-Console.WriteLine(((IContainer<TransientScopeRootSpecific>) container).Resolve());
+Console.WriteLine(((IContainer<Dependency>) container).Resolve());

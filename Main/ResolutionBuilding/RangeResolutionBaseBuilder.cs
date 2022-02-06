@@ -103,7 +103,8 @@ internal abstract class RangeResolutionBaseBuilder
                     .TypeArguments
                     .Select((t, i) => ($"item{(i + 1)}", SwitchType(new SwitchTypeParameter(t, currentFuncParameters))))
                     .ToList(),
-                Array.Empty<(string Name, Resolvable Dependency)>());
+                Array.Empty<(string Name, Resolvable Dependency)>(),
+                null);
         }
 
         if (type.FullName().StartsWith("(") && type.FullName().EndsWith(")") && type is INamedTypeSymbol syntaxValueTupleType)
@@ -169,7 +170,8 @@ internal abstract class RangeResolutionBaseBuilder
                                 dependency)
                         )
                     }),
-                Array.Empty<(string Name, Resolvable Dependency)>());
+                Array.Empty<(string Name, Resolvable Dependency)>(),
+                null);
         }
 
         if (type.OriginalDefinition.Equals(WellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
@@ -476,7 +478,34 @@ internal abstract class RangeResolutionBaseBuilder
 
         var isTransientScopeRoot =
             CheckTypeProperties.ShouldBeScopeRoot(implementationType) == ScopeLevel.TransientScope;
-        
+
+        ITypeInitializationResolution? typeInitializationResolution = null;
+
+        if (CheckTypeProperties.GetInitializerFor(implementationType) is { } tuple)
+        {
+            var (initializationInterface, initializationMethod) = tuple;
+            var initializationTypeFullName = initializationInterface.FullName();
+            var initializationMethodName = initializationMethod.Name;
+            typeInitializationResolution = initializationMethod.ReturnsVoid switch
+            {
+                true => new SyncTypeInitializationResolution(initializationTypeFullName, initializationMethodName),
+                false when initializationMethod.ReturnType.Equals(WellKnownTypes.Task, SymbolEqualityComparer.Default) =>
+                    new TaskTypeInitializationResolution(
+                        initializationTypeFullName, 
+                        initializationMethodName,
+                        WellKnownTypes.Task.FullName(),
+                        RootReferenceGenerator.Generate(WellKnownTypes.Task)),
+                false when initializationMethod.ReturnType.Equals(WellKnownTypes.ValueTask, SymbolEqualityComparer.Default) => 
+                    new ValueTaskTypeInitializationResolution(
+                        initializationTypeFullName, 
+                        initializationMethodName, 
+                        WellKnownTypes.ValueTask.FullName(),
+                        RootReferenceGenerator.Generate(WellKnownTypes.ValueTask)),
+                _ => typeInitializationResolution
+            };
+        }
+
+
         return new ConstructorResolution(
             RootReferenceGenerator.Generate(implementationType),
             implementationType.FullName(),
@@ -494,7 +523,8 @@ internal abstract class RangeResolutionBaseBuilder
                 .OfType<IPropertySymbol>()
                 .Where(p => p.SetMethod?.IsInitOnly ?? false)
                 .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
-                .ToList()));
+                .ToList()),
+            typeInitializationResolution);
 
         (string Name, Resolvable Dependency) ProcessChildType(
             ITypeSymbol typeSymbol, 

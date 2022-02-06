@@ -14,6 +14,7 @@ internal interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> Composite { get; }
     IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
+    IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
     IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
@@ -26,6 +27,7 @@ internal interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> FilterComposite { get; }
     IReadOnlyList<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
     IReadOnlyList<INamedTypeSymbol> FilterConstructorChoices { get; }
+    IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
 }
 
 internal class TypesFromAttributes : ScopeTypesFromAttributes
@@ -106,11 +108,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         FilterDecoratorSequenceChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterDecoratorSequenceChoiceAttribute, out var group1) ? group1 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length < 2)
+                if (ad.ConstructorArguments.Length != 1)
                     return null;
-                var decoratedType = ad.ConstructorArguments[0].Value;
                 
-                return decoratedType as INamedTypeSymbol;
+                return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
             })
             .OfType<INamedTypeSymbol>()
             .ToList();
@@ -150,7 +151,40 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         FilterConstructorChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterConstructorChoiceAttribute, out var group2) ? group2 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length < 2)
+                if (ad.ConstructorArguments.Length != 1)
+                    return null;
+                return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+            })
+            .OfType<INamedTypeSymbol>()
+            .ToList();
+
+        TypeInitializers = (AttributeDictionary.TryGetValue(wellKnownTypes.TypeInitializerAttribute, out var group3) ? group3 : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length != 2 
+                    || ad.ConstructorArguments[0].Value is not INamedTypeSymbol type
+                    || ad.ConstructorArguments[1].Value is not string methodName)
+                    return ((INamedTypeSymbol, IMethodSymbol)?) null;
+
+                var initializationMethod = type
+                    .GetMembers(methodName)
+                    .OfType<IMethodSymbol>()
+                    .FirstOrDefault(m => m.Parameters.Length == 0);
+
+                if (initializationMethod is { })
+                {
+                    return (type, initializationMethod);
+                }
+
+                return null;
+            })
+            .OfType<(INamedTypeSymbol, IMethodSymbol)>()
+            .ToList();
+        
+        FilterTypeInitializers = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterTypeInitializerAttribute, out var group4) ? group4 : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length != 1)
                     return null;
                 return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
             })
@@ -194,6 +228,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> Composite { get; }
     public IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     public IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
+    public IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
@@ -206,4 +241,5 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> FilterComposite { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterConstructorChoices { get; }
+    public IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
 }

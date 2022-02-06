@@ -18,7 +18,7 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
         
         stringBuilder = stringBuilder
             .AppendLine(
-                $"internal partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}, {WellKnownTypes.Disposable.FullName()}")
+                $"private partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}, {WellKnownTypes.Disposable.FullName()}")
             .AppendLine($"{{")
             .AppendLine($"private readonly {_containerInfo.FullName} {_transientScopeResolution.ContainerReference};")
             .AppendLine($"internal {_transientScopeResolution.Name}(")

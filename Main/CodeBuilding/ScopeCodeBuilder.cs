@@ -18,7 +18,7 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
         
         stringBuilder = stringBuilder
             .AppendLine(
-                $"internal partial class {_scopeResolution.Name} : {WellKnownTypes.Disposable.FullName()}")
+                $"private partial class {_scopeResolution.Name} : {WellKnownTypes.Disposable.FullName()}")
             .AppendLine($"{{")
             .AppendLine($"private readonly {_containerInfo.FullName} {_scopeResolution.ContainerReference};")
             .AppendLine($"private readonly {_transientScopeInterfaceResolution.Name} {_scopeResolution.TransientScopeReference};")

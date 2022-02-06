@@ -169,4 +169,20 @@ public class CustomScopeForRootTypesAttribute : Attribute
     {
     }
 }
+
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class TypeInitializerAttribute : Attribute
+{
+    public TypeInitializerAttribute(Type type, string methodName)
+    {
+    }
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterTypeInitializerAttribute : Attribute
+{
+    public FilterTypeInitializerAttribute(Type type)
+    {
+    }
+}
 // ReSharper enable UnusedParameter.Local

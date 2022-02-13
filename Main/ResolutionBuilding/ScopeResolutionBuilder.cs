@@ -2,7 +2,7 @@ using MrMeeseeks.DIE.Configuration;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
-internal interface IScopeResolutionBuilder
+internal interface IScopeResolutionBuilder : IRangeResolutionBaseBuilder
 {
     bool HasWorkToDo { get; }
     
@@ -24,6 +24,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     private readonly IContainerResolutionBuilder _containerResolutionBuilder;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
     private readonly IScopeManager _scopeManager;
+    private readonly Func<IRangeResolutionBaseBuilder, IFunctionResolutionBuilder> _functionResolutionBuilderFactory;
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
     private readonly string _containerReference;
     private readonly string _containerParameterReference;
@@ -45,30 +46,33 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
-        IReferenceGeneratorFactory referenceGeneratorFactory) 
+        IReferenceGeneratorFactory referenceGeneratorFactory,
+        Func<IRangeResolutionBaseBuilder, IFunctionResolutionBuilder> functionResolutionBuilderFactory) 
         : base(
-            name, //Constants.DefaultScopeName, 
+            name,
+            checkTypeProperties,
+            userProvidedScopeElements,
             wellKnownTypes, 
-            referenceGeneratorFactory, 
-            checkTypeProperties, 
-            userProvidedScopeElements)
+            referenceGeneratorFactory,
+            functionResolutionBuilderFactory)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
         _scopeManager = scopeManager;
+        _functionResolutionBuilderFactory = functionResolutionBuilderFactory;
         _containerReference = RootReferenceGenerator.Generate("_container");
         _containerParameterReference = RootReferenceGenerator.Generate("container");
         _transientScopeReference = RootReferenceGenerator.Generate("_transientScope");
         _transientScopeParameterReference = RootReferenceGenerator.Generate("transientScope");
     }
 
-    protected override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
+    public override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _containerResolutionBuilder.CreateContainerInstanceReferenceResolution(parameter, _containerReference);
 
-    protected override RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
+    public override RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, _transientScopeReference);
 
-    protected override TransientScopeRootResolution CreateTransientScopeRootResolution(
+    public override TransientScopeRootResolution CreateTransientScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
         DisposableCollectionResolution disposableCollectionResolution,
@@ -82,7 +86,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                 disposableCollectionResolution,
                 currentParameters);
 
-    protected override ScopeRootResolution CreateScopeRootResolution(
+    public override ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
         DisposableCollectionResolution disposableCollectionResolution,
@@ -150,9 +154,9 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
 
                 var resolvable = functionParameter switch
                 {
-                    CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter),
-                    SwitchImplementationParameter switchImplementationParameter => SwitchImplementation(switchImplementationParameter),
-                    SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => SwitchInterfaceAfterScopeRoot(switchInterfaceAfterScopeRootParameter),
+                    CreateInterfaceParameter createInterfaceParameter => _functionResolutionBuilderFactory(this).ScopeRootFunction(createInterfaceParameter),
+                    SwitchImplementationParameter switchImplementationParameter => _functionResolutionBuilderFactory(this).ScopeRootFunction(switchImplementationParameter),
+                    SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => _functionResolutionBuilderFactory(this).ScopeRootFunction(switchInterfaceAfterScopeRootParameter),
                     _ => throw new ArgumentOutOfRangeException(nameof(functionParameter))
                 };
                 

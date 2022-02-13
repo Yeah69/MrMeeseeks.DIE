@@ -38,7 +38,10 @@ internal record TaskBaseTypeInitializationResolution(
     string TypeFullName,
     string MethodName,
     string TaskTypeFullName,
-    string TaskReference) : ITypeInitializationResolution;
+    string TaskReference) : ITypeInitializationResolution
+{
+    internal bool Await { get; set; } = true;
+}
 
 internal record TaskTypeInitializationResolution(
     string TypeFullName,
@@ -202,3 +205,38 @@ internal record FieldResolution(
     string Reference,
     string TypeFullName,
     string FieldName) : Resolvable(Reference, TypeFullName);
+
+internal abstract record TaskBaseResolution(
+    Resolvable WrappedResolvable,
+    string TaskReference,
+    string TaskFullName) : Resolvable(TaskReference, TaskFullName);
+
+internal record TaskFromTaskResolution(
+    Resolvable WrappedResolvable,
+    TaskTypeInitializationResolution Initialization,
+    string TaskReference,
+    string TaskFullName) : TaskBaseResolution(WrappedResolvable, TaskReference, TaskFullName);
+internal record TaskFromValueTaskResolution(
+    Resolvable WrappedResolvable,
+    ValueTaskTypeInitializationResolution Initialization,
+    string TaskReference,
+    string TaskFullName) : TaskBaseResolution(WrappedResolvable, TaskReference, TaskFullName);
+internal record TaskFromSyncResolution(
+    Resolvable WrappedResolvable,
+    string TaskReference,
+    string TaskFullName) : TaskBaseResolution(WrappedResolvable, TaskReference, TaskFullName);
+    
+internal record ValueTaskFromTaskResolution(
+    Resolvable WrappedResolvable,
+    TaskTypeInitializationResolution Initialization,
+    string ValueTaskReference,
+    string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);
+internal record ValueTaskFromValueTaskResolution(
+    Resolvable WrappedResolvable,
+    ValueTaskTypeInitializationResolution Initialization,
+    string ValueTaskReference,
+    string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);
+internal record ValueTaskFromSyncResolution(
+    Resolvable WrappedResolvable,
+    string ValueTaskReference,
+    string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);

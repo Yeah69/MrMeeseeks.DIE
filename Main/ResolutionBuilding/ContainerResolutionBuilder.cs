@@ -2,7 +2,7 @@ using MrMeeseeks.DIE.Configuration;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
-internal interface IContainerResolutionBuilder
+internal interface IContainerResolutionBuilder : IRangeResolutionBaseBuilder
 {
     void AddCreateResolveFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes);
 
@@ -17,6 +17,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
 {
     private readonly IContainerInfo _containerInfo;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
+    private readonly Func<IRangeResolutionBaseBuilder, IFunctionResolutionBuilder> _functionResolutionBuilderFactory;
 
     private readonly List<RootResolutionFunction> _rootResolutions = new ();
     private readonly string _transientScopeAdapterReference;
@@ -31,17 +32,20 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         IReferenceGeneratorFactory referenceGeneratorFactory,
         ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
-        Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeManager> scopeManagerFactory, 
-        IUserProvidedScopeElements userProvidedScopeElements) 
+        Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeManager> scopeManagerFactory,
+        Func<IRangeResolutionBaseBuilder, IFunctionResolutionBuilder> functionResolutionBuilderFactory, 
+        IUserProvidedScopeElements userProvidedScopeElement) 
         : base(
             containerInfo.Name, 
-            wellKnownTypes, 
-            referenceGeneratorFactory, 
             checkTypeProperties,
-            userProvidedScopeElements)
+            userProvidedScopeElement,
+            wellKnownTypes, 
+            referenceGeneratorFactory,
+            functionResolutionBuilderFactory)
     {
         _containerInfo = containerInfo;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
+        _functionResolutionBuilderFactory = functionResolutionBuilderFactory;
         _scopeManager = scopeManagerFactory(this, transientScopeInterfaceResolutionBuilder);
         
         transientScopeInterfaceResolutionBuilder.AddImplementation(this);
@@ -55,7 +59,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 nameof(IContainer<object>.Resolve),
                 typeSymbol.FullName(),
                 "",
-                SwitchType(new SwitchTypeParameter(
+                _functionResolutionBuilderFactory(this).ResolveFunction(new SwitchTypeParameter(
                     typeSymbol,
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())),
                 Array.Empty<ParameterResolution>(),
@@ -70,13 +74,13 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             "Container",
             containerReference);
 
-    protected override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
+    public override RangedInstanceReferenceResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
         CreateContainerInstanceReferenceResolution(parameter, "this");
 
-    protected override RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
+    public override RangedInstanceReferenceResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, "this");
 
-    protected override TransientScopeRootResolution CreateTransientScopeRootResolution(IScopeRootParameter parameter, INamedTypeSymbol rootType,
+    public override TransientScopeRootResolution CreateTransientScopeRootResolution(IScopeRootParameter parameter, INamedTypeSymbol rootType,
         DisposableCollectionResolution disposableCollectionResolution, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
             .GetTransientScopeBuilder(rootType)
@@ -87,7 +91,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 disposableCollectionResolution,
                 currentParameters);
 
-    protected override ScopeRootResolution CreateScopeRootResolution(
+    public override ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
         DisposableCollectionResolution disposableCollectionResolution,

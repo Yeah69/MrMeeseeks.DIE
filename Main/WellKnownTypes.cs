@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using MrMeeseeks.DIE.Configuration;
+﻿using MrMeeseeks.DIE.Configuration;
 
 namespace MrMeeseeks.DIE;
 
@@ -49,6 +48,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol Action,
     INamedTypeSymbol Func,
     INamedTypeSymbol Exception,
+    INamedTypeSymbol TaskCanceledException,
     INamedTypeSymbol SemaphoreSlim)
 {
     internal static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
@@ -72,6 +72,7 @@ internal record WellKnownTypes(
         var action = compilation.GetTypeOrReport("System.Action");
         var func = compilation.GetTypeOrReport("System.Func`3");
         var exception = compilation.GetTypeOrReport("System.Exception");
+        var taskCanceledException = compilation.GetTypeOrReport("System.Threading.Tasks.TaskCanceledException");
         var semaphoreSlim = compilation.GetTypeOrReport("System.Threading.SemaphoreSlim");
 
         var spyAggregationAttribute = compilation
@@ -161,105 +162,107 @@ internal record WellKnownTypes(
         var filterTypeInitializerAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterTypeInitializerAttribute).FullName ?? "");
 
-        if (iContainer is null
-            || spyAggregationAttribute is null
-            || spyConstructorChoiceAggregationAttribute is null
-            || implementationAggregationAttribute is null
-            || transientAggregationAttribute is null
-            || containerInstanceAggregationAttribute is null
-            || transientScopeInstanceAggregationAttribute is null
-            || scopeInstanceAggregationAttribute is null
-            || transientScopeRootAggregationAttribute is null
-            || scopeRootAggregationAttribute is null
-            || decoratorAggregationAttribute is null
-            || compositeAggregationAttribute is null
-            || decoratorSequenceChoiceAttribute is null
-            || constructorChoiceAttribute is null
-            || typeInitializerAttribute is null
-            || filterSpyAggregationAttribute is null
-            || filterSpyConstructorChoiceAggregationAttribute is null
-            || filterImplementationAggregationAttribute is null
-            || filterTransientAggregationAttribute is null
-            || filterContainerInstanceAggregationAttribute is null
-            || filterTransientScopeInstanceAggregationAttribute is null
-            || filterScopeInstanceAggregationAttribute is null
-            || filterTransientScopeRootAggregationAttribute is null
-            || filterScopeRootAggregationAttribute is null
-            || filterDecoratorAggregationAttribute is null
-            || filterCompositeAggregationAttribute is null
-            || filterDecoratorSequenceChoiceAttribute is null
-            || filterConstructorChoiceAttribute is null
-            || filterTypeInitializerAttribute is null
-            || customScopeForRootTypesAttribute is null
-            || iDisposable is null
-            || iAsyncDisposable is null
-            || lazy1 is null
-            || valueTask is null
-            || task is null
-            || valueTask1 is null
-            || task1 is null
-            || objectDisposedException is null
-            || iEnumerable1 is null
-            || iReadOnlyCollection1 is null
-            || iReadOnlyList1 is null
-            || concurrentBagOfDisposable is null
-            || action is null
-            || func is null
-            || exception is null
-            || semaphoreSlim is null)
+        if (iContainer is not null
+            && spyAggregationAttribute is not null
+            && spyConstructorChoiceAggregationAttribute is not null
+            && implementationAggregationAttribute is not null
+            && transientAggregationAttribute is not null
+            && containerInstanceAggregationAttribute is not null
+            && transientScopeInstanceAggregationAttribute is not null
+            && scopeInstanceAggregationAttribute is not null
+            && transientScopeRootAggregationAttribute is not null
+            && scopeRootAggregationAttribute is not null
+            && decoratorAggregationAttribute is not null
+            && compositeAggregationAttribute is not null
+            && decoratorSequenceChoiceAttribute is not null
+            && constructorChoiceAttribute is not null
+            && typeInitializerAttribute is not null
+            && filterSpyAggregationAttribute is not null
+            && filterSpyConstructorChoiceAggregationAttribute is not null
+            && filterImplementationAggregationAttribute is not null
+            && filterTransientAggregationAttribute is not null
+            && filterContainerInstanceAggregationAttribute is not null
+            && filterTransientScopeInstanceAggregationAttribute is not null
+            && filterScopeInstanceAggregationAttribute is not null
+            && filterTransientScopeRootAggregationAttribute is not null
+            && filterScopeRootAggregationAttribute is not null
+            && filterDecoratorAggregationAttribute is not null
+            && filterCompositeAggregationAttribute is not null
+            && filterDecoratorSequenceChoiceAttribute is not null
+            && filterConstructorChoiceAttribute is not null
+            && filterTypeInitializerAttribute is not null
+            && customScopeForRootTypesAttribute is not null
+            && iDisposable is not null
+            && iAsyncDisposable is not null
+            && lazy1 is not null
+            && valueTask is not null
+            && task is not null
+            && valueTask1 is not null
+            && task1 is not null
+            && taskCanceledException is not null
+            && objectDisposedException is not null
+            && iEnumerable1 is not null
+            && iReadOnlyCollection1 is not null
+            && iReadOnlyList1 is not null
+            && concurrentBagOfDisposable is not null
+            && action is not null
+            && func is not null
+            && exception is not null
+            && semaphoreSlim is not null)
         {
-            wellKnownTypes = null!;
-            return false;
+
+            wellKnownTypes = new WellKnownTypes(
+                Container: iContainer,
+                SpyAggregationAttribute: spyAggregationAttribute,
+                SpyConstructorChoiceAggregationAttribute: spyConstructorChoiceAggregationAttribute,
+                ImplementationAggregationAttribute: implementationAggregationAttribute,
+                TransientAggregationAttribute: transientAggregationAttribute,
+                ContainerInstanceAggregationAttribute: containerInstanceAggregationAttribute,
+                TransientScopeInstanceAggregationAttribute: transientScopeInstanceAggregationAttribute,
+                ScopeInstanceAggregationAttribute: scopeInstanceAggregationAttribute,
+                TransientScopeRootAggregationAttribute: transientScopeRootAggregationAttribute,
+                ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
+                DecoratorAggregationAttribute: decoratorAggregationAttribute,
+                CompositeAggregationAttribute: compositeAggregationAttribute,
+                DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
+                ConstructorChoiceAttribute: constructorChoiceAttribute,
+                TypeInitializerAttribute: typeInitializerAttribute,
+                FilterSpyAggregationAttribute: filterSpyAggregationAttribute,
+                FilterSpyConstructorChoiceAggregationAttribute: filterSpyConstructorChoiceAggregationAttribute,
+                FilterImplementationAggregationAttribute: filterImplementationAggregationAttribute,
+                FilterTransientAggregationAttribute: filterTransientAggregationAttribute,
+                FilterContainerInstanceAggregationAttribute: filterContainerInstanceAggregationAttribute,
+                FilterTransientScopeInstanceAggregationAttribute: filterTransientScopeInstanceAggregationAttribute,
+                FilterScopeInstanceAggregationAttribute: filterScopeInstanceAggregationAttribute,
+                FilterTransientScopeRootAggregationAttribute: filterTransientScopeRootAggregationAttribute,
+                FilterScopeRootAggregationAttribute: filterScopeRootAggregationAttribute,
+                FilterDecoratorAggregationAttribute: filterDecoratorAggregationAttribute,
+                FilterCompositeAggregationAttribute: filterCompositeAggregationAttribute,
+                FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
+                FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
+                FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
+                CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
+                Disposable: iDisposable,
+                AsyncDisposable: iAsyncDisposable,
+                Lazy1: lazy1,
+                ValueTask: valueTask,
+                ValueTask1: valueTask1,
+                Task: task,
+                Task1: task1,
+                ObjectDisposedException: objectDisposedException,
+                Enumerable1: iEnumerable1,
+                ReadOnlyCollection1: iReadOnlyCollection1,
+                ReadOnlyList1: iReadOnlyList1,
+                ConcurrentBagOfDisposable: concurrentBagOfDisposable,
+                Action: action,
+                Func: func,
+                Exception: exception,
+                TaskCanceledException: taskCanceledException,
+                SemaphoreSlim: semaphoreSlim);
+            return true;
         }
-
-        wellKnownTypes = new WellKnownTypes(
-            Container: iContainer,
-            SpyAggregationAttribute: spyAggregationAttribute,
-            SpyConstructorChoiceAggregationAttribute: spyConstructorChoiceAggregationAttribute,
-            ImplementationAggregationAttribute: implementationAggregationAttribute,
-            TransientAggregationAttribute: transientAggregationAttribute,
-            ContainerInstanceAggregationAttribute: containerInstanceAggregationAttribute,
-            TransientScopeInstanceAggregationAttribute: transientScopeInstanceAggregationAttribute,
-            ScopeInstanceAggregationAttribute: scopeInstanceAggregationAttribute,
-            TransientScopeRootAggregationAttribute: transientScopeRootAggregationAttribute,
-            ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
-            DecoratorAggregationAttribute: decoratorAggregationAttribute,
-            CompositeAggregationAttribute: compositeAggregationAttribute,
-            DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
-            ConstructorChoiceAttribute: constructorChoiceAttribute,
-            TypeInitializerAttribute: typeInitializerAttribute,
-            FilterSpyAggregationAttribute: filterSpyAggregationAttribute,
-            FilterSpyConstructorChoiceAggregationAttribute: filterSpyConstructorChoiceAggregationAttribute,
-            FilterImplementationAggregationAttribute: filterImplementationAggregationAttribute,
-            FilterTransientAggregationAttribute: filterTransientAggregationAttribute,
-            FilterContainerInstanceAggregationAttribute: filterContainerInstanceAggregationAttribute,
-            FilterTransientScopeInstanceAggregationAttribute: filterTransientScopeInstanceAggregationAttribute,
-            FilterScopeInstanceAggregationAttribute: filterScopeInstanceAggregationAttribute,
-            FilterTransientScopeRootAggregationAttribute: filterTransientScopeRootAggregationAttribute,
-            FilterScopeRootAggregationAttribute: filterScopeRootAggregationAttribute,
-            FilterDecoratorAggregationAttribute: filterDecoratorAggregationAttribute,
-            FilterCompositeAggregationAttribute: filterCompositeAggregationAttribute,
-            FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
-            FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
-            FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
-            CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
-            Disposable: iDisposable,
-            AsyncDisposable: iAsyncDisposable,
-            Lazy1: lazy1,
-            ValueTask: valueTask,
-            ValueTask1: valueTask1,
-            Task: task,
-            Task1: task1,
-            ObjectDisposedException: objectDisposedException,
-            Enumerable1: iEnumerable1,
-            ReadOnlyCollection1: iReadOnlyCollection1,
-            ReadOnlyList1: iReadOnlyList1,
-            ConcurrentBagOfDisposable: concurrentBagOfDisposable,
-            Action: action,
-            Func: func,
-            Exception: exception,
-            SemaphoreSlim: semaphoreSlim);
-
-        return true;
+        
+        wellKnownTypes = null!;
+        return false;
     }
 }

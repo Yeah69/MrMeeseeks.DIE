@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Sample;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.TaskCollection;
+namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.TaskCollection;
 
 internal interface IInterface
 {
@@ -48,4 +48,18 @@ internal class DependencyD : IInterface
 
 internal partial class Container : IContainer<IReadOnlyList<Task<IInterface>>>
 {
+}
+
+public class Tests
+{
+    [Fact]
+    public async Task Test()
+    {
+        using var container = new Container();
+        var instance = ((IContainer<IReadOnlyList<Task<IInterface>>>) container).Resolve();
+        Assert.Equal(4, instance.Count);
+        await Task.WhenAll(instance).ConfigureAwait(false);
+        foreach (var task in instance)
+            Assert.True((await task.ConfigureAwait(false)).IsInitialized);
+    }
 }

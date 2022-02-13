@@ -47,6 +47,7 @@ public class SourceGenerator : ISourceGenerator
                 new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, context)),
                 wellKnownTypes,
                 ScopeManagerFactory,
+                FunctionResolutionBuilderFactory,
                 new UserProvidedScopeElements(ci.ContainerType));
 
             IScopeManager ScopeManagerFactory(
@@ -79,7 +80,8 @@ public class SourceGenerator : ISourceGenerator
                 checkTypeProperties,
             
                 wellKnownTypes, 
-                referenceGeneratorFactory);
+                referenceGeneratorFactory,
+                FunctionResolutionBuilderFactory);
             IScopeResolutionBuilder ScopeResolutionBuilderFactory(
                 string name,
                 IContainerResolutionBuilder containerBuilder, 
@@ -95,6 +97,14 @@ public class SourceGenerator : ISourceGenerator
                 checkTypeProperties,
             
                 wellKnownTypes, 
+                referenceGeneratorFactory,
+                FunctionResolutionBuilderFactory);
+
+            IFunctionResolutionBuilder FunctionResolutionBuilderFactory(
+                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder) => new FunctionResolutionBuilder(
+                rangeResolutionBaseBuilder,
+
+                wellKnownTypes,
                 referenceGeneratorFactory);
         }
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);

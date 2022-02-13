@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.TaskTypeInitializationTests;
+namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.TaskToValueTask;
 
 internal class Dependency : ITaskTypeInitializer
 {
@@ -15,17 +15,17 @@ internal class Dependency : ITaskTypeInitializer
     }
 }
 
-internal partial class Container : IContainer<Dependency>
+internal partial class Container : IContainer<ValueTask<Dependency>>
 {
 }
 
-public partial class Tests
+public class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
         using var container = new Container();
-        var instance = ((IContainer<Dependency>) container).Resolve();
+        var instance = await ((IContainer<ValueTask<Dependency>>) container).Resolve().ConfigureAwait(false);
         Assert.True(instance.IsInitialized);
     }
 }

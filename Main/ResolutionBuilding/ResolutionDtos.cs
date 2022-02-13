@@ -145,3 +145,13 @@ internal record RangedInstanceResolutionsQueueItem(
     IReadOnlyList<(ITypeSymbol, ParameterResolution)> Parameters,
     INamedTypeSymbol ImplementationType,
     InterfaceExtension? InterfaceExtension);
+
+internal record SwitchTaskParameter((Resolvable, ConstructorResolution?) InnerResolution) : Parameter;
+
+internal record SwitchValueTaskParameter((Resolvable, ConstructorResolution?) InnerResolution) : Parameter;
+
+internal enum TaskType
+{
+    Task,
+    ValueTask
+}

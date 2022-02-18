@@ -92,7 +92,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
         stringBuilder = stringBuilder
-            .AppendLine($"{resolution.AccessModifier} {resolution.TypeFullName} {resolution.ExplicitImplementationFullName}{(string.IsNullOrWhiteSpace(resolution.ExplicitImplementationFullName) ? "" : ".")}{resolution.Reference}({parameter})")
+            .AppendLine($"{resolution.AccessModifier} {resolution.TypeFullName} {resolution.Reference}({parameter})")
             .AppendLine($"{{")
             .AppendLine($"if (this.{resolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(nameof({resolution.RangeName}));");
         

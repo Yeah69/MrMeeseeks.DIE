@@ -25,9 +25,10 @@ internal class Scope : IScopeRoot
     public IDependency Dependency { get; }
 }
 
+[MultiContainer(typeof(IDependency), typeof(TransientScope), typeof(Scope))]
 [FilterImplementationAggregation(typeof(DependencyScope))]
 [FilterImplementationAggregation(typeof(DependencyTransientScope))]
-internal partial class Container : IContainer<IDependency>, IContainer<TransientScope>, IContainer<Scope>
+internal partial class Container
 {
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyTransientScope))]
@@ -50,21 +51,21 @@ public class Tests
     public void Container()
     {
         using var container = new Container();
-        var dependency = ((IContainer<IDependency>) container).Resolve();
+        var dependency = container.Create0();
         Assert.IsType<DependencyContainer>(dependency);
     }
     [Fact]
     public void TransientScope()
     {
         using var container = new Container();
-        var dependency = ((IContainer<TransientScope>) container).Resolve();
+        var dependency = container.Create1();
         Assert.IsType<DependencyTransientScope>(dependency.Dependency);
     }
     [Fact]
     public void Scope()
     {
         using var container = new Container();
-        var dependency = ((IContainer<Scope>) container).Resolve();
+        var dependency = container.Create2();
         Assert.IsType<DependencyScope>(dependency.Dependency);
     }
 }

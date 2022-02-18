@@ -25,17 +25,15 @@ internal class ContainerInfo : IContainerInfo
         ContainerType = containerClass;
             
         ResolutionRootTypes = containerClass
-            .AllInterfaces
-            .Where(x => x.OriginalDefinition.Equals(wellKnowTypes.Container, SymbolEqualityComparer.Default))
-            .Select(nts =>
-            {
-                var typeParameterSymbol = nts.TypeArguments.Single();
-                if (typeParameterSymbol is INamedTypeSymbol { IsUnboundGenericType: false } type && type.IsAccessibleInternally())
-                {
-                    return typeParameterSymbol;
-                }
-                return null;
-            })
+            .GetAttributes()
+            .Where(ad => wellKnowTypes.MultiContainerAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default))
+            .SelectMany(ad => ad.ConstructorArguments
+                .Where(tc => tc.Kind == TypedConstantKind.Type)
+                .OfType<TypedConstant>()
+                .Concat(ad.ConstructorArguments.SelectMany(ca => ca.Kind is TypedConstantKind.Array
+                    ? (IEnumerable<TypedConstant>)ca.Values
+                    : Array.Empty<TypedConstant>())))
+            .Select(tc => tc.Value as INamedTypeSymbol)
             .OfType<INamedTypeSymbol>()
             .ToList();
 

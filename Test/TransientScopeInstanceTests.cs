@@ -1,4 +1,5 @@
 using System;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
@@ -6,18 +7,13 @@ namespace MrMeeseeks.DIE.Test;
 internal interface ITransientScopeInstanceInner {}
 internal class TransientScopeInstance : ITransientScopeInstanceInner, ITransientScopeInstance {}
 
-internal partial class TransientScopeInstanceContainer : IContainer<ITransientScopeInstanceInner>
-{
-    
-}
-
 public partial class TransientScopeInstanceTests
 {
     [Fact]
     public void InContainer()
     {
         using var container = new TransientScopeInstanceContainer();
-        var _ = ((IContainer<ITransientScopeInstanceInner>) container).Resolve();
+        var _ = container.Create0();
     }
 }
 
@@ -28,18 +24,13 @@ internal class ScopeWithTransientScopeInstance : IScopeWithTransientScopeInstanc
     public ScopeWithTransientScopeInstance(ITransientScopeInstanceInner _) {}
 }
 
-internal partial class TransientScopeInstanceContainer : IContainer<IScopeWithTransientScopeInstance>
-{
-    
-}
-
 public partial class TransientScopeInstanceTests
 {
     [Fact]
     public void InScope()
     {
         using var container = new TransientScopeInstanceContainer();
-        var _ = ((IContainer<IScopeWithTransientScopeInstance>) container).Resolve();
+        var _ = container.Create1();
     }
 }
 
@@ -50,18 +41,13 @@ internal class ScopeWithTransientScopeInstanceAbove : IScopeWithTransientScopeIn
     public ScopeWithTransientScopeInstanceAbove(IScopeWithTransientScopeInstance _) {}
 }
 
-internal partial class TransientScopeInstanceContainer : IContainer<IScopeWithTransientScopeInstanceAbove>
-{
-    
-}
-
 public partial class TransientScopeInstanceTests
 {
     [Fact]
     public void InScopeInScope()
     {
         using var container = new TransientScopeInstanceContainer();
-        var _ = ((IContainer<IScopeWithTransientScopeInstanceAbove>) container).Resolve();
+        var _ = container.Create2();
     }
 }
 
@@ -72,18 +58,13 @@ internal class TransientScopeWithTransientScopeInstance : ITransientScopeWithTra
     public TransientScopeWithTransientScopeInstance(IDisposable scopeDisposal, ITransientScopeInstanceInner _) {}
 }
 
-internal partial class TransientScopeInstanceContainer : IContainer<ITransientScopeWithTransientScopeInstance>
-{
-    
-}
-
 public partial class TransientScopeInstanceTests
 {
     [Fact]
     public void InTransientScope()
     {
         using var container = new TransientScopeInstanceContainer();
-        var _ = ((IContainer<ITransientScopeWithTransientScopeInstance>) container).Resolve();
+        var _ = container.Create3();
     }
 }
 
@@ -134,7 +115,14 @@ internal class TransientScopeWithScopes : ITransientScopeWithScopes, ITransientS
     }
 }
 
-internal partial class TransientScopeInstanceContainer : IContainer<ITransientScopeWithScopes>
+
+[MultiContainer(
+    typeof(ITransientScopeInstanceInner), 
+    typeof(IScopeWithTransientScopeInstance),
+    typeof(IScopeWithTransientScopeInstanceAbove),
+    typeof(ITransientScopeWithTransientScopeInstance), 
+    typeof(ITransientScopeWithScopes))]
+internal partial class TransientScopeInstanceContainer
 {
     
 }
@@ -145,7 +133,7 @@ public partial class TransientScopeInstanceTests
     public void TransientScopeWithScopes()
     {
         using var container = new TransientScopeInstanceContainer();
-        var transientScopeRoot = ((IContainer<ITransientScopeWithScopes>) container).Resolve();
+        var transientScopeRoot = container.Create4();
         Assert.NotEqual(transientScopeRoot.A, transientScopeRoot.B);
         Assert.Equal(transientScopeRoot.A.TransientScopeInstance, transientScopeRoot.B.TransientScopeInstance);
         transientScopeRoot.CleanUp();

@@ -54,16 +54,16 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
 
     public void AddCreateResolveFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes)
     {
+        var i = 0;
         foreach (var typeSymbol in rootTypes)
             _rootResolutions.Add(new RootResolutionFunction(
-                nameof(IContainer<object>.Resolve),
+                $"Create{i++}",
                 typeSymbol.FullName(),
-                "",
+                "public",
                 _functionResolutionBuilderFactory(this).ResolveFunction(new SwitchTypeParameter(
                     typeSymbol,
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())),
                 Array.Empty<ParameterResolution>(),
-                WellKnownTypes.Container.Construct(typeSymbol).FullName(),
                 _containerInfo.Name,
                 DisposalHandling));
     }

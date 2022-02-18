@@ -26,7 +26,8 @@ internal class Scope : IScopeRoot
     public IReadOnlyList<IDependency> Dependencies { get; }
 }
 
-internal partial class Container : IContainer<IReadOnlyList<IDependency>>, IContainer<TransientScope>, IContainer<Scope>
+[MultiContainer(typeof(IReadOnlyList<IDependency>), typeof(TransientScope), typeof(Scope))]
+internal partial class Container
 {
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyScope))]
@@ -49,7 +50,7 @@ public class Tests
     public void Container()
     {
         using var container = new Container();
-        var dependencies = ((IContainer<IReadOnlyList<IDependency>>) container).Resolve();
+        var dependencies = container.Create0();
         Assert.Equal(3, dependencies.Count);
         Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyContainer));
         Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyTransientScope));
@@ -59,7 +60,7 @@ public class Tests
     public void TransientScope()
     {
         using var container = new Container();
-        var dependencies = ((IContainer<TransientScope>) container).Resolve();
+        var dependencies = container.Create1();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyTransientScope));
     }
@@ -67,7 +68,7 @@ public class Tests
     public void Scope()
     {
         using var container = new Container();
-        var dependencies = ((IContainer<Scope>) container).Resolve();
+        var dependencies = container.Create2();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyScope));
     }

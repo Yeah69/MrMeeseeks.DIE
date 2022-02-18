@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
@@ -16,17 +17,18 @@ internal class ConstructorInit : IConstructorInit
     public IConstructorInitDependency? Dependency { get; init; }
 }
 
-internal partial class ConstructorInitContainer : IContainer<IConstructorInit>
+[MultiContainer(typeof(IConstructorInit))]
+internal partial class ConstructorInitContainer
 {
 }
 
-public partial class ConstructorsTests
+public class ConstructorsTests
 {
     [Fact]
     public void ResolveInitProperty()
     {
         using var container = new ConstructorInitContainer();
-        var resolution = ((IContainer<IConstructorInit>) container).Resolve();
+        var resolution = container.Create0();
         Assert.NotNull(resolution.Dependency);
         Assert.IsType<ConstructorInitDependency>(resolution.Dependency);
     }

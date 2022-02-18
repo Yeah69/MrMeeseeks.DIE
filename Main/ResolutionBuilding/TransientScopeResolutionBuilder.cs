@@ -156,7 +156,6 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
                     "internal",
                     resolvable,
                     parameter,
-                    "",
                     Name,
                     DisposalHandling));
             }

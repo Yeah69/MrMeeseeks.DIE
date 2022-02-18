@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
@@ -17,7 +18,8 @@ internal class InstanceClass : IInstanceClass
     }
 }
 
-internal partial class InstanceContainer : IContainer<IInstanceClass>
+[MultiContainer(typeof(IInstanceClass))]
+internal partial class InstanceContainer
 {
     private readonly string DIE_Dependency;
 
@@ -31,7 +33,7 @@ public partial class InstanceTests
     {
         var check = "Hello, instance!";
         using var container = new InstanceContainer(check);
-        var instanceClass = ((IContainer<IInstanceClass>) container).Resolve();
+        var instanceClass = container.Create0();
         Assert.Equal(check, instanceClass.Dependency);
     }
 }

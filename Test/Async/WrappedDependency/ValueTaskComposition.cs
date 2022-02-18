@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.ValueTaskComposition;
@@ -66,7 +67,8 @@ internal class Composite : ITaskTypeInitializer, IInterface, IComposite<IInterfa
     public int Count => _composition.Count;
 }
 
-internal partial class Container : IContainer<ValueTask<IInterface>>
+[MultiContainer(typeof(ValueTask<IInterface>))]
+internal partial class Container
 {
 }
 
@@ -76,7 +78,7 @@ public class Tests
     public async Task Test()
     {
         using var container = new Container();
-        var instance = await ((IContainer<ValueTask<IInterface>>) container).Resolve().ConfigureAwait(false);
+        var instance = await container.Create0().ConfigureAwait(false);
         Assert.IsType<Composite>(instance);
         Assert.Equal(4, ((Composite) instance).Count);
         Assert.True(instance.IsInitialized);

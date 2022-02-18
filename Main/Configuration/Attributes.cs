@@ -185,4 +185,12 @@ public class FilterTypeInitializerAttribute : Attribute
     {
     }
 }
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class MultiContainerAttribute : Attribute
+{
+    public MultiContainerAttribute(params Type[] types)
+    {
+    }
+}
 // ReSharper enable UnusedParameter.Local

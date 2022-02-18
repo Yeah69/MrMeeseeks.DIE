@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.TaskCollection;
@@ -46,7 +47,8 @@ internal class DependencyD : IInterface
     public bool IsInitialized => true;
 }
 
-internal partial class Container : IContainer<IReadOnlyList<Task<IInterface>>>
+[MultiContainer(typeof(IReadOnlyList<Task<IInterface>>))]
+internal partial class Container
 {
 }
 
@@ -56,7 +58,7 @@ public class Tests
     public async Task Test()
     {
         using var container = new Container();
-        var instance = ((IContainer<IReadOnlyList<Task<IInterface>>>) container).Resolve();
+        var instance = container.Create0();
         Assert.Equal(4, instance.Count);
         await Task.WhenAll(instance).ConfigureAwait(false);
         foreach (var task in instance)

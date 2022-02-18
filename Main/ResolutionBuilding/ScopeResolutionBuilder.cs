@@ -166,7 +166,6 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                     "internal",
                     resolvable,
                     parameter,
-                    "",
                     Name,
                     DisposalHandling));
             }

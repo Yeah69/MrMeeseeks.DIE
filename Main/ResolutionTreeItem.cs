@@ -12,7 +12,6 @@ internal record RootResolutionFunction(
     string AccessModifier,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    string ExplicitImplementationFullName,
     string RangeName,
     DisposalHandling DisposalHandling) : Resolvable(Reference, TypeFullName);
 

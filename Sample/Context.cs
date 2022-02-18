@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Sample;
 
 namespace MrMeeseeks.DIE.Test.Async.TaskCollection;
@@ -46,6 +47,7 @@ internal class DependencyD : IInterface
     public bool IsInitialized => true;
 }
 
-internal partial class Container : IContainer<IReadOnlyList<Task<IInterface>>>
+[MultiContainer(typeof(IReadOnlyList<Task<IInterface>>))]
+internal partial class Container
 {
 }

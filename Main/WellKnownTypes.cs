@@ -3,7 +3,6 @@
 namespace MrMeeseeks.DIE;
 
 internal record WellKnownTypes(
-    INamedTypeSymbol Container,
     INamedTypeSymbol SpyAggregationAttribute,
     INamedTypeSymbol SpyConstructorChoiceAggregationAttribute,
     INamedTypeSymbol ImplementationAggregationAttribute,
@@ -33,6 +32,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterConstructorChoiceAttribute,
     INamedTypeSymbol FilterTypeInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
+    INamedTypeSymbol MultiContainerAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -53,7 +53,6 @@ internal record WellKnownTypes(
 {
     internal static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
     {
-        var iContainer = compilation.GetTypeOrReport("MrMeeseeks.DIE.IContainer`1");
         var iDisposable = compilation.GetTypeOrReport("System.IDisposable");
         var iAsyncDisposable = compilation.GetTypeOrReport("System.IAsyncDisposable");
         var lazy1 = compilation.GetTypeOrReport("System.Lazy`1");
@@ -154,16 +153,18 @@ internal record WellKnownTypes(
             .GetTypeByMetadataName(typeof(FilterConstructorChoiceAttribute).FullName ?? "");
 
         var customScopeForRootTypesAttribute = compilation
-            .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");;
+            .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
 
         var typeInitializerAttribute = compilation
-            .GetTypeByMetadataName(typeof(TypeInitializerAttribute).FullName ?? "");;
+            .GetTypeByMetadataName(typeof(TypeInitializerAttribute).FullName ?? "");
 
         var filterTypeInitializerAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterTypeInitializerAttribute).FullName ?? "");
 
-        if (iContainer is not null
-            && spyAggregationAttribute is not null
+        var multiContainerAttribute = compilation
+            .GetTypeByMetadataName(typeof(MultiContainerAttribute).FullName ?? "");
+
+        if (spyAggregationAttribute is not null
             && spyConstructorChoiceAggregationAttribute is not null
             && implementationAggregationAttribute is not null
             && transientAggregationAttribute is not null
@@ -192,6 +193,7 @@ internal record WellKnownTypes(
             && filterConstructorChoiceAttribute is not null
             && filterTypeInitializerAttribute is not null
             && customScopeForRootTypesAttribute is not null
+            && multiContainerAttribute is not null
             && iDisposable is not null
             && iAsyncDisposable is not null
             && lazy1 is not null
@@ -212,7 +214,6 @@ internal record WellKnownTypes(
         {
 
             wellKnownTypes = new WellKnownTypes(
-                Container: iContainer,
                 SpyAggregationAttribute: spyAggregationAttribute,
                 SpyConstructorChoiceAggregationAttribute: spyConstructorChoiceAggregationAttribute,
                 ImplementationAggregationAttribute: implementationAggregationAttribute,
@@ -242,6 +243,7 @@ internal record WellKnownTypes(
                 FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
                 FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
+                MultiContainerAttribute: multiContainerAttribute,
                 Disposable: iDisposable,
                 AsyncDisposable: iAsyncDisposable,
                 Lazy1: lazy1,

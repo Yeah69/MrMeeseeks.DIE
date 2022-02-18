@@ -1,4 +1,5 @@
 using System;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
@@ -32,7 +33,8 @@ internal class ValueTupleBase : IValueTupleBase
         int _25) Dependency { get; }
 }
 
-internal partial class ValueTupleContainer : IContainer<IValueTupleBase>
+[MultiContainer(typeof(IValueTupleBase))]
+internal partial class ValueTupleContainer
 {
     private int _i;
 
@@ -45,7 +47,7 @@ public partial class ValueTupleTests
     public void ResolveValueTuple()
     {
         using var container = new ValueTupleContainer();
-        var valueTupleBase = ((IContainer<IValueTupleBase>) container).Resolve();
+        var valueTupleBase = container.Create0();
         Assert.Equal(25, valueTupleBase.Dependency._25);
     }
 }
@@ -76,7 +78,8 @@ internal class NonSyntaxValueTupleBase : INonSyntaxValueTupleBase
         Dependency { get; }
 }
 
-internal partial class NonSyntaxValueTupleContainer : IContainer<INonSyntaxValueTupleBase>
+[MultiContainer(typeof(INonSyntaxValueTupleBase))]
+internal partial class NonSyntaxValueTupleContainer
 {
     private int _i;
 
@@ -89,7 +92,7 @@ public partial class ValueTupleTests
     public void ResolveNonSyntaxValueTuple()
     {
         using var container = new NonSyntaxValueTupleContainer();
-        var nonSyntaxValueTupleBase = ((IContainer<INonSyntaxValueTupleBase>) container).Resolve();
+        var nonSyntaxValueTupleBase = container.Create0();
         Assert.Equal(25, nonSyntaxValueTupleBase.Dependency.Item26);
     }
 }
@@ -111,7 +114,8 @@ internal class NonSyntaxSingleItemValueTupleBase : INonSyntaxSingleItemValueTupl
         Dependency { get; }
 }
 
-internal partial class NonSyntaxSingleItemValueTupleContainer : IContainer<INonSyntaxSingleItemValueTupleBase>
+[MultiContainer(typeof(INonSyntaxSingleItemValueTupleBase))]
+internal partial class NonSyntaxSingleItemValueTupleContainer
 {
     private int _i;
 
@@ -124,7 +128,7 @@ public partial class ValueTupleTests
     public void ResolveNonSyntaxSingleItemValueTuple()
     {
         using var container = new NonSyntaxSingleItemValueTupleContainer();
-        var NonSyntaxSingleItemValueTupleBase = ((IContainer<INonSyntaxSingleItemValueTupleBase>) container).Resolve();
+        var NonSyntaxSingleItemValueTupleBase = container.Create0();
         Assert.Equal(0, NonSyntaxSingleItemValueTupleBase.Dependency.Item1);
     }
 }
@@ -146,7 +150,8 @@ internal class NonSyntaxDoubleItemValueTupleBase : INonSyntaxDoubleItemValueTupl
         Dependency { get; }
 }
 
-internal partial class NonSyntaxDoubleItemValueTupleContainer : IContainer<INonSyntaxDoubleItemValueTupleBase>
+[MultiContainer(typeof(INonSyntaxDoubleItemValueTupleBase))]
+internal partial class NonSyntaxDoubleItemValueTupleContainer
 {
     private int _i;
 
@@ -159,7 +164,7 @@ public partial class ValueTupleTests
     public void ResolveNonSyntaxDoubleItemValueTuple()
     {
         using var container = new NonSyntaxDoubleItemValueTupleContainer();
-        var NonSyntaxDoubleItemValueTupleBase = ((IContainer<INonSyntaxDoubleItemValueTupleBase>) container).Resolve();
+        var NonSyntaxDoubleItemValueTupleBase = container.Create0();
         Assert.Equal(1, NonSyntaxDoubleItemValueTupleBase.Dependency.Item2);
     }
 }

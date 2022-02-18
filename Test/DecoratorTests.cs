@@ -26,7 +26,8 @@ internal class DecoratorNormal : IDecoratedNormal, IDecorator<IDecoratedNormal>
     public IDecoratedNormal Decorated { get; }
 }
 
-internal partial class DecoratorNormalContainer : IContainer<IDecoratedNormal>
+[MultiContainer(typeof(IDecoratedNormal))]
+internal partial class DecoratorNormalContainer
 {
     
 }
@@ -37,7 +38,7 @@ public partial class DecoratorTests
     public void Normal()
     {
         using var container = new DecoratorNormalContainer();
-        var decorated = ((IContainer<IDecoratedNormal>) container).Resolve();
+        var decorated = container.Create0();
         Assert.NotEqual(decorated, decorated.Decorated);
         Assert.IsType<DecoratorNormal>(decorated);
         Assert.IsType<DecoratorNormalBasis>(decorated.Decorated);
@@ -62,7 +63,8 @@ internal class DecoratorContainerInstance : IDecoratedContainerInstance, IDecora
     public IDecoratedContainerInstance Decorated { get; }
 }
 
-internal partial class DecoratorContainerInstanceContainer : IContainer<IDecoratedContainerInstance>
+[MultiContainer(typeof(IDecoratedContainerInstance))]
+internal partial class DecoratorContainerInstanceContainer
 {
     
 }
@@ -73,12 +75,12 @@ public partial class DecoratorTests
     public void ContainerInstance()
     {
         using var container = new DecoratorContainerInstanceContainer();
-        var decorated = ((IContainer<IDecoratedContainerInstance>) container).Resolve();
+        var decorated = container.Create0();
         Assert.NotEqual(decorated, decorated.Decorated);
         Assert.IsType<DecoratorContainerInstance>(decorated);
         Assert.IsType<DecoratorContainerInstanceBasis>(decorated.Decorated);
         
-        var decoratedNextReference = ((IContainer<IDecoratedContainerInstance>) container).Resolve();
+        var decoratedNextReference = container.Create0();
         Assert.Equal(decorated, decoratedNextReference);
         Assert.Equal(decorated.Decorated, decoratedNextReference.Decorated);
     }
@@ -117,7 +119,8 @@ internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedSc
     public IDecoratedScopeRoot Decorated { get; }
 }
 
-internal partial class DecoratorScopeRootContainer : IContainer<IDecoratedScopeRoot>
+[MultiContainer(typeof(IDecoratedScopeRoot))]
+internal partial class DecoratorScopeRootContainer
 {
     
 }
@@ -128,14 +131,14 @@ public partial class DecoratorTests
     public void ScopeRoot()
     {
         using var container = new DecoratorScopeRootContainer();
-        var decorated = ((IContainer<IDecoratedScopeRoot>) container).Resolve();
+        var decorated = container.Create0();
         Assert.NotEqual(decorated, decorated.Decorated);
         Assert.Equal(decorated.Dependency, decorated.Decorated.Dependency);
         Assert.IsType<DecoratorScopeRoot>(decorated);
         Assert.IsType<DecoratorScopeRootBasis>(decorated.Decorated);
         
         // There is yet no way to check scopes externally
-        var next = ((IContainer<IDecoratedScopeRoot>) container).Resolve();
+        var next = container.Create0();
         Assert.NotEqual(decorated, next);
         Assert.NotEqual(decorated.Dependency, next.Dependency);
     }
@@ -167,7 +170,8 @@ internal class DecoratorMultiB : IDecoratedMulti, IDecorator<IDecoratedMulti>
     public IDecoratedMulti Decorated { get; }
 }
 
-internal partial class DecoratorMultiContainer : IContainer<IDecoratedMulti>
+[MultiContainer(typeof(IDecoratedMulti))]
+internal partial class DecoratorMultiContainer
 {
     
 }
@@ -178,7 +182,7 @@ public partial class DecoratorTests
     public void Multi()
     {
         using var container = new DecoratorMultiContainer();
-        var decorated = ((IContainer<IDecoratedMulti>) container).Resolve();
+        var decorated = container.Create0();
         var decoratedB = decorated;
         var decoratedA = decorated.Decorated;
         var decoratedBasis = decoratedA.Decorated;
@@ -214,7 +218,8 @@ internal class DecoratorList : IDecoratedList, IDecorator<IDecoratedList>
     public IDecoratedList Decorated { get; }
 }
 
-internal partial class DecoratorListContainer : IContainer<IReadOnlyList<IDecoratedList>>
+[MultiContainer(typeof(IReadOnlyList<IDecoratedList>))]
+internal partial class DecoratorListContainer
 {
     
 }
@@ -225,7 +230,7 @@ public partial class DecoratorTests
     public void List()
     {
         using var container = new DecoratorListContainer();
-        var decorated = ((IContainer<IReadOnlyList<IDecoratedList>>) container).Resolve();
+        var decorated = container.Create0();
         var decoratedOfA = decorated[0];
         var decoratedOfB = decorated[1];
         var decoratedBasisA = decoratedOfA.Decorated;

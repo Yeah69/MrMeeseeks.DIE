@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
@@ -17,7 +19,8 @@ internal class PropertyClass : IPropertyClass
     }
 }
 
-internal partial class PropertyContainer : IContainer<IPropertyClass>
+[MultiContainer(typeof(IPropertyClass))]
+internal partial class PropertyContainer
 {
     private string DIE_Dependency { get; }
 
@@ -31,7 +34,7 @@ public partial class PropertyTests
     {
         var check = "Hello, Property!";
         using var container = new PropertyContainer(check);
-        var propertyClass = ((IContainer<IPropertyClass>) container).Resolve();
+        var propertyClass = container.Create0();
         Assert.Equal(check, propertyClass.Dependency);
     }
 }

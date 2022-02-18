@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.SyncTypeInitializationTest;
@@ -9,8 +10,8 @@ internal class Dependency : ITypeInitializer
     void ITypeInitializer.Initialize() => IsInitialized = true;
 }
 
+[MultiContainer(typeof(Dependency))]
 internal partial class Container 
-    : IContainer<Dependency>
 {
 }
 
@@ -20,7 +21,7 @@ public partial class Tests
     public void Test()
     {
         using var container = new Container();
-        var instance = ((IContainer<Dependency>) container).Resolve();
+        var instance = container.Create0();
         Assert.True(instance.IsInitialized);
     }
 }

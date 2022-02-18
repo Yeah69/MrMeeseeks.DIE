@@ -1,4 +1,5 @@
 using System.IO;
+using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
@@ -22,7 +23,8 @@ internal class FactoryContainerScope : IScopeRoot
     }
 }
 
-internal partial class FactoryContainer : IContainer<FileInfo>, IContainer<FactoryContainerTransientScope>, IContainer<FactoryContainerScope>
+[MultiContainer(typeof(FileInfo), typeof(FactoryContainerTransientScope), typeof(FactoryContainerScope))]
+internal partial class FactoryContainer
 {
     private string DIE_Path { get; }
 
@@ -48,7 +50,7 @@ public partial class FactoryTests
     {
         var check = @"C:\HelloWorld.txt";
         using var container = new FactoryContainer(check);
-        var fileInfo = ((IContainer<FileInfo>) container).Resolve();
+        var fileInfo = container.Create0();
         Assert.Equal(check, fileInfo.FullName);
     }
     
@@ -57,7 +59,7 @@ public partial class FactoryTests
     {
         var check = @"C:\HelloWorld.txt";
         using var container = new FactoryContainer(check);
-        var transientScope = ((IContainer<FactoryContainerTransientScope>) container).Resolve();
+        var transientScope = container.Create1();
         Assert.Equal(69, transientScope.Number);
     }
     
@@ -66,7 +68,7 @@ public partial class FactoryTests
     {
         var check = @"C:\HelloWorld.txt";
         using var container = new FactoryContainer(check);
-        var scope = ((IContainer<FactoryContainerScope>) container).Resolve();
+        var scope = container.Create2();
         Assert.Equal("Yeah", scope.Yeah);
     }
 }

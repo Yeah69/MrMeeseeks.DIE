@@ -1,5 +1,4 @@
 using System;
-using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
@@ -8,18 +7,19 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
 
-internal partial class ConstructorChoiceContainer : IContainer<DateTime>
+[MultiContainer(typeof(DateTime))]
+internal partial class ConstructorChoiceContainer
 {
     
 }
 
-public partial class ImplementationAggregationTests
+public class ImplementationAggregationTests
 {
     [Fact]
     public void ResolveExternalType()
     {
         using var container = new ConstructorChoiceContainer();
-        var dateTime = ((IContainer<DateTime>) container).Resolve();
+        var dateTime = container.Create0();
         Assert.Equal(DateTime.MinValue, dateTime);
     }
 }

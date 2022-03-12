@@ -47,6 +47,9 @@ internal record SwitchInterfaceParameter(
 
 internal interface IScopeRootParameter
 {
+    INamedTypeSymbol ReturnType { get; }
+    IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters { get; }
+
     string KeySuffix();
     string RootFunctionSuffix();
 }
@@ -57,6 +60,8 @@ internal record SwitchInterfaceAfterScopeRootParameter(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters) 
     : IScopeRootParameter
 {
+    public INamedTypeSymbol ReturnType => InterfaceType;
+    
     public string KeySuffix() => ":::InterfaceAfterRoot";
 
     public string RootFunctionSuffix() => "_InterfaceAfterRoot";
@@ -74,6 +79,8 @@ internal record CreateInterfaceParameter(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
     : IScopeRootParameter
 {
+    public INamedTypeSymbol ReturnType => InterfaceType;
+
     public virtual string KeySuffix() => ":::NormalInterface";
 
     public virtual string RootFunctionSuffix() => "_NormalInterface";
@@ -100,6 +107,8 @@ internal record SwitchImplementationParameter(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
     : IScopeRootParameter
 {
+    public INamedTypeSymbol ReturnType => ImplementationType;
+
     public virtual string KeySuffix() => ":::Implementation";
 
     public virtual string RootFunctionSuffix() => "";
@@ -141,10 +150,9 @@ internal record ForConstructorParameterWithComposition(
 
 //(RangedInstanceFunction, IReadOnlyList<(ITypeSymbol, ParameterResolution)>, INamedTypeSymbol, InterfaceExtension?)
 internal record RangedInstanceResolutionsQueueItem(
-    RangedInstanceFunction Function,
-    IReadOnlyList<(ITypeSymbol, ParameterResolution)> Parameters,
-    INamedTypeSymbol ImplementationType,
-    InterfaceExtension? InterfaceExtension);
+    ForConstructorParameter Parameter,
+    string Label,
+    string Reference);
 
 internal record SwitchTaskParameter((Resolvable, ConstructorResolution?) InnerResolution) : Parameter;
 

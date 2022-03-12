@@ -2,5 +2,8 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface ITransientScopeImplementationResolutionBuilder
 {
-    void EnqueueRangedInstanceResolution(RangedInstanceResolutionsQueueItem item);
+    void EnqueueRangedInstanceResolution(
+        ForConstructorParameter parameter,
+        string label,
+        string reference);
 }

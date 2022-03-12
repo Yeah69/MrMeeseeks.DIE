@@ -26,7 +26,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         StringBuilder stringBuilder,
         RangeResolution rangeResolution)
     {
-        stringBuilder = rangeResolution.RangedInstances.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
+        stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
 
         stringBuilder =  rangeResolution.RootResolutions.Aggregate(stringBuilder, GenerateResolutionFunction);
         
@@ -51,9 +51,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
         if (_isDisposalHandlingRequired)
         {
-            stringBuilder = rangeResolution.RangedInstances.Aggregate(
+            stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(
                 stringBuilder, 
-                (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.Function.LockReference}.Wait();"));
+                (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.LockReference}.Wait();"));
 
             stringBuilder = stringBuilder
                 .AppendLine($"try")
@@ -73,9 +73,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 .AppendLine($"finally")
                 .AppendLine($"{{");
 
-            stringBuilder = rangeResolution.RangedInstances.Aggregate(
+            stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(
                 stringBuilder, 
-                (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.Function.LockReference}.Release();"));
+                (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.LockReference}.Release();"));
 
             return stringBuilder
                 .AppendLine($"}}")
@@ -88,17 +88,44 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
     private StringBuilder GenerateResolutionFunction(
         StringBuilder stringBuilder,
-        RootResolutionFunction resolution)
+        FunctionResolution resolution)
     {
-        var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
-        stringBuilder = stringBuilder
-            .AppendLine($"{resolution.AccessModifier} {resolution.TypeFullName} {resolution.Reference}({parameter})")
-            .AppendLine($"{{")
-            .AppendLine($"if (this.{resolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(nameof({resolution.RangeName}));");
+        if (resolution is RootResolutionFunction rootResolutionFunction)
+        {
+            var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
+            stringBuilder = stringBuilder
+                .AppendLine($"{rootResolutionFunction.AccessModifier} {resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"{{")
+                .AppendLine($"if (this.{rootResolutionFunction.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
+
+            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
+                .AppendLine($"return {resolution.Resolvable.Reference};");
+
+            stringBuilder = resolution.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction)
+                .AppendLine($"}}");
+            
+            return stringBuilder;
+        }
+        else if (resolution is LocalFunctionResolution localFunctionResolution)
+        {
+            var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
+            stringBuilder = stringBuilder
+                .AppendLine($"{resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"{{")
+                .AppendLine($"if (this.{localFunctionResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
+
+            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
+                .AppendLine($"return {resolution.Resolvable.Reference};");
+
+            stringBuilder = resolution.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction)
+                .AppendLine($"}}");
+
+            
         
-        return GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
-            .AppendLine($"return {resolution.Resolvable.Reference};")
-            .AppendLine($"}}");
+            return stringBuilder;
+        }
+
+        throw new Exception();
     }
 
     private StringBuilder GenerateResolutionFunctionContent(
@@ -115,6 +142,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
+            case LazyResolution(var reference, var typeFullName, _):
+                stringBuilder = stringBuilder
+                    .AppendLine($"{typeFullName} {reference};");
+                break;
             case TaskFromTaskResolution(var wrappedResolvable, _, var taskReference, var taskFullName):
                 stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder
@@ -145,15 +176,13 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder
                     .AppendLine($"{valueTaskFullName} {valueTaskReference};");
                 break;
-            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, _, _, _, _):
-                stringBuilder = stringBuilder
-                    .AppendLine($"{transientScopeTypeFullName} {transientScopeReference};")
-                    .AppendLine($"{typeFullName} {reference};");
+            case TransientScopeRootResolution(var transientScopeReference, var transientScopeTypeFullName, _, _, var functionCallResolution):
+                stringBuilder = stringBuilder.AppendLine($"{transientScopeTypeFullName} {transientScopeReference};");
+                stringBuilder = GenerateFields(stringBuilder, functionCallResolution);
                 break;
-            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, _, _, _, _, _):
-                stringBuilder = stringBuilder
-                    .AppendLine($"{scopeTypeFullName} {scopeReference};")
-                    .AppendLine($"{typeFullName} {reference};");  
+            case ScopeRootResolution(var scopeReference, var scopeTypeFullName, _, _, _, var functionCallResolution):
+                stringBuilder = stringBuilder.AppendLine($"{scopeTypeFullName} {scopeReference};");  
+                stringBuilder = GenerateFields(stringBuilder, functionCallResolution);
                 break;
             case TransientScopeAsDisposableResolution(var reference, var typeFullName):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
@@ -175,11 +204,13 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = items.Aggregate(stringBuilder, GenerateFields);
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                 break;
-            case FuncResolution(var reference, var typeFullName, _, _):
+            case FuncResolution(var reference, var typeFullName, _):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                 break;
             case ParameterResolution:
                 break; // the parameter is the field
+            case MethodGroupResolution:
+                break; // referenced directly
             case FieldResolution(var reference, var typeFullName, _):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                 break;
@@ -208,6 +239,20 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
+            case LazyResolution(var reference, var typeFullName, var methodGroup):
+                string owner = "";
+                if (methodGroup.OwnerReference is { } explicitOwner)
+                    owner = $"{explicitOwner}.";
+                stringBuilder = stringBuilder
+                    .AppendLine($"{reference} = new {typeFullName}({owner}{methodGroup.Reference});");
+                break;
+            case FunctionCallResolution(var reference, var typeFullName, var functionReference, var functionOwner, var parameters):
+                string owner2 = "";
+                if (functionOwner is { } explicitOwner2)
+                    owner2 = $"{explicitOwner2}.";
+                stringBuilder = stringBuilder
+                    .AppendLine($"{reference} = ({typeFullName}){owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
+                break;
             case TaskFromTaskResolution(var wrappedResolvable, var initialization, var taskReference, _):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder
@@ -272,22 +317,19 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder.AppendLine($"{valueTaskReference} = {WellKnownTypes.ValueTask.FullName()}.FromResult({wrappedResolvable.Reference});");      
                 break;
-            case TransientScopeRootResolution(var reference, var typeFullName, var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var parameter, var (_, _, _, _, _, _), var (createFunctionReference, _)):
+            case TransientScopeRootResolution(var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var (_, _, _, _, _, _), var createFunctionCall):
                 stringBuilder = stringBuilder
                     .AppendLine($"{transientScopeReference} = new {transientScopeTypeFullName}({containerInstanceScopeReference});")
-                    .AppendLine($"{_rangeResolution.ContainerReference}.{_containerResolution.DisposalHandling.DisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {transientScopeReference});")
-                    .AppendLine($"{reference} = ({typeFullName}) {transientScopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
+                    .AppendLine($"{_rangeResolution.ContainerReference}.{_containerResolution.DisposalHandling.DisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {transientScopeReference});");
+                stringBuilder = GenerateResolutions(stringBuilder, createFunctionCall);
                 _isDisposalHandlingRequired = true;
                 break;
-            case ScopeRootResolution(var reference, var typeFullName, var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var parameter, var (disposableCollectionReference, _, _, _, _, _), var (createFunctionReference, _)):
+            case ScopeRootResolution(var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var (disposableCollectionReference, _, _, _, _, _), var createFunctionCall):
                 stringBuilder = stringBuilder
                     .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});")
-                    .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});")
-                    .AppendLine($"{reference} = ({typeFullName}) {scopeReference}.{createFunctionReference}({string.Join(", ", parameter.Select(p => p.Reference))});");
+                    .AppendLine($"{disposableCollectionReference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});");
+                stringBuilder = GenerateResolutions(stringBuilder, createFunctionCall);
                 _isDisposalHandlingRequired = true;
-                break;
-            case RangedInstanceReferenceResolution(var reference, { Reference: {} functionReference}, var parameter, var owningObjectReference):
-                stringBuilder = stringBuilder.AppendLine($"{reference} = {owningObjectReference}.{functionReference}({string.Join(", ", parameter.Select(p => p.Reference))});"); 
                 break;
             case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                 stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
@@ -334,12 +376,12 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = items.Aggregate(stringBuilder, GenerateResolutions);
                 stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", items.Select(d => d.Reference))});");
                 break;
-            case FuncResolution(var reference, _, var parameter, Resolvable resolutionBase):
-                stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", parameter.Select(fpr => fpr.Reference))}) =>");
-                stringBuilder = stringBuilder.AppendLine($"{{");
-                GenerateResolutionFunctionContent(stringBuilder, resolutionBase);
-                stringBuilder = stringBuilder.AppendLine($"return {resolutionBase.Reference};");
-                stringBuilder = stringBuilder.AppendLine($"}};");
+            case FuncResolution(var reference, _, var methodGroup):
+                string owner1 = "";
+                if (methodGroup.OwnerReference is { } explicitOwner1)
+                    owner1 = $"{explicitOwner1}.";
+                stringBuilder = stringBuilder
+                    .AppendLine($"{reference} = {owner1}{methodGroup.Reference};");
                 break;
             case ParameterResolution:
                 break; // parameter exists already
@@ -363,40 +405,40 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         return stringBuilder;
     }
 
-    private StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstance rangedInstance)
+    private StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution)
     {
         stringBuilder = stringBuilder
             .AppendLine(
-                $"private {rangedInstance.Function.TypeFullName} {rangedInstance.Function.FieldReference};")
+                $"private {rangedInstanceFunctionGroupResolution.TypeFullName} {rangedInstanceFunctionGroupResolution.FieldReference};")
             .AppendLine(
-                $"private {WellKnownTypes.SemaphoreSlim.FullName()} {rangedInstance.Function.LockReference} = new {WellKnownTypes.SemaphoreSlim.FullName()}(1);");
+                $"private {WellKnownTypes.SemaphoreSlim.FullName()} {rangedInstanceFunctionGroupResolution.LockReference} = new {WellKnownTypes.SemaphoreSlim.FullName()}(1);");
             
-        foreach (var (resolvable, funcParameterResolutions) in rangedInstance.Overloads)
+        foreach (var overload in rangedInstanceFunctionGroupResolution.Overloads)
         {
             var parameters = string.Join(", ",
-                funcParameterResolutions.Select(p => $"{p.TypeFullName} {p.Reference}"));
+                overload.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"));
             stringBuilder = stringBuilder.AppendLine(
-                    $"public {rangedInstance.Function.TypeFullName} {rangedInstance.Function.Reference}({parameters})")
+                    $"public {overload.TypeFullName} {overload.Reference}({parameters})")
                 .AppendLine($"{{")
-                .AppendLine($"this.{rangedInstance.Function.LockReference}.Wait();")
+                .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Wait();")
                 .AppendLine($"try")
                 .AppendLine($"{{")
                 .AppendLine(
-                    $"if (this.{rangedInstance.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(nameof({rangedInstance.DisposalHandling.RangeName}));")
+                    $"if (this.{overload.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(nameof({overload.DisposalHandling.RangeName}));")
                 .AppendLine(
-                    $"if (!object.ReferenceEquals({rangedInstance.Function.FieldReference}, null)) return {rangedInstance.Function.FieldReference};");
+                    $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};");
 
-            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolvable);
+            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, overload.Resolvable);
 
             stringBuilder = stringBuilder
                 .AppendLine(
-                    $"this.{rangedInstance.Function.FieldReference} = {resolvable.Reference};")
+                    $"this.{rangedInstanceFunctionGroupResolution.FieldReference} = {overload.Resolvable.Reference};")
                 .AppendLine($"}}")
                 .AppendLine($"finally")
                 .AppendLine($"{{")
-                .AppendLine($"this.{rangedInstance.Function.LockReference}.Release();")
+                .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Release();")
                 .AppendLine($"}}")
-                .AppendLine($"return this.{rangedInstance.Function.FieldReference};")
+                .AppendLine($"return this.{rangedInstanceFunctionGroupResolution.FieldReference};")
                 .AppendLine($"}}");
         }
         

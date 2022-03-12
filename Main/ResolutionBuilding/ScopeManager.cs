@@ -219,9 +219,9 @@ internal class ScopeManager : IScopeManager
     {
         if (_defaultScopeBuilder.IsValueCreated) _defaultScopeBuilder.Value.DoWork();
         if (_defaultTransientScopeBuilder.IsValueCreated) _defaultTransientScopeBuilder.Value.DoWork();
-        foreach (var customScopeBuilder in _customScopeBuilders.Values)
+        foreach (var customScopeBuilder in _customScopeBuilders.Values.ToList())
             customScopeBuilder.DoWork();
-        foreach (var customTransientScopeBuilder in _customTransientScopeBuilders.Values)
+        foreach (var customTransientScopeBuilder in _customTransientScopeBuilders.Values.ToList())
             customTransientScopeBuilder.DoWork();
     }
 

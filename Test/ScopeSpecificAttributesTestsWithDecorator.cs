@@ -120,7 +120,7 @@ internal partial class Container
     }
 }
 
-public partial class ScopeSpecificAttributesTests
+public class ScopeSpecificAttributesTests
 {
     [Fact]
     public void Container()

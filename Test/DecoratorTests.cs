@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Test;
 using Xunit;

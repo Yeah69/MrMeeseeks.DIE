@@ -6,14 +6,53 @@ internal abstract record Resolvable(
     string Reference,
     string TypeFullName) : ResolutionTreeItem;
 
+internal record FunctionResolution(
+    string Reference,
+    string TypeFullName,
+    Resolvable Resolvable,
+    IReadOnlyList<ParameterResolution> Parameter,
+    DisposalHandling DisposalHandling,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions) : Resolvable(Reference, TypeFullName);
+
 internal record RootResolutionFunction(
     string Reference,
     string TypeFullName,
     string AccessModifier,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    string RangeName,
-    DisposalHandling DisposalHandling) : Resolvable(Reference, TypeFullName);
+    DisposalHandling DisposalHandling,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions);
+
+internal record LocalFunctionResolution(
+    string Reference,
+    string TypeFullName,
+    Resolvable Resolvable,
+    IReadOnlyList<ParameterResolution> Parameter,
+    DisposalHandling DisposalHandling,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions);
+
+internal record RangedInstanceFunctionResolution(
+    string Reference,
+    string TypeFullName,
+    Resolvable Resolvable,
+    IReadOnlyList<ParameterResolution> Parameter,
+    DisposalHandling DisposalHandling,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions);
+
+internal record RangedInstanceFunctionGroupResolution(
+    string TypeFullName,
+    IReadOnlyList<RangedInstanceFunctionResolution> Overloads,
+    string FieldReference,
+    string LockReference);
+
+internal record MethodGroupResolution(
+    string Reference,
+    string TypeFullName,
+    string? OwnerReference)
+    : Resolvable(Reference, TypeFullName);
 
 internal record TransientScopeAsDisposableResolution(
     string Reference,
@@ -62,71 +101,48 @@ internal record ConstructorResolution(
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
     ITypeInitializationResolution? Initialization) : Resolvable(Reference, TypeFullName);
 
+internal record LazyResolution(
+    string Reference,
+    string TypeFullName,
+    MethodGroupResolution MethodGroup) : Resolvable(Reference, TypeFullName);
+
 internal record SyntaxValueTupleResolution(
     string Reference,
     string TypeFullName,
     IReadOnlyList<Resolvable> Items) : Resolvable(Reference, TypeFullName);
 
 internal record TransientScopeRootResolution(
-    string Reference,
-    string TypeFullName,
     string TransientScopeReference,
     string TransientScopeTypeFullName,
     string ContainerInstanceScopeReference,
-    IReadOnlyList<ParameterResolution> Parameter,
     DisposableCollectionResolution DisposableCollectionResolution,
-    ScopeRootFunction ScopeRootFunction) : Resolvable(Reference, TypeFullName);
+    FunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.TypeFullName);
 
 internal record ScopeRootResolution(
-    string Reference,
-    string TypeFullName,
     string ScopeReference,
     string ScopeTypeFullName,
     string ContainerInstanceScopeReference,
     string TransientInstanceScopeReference,
-    IReadOnlyList<ParameterResolution> Parameter,
     DisposableCollectionResolution DisposableCollectionResolution,
-    ScopeRootFunction ScopeRootFunction) : Resolvable(Reference, TypeFullName);
+    FunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.TypeFullName);
 
 internal record ScopeRootFunction(
     string Reference,
     string TypeFullName) : Resolvable(Reference, TypeFullName);
 
-internal record RangedInstance(
-    RangedInstanceFunction Function,
-    IReadOnlyList<RangedInstanceFunctionOverload> Overloads,
-    DisposalHandling DisposalHandling);
-
 internal record ParameterResolution(
     string Reference,
     string TypeFullName) : Resolvable(Reference, TypeFullName);
 
-internal record RangedInstanceFunction(
+internal record InterfaceFunctionDeclarationResolution(
     string Reference,
     string TypeFullName,
-    string FieldReference,
-    string LockReference);
-
-internal record TransientScopeInstanceInterfaceFunction(
-    IReadOnlyList<ParameterResolution> Parameter,
-    string Reference,
-    string TypeFullName);
-
-internal record RangedInstanceFunctionOverload(
-    Resolvable Dependency,
     IReadOnlyList<ParameterResolution> Parameter);
-
-internal record RangedInstanceReferenceResolution(
-    string Reference,
-    RangedInstanceFunction Function,
-    IReadOnlyList<Resolvable> Parameter,
-    string OwningObjectReference) : Resolvable(Reference, Function.TypeFullName);
 
 internal record FuncResolution(
     string Reference,
     string TypeFullName,
-    IReadOnlyList<ParameterResolution> Parameter,
-    ResolutionTreeItem Dependency) : Resolvable(Reference, TypeFullName);
+    MethodGroupResolution MethodGroupResolution) : Resolvable(Reference, TypeFullName);
 
 internal record FactoryResolution(
     string Reference,
@@ -154,43 +170,43 @@ internal record DisposableCollectionResolution(
 internal abstract record RangeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> RangedInstances,
+    IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     string ContainerReference) : ResolutionTreeItem;
 
 internal record TransientScopeInterfaceResolution(
-    IReadOnlyList<TransientScopeInstanceInterfaceFunction> Functions,
+    IReadOnlyList<InterfaceFunctionDeclarationResolution> Functions,
     string Name,
     string ContainerAdapterName);
 
 internal record ScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> RangedInstances,
+    IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     string ContainerReference,
     string ContainerParameterReference,
     string TransientScopeReference,
     string TransientScopeParameterReference,
     string Name) 
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances, ContainerReference);
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
 
 internal record TransientScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> RangedInstances,
+    IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     string ContainerReference,
     string ContainerParameterReference,
     string Name) 
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances, ContainerReference);
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
 
 internal record ContainerResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstance> RangedInstances,
+    IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     TransientScopeInterfaceResolution TransientScopeInterface,
     string TransientScopeAdapterReference,
     IReadOnlyList<TransientScopeResolution> TransientScopes,
     IReadOnlyList<ScopeResolution> Scopes)
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstances, "this");
+    : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, "this");
 
 internal record DisposalHandling(
     DisposableCollectionResolution DisposableCollection,
@@ -239,3 +255,21 @@ internal record ValueTaskFromSyncResolution(
     Resolvable WrappedResolvable,
     string ValueTaskReference,
     string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);
+    
+internal record TaskFromWrappedValueTask(
+    Resolvable WrappedResolvable,
+    string TaskReference,
+    string TaskFullName);
+    
+internal record ValueTaskFromWrappedTask(
+    Resolvable WrappedResolvable,
+    string ValueTaskReference,
+    string ValueTaskFullName);
+
+internal record FunctionCallResolution(
+    string Reference,
+    string TypeFullName,
+    string FunctionReference,
+    string? OwnerReference,
+    IReadOnlyList<(string Name, string Reference)> Parameters)
+    : Resolvable(Reference, TypeFullName);

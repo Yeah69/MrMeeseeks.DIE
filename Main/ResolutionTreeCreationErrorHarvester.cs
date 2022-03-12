@@ -17,11 +17,11 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
         {
             switch (item)
             {
+                case FunctionCallResolution:
+                    break;
                 case RootResolutionFunction:
                     break;
                 case TransientScopeAsDisposableResolution:
-                    break;
-                case RangedInstanceReferenceResolution:
                     break;
                 case ScopeRootFunction:
                     break;
@@ -30,8 +30,8 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
                 case FieldResolution:
                     break;
                 case RangeResolution containerResolution:
-                    foreach (var overload in containerResolution.RangedInstances.SelectMany(ri => ri.Overloads))
-                        Inner(overload.Dependency, errorTreeItems);
+                    foreach (var overload in containerResolution.RangedInstanceFunctionGroups.SelectMany(ri => ri.Overloads))
+                        Inner(overload.Resolvable, errorTreeItems);
                     foreach (var rootResolution in containerResolution.RootResolutions)
                         Inner(rootResolution, errorTreeItems);
                     break;
@@ -52,10 +52,7 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
                     break;
                 case ParameterResolution:
                     break;
-                case FuncResolution funcResolution:
-                    foreach (var funcParameterResolution in funcResolution.Parameter)
-                        Inner(funcParameterResolution, errorTreeItems);
-                    Inner(funcResolution.Dependency, errorTreeItems);
+                case FuncResolution:
                     break;
                 case InterfaceResolution interfaceResolution:
                     Inner(interfaceResolution.Dependency, errorTreeItems);

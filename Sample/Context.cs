@@ -1,53 +1,43 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using MrMeeseeks.DIE.Configuration;
+﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Async.TaskCollection;
+namespace MrMeeseeks.DIE.Test;
 
-internal interface IInterface
+internal interface IDecoratedScopeRoot
 {
-    bool IsInitialized { get; }
+    IDecoratedScopeRootDependency Dependency { get; }
+    IDecoratedScopeRoot Decorated { get; }
 }
 
-internal class DependencyA : ITaskTypeInitializer, IInterface
+internal interface IDecoratedScopeRootDependency {}
+
+internal class DecoratedScopeRootDependency : IDecoratedScopeRootDependency, IScopeInstance {}
+
+internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot, IScopeInstance
 {
-    public bool IsInitialized { get; private set; }
-    
-    async Task ITaskTypeInitializer.InitializeAsync()
+    public IDecoratedScopeRootDependency Dependency { get; }
+
+    public IDecoratedScopeRoot Decorated => this;
+
+    public DecoratorScopeRootBasis(
+        IDecoratedScopeRootDependency dependency) =>
+        Dependency = dependency;
+}
+
+internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedScopeRoot>
+{
+    public DecoratorScopeRoot(IDecoratedScopeRoot decorated, IDecoratedScopeRootDependency dependency)
     {
-        await Task.Delay(500).ConfigureAwait(false);
-        IsInitialized = true;
+        Decorated = decorated;
+        Dependency = dependency;
     }
+
+    public IDecoratedScopeRootDependency Dependency { get; }
+    public IDecoratedScopeRoot Decorated { get; }
 }
 
-internal class DependencyB : IValueTaskTypeInitializer, IInterface
+[MultiContainer(typeof(IDecoratedScopeRoot))]
+internal partial class DecoratorScopeRootContainer
 {
-    public bool IsInitialized { get; private set; }
     
-    async ValueTask IValueTaskTypeInitializer.InitializeAsync()
-    {
-        await Task.Delay(500).ConfigureAwait(false);
-        IsInitialized = true;
-    }
-}
-
-internal class DependencyC : ITypeInitializer, IInterface
-{
-    public bool IsInitialized { get; private set; }
-    
-    void ITypeInitializer.Initialize()
-    {
-        IsInitialized = true;
-    }
-}
-
-internal class DependencyD : IInterface
-{
-    public bool IsInitialized => true;
-}
-
-[MultiContainer(typeof(IReadOnlyList<Task<IInterface>>))]
-internal partial class Container
-{
 }

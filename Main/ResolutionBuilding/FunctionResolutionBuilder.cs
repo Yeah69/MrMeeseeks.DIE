@@ -4,42 +4,274 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface IFunctionResolutionBuilder
 {
-    Resolvable ResolveFunction(SwitchTypeParameter parameter);
-    Resolvable RangedFunction(ForConstructorParameter parameter);
-    Resolvable ScopeRootFunction(CreateInterfaceParameter parameter);
-    Resolvable ScopeRootFunction(SwitchImplementationParameter parameter);
-    Resolvable ScopeRootFunction(SwitchInterfaceAfterScopeRootParameter parameter);
+    FunctionCallResolution BuildFunctionCall(
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
+        string? ownerReference);
+
+    MethodGroupResolution BuildMethodGroup();
+
+    FunctionResolution Build();
 }
 
-internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
+internal interface ILocalFunctionResolutionBuilder : IFunctionResolutionBuilder
+{
+}
+
+internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILocalFunctionResolutionBuilder
 {
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
+    private readonly INamedTypeSymbol _returnType;
+    private readonly IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> _parameters;
+
+    public LocalFunctionResolutionBuilder(
+        // parameter
+        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+        INamedTypeSymbol returnType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> parameters,
+        
+        
+        // dependencies
+        WellKnownTypes wellKnownTypes, 
+        IReferenceGeneratorFactory referenceGeneratorFactory, 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        : base(rangeResolutionBaseBuilder, returnType, parameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+    {
+        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
+        _returnType = returnType;
+        _parameters = parameters;
+
+        Name = RootReferenceGenerator.Generate("Create", _returnType);
+    }
+
+    protected override string Name { get; }
+
+    public override FunctionResolution Build() =>
+        new(Name,
+            TypeFullName,
+            SwitchType(new SwitchTypeParameter(_returnType, _parameters)).Item1,
+            _parameters.Select(t => t.Resolution).ToList(),
+            _rangeResolutionBaseBuilder.DisposalHandling,
+            LocalFunctions
+                .Select(lf => lf.Build())
+                .Select(f => new LocalFunctionResolution(
+                    f.Reference,
+                    f.TypeFullName,
+                    f.Resolvable,
+                    f.Parameter,
+                    f.DisposalHandling,
+                    f.LocalFunctions))
+                .ToList());
+}
+
+internal interface IContainerCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
+{
+}
+
+internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuilder, IContainerCreateFunctionResolutionBuilder
+{
+    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
+    private readonly INamedTypeSymbol _returnType;
+
+    public ContainerCreateFunctionResolutionBuilder(
+        // parameter
+        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+        INamedTypeSymbol returnType,
+        
+        
+        // dependencies
+        WellKnownTypes wellKnownTypes, 
+        IReferenceGeneratorFactory referenceGeneratorFactory, 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        : base(rangeResolutionBaseBuilder, returnType, Array.Empty<(ITypeSymbol, ParameterResolution)>(), wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+    {
+        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
+        _returnType = returnType;
+        
+        Name = RootReferenceGenerator.Generate("Create");
+    }
+
+    protected override string Name { get; }
+
+    public override FunctionResolution Build() =>
+        new(RootReferenceGenerator.Generate("Create"),
+            TypeFullName,
+            SwitchType(new SwitchTypeParameter(
+                _returnType,
+                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())).Item1,
+            Array.Empty<ParameterResolution>(),
+            _rangeResolutionBaseBuilder.DisposalHandling,
+            LocalFunctions
+                .Select(lf => lf.Build())
+                .Select(f => new LocalFunctionResolution(
+                    f.Reference,
+                    f.TypeFullName,
+                    f.Resolvable,
+                    f.Parameter,
+                    f.DisposalHandling,
+                    f.LocalFunctions))
+                .ToList());
+}
+
+internal interface IScopeRootCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
+{
+}
+
+internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuilder, IScopeRootCreateFunctionResolutionBuilder
+{
+    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
+    private readonly IScopeRootParameter _scopeRootParameter;
+
+    public ScopeRootCreateFunctionResolutionBuilder(
+        // parameter
+        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+        IScopeRootParameter scopeRootParameter,
+        
+        
+        // dependencies
+        WellKnownTypes wellKnownTypes, 
+        IReferenceGeneratorFactory referenceGeneratorFactory, 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        : base(rangeResolutionBaseBuilder, scopeRootParameter.ReturnType, scopeRootParameter.CurrentParameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+    {
+        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
+        _scopeRootParameter = scopeRootParameter;
+
+        Name = RootReferenceGenerator.Generate("Create");
+    }
+
+    protected override string Name { get; }
+
+    public override FunctionResolution Build()
+    {
+        var resolvable = _scopeRootParameter switch
+        {
+            CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter).Item1,
+            SwitchImplementationParameter switchImplementationParameter => SwitchImplementation(switchImplementationParameter).Item1,
+            SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => SwitchInterfaceAfterScopeRoot(switchInterfaceAfterScopeRootParameter).Item1,
+            _ => throw new ArgumentOutOfRangeException(nameof(_scopeRootParameter))
+        };
+        
+        return new(
+            Name,
+            TypeFullName,
+            resolvable,
+            Parameters,
+            _rangeResolutionBaseBuilder.DisposalHandling,
+            LocalFunctions
+                .Select(lf => lf.Build())
+                .Select(f => new LocalFunctionResolution(
+                    f.Reference,
+                    f.TypeFullName,
+                    f.Resolvable,
+                    f.Parameter,
+                    f.DisposalHandling,
+                    f.LocalFunctions))
+                .ToList());
+    }
+}
+
+internal interface IRangedFunctionResolutionBuilder : IFunctionResolutionBuilder
+{
+}
+
+internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRangedFunctionResolutionBuilder
+{
+    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
+    private readonly string _reference;
+    private readonly ForConstructorParameter _forConstructorParameter;
+
+    public RangedFunctionResolutionBuilder(
+        // parameter
+        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+        string reference,
+        ForConstructorParameter forConstructorParameter,
+        
+        
+        // dependencies
+        WellKnownTypes wellKnownTypes, 
+        IReferenceGeneratorFactory referenceGeneratorFactory, 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        : base(rangeResolutionBaseBuilder, forConstructorParameter.ImplementationType, forConstructorParameter.CurrentFuncParameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+    {
+        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
+        _reference = reference;
+        _forConstructorParameter = forConstructorParameter;
+        
+        Name = reference;
+    }
+
+    protected override string Name { get; }
+
+    public override FunctionResolution Build()
+    {
+        var resolvable = CreateConstructorResolution(_forConstructorParameter).Item1;
+        
+        return new(
+            _reference,
+            TypeFullName,
+            resolvable,
+            _forConstructorParameter.CurrentFuncParameters.Select(t => t.Resolution).ToList(),
+            _rangeResolutionBaseBuilder.DisposalHandling,
+            LocalFunctions
+                .Select(lf => lf.Build())
+                .Select(f => new LocalFunctionResolution(
+                    f.Reference,
+                    f.TypeFullName,
+                    f.Resolvable,
+                    f.Parameter,
+                    f.DisposalHandling,
+                    f.LocalFunctions))
+                .ToList());
+    }
+}
+
+internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
+{
+    public INamedTypeSymbol ReturnType { get; }
+    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly WellKnownTypes _wellKnownTypes;
+    private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
-    private readonly IReferenceGenerator _rootReferenceGenerator;
+    protected readonly IReferenceGenerator RootReferenceGenerator;
 
     private readonly DisposableCollectionResolution _disposableCollectionResolution;
     private readonly IUserProvidedScopeElements _userProvidedScopeElements;
 
+    protected readonly IList<IFunctionResolutionBuilder> LocalFunctions = new List<IFunctionResolutionBuilder>();
+    
+    protected abstract string Name { get; }
+    protected string TypeFullName => ReturnType.FullName();
+    
+    protected IReadOnlyList<ParameterResolution> Parameters { get; }
+
     internal FunctionResolutionBuilder(
         // parameters
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+        INamedTypeSymbol returnType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
+        
         
         // dependencies
         WellKnownTypes wellKnownTypes,
-        IReferenceGeneratorFactory referenceGeneratorFactory)
+        IReferenceGeneratorFactory referenceGeneratorFactory,
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
     {
+        ReturnType = returnType;
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _wellKnownTypes = wellKnownTypes;
+        _localFunctionResolutionBuilderFactory = localFunctionResolutionBuilderFactory;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
         _userProvidedScopeElements = rangeResolutionBaseBuilder.UserProvidedScopeElements;
 
-        _rootReferenceGenerator = referenceGeneratorFactory.Create();
+        RootReferenceGenerator = referenceGeneratorFactory.Create();
         _disposableCollectionResolution = _rangeResolutionBaseBuilder.DisposableCollectionResolution;
+        Parameters = currentParameters
+            .Select(p => new ParameterResolution(RootReferenceGenerator.Generate(p.Type), TypeFullName))
+            .ToList();
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchType(SwitchTypeParameter parameter)
+    protected (Resolvable, ConstructorResolution?) SwitchType(SwitchTypeParameter parameter)
     {
         var (type, currentFuncParameters) = parameter;
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
@@ -48,7 +280,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (_userProvidedScopeElements.GetInstanceFor(type) is { } instance)
             return (
                 new FieldResolution(
-                    _rootReferenceGenerator.Generate(instance.Type),
+                    RootReferenceGenerator.Generate(instance.Type),
                     instance.Type.FullName(),
                     instance.Name),
                 null);
@@ -56,7 +288,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (_userProvidedScopeElements.GetPropertyFor(type) is { } property)
             return (
                 new FieldResolution(
-                    _rootReferenceGenerator.Generate(property.Type),
+                    RootReferenceGenerator.Generate(property.Type),
                     property.Type.FullName(),
                     property.Name),
                 null);
@@ -64,7 +296,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (_userProvidedScopeElements.GetFactoryFor(type) is { } factory)
             return (
                 new FactoryResolution(
-                    _rootReferenceGenerator.Generate(factory.ReturnType),
+                    RootReferenceGenerator.Generate(factory.ReturnType),
                     factory.ReturnType.FullName(),
                     factory.Name,
                     factory
@@ -84,7 +316,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
         {
             var constructorResolution = new ConstructorResolution(
-                _rootReferenceGenerator.Generate(valueTupleType),
+                RootReferenceGenerator.Generate(valueTupleType),
                 valueTupleType.FullName(),
                 ImplementsIDisposable(valueTupleType, _wellKnownTypes, _disposableCollectionResolution, _checkTypeProperties),
                 valueTupleType
@@ -101,7 +333,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
             var itemTypes = GetTypeArguments(syntaxValueTupleType).ToList();
             
             return (new SyntaxValueTupleResolution(
-                _rootReferenceGenerator.Generate("syntaxValueTuple"),
+                RootReferenceGenerator.Generate("syntaxValueTuple"),
                 syntaxValueTupleType.FullName(),
                 itemTypes
                     .Select(t => SwitchType(new SwitchTypeParameter(t, currentFuncParameters)).Item1)
@@ -142,29 +374,45 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
                     }),
                     null);
             }
-            
-            var dependency = SwitchType(new SwitchTypeParameter(
-                genericType, 
-                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>()));
-            var constructorInjection = new ConstructorResolution(
-                _rootReferenceGenerator.Generate(namedTypeSymbol),
+
+            var newLocalFunction = _localFunctionResolutionBuilderFactory(_rangeResolutionBaseBuilder, genericType, Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>());
+            LocalFunctions.Add(newLocalFunction);
+
+            var constructorInjection = new LazyResolution(
+                RootReferenceGenerator.Generate(namedTypeSymbol),
                 namedTypeSymbol.FullName(),
-                ImplementsIDisposable(namedTypeSymbol, _wellKnownTypes, _disposableCollectionResolution, _checkTypeProperties),
-                new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
-                    new List<(string Name, Resolvable Dependency)> 
-                    { 
-                        (
-                            "valueFactory", 
-                            new FuncResolution(
-                                _rootReferenceGenerator.Generate("func"),
-                                $"global::System.Func<{genericType.FullName()}>",
-                                Array.Empty<ParameterResolution>(),
-                                dependency.Item1)
-                        )
-                    }),
-                Array.Empty<(string Name, Resolvable Dependency)>(),
+                newLocalFunction.BuildMethodGroup());
+            return (constructorInjection, null);
+        }
+
+        if (type.TypeKind == TypeKind.Delegate 
+            && type.FullName().StartsWith("global::System.Func<")
+            && type is INamedTypeSymbol namedTypeSymbol0)
+        {
+            var returnTypeRaw = namedTypeSymbol0.TypeArguments.Last();
+            
+            if (returnTypeRaw is not INamedTypeSymbol returnType)
+            {
+                return (
+                    new ErrorTreeItem($"[{type.FullName()}] Func: Return type not named"),
+                    null);
+            }
+            
+            var parameterTypes = namedTypeSymbol0
+                .TypeArguments
+                .Take(namedTypeSymbol0.TypeArguments.Length - 1)
+                .Select(ts => (Type: ts, Resolution: new ParameterResolution(RootReferenceGenerator.Generate(ts), ts.FullName())))
+                .ToArray();
+
+            var newLocalFunction = _localFunctionResolutionBuilderFactory(_rangeResolutionBaseBuilder, returnType, parameterTypes);
+            LocalFunctions.Add(newLocalFunction);
+            
+            return (
+                new FuncResolution(
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    newLocalFunction.BuildMethodGroup()),
                 null);
-            return (constructorInjection, constructorInjection);
         }
 
         if (type.OriginalDefinition.Equals(_wellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
@@ -243,7 +491,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
             return (
                 new CollectionResolution(
-                    _rootReferenceGenerator.Generate(type),
+                    RootReferenceGenerator.Generate(type),
                     type.FullName(),
                     wrappedItemType.FullName(),
                     items),
@@ -255,29 +503,6 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
         if (type.TypeKind is TypeKind.Class or TypeKind.Struct)
             return SwitchClass(new SwitchClassParameter(type, currentFuncParameters));
-
-        if (type.TypeKind == TypeKind.Delegate 
-            && type.FullName().StartsWith("global::System.Func<")
-            && type is INamedTypeSymbol namedTypeSymbol0)
-        {
-            var returnType = namedTypeSymbol0.TypeArguments.Last();
-            var parameterTypes = namedTypeSymbol0
-                .TypeArguments
-                .Take(namedTypeSymbol0.TypeArguments.Length - 1)
-                .Select(ts => (Type: ts, Resolution: new ParameterResolution(_rootReferenceGenerator.Generate(ts), ts.FullName())))
-                .ToArray();
-
-            var dependency = SwitchType(new SwitchTypeParameter(
-                returnType, 
-                parameterTypes));
-            return (
-                new FuncResolution(
-                    _rootReferenceGenerator.Generate(type),
-                    type.FullName(),
-                    parameterTypes.Select(t => t.Resolution).ToArray(),
-                    dependency.Item1),
-                null);
-        }
 
         return (
             new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation."),
@@ -292,7 +517,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
             .ConstructUnboundGenericType()
             .FullName()
             .Replace("<>", $"<{resolution.Item1.TypeFullName}>");
-        var wrappedTaskReference = _rootReferenceGenerator.Generate(_wellKnownTypes.Task);
+        var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
         if (resolution.Item2 is { } constructorResolution)
         {
             if (constructorResolution.Initialization is TaskBaseTypeInitializationResolution taskBaseResolution)
@@ -324,7 +549,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
             .ConstructUnboundGenericType()
             .FullName()
             .Replace("<>", $"<{resolution.Item1.TypeFullName}>");
-        var wrappedValueTaskReference = _rootReferenceGenerator.Generate(_wellKnownTypes.ValueTask);
+        var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask);
         if (resolution.Item2 is { } constructorResolution)
         {
             if (constructorResolution.Initialization is TaskBaseTypeInitializationResolution taskBaseResolution)
@@ -377,7 +602,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchInterfaceAfterScopeRoot(
+    protected (Resolvable, ConstructorResolution?) SwitchInterfaceAfterScopeRoot(
         SwitchInterfaceAfterScopeRootParameter parameter)
     {
         var (interfaceType, implementations, currentParameters) = parameter;
@@ -444,7 +669,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
     }
 
-    private (InterfaceResolution, ConstructorResolution?) CreateInterface(CreateInterfaceParameter parameter)
+    protected (InterfaceResolution, ConstructorResolution?) CreateInterface(CreateInterfaceParameter parameter)
     {
         var (interfaceType, implementationType, currentParameters) = parameter;
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
@@ -461,7 +686,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
 
         var currentInterfaceResolution = new InterfaceResolution(
-            _rootReferenceGenerator.Generate(interfaceType),
+            RootReferenceGenerator.Generate(interfaceType),
             interfaceType.FullName(),
             SwitchImplementation(nextParameter).Item1);
 
@@ -481,7 +706,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
                     currentParameters,
                     decoration)).Item1;
                 currentInterfaceResolution = new InterfaceResolution(
-                    _rootReferenceGenerator.Generate(interfaceType),
+                    RootReferenceGenerator.Generate(interfaceType),
                     interfaceType.FullName(),
                     decoratorResolution);
             }
@@ -528,7 +753,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchImplementation(SwitchImplementationParameter parameter)
+    protected (Resolvable, ConstructorResolution?) SwitchImplementation(SwitchImplementationParameter parameter)
     {
         var (implementationType, currentParameters) = parameter;
         var scopeLevel = parameter switch
@@ -561,7 +786,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
     }
 
-    private (Resolvable, ConstructorResolution?) CreateConstructorResolution(ForConstructorParameter parameter)
+    protected (Resolvable, ConstructorResolution?) CreateConstructorResolution(ForConstructorParameter parameter)
     {
         var (implementationType, currentParameters) = parameter;
         
@@ -613,20 +838,20 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
                         initializationTypeFullName, 
                         initializationMethodName,
                         _wellKnownTypes.Task.FullName(),
-                        _rootReferenceGenerator.Generate(_wellKnownTypes.Task)),
+                        RootReferenceGenerator.Generate(_wellKnownTypes.Task)),
                 false when initializationMethod.ReturnType.Equals(_wellKnownTypes.ValueTask, SymbolEqualityComparer.Default) => 
                     new ValueTaskTypeInitializationResolution(
                         initializationTypeFullName, 
                         initializationMethodName, 
                         _wellKnownTypes.ValueTask.FullName(),
-                        _rootReferenceGenerator.Generate(_wellKnownTypes.ValueTask)),
+                        RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask)),
                 _ => typeInitializationResolution
             };
         }
 
 
         var resolution = new ConstructorResolution(
-            _rootReferenceGenerator.Generate(implementationType),
+            RootReferenceGenerator.Generate(implementationType),
             implementationType.FullName(),
             ImplementsIDisposable(
                 implementationType, 
@@ -673,7 +898,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
                     || typeSymbol.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
                     || typeSymbol.Equals(_wellKnownTypes.ReadOnlyList1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default))
                     return (parameterName, new CollectionResolution(
-                        _rootReferenceGenerator.Generate(typeSymbol),
+                        RootReferenceGenerator.Generate(typeSymbol),
                         typeSymbol.FullName(),
                         composition.InterfaceType.FullName(),
                         composition.InterfaceResolutionComposition));
@@ -682,7 +907,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
                     || typeSymbol.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(_wellKnownTypes.Task1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default)
                     || typeSymbol.Equals(_wellKnownTypes.ReadOnlyList1.Construct(_wellKnownTypes.Task1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default))
                     return (parameterName, new CollectionResolution(
-                        _rootReferenceGenerator.Generate(typeSymbol),
+                        RootReferenceGenerator.Generate(typeSymbol),
                         typeSymbol.FullName(),
                         _wellKnownTypes.Task1.Construct(composition.InterfaceType).FullName(),
                         composition.InterfaceResolutionComposition
@@ -699,7 +924,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
                     || typeSymbol.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(_wellKnownTypes.ValueTask1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default)
                     || typeSymbol.Equals(_wellKnownTypes.ReadOnlyList1.Construct(_wellKnownTypes.ValueTask1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default))
                     return (parameterName, new CollectionResolution(
-                        _rootReferenceGenerator.Generate(typeSymbol),
+                        RootReferenceGenerator.Generate(typeSymbol),
                         typeSymbol.FullName(),
                         _wellKnownTypes.ValueTask1.Construct(composition.InterfaceType).FullName(),
                         composition.InterfaceResolutionComposition
@@ -716,7 +941,7 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
             if (isTransientScopeRoot
                 && typeSymbol.Equals(_wellKnownTypes.Disposable, SymbolEqualityComparer.Default))
                 return (parameterName, new TransientScopeAsDisposableResolution(
-                    _rootReferenceGenerator.Generate(_wellKnownTypes.Disposable),
+                    RootReferenceGenerator.Generate(_wellKnownTypes.Disposable),
                     _wellKnownTypes.Disposable.FullName()));
             if (typeSymbol is not INamedTypeSymbol parameterType)
                 return ("",
@@ -740,28 +965,15 @@ internal class FunctionResolutionBuilder : IFunctionResolutionBuilder
             ? disposableCollectionResolution 
             : null;
 
-    public Resolvable ResolveFunction(SwitchTypeParameter parameter)
-    {
-        return SwitchType(parameter).Item1;
-    }
+    public FunctionCallResolution BuildFunctionCall(
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters, string? ownerReference) =>
+        new(RootReferenceGenerator.Generate("ret"),
+            TypeFullName,
+            Name,
+            ownerReference,
+            Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList());
 
-    public Resolvable RangedFunction(ForConstructorParameter parameter)
-    {
-        return CreateConstructorResolution(parameter).Item1;
-    }
+    public MethodGroupResolution BuildMethodGroup() => new (Name, TypeFullName, null);
 
-    public Resolvable ScopeRootFunction(CreateInterfaceParameter parameter)
-    {
-        return CreateInterface(parameter).Item1;
-    }
-
-    public Resolvable ScopeRootFunction(SwitchImplementationParameter parameter)
-    {
-        return SwitchImplementation(parameter).Item1;
-    }
-
-    public Resolvable ScopeRootFunction(SwitchInterfaceAfterScopeRootParameter parameter)
-    {
-        return SwitchInterfaceAfterScopeRoot(parameter).Item1;
-    }
+    public abstract FunctionResolution Build();
 }

@@ -42,12 +42,13 @@ public class SourceGenerator : ISourceGenerator
             return new ContainerResolutionBuilder(
                 ci,
                 
-                new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory),
+                new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory, RangedFunctionGroupResolutionBuilderFactory),
                 referenceGeneratorFactory,
                 new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, context)),
                 wellKnownTypes,
                 ScopeManagerFactory,
-                FunctionResolutionBuilderFactory,
+                ContainerCreateFunctionResolutionBuilderFactory,
+                RangedFunctionGroupResolutionBuilderFactory,
                 new UserProvidedScopeElements(ci.ContainerType));
 
             IScopeManager ScopeManagerFactory(
@@ -81,7 +82,8 @@ public class SourceGenerator : ISourceGenerator
             
                 wellKnownTypes, 
                 referenceGeneratorFactory,
-                FunctionResolutionBuilderFactory);
+                ScopeRootCreateFunctionResolutionBuilderFactory,
+                RangedFunctionGroupResolutionBuilderFactory);
             IScopeResolutionBuilder ScopeResolutionBuilderFactory(
                 string name,
                 IContainerResolutionBuilder containerBuilder, 
@@ -98,14 +100,67 @@ public class SourceGenerator : ISourceGenerator
             
                 wellKnownTypes, 
                 referenceGeneratorFactory,
-                FunctionResolutionBuilderFactory);
+                ScopeRootCreateFunctionResolutionBuilderFactory,
+                RangedFunctionGroupResolutionBuilderFactory);
 
-            IFunctionResolutionBuilder FunctionResolutionBuilderFactory(
-                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder) => new FunctionResolutionBuilder(
+            ILocalFunctionResolutionBuilder LocalFunctionResolutionBuilderFactory(
+                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+                INamedTypeSymbol returnType,
+                IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> parameters) => new LocalFunctionResolutionBuilder(
                 rangeResolutionBaseBuilder,
+                returnType,
+                parameters,
 
                 wellKnownTypes,
-                referenceGeneratorFactory);
+                referenceGeneratorFactory,
+                LocalFunctionResolutionBuilderFactory);
+
+            IContainerCreateFunctionResolutionBuilder ContainerCreateFunctionResolutionBuilderFactory(
+                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+                INamedTypeSymbol returnType) => new ContainerCreateFunctionResolutionBuilder(
+                rangeResolutionBaseBuilder,
+                returnType,
+
+                wellKnownTypes,
+                referenceGeneratorFactory,
+                LocalFunctionResolutionBuilderFactory);
+
+            IScopeRootCreateFunctionResolutionBuilder ScopeRootCreateFunctionResolutionBuilderFactory(
+                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+                IScopeRootParameter scopeRootParameter) => new ScopeRootCreateFunctionResolutionBuilder(
+                rangeResolutionBaseBuilder,
+                scopeRootParameter,
+
+                wellKnownTypes,
+                referenceGeneratorFactory,
+                LocalFunctionResolutionBuilderFactory);
+
+            IRangedFunctionResolutionBuilder RangedFunctionResolutionBuilderFactory(
+                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+                string reference,
+                ForConstructorParameter forConstructorParameter) => new RangedFunctionResolutionBuilder(
+                rangeResolutionBaseBuilder,
+                reference,
+                forConstructorParameter,
+
+                wellKnownTypes,
+                referenceGeneratorFactory,
+                LocalFunctionResolutionBuilderFactory);
+
+            IRangedFunctionGroupResolutionBuilder RangedFunctionGroupResolutionBuilderFactory(
+                string label,
+                string? reference,
+                INamedTypeSymbol implementationType,
+                string decorationSuffix, 
+                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder) => new RangedFunctionGroupResolutionBuilder(
+                label,
+                reference,
+                implementationType,
+                decorationSuffix,
+                rangeResolutionBaseBuilder,
+
+                referenceGeneratorFactory,
+                RangedFunctionResolutionBuilderFactory);
         }
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);

@@ -13,7 +13,7 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
-        if (!_scopeResolution.RootResolutions.Any() && !_scopeResolution.RangedInstances.Any()) 
+        if (!_scopeResolution.RootResolutions.Any() && !_scopeResolution.RangedInstanceFunctionGroups.Any()) 
             return stringBuilder;
         
         stringBuilder = stringBuilder

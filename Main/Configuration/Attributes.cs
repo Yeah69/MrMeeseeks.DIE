@@ -187,9 +187,9 @@ public class FilterTypeInitializerAttribute : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class MultiContainerAttribute : Attribute
+public class CreateFunctionAttribute : Attribute
 {
-    public MultiContainerAttribute(params Type[] types)
+    public CreateFunctionAttribute(Type type, string methodNamePrefix)
     {
     }
 }

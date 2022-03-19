@@ -53,7 +53,7 @@ internal class ExecuteImpl : IExecute
                 .Select(x => semanticModel.GetDeclaredSymbol(x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x.GetAttributes().Any(ad => _wellKnownTypes.MultiContainerAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default)))
+                .Where(x => x.GetAttributes().Any(ad => _wellKnownTypes.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default)))
                 .ToList();
             foreach (var namedTypeSymbol in containerClasses)
             {
@@ -63,7 +63,7 @@ internal class ExecuteImpl : IExecute
                     if (containerInfo.IsValid)
                     {
                         var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
-                        containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.ResolutionRootTypes);
+                        containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.CreateFunctionData);
                         var containerResolution = containerResolutionBuilder.Build();
                         var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
                         if (errorTreeItems.Any())

@@ -32,7 +32,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterConstructorChoiceAttribute,
     INamedTypeSymbol FilterTypeInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
-    INamedTypeSymbol MultiContainerAttribute,
+    INamedTypeSymbol CreateFunctionAttribute,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -161,8 +161,8 @@ internal record WellKnownTypes(
         var filterTypeInitializerAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterTypeInitializerAttribute).FullName ?? "");
 
-        var multiContainerAttribute = compilation
-            .GetTypeByMetadataName(typeof(MultiContainerAttribute).FullName ?? "");
+        var createFunctionAttribute = compilation
+            .GetTypeByMetadataName(typeof(CreateFunctionAttribute).FullName ?? "");
 
         if (spyAggregationAttribute is not null
             && spyConstructorChoiceAggregationAttribute is not null
@@ -193,7 +193,7 @@ internal record WellKnownTypes(
             && filterConstructorChoiceAttribute is not null
             && filterTypeInitializerAttribute is not null
             && customScopeForRootTypesAttribute is not null
-            && multiContainerAttribute is not null
+            && createFunctionAttribute is not null
             && iDisposable is not null
             && iAsyncDisposable is not null
             && lazy1 is not null
@@ -243,7 +243,7 @@ internal record WellKnownTypes(
                 FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
                 FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
-                MultiContainerAttribute: multiContainerAttribute,
+                CreateFunctionAttribute: createFunctionAttribute,
                 Disposable: iDisposable,
                 AsyncDisposable: iAsyncDisposable,
                 Lazy1: lazy1,

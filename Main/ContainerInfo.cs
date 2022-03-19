@@ -7,7 +7,7 @@ internal interface IContainerInfo
     string FullName { get; }
     bool IsValid { get; }
     INamedTypeSymbol ContainerType { get; }
-    IReadOnlyList<INamedTypeSymbol> ResolutionRootTypes { get; }
+    IReadOnlyList<(INamedTypeSymbol, string)> CreateFunctionData { get; }
 }
 
 internal class ContainerInfo : IContainerInfo
@@ -24,20 +24,20 @@ internal class ContainerInfo : IContainerInfo
         FullName = containerClass.FullName();
         ContainerType = containerClass;
             
-        ResolutionRootTypes = containerClass
+        CreateFunctionData = containerClass
             .GetAttributes()
-            .Where(ad => wellKnowTypes.MultiContainerAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default))
-            .SelectMany(ad => ad.ConstructorArguments
-                .Where(tc => tc.Kind == TypedConstantKind.Type)
-                .OfType<TypedConstant>()
-                .Concat(ad.ConstructorArguments.SelectMany(ca => ca.Kind is TypedConstantKind.Array
-                    ? (IEnumerable<TypedConstant>)ca.Values
-                    : Array.Empty<TypedConstant>())))
-            .Select(tc => tc.Value as INamedTypeSymbol)
-            .OfType<INamedTypeSymbol>()
+            .Where(ad => wellKnowTypes.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default))
+            .Select(ad => ad.ConstructorArguments.Length == 2 
+                          && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type
+                          && ad.ConstructorArguments[0].Value is INamedTypeSymbol type
+                          && ad.ConstructorArguments[1].Kind == TypedConstantKind.Primitive
+                          && ad.ConstructorArguments[1].Value is string methodNamePrefix
+                          ? (type, methodNamePrefix)
+                          : ((INamedTypeSymbol, string)?) null)
+            .OfType<(INamedTypeSymbol, string)>()
             .ToList();
 
-        IsValid = ResolutionRootTypes.Any();
+        IsValid = CreateFunctionData.Any();
     }
 
     public string Name { get; }
@@ -45,5 +45,5 @@ internal class ContainerInfo : IContainerInfo
     public string FullName { get; }
     public bool IsValid { get; }
     public INamedTypeSymbol ContainerType { get; }
-    public IReadOnlyList<INamedTypeSymbol> ResolutionRootTypes { get; }
+    public IReadOnlyList<(INamedTypeSymbol, string)> CreateFunctionData { get; }
 }

@@ -94,7 +94,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
-                .AppendLine($"{rootResolutionFunction.AccessModifier} {resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"{rootResolutionFunction.AccessModifier} {(rootResolutionFunction.IsAsync ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
                 .AppendLine($"{{")
                 .AppendLine($"if (this.{rootResolutionFunction.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
 
@@ -110,7 +110,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
-                .AppendLine($"{resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"{(localFunctionResolution.IsAsync ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
                 .AppendLine($"{{")
                 .AppendLine($"if (this.{localFunctionResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
 
@@ -145,6 +145,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case LazyResolution(var reference, var typeFullName, _):
                 stringBuilder = stringBuilder
                     .AppendLine($"{typeFullName} {reference};");
+                break;
+            case DeferringResolvable { Resolvable: {} resolvable}:
+                stringBuilder = GenerateFields(stringBuilder, resolvable);
                 break;
             case TaskFromTaskResolution(var wrappedResolvable, _, var taskReference, var taskFullName):
                 stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
@@ -239,6 +242,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
+            case DeferringResolvable { Resolvable: {} resolvable}:
+                stringBuilder = GenerateResolutions(stringBuilder, resolvable);
+                break;
             case LazyResolution(var reference, var typeFullName, var methodGroup):
                 string owner = "";
                 if (methodGroup.OwnerReference is { } explicitOwner)
@@ -418,7 +424,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             var parameters = string.Join(", ",
                 overload.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"));
             stringBuilder = stringBuilder.AppendLine(
-                    $"public {overload.TypeFullName} {overload.Reference}({parameters})")
+                    $"public {(overload.IsAsync ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})")
                 .AppendLine($"{{")
                 .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Wait();")
                 .AppendLine($"try")

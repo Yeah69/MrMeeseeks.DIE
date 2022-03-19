@@ -2,8 +2,16 @@ using MrMeeseeks.DIE.Configuration;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
+internal enum SynchronicityDecision
+{
+    Undecided,
+    Sync,
+    Async
+}
+
 internal interface IFunctionResolutionBuilder
 {
+    
     FunctionCallResolution BuildFunctionCall(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
         string? ownerReference);
@@ -59,8 +67,10 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
                     f.Resolvable,
                     f.Parameter,
                     f.DisposalHandling,
-                    f.LocalFunctions))
-                .ToList());
+                    f.LocalFunctions,
+                    f.IsAsync))
+                .ToList(),
+            IsAsync);
 }
 
 internal interface IContainerCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
@@ -108,8 +118,10 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
                     f.Resolvable,
                     f.Parameter,
                     f.DisposalHandling,
-                    f.LocalFunctions))
-                .ToList());
+                    f.LocalFunctions,
+                    f.IsAsync))
+                .ToList(),
+            IsAsync);
 }
 
 internal interface IScopeRootCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
@@ -165,8 +177,10 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
                     f.Resolvable,
                     f.Parameter,
                     f.DisposalHandling,
-                    f.LocalFunctions))
-                .ToList());
+                    f.LocalFunctions,
+                    f.IsAsync))
+                .ToList(),
+            IsAsync);
     }
 }
 
@@ -220,8 +234,10 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
                     f.Resolvable,
                     f.Parameter,
                     f.DisposalHandling,
-                    f.LocalFunctions))
-                .ToList());
+                    f.LocalFunctions,
+                    f.IsAsync))
+                .ToList(),
+            IsAsync);
     }
 }
 
@@ -239,11 +255,15 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     private readonly IUserProvidedScopeElements _userProvidedScopeElements;
 
     protected readonly IList<IFunctionResolutionBuilder> LocalFunctions = new List<IFunctionResolutionBuilder>();
+
+    protected readonly IList<IAwaitableResolution> PotentialAwaits = new List<IAwaitableResolution>();
     
     protected abstract string Name { get; }
     protected string TypeFullName => ReturnType.FullName();
     
     protected IReadOnlyList<ParameterResolution> Parameters { get; }
+
+    protected bool IsAsync => PotentialAwaits.Any(pa => pa.Await);
 
     internal FunctionResolutionBuilder(
         // parameters
@@ -847,6 +867,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                         RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask)),
                 _ => typeInitializationResolution
             };
+            if (typeInitializationResolution is IAwaitableResolution awaitableResolution)
+            {
+                PotentialAwaits.Add(awaitableResolution);
+            }
         }
 
 

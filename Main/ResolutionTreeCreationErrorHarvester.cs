@@ -17,6 +17,8 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
         {
             switch (item)
             {
+                case DeferringResolvable:
+                    break;
                 case FunctionCallResolution:
                     break;
                 case RootResolutionFunction:

@@ -146,7 +146,8 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
                     functionResolution.Resolvable,
                     functionResolution.Parameter,
                     functionResolution.DisposalHandling,
-                    functionResolution.LocalFunctions));
+                    functionResolution.LocalFunctions,
+                    functionResolution.IsAsync));
             }
             
             DoRangedInstancesWork();

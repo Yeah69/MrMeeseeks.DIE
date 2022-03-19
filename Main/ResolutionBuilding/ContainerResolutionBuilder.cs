@@ -4,7 +4,7 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface IContainerResolutionBuilder : IRangeResolutionBaseBuilder
 {
-    void AddCreateResolveFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes);
+    void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData);
 
     FunctionCallResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter,
@@ -53,7 +53,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         _transientScopeAdapterReference = RootReferenceGenerator.Generate("TransientScopeAdapter");
     }
 
-    public void AddCreateResolveFunctions(IReadOnlyList<INamedTypeSymbol> rootTypes)
+    public void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData)
     {
         foreach (var typeSymbol in rootTypes)
             _rootResolutions.Add(_createFunctionResolutionBuilderFactory(this, typeSymbol));
@@ -109,7 +109,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 f.Resolvable,
                 f.Parameter,
                 DisposalHandling,
-                f.LocalFunctions))
+                f.LocalFunctions,
+                f.IsAsync))
             .ToList();
 
         var i = 0;
@@ -126,7 +127,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     Array.Empty<(string, string)>()),
                 f.Parameter,
                 DisposalHandling,
-                Array.Empty<LocalFunctionResolution>()));
+                Array.Empty<LocalFunctionResolution>(),
+                f.IsAsync));
 
         while (RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
                || _scopeManager.HasWorkToDo)

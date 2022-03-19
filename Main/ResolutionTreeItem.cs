@@ -6,13 +6,19 @@ internal abstract record Resolvable(
     string Reference,
     string TypeFullName) : ResolutionTreeItem;
 
+internal record DeferringResolvable() : Resolvable("", "")
+{
+    internal Resolvable? Resolvable { get; set; }
+}
+
 internal record FunctionResolution(
     string Reference,
     string TypeFullName,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions) : Resolvable(Reference, TypeFullName);
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
+    bool IsAsync) : Resolvable(Reference, TypeFullName);
 
 internal record RootResolutionFunction(
     string Reference,
@@ -21,8 +27,9 @@ internal record RootResolutionFunction(
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions);
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
+    bool IsAsync) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, IsAsync);
 
 internal record LocalFunctionResolution(
     string Reference,
@@ -30,8 +37,9 @@ internal record LocalFunctionResolution(
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions);
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
+    bool IsAsync) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, IsAsync);
 
 internal record RangedInstanceFunctionResolution(
     string Reference,
@@ -39,8 +47,9 @@ internal record RangedInstanceFunctionResolution(
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions);
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
+    bool IsAsync) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, IsAsync);
 
 internal record RangedInstanceFunctionGroupResolution(
     string TypeFullName,
@@ -72,13 +81,18 @@ internal record SyncTypeInitializationResolution(
     string TypeFullName,
     string MethodName) : ITypeInitializationResolution;
 
+internal interface IAwaitableResolution
+{
+    bool Await { get; }
+}
+
 internal record TaskBaseTypeInitializationResolution(
     string TypeFullName,
     string MethodName,
     string TaskTypeFullName,
-    string TaskReference) : ITypeInitializationResolution
+    string TaskReference) : ITypeInitializationResolution, IAwaitableResolution
 {
-    internal bool Await { get; set; } = true;
+    public bool Await { get; set; } = true;
 }
 
 internal record TaskTypeInitializationResolution(

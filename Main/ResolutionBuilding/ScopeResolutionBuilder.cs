@@ -156,7 +156,8 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                     functionResolution.Resolvable,
                     functionResolution.Parameter,
                     functionResolution.DisposalHandling,
-                    functionResolution.LocalFunctions));
+                    functionResolution.LocalFunctions,
+                    functionResolution.IsAsync));
             }
             
             DoRangedInstancesWork();

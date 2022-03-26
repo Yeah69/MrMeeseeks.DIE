@@ -115,13 +115,11 @@ internal class TransientScopeWithScopes : ITransientScopeWithScopes, ITransientS
     }
 }
 
-
-[MultiContainer(
-    typeof(ITransientScopeInstanceInner), 
-    typeof(IScopeWithTransientScopeInstance),
-    typeof(IScopeWithTransientScopeInstanceAbove),
-    typeof(ITransientScopeWithTransientScopeInstance), 
-    typeof(ITransientScopeWithScopes))]
+[CreateFunction(typeof(ITransientScopeInstanceInner), "Create0")]
+[CreateFunction(typeof(IScopeWithTransientScopeInstance), "Create1")]
+[CreateFunction(typeof(IScopeWithTransientScopeInstanceAbove), "Create2")]
+[CreateFunction(typeof(ITransientScopeWithTransientScopeInstance), "Create3")]
+[CreateFunction(typeof(ITransientScopeWithScopes), "Create4")]
 internal partial class TransientScopeInstanceContainer
 {
     

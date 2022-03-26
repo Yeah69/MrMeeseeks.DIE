@@ -26,7 +26,9 @@ internal class Scope : IScopeRoot
     public IReadOnlyList<IDependency> Dependencies { get; }
 }
 
-[MultiContainer(typeof(IReadOnlyList<IDependency>), typeof(TransientScope), typeof(Scope))]
+[CreateFunction(typeof(IReadOnlyList<IDependency>), "Create0")]
+[CreateFunction(typeof(TransientScope), "Create1")]
+[CreateFunction(typeof(Scope), "Create2")]
 internal partial class Container
 {
     [FilterImplementationAggregation(typeof(DependencyContainer))]

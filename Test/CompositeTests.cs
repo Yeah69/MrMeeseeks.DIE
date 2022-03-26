@@ -31,7 +31,8 @@ internal class CompositeNormal : ICompositeNormal, IComposite<ICompositeNormal>
     public IReadOnlyList<ICompositeNormal> Composites { get; }
 }
 
-[MultiContainer(typeof(ICompositeNormal), typeof(IReadOnlyList<ICompositeNormal>))]
+[CreateFunction(typeof(ICompositeNormal), "CreateDep")]
+[CreateFunction(typeof(IReadOnlyList<ICompositeNormal>), "CreateCollection")]
 internal partial class CompositeNormalContainer
 {
     
@@ -43,7 +44,7 @@ public partial class CompositeTests
     public void Normal()
     {
         using var container = new CompositeNormalContainer();
-        var composite = container.Create0();
+        var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
             Assert.NotEqual(composite, compositeComposite);
@@ -56,7 +57,7 @@ public partial class CompositeTests
     public void NormalList()
     {
         using var container = new CompositeNormalContainer();
-        var composites = container.Create1();
+        var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
             var type = compositeComposite.GetType();
@@ -89,7 +90,8 @@ internal class CompositeContainerInstance : ICompositeContainerInstance, ICompos
     public IReadOnlyList<ICompositeContainerInstance> Composites { get; }
 }
 
-[MultiContainer(typeof(ICompositeContainerInstance), typeof(IReadOnlyList<ICompositeContainerInstance>))]
+[CreateFunction(typeof(ICompositeContainerInstance), "CreateDep")]
+[CreateFunction(typeof(IReadOnlyList<ICompositeContainerInstance>), "CreateCollection")]
 internal partial class CompositeContainerInstanceContainer
 {
     
@@ -101,14 +103,14 @@ public partial class CompositeTests
     public void ContainerInstance()
     {
         using var container = new CompositeContainerInstanceContainer();
-        var composite = container.Create0();
+        var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
             Assert.NotEqual(composite, compositeComposite);
             var type = compositeComposite.GetType();
             Assert.True(type == typeof(CompositeContainerInstanceBasisA) || type == typeof(CompositeContainerInstanceBasisB));
         }
-        var nextComposite = container.Create0();
+        var nextComposite = container.CreateDep();
         Assert.Equal(composite, nextComposite);
     }
     
@@ -116,14 +118,14 @@ public partial class CompositeTests
     public void ContainerInstanceList()
     {
         using var container = new CompositeContainerInstanceContainer();
-        var composites = container.Create1();
+        var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
             var type = compositeComposite.GetType();
             Assert.True(type == typeof(CompositeContainerInstanceBasisA) || type == typeof(CompositeContainerInstanceBasisB));
         }
         Assert.Equal(2, composites.Count);
-        var nextComposites = container.Create1();
+        var nextComposites = container.CreateCollection();
         Assert.Equal(composites[0], nextComposites[0]);
         Assert.Equal(composites[1], nextComposites[1]);
     }
@@ -152,7 +154,8 @@ internal class CompositeMixedScoping : ICompositeMixedScoping, IComposite<ICompo
     public IReadOnlyList<ICompositeMixedScoping> Composites { get; }
 }
 
-[MultiContainer(typeof(ICompositeMixedScoping), typeof(IReadOnlyList<ICompositeMixedScoping>))]
+[CreateFunction(typeof(ICompositeMixedScoping), "CreateDep")]
+[CreateFunction(typeof(IReadOnlyList<ICompositeMixedScoping>), "CreateCollection")]
 internal partial class CompositeMixedScopingContainer
 {
     
@@ -164,14 +167,14 @@ public partial class CompositeTests
     public void MixedScoping()
     {
         using var container = new CompositeMixedScopingContainer();
-        var composite = container.Create0();
+        var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
             Assert.NotEqual(composite, compositeComposite);
             var type = compositeComposite.GetType();
             Assert.True(type == typeof(CompositeMixedScopingBasisA) || type == typeof(CompositeMixedScopingBasisB));
         }
-        var nextComposite = container.Create0();
+        var nextComposite = container.CreateDep();
         Assert.NotEqual(composite, nextComposite);
     }
     
@@ -179,14 +182,14 @@ public partial class CompositeTests
     public void MixedScopingList()
     {
         using var container = new CompositeMixedScopingContainer();
-        var composites = container.Create1();
+        var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
             var type = compositeComposite.GetType();
             Assert.True(type == typeof(CompositeMixedScopingBasisA) || type == typeof(CompositeMixedScopingBasisB));
         }
         Assert.Equal(2, composites.Count);
-        var nextComposites = container.Create1();
+        var nextComposites = container.CreateCollection();
         Assert.True(composites[0].Equals(nextComposites[0]) && !composites[1].Equals(nextComposites[1])
             || composites[1].Equals(nextComposites[1]) && !composites[0].Equals(nextComposites[0]));
     }
@@ -230,7 +233,8 @@ internal class CompositeScopeRoot : ICompositeScopeRoot, IComposite<ICompositeSc
     public ICompositeScopeRootDependency Dependency { get; }
 }
 
-[MultiContainer(typeof(ICompositeScopeRoot), typeof(IReadOnlyList<ICompositeScopeRoot>))]
+[CreateFunction(typeof(ICompositeScopeRoot), "CreateDep")]
+[CreateFunction(typeof(IReadOnlyList<ICompositeScopeRoot>), "CreateCollection")]
 internal partial class CompositeScopeRootContainer
 {
     
@@ -242,7 +246,7 @@ public partial class CompositeTests
     public void ScopeRoot()
     {
         using var container = new CompositeScopeRootContainer();
-        var composite = container.Create0();
+        var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
             Assert.NotEqual(composite, compositeComposite);
@@ -250,7 +254,7 @@ public partial class CompositeTests
             Assert.True(type == typeof(CompositeScopeRootBasisA) || type == typeof(CompositeScopeRootBasisB));
             Assert.Equal(composite.Dependency, compositeComposite.Dependency);
         }
-        var next = container.Create0();
+        var next = container.CreateDep();
         Assert.NotEqual(composite.Dependency, next.Dependency);
     }
     
@@ -258,7 +262,7 @@ public partial class CompositeTests
     public void ScopeRootList()
     {
         using var container = new CompositeScopeRootContainer();
-        var composites = container.Create1();
+        var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
             var type = compositeComposite.GetType();
@@ -316,7 +320,8 @@ internal class CompositeDecorated : ICompositeDecorated, IComposite<ICompositeDe
     public ICompositeDecorated Decorated => this;
 }
 
-[MultiContainer(typeof(ICompositeDecorated), typeof(IReadOnlyList<ICompositeDecorated>))]
+[CreateFunction(typeof(ICompositeDecorated), "CreateDep")]
+[CreateFunction(typeof(IReadOnlyList<ICompositeDecorated>), "CreateCollection")]
 internal partial class CompositeDecoratedContainer
 {
     
@@ -328,7 +333,7 @@ public partial class CompositeTests
     public void Decorated()
     {
         using var container = new CompositeDecoratedContainer();
-        var composite = container.Create0();
+        var composite = container.CreateDep();
         Assert.IsType<CompositeDecoratedDecoratorB>(composite);
         Assert.IsType<CompositeDecorated>(composite.Decorated);
         foreach (var compositeComposite in composite.Composites)
@@ -345,7 +350,7 @@ public partial class CompositeTests
     public void DecoratedList()
     {
         using var container = new CompositeDecoratedContainer();
-        var composites = container.Create1();
+        var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
             Assert.IsType<CompositeDecoratedDecoratorB>(compositeComposite);

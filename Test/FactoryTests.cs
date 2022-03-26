@@ -23,7 +23,9 @@ internal class FactoryContainerScope : IScopeRoot
     }
 }
 
-[MultiContainer(typeof(FileInfo), typeof(FactoryContainerTransientScope), typeof(FactoryContainerScope))]
+[CreateFunction(typeof(FileInfo), "CreateFileInfo")]
+[CreateFunction(typeof(FactoryContainerTransientScope), "CreateFactoryContainerTransientScope")]
+[CreateFunction(typeof(FactoryContainerScope), "CreateFactoryContainerScope")]
 internal partial class FactoryContainer
 {
     private string DIE_Path { get; }
@@ -50,7 +52,7 @@ public partial class FactoryTests
     {
         var check = @"C:\HelloWorld.txt";
         using var container = new FactoryContainer(check);
-        var fileInfo = container.Create0();
+        var fileInfo = container.CreateFileInfo();
         Assert.Equal(check, fileInfo.FullName);
     }
     
@@ -59,7 +61,7 @@ public partial class FactoryTests
     {
         var check = @"C:\HelloWorld.txt";
         using var container = new FactoryContainer(check);
-        var transientScope = container.Create1();
+        var transientScope = container.CreateFactoryContainerTransientScope();
         Assert.Equal(69, transientScope.Number);
     }
     
@@ -68,7 +70,7 @@ public partial class FactoryTests
     {
         var check = @"C:\HelloWorld.txt";
         using var container = new FactoryContainer(check);
-        var scope = container.Create2();
+        var scope = container.CreateFactoryContainerScope();
         Assert.Equal("Yeah", scope.Yeah);
     }
 }

@@ -88,8 +88,11 @@ internal class ScopeRoot : IScopeRoot
     }
 }
 
-
-[MultiContainer(typeof(IInterface), typeof(TransientScopeRoot), typeof(TransientScopeRootSpecific), typeof(ScopeRoot), typeof(ScopeRootSpecific))]
+[CreateFunction(typeof(IInterface), "Create0")]
+[CreateFunction(typeof(TransientScopeRoot), "Create1")]
+[CreateFunction(typeof(TransientScopeRootSpecific), "Create2")]
+[CreateFunction(typeof(ScopeRoot), "Create3")]
+[CreateFunction(typeof(ScopeRootSpecific), "Create4")]
 [DecoratorSequenceChoice(typeof(IInterface), typeof(ContainerDecorator))]
 internal partial class Container
 {

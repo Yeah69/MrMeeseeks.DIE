@@ -47,7 +47,7 @@ internal class DependencyD : IInterface
     public bool IsInitialized => true;
 }
 
-[MultiContainer(typeof(IReadOnlyList<Task<IInterface>>))]
+[CreateFunction(typeof(IReadOnlyList<Task<IInterface>>), "CreateDep")]
 internal partial class Container
 {
 }
@@ -58,7 +58,7 @@ public class Tests
     public async Task Test()
     {
         using var container = new Container();
-        var instance = container.Create0();
+        var instance = container.CreateDep();
         Assert.Equal(4, instance.Count);
         await Task.WhenAll(instance).ConfigureAwait(false);
         foreach (var task in instance)

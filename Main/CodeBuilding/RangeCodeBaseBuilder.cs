@@ -149,6 +149,16 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case DeferringResolvable { Resolvable: {} resolvable}:
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
                 break;
+            case ValueTaskFromWrappedTaskResolution(var resolvable, var reference, var fullName):
+                stringBuilder = GenerateFields(stringBuilder, resolvable);
+                stringBuilder = stringBuilder
+                    .AppendLine($"{fullName} {reference};");
+                break;
+            case TaskFromWrappedValueTaskResolution(var resolvable, var reference, var fullName):
+                stringBuilder = GenerateFields(stringBuilder, resolvable);
+                stringBuilder = stringBuilder
+                    .AppendLine($"{fullName} {reference};");
+                break;
             case TaskFromTaskResolution(var wrappedResolvable, _, var taskReference, var taskFullName):
                 stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder
@@ -258,6 +268,16 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     owner2 = $"{explicitOwner2}.";
                 stringBuilder = stringBuilder
                     .AppendLine($"{reference} = ({typeFullName}){owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
+                break;
+            case ValueTaskFromWrappedTaskResolution(var resolvable, var reference, var fullName):
+                stringBuilder = GenerateResolutions(stringBuilder, resolvable);
+                stringBuilder = stringBuilder
+                    .AppendLine($"{reference} = new {fullName}({resolvable.Reference});");
+                break;
+            case TaskFromWrappedValueTaskResolution(var resolvable, var reference, var fullName):
+                stringBuilder = GenerateResolutions(stringBuilder, resolvable);
+                stringBuilder = stringBuilder
+                    .AppendLine($"{reference} = {resolvable.Reference}.AsTask();");
                 break;
             case TaskFromTaskResolution(var wrappedResolvable, var initialization, var taskReference, _):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);

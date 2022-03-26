@@ -16,7 +16,7 @@ internal class Dependency : ITaskTypeInitializer
     }
 }
 
-//[MultiContainer(typeof(Dependency))]
+[CreateFunction(typeof(Dependency), "CreateDep")]
 internal partial class Container
 {
 }
@@ -24,10 +24,10 @@ internal partial class Container
 public class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
         using var container = new Container();
-        var instance = container.Create0();
+        var instance = await container.CreateDepAsync().ConfigureAwait(false);
         Assert.True(instance.IsInitialized);
     }
 }

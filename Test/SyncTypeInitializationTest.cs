@@ -10,7 +10,7 @@ internal class Dependency : ITypeInitializer
     void ITypeInitializer.Initialize() => IsInitialized = true;
 }
 
-[MultiContainer(typeof(Dependency))]
+[CreateFunction(typeof(Dependency), "Create0")]
 internal partial class Container 
 {
 }

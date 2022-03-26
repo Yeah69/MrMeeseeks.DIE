@@ -1,12 +1,12 @@
 ﻿using System;
-using MrMeeseeks.DIE.Test;
+using MrMeeseeks.DIE.Test.Async.AwaitedDependency.Dependency;
 
 internal class Program
 {
     private static void Main()
     {
         Console.WriteLine("Hello, world!");
-        var container = new DecoratorScopeRootContainer();
-        Console.WriteLine(container.Create0());
+        var container = new Container();
+        Console.WriteLine(container.CreateDepAsync().ConfigureAwait(false));
     }
 }

@@ -17,7 +17,7 @@ internal class ConstructorInit : IConstructorInit
     public IConstructorInitDependency? Dependency { get; init; }
 }
 
-[MultiContainer(typeof(IConstructorInit))]
+[CreateFunction(typeof(IConstructorInit), "CreateDep")]
 internal partial class ConstructorInitContainer
 {
 }
@@ -28,7 +28,7 @@ public class ConstructorsTests
     public void ResolveInitProperty()
     {
         using var container = new ConstructorInitContainer();
-        var resolution = container.Create0();
+        var resolution = container.CreateDep();
         Assert.NotNull(resolution.Dependency);
         Assert.IsType<ConstructorInitDependency>(resolution.Dependency);
     }

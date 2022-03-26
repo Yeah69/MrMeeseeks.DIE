@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
@@ -17,9 +18,10 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
 {
     private readonly IContainerInfo _containerInfo;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
+    private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IContainerCreateFunctionResolutionBuilder> _createFunctionResolutionBuilderFactory;
 
-    private readonly List<IContainerCreateFunctionResolutionBuilder> _rootResolutions = new ();
+    private readonly List<(IContainerCreateFunctionResolutionBuilder CreateFunction, string MethodNamePrefix)> _rootResolutions = new ();
     private readonly string _transientScopeAdapterReference;
     private readonly IScopeManager _scopeManager;
 
@@ -46,6 +48,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     {
         _containerInfo = containerInfo;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
+        _wellKnownTypes = wellKnownTypes;
         _createFunctionResolutionBuilderFactory = createFunctionResolutionBuilderFactory;
         _scopeManager = scopeManagerFactory(this, transientScopeInterfaceResolutionBuilder);
         
@@ -55,8 +58,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
 
     public void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData)
     {
-        foreach (var typeSymbol in rootTypes)
-            _rootResolutions.Add(_createFunctionResolutionBuilderFactory(this, typeSymbol));
+        foreach (var (typeSymbol, methodNamePrefix) in createFunctionData)
+            _rootResolutions.Add((_createFunctionResolutionBuilderFactory(this, typeSymbol), methodNamePrefix));
     }
 
     public FunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter, string containerReference) =>
@@ -100,35 +103,127 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
 
     public ContainerResolution Build()
     {
-        var privateRootFunctions = _rootResolutions
-            .Select(b => b.Build())
-            .Select(f => new RootResolutionFunction(
-                f.Reference,
-                f.TypeFullName,
+        var rootFunctions = new List<RootResolutionFunction>();
+        foreach (var (createFunction, methodNamePrefix) in _rootResolutions)
+        {
+            var privateFunctionResolution = createFunction.Build();
+            var privateRootResolutionFunction = new RootResolutionFunction(
+                privateFunctionResolution.Reference,
+                privateFunctionResolution.TypeFullName,
                 "private",
-                f.Resolvable,
-                f.Parameter,
+                privateFunctionResolution.Resolvable,
+                privateFunctionResolution.Parameter,
                 DisposalHandling,
-                f.LocalFunctions,
-                f.IsAsync))
-            .ToList();
+                privateFunctionResolution.LocalFunctions,
+                privateFunctionResolution.IsAsync);
+            
+            rootFunctions.Add(privateRootResolutionFunction);
 
-        var i = 0;
-        var publicRootFunctions = privateRootFunctions
-            .Select(f => new RootResolutionFunction(
-                $"Create{i++}",
-                f.TypeFullName,
-                "public",
-                new FunctionCallResolution(
-                    RootReferenceGenerator.Generate("result"),
-                    f.TypeFullName,
-                    f.Reference,
-                    "this",
-                    Array.Empty<(string, string)>()),
-                f.Parameter,
-                DisposalHandling,
-                Array.Empty<LocalFunctionResolution>(),
-                f.IsAsync));
+            // Create function stays sync
+            if (createFunction.OriginalReturnType.Equals(
+                    createFunction.ActualReturnType,
+                    SymbolEqualityComparer.Default))
+            {
+                var publicSyncResolutionFunction = new RootResolutionFunction(
+                    methodNamePrefix,
+                    privateRootResolutionFunction.TypeFullName,
+                    "public",
+                    createFunction.BuildFunctionCall(
+                        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                        "this"),
+                    privateRootResolutionFunction.Parameter,
+                    DisposalHandling,
+                    Array.Empty<LocalFunctionResolution>(),
+                    false);
+            
+                rootFunctions.Add(publicSyncResolutionFunction);
+                
+                var boundTaskTypeFullName = _wellKnownTypes
+                    .Task1
+                    .Construct(createFunction.OriginalReturnType)
+                    .FullName();
+                var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
+                var publicTaskResolutionFunction = new RootResolutionFunction(
+                    $"{methodNamePrefix}Async",
+                    boundTaskTypeFullName,
+                    "public",
+                    new TaskFromSyncResolution(
+                        createFunction.BuildFunctionCall(
+                            Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                            "this"), 
+                        wrappedTaskReference, 
+                        boundTaskTypeFullName),
+                    privateRootResolutionFunction.Parameter,
+                    DisposalHandling,
+                    Array.Empty<LocalFunctionResolution>(),
+                    false);
+            
+                rootFunctions.Add(publicTaskResolutionFunction);
+                
+                var boundValueTaskTypeFullName = _wellKnownTypes
+                    .ValueTask1
+                    .Construct(createFunction.OriginalReturnType)
+                    .FullName();
+                var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
+                var publicValueTaskResolutionFunction = new RootResolutionFunction(
+                    $"{methodNamePrefix}ValueAsync",
+                    boundValueTaskTypeFullName,
+                    "public",
+                    new ValueTaskFromSyncResolution(
+                        createFunction.BuildFunctionCall(
+                            Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                            "this"), 
+                        wrappedValueTaskReference, 
+                        boundValueTaskTypeFullName),
+                    privateRootResolutionFunction.Parameter,
+                    DisposalHandling,
+                    Array.Empty<LocalFunctionResolution>(),
+                    false);
+            
+                rootFunctions.Add(publicValueTaskResolutionFunction);
+            }
+            else if (createFunction.ActualReturnType is { } actual
+                     && actual.Equals(_wellKnownTypes.Task1.Construct(createFunction.OriginalReturnType),
+                         SymbolEqualityComparer.Default))
+            {
+                var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
+                var publicTaskResolutionFunction = new RootResolutionFunction(
+                    $"{methodNamePrefix}Async",
+                    actual.FullName(),
+                    "public",
+                    createFunction.BuildFunctionCall(
+                        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                        "this"),
+                    privateRootResolutionFunction.Parameter,
+                    DisposalHandling,
+                    Array.Empty<LocalFunctionResolution>(),
+                    false);
+            
+                rootFunctions.Add(publicTaskResolutionFunction);
+                
+                var boundValueTaskTypeFullName = _wellKnownTypes
+                    .ValueTask1
+                    .Construct(createFunction.OriginalReturnType)
+                    .FullName();
+                var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
+                var publicValueTaskResolutionFunction = new RootResolutionFunction(
+                    $"{methodNamePrefix}ValueAsync",
+                    boundValueTaskTypeFullName,
+                    "public",
+                    new ValueTaskFromWrappedTaskResolution(
+                        createFunction.BuildFunctionCall(
+                            Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                            "this"), 
+                        wrappedValueTaskReference, 
+                        boundValueTaskTypeFullName),
+                    privateRootResolutionFunction.Parameter,
+                    DisposalHandling,
+                    Array.Empty<LocalFunctionResolution>(),
+                    false);
+            
+                rootFunctions.Add(publicValueTaskResolutionFunction);
+            }
+        }
 
         while (RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
                || _scopeManager.HasWorkToDo)
@@ -140,7 +235,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         var (transientScopeResolutions, scopeResolutions) = _scopeManager.Build();
 
         return new(
-            privateRootFunctions.Concat(publicRootFunctions).ToList(),
+            rootFunctions,
             DisposalHandling,
             RangedInstanceReferenceResolutions.Values.Select(b => b.Build()).ToList(),
             _transientScopeInterfaceResolutionBuilder.Build(),

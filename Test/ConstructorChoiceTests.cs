@@ -7,7 +7,7 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
 
-[MultiContainer(typeof(DateTime))]
+[CreateFunction(typeof(DateTime), "CreateDep")]
 internal partial class ConstructorChoiceContainer
 {
     
@@ -19,7 +19,7 @@ public class ImplementationAggregationTests
     public void ResolveExternalType()
     {
         using var container = new ConstructorChoiceContainer();
-        var dateTime = container.Create0();
+        var dateTime = container.CreateDep();
         Assert.Equal(DateTime.MinValue, dateTime);
     }
 }

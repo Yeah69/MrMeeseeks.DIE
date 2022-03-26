@@ -16,7 +16,7 @@ internal class Dependency : IValueTaskTypeInitializer
     }
 }
 
-[MultiContainer(typeof(ValueTask<Dependency>))]
+[CreateFunction(typeof(ValueTask<Dependency>), "Create0")]
 internal partial class Container
 {
 }

@@ -270,15 +270,15 @@ internal record ValueTaskFromSyncResolution(
     string ValueTaskReference,
     string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);
     
-internal record TaskFromWrappedValueTask(
+internal record TaskFromWrappedValueTaskResolution(
     Resolvable WrappedResolvable,
-    string TaskReference,
-    string TaskFullName);
+    string Reference,
+    string FullName) : Resolvable(Reference, FullName);
     
-internal record ValueTaskFromWrappedTask(
+internal record ValueTaskFromWrappedTaskResolution(
     Resolvable WrappedResolvable,
-    string ValueTaskReference,
-    string ValueTaskFullName);
+    string Reference,
+    string FullName) : Resolvable(Reference, FullName);
 
 internal record FunctionCallResolution(
     string Reference,

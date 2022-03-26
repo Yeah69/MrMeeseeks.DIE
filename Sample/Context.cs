@@ -1,43 +1,22 @@
-﻿using MrMeeseeks.DIE.Configuration;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test;
+namespace MrMeeseeks.DIE.Test.Async.AwaitedDependency.Dependency;
 
-internal interface IDecoratedScopeRoot
+
+internal class Dependency : ITaskTypeInitializer
 {
-    IDecoratedScopeRootDependency Dependency { get; }
-    IDecoratedScopeRoot Decorated { get; }
-}
-
-internal interface IDecoratedScopeRootDependency {}
-
-internal class DecoratedScopeRootDependency : IDecoratedScopeRootDependency, IScopeInstance {}
-
-internal class DecoratorScopeRootBasis : IDecoratedScopeRoot, IScopeRoot, IScopeInstance
-{
-    public IDecoratedScopeRootDependency Dependency { get; }
-
-    public IDecoratedScopeRoot Decorated => this;
-
-    public DecoratorScopeRootBasis(
-        IDecoratedScopeRootDependency dependency) =>
-        Dependency = dependency;
-}
-
-internal class DecoratorScopeRoot : IDecoratedScopeRoot, IDecorator<IDecoratedScopeRoot>
-{
-    public DecoratorScopeRoot(IDecoratedScopeRoot decorated, IDecoratedScopeRootDependency dependency)
-    {
-        Decorated = decorated;
-        Dependency = dependency;
-    }
-
-    public IDecoratedScopeRootDependency Dependency { get; }
-    public IDecoratedScopeRoot Decorated { get; }
-}
-
-[MultiContainer(typeof(IDecoratedScopeRoot))]
-internal partial class DecoratorScopeRootContainer
-{
+    public bool IsInitialized { get; private set; }
     
+    async Task ITaskTypeInitializer.InitializeAsync()
+    {
+        await Task.Delay(500).ConfigureAwait(false);
+        IsInitialized = true;
+    }
+}
+
+[CreateFunction(typeof(Dependency), "CreateDep")]
+internal partial class Container
+{
 }

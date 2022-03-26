@@ -25,7 +25,9 @@ internal class Scope : IScopeRoot
     public IDependency Dependency { get; }
 }
 
-[MultiContainer(typeof(IDependency), typeof(TransientScope), typeof(Scope))]
+[CreateFunction(typeof(IDependency), "Create0")]
+[CreateFunction(typeof(TransientScope), "Create1")]
+[CreateFunction(typeof(Scope), "Create2")]
 [FilterImplementationAggregation(typeof(DependencyScope))]
 [FilterImplementationAggregation(typeof(DependencyTransientScope))]
 internal partial class Container

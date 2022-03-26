@@ -11,6 +11,8 @@ internal enum SynchronicityDecision
 
 internal interface IFunctionResolutionBuilder
 {
+    INamedTypeSymbol OriginalReturnType { get; }
+    INamedTypeSymbol? ActualReturnType { get; }
     
     FunctionCallResolution BuildFunctionCall(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
@@ -53,8 +55,11 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
 
     protected override string Name { get; }
 
-    public override FunctionResolution Build() =>
-        new(Name,
+    public override FunctionResolution Build()
+    {
+        AdjustForSynchronicity();
+        return new(
+            Name,
             TypeFullName,
             SwitchType(new SwitchTypeParameter(_returnType, _parameters)).Item1,
             _parameters.Select(t => t.Resolution).ToList(),
@@ -71,6 +76,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
                     f.IsAsync))
                 .ToList(),
             IsAsync);
+    }
 }
 
 internal interface IContainerCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
@@ -102,12 +108,16 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
 
     protected override string Name { get; }
 
-    public override FunctionResolution Build() =>
-        new(RootReferenceGenerator.Generate("Create"),
+    public override FunctionResolution Build()
+    {
+        var resolvable = SwitchType(new SwitchTypeParameter(
+            _returnType,
+            Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())).Item1;
+        AdjustForSynchronicity();
+        return new(
+            Name,
             TypeFullName,
-            SwitchType(new SwitchTypeParameter(
-                _returnType,
-                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())).Item1,
+            resolvable,
             Array.Empty<ParameterResolution>(),
             _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
@@ -122,6 +132,7 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
                     f.IsAsync))
                 .ToList(),
             IsAsync);
+    }
 }
 
 internal interface IScopeRootCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
@@ -155,6 +166,7 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
 
     public override FunctionResolution Build()
     {
+        AdjustForSynchronicity();
         var resolvable = _scopeRootParameter switch
         {
             CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter).Item1,
@@ -191,7 +203,6 @@ internal interface IRangedFunctionResolutionBuilder : IFunctionResolutionBuilder
 internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRangedFunctionResolutionBuilder
 {
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
-    private readonly string _reference;
     private readonly ForConstructorParameter _forConstructorParameter;
 
     public RangedFunctionResolutionBuilder(
@@ -208,7 +219,6 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         : base(rangeResolutionBaseBuilder, forConstructorParameter.ImplementationType, forConstructorParameter.CurrentFuncParameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
     {
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
-        _reference = reference;
         _forConstructorParameter = forConstructorParameter;
         
         Name = reference;
@@ -218,10 +228,11 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
 
     public override FunctionResolution Build()
     {
+        AdjustForSynchronicity();
         var resolvable = CreateConstructorResolution(_forConstructorParameter).Item1;
         
         return new(
-            _reference,
+            Name,
             TypeFullName,
             resolvable,
             _forConstructorParameter.CurrentFuncParameters.Select(t => t.Resolution).ToList(),
@@ -243,7 +254,6 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
 
 internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 {
-    public INamedTypeSymbol ReturnType { get; }
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
@@ -259,11 +269,14 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     protected readonly IList<IAwaitableResolution> PotentialAwaits = new List<IAwaitableResolution>();
     
     protected abstract string Name { get; }
-    protected string TypeFullName => ReturnType.FullName();
+    protected string TypeFullName => ActualReturnType?.FullName() ?? OriginalReturnType.FullName();
     
     protected IReadOnlyList<ParameterResolution> Parameters { get; }
 
     protected bool IsAsync => PotentialAwaits.Any(pa => pa.Await);
+    
+    public INamedTypeSymbol OriginalReturnType { get; }
+    public INamedTypeSymbol? ActualReturnType { get; protected set; }
 
     internal FunctionResolutionBuilder(
         // parameters
@@ -277,7 +290,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         IReferenceGeneratorFactory referenceGeneratorFactory,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
     {
-        ReturnType = returnType;
+        OriginalReturnType = returnType;
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _wellKnownTypes = wellKnownTypes;
         _localFunctionResolutionBuilderFactory = localFunctionResolutionBuilderFactory;
@@ -978,6 +991,13 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                     parameterType,
                     currParameter)).Item1);
         }
+    }
+
+    protected void AdjustForSynchronicity()
+    {
+        ActualReturnType = IsAsync 
+            ? _wellKnownTypes.Task1.Construct(OriginalReturnType) 
+            : OriginalReturnType;
     }
 
     private static DisposableCollectionResolution? ImplementsIDisposable(

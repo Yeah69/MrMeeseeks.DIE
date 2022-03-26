@@ -47,7 +47,7 @@ internal class DependencyD : IInterface
     public bool IsInitialized => true;
 }
 
-[MultiContainer(typeof(IReadOnlyList<ValueTask<IInterface>>))]
+[CreateFunction(typeof(IReadOnlyList<ValueTask<IInterface>>), "Create0")]
 internal partial class Container
 {
 }

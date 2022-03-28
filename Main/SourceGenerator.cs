@@ -42,7 +42,7 @@ public class SourceGenerator : ISourceGenerator
             return new ContainerResolutionBuilder(
                 ci,
                 
-                new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory, RangedFunctionGroupResolutionBuilderFactory),
+                new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory, wellKnownTypes, RangedFunctionGroupResolutionBuilderFactory),
                 referenceGeneratorFactory,
                 new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, context)),
                 wellKnownTypes,

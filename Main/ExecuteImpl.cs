@@ -64,6 +64,12 @@ internal class ExecuteImpl : IExecute
                     {
                         var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
                         containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.CreateFunctionData);
+
+                        while (containerResolutionBuilder.HasWorkToDo)
+                        {
+                            containerResolutionBuilder.DoWork();
+                        }
+                        
                         var containerResolution = containerResolutionBuilder.Build();
                         var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
                         if (errorTreeItems.Any())

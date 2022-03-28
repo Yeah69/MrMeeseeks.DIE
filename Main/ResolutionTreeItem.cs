@@ -1,4 +1,6 @@
-﻿namespace MrMeeseeks.DIE;
+﻿using MrMeeseeks.DIE.ResolutionBuilding;
+
+namespace MrMeeseeks.DIE;
 
 internal abstract record ResolutionTreeItem;
     
@@ -11,6 +13,10 @@ internal record DeferringResolvable() : Resolvable("", "")
     internal Resolvable? Resolvable { get; set; }
 }
 
+internal record NewReferenceResolvable(
+    string Reference,
+    Resolvable Resolvable) : Resolvable(Reference, Resolvable.TypeFullName);
+
 internal record FunctionResolution(
     string Reference,
     string TypeFullName,
@@ -18,7 +24,7 @@ internal record FunctionResolution(
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
-    bool IsAsync) : Resolvable(Reference, TypeFullName);
+    SynchronicityDecision SynchronicityDecision) : Resolvable(Reference, TypeFullName);
 
 internal record RootResolutionFunction(
     string Reference,
@@ -28,8 +34,8 @@ internal record RootResolutionFunction(
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
-    bool IsAsync) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, IsAsync);
+    SynchronicityDecision SynchronicityDecision) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, SynchronicityDecision);
 
 internal record LocalFunctionResolution(
     string Reference,
@@ -38,8 +44,8 @@ internal record LocalFunctionResolution(
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
-    bool IsAsync) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, IsAsync);
+    SynchronicityDecision SynchronicityDecision) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, SynchronicityDecision);
 
 internal record RangedInstanceFunctionResolution(
     string Reference,
@@ -48,8 +54,8 @@ internal record RangedInstanceFunctionResolution(
     IReadOnlyList<ParameterResolution> Parameter,
     DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
-    bool IsAsync) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, IsAsync);
+    SynchronicityDecision SynchronicityDecision) 
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, SynchronicityDecision);
 
 internal record RangedInstanceFunctionGroupResolution(
     string TypeFullName,
@@ -86,6 +92,8 @@ internal interface IAwaitableResolution
     bool Await { get; }
 }
 
+internal interface ITaskConsumableResolution {}
+
 internal record TaskBaseTypeInitializationResolution(
     string TypeFullName,
     string MethodName,
@@ -113,7 +121,7 @@ internal record ConstructorResolution(
     DisposableCollectionResolution? DisposableCollectionResolution,
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
-    ITypeInitializationResolution? Initialization) : Resolvable(Reference, TypeFullName);
+    ITypeInitializationResolution? Initialization) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
 
 internal record LazyResolution(
     string Reference,
@@ -130,7 +138,7 @@ internal record TransientScopeRootResolution(
     string TransientScopeTypeFullName,
     string ContainerInstanceScopeReference,
     DisposableCollectionResolution DisposableCollectionResolution,
-    FunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.TypeFullName);
+    MultiSynchronicityFunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.TypeFullName);
 
 internal record ScopeRootResolution(
     string ScopeReference,
@@ -138,7 +146,7 @@ internal record ScopeRootResolution(
     string ContainerInstanceScopeReference,
     string TransientInstanceScopeReference,
     DisposableCollectionResolution DisposableCollectionResolution,
-    FunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.TypeFullName);
+    MultiSynchronicityFunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.Sync.OriginalTypeFullName);
 
 internal record ScopeRootFunction(
     string Reference,
@@ -280,10 +288,50 @@ internal record ValueTaskFromWrappedTaskResolution(
     string Reference,
     string FullName) : Resolvable(Reference, FullName);
 
+internal record MultiTaskResolution(
+    Resolvable Sync,
+    Resolvable AsyncTask,
+    Resolvable AsyncValueTask,
+    Lazy<SynchronicityDecision> LazySynchronicityDecision) : Resolvable(Sync.Reference, "")
+{
+    internal Resolvable SelectedResolvable =>
+        LazySynchronicityDecision.Value switch
+        {
+            SynchronicityDecision.Sync => Sync,
+            SynchronicityDecision.AsyncTask => AsyncTask,
+            SynchronicityDecision.AsyncValueTask => AsyncValueTask,
+            _ => throw new ArgumentException("Synchronicity not decided yet")
+        };
+}
+
+internal record MultiSynchronicityFunctionCallResolution(
+    FunctionCallResolution Sync,
+    FunctionCallResolution AsyncTask,
+    FunctionCallResolution AsyncValueTask,
+    Lazy<SynchronicityDecision> LazySynchronicityDecision) : Resolvable(Sync.Reference, ""), IAwaitableResolution, ITaskConsumableResolution
+{
+    internal FunctionCallResolution SelectedFunctionCall =>
+        LazySynchronicityDecision.Value switch
+        {
+            SynchronicityDecision.Sync => Sync,
+            SynchronicityDecision.AsyncTask => AsyncTask,
+            SynchronicityDecision.AsyncValueTask => AsyncValueTask,
+            _ => throw new ArgumentException("Synchronicity not decided yet")
+        };
+    
+    public bool Await => SelectedFunctionCall.Await;
+}
+
 internal record FunctionCallResolution(
     string Reference,
     string TypeFullName,
+    string OriginalTypeFullName,
     string FunctionReference,
     string? OwnerReference,
     IReadOnlyList<(string Name, string Reference)> Parameters)
-    : Resolvable(Reference, TypeFullName);
+    : Resolvable(Reference, TypeFullName), IAwaitableResolution
+{
+    public bool Await { get; set; } = true;
+
+    public string SelectedTypeFullName => Await ? OriginalTypeFullName : TypeFullName;
+}

@@ -10,7 +10,7 @@ internal class ResolutionTreeCreationErrorHarvester : IResolutionTreeCreationErr
     public IReadOnlyList<ErrorTreeItem> Harvest(ResolutionTreeItem root)
     {
         var errorTreeItems = new List<ErrorTreeItem>();
-        Inner(root, errorTreeItems);
+        //Inner(root, errorTreeItems); // todo error handling
         return errorTreeItems;
 
         static void Inner(ResolutionTreeItem item, ICollection<ErrorTreeItem> errorTreeItems)

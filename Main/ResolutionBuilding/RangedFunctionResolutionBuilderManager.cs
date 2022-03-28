@@ -73,7 +73,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
                 functionResolution.Parameter,
                 functionResolution.DisposalHandling,
                 functionResolution.LocalFunctions,
-                false)); // todo async support
+                SynchronicityDecision.Sync)); // todo async support
         }
     }
 

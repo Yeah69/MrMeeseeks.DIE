@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.AwaitedDependency.Dependency;
+namespace MrMeeseeks.DIE.Test.Async.Awaited.FunctionCall;
 
 
 internal class Dependency : ITaskTypeInitializer
@@ -16,7 +16,12 @@ internal class Dependency : ITaskTypeInitializer
     }
 }
 
-[CreateFunction(typeof(Dependency), "CreateDep")]
+internal class ScopeRoot : IScopeRoot
+{
+    internal ScopeRoot(Dependency dep) {}
+}
+
+[CreateFunction(typeof(Task<ScopeRoot>), "Create")]
 internal partial class Container
 {
 }
@@ -27,7 +32,6 @@ public class Tests
     public async Task Test()
     {
         using var container = new Container();
-        var instance = await container.CreateDepAsync().ConfigureAwait(false);
-        Assert.True(instance.IsInitialized);
+        var instance = await container.CreateAsync().ConfigureAwait(false);
     }
 }

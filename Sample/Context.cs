@@ -2,7 +2,7 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Async.AwaitedDependency.Dependency;
+namespace MrMeeseeks.DIE.Test.Async.Awaited.FunctionCall;
 
 
 internal class Dependency : ITaskTypeInitializer
@@ -16,7 +16,12 @@ internal class Dependency : ITaskTypeInitializer
     }
 }
 
-[CreateFunction(typeof(Dependency), "CreateDep")]
+internal class ScopeRoot : IScopeRoot
+{
+    internal ScopeRoot(Dependency dep) {}
+}
+
+[CreateFunction(typeof(Task<ScopeRoot>), "Create")]
 internal partial class Container
 {
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using MrMeeseeks.DIE.Test.Async.AwaitedDependency.Dependency;
+using MrMeeseeks.DIE.Test.Async.Awaited.FunctionCall;
 
 internal class Program
 {
@@ -7,6 +7,6 @@ internal class Program
     {
         Console.WriteLine("Hello, world!");
         var container = new Container();
-        Console.WriteLine(container.CreateDepAsync().ConfigureAwait(false));
+        Console.WriteLine(container.CreateAsync());
     }
 }

@@ -6,21 +6,20 @@ internal enum SynchronicityDecision
 {
     Undecided,
     Sync,
-    Async
+    AsyncTask,
+    AsyncValueTask
 }
 
-internal interface IFunctionResolutionBuilder
+internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResolution>
 {
     INamedTypeSymbol OriginalReturnType { get; }
     INamedTypeSymbol? ActualReturnType { get; }
     
-    FunctionCallResolution BuildFunctionCall(
+    MultiSynchronicityFunctionCallResolution BuildFunctionCall(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
         string? ownerReference);
 
     MethodGroupResolution BuildMethodGroup();
-
-    FunctionResolution Build();
 }
 
 internal interface ILocalFunctionResolutionBuilder : IFunctionResolutionBuilder
@@ -55,13 +54,15 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
 
     protected override string Name { get; }
 
+    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(_returnType, _parameters)).Item1;
+
     public override FunctionResolution Build()
     {
         AdjustForSynchronicity();
         return new(
             Name,
             TypeFullName,
-            SwitchType(new SwitchTypeParameter(_returnType, _parameters)).Item1,
+            Resolvable.Value,
             _parameters.Select(t => t.Resolution).ToList(),
             _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
@@ -73,9 +74,9 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
                     f.Parameter,
                     f.DisposalHandling,
                     f.LocalFunctions,
-                    f.IsAsync))
+                    f.SynchronicityDecision))
                 .ToList(),
-            IsAsync);
+            SynchronicityDecision.Value);
     }
 }
 
@@ -108,16 +109,17 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
 
     protected override string Name { get; }
 
+    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(
+        _returnType,
+        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())).Item1;
+
     public override FunctionResolution Build()
     {
-        var resolvable = SwitchType(new SwitchTypeParameter(
-            _returnType,
-            Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())).Item1;
         AdjustForSynchronicity();
         return new(
             Name,
             TypeFullName,
-            resolvable,
+            Resolvable.Value,
             Array.Empty<ParameterResolution>(),
             _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
@@ -129,9 +131,9 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
                     f.Parameter,
                     f.DisposalHandling,
                     f.LocalFunctions,
-                    f.IsAsync))
+                    f.SynchronicityDecision))
                 .ToList(),
-            IsAsync);
+            SynchronicityDecision.Value);
     }
 }
 
@@ -164,21 +166,22 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
 
     protected override string Name { get; }
 
+    protected override Resolvable CreateResolvable() => _scopeRootParameter switch
+    {
+        CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter).Item1,
+        SwitchImplementationParameter switchImplementationParameter => SwitchImplementation(switchImplementationParameter).Item1,
+        SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => SwitchInterfaceAfterScopeRoot(switchInterfaceAfterScopeRootParameter).Item1,
+        _ => throw new ArgumentOutOfRangeException(nameof(_scopeRootParameter))
+    };
+
     public override FunctionResolution Build()
     {
         AdjustForSynchronicity();
-        var resolvable = _scopeRootParameter switch
-        {
-            CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter).Item1,
-            SwitchImplementationParameter switchImplementationParameter => SwitchImplementation(switchImplementationParameter).Item1,
-            SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => SwitchInterfaceAfterScopeRoot(switchInterfaceAfterScopeRootParameter).Item1,
-            _ => throw new ArgumentOutOfRangeException(nameof(_scopeRootParameter))
-        };
         
         return new(
             Name,
             TypeFullName,
-            resolvable,
+            Resolvable.Value,
             Parameters,
             _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
@@ -190,9 +193,9 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
                     f.Parameter,
                     f.DisposalHandling,
                     f.LocalFunctions,
-                    f.IsAsync))
+                    f.SynchronicityDecision))
                 .ToList(),
-            IsAsync);
+            SynchronicityDecision.Value);
     }
 }
 
@@ -226,15 +229,16 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
 
     protected override string Name { get; }
 
+    protected override Resolvable CreateResolvable() => CreateConstructorResolution(_forConstructorParameter).Item1;
+
     public override FunctionResolution Build()
     {
         AdjustForSynchronicity();
-        var resolvable = CreateConstructorResolution(_forConstructorParameter).Item1;
         
         return new(
             Name,
             TypeFullName,
-            resolvable,
+            Resolvable.Value,
             _forConstructorParameter.CurrentFuncParameters.Select(t => t.Resolution).ToList(),
             _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
@@ -246,9 +250,9 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
                     f.Parameter,
                     f.DisposalHandling,
                     f.LocalFunctions,
-                    f.IsAsync))
+                    f.SynchronicityDecision))
                 .ToList(),
-            IsAsync);
+            SynchronicityDecision.Value);
     }
 }
 
@@ -266,14 +270,15 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
     protected readonly IList<IFunctionResolutionBuilder> LocalFunctions = new List<IFunctionResolutionBuilder>();
 
-    protected readonly IList<IAwaitableResolution> PotentialAwaits = new List<IAwaitableResolution>();
+    protected readonly ISet<IAwaitableResolution> PotentialAwaits = new HashSet<IAwaitableResolution>();
     
     protected abstract string Name { get; }
     protected string TypeFullName => ActualReturnType?.FullName() ?? OriginalReturnType.FullName();
+
+    public Lazy<SynchronicityDecision> SynchronicityDecision { get; }
+    protected Lazy<Resolvable> Resolvable { get; } 
     
     protected IReadOnlyList<ParameterResolution> Parameters { get; }
-
-    protected bool IsAsync => PotentialAwaits.Any(pa => pa.Await);
     
     public INamedTypeSymbol OriginalReturnType { get; }
     public INamedTypeSymbol? ActualReturnType { get; protected set; }
@@ -302,9 +307,15 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         Parameters = currentParameters
             .Select(p => new ParameterResolution(RootReferenceGenerator.Generate(p.Type), TypeFullName))
             .ToList();
+
+        SynchronicityDecision = new(() =>
+            PotentialAwaits.Any(pa => pa.Await)
+                ? ResolutionBuilding.SynchronicityDecision.AsyncTask
+                : ResolutionBuilding.SynchronicityDecision.Sync);
+        Resolvable = new(CreateResolvable);
     }
 
-    protected (Resolvable, ConstructorResolution?) SwitchType(SwitchTypeParameter parameter)
+    protected (Resolvable, ITaskConsumableResolution?) SwitchType(SwitchTypeParameter parameter)
     {
         var (type, currentFuncParameters) = parameter;
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
@@ -542,7 +553,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             null);
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchTask(SwitchTaskParameter parameter)
+    private (Resolvable, ITaskConsumableResolution?) SwitchTask(SwitchTaskParameter parameter)
     {
         var resolution = parameter.InnerResolution;
         var boundTaskTypeFullName = _wellKnownTypes
@@ -551,7 +562,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             .FullName()
             .Replace("<>", $"<{resolution.Item1.TypeFullName}>");
         var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
-        if (resolution.Item2 is { } constructorResolution)
+        if (resolution.Item2 is ConstructorResolution constructorResolution)
         {
             if (constructorResolution.Initialization is TaskBaseTypeInitializationResolution taskBaseResolution)
                 taskBaseResolution.Await = false;
@@ -571,10 +582,29 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             };
             return (taskResolution, resolution.Item2);
         }
+        else if (resolution.Item2 is MultiSynchronicityFunctionCallResolution multiSynchronicityFunctionCallResolution)
+        {
+            var taskReference = RootReferenceGenerator.Generate("task");
+            var taskFullName = multiSynchronicityFunctionCallResolution.AsyncTask.TypeFullName;
+            multiSynchronicityFunctionCallResolution.Sync.Await = false;
+            multiSynchronicityFunctionCallResolution.AsyncTask.Await = false;
+            multiSynchronicityFunctionCallResolution.AsyncValueTask.Await = false;
+            return (new MultiTaskResolution(
+                new TaskFromSyncResolution(
+                    multiSynchronicityFunctionCallResolution.Sync,
+                    taskReference,
+                    taskFullName),
+                new NewReferenceResolvable(taskReference, multiSynchronicityFunctionCallResolution.AsyncTask),
+                new TaskFromWrappedValueTaskResolution(
+                    multiSynchronicityFunctionCallResolution.AsyncValueTask,
+                    taskReference,
+                    taskFullName),
+                multiSynchronicityFunctionCallResolution.LazySynchronicityDecision), null);
+        }
         return (new TaskFromSyncResolution(resolution.Item1, wrappedTaskReference, boundTaskTypeFullName), resolution.Item2);
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchValueTask(SwitchValueTaskParameter parameter)
+    private (Resolvable, ITaskConsumableResolution?) SwitchValueTask(SwitchValueTaskParameter parameter)
     {
         var resolution = parameter.InnerResolution;
         var boundValueTaskTypeFullName = _wellKnownTypes
@@ -583,7 +613,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             .FullName()
             .Replace("<>", $"<{resolution.Item1.TypeFullName}>");
         var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask);
-        if (resolution.Item2 is { } constructorResolution)
+        if (resolution.Item2 is ConstructorResolution constructorResolution)
         {
             if (constructorResolution.Initialization is TaskBaseTypeInitializationResolution taskBaseResolution)
                 taskBaseResolution.Await = false;
@@ -603,10 +633,29 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             };
             return (taskResolution, resolution.Item2);
         }
+        else if (resolution.Item2 is MultiSynchronicityFunctionCallResolution multiSynchronicityFunctionCallResolution)
+        {
+            var valueTaskReference = RootReferenceGenerator.Generate("valueTask");
+            var valueTaskFullName = multiSynchronicityFunctionCallResolution.AsyncValueTask.TypeFullName;
+            multiSynchronicityFunctionCallResolution.Sync.Await = false;
+            multiSynchronicityFunctionCallResolution.AsyncTask.Await = false;
+            multiSynchronicityFunctionCallResolution.AsyncValueTask.Await = false;
+            return (new MultiTaskResolution(
+                new ValueTaskFromSyncResolution(
+                    multiSynchronicityFunctionCallResolution.Sync,
+                    valueTaskReference,
+                    valueTaskFullName),
+                new ValueTaskFromWrappedTaskResolution(
+                    multiSynchronicityFunctionCallResolution.AsyncTask,
+                    valueTaskReference,
+                    valueTaskFullName),
+                new NewReferenceResolvable(valueTaskReference, multiSynchronicityFunctionCallResolution.AsyncValueTask),
+                multiSynchronicityFunctionCallResolution.LazySynchronicityDecision), null);
+        }
         return (new TaskFromSyncResolution(resolution.Item1, wrappedValueTaskReference, boundValueTaskTypeFullName), resolution.Item2);
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchInterface(SwitchInterfaceParameter parameter)
+    private (Resolvable, ITaskConsumableResolution?) SwitchInterface(SwitchInterfaceParameter parameter)
     {
         var (typeSymbol, currentParameters) = parameter;
         var interfaceType = (INamedTypeSymbol) typeSymbol;
@@ -619,23 +668,28 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             implementations,
             currentParameters);
         
-        return shouldBeScopeRoot switch
+        var ret = shouldBeScopeRoot switch
         {
             ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
                 nextParameter,
                 interfaceType,
                 _disposableCollectionResolution,
-                currentParameters), null), // todo async handling
+                currentParameters), null),
             ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
                 nextParameter,
                 interfaceType,
                 _disposableCollectionResolution,
-                currentParameters), null), // todo async handling
+                currentParameters), null),
             _ => SwitchInterfaceAfterScopeRoot(nextParameter)
         };
+
+        if (ret.Item1 is IAwaitableResolution awaitableResolution)
+            PotentialAwaits.Add(awaitableResolution);
+        
+        return ret;
     }
 
-    protected (Resolvable, ConstructorResolution?) SwitchInterfaceAfterScopeRoot(
+    protected (Resolvable, ITaskConsumableResolution?) SwitchInterfaceAfterScopeRoot(
         SwitchInterfaceAfterScopeRootParameter parameter)
     {
         var (interfaceType, implementations, currentParameters) = parameter;
@@ -676,7 +730,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             currentParameters));
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchInterfaceForSpecificImplementation(
+    private (Resolvable, ITaskConsumableResolution?) SwitchInterfaceForSpecificImplementation(
         SwitchInterfaceForSpecificImplementationParameter parameter)
     {
         var (interfaceType, implementationType, currentParameters) = parameter;
@@ -686,23 +740,28 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             implementationType,
             currentParameters);
 
-        return _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
+        (Resolvable, ITaskConsumableResolution?) ret = _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
         {
             ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
                 nextParameter,
                 interfaceType,
                 _disposableCollectionResolution,
-                currentParameters), null), // todo async handling
+                currentParameters), null),
             ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
                 nextParameter,
                 interfaceType,
                 _disposableCollectionResolution,
-                currentParameters), null), // todo async handling
+                currentParameters), null),
             _ => CreateInterface(nextParameter)
         };
+
+        if (ret.Item1 is IAwaitableResolution awaitableResolution)
+            PotentialAwaits.Add(awaitableResolution);
+        
+        return ret;
     }
 
-    protected (InterfaceResolution, ConstructorResolution?) CreateInterface(CreateInterfaceParameter parameter)
+    protected (InterfaceResolution, ITaskConsumableResolution?) CreateInterface(CreateInterfaceParameter parameter)
     {
         var (interfaceType, implementationType, currentParameters) = parameter;
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
@@ -748,7 +807,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         return (currentInterfaceResolution, currentInterfaceResolution.Dependency as ConstructorResolution);
     }
 
-    private (Resolvable, ConstructorResolution?) SwitchClass(SwitchClassParameter parameter)
+    private (Resolvable, ITaskConsumableResolution?) SwitchClass(SwitchClassParameter parameter)
     {
         var (typeSymbol, currentParameters) = parameter;
         var implementations = _checkTypeProperties
@@ -770,23 +829,31 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             implementationType,
             currentParameters);
         
-        return _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
+        var ret = _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
         {
             ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
                 nextParameter,
                 implementationType, 
                 _disposableCollectionResolution, 
-                currentParameters), null), // todo async handling
+                currentParameters), null),
             ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
                 nextParameter, 
                 implementationType, 
                 _disposableCollectionResolution, 
-                currentParameters), null), // todo async handling
+                currentParameters), null),
             _ => SwitchImplementation(nextParameter)
         };
+
+        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
+            PotentialAwaits.Add(awaitableResolution);
+
+        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
+            PotentialAwaits.Add(awaitableResolution0);
+
+        return ret;
     }
 
-    protected (Resolvable, ConstructorResolution?) SwitchImplementation(SwitchImplementationParameter parameter)
+    protected (Resolvable, ITaskConsumableResolution?) SwitchImplementation(SwitchImplementationParameter parameter)
     {
         var (implementationType, currentParameters) = parameter;
         var scopeLevel = parameter switch
@@ -810,16 +877,24 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 withDecoration.Decoration),
             _ => new ForConstructorParameter(implementationType, currentParameters)
         };
-        return scopeLevel switch
+
+        var ret = scopeLevel switch
         {
-            ScopeLevel.Container => (_rangeResolutionBaseBuilder.CreateContainerInstanceReferenceResolution(nextParameter), null), // todo async handling
-            ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeInstanceReferenceResolution(nextParameter), null), // todo async handling
-            ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeInstanceReferenceResolution(nextParameter), null), // todo async handling
+            ScopeLevel.Container => (_rangeResolutionBaseBuilder.CreateContainerInstanceReferenceResolution(nextParameter), null),
+            ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeInstanceReferenceResolution(nextParameter), null),
+            ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeInstanceReferenceResolution(nextParameter), null),
             _ => CreateConstructorResolution(nextParameter)
         };
+
+        if (ret.Item1 is IAwaitableResolution awaitableResolution)
+        {
+            PotentialAwaits.Add(awaitableResolution);
+        }
+
+        return ret;
     }
 
-    protected (Resolvable, ConstructorResolution?) CreateConstructorResolution(ForConstructorParameter parameter)
+    protected (Resolvable, ITaskConsumableResolution?) CreateConstructorResolution(ForConstructorParameter parameter)
     {
         var (implementationType, currentParameters) = parameter;
         
@@ -880,6 +955,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                         RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask)),
                 _ => typeInitializationResolution
             };
+
             if (typeInitializationResolution is IAwaitableResolution awaitableResolution)
             {
                 PotentialAwaits.Add(awaitableResolution);
@@ -993,12 +1069,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         }
     }
 
-    protected void AdjustForSynchronicity()
-    {
-        ActualReturnType = IsAsync 
+    protected void AdjustForSynchronicity() =>
+        ActualReturnType = SynchronicityDecision.Value is ResolutionBuilding.SynchronicityDecision.AsyncTask or ResolutionBuilding.SynchronicityDecision.AsyncValueTask
             ? _wellKnownTypes.Task1.Construct(OriginalReturnType) 
             : OriginalReturnType;
-    }
 
     private static DisposableCollectionResolution? ImplementsIDisposable(
         INamedTypeSymbol type, 
@@ -1009,15 +1083,50 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             ? disposableCollectionResolution 
             : null;
 
-    public FunctionCallResolution BuildFunctionCall(
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters, string? ownerReference) =>
-        new(RootReferenceGenerator.Generate("ret"),
-            TypeFullName,
-            Name,
-            ownerReference,
-            Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList());
+    public MultiSynchronicityFunctionCallResolution BuildFunctionCall(
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters, string? ownerReference)
+    {
+        var returnReference = RootReferenceGenerator.Generate("ret");
+        return new(new(returnReference,
+                OriginalReturnType.FullName(),
+                OriginalReturnType.FullName(),
+                Name,
+                ownerReference,
+                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList()) 
+                { Await = false },
+            new(returnReference,
+                _wellKnownTypes.Task1.Construct(OriginalReturnType).FullName(),
+                OriginalReturnType.FullName(),
+                Name,
+                ownerReference,
+                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList()),
+            new(returnReference,
+                _wellKnownTypes.ValueTask1.Construct(OriginalReturnType).FullName(),
+                OriginalReturnType.FullName(),
+                Name,
+                ownerReference,
+                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList()),
+            SynchronicityDecision);
+    }
 
     public MethodGroupResolution BuildMethodGroup() => new (Name, TypeFullName, null);
+
+    public bool HasWorkToDo => !Resolvable.IsValueCreated
+        || LocalFunctions.Any(lf => lf.HasWorkToDo);
+
+    protected abstract Resolvable CreateResolvable();
+    
+    public void DoWork()
+    {
+        var _ = Resolvable.Value;
+        while (LocalFunctions.Any(lf => lf.HasWorkToDo))
+        {
+            foreach (var localFunction in LocalFunctions)
+            {
+                localFunction.DoWork();
+            }
+        }
+    }
 
     public abstract FunctionResolution Build();
 }

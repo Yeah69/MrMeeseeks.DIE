@@ -9,13 +9,13 @@ internal interface IRangeResolutionBaseBuilder
     DisposableCollectionResolution DisposableCollectionResolution { get; }
     DisposalHandling DisposalHandling { get; }
     
-    FunctionCallResolution CreateContainerInstanceReferenceResolution(
+    MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter);
 
-    FunctionCallResolution CreateTransientScopeInstanceReferenceResolution(
+    MultiSynchronicityFunctionCallResolution CreateTransientScopeInstanceReferenceResolution(
         ForConstructorParameter parameter);
 
-    FunctionCallResolution CreateScopeInstanceReferenceResolution(
+    MultiSynchronicityFunctionCallResolution CreateScopeInstanceReferenceResolution(
         ForConstructorParameter parameter);
     
     TransientScopeRootResolution CreateTransientScopeRootResolution(
@@ -77,11 +77,11 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             RootReferenceGenerator.Generate("disposable"));
     }
 
-    public abstract FunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter);
+    public abstract MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter);
 
-    public abstract FunctionCallResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter);
+    public abstract MultiSynchronicityFunctionCallResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter);
 
-    public FunctionCallResolution CreateScopeInstanceReferenceResolution(
+    public MultiSynchronicityFunctionCallResolution CreateScopeInstanceReferenceResolution(
         ForConstructorParameter parameter) =>
         CreateRangedInstanceReferenceResolution(
             parameter,
@@ -101,7 +101,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 
-    protected FunctionCallResolution CreateRangedInstanceReferenceResolution(
+    protected MultiSynchronicityFunctionCallResolution CreateRangedInstanceReferenceResolution(
         ForConstructorParameter parameter,
         string label,
         string? reference,

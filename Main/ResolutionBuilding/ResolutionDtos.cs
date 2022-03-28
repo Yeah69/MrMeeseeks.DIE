@@ -154,9 +154,9 @@ internal record RangedInstanceResolutionsQueueItem(
     string Label,
     string Reference);
 
-internal record SwitchTaskParameter((Resolvable, ConstructorResolution?) InnerResolution) : Parameter;
+internal record SwitchTaskParameter((Resolvable, ITaskConsumableResolution?) InnerResolution) : Parameter;
 
-internal record SwitchValueTaskParameter((Resolvable, ConstructorResolution?) InnerResolution) : Parameter;
+internal record SwitchValueTaskParameter((Resolvable, ITaskConsumableResolution?) InnerResolution) : Parameter;
 
 internal enum TaskType
 {

@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.ResolutionBuilding;
+
 namespace MrMeeseeks.DIE.CodeBuilding;
 
 internal interface IRangeCodeBaseBuilder
@@ -94,7 +96,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
-                .AppendLine($"{rootResolutionFunction.AccessModifier} {(rootResolutionFunction.IsAsync ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"{rootResolutionFunction.AccessModifier} {(rootResolutionFunction.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
                 .AppendLine($"{{")
                 .AppendLine($"if (this.{rootResolutionFunction.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
 
@@ -110,7 +112,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
-                .AppendLine($"{(localFunctionResolution.IsAsync ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"{(localFunctionResolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
                 .AppendLine($"{{")
                 .AppendLine($"if (this.{localFunctionResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
 
@@ -143,11 +145,24 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         switch (resolution)
         {
             case LazyResolution(var reference, var typeFullName, _):
-                stringBuilder = stringBuilder
-                    .AppendLine($"{typeFullName} {reference};");
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
+                break;
+            case FunctionCallResolution(var reference, _, _, _, _, _) functionCallResolution:
+                stringBuilder = stringBuilder.AppendLine($"{functionCallResolution.SelectedTypeFullName} {reference};");
                 break;
             case DeferringResolvable { Resolvable: {} resolvable}:
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
+                break;
+            case NewReferenceResolvable(var reference, var resolvable):
+                stringBuilder = GenerateFields(stringBuilder, resolvable);
+                stringBuilder = stringBuilder
+                    .AppendLine($"{resolvable.TypeFullName} {reference};");
+                break;
+            case MultiTaskResolution { SelectedResolvable: {} resolvable}:
+                stringBuilder = GenerateFields(stringBuilder, resolvable);
+                break;
+            case MultiSynchronicityFunctionCallResolution { SelectedFunctionCall: {} selectedFunctionCall}:
+                stringBuilder = GenerateFields(stringBuilder, selectedFunctionCall);
                 break;
             case ValueTaskFromWrappedTaskResolution(var resolvable, var reference, var fullName):
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
@@ -255,6 +270,17 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case DeferringResolvable { Resolvable: {} resolvable}:
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
                 break;
+            case MultiTaskResolution { SelectedResolvable: {} resolvable}:
+                stringBuilder = GenerateResolutions(stringBuilder, resolvable);
+                break;
+            case NewReferenceResolvable(var reference, var resolvable):
+                stringBuilder = GenerateResolutions(stringBuilder, resolvable);
+                stringBuilder = stringBuilder
+                    .AppendLine($"{reference} = ({resolvable.TypeFullName}) {resolvable.Reference};");
+                break;
+            case MultiSynchronicityFunctionCallResolution { SelectedFunctionCall: {} selectedFunctionCall}:
+                stringBuilder = GenerateResolutions(stringBuilder, selectedFunctionCall);
+                break;
             case LazyResolution(var reference, var typeFullName, var methodGroup):
                 string owner = "";
                 if (methodGroup.OwnerReference is { } explicitOwner)
@@ -262,12 +288,16 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder
                     .AppendLine($"{reference} = new {typeFullName}({owner}{methodGroup.Reference});");
                 break;
-            case FunctionCallResolution(var reference, var typeFullName, var functionReference, var functionOwner, var parameters):
+            case FunctionCallResolution(var reference, _, _, var functionReference, var functionOwner, var parameters) functionCallResolution:
                 string owner2 = "";
                 if (functionOwner is { } explicitOwner2)
                     owner2 = $"{explicitOwner2}.";
-                stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = ({typeFullName}){owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
+                if (functionCallResolution.Await)
+                    stringBuilder = stringBuilder
+                        .AppendLine($"{reference} = ({functionCallResolution.SelectedTypeFullName})(await {owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))}));");
+                else
+                    stringBuilder = stringBuilder
+                        .AppendLine($"{reference} = ({functionCallResolution.SelectedTypeFullName}){owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
                 break;
             case ValueTaskFromWrappedTaskResolution(var resolvable, var reference, var fullName):
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
@@ -444,7 +474,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             var parameters = string.Join(", ",
                 overload.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"));
             stringBuilder = stringBuilder.AppendLine(
-                    $"public {(overload.IsAsync ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})")
+                    $"public {(overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})")
                 .AppendLine($"{{")
                 .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Wait();")
                 .AppendLine($"try")

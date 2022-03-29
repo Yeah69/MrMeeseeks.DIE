@@ -591,12 +591,12 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             multiSynchronicityFunctionCallResolution.AsyncValueTask.Await = false;
             return (new MultiTaskResolution(
                 new TaskFromSyncResolution(
-                    multiSynchronicityFunctionCallResolution.Sync,
+                    resolution.Item1,
                     taskReference,
                     taskFullName),
-                new NewReferenceResolvable(taskReference, multiSynchronicityFunctionCallResolution.AsyncTask),
+                new NewReferenceResolvable(taskReference, taskFullName, resolution.Item1),
                 new TaskFromWrappedValueTaskResolution(
-                    multiSynchronicityFunctionCallResolution.AsyncValueTask,
+                    resolution.Item1,
                     taskReference,
                     taskFullName),
                 multiSynchronicityFunctionCallResolution.LazySynchronicityDecision), null);
@@ -642,14 +642,14 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             multiSynchronicityFunctionCallResolution.AsyncValueTask.Await = false;
             return (new MultiTaskResolution(
                 new ValueTaskFromSyncResolution(
-                    multiSynchronicityFunctionCallResolution.Sync,
+                    resolution.Item1,
                     valueTaskReference,
                     valueTaskFullName),
                 new ValueTaskFromWrappedTaskResolution(
-                    multiSynchronicityFunctionCallResolution.AsyncTask,
+                    resolution.Item1,
                     valueTaskReference,
                     valueTaskFullName),
-                new NewReferenceResolvable(valueTaskReference, multiSynchronicityFunctionCallResolution.AsyncValueTask),
+                new NewReferenceResolvable(valueTaskReference, valueTaskFullName, resolution.Item1),
                 multiSynchronicityFunctionCallResolution.LazySynchronicityDecision), null);
         }
         return (new TaskFromSyncResolution(resolution.Item1, wrappedValueTaskReference, boundValueTaskTypeFullName), resolution.Item2);
@@ -683,9 +683,18 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             _ => SwitchInterfaceAfterScopeRoot(nextParameter)
         };
 
-        if (ret.Item1 is IAwaitableResolution awaitableResolution)
+        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
             PotentialAwaits.Add(awaitableResolution);
-        
+
+        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
+            PotentialAwaits.Add(awaitableResolution0);
+
+        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
+            ret.Item2 = taskConsumableResolution;
+
+        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution0 })
+            ret.Item2 = taskConsumableResolution0;
+
         return ret;
     }
 
@@ -755,9 +764,18 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             _ => CreateInterface(nextParameter)
         };
 
-        if (ret.Item1 is IAwaitableResolution awaitableResolution)
+        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
             PotentialAwaits.Add(awaitableResolution);
-        
+
+        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
+            PotentialAwaits.Add(awaitableResolution0);
+
+        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
+            ret.Item2 = taskConsumableResolution;
+
+        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution0 })
+            ret.Item2 = taskConsumableResolution0;
+
         return ret;
     }
 
@@ -850,6 +868,12 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
             PotentialAwaits.Add(awaitableResolution0);
 
+        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
+            ret.Item2 = taskConsumableResolution;
+
+        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution0 })
+            ret.Item2 = taskConsumableResolution0;
+
         return ret;
     }
 
@@ -887,9 +911,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
 
         if (ret.Item1 is IAwaitableResolution awaitableResolution)
-        {
             PotentialAwaits.Add(awaitableResolution);
-        }
+
+        if (ret.Item2 is null)
+            ret.Item2 = ret.Item1 as ITaskConsumableResolution;
 
         return ret;
     }

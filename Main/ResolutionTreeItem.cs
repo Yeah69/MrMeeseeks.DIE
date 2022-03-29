@@ -15,7 +15,8 @@ internal record DeferringResolvable() : Resolvable("", "")
 
 internal record NewReferenceResolvable(
     string Reference,
-    Resolvable Resolvable) : Resolvable(Reference, Resolvable.TypeFullName);
+    string TypeFullName,
+    Resolvable Resolvable) : Resolvable(Reference, TypeFullName);
 
 internal record FunctionResolution(
     string Reference,

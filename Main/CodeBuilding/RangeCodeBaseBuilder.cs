@@ -153,10 +153,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case DeferringResolvable { Resolvable: {} resolvable}:
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
                 break;
-            case NewReferenceResolvable(var reference, var resolvable):
+            case NewReferenceResolvable(var reference, var typeFullName, var resolvable):
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{resolvable.TypeFullName} {reference};");
+                    .AppendLine($"{typeFullName} {reference};");
                 break;
             case MultiTaskResolution { SelectedResolvable: {} resolvable}:
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
@@ -273,10 +273,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case MultiTaskResolution { SelectedResolvable: {} resolvable}:
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
                 break;
-            case NewReferenceResolvable(var reference, var resolvable):
+            case NewReferenceResolvable(var reference, var typeFullName, var resolvable):
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = ({resolvable.TypeFullName}) {resolvable.Reference};");
+                    .AppendLine($"{reference} = ({typeFullName}) {resolvable.Reference};");
                 break;
             case MultiSynchronicityFunctionCallResolution { SelectedFunctionCall: {} selectedFunctionCall}:
                 stringBuilder = GenerateResolutions(stringBuilder, selectedFunctionCall);

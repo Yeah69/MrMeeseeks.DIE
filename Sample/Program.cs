@@ -1,5 +1,5 @@
 ﻿using System;
-using MrMeeseeks.DIE.Test.Async.Awaited.FunctionCall;
+using MrMeeseeks.DIE.Test.Async.Awaited.AsyncFunctionCallAsTask;
 
 internal class Program
 {

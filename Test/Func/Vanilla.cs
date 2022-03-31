@@ -7,7 +7,7 @@ namespace MrMeeseeks.DIE.Test.Func.Vanilla;
 
 internal class Dependency{}
 
-[CreateFunction(typeof(Func<DateTime, IList<object>, Dependency>), "CreateDep")]
+[CreateFunction(typeof(Func<DateTime, IList<object>, Dependency>), "Create")]
 internal partial class Container
 {
 }
@@ -18,6 +18,6 @@ public class Tests
     public void Test()
     {
         using var container = new Container();
-        var _ = container.CreateDep()(DateTime.Now, new List<object>());
+        var _ = container.Create()(DateTime.Now, new List<object>());
     }
 }

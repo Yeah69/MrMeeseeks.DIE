@@ -17,7 +17,7 @@ internal class InstanceClass : IInstanceClass
         Dependency = dependency;
     }
 }
-[CreateFunction(typeof(IInstanceClass), "CreateDep")]
+[CreateFunction(typeof(IInstanceClass), "Create")]
 internal partial class InstanceContainer
 {
     private readonly string DIE_Dependency;
@@ -32,7 +32,7 @@ public partial class InstanceTests
     {
         var check = "Hello, instance!";
         using var container = new InstanceContainer(check);
-        var instanceClass = container.CreateDep();
+        var instanceClass = container.Create();
         Assert.Equal(check, instanceClass.Dependency);
     }
 }

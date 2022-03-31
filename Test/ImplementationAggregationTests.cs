@@ -7,7 +7,7 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test;
 
-[CreateFunction(typeof(Func<string, FileInfo>), "CreateDep")]
+[CreateFunction(typeof(Func<string, FileInfo>), "Create")]
 internal partial class ImplementationAggregationContainer
 {
     
@@ -20,7 +20,7 @@ public partial class ConstructorChoiceTests
     {
         using var container = new ImplementationAggregationContainer();
         var path = @"C:\HelloWorld.txt";
-        var fileInfo = container.CreateDep()(path);
+        var fileInfo = container.Create()(path);
         Assert.NotNull(fileInfo);
         Assert.IsType<FileInfo>(fileInfo);
         Assert.Equal(path, fileInfo.FullName);

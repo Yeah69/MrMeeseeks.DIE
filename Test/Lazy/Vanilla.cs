@@ -6,7 +6,7 @@ namespace MrMeeseeks.DIE.Test.Lazy.Vanilla;
 
 internal class Dependency{}
 
-[CreateFunction(typeof(Lazy<Dependency>), "CreateDep")]
+[CreateFunction(typeof(Lazy<Dependency>), "Create")]
 internal partial class Container
 {
 }
@@ -17,7 +17,7 @@ public class Tests
     public void Test()
     {
         using var container = new Container();
-        var lazy = container.CreateDep();
+        var lazy = container.Create();
         var _ = lazy.Value;
     }
 }

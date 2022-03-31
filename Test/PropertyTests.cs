@@ -19,7 +19,7 @@ internal class PropertyClass : IPropertyClass
     }
 }
 
-[CreateFunction(typeof(IPropertyClass), "CreateDep")]
+[CreateFunction(typeof(IPropertyClass), "Create")]
 internal partial class PropertyContainer
 {
     private string DIE_Dependency { get; }
@@ -34,7 +34,7 @@ public partial class PropertyTests
     {
         var check = "Hello, Property!";
         using var container = new PropertyContainer(check);
-        var propertyClass = container.CreateDep();
+        var propertyClass = container.Create();
         Assert.Equal(check, propertyClass.Dependency);
     }
 }

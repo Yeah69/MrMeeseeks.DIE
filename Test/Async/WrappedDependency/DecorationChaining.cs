@@ -47,7 +47,7 @@ internal class DecoratorB : IValueTaskTypeInitializer, IInterface, IDecorator<II
     }
 }
 
-[CreateFunction(typeof(Task<IInterface>), "CreateDep")]
+[CreateFunction(typeof(Task<IInterface>), "Create")]
 [DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
 internal partial class Container
 {
@@ -59,7 +59,7 @@ public class Tests
     public async ValueTask Test()
     {
         using var container = new Container();
-        var instance = await container.CreateDep().ConfigureAwait(false);
+        var instance = await container.Create().ConfigureAwait(false);
         Assert.True(instance.IsInitialized);
     }
 }

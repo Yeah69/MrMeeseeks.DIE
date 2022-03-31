@@ -67,7 +67,7 @@ internal class Composite : ITaskTypeInitializer, IInterface, IComposite<IInterfa
     public int Count => _composition.Count;
 }
 
-[CreateFunction(typeof(ValueTask<IInterface>), "Create0")]
+[CreateFunction(typeof(ValueTask<IInterface>), "Create")]
 internal partial class Container
 {
 }
@@ -78,7 +78,7 @@ public class Tests
     public async ValueTask Test()
     {
         using var container = new Container();
-        var instance = await container.Create0().ConfigureAwait(false);
+        var instance = await container.Create().ConfigureAwait(false);
         Assert.IsType<Composite>(instance);
         Assert.Equal(4, ((Composite) instance).Count);
         Assert.True(instance.IsInitialized);

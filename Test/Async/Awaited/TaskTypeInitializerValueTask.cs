@@ -16,7 +16,7 @@ internal class Dependency : IValueTaskTypeInitializer
     }
 }
 
-[CreateFunction(typeof(Dependency), "CreateDep")]
+[CreateFunction(typeof(Dependency), "Create")]
 internal partial class Container
 {
 }
@@ -27,7 +27,7 @@ public class Tests
     public async ValueTask Test()
     {
         using var container = new Container();
-        var instance = await container.CreateDepAsync().ConfigureAwait(false);
+        var instance = await container.CreateAsync().ConfigureAwait(false);
         Assert.True(instance.IsInitialized);
     }
 }

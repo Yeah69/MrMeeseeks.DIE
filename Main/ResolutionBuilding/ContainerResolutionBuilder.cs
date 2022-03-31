@@ -258,6 +258,54 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             
                 rootFunctions.Add(publicValueTaskResolutionFunction);
             }
+            else if (createFunction.ActualReturnType is { } actual1
+                     && actual1.Equals(_wellKnownTypes.ValueTask1.Construct(createFunction.OriginalReturnType),
+                         SymbolEqualityComparer.Default))
+            {
+                var boundTaskTypeFullName = _wellKnownTypes
+                    .Task1
+                    .Construct(createFunction.OriginalReturnType)
+                    .FullName();
+                var call = createFunction.BuildFunctionCall(
+                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    "this");
+                call.Sync.Await = false;
+                call.AsyncTask.Await = false;
+                call.AsyncValueTask.Await = false;
+                var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask);
+                var publicTaskResolutionFunction = new RootResolutionFunction(
+                    $"{methodNamePrefix}Async",
+                    boundTaskTypeFullName,
+                    "public",
+                    new TaskFromWrappedValueTaskResolution(
+                        call, 
+                        wrappedTaskReference, 
+                        boundTaskTypeFullName),
+                    privateRootResolutionFunction.Parameter,
+                    DisposalHandling,
+                    Array.Empty<LocalFunctionResolution>(),
+                    SynchronicityDecision.Sync);
+            
+                rootFunctions.Add(publicTaskResolutionFunction);
+                
+                var valueCall = createFunction.BuildFunctionCall(
+                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    "this");
+                valueCall.Sync.Await = false;
+                valueCall.AsyncTask.Await = false;
+                valueCall.AsyncValueTask.Await = false;
+                var publicValueTaskResolutionFunction = new RootResolutionFunction(
+                    $"{methodNamePrefix}ValueAsync",
+                    actual1.FullName(),
+                    "public",
+                    valueCall,
+                    privateRootResolutionFunction.Parameter,
+                    DisposalHandling,
+                    Array.Empty<LocalFunctionResolution>(),
+                    SynchronicityDecision.Sync);
+            
+                rootFunctions.Add(publicValueTaskResolutionFunction);
+            }
         }
         
         var (transientScopeResolutions, scopeResolutions) = _scopeManager.Build();

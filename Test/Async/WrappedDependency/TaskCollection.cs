@@ -55,7 +55,7 @@ internal partial class Container
 public class Tests
 {
     [Fact]
-    public async Task Test()
+    public async ValueTask Test()
     {
         using var container = new Container();
         var instance = container.CreateDep();

@@ -310,7 +310,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
         SynchronicityDecision = new(() =>
             PotentialAwaits.Any(pa => pa.Await)
-                ? ResolutionBuilding.SynchronicityDecision.AsyncTask
+                ? ResolutionBuilding.SynchronicityDecision.AsyncValueTask
                 : ResolutionBuilding.SynchronicityDecision.Sync);
         Resolvable = new(CreateResolvable);
     }
@@ -1095,9 +1095,12 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     }
 
     protected void AdjustForSynchronicity() =>
-        ActualReturnType = SynchronicityDecision.Value is ResolutionBuilding.SynchronicityDecision.AsyncTask or ResolutionBuilding.SynchronicityDecision.AsyncValueTask
-            ? _wellKnownTypes.Task1.Construct(OriginalReturnType) 
-            : OriginalReturnType;
+        ActualReturnType = SynchronicityDecision.Value switch
+        {
+            ResolutionBuilding.SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(OriginalReturnType),
+            ResolutionBuilding.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(OriginalReturnType),
+            _ => OriginalReturnType
+        };
 
     private static DisposableCollectionResolution? ImplementsIDisposable(
         INamedTypeSymbol type, 

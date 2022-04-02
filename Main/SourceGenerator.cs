@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.CodeBuilding;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding;
+using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE;
 

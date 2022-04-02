@@ -1,6 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 
-namespace MrMeeseeks.DIE.ResolutionBuilding;
+namespace MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 internal enum SynchronicityDecision
 {
@@ -20,240 +20,6 @@ internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResol
         string? ownerReference);
 
     MethodGroupResolution BuildMethodGroup();
-}
-
-internal interface ILocalFunctionResolutionBuilder : IFunctionResolutionBuilder
-{
-}
-
-internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILocalFunctionResolutionBuilder
-{
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
-    private readonly INamedTypeSymbol _returnType;
-    private readonly IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> _parameters;
-
-    public LocalFunctionResolutionBuilder(
-        // parameter
-        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-        INamedTypeSymbol returnType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> parameters,
-        
-        
-        // dependencies
-        WellKnownTypes wellKnownTypes, 
-        IReferenceGeneratorFactory referenceGeneratorFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, returnType, parameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
-    {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
-        _returnType = returnType;
-        _parameters = parameters;
-
-        Name = RootReferenceGenerator.Generate("Create", _returnType);
-    }
-
-    protected override string Name { get; }
-
-    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(_returnType, _parameters)).Item1;
-
-    public override FunctionResolution Build()
-    {
-        AdjustForSynchronicity();
-        return new(
-            Name,
-            TypeFullName,
-            Resolvable.Value,
-            _parameters.Select(t => t.Resolution).ToList(),
-            _rangeResolutionBaseBuilder.DisposalHandling,
-            LocalFunctions
-                .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
-                    f.Reference,
-                    f.TypeFullName,
-                    f.Resolvable,
-                    f.Parameter,
-                    f.DisposalHandling,
-                    f.LocalFunctions,
-                    f.SynchronicityDecision))
-                .ToList(),
-            SynchronicityDecision.Value);
-    }
-}
-
-internal interface IContainerCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
-{
-}
-
-internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuilder, IContainerCreateFunctionResolutionBuilder
-{
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
-    private readonly INamedTypeSymbol _returnType;
-
-    public ContainerCreateFunctionResolutionBuilder(
-        // parameter
-        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-        INamedTypeSymbol returnType,
-        
-        
-        // dependencies
-        WellKnownTypes wellKnownTypes, 
-        IReferenceGeneratorFactory referenceGeneratorFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, returnType, Array.Empty<(ITypeSymbol, ParameterResolution)>(), wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
-    {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
-        _returnType = returnType;
-        
-        Name = RootReferenceGenerator.Generate("Create");
-    }
-
-    protected override string Name { get; }
-
-    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(
-        _returnType,
-        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())).Item1;
-
-    public override FunctionResolution Build()
-    {
-        AdjustForSynchronicity();
-        return new(
-            Name,
-            TypeFullName,
-            Resolvable.Value,
-            Array.Empty<ParameterResolution>(),
-            _rangeResolutionBaseBuilder.DisposalHandling,
-            LocalFunctions
-                .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
-                    f.Reference,
-                    f.TypeFullName,
-                    f.Resolvable,
-                    f.Parameter,
-                    f.DisposalHandling,
-                    f.LocalFunctions,
-                    f.SynchronicityDecision))
-                .ToList(),
-            SynchronicityDecision.Value);
-    }
-}
-
-internal interface IScopeRootCreateFunctionResolutionBuilder : IFunctionResolutionBuilder
-{
-}
-
-internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuilder, IScopeRootCreateFunctionResolutionBuilder
-{
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
-    private readonly IScopeRootParameter _scopeRootParameter;
-
-    public ScopeRootCreateFunctionResolutionBuilder(
-        // parameter
-        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-        IScopeRootParameter scopeRootParameter,
-        
-        
-        // dependencies
-        WellKnownTypes wellKnownTypes, 
-        IReferenceGeneratorFactory referenceGeneratorFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, scopeRootParameter.ReturnType, scopeRootParameter.CurrentParameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
-    {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
-        _scopeRootParameter = scopeRootParameter;
-
-        Name = RootReferenceGenerator.Generate("Create");
-    }
-
-    protected override string Name { get; }
-
-    protected override Resolvable CreateResolvable() => _scopeRootParameter switch
-    {
-        CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter).Item1,
-        SwitchImplementationParameter switchImplementationParameter => SwitchImplementation(switchImplementationParameter).Item1,
-        SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => SwitchInterfaceAfterScopeRoot(switchInterfaceAfterScopeRootParameter).Item1,
-        _ => throw new ArgumentOutOfRangeException(nameof(_scopeRootParameter))
-    };
-
-    public override FunctionResolution Build()
-    {
-        AdjustForSynchronicity();
-        
-        return new(
-            Name,
-            TypeFullName,
-            Resolvable.Value,
-            Parameters,
-            _rangeResolutionBaseBuilder.DisposalHandling,
-            LocalFunctions
-                .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
-                    f.Reference,
-                    f.TypeFullName,
-                    f.Resolvable,
-                    f.Parameter,
-                    f.DisposalHandling,
-                    f.LocalFunctions,
-                    f.SynchronicityDecision))
-                .ToList(),
-            SynchronicityDecision.Value);
-    }
-}
-
-internal interface IRangedFunctionResolutionBuilder : IFunctionResolutionBuilder
-{
-}
-
-internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRangedFunctionResolutionBuilder
-{
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
-    private readonly ForConstructorParameter _forConstructorParameter;
-
-    public RangedFunctionResolutionBuilder(
-        // parameter
-        IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-        string reference,
-        ForConstructorParameter forConstructorParameter,
-        
-        
-        // dependencies
-        WellKnownTypes wellKnownTypes, 
-        IReferenceGeneratorFactory referenceGeneratorFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, forConstructorParameter.ImplementationType, forConstructorParameter.CurrentFuncParameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
-    {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
-        _forConstructorParameter = forConstructorParameter;
-        
-        Name = reference;
-    }
-
-    protected override string Name { get; }
-
-    protected override Resolvable CreateResolvable() => CreateConstructorResolution(_forConstructorParameter).Item1;
-
-    public override FunctionResolution Build()
-    {
-        AdjustForSynchronicity();
-        
-        return new(
-            Name,
-            TypeFullName,
-            Resolvable.Value,
-            _forConstructorParameter.CurrentFuncParameters.Select(t => t.Resolution).ToList(),
-            _rangeResolutionBaseBuilder.DisposalHandling,
-            LocalFunctions
-                .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
-                    f.Reference,
-                    f.TypeFullName,
-                    f.Resolvable,
-                    f.Parameter,
-                    f.DisposalHandling,
-                    f.LocalFunctions,
-                    f.SynchronicityDecision))
-                .ToList(),
-            SynchronicityDecision.Value);
-    }
 }
 
 internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
@@ -310,8 +76,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
         SynchronicityDecision = new(() =>
             PotentialAwaits.Any(pa => pa.Await)
-                ? ResolutionBuilding.SynchronicityDecision.AsyncValueTask
-                : ResolutionBuilding.SynchronicityDecision.Sync);
+                ? Function.SynchronicityDecision.AsyncValueTask
+                : Function.SynchronicityDecision.Sync);
         Resolvable = new(CreateResolvable);
     }
 
@@ -1103,8 +869,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     protected void AdjustForSynchronicity() =>
         ActualReturnType = SynchronicityDecision.Value switch
         {
-            ResolutionBuilding.SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(OriginalReturnType),
-            ResolutionBuilding.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(OriginalReturnType),
+            Function.SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(OriginalReturnType),
+            Function.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(OriginalReturnType),
             _ => OriginalReturnType
         };
 

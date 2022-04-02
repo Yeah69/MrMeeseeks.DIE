@@ -904,10 +904,16 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
         var ret = scopeLevel switch
         {
-            ScopeLevel.Container => (_rangeResolutionBaseBuilder.CreateContainerInstanceReferenceResolution(nextParameter), null),
-            ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeInstanceReferenceResolution(nextParameter), null),
-            ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeInstanceReferenceResolution(nextParameter), null),
-            _ => CreateConstructorResolution(nextParameter)
+            >= ScopeLevel.Scope when parameter is SwitchImplementationParameterWithDecoration or SwitchImplementationParameterWithDecoration => 
+                (_rangeResolutionBaseBuilder.CreateScopeInstanceReferenceResolution(nextParameter), null),
+            ScopeLevel.Container => 
+                (_rangeResolutionBaseBuilder.CreateContainerInstanceReferenceResolution(nextParameter), null),
+            ScopeLevel.TransientScope => 
+                (_rangeResolutionBaseBuilder.CreateTransientScopeInstanceReferenceResolution(nextParameter), null),
+            ScopeLevel.Scope => 
+                (_rangeResolutionBaseBuilder.CreateScopeInstanceReferenceResolution(nextParameter), null),
+            _ => 
+                CreateConstructorResolution(nextParameter)
         };
 
         if (ret.Item1 is IAwaitableResolution awaitableResolution)

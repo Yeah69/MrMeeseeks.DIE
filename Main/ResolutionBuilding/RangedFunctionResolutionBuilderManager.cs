@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.ResolutionBuilding.Function;
+
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface IRangedFunctionGroupResolutionBuilder

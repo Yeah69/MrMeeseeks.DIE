@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.ResolutionBuilding;
+using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE;
 

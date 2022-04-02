@@ -1,5 +1,5 @@
 ﻿using System;
-using MrMeeseeks.DIE.Test.Async.Awaited.AsyncFunctionCallAsTask;
+using MrMeeseeks.DIE.Test.Decorator.SequenceEdgeCase;
 
 internal class Program
 {
@@ -7,6 +7,6 @@ internal class Program
     {
         Console.WriteLine("Hello, world!");
         var container = new Container();
-        Console.WriteLine(container.CreateAsync());
+        Console.WriteLine(container.Create0Async());
     }
 }

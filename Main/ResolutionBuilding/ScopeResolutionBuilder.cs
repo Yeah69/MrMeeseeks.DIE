@@ -40,14 +40,16 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory,
         Func<IRangeResolutionBaseBuilder, IScopeRootParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory) 
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory) 
         : base(
             name,
             checkTypeProperties,
             userProvidedScopeElements,
             wellKnownTypes, 
             referenceGeneratorFactory,
-            rangedFunctionGroupResolutionBuilderFactory)
+            rangedFunctionGroupResolutionBuilderFactory,
+            synchronicityDecisionMakerFactory)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;

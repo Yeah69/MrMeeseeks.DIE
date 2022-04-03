@@ -10,6 +10,35 @@ internal enum SynchronicityDecision
     AsyncValueTask
 }
 
+internal interface IFunctionResolutionSynchronicityDecisionMaker
+{
+    Lazy<SynchronicityDecision> Decision { get; }
+    
+    void Register(IAwaitableResolution awaitableResolution);
+}
+
+internal class FunctionResolutionSynchronicityDecisionMaker : IFunctionResolutionSynchronicityDecisionMaker
+{
+    private readonly ISet<IAwaitableResolution> _potentialAwaits = new HashSet<IAwaitableResolution>();
+    
+    public Lazy<SynchronicityDecision> Decision { get; }
+
+    public FunctionResolutionSynchronicityDecisionMaker() =>
+        Decision = new(() => _potentialAwaits.Any(pa => pa.Await)
+            ? SynchronicityDecision.AsyncValueTask
+            : SynchronicityDecision.Sync);
+
+    public void Register(IAwaitableResolution awaitableResolution)
+    {
+        if (Decision.IsValueCreated)
+        {
+            throw new InvalidOperationException("Registration of awaitable resolution after (!) synchronicity was decided.");
+        }
+
+        _potentialAwaits.Add(awaitableResolution);
+    }
+}
+
 internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResolution>
 {
     INamedTypeSymbol OriginalReturnType { get; }
@@ -25,6 +54,7 @@ internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResol
 internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 {
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
+    private readonly IFunctionResolutionSynchronicityDecisionMaker _synchronicityDecisionMaker;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
     private readonly ICheckTypeProperties _checkTypeProperties;
@@ -35,13 +65,11 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     private readonly IUserProvidedScopeElements _userProvidedScopeElements;
 
     protected readonly IList<IFunctionResolutionBuilder> LocalFunctions = new List<IFunctionResolutionBuilder>();
-
-    protected readonly ISet<IAwaitableResolution> PotentialAwaits = new HashSet<IAwaitableResolution>();
     
     protected abstract string Name { get; }
     protected string TypeFullName => ActualReturnType?.FullName() ?? OriginalReturnType.FullName();
 
-    public Lazy<SynchronicityDecision> SynchronicityDecision { get; }
+    public Lazy<SynchronicityDecision> SynchronicityDecision => _synchronicityDecisionMaker.Decision;
     protected Lazy<Resolvable> Resolvable { get; } 
     
     protected IReadOnlyList<ParameterResolution> Parameters { get; }
@@ -54,6 +82,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
         INamedTypeSymbol returnType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
+        IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         
         
         // dependencies
@@ -63,6 +92,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     {
         OriginalReturnType = returnType;
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
+        _synchronicityDecisionMaker = synchronicityDecisionMaker;
         _wellKnownTypes = wellKnownTypes;
         _localFunctionResolutionBuilderFactory = localFunctionResolutionBuilderFactory;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
@@ -74,10 +104,6 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             .Select(p => new ParameterResolution(RootReferenceGenerator.Generate(p.Type), TypeFullName))
             .ToList();
 
-        SynchronicityDecision = new(() =>
-            PotentialAwaits.Any(pa => pa.Await)
-                ? Function.SynchronicityDecision.AsyncValueTask
-                : Function.SynchronicityDecision.Sync);
         Resolvable = new(CreateResolvable);
     }
 
@@ -450,10 +476,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
-            PotentialAwaits.Add(awaitableResolution);
+            _synchronicityDecisionMaker.Register(awaitableResolution);
 
         if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
-            PotentialAwaits.Add(awaitableResolution0);
+            _synchronicityDecisionMaker.Register(awaitableResolution0);
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
             ret.Item2 = taskConsumableResolution;
@@ -531,10 +557,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
-            PotentialAwaits.Add(awaitableResolution);
+            _synchronicityDecisionMaker.Register(awaitableResolution);
 
         if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
-            PotentialAwaits.Add(awaitableResolution0);
+            _synchronicityDecisionMaker.Register(awaitableResolution0);
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
             ret.Item2 = taskConsumableResolution;
@@ -629,10 +655,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
-            PotentialAwaits.Add(awaitableResolution);
+            _synchronicityDecisionMaker.Register(awaitableResolution);
 
         if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
-            PotentialAwaits.Add(awaitableResolution0);
+            _synchronicityDecisionMaker.Register(awaitableResolution0);
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
             ret.Item2 = taskConsumableResolution;
@@ -683,7 +709,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         };
 
         if (ret.Item1 is IAwaitableResolution awaitableResolution)
-            PotentialAwaits.Add(awaitableResolution);
+            _synchronicityDecisionMaker.Register(awaitableResolution);
 
         if (ret.Item2 is null)
             ret.Item2 = ret.Item1 as ITaskConsumableResolution;
@@ -755,7 +781,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
             if (typeInitializationResolution is IAwaitableResolution awaitableResolution)
             {
-                PotentialAwaits.Add(awaitableResolution);
+                _synchronicityDecisionMaker.Register(awaitableResolution);
             }
         }
 

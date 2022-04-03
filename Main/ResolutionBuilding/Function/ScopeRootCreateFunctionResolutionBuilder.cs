@@ -13,13 +13,14 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         // parameter
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
         IScopeRootParameter scopeRootParameter,
+        IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, scopeRootParameter.ReturnType, scopeRootParameter.CurrentParameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+        : base(rangeResolutionBaseBuilder, scopeRootParameter.ReturnType, scopeRootParameter.CurrentParameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
     {
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _scopeRootParameter = scopeRootParameter;

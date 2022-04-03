@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
@@ -40,6 +41,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
 
     protected readonly WellKnownTypes WellKnownTypes;
     private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
+    private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
     protected readonly IDictionary<string, IRangedFunctionGroupResolutionBuilder> RangedInstanceReferenceResolutions =
@@ -55,12 +57,14 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         // dependencies
         WellKnownTypes wellKnownTypes,
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory)
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory)
     {
         CheckTypeProperties = checkTypeProperties;
         UserProvidedScopeElements = userProvidedScopeElements;
         WellKnownTypes = wellKnownTypes;
         _rangedFunctionGroupResolutionBuilderFactory = rangedFunctionGroupResolutionBuilderFactory;
+        _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
         DisposableCollectionResolution = new DisposableCollectionResolution(
@@ -87,7 +91,8 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             parameter,
             "Scope",
             null,
-            "this");
+            "this",
+            new (_synchronicityDecisionMakerFactory));
     
     public abstract TransientScopeRootResolution CreateTransientScopeRootResolution(
         IScopeRootParameter parameter,
@@ -105,7 +110,8 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         ForConstructorParameter parameter,
         string label,
         string? reference,
-        string owningObjectReference)
+        string owningObjectReference,
+        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker)
     {
         var (implementationType, currentParameters) = parameter;
         InterfaceExtension? interfaceExtension = parameter switch
@@ -123,7 +129,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         }
 
         return functionGroup
-            .GetInstanceFunction(parameter)
+            .GetInstanceFunction(parameter, synchronicityDecisionMaker)
             .BuildFunctionCall(currentParameters, owningObjectReference);
     }
 

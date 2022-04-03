@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.ResolutionBuilding.Function;
+
 namespace MrMeeseeks.DIE.CodeBuilding;
 
 internal interface IContainerCodeBuilder : IRangeCodeBaseBuilder
@@ -15,6 +17,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         stringBuilder = stringBuilder
+            .AppendLine($"#nullable enable")
             .AppendLine($"namespace {_containerInfo.Namespace}")
             .AppendLine($"{{")
             .AppendLine($"partial class {_containerInfo.Name} : {WellKnownTypes.Disposable.FullName()}")
@@ -31,7 +34,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         stringBuilder = _containerResolution.TransientScopeInterface.Functions.Aggregate(
             stringBuilder,
             (sb, f) => sb.AppendLine(
-                $"{f.TypeFullName} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))});"));
+                $"{SelectFullName(f)} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))});"));
         
         stringBuilder = stringBuilder
             .AppendLine($"}}");
@@ -45,12 +48,12 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         stringBuilder = _containerResolution.TransientScopeInterface.Functions.Aggregate(
             stringBuilder,
             (sb, f) => sb.AppendLine(
-                $"public {f.TypeFullName} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))}) =>")
+                $"public {SelectFullName(f)} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))}) =>")
                 .AppendLine($"_container.{f.Reference}({string.Join(", ", f.Parameter.Select(p => p.Reference))});"));
         
         stringBuilder = stringBuilder
             .AppendLine($"}}")
-            .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} _{_containerResolution.TransientScopeAdapterReference};")
+            .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName}? _{_containerResolution.TransientScopeAdapterReference};")
             .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} {_containerResolution.TransientScopeAdapterReference} => _{_containerResolution.TransientScopeAdapterReference} ??= new {_containerResolution.TransientScopeInterface.ContainerAdapterName}(this);");
 
         stringBuilder = _transientScopeCodeBuilders.Aggregate(stringBuilder, (sb, cb) => cb.Build(sb));
@@ -59,7 +62,17 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 
         return stringBuilder
             .AppendLine($"}}")
-            .AppendLine($"}}");
+            .AppendLine($"}}")
+            .AppendLine($"#nullable disable");
+
+        string SelectFullName(InterfaceFunctionDeclarationResolution interfaceResolution) =>
+            interfaceResolution.SynchronicityDecision.Value switch
+            {
+                SynchronicityDecision.AsyncValueTask => interfaceResolution.ValueTaskTypeFullName,
+                SynchronicityDecision.AsyncTask => interfaceResolution.TaskTypeFullName,
+                SynchronicityDecision.Sync => interfaceResolution.TypeFullName,
+                _ => throw new ArgumentException("Synchronicity not decided for the interface function at time of generating the sources")
+            };
     }
 
     public ContainerCodeBuilder(

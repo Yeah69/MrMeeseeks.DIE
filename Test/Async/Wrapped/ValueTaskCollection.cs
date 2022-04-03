@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.TaskCollection;
+namespace MrMeeseeks.DIE.Test.Async.Wrapped.ValueTaskCollection;
 
 internal interface IInterface
 {
@@ -47,7 +47,7 @@ internal class DependencyD : IInterface
     public bool IsInitialized => true;
 }
 
-[CreateFunction(typeof(IReadOnlyList<Task<IInterface>>), "Create")]
+[CreateFunction(typeof(IReadOnlyList<ValueTask<IInterface>>), "Create")]
 internal partial class Container
 {
 }
@@ -60,7 +60,6 @@ public class Tests
         using var container = new Container();
         var instance = container.Create();
         Assert.Equal(4, instance.Count);
-        await Task.WhenAll(instance).ConfigureAwait(false);
         foreach (var task in instance)
             Assert.True((await task.ConfigureAwait(false)).IsInitialized);
     }

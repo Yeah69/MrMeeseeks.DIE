@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.ValueTaskComposition;
+namespace MrMeeseeks.DIE.Test.Async.Wrapped.TaskCollection;
 
 internal interface IInterface
 {
@@ -47,27 +47,7 @@ internal class DependencyD : IInterface
     public bool IsInitialized => true;
 }
 
-internal class Composite : ITaskTypeInitializer, IInterface, IComposite<IInterface>
-{
-    private readonly IReadOnlyList<Task<IInterface>> _composition;
-
-    internal Composite(
-        IReadOnlyList<Task<IInterface>> composition) =>
-        _composition = composition;
-
-    public async Task InitializeAsync()
-    {
-        await Task.WhenAll(_composition).ConfigureAwait(false);
-        await Task.Delay(500).ConfigureAwait(false);
-        IsInitialized = true;
-    }
-
-    public bool IsInitialized { get; private set; }
-
-    public int Count => _composition.Count;
-}
-
-[CreateFunction(typeof(ValueTask<IInterface>), "Create")]
+[CreateFunction(typeof(IReadOnlyList<Task<IInterface>>), "Create")]
 internal partial class Container
 {
 }
@@ -78,9 +58,10 @@ public class Tests
     public async ValueTask Test()
     {
         using var container = new Container();
-        var instance = await container.Create().ConfigureAwait(false);
-        Assert.IsType<Composite>(instance);
-        Assert.Equal(4, ((Composite) instance).Count);
-        Assert.True(instance.IsInitialized);
+        var instance = container.Create();
+        Assert.Equal(4, instance.Count);
+        await Task.WhenAll(instance).ConfigureAwait(false);
+        foreach (var task in instance)
+            Assert.True((await task.ConfigureAwait(false)).IsInitialized);
     }
 }

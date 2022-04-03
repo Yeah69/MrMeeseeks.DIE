@@ -1,62 +1,19 @@
-﻿using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Sample;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration;
 
-namespace MrMeeseeks.DIE.Test.Decorator.SequenceEdgeCase;
-
-internal interface IInterface
+namespace MrMeeseeks.DIE.Sample;
+internal class Dependency : ITaskTypeInitializer, ITransientScopeInstance
 {
-    IInterface Decorated { get; }
-}
-
-internal class Dependency : IInterface, IContainerInstance
-{
-    public IInterface Decorated => this;
-}
-
-internal class DecoratorA : IInterface, IDecorator<IInterface>
-{
-    public IInterface Decorated { get; }
+    public bool IsInitialized { get; private set; }
     
-    internal DecoratorA(IInterface decorated) => Decorated = decorated;
+    async Task ITaskTypeInitializer.InitializeAsync()
+    {
+        await Task.Delay(500).ConfigureAwait(false);
+        IsInitialized = true;
+    }
 }
 
-internal class DecoratorB : IInterface, IDecorator<IInterface>
-{
-    public IInterface Decorated { get; }
-    
-    internal DecoratorB(IInterface decorated) => Decorated = decorated;
-}
-
-internal class ScopeRoot0 : IScopeRoot
-{
-    public IInterface Decorated { get; }
-
-    internal ScopeRoot0(IInterface decorated) => Decorated = decorated;
-}
-
-internal class ScopeRoot1 : IScopeRoot
-{
-    public IInterface Decorated { get; }
-
-    internal ScopeRoot1(IInterface decorated) => Decorated = decorated;
-}
-
-[CreateFunction(typeof(ScopeRoot0), "Create0")]
-[CreateFunction(typeof(ScopeRoot1), "Create1")]
-[DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
+[CreateFunction(typeof(Task<Dependency>), "Create")]
 internal partial class Container
 {
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
-    [CustomScopeForRootTypes(typeof(ScopeRoot0))]
-    private partial class DIE_Scope_0
-    {
-        
-    }
-    
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA))]
-    [CustomScopeForRootTypes(typeof(ScopeRoot1))]
-    private partial class DIE_Scope_1
-    {
-        
-    }
 }

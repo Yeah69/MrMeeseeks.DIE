@@ -37,14 +37,16 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory,
         Func<IRangeResolutionBaseBuilder, IScopeRootParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory) 
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory) 
         : base(
             name, 
             checkTypeProperties,
             userProvidedScopeElements,
             wellKnownTypes, 
             referenceGeneratorFactory,
-            rangedFunctionGroupResolutionBuilderFactory)
+            rangedFunctionGroupResolutionBuilderFactory,
+            synchronicityDecisionMakerFactory)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
@@ -152,9 +154,11 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
     public void EnqueueRangedInstanceResolution(
         ForConstructorParameter parameter,
         string label,
-        string reference) => CreateRangedInstanceReferenceResolution(
+        string reference,
+        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker) => CreateRangedInstanceReferenceResolution(
         parameter,
         label,
         reference,
-        "Doesn'tMatter");
+        "Doesn't Matter, because for interface",
+        synchronicityDecisionMaker);
 }

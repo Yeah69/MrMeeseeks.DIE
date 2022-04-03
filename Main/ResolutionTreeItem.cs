@@ -161,7 +161,10 @@ internal record ParameterResolution(
 internal record InterfaceFunctionDeclarationResolution(
     string Reference,
     string TypeFullName,
-    IReadOnlyList<ParameterResolution> Parameter);
+    string TaskTypeFullName,
+    string ValueTaskTypeFullName,
+    IReadOnlyList<ParameterResolution> Parameter,
+    Lazy<SynchronicityDecision> SynchronicityDecision);
 
 internal record FuncResolution(
     string Reference,

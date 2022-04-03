@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.TaskComposition;
+namespace MrMeeseeks.DIE.Test.Async.Wrapped.ValueTaskComposition;
 
 internal interface IInterface
 {
@@ -66,7 +66,8 @@ internal class Composite : ITaskTypeInitializer, IInterface, IComposite<IInterfa
 
     public int Count => _composition.Count;
 }
-[CreateFunction(typeof(Task<IInterface>), "Create")]
+
+[CreateFunction(typeof(ValueTask<IInterface>), "Create")]
 internal partial class Container
 {
 }

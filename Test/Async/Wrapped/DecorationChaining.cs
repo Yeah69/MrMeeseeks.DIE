@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.DecorationChaining;
+namespace MrMeeseeks.DIE.Test.Async.Wrapped.DecorationChaining;
 
 internal interface IInterface
 {

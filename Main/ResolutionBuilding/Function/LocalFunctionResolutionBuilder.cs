@@ -15,13 +15,14 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
         INamedTypeSymbol returnType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> parameters,
+        IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, returnType, parameters, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+        : base(rangeResolutionBaseBuilder, returnType, parameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
     {
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _returnType = returnType;

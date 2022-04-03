@@ -1,10 +1,8 @@
-using MrMeeseeks.DIE.ResolutionBuilding.Function;
-
-namespace MrMeeseeks.DIE.ResolutionBuilding;
+namespace MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 internal interface IRangedFunctionGroupResolutionBuilder
 {
-    IRangedFunctionResolutionBuilder GetInstanceFunction(ForConstructorParameter parameter);
+    IRangedFunctionResolutionBuilder GetInstanceFunction(ForConstructorParameter parameter, Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker);
     
     bool HasWorkToDo { get; }
 
@@ -16,15 +14,20 @@ internal interface IRangedFunctionGroupResolutionBuilder
 internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolutionBuilder
 {
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
-    private readonly Func<IRangeResolutionBaseBuilder, string, ForConstructorParameter, IRangedFunctionResolutionBuilder> _rangedFunctionResolutionBuilderFactory;
+
+    private readonly Func<
+        IRangeResolutionBaseBuilder, 
+        string, 
+        ForConstructorParameter, 
+        IFunctionResolutionSynchronicityDecisionMaker, 
+        IRangedFunctionResolutionBuilder> _rangedFunctionResolutionBuilderFactory;
     private readonly string _reference;
     private readonly string _typeFullName;
     private readonly string _fieldReference;
     private readonly string _lockReference;
 
     private readonly Dictionary<string, IRangedFunctionResolutionBuilder> _overloads = new();
-    private readonly Queue<IRangedFunctionResolutionBuilder> _functionQueue = new();
-    private readonly List<RangedInstanceFunctionResolution> _overloadResolutions = new();
+    private readonly List<IRangedFunctionResolutionBuilder> _functionQueue = new();
 
     internal RangedFunctionGroupResolutionBuilder(
         // parameter
@@ -36,7 +39,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         
         // dependencies
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        Func<IRangeResolutionBaseBuilder, string, ForConstructorParameter, IRangedFunctionResolutionBuilder> rangedFunctionResolutionBuilderFactory)
+        Func<IRangeResolutionBaseBuilder, string, ForConstructorParameter, IFunctionResolutionSynchronicityDecisionMaker, IRangedFunctionResolutionBuilder> rangedFunctionResolutionBuilderFactory)
     {
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _rangedFunctionResolutionBuilderFactory = rangedFunctionResolutionBuilderFactory;
@@ -48,43 +51,42 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         _lockReference = rootReferenceGenerator.Generate($"_{label.ToLower()}InstanceLock{decorationSuffix}");
     }
 
-    public IRangedFunctionResolutionBuilder GetInstanceFunction(ForConstructorParameter parameter)
+    public IRangedFunctionResolutionBuilder GetInstanceFunction(
+        ForConstructorParameter parameter,
+        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker)
     {
         var listedParameterTypes = string.Join(",", parameter.CurrentFuncParameters.Select(p => p.Item2.TypeFullName));
         if (!_overloads.TryGetValue(listedParameterTypes, out var function))
         {
-            function = _rangedFunctionResolutionBuilderFactory(_rangeResolutionBaseBuilder, _reference, parameter);
+            function = _rangedFunctionResolutionBuilderFactory(_rangeResolutionBaseBuilder, _reference, parameter, synchronicityDecisionMaker.Value);
             _overloads[listedParameterTypes] = function;
-            _functionQueue.Enqueue(function);
+            _functionQueue.Add(function);
         }
         return function;
     }
 
-    public bool HasWorkToDo => _functionQueue.Any();
+    public bool HasWorkToDo => _functionQueue.Any(f => f.HasWorkToDo);
     
     public void DoWork()
     {
-        while (_functionQueue.Any())
-        {
-            var function = _functionQueue.Dequeue();
-            var functionResolution = function.Build();
-            _overloadResolutions.Add(new RangedInstanceFunctionResolution(
-                functionResolution.Reference,
-                functionResolution.TypeFullName,
-                functionResolution.Resolvable,
-                functionResolution.Parameter,
-                functionResolution.DisposalHandling,
-                functionResolution.LocalFunctions,
-                SynchronicityDecision.Sync)); // todo async support
-        }
+        while (_functionQueue.Any(f => f.HasWorkToDo))
+            foreach (var function in _functionQueue.Where(f => f.HasWorkToDo))
+                function.DoWork();
     }
 
-    public RangedInstanceFunctionGroupResolution Build()
-    {
-        return new RangedInstanceFunctionGroupResolution(
-            _typeFullName,
-            _overloadResolutions,
+    public RangedInstanceFunctionGroupResolution Build() =>
+        new(_typeFullName,
+            _functionQueue
+                .Select(function => function.Build())
+                .Select(functionResolution => new RangedInstanceFunctionResolution(
+                    functionResolution.Reference, 
+                    functionResolution.TypeFullName, 
+                    functionResolution.Resolvable,
+                    functionResolution.Parameter, 
+                    functionResolution.DisposalHandling, 
+                    functionResolution.LocalFunctions, 
+                    functionResolution.SynchronicityDecision))
+                .ToList(),
             _fieldReference,
             _lockReference);
-    }
 }

@@ -1,21 +1,21 @@
-using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.SyncToValueTask;
+namespace MrMeeseeks.DIE.Test.Async.Wrapped.TaskToTask;
 
-internal class Dependency : ITypeInitializer
+internal class Dependency : ITaskTypeInitializer
 {
     public bool IsInitialized { get; private set; }
     
-    void ITypeInitializer.Initialize()
+    async Task ITaskTypeInitializer.InitializeAsync()
     {
+        await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
         IsInitialized = true;
     }
 }
-
-[CreateFunction(typeof(ValueTask<Dependency>), "Create")]
+[CreateFunction(typeof(Task<Dependency>), "Create")]
 internal partial class Container
 {
 }

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.ResolutionBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE.CodeBuilding;
@@ -466,18 +465,21 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         stringBuilder = stringBuilder
             .AppendLine(
-                $"private {rangedInstanceFunctionGroupResolution.TypeFullName} {rangedInstanceFunctionGroupResolution.FieldReference};")
+                $"private {rangedInstanceFunctionGroupResolution.TypeFullName}? {rangedInstanceFunctionGroupResolution.FieldReference};")
             .AppendLine(
                 $"private {WellKnownTypes.SemaphoreSlim.FullName()} {rangedInstanceFunctionGroupResolution.LockReference} = new {WellKnownTypes.SemaphoreSlim.FullName()}(1);");
             
         foreach (var overload in rangedInstanceFunctionGroupResolution.Overloads)
         {
+            var isAsync =
+                overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
             var parameters = string.Join(", ",
                 overload.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"));
             stringBuilder = stringBuilder.AppendLine(
-                    $"public {(overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})")
-                .AppendLine($"{{")
-                .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Wait();")
+                    $"public {(isAsync ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})")
+                .AppendLine($"{{").AppendLine(
+                    $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};")
+                .AppendLine($"{(isAsync ? "await " : "")}this.{rangedInstanceFunctionGroupResolution.LockReference}.Wait{(isAsync ? "Async" : "")}();")
                 .AppendLine($"try")
                 .AppendLine($"{{")
                 .AppendLine(

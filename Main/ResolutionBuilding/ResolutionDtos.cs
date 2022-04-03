@@ -152,7 +152,8 @@ internal record ForConstructorParameterWithComposition(
 internal record RangedInstanceResolutionsQueueItem(
     ForConstructorParameter Parameter,
     string Label,
-    string Reference);
+    string Reference,
+    string Key);
 
 internal record SwitchTaskParameter((Resolvable, ITaskConsumableResolution?) InnerResolution) : Parameter;
 

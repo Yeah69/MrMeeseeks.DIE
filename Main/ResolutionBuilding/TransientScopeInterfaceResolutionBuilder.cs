@@ -19,11 +19,16 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
     private readonly HashSet<RangedInstanceResolutionsQueueItem> _pastQueuedItems = new();
     private readonly IList<ITransientScopeImplementationResolutionBuilder> _implementations =
         new List<ITransientScopeImplementationResolutionBuilder>();
-    protected readonly IDictionary<string, InterfaceFunctionDeclarationResolution> RangedInstanceReferenceResolutions =
+
+    private readonly IDictionary<string, InterfaceFunctionDeclarationResolution> _rangedInstanceReferenceResolutions =
         new Dictionary<string, InterfaceFunctionDeclarationResolution>();
+    private readonly IDictionary<string, IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakers =
+        new Dictionary<string, IFunctionResolutionSynchronicityDecisionMaker>();
+    
 
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
+    private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
     private readonly string _name;
     private readonly string _containerAdapterName;
@@ -32,10 +37,12 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
     public TransientScopeInterfaceResolutionBuilder(
         IReferenceGeneratorFactory referenceGeneratorFactory,
         WellKnownTypes wellKnownTypes,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory)
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory)
     {
         _wellKnownTypes = wellKnownTypes;
         _rangedFunctionGroupResolutionBuilderFactory = rangedFunctionGroupResolutionBuilderFactory;
+        _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
         _rootReferenceGenerator = referenceGeneratorFactory.Create();
 
         _name = _rootReferenceGenerator.Generate("ITransientScope");
@@ -46,11 +53,12 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
 
     public void AddImplementation(ITransientScopeImplementationResolutionBuilder implementation)
     {
-        foreach (var (parameter, label, reference) in _pastQueuedItems)
+        foreach (var (parameter, label, reference, key) in _pastQueuedItems)
             implementation.EnqueueRangedInstanceResolution(
                 parameter,
                 label,
-                reference);
+                reference,
+                new (() => _synchronicityDecisionMakers[key]));
 
         _implementations.Add(implementation);
     }
@@ -62,7 +70,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
             containerReference);
 
     public TransientScopeInterfaceResolution Build() => new(
-        RangedInstanceReferenceResolutions.Values.ToList(),
+        _rangedInstanceReferenceResolutions.Values.ToList(),
         _name,
         _containerAdapterName);
 
@@ -79,29 +87,37 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
             _ => null
         };
         var key = $"{implementationType.FullName()}{interfaceExtension?.KeySuffix() ?? ""}";
-        if (!RangedInstanceReferenceResolutions.TryGetValue(key, out var interfaceDeclaration))
+        if (!_rangedInstanceReferenceResolutions.TryGetValue(key, out var interfaceDeclaration))
         {
             var decorationSuffix = interfaceExtension?.RangedNameSuffix() ?? "";
             var reference = _rootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix);
             var queueItem = new RangedInstanceResolutionsQueueItem(
                 parameter,
                 label,
-                reference);
+                reference,
+                key);
 
             _pastQueuedItems.Add(queueItem);
-            
+
+            var synchronicityDecisionMaker = _synchronicityDecisionMakerFactory();
+            _synchronicityDecisionMakers[key] = synchronicityDecisionMaker;
+
             foreach (var implementation in _implementations)
                 implementation.EnqueueRangedInstanceResolution(
                     queueItem.Parameter,
                     queueItem.Label,
-                    queueItem.Reference);
+                    queueItem.Reference,
+                    new (() => synchronicityDecisionMaker));
 
             interfaceDeclaration = new InterfaceFunctionDeclarationResolution(
                 reference,
                 implementationType.FullName(),
+                _wellKnownTypes.Task1.Construct(implementationType).FullName(),
+                _wellKnownTypes.ValueTask1.Construct(implementationType).FullName(),
                 currentParameters.Select(t =>
-                    new ParameterResolution(_rootReferenceGenerator.Generate(t.Type), t.Type.FullName())).ToList());
-            RangedInstanceReferenceResolutions[key] = interfaceDeclaration;
+                    new ParameterResolution(_rootReferenceGenerator.Generate(t.Type), t.Type.FullName())).ToList(),
+                synchronicityDecisionMaker.Decision);
+            _rangedInstanceReferenceResolutions[key] = interfaceDeclaration;
         }
 
         var returnReference = _rootReferenceGenerator.Generate("ret");
@@ -123,12 +139,12 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
                 interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference))
                     .ToList()),
             new(returnReference,
-                interfaceDeclaration.TypeFullName,
                 _wellKnownTypes.ValueTask1.Construct(implementationType).FullName(),
+                interfaceDeclaration.TypeFullName,
                 interfaceDeclaration.Reference,
                 owningObjectReference,
                 interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference))
                     .ToList()),
-            new Lazy<SynchronicityDecision>(() => SynchronicityDecision.Sync)); // todo solve situation with transient scope instance interface
+            _synchronicityDecisionMakers[key].Decision);
     }
 }

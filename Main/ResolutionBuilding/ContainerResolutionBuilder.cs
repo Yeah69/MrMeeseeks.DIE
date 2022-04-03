@@ -18,6 +18,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IContainerCreateFunctionResolutionBuilder> _createFunctionResolutionBuilderFactory;
+    private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
     private readonly List<(IContainerCreateFunctionResolutionBuilder CreateFunction, string MethodNamePrefix)> _rootResolutions = new ();
     private readonly string _transientScopeAdapterReference;
@@ -34,7 +35,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         WellKnownTypes wellKnownTypes,
         Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeManager> scopeManagerFactory,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IContainerCreateFunctionResolutionBuilder> createFunctionResolutionBuilderFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory, 
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory,
         IUserProvidedScopeElements userProvidedScopeElement) 
         : base(
             containerInfo.Name, 
@@ -42,12 +44,14 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             userProvidedScopeElement,
             wellKnownTypes, 
             referenceGeneratorFactory,
-            rangedFunctionGroupResolutionBuilderFactory)
+            rangedFunctionGroupResolutionBuilderFactory,
+            synchronicityDecisionMakerFactory)
     {
         _containerInfo = containerInfo;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
         _wellKnownTypes = wellKnownTypes;
         _createFunctionResolutionBuilderFactory = createFunctionResolutionBuilderFactory;
+        _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
         _scopeManager = scopeManagerFactory(this, transientScopeInterfaceResolutionBuilder);
         
         transientScopeInterfaceResolutionBuilder.AddImplementation(this);
@@ -65,7 +69,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             parameter,
             "Container",
             null,
-            containerReference);
+            containerReference,
+            new (_synchronicityDecisionMakerFactory));
 
     public override MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
         CreateContainerInstanceReferenceResolution(parameter, "this");
@@ -324,9 +329,11 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public void EnqueueRangedInstanceResolution(
         ForConstructorParameter parameter,
         string label,
-        string reference) => CreateRangedInstanceReferenceResolution(
+        string reference,
+        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker) => CreateRangedInstanceReferenceResolution(
         parameter,
         label,
         reference,
-        "Doesn'tMatter");
+        "Doesn't Matter, because for interface",
+        synchronicityDecisionMaker);
 }

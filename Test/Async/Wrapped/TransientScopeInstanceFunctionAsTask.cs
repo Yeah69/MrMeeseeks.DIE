@@ -2,14 +2,15 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.SyncToTask;
+namespace MrMeeseeks.DIE.Test.Async.Wrapped.TransientScopeInstanceFunctionAsTask;
 
-internal class Dependency : ITypeInitializer
+internal class Dependency : ITaskTypeInitializer, ITransientScopeInstance
 {
     public bool IsInitialized { get; private set; }
     
-    void ITypeInitializer.Initialize()
+    async Task ITaskTypeInitializer.InitializeAsync()
     {
+        await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;
     }
 }
@@ -25,7 +26,7 @@ public class Tests
     public async ValueTask Test()
     {
         using var container = new Container();
-        var instance = await container.Create().ConfigureAwait(false);
-        Assert.True(instance.IsInitialized);
+        var instance = container.Create();
+        Assert.True((await instance.ConfigureAwait(false)).IsInitialized);
     }
 }

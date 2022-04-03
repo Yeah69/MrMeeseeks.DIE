@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.WrappedDependency.ValueTaskToValueTask;
+namespace MrMeeseeks.DIE.Test.Async.Wrapped.ValueTaskToValueTask;
 
 internal class Dependency : IValueTaskTypeInitializer
 {

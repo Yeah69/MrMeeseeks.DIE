@@ -7,7 +7,7 @@ internal abstract record InterfaceExtension(
         this switch
         {
             DecorationInterfaceExtension decoration => $":::{decoration.ImplementationType.FullName()}",
-            CompositionInterfaceExtension composition => string.Join(":::", composition.ImplementationTypes.Select(i => i.FullName())),
+            CompositionInterfaceExtension composition => $":::{string.Join(":::", composition.ImplementationTypes.Select(i => i.FullName()))}",
             _ => throw new ArgumentException()
         };
         

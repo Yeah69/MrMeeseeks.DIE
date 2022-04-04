@@ -20,6 +20,9 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
     private readonly IList<ITransientScopeImplementationResolutionBuilder> _implementations =
         new List<ITransientScopeImplementationResolutionBuilder>();
 
+    private readonly IDictionary<string, string> _rangedInstanceReferences =
+        new Dictionary<string, string>();
+
     private readonly IDictionary<string, InterfaceFunctionDeclarationResolution> _rangedInstanceReferenceResolutions =
         new Dictionary<string, InterfaceFunctionDeclarationResolution>();
     private readonly IDictionary<string, IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakers =
@@ -86,11 +89,18 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
             ForConstructorParameterWithDecoration withDecoration => withDecoration.Decoration,
             _ => null
         };
-        var key = $"{implementationType.FullName()}{interfaceExtension?.KeySuffix() ?? ""}";
-        if (!_rangedInstanceReferenceResolutions.TryGetValue(key, out var interfaceDeclaration))
+        var referenceKey = $"{implementationType.FullName()}{interfaceExtension?.KeySuffix() ?? ""}";
+        if (!_rangedInstanceReferences.TryGetValue(referenceKey, out var reference))
         {
             var decorationSuffix = interfaceExtension?.RangedNameSuffix() ?? "";
-            var reference = _rootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix);
+            reference =
+                _rootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix);
+            _rangedInstanceReferences[referenceKey] = reference;
+        }
+        
+        var key = $"{referenceKey}:::{string.Join(":::", currentParameters.Select(p => p.Type.FullName()))}";
+        if (!_rangedInstanceReferenceResolutions.TryGetValue(key, out var interfaceDeclaration))
+        {
             var queueItem = new RangedInstanceResolutionsQueueItem(
                 parameter,
                 label,

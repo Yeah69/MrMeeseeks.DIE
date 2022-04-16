@@ -8,9 +8,16 @@ internal enum ScopeLevel
     Container
 }
 
+internal enum DisposalType
+{
+    None,
+    Sync,
+    Async
+}
+
 internal interface ICheckTypeProperties
 {
-    bool ShouldBeManaged(INamedTypeSymbol implementationType);
+    DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType);
     ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType);
     bool ShouldBeComposite(INamedTypeSymbol interfaceType);
     ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType);
@@ -27,14 +34,29 @@ internal interface ICheckTypeProperties
 internal class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
+    private readonly WellKnownTypes _wellKnownTypes;
 
     internal CheckTypeProperties(
-        ICurrentlyConsideredTypes currentlyConsideredTypes)
+        ICurrentlyConsideredTypes currentlyConsideredTypes,
+        WellKnownTypes wellKnownTypes)
     {
         _currentlyConsideredTypes = currentlyConsideredTypes;
+        _wellKnownTypes = wellKnownTypes;
+    }
+    
+    public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
+    {
+        if (implementationType.AllInterfaces.Contains(_wellKnownTypes.AsyncDisposable)
+            && !_currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType))
+            return DisposalType.Async;
+        
+        if (implementationType.AllInterfaces.Contains(_wellKnownTypes.Disposable)
+            && !_currentlyConsideredTypes.SyncTransientTypes.Contains(implementationType))
+            return DisposalType.Sync;
+        
+        return DisposalType.None;
     }
 
-    public bool ShouldBeManaged(INamedTypeSymbol implementationType) => !_currentlyConsideredTypes.TransientTypes.Contains(implementationType);
     public ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType)
     {
         if (_currentlyConsideredTypes.TransientScopeRootTypes.Contains(implementationType)) return ScopeLevel.TransientScope;

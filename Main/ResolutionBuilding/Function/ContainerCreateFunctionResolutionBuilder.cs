@@ -42,7 +42,6 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
             TypeFullName,
             Resolvable.Value,
             Array.Empty<ParameterResolution>(),
-            _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
                 .Select(lf => lf.Build())
                 .Select(f => new LocalFunctionResolution(
@@ -50,7 +49,6 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
                     f.TypeFullName,
                     f.Resolvable,
                     f.Parameter,
-                    f.DisposalHandling,
                     f.LocalFunctions,
                     f.SynchronicityDecision))
                 .ToList(),

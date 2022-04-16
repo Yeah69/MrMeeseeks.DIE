@@ -60,8 +60,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     private readonly ICheckTypeProperties _checkTypeProperties;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
-
-    private readonly DisposableCollectionResolution _disposableCollectionResolution;
+    
     private readonly IUserProvidedScopeElements _userProvidedScopeElements;
 
     protected readonly IList<IFunctionResolutionBuilder> LocalFunctions = new List<IFunctionResolutionBuilder>();
@@ -99,7 +98,6 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         _userProvidedScopeElements = rangeResolutionBaseBuilder.UserProvidedScopeElements;
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
-        _disposableCollectionResolution = _rangeResolutionBaseBuilder.DisposableCollectionResolution;
         Parameters = currentParameters
             .Select(p => new ParameterResolution(RootReferenceGenerator.Generate(p.Type), TypeFullName))
             .ToList();
@@ -154,7 +152,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             var constructorResolution = new ConstructorResolution(
                 RootReferenceGenerator.Generate(valueTupleType),
                 valueTupleType.FullName(),
-                ImplementsIDisposable(valueTupleType, _wellKnownTypes, _disposableCollectionResolution, _checkTypeProperties),
+                DisposalType.None,
                 valueTupleType
                     .TypeArguments
                     .Select((t, i) => ($"item{(i + 1)}", SwitchType(new SwitchTypeParameter(t, currentFuncParameters)).Item1))
@@ -465,12 +463,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
                 nextParameter,
                 interfaceType,
-                _disposableCollectionResolution,
                 currentParameters), null),
             ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
                 nextParameter,
                 interfaceType,
-                _disposableCollectionResolution,
                 currentParameters), null),
             _ => SwitchInterfaceAfterScopeRoot(nextParameter)
         };
@@ -546,12 +542,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
                 nextParameter,
                 interfaceType,
-                _disposableCollectionResolution,
                 currentParameters), null),
             ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
                 nextParameter,
                 interfaceType,
-                _disposableCollectionResolution,
                 currentParameters), null),
             _ => CreateInterface(nextParameter)
         };
@@ -644,12 +638,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
                 nextParameter,
                 implementationType, 
-                _disposableCollectionResolution, 
                 currentParameters), null),
             ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
                 nextParameter, 
                 implementationType, 
-                _disposableCollectionResolution, 
                 currentParameters), null),
             _ => SwitchImplementation(nextParameter)
         };
@@ -785,15 +777,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             }
         }
 
-
         var resolution = new ConstructorResolution(
             RootReferenceGenerator.Generate(implementationType),
             implementationType.FullName(),
-            ImplementsIDisposable(
-                implementationType, 
-                _wellKnownTypes, 
-                _disposableCollectionResolution,
-                _checkTypeProperties),
+            GetDisposalTypeFor(implementationType),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                 .Parameters
                 .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
@@ -879,6 +866,13 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 return (parameterName, new TransientScopeAsDisposableResolution(
                     RootReferenceGenerator.Generate(_wellKnownTypes.Disposable),
                     _wellKnownTypes.Disposable.FullName()));
+
+            if (isTransientScopeRoot
+                && typeSymbol.Equals(_wellKnownTypes.AsyncDisposable, SymbolEqualityComparer.Default))
+                return (parameterName, new TransientScopeAsAsyncDisposableResolution(
+                    RootReferenceGenerator.Generate(_wellKnownTypes.AsyncDisposable),
+                    _wellKnownTypes.AsyncDisposable.FullName()));
+            
             if (typeSymbol is not INamedTypeSymbol parameterType)
                 return ("",
                     new ErrorTreeItem(
@@ -892,6 +886,13 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         }
     }
 
+    private DisposalType GetDisposalTypeFor(INamedTypeSymbol type)
+    {
+        var disposalType = _checkTypeProperties.ShouldDisposalBeManaged(type);
+        _rangeResolutionBaseBuilder.RegisterDisposalType(disposalType);
+        return disposalType;
+    }
+
     protected void AdjustForSynchronicity() =>
         ActualReturnType = SynchronicityDecision.Value switch
         {
@@ -899,15 +900,6 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             Function.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(OriginalReturnType),
             _ => OriginalReturnType
         };
-
-    private static DisposableCollectionResolution? ImplementsIDisposable(
-        INamedTypeSymbol type, 
-        WellKnownTypes wellKnownTypes, 
-        DisposableCollectionResolution disposableCollectionResolution,
-        ICheckTypeProperties checkDisposalManagement) =>
-        type.AllInterfaces.Contains(wellKnownTypes.Disposable) && checkDisposalManagement.ShouldBeManaged(type) 
-            ? disposableCollectionResolution 
-            : null;
 
     public MultiSynchronicityFunctionCallResolution BuildFunctionCall(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters, string? ownerReference)

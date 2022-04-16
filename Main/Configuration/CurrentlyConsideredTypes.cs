@@ -4,7 +4,8 @@ namespace MrMeeseeks.DIE.Configuration;
 
 internal interface ICurrentlyConsideredTypes
 {
-    IImmutableSet<ISymbol?> TransientTypes { get; }
+    IImmutableSet<ISymbol?> SyncTransientTypes { get; }
+    IImmutableSet<ISymbol?> AsyncTransientTypes { get; }
     IImmutableSet<ISymbol?> ContainerInstanceTypes { get; }
     IImmutableSet<ISymbol?> TransientScopeInstanceTypes { get; }
     IImmutableSet<ISymbol?> ScopeInstanceTypes { get; }
@@ -54,7 +55,12 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 .Concat(spiedImplementations));
         }
 
-        TransientTypes = GetSetOfTypesWithProperties(t => t.Transient, t => t.FilterTransient);
+        SyncTransientTypes = GetSetOfTypesWithProperties(
+            t => t.SyncTransient.Concat(t.Transient).ToList(), 
+            t => t.FilterSyncTransient.Concat(t.FilterTransient).ToList());
+        AsyncTransientTypes = GetSetOfTypesWithProperties(
+            t => t.AsyncTransient.Concat(t.Transient).ToList(), 
+            t => t.FilterAsyncTransient.Concat(t.FilterTransient).ToList());
         ContainerInstanceTypes = GetSetOfTypesWithProperties(t => t.ContainerInstance, t => t.FilterContainerInstance);
         TransientScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.TransientScopeInstance, t => t.FilterTransientScopeInstance);
         ScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.ScopeInstance, t => t.FilterScopeInstance);
@@ -193,8 +199,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         ImplementationToInitializer = initializers;
         
         IImmutableSet<ISymbol?> GetSetOfTypesWithProperties(
-            Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> propertyGivingTypesGetter,
-        Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> filteredPropertyGivingTypesGetter)
+            Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> propertyGivingTypesGetter, 
+            Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> filteredPropertyGivingTypesGetter)
         {
             var ret = ImmutableHashSet<ISymbol?>.Empty;
             foreach (var types in typesFromAttributes)
@@ -232,7 +238,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         }
     }
     
-    public IImmutableSet<ISymbol?> TransientTypes { get; }
+    public IImmutableSet<ISymbol?> SyncTransientTypes { get; }
+    public IImmutableSet<ISymbol?> AsyncTransientTypes { get; }
     public IImmutableSet<ISymbol?> ContainerInstanceTypes { get; }
     public IImmutableSet<ISymbol?> TransientScopeInstanceTypes { get; }
     public IImmutableSet<ISymbol?> ScopeInstanceTypes { get; }

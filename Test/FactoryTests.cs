@@ -51,7 +51,7 @@ public partial class FactoryTests
     public void ResolveExternalType()
     {
         var check = @"C:\HelloWorld.txt";
-        using var container = new FactoryContainer(check);
+        var container = new FactoryContainer(check);
         var fileInfo = container.CreateFileInfo();
         Assert.Equal(check, fileInfo.FullName);
     }
@@ -60,7 +60,7 @@ public partial class FactoryTests
     public void ResolveFromFactoryInTransientScope()
     {
         var check = @"C:\HelloWorld.txt";
-        using var container = new FactoryContainer(check);
+        var container = new FactoryContainer(check);
         var transientScope = container.CreateFactoryContainerTransientScope();
         Assert.Equal(69, transientScope.Number);
     }
@@ -69,7 +69,7 @@ public partial class FactoryTests
     public void ResolveFromFactoryInScope()
     {
         var check = @"C:\HelloWorld.txt";
-        using var container = new FactoryContainer(check);
+        var container = new FactoryContainer(check);
         var scope = container.CreateFactoryContainerScope();
         Assert.Equal("Yeah", scope.Yeah);
     }

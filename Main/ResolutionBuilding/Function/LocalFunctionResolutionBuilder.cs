@@ -43,7 +43,6 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
             TypeFullName,
             Resolvable.Value,
             _parameters.Select(t => t.Resolution).ToList(),
-            _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
                 .Select(lf => lf.Build())
                 .Select(f => new LocalFunctionResolution(
@@ -51,7 +50,6 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
                     f.TypeFullName,
                     f.Resolvable,
                     f.Parameter,
-                    f.DisposalHandling,
                     f.LocalFunctions,
                     f.SynchronicityDecision))
                 .ToList(),

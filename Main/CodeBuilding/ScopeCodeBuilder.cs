@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Configuration;
+
 namespace MrMeeseeks.DIE.CodeBuilding;
 
 internal interface IScopeCodeBuilder : IRangeCodeBaseBuilder
@@ -10,15 +12,27 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
     private readonly IContainerInfo _containerInfo;
     private readonly ScopeResolution _scopeResolution;
     private readonly TransientScopeInterfaceResolution _transientScopeInterfaceResolution;
+    private readonly ContainerResolution _containerResolution;
+
+    protected override StringBuilder GenerateDisposalFunction_TransientScopeDictionary(StringBuilder stringBuilder) => stringBuilder;
+
+    protected override StringBuilder GenerateDisposalFunction_TransientScopeDisposal(StringBuilder stringBuilder) => stringBuilder;
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         if (!_scopeResolution.RootResolutions.Any() && !_scopeResolution.RangedInstanceFunctionGroups.Any()) 
             return stringBuilder;
         
+        var disposableImplementation = _containerResolution.DisposalType switch
+        {
+            DisposalType.Sync => $" : {WellKnownTypes.Disposable.FullName()}",
+            DisposalType.Async => $" : {WellKnownTypes.AsyncDisposable.FullName()}",
+            _ => ""
+        };
+        
         stringBuilder = stringBuilder
             .AppendLine(
-                $"private partial class {_scopeResolution.Name} : {WellKnownTypes.Disposable.FullName()}")
+                $"private partial class {_scopeResolution.Name}{disposableImplementation}")
             .AppendLine($"{{")
             .AppendLine($"private readonly {_containerInfo.FullName} {_scopeResolution.ContainerReference};")
             .AppendLine($"private readonly {_transientScopeInterfaceResolution.Name} {_scopeResolution.TransientScopeReference};")
@@ -54,5 +68,6 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
         _containerInfo = containerInfo;
         _scopeResolution = scopeResolution;
         _transientScopeInterfaceResolution = transientScopeInterfaceResolution;
+        _containerResolution = containerResolution;
     }
 }

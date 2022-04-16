@@ -31,7 +31,7 @@ public partial class InstanceTests
     public void ResolveExternalType()
     {
         var check = "Hello, instance!";
-        using var container = new InstanceContainer(check);
+        var container = new InstanceContainer(check);
         var instanceClass = container.Create();
         Assert.Equal(check, instanceClass.Dependency);
     }

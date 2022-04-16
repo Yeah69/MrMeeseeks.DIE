@@ -46,7 +46,7 @@ public partial class ValueTupleTests
     [Fact]
     public void ResolveValueTuple()
     {
-        using var container = new ValueTupleContainer();
+        var container = new ValueTupleContainer();
         var valueTupleBase = container.CreateDep();
         Assert.Equal(25, valueTupleBase.Dependency._25);
     }
@@ -91,7 +91,7 @@ public partial class ValueTupleTests
     [Fact]
     public void ResolveNonSyntaxValueTuple()
     {
-        using var container = new NonSyntaxValueTupleContainer();
+        var container = new NonSyntaxValueTupleContainer();
         var nonSyntaxValueTupleBase = container.CreateDep();
         Assert.Equal(25, nonSyntaxValueTupleBase.Dependency.Item26);
     }
@@ -127,7 +127,7 @@ public partial class ValueTupleTests
     [Fact]
     public void ResolveNonSyntaxSingleItemValueTuple()
     {
-        using var container = new NonSyntaxSingleItemValueTupleContainer();
+        var container = new NonSyntaxSingleItemValueTupleContainer();
         var NonSyntaxSingleItemValueTupleBase = container.CreateDep();
         Assert.Equal(0, NonSyntaxSingleItemValueTupleBase.Dependency.Item1);
     }
@@ -163,7 +163,7 @@ public partial class ValueTupleTests
     [Fact]
     public void ResolveNonSyntaxDoubleItemValueTuple()
     {
-        using var container = new NonSyntaxDoubleItemValueTupleContainer();
+        var container = new NonSyntaxDoubleItemValueTupleContainer();
         var NonSyntaxDoubleItemValueTupleBase = container.CreateDep();
         Assert.Equal(1, NonSyntaxDoubleItemValueTupleBase.Dependency.Item2);
     }

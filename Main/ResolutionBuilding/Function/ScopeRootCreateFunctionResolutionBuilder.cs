@@ -47,7 +47,6 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
             TypeFullName,
             Resolvable.Value,
             Parameters,
-            _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
                 .Select(lf => lf.Build())
                 .Select(f => new LocalFunctionResolution(
@@ -55,7 +54,6 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
                     f.TypeFullName,
                     f.Resolvable,
                     f.Parameter,
-                    f.DisposalHandling,
                     f.LocalFunctions,
                     f.SynchronicityDecision))
                 .ToList(),

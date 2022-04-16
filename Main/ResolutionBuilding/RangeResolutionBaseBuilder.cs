@@ -7,8 +7,6 @@ internal interface IRangeResolutionBaseBuilder
 {
     ICheckTypeProperties CheckTypeProperties { get; }
     IUserProvidedScopeElements UserProvidedScopeElements { get; }
-    DisposableCollectionResolution DisposableCollectionResolution { get; }
-    DisposalHandling DisposalHandling { get; }
     
     MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter);
@@ -22,22 +20,20 @@ internal interface IRangeResolutionBaseBuilder
     TransientScopeRootResolution CreateTransientScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
     
     ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+
+    void RegisterDisposalType(DisposalType disposalType);
 }
 
 internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
 {
     public ICheckTypeProperties CheckTypeProperties { get; }
     public IUserProvidedScopeElements UserProvidedScopeElements { get; }
-    public DisposableCollectionResolution DisposableCollectionResolution { get; }
-    public DisposalHandling DisposalHandling { get; }
 
     protected readonly WellKnownTypes WellKnownTypes;
     private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
@@ -67,18 +63,8 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
-        DisposableCollectionResolution = new DisposableCollectionResolution(
-            RootReferenceGenerator.Generate(WellKnownTypes.ConcurrentBagOfDisposable),
-            WellKnownTypes.ConcurrentBagOfDisposable.FullName());
         
         Name = name;
-        DisposalHandling = new DisposalHandling(
-            DisposableCollectionResolution,
-            Name,
-            RootReferenceGenerator.Generate("_disposed"),
-            RootReferenceGenerator.Generate("disposed"),
-            RootReferenceGenerator.Generate("Disposed"),
-            RootReferenceGenerator.Generate("disposable"));
     }
 
     public abstract MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter);
@@ -97,14 +83,14 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
     public abstract TransientScopeRootResolution CreateTransientScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
     
     public abstract ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+
+    public abstract void RegisterDisposalType(DisposalType disposalType);
 
     protected MultiSynchronicityFunctionCallResolution CreateRangedInstanceReferenceResolution(
         ForConstructorParameter parameter,
@@ -143,4 +129,17 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             }
         }
     }
+
+    protected DisposalHandling BuildDisposalHandling() =>
+        new(new SyncDisposableCollectionResolution(
+                RootReferenceGenerator.Generate(WellKnownTypes.ConcurrentBagOfSyncDisposable),
+                WellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()),
+            new AsyncDisposableCollectionResolution(
+                RootReferenceGenerator.Generate(WellKnownTypes.ConcurrentBagOfAsyncDisposable),
+                WellKnownTypes.ConcurrentBagOfAsyncDisposable.FullName()),
+            Name,
+            RootReferenceGenerator.Generate("_disposed"),
+            RootReferenceGenerator.Generate("disposed"),
+            RootReferenceGenerator.Generate("Disposed"),
+            RootReferenceGenerator.Generate("disposable"));
 }

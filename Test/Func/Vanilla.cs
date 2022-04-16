@@ -17,7 +17,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        var container = new Container();
         var _ = container.Create()(DateTime.Now, new List<object>());
     }
 }

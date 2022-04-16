@@ -42,7 +42,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        var container = new Container();
 
         var scopeRoot0 = container.Create();
         var decorator0 = scopeRoot0.Decorated;

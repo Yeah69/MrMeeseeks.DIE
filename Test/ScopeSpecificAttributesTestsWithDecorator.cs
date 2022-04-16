@@ -128,35 +128,35 @@ public class ScopeSpecificAttributesTests
     [Fact]
     public void Container()
     {
-        using var container = new Container();
+        var container = new Container();
         var instance = container.Create0();
         Assert.Equal(69, instance.CheckNumber);
     }
     [Fact]
     public void TransientScope()
     {
-        using var container = new Container();
+        var container = new Container();
         var instance = container.Create1();
         Assert.Equal(23, instance.Dep.CheckNumber);
     }
     [Fact]
     public void TransientScopeSpecific()
     {
-        using var container = new Container();
+        var container = new Container();
         var instance = container.Create2();
         Assert.Equal(7, instance.Dep.CheckNumber);
     }
     [Fact]
     public void Scope()
     {
-        using var container = new Container();
+        var container = new Container();
         var instance = container.Create3();
         Assert.Equal(3, instance.Dep.CheckNumber);
     }
     [Fact]
     public void ScopeSpecific()
     {
-        using var container = new Container();
+        var container = new Container();
         var instance = container.Create4();
         Assert.Equal(13, instance.Dep.CheckNumber);
     }

@@ -52,21 +52,21 @@ public class Tests
     [Fact]
     public void Container()
     {
-        using var container = new Container();
+        var container = new Container();
         var dependency = container.Create0();
         Assert.IsType<DependencyContainer>(dependency);
     }
     [Fact]
     public void TransientScope()
     {
-        using var container = new Container();
+        var container = new Container();
         var dependency = container.Create1();
         Assert.IsType<DependencyTransientScope>(dependency.Dependency);
     }
     [Fact]
     public void Scope()
     {
-        using var container = new Container();
+        var container = new Container();
         var dependency = container.Create2();
         Assert.IsType<DependencyScope>(dependency.Dependency);
     }

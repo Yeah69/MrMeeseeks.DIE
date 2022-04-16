@@ -24,6 +24,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     private readonly string _transientScopeAdapterReference;
     private readonly IScopeManager _scopeManager;
 
+    private DisposalType _disposalType = DisposalType.None;
+
     internal ContainerResolutionBuilder(
         // parameters
         IContainerInfo containerInfo,
@@ -78,21 +80,21 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public override MultiSynchronicityFunctionCallResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, _transientScopeAdapterReference);
 
-    public override TransientScopeRootResolution CreateTransientScopeRootResolution(IScopeRootParameter parameter, INamedTypeSymbol rootType,
-        DisposableCollectionResolution disposableCollectionResolution, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+    public override TransientScopeRootResolution CreateTransientScopeRootResolution(
+        IScopeRootParameter parameter,
+        INamedTypeSymbol rootType,
+        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
             .GetTransientScopeBuilder(rootType)
             .AddCreateResolveFunction(
                 parameter,
                 rootType, 
                 "this",
-                disposableCollectionResolution,
                 currentParameters);
 
     public override ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
             .GetScopeBuilder(rootType)
@@ -101,8 +103,12 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 rootType, 
                 "this",
                 _transientScopeAdapterReference,
-                disposableCollectionResolution,
                 currentParameters);
+
+    public override void RegisterDisposalType(DisposalType disposalType)
+    {
+        if (disposalType > _disposalType) _disposalType = disposalType;
+    }
 
     public bool HasWorkToDo =>
         _rootResolutions.Any(r => r.CreateFunction.HasWorkToDo)    
@@ -135,7 +141,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 "private",
                 privateFunctionResolution.Resolvable,
                 privateFunctionResolution.Parameter,
-                DisposalHandling,
                 privateFunctionResolution.LocalFunctions,
                 privateFunctionResolution.SynchronicityDecision);
             
@@ -158,7 +163,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     "public",
                     call,
                     privateRootResolutionFunction.Parameter,
-                    DisposalHandling,
                     Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
@@ -184,7 +188,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedTaskReference, 
                         boundTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    DisposalHandling,
                     Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
@@ -210,7 +213,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedValueTaskReference, 
                         boundValueTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    DisposalHandling,
                     Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
@@ -232,7 +234,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     "public",
                     call,
                     privateRootResolutionFunction.Parameter,
-                    DisposalHandling,
                     Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
@@ -258,7 +259,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedValueTaskReference, 
                         boundValueTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    DisposalHandling,
                     Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
@@ -288,7 +288,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedTaskReference, 
                         boundTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    DisposalHandling,
                     Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
@@ -306,7 +305,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     "public",
                     valueCall,
                     privateRootResolutionFunction.Parameter,
-                    DisposalHandling,
                     Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
@@ -318,12 +316,15 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
 
         return new(
             rootFunctions,
-            DisposalHandling,
+            BuildDisposalHandling(),
             RangedInstanceReferenceResolutions.Values.Select(b => b.Build()).ToList(),
             _transientScopeInterfaceResolutionBuilder.Build(),
             _transientScopeAdapterReference,
             transientScopeResolutions,
-            scopeResolutions);
+            scopeResolutions,
+            _disposalType,
+            RootReferenceGenerator.Generate("transientScopeDisposal"),
+            RootReferenceGenerator.Generate("transientScopeToDispose"));
     }
 
     public void EnqueueRangedInstanceResolution(

@@ -119,7 +119,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     {
         while (HasWorkToDo)
         {
-            foreach ((IContainerCreateFunctionResolutionBuilder createFunction, _) in _rootResolutions.Where(r => r.CreateFunction.HasWorkToDo))
+            foreach ((IContainerCreateFunctionResolutionBuilder createFunction, _) in _rootResolutions.Where(r => r.CreateFunction.HasWorkToDo).ToList())
             {
                 createFunction.DoWork();
             }

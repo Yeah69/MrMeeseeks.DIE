@@ -127,7 +127,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     {
         while (HasWorkToDo)
         {
-            foreach (var functionResolutionBuilder in _scopeRootFunctionResolutions.Values.Where(f => f.HasWorkToDo))
+            foreach (var functionResolutionBuilder in _scopeRootFunctionResolutions.Values.Where(f => f.HasWorkToDo).ToList())
             {
                 functionResolutionBuilder.DoWork();
             }

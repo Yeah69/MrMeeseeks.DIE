@@ -107,6 +107,33 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         
         stringBuilder = _scopeCodeBuilders.Aggregate(stringBuilder, (sb, cb) => cb.Build(sb));
 
+        var disposableTypeFullName = WellKnownTypes.Disposable.FullName();
+        var asyncDisposableTypeFullName = WellKnownTypes.AsyncDisposable.FullName();
+        var valueTaskFullName = WellKnownTypes.ValueTask.FullName();
+        stringBuilder = stringBuilder
+            .AppendLine($"private class {_containerResolution.NopDisposable.ClassName} : {disposableTypeFullName}")
+            .AppendLine($"{{")
+            .AppendLine($"internal static {disposableTypeFullName} {_containerResolution.NopDisposable.InstanceReference} {{ get; }} = new {_containerResolution.NopDisposable.ClassName}();")
+            .AppendLine($"public void Dispose()")
+            .AppendLine($"{{")
+            .AppendLine($"}}")
+            .AppendLine($"}}")
+            .AppendLine($"private class {_containerResolution.NopAsyncDisposable.ClassName} : {asyncDisposableTypeFullName}")
+            .AppendLine($"{{")
+            .AppendLine($"internal static {asyncDisposableTypeFullName} {_containerResolution.NopAsyncDisposable.InstanceReference} {{ get; }} = new {_containerResolution.NopAsyncDisposable.ClassName}();")
+            .AppendLine($"public {valueTaskFullName} DisposeAsync() => {valueTaskFullName}.CompletedTask;")
+            .AppendLine($"}}")
+            .AppendLine($"private class {_containerResolution.SyncToAsyncDisposable.ClassName} : {asyncDisposableTypeFullName}")
+            .AppendLine($"{{")
+            .AppendLine($"private readonly {disposableTypeFullName} {_containerResolution.SyncToAsyncDisposable.DisposableFieldReference};")
+            .AppendLine($"internal {_containerResolution.SyncToAsyncDisposable.ClassName}({disposableTypeFullName} {_containerResolution.SyncToAsyncDisposable.DisposableParameterReference}) => {_containerResolution.SyncToAsyncDisposable.DisposableFieldReference} = {_containerResolution.SyncToAsyncDisposable.DisposableParameterReference};")
+            .AppendLine($"public {valueTaskFullName} DisposeAsync()")
+            .AppendLine($"{{")
+            .AppendLine($"{_containerResolution.SyncToAsyncDisposable.DisposableFieldReference}.Dispose();")
+            .AppendLine($"return {valueTaskFullName}.CompletedTask;")
+            .AppendLine($"}}")
+            .AppendLine($"}}");
+        
         return stringBuilder
             .AppendLine($"}}")
             .AppendLine($"}}")

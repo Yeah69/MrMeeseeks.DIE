@@ -463,14 +463,22 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     $"{reference} = ({typeFullName}) {resolutionBase.Reference};");              
                 break;
             case TransientScopeAsDisposableResolution(var reference, var typeFullName):
-                if (_containerResolution.DisposalType is not DisposalType.Sync)
-                    throw new Exception();
-                stringBuilder = stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;");              
+                stringBuilder = _containerResolution.DisposalType switch
+                {
+                    DisposalType.Async => throw new Exception("If the container disposal has to be async, then sync disposal handles in transient scopes are not allowed."),
+                    DisposalType.Sync => stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;"),
+                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopDisposable}.{_containerResolution.NopDisposable.InstanceReference};"),
+                    _ => stringBuilder
+                };
                 break;
             case TransientScopeAsAsyncDisposableResolution(var reference, var typeFullName):
-                if (_containerResolution.DisposalType is not DisposalType.Async)
-                    throw new Exception();
-                stringBuilder = stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;");              
+                stringBuilder = _containerResolution.DisposalType switch
+                {
+                    DisposalType.Async => stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;"),
+                    DisposalType.Sync => stringBuilder.AppendLine($"{reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable}(({WellKnownTypes.Disposable.FullName()}) this);"),
+                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable}.{_containerResolution.NopAsyncDisposable.InstanceReference};"),
+                    _ => stringBuilder
+                };
                 break;
             case ConstructorResolution(var reference, var typeFullName, var disposalType, var parameters, var initializedProperties, var initialization):
                 stringBuilder = parameters.Aggregate(stringBuilder,

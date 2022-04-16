@@ -6,7 +6,6 @@ internal interface IContainerCreateFunctionResolutionBuilder : IFunctionResoluti
 
 internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuilder, IContainerCreateFunctionResolutionBuilder
 {
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly INamedTypeSymbol _returnType;
 
     public ContainerCreateFunctionResolutionBuilder(
@@ -22,7 +21,6 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
         : base(rangeResolutionBaseBuilder, returnType, Array.Empty<(ITypeSymbol, ParameterResolution)>(), synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
     {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _returnType = returnType;
         
         Name = RootReferenceGenerator.Generate("Create");

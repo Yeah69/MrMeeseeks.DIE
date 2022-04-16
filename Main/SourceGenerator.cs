@@ -45,7 +45,7 @@ public class SourceGenerator : ISourceGenerator
                 
                 new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory, wellKnownTypes, RangedFunctionGroupResolutionBuilderFactory, FunctionResolutionSynchronicityDecisionMakerFactory),
                 referenceGeneratorFactory,
-                new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, context)),
+                new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, context), wellKnownTypes),
                 wellKnownTypes,
                 ScopeManagerFactory,
                 ContainerCreateFunctionResolutionBuilderFactory,
@@ -63,7 +63,7 @@ public class SourceGenerator : ISourceGenerator
                 TransientScopeResolutionBuilderFactory,
                 ScopeResolutionBuilderFactory,
                 ad => new ScopeTypesFromAttributes(ad, wellKnownTypes),
-                tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, context)),
+                tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, context), wellKnownTypes),
                 st => new UserProvidedScopeElements(st),
                 new EmptyUserProvidedScopeElements(),
                 wellKnownTypes);

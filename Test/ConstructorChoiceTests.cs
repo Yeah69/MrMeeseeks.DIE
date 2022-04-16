@@ -18,7 +18,7 @@ public class ImplementationAggregationTests
     [Fact]
     public void ResolveExternalType()
     {
-        using var container = new ConstructorChoiceContainer();
+        var container = new ConstructorChoiceContainer();
         var dateTime = container.Create();
         Assert.Equal(DateTime.MinValue, dateTime);
     }

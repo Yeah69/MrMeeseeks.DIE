@@ -77,7 +77,7 @@ public class Tests
     [Fact]
     public async ValueTask Test()
     {
-        using var container = new Container();
+        var container = new Container();
         var instance = await container.Create().ConfigureAwait(false);
         Assert.IsType<Composite>(instance);
         Assert.Equal(4, ((Composite) instance).Count);

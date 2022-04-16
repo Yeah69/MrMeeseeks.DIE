@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE.CodeBuilding;
@@ -14,13 +15,59 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
     private readonly IReadOnlyList<ITransientScopeCodeBuilder> _transientScopeCodeBuilders;
     private readonly IReadOnlyList<IScopeCodeBuilder> _scopeCodeBuilders;
 
+    protected override StringBuilder GenerateDisposalFunction_TransientScopeDictionary(StringBuilder stringBuilder)
+    {
+        if (_containerResolution.DisposalType is DisposalType.None)
+            return stringBuilder;
+
+        var dictionaryTypeName = _containerResolution.DisposalType is DisposalType.Async
+            ? WellKnownTypes.ConcurrentDictionaryOfAsyncDisposable.FullName()
+            : WellKnownTypes.ConcurrentDictionaryOfSyncDisposable.FullName();
+
+        stringBuilder.AppendLine(
+            $"private {dictionaryTypeName} {_containerResolution.TransientScopeDisposalReference} = new {dictionaryTypeName}();");
+        
+        return stringBuilder;
+    }
+
+    protected override StringBuilder GenerateDisposalFunction_TransientScopeDisposal(StringBuilder stringBuilder)
+    {
+        if (_containerResolution.DisposalType is DisposalType.None)
+            return stringBuilder;
+
+        var elementName = _containerResolution.TransientScopeDisposalElement;
+
+        var asyncSuffix = _containerResolution.DisposalType is DisposalType.Async ? "Async" : "";
+        var awaitPrefix = _containerResolution.DisposalType is DisposalType.Async ? "await " : "";
+
+        stringBuilder
+            .AppendLine($"while ({_containerResolution.TransientScopeDisposalReference}.Count > 0)")
+            .AppendLine($"{{")
+            .AppendLine($"var {elementName} = global::System.Linq.Enumerable.FirstOrDefault({_containerResolution.TransientScopeDisposalReference}.Keys);")
+            .AppendLine($"if ({elementName} is not null && {_containerResolution.TransientScopeDisposalReference}.TryRemove({elementName}, out _))")
+            .AppendLine($"{{")
+            .AppendLine($"{awaitPrefix}{elementName}.Dispose{asyncSuffix}();")
+            .AppendLine($"}}")
+            .AppendLine($"}}")
+            .AppendLine($"{_containerResolution.TransientScopeDisposalReference}.Clear();");
+
+        return stringBuilder;
+    }
+
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
+        var disposableImplementation = _containerResolution.DisposalType switch
+        {
+            DisposalType.Sync => $" : {WellKnownTypes.Disposable.FullName()}",
+            DisposalType.Async => $" : {WellKnownTypes.AsyncDisposable.FullName()}",
+            _ => ""
+        };
+        
         stringBuilder = stringBuilder
             .AppendLine($"#nullable enable")
             .AppendLine($"namespace {_containerInfo.Namespace}")
             .AppendLine($"{{")
-            .AppendLine($"partial class {_containerInfo.Name} : {WellKnownTypes.Disposable.FullName()}")
+            .AppendLine($"partial class {_containerInfo.Name}{disposableImplementation}")
             .AppendLine($"{{");
 
         stringBuilder = GenerateResolutionRange(

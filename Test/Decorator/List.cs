@@ -38,7 +38,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        var container = new Container();
         var decorated = container.Create();
         var decoratedOfA = decorated[0];
         var decoratedOfB = decorated[1];

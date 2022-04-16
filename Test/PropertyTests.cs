@@ -33,7 +33,7 @@ public partial class PropertyTests
     public void ResolveExternalType()
     {
         var check = "Hello, Property!";
-        using var container = new PropertyContainer(check);
+        var container = new PropertyContainer(check);
         var propertyClass = container.Create();
         Assert.Equal(check, propertyClass.Dependency);
     }

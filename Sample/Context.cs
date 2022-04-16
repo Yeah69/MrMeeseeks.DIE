@@ -1,30 +1,86 @@
 ﻿using System;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Sample;
-internal class Dependency : ITaskTypeInitializer
+namespace MrMeeseeks.DIE.Test;
+
+internal interface ITransientScopeInstanceInner {}
+internal class TransientScopeInstance : ITransientScopeInstanceInner, ITransientScopeInstance {}
+
+internal interface IScopeWithTransientScopeInstance {}
+
+internal class ScopeWithTransientScopeInstance : IScopeWithTransientScopeInstance, IScopeRoot
 {
-    public bool IsInitialized { get; private set; }
-    
-    async Task ITaskTypeInitializer.InitializeAsync()
+    public ScopeWithTransientScopeInstance(ITransientScopeInstanceInner _) {}
+}
+
+internal interface IScopeWithTransientScopeInstanceAbove {}
+
+internal class ScopeWithTransientScopeInstanceAbove : IScopeWithTransientScopeInstanceAbove, IScopeRoot
+{
+    public ScopeWithTransientScopeInstanceAbove(IScopeWithTransientScopeInstance _) {}
+}
+
+internal interface ITransientScopeWithTransientScopeInstance {}
+
+internal class TransientScopeWithTransientScopeInstance : ITransientScopeWithTransientScopeInstance, ITransientScopeRoot
+{
+    public TransientScopeWithTransientScopeInstance(IDisposable scopeDisposal, ITransientScopeInstanceInner _) {}
+}
+
+internal interface ITransientScopeChild
+{
+    ITransientScopeInstanceInner TransientScopeInstance { get; }
+    bool Disposed { get; }
+}
+
+internal class TransientScopeChild : ITransientScopeChild, IScopeRoot, IDisposable
+{
+    public TransientScopeChild(ITransientScopeInstanceInner transientScopeInstance)
     {
-        await Task.Delay(500).ConfigureAwait(false);
-        IsInitialized = true;
+        TransientScopeInstance = transientScopeInstance;
+    }
+
+    public ITransientScopeInstanceInner TransientScopeInstance { get; }
+    public bool Disposed { get; private set; }
+
+    public void Dispose()
+    {
+        Disposed = true;
     }
 }
 
-internal class Instance : ITransientScopeInstance
+internal interface ITransientScopeWithScopes
 {
-    public Dependency Dependency { get; }
-
-    internal Instance(Dependency dependency) => Dependency = dependency;
+    ITransientScopeChild A { get; }
+    ITransientScopeChild B { get; }
+    void CleanUp();
 }
 
-
-
-[CreateFunction(typeof(Func<Dependency, Task<Instance>>), "CreateWithParameter")]
-[CreateFunction(typeof(Func<Task<Instance>>), "CreateWithoutParameter")]
-internal partial class Container
+internal class TransientScopeWithScopes : ITransientScopeWithScopes, ITransientScopeRoot
 {
+    private readonly IDisposable _scopeDisposal;
+
+    public TransientScopeWithScopes(IDisposable scopeDisposal, ITransientScopeChild a, ITransientScopeChild b)
+    {
+        _scopeDisposal = scopeDisposal;
+        A = a;
+        B = b;
+    }
+    public ITransientScopeChild A { get; }
+    public ITransientScopeChild B { get; }
+    public void CleanUp()
+    {
+        _scopeDisposal.Dispose();
+    }
+}
+
+[CreateFunction(typeof(ITransientScopeInstanceInner), "Create0")]
+[CreateFunction(typeof(IScopeWithTransientScopeInstance), "Create1")]
+[CreateFunction(typeof(IScopeWithTransientScopeInstanceAbove), "Create2")]
+[CreateFunction(typeof(ITransientScopeWithTransientScopeInstance), "Create3")]
+[CreateFunction(typeof(ITransientScopeWithScopes), "Create4")]
+internal partial class TransientScopeInstanceContainer
+{
+    
 }

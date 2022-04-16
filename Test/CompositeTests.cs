@@ -43,7 +43,7 @@ public partial class CompositeTests
     [Fact]
     public void Normal()
     {
-        using var container = new CompositeNormalContainer();
+        var container = new CompositeNormalContainer();
         var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
@@ -56,7 +56,7 @@ public partial class CompositeTests
     [Fact]
     public void NormalList()
     {
-        using var container = new CompositeNormalContainer();
+        var container = new CompositeNormalContainer();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
@@ -102,7 +102,7 @@ public partial class CompositeTests
     [Fact]
     public void ContainerInstance()
     {
-        using var container = new CompositeContainerInstanceContainer();
+        var container = new CompositeContainerInstanceContainer();
         var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
@@ -117,7 +117,7 @@ public partial class CompositeTests
     [Fact]
     public void ContainerInstanceList()
     {
-        using var container = new CompositeContainerInstanceContainer();
+        var container = new CompositeContainerInstanceContainer();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
@@ -166,7 +166,7 @@ public partial class CompositeTests
     [Fact]
     public void MixedScoping()
     {
-        using var container = new CompositeMixedScopingContainer();
+        var container = new CompositeMixedScopingContainer();
         var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
@@ -181,7 +181,7 @@ public partial class CompositeTests
     [Fact]
     public void MixedScopingList()
     {
-        using var container = new CompositeMixedScopingContainer();
+        var container = new CompositeMixedScopingContainer();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
@@ -245,7 +245,7 @@ public partial class CompositeTests
     [Fact]
     public void ScopeRoot()
     {
-        using var container = new CompositeScopeRootContainer();
+        var container = new CompositeScopeRootContainer();
         var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
@@ -261,7 +261,7 @@ public partial class CompositeTests
     [Fact]
     public void ScopeRootList()
     {
-        using var container = new CompositeScopeRootContainer();
+        var container = new CompositeScopeRootContainer();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {
@@ -332,7 +332,7 @@ public partial class CompositeTests
     [Fact]
     public void Decorated()
     {
-        using var container = new CompositeDecoratedContainer();
+        var container = new CompositeDecoratedContainer();
         var composite = container.CreateDep();
         Assert.IsType<CompositeDecoratedDecoratorB>(composite);
         Assert.IsType<CompositeDecorated>(composite.Decorated);
@@ -349,7 +349,7 @@ public partial class CompositeTests
     [Fact]
     public void DecoratedList()
     {
-        using var container = new CompositeDecoratedContainer();
+        var container = new CompositeDecoratedContainer();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {

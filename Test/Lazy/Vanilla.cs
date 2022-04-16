@@ -16,7 +16,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        var container = new Container();
         var lazy = container.Create();
         var _ = lazy.Value;
     }

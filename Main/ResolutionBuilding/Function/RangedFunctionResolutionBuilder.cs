@@ -42,7 +42,6 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
             TypeFullName,
             Resolvable.Value,
             _forConstructorParameter.CurrentFuncParameters.Select(t => t.Resolution).ToList(),
-            _rangeResolutionBaseBuilder.DisposalHandling,
             LocalFunctions
                 .Select(lf => lf.Build())
                 .Select(f => new LocalFunctionResolution(
@@ -50,7 +49,6 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
                     f.TypeFullName,
                     f.Resolvable,
                     f.Parameter,
-                    f.DisposalHandling,
                     f.LocalFunctions,
                     f.SynchronicityDecision))
                 .ToList(),

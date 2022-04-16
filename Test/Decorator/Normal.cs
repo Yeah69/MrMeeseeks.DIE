@@ -32,7 +32,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        var container = new Container();
         var decorated = container.Create();
         Assert.NotEqual(decorated, decorated.Decorated);
         Assert.IsType<Decorator>(decorated);

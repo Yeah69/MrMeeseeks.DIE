@@ -51,6 +51,30 @@ public class FilterTransientAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class SyncTransientAggregationAttribute : Attribute
+{
+    public SyncTransientAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterSyncTransientAggregationAttribute : Attribute
+{
+    public FilterSyncTransientAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class AsyncTransientAggregationAttribute : Attribute
+{
+    public AsyncTransientAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterAsyncTransientAggregationAttribute : Attribute
+{
+    public FilterAsyncTransientAggregationAttribute(params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
 public class ContainerInstanceAggregationAttribute : Attribute
 {
     public ContainerInstanceAggregationAttribute(params Type[] types) {}

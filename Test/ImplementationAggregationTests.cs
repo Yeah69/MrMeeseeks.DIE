@@ -18,7 +18,7 @@ public partial class ConstructorChoiceTests
     [Fact]
     public void ResolveExternalType()
     {
-        using var container = new ImplementationAggregationContainer();
+        var container = new ImplementationAggregationContainer();
         var path = @"C:\HelloWorld.txt";
         var fileInfo = container.Create()(path);
         Assert.NotNull(fileInfo);

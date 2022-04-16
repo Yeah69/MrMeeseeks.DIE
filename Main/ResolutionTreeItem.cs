@@ -1,4 +1,4 @@
-﻿using MrMeeseeks.DIE.ResolutionBuilding;
+﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE;
@@ -24,7 +24,6 @@ internal record FunctionResolution(
     string TypeFullName,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) : Resolvable(Reference, TypeFullName);
 
@@ -34,30 +33,27 @@ internal record RootResolutionFunction(
     string AccessModifier,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, LocalFunctions, SynchronicityDecision);
 
 internal record LocalFunctionResolution(
     string Reference,
     string TypeFullName,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, LocalFunctions, SynchronicityDecision);
 
 internal record RangedInstanceFunctionResolution(
     string Reference,
     string TypeFullName,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    DisposalHandling DisposalHandling,
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, DisposalHandling, LocalFunctions, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, LocalFunctions, SynchronicityDecision);
 
 internal record RangedInstanceFunctionGroupResolution(
     string TypeFullName,
@@ -72,6 +68,10 @@ internal record MethodGroupResolution(
     : Resolvable(Reference, TypeFullName);
 
 internal record TransientScopeAsDisposableResolution(
+    string Reference,
+    string TypeFullName) : Resolvable(Reference, TypeFullName);
+
+internal record TransientScopeAsAsyncDisposableResolution(
     string Reference,
     string TypeFullName) : Resolvable(Reference, TypeFullName);
 
@@ -120,7 +120,7 @@ internal record ValueTaskTypeInitializationResolution(
 internal record ConstructorResolution(
     string Reference,
     string TypeFullName,
-    DisposableCollectionResolution? DisposableCollectionResolution,
+    DisposalType DisposalType,
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
     ITypeInitializationResolution? Initialization) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
@@ -139,7 +139,6 @@ internal record TransientScopeRootResolution(
     string TransientScopeReference,
     string TransientScopeTypeFullName,
     string ContainerInstanceScopeReference,
-    DisposableCollectionResolution DisposableCollectionResolution,
     MultiSynchronicityFunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.TypeFullName);
 
 internal record ScopeRootResolution(
@@ -147,7 +146,6 @@ internal record ScopeRootResolution(
     string ScopeTypeFullName,
     string ContainerInstanceScopeReference,
     string TransientInstanceScopeReference,
-    DisposableCollectionResolution DisposableCollectionResolution,
     MultiSynchronicityFunctionCallResolution ScopeRootFunction) : Resolvable(ScopeRootFunction.Reference, ScopeRootFunction.Sync.OriginalTypeFullName);
 
 internal record ScopeRootFunction(
@@ -183,13 +181,24 @@ internal record CollectionResolution(
     string ItemFullName,
     IReadOnlyList<ResolutionTreeItem> Parameter) : Resolvable(Reference, TypeFullName);
 
-internal record DisposableCollectionResolution(
-    string Reference,
-    string TypeFullName) 
+internal record SyncDisposableCollectionResolution(
+        string Reference,
+        string TypeFullName) 
     : ConstructorResolution(
         Reference,
         TypeFullName, 
-        null, 
+        DisposalType.None,
+        Array.Empty<(string Name, Resolvable Dependency)>(), 
+        Array.Empty<(string Name, Resolvable Dependency)>(),
+        null);
+
+internal record AsyncDisposableCollectionResolution(
+        string Reference,
+        string TypeFullName) 
+    : ConstructorResolution(
+        Reference,
+        TypeFullName, 
+        DisposalType.None,
         Array.Empty<(string Name, Resolvable Dependency)>(), 
         Array.Empty<(string Name, Resolvable Dependency)>(),
         null);
@@ -232,11 +241,15 @@ internal record ContainerResolution(
     TransientScopeInterfaceResolution TransientScopeInterface,
     string TransientScopeAdapterReference,
     IReadOnlyList<TransientScopeResolution> TransientScopes,
-    IReadOnlyList<ScopeResolution> Scopes)
+    IReadOnlyList<ScopeResolution> Scopes,
+    DisposalType DisposalType,
+    string TransientScopeDisposalReference,
+    string TransientScopeDisposalElement)
     : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, "this");
 
 internal record DisposalHandling(
-    DisposableCollectionResolution DisposableCollection,
+    SyncDisposableCollectionResolution SyncDisposableCollection,
+    AsyncDisposableCollectionResolution AsyncDisposableCollection,
     string RangeName,
     string DisposedFieldReference,
     string DisposedLocalReference,

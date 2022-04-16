@@ -10,7 +10,6 @@ internal interface IScopeResolutionBuilder : IRangeResolutionBaseBuilder, IResol
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
         string transientInstanceScopeReference,
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 }
 
@@ -70,7 +69,6 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     public override TransientScopeRootResolution CreateTransientScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType,
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
             .GetTransientScopeBuilder(rootType)
@@ -78,13 +76,11 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                 parameter,
                 rootType,
                 _containerReference,
-                disposableCollectionResolution,
                 currentParameters);
 
     public override ScopeRootResolution CreateScopeRootResolution(
         IScopeRootParameter parameter,
         INamedTypeSymbol rootType, 
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
             .GetScopeBuilder(rootType)
@@ -93,8 +89,9 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                 rootType, 
                 _containerReference, 
                 _transientScopeReference,
-                disposableCollectionResolution,
                 currentParameters);
+
+    public override void RegisterDisposalType(DisposalType disposalType) => _containerResolutionBuilder.RegisterDisposalType(disposalType);
 
     public bool HasWorkToDo => 
         _scopeRootFunctionResolutions.Values.Any(f => f.HasWorkToDo) 
@@ -105,7 +102,6 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
         string transientInstanceScopeReference,
-        DisposableCollectionResolution disposableCollectionResolution,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
         var key = $"{rootType.FullName()}{parameter.KeySuffix()}";
@@ -124,7 +120,6 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             Name,
             containerInstanceScopeReference,
             transientInstanceScopeReference,
-            disposableCollectionResolution,
             function.BuildFunctionCall(currentParameters, scopeRootReference));
     }
 
@@ -151,11 +146,10 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                     "internal",
                     f.Resolvable,
                     f.Parameter,
-                    f.DisposalHandling,
                     f.LocalFunctions,
                     f.SynchronicityDecision))
                 .ToList(),
-            DisposalHandling,
+            BuildDisposalHandling(),
             RangedInstanceReferenceResolutions.Values.Select(b => b.Build()).ToList(),
             _containerReference,
             _containerParameterReference,

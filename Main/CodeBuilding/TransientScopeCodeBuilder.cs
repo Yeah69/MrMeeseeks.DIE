@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Configuration;
+
 namespace MrMeeseeks.DIE.CodeBuilding;
 
 internal interface ITransientScopeCodeBuilder : IRangeCodeBaseBuilder
@@ -11,14 +13,37 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
     private readonly TransientScopeResolution _transientScopeResolution;
     private readonly ContainerResolution _containerResolution;
 
+    protected override StringBuilder GenerateDisposalFunction_TransientScopeDictionary(StringBuilder stringBuilder) => stringBuilder;
+
+    protected override StringBuilder GenerateDisposalFunction_TransientScopeDisposal(StringBuilder stringBuilder)
+    {
+        if (_containerResolution.DisposalType is DisposalType.None)
+            return stringBuilder;
+
+        var disposalType = _containerResolution.DisposalType is DisposalType.Async 
+            ? WellKnownTypes.AsyncDisposable.FullName() 
+            : WellKnownTypes.Disposable.FullName();
+
+        stringBuilder
+            .AppendLine($"{_transientScopeResolution.ContainerReference}.{_containerResolution.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
+
+        return stringBuilder;
+    }
+
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         if (!_transientScopeResolution.RootResolutions.Any() && !_transientScopeResolution.RangedInstanceFunctionGroups.Any()) 
             return stringBuilder;
         
+        var disposableImplementation = _containerResolution.DisposalType switch
+        {
+            DisposalType.Sync => $", {WellKnownTypes.Disposable.FullName()}",
+            DisposalType.Async => $", {WellKnownTypes.AsyncDisposable.FullName()}",
+            _ => ""
+        };
+        
         stringBuilder = stringBuilder
-            .AppendLine(
-                $"private partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}, {WellKnownTypes.Disposable.FullName()}")
+            .AppendLine($"private partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}{disposableImplementation}")
             .AppendLine($"{{")
             .AppendLine($"private readonly {_containerInfo.FullName} {_transientScopeResolution.ContainerReference};")
             .AppendLine($"internal {_transientScopeResolution.Name}(")

@@ -74,7 +74,7 @@ public class Tests
     [Fact]
     public async ValueTask Test()
     {
-        using var container = new Container();
+        var container = new Container();
         var instance0 = container.Create0();
         var _ = container.Create1();
         Assert.True(((await instance0.Dependency.ConfigureAwait(false)).Inner as DependencyA)?.IsInitialized);

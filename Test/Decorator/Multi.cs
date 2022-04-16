@@ -41,7 +41,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        var container = new Container();
         var decorated = container.Create();
         var decoratedB = decorated;
         var decoratedA = decorated.Decorated;

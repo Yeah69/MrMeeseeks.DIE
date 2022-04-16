@@ -51,7 +51,7 @@ public class Tests
     [Fact]
     public void Container()
     {
-        using var container = new Container();
+        var container = new Container();
         var dependencies = container.Create0();
         Assert.Equal(3, dependencies.Count);
         Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyContainer));
@@ -61,7 +61,7 @@ public class Tests
     [Fact]
     public void TransientScope()
     {
-        using var container = new Container();
+        var container = new Container();
         var dependencies = container.Create1();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyTransientScope));
@@ -69,7 +69,7 @@ public class Tests
     [Fact]
     public void Scope()
     {
-        using var container = new Container();
+        var container = new Container();
         var dependencies = container.Create2();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyScope));

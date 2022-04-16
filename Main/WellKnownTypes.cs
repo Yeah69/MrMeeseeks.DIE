@@ -7,6 +7,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol SpyConstructorChoiceAggregationAttribute,
     INamedTypeSymbol ImplementationAggregationAttribute,
     INamedTypeSymbol TransientAggregationAttribute,
+    INamedTypeSymbol SyncTransientAggregationAttribute,
+    INamedTypeSymbol AsyncTransientAggregationAttribute,
     INamedTypeSymbol ContainerInstanceAggregationAttribute,
     INamedTypeSymbol TransientScopeInstanceAggregationAttribute,
     INamedTypeSymbol ScopeInstanceAggregationAttribute,
@@ -21,6 +23,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterSpyConstructorChoiceAggregationAttribute,
     INamedTypeSymbol FilterImplementationAggregationAttribute,
     INamedTypeSymbol FilterTransientAggregationAttribute,
+    INamedTypeSymbol FilterSyncTransientAggregationAttribute,
+    INamedTypeSymbol FilterAsyncTransientAggregationAttribute,
     INamedTypeSymbol FilterContainerInstanceAggregationAttribute,
     INamedTypeSymbol FilterTransientScopeInstanceAggregationAttribute,
     INamedTypeSymbol FilterScopeInstanceAggregationAttribute,
@@ -44,7 +48,10 @@ internal record WellKnownTypes(
     INamedTypeSymbol Enumerable1,
     INamedTypeSymbol ReadOnlyCollection1,
     INamedTypeSymbol ReadOnlyList1,
-    INamedTypeSymbol ConcurrentBagOfDisposable,
+    INamedTypeSymbol ConcurrentBagOfSyncDisposable,
+    INamedTypeSymbol ConcurrentBagOfAsyncDisposable,
+    INamedTypeSymbol ConcurrentDictionaryOfSyncDisposable,
+    INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,
     INamedTypeSymbol Action,
     INamedTypeSymbol Func,
     INamedTypeSymbol Exception,
@@ -65,9 +72,19 @@ internal record WellKnownTypes(
         var iReadOnlyCollection1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyCollection`1");
         var iReadOnlyList1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyList`1");
         var concurrentBag = compilation.GetTypeOrReport("System.Collections.Concurrent.ConcurrentBag`1");
-        var concurrentBagOfDisposable = iDisposable is null
+        var concurrentBagOfSyncDisposable = iDisposable is null
             ? null
             : concurrentBag?.Construct(iDisposable);
+        var concurrentBagOfAsyncDisposable = iAsyncDisposable is null
+            ? null
+            : concurrentBag?.Construct(iAsyncDisposable);
+        var concurrentDictionary2= compilation.GetTypeOrReport("System.Collections.Concurrent.ConcurrentDictionary`2");
+        var concurrentDictionary2OfSyncDisposable = iDisposable is null
+            ? null
+            : concurrentDictionary2?.Construct(iDisposable, iDisposable);
+        var concurrentDictionary2OfAsyncDisposable = iAsyncDisposable is null
+            ? null
+            : concurrentDictionary2?.Construct(iAsyncDisposable, iAsyncDisposable);
         var action = compilation.GetTypeOrReport("System.Action");
         var func = compilation.GetTypeOrReport("System.Func`3");
         var exception = compilation.GetTypeOrReport("System.Exception");
@@ -85,6 +102,12 @@ internal record WellKnownTypes(
 
         var transientAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(TransientAggregationAttribute).FullName ?? "");
+
+        var syncTransientAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(SyncTransientAggregationAttribute).FullName ?? "");
+
+        var asyncTransientAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(AsyncTransientAggregationAttribute).FullName ?? "");
 
         var containerInstanceAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ContainerInstanceAggregationAttribute).FullName ?? "");
@@ -124,6 +147,12 @@ internal record WellKnownTypes(
 
         var filterTransientAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterTransientAggregationAttribute).FullName ?? "");
+
+        var filterSyncTransientAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterSyncTransientAggregationAttribute).FullName ?? "");
+
+        var filterAsyncTransientAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterAsyncTransientAggregationAttribute).FullName ?? "");
 
         var filterContainerInstanceAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterContainerInstanceAggregationAttribute).FullName ?? "");
@@ -168,6 +197,8 @@ internal record WellKnownTypes(
             && spyConstructorChoiceAggregationAttribute is not null
             && implementationAggregationAttribute is not null
             && transientAggregationAttribute is not null
+            && syncTransientAggregationAttribute is not null
+            && asyncTransientAggregationAttribute is not null
             && containerInstanceAggregationAttribute is not null
             && transientScopeInstanceAggregationAttribute is not null
             && scopeInstanceAggregationAttribute is not null
@@ -182,6 +213,8 @@ internal record WellKnownTypes(
             && filterSpyConstructorChoiceAggregationAttribute is not null
             && filterImplementationAggregationAttribute is not null
             && filterTransientAggregationAttribute is not null
+            && filterSyncTransientAggregationAttribute is not null
+            && filterAsyncTransientAggregationAttribute is not null
             && filterContainerInstanceAggregationAttribute is not null
             && filterTransientScopeInstanceAggregationAttribute is not null
             && filterScopeInstanceAggregationAttribute is not null
@@ -206,7 +239,10 @@ internal record WellKnownTypes(
             && iEnumerable1 is not null
             && iReadOnlyCollection1 is not null
             && iReadOnlyList1 is not null
-            && concurrentBagOfDisposable is not null
+            && concurrentBagOfSyncDisposable is not null
+            && concurrentBagOfAsyncDisposable is not null
+            && concurrentDictionary2OfSyncDisposable is not null
+            && concurrentDictionary2OfAsyncDisposable is not null
             && action is not null
             && func is not null
             && exception is not null
@@ -218,6 +254,8 @@ internal record WellKnownTypes(
                 SpyConstructorChoiceAggregationAttribute: spyConstructorChoiceAggregationAttribute,
                 ImplementationAggregationAttribute: implementationAggregationAttribute,
                 TransientAggregationAttribute: transientAggregationAttribute,
+                SyncTransientAggregationAttribute: syncTransientAggregationAttribute,
+                AsyncTransientAggregationAttribute: asyncTransientAggregationAttribute,
                 ContainerInstanceAggregationAttribute: containerInstanceAggregationAttribute,
                 TransientScopeInstanceAggregationAttribute: transientScopeInstanceAggregationAttribute,
                 ScopeInstanceAggregationAttribute: scopeInstanceAggregationAttribute,
@@ -232,6 +270,8 @@ internal record WellKnownTypes(
                 FilterSpyConstructorChoiceAggregationAttribute: filterSpyConstructorChoiceAggregationAttribute,
                 FilterImplementationAggregationAttribute: filterImplementationAggregationAttribute,
                 FilterTransientAggregationAttribute: filterTransientAggregationAttribute,
+                FilterSyncTransientAggregationAttribute: filterSyncTransientAggregationAttribute,
+                FilterAsyncTransientAggregationAttribute: filterAsyncTransientAggregationAttribute,
                 FilterContainerInstanceAggregationAttribute: filterContainerInstanceAggregationAttribute,
                 FilterTransientScopeInstanceAggregationAttribute: filterTransientScopeInstanceAggregationAttribute,
                 FilterScopeInstanceAggregationAttribute: filterScopeInstanceAggregationAttribute,
@@ -255,7 +295,10 @@ internal record WellKnownTypes(
                 Enumerable1: iEnumerable1,
                 ReadOnlyCollection1: iReadOnlyCollection1,
                 ReadOnlyList1: iReadOnlyList1,
-                ConcurrentBagOfDisposable: concurrentBagOfDisposable,
+                ConcurrentBagOfSyncDisposable: concurrentBagOfSyncDisposable,
+                ConcurrentBagOfAsyncDisposable: concurrentBagOfAsyncDisposable,
+                ConcurrentDictionaryOfSyncDisposable: concurrentDictionary2OfSyncDisposable,
+                ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2OfAsyncDisposable,
                 Action: action,
                 Func: func,
                 Exception: exception,

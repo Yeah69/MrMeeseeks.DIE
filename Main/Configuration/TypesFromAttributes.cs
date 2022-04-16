@@ -5,6 +5,8 @@ internal interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> Spy { get; }
     IReadOnlyList<INamedTypeSymbol> Implementation { get; }
     IReadOnlyList<INamedTypeSymbol> Transient { get; }
+    IReadOnlyList<INamedTypeSymbol> SyncTransient { get; }
+    IReadOnlyList<INamedTypeSymbol> AsyncTransient { get; }
     IReadOnlyList<INamedTypeSymbol> ContainerInstance { get; }
     IReadOnlyList<INamedTypeSymbol> TransientScopeInstance { get; }
     IReadOnlyList<INamedTypeSymbol> ScopeInstance { get; }
@@ -18,6 +20,8 @@ internal interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
+    IReadOnlyList<INamedTypeSymbol> FilterSyncTransient { get; }
+    IReadOnlyList<INamedTypeSymbol> FilterAsyncTransient { get; }
     IReadOnlyList<INamedTypeSymbol> FilterContainerInstance { get; }
     IReadOnlyList<INamedTypeSymbol> FilterTransientScopeInstance { get; }
     IReadOnlyList<INamedTypeSymbol> FilterScopeInstance { get; }
@@ -66,6 +70,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         Spy = GetTypesFromAttribute(wellKnownTypes.SpyAggregationAttribute).ToList();
         Implementation = GetTypesFromAttribute(wellKnownTypes.ImplementationAggregationAttribute).ToList();
         Transient = GetTypesFromAttribute(wellKnownTypes.TransientAggregationAttribute).ToList();
+        SyncTransient = GetTypesFromAttribute(wellKnownTypes.SyncTransientAggregationAttribute).ToList();
+        AsyncTransient = GetTypesFromAttribute(wellKnownTypes.AsyncTransientAggregationAttribute).ToList();
         ContainerInstance = new List<INamedTypeSymbol>();
         TransientScopeInstance = new List<INamedTypeSymbol>();
         ScopeInstance = GetTypesFromAttribute(wellKnownTypes.ScopeInstanceAggregationAttribute).ToList();
@@ -77,6 +83,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         FilterSpy = GetTypesFromAttribute(wellKnownTypes.FilterSpyAggregationAttribute).ToList();
         FilterImplementation = GetTypesFromAttribute(wellKnownTypes.FilterImplementationAggregationAttribute).ToList();
         FilterTransient = GetTypesFromAttribute(wellKnownTypes.FilterTransientAggregationAttribute).ToList();
+        FilterSyncTransient = GetTypesFromAttribute(wellKnownTypes.FilterSyncTransientAggregationAttribute).ToList();
+        FilterAsyncTransient = GetTypesFromAttribute(wellKnownTypes.FilterAsyncTransientAggregationAttribute).ToList();
         FilterContainerInstance = new List<INamedTypeSymbol>();
         FilterTransientScopeInstance = new List<INamedTypeSymbol>();
         FilterScopeInstance = GetTypesFromAttribute(wellKnownTypes.FilterScopeInstanceAggregationAttribute).ToList();
@@ -219,6 +227,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> Spy { get; }
     public IReadOnlyList<INamedTypeSymbol> Implementation { get; }
     public IReadOnlyList<INamedTypeSymbol> Transient { get; }
+    public IReadOnlyList<INamedTypeSymbol> SyncTransient { get; }
+    public IReadOnlyList<INamedTypeSymbol> AsyncTransient { get; }
     public IReadOnlyList<INamedTypeSymbol> ContainerInstance { get; protected init; }
     public IReadOnlyList<INamedTypeSymbol> TransientScopeInstance { get; protected init; }
     public IReadOnlyList<INamedTypeSymbol> ScopeInstance { get; }
@@ -232,6 +242,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
+    public IReadOnlyList<INamedTypeSymbol> FilterSyncTransient { get; }
+    public IReadOnlyList<INamedTypeSymbol> FilterAsyncTransient { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterContainerInstance { get; protected init; }
     public IReadOnlyList<INamedTypeSymbol> FilterTransientScopeInstance { get; protected init; }
     public IReadOnlyList<INamedTypeSymbol> FilterScopeInstance { get; }

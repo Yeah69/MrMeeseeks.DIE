@@ -27,7 +27,7 @@ public class ConstructorsTests
     [Fact]
     public void ResolveInitProperty()
     {
-        using var container = new ConstructorInitContainer();
+        var container = new ConstructorInitContainer();
         var resolution = container.Create();
         Assert.NotNull(resolution.Dependency);
         Assert.IsType<ConstructorInitDependency>(resolution.Dependency);

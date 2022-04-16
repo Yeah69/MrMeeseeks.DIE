@@ -137,5 +137,6 @@ public partial class TransientScopeInstanceTests
         transientScopeRoot.CleanUp();
         Assert.True(transientScopeRoot.A.Disposed);
         Assert.True(transientScopeRoot.B.Disposed);
+        container.Dispose();
     }
 }

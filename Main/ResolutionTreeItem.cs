@@ -244,8 +244,24 @@ internal record ContainerResolution(
     IReadOnlyList<ScopeResolution> Scopes,
     DisposalType DisposalType,
     string TransientScopeDisposalReference,
-    string TransientScopeDisposalElement)
+    string TransientScopeDisposalElement,
+    NopDisposable NopDisposable,
+    NopAsyncDisposable NopAsyncDisposable,
+    SyncToAsyncDisposable SyncToAsyncDisposable)
     : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, "this");
+
+internal record NopDisposable(
+    string ClassName,
+    string InstanceReference);
+
+internal record NopAsyncDisposable(
+    string ClassName,
+    string InstanceReference);
+
+internal record SyncToAsyncDisposable(
+    string ClassName,
+    string DisposableParameterReference,
+    string DisposableFieldReference);
 
 internal record DisposalHandling(
     SyncDisposableCollectionResolution SyncDisposableCollection,

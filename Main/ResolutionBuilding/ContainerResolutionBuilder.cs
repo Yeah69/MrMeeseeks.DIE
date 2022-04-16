@@ -324,7 +324,17 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             scopeResolutions,
             _disposalType,
             RootReferenceGenerator.Generate("transientScopeDisposal"),
-            RootReferenceGenerator.Generate("transientScopeToDispose"));
+            RootReferenceGenerator.Generate("transientScopeToDispose"),
+            new NopDisposable(
+                RootReferenceGenerator.Generate("NopDisposable"),
+                RootReferenceGenerator.Generate("Instance")),
+            new NopAsyncDisposable(
+                RootReferenceGenerator.Generate("NopDisposable"),
+                RootReferenceGenerator.Generate("Instance")),
+            new SyncToAsyncDisposable(
+                RootReferenceGenerator.Generate("NopDisposable"),
+                RootReferenceGenerator.Generate("disposable"),
+                RootReferenceGenerator.Generate("_disposable")));
     }
 
     public void EnqueueRangedInstanceResolution(

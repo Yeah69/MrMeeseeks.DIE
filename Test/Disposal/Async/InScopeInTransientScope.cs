@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Sample;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Disposal.Async.InTransientScopeInTransientScope;
+namespace MrMeeseeks.DIE.Test.Disposal.Async.InScopeInTransientScope;
 
 internal class Dependency :  IAsyncDisposable
 {
@@ -16,26 +16,23 @@ internal class Dependency :  IAsyncDisposable
     }
 }
 
-internal class TransientScopeRootInner : ITransientScopeRoot
+internal class ScopeRoot : IScopeRoot
 {
-    public TransientScopeRootInner(Dependency dependency) => Dependency = dependency;
+    public ScopeRoot(Dependency dependency) => Dependency = dependency;
 
     internal Dependency Dependency { get; }
 }
 
 internal class TransientScopeRoot : ITransientScopeRoot
 {
-    public TransientScopeRootInner TransientScopeRootInner { get; }
-    public Dependency Dependency { get; }
+    public ScopeRoot ScopeRoot { get; }
     private readonly IAsyncDisposable _disposable;
 
     internal TransientScopeRoot(
-        TransientScopeRootInner transientScopeRootInner,
-        Dependency dependency,
+        ScopeRoot scopeRoot,
         IAsyncDisposable disposable)
     {
-        TransientScopeRootInner = transientScopeRootInner;
-        Dependency = dependency;
+        ScopeRoot = scopeRoot;
         _disposable = disposable;
     }
 
@@ -46,4 +43,17 @@ internal class TransientScopeRoot : ITransientScopeRoot
 internal partial class Container
 {
     
+}
+
+public class Tests
+{
+    [Fact]
+    public async ValueTask Test()
+    {
+        await using var container = new Container();
+        var transientScopeRoot = container.Create();
+        Assert.False(transientScopeRoot.ScopeRoot.Dependency.IsDisposed);
+        await transientScopeRoot.Cleanup().ConfigureAwait(false);
+        Assert.True(transientScopeRoot.ScopeRoot.Dependency.IsDisposed);
+    }
 }

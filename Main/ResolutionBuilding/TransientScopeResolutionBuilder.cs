@@ -120,7 +120,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
     {
         while (HasWorkToDo)
         {
-            foreach (var functionResolutionBuilder in _transientScopeRootFunctionResolutions.Values.Where(f => f.HasWorkToDo))
+            foreach (var functionResolutionBuilder in _transientScopeRootFunctionResolutions.Values.Where(f => f.HasWorkToDo).ToList())
             {
                 functionResolutionBuilder.DoWork();
             }

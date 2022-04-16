@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Sample;
+using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Disposal.Async.InTransientScopeInTransientScope;
 
@@ -46,4 +46,22 @@ internal class TransientScopeRoot : ITransientScopeRoot
 internal partial class Container
 {
     
+}
+
+public class Tests
+{
+    [Fact]
+    public async ValueTask Test()
+    {
+        await using var container = new Container();
+        var transientScopeRoot = container.Create();
+        Assert.False(transientScopeRoot.TransientScopeRootInner.Dependency.IsDisposed);
+        Assert.False(transientScopeRoot.Dependency.IsDisposed);
+        await transientScopeRoot.Cleanup().ConfigureAwait(false);
+        Assert.False(transientScopeRoot.TransientScopeRootInner.Dependency.IsDisposed);
+        Assert.True(transientScopeRoot.Dependency.IsDisposed);
+        await container.DisposeAsync().ConfigureAwait(false);
+        Assert.True(transientScopeRoot.TransientScopeRootInner.Dependency.IsDisposed);
+        Assert.True(transientScopeRoot.Dependency.IsDisposed);
+    }
 }

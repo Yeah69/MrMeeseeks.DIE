@@ -467,7 +467,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 {
                     DisposalType.Async => throw new Exception("If the container disposal has to be async, then sync disposal handles in transient scopes are not allowed."),
                     DisposalType.Sync => stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;"),
-                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopDisposable}.{_containerResolution.NopDisposable.InstanceReference};"),
+                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopDisposable.ClassName}.{_containerResolution.NopDisposable.InstanceReference};"),
                     _ => stringBuilder
                 };
                 break;
@@ -475,8 +475,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = _containerResolution.DisposalType switch
                 {
                     DisposalType.Async => stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;"),
-                    DisposalType.Sync => stringBuilder.AppendLine($"{reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable}(({WellKnownTypes.Disposable.FullName()}) this);"),
-                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable}.{_containerResolution.NopAsyncDisposable.InstanceReference};"),
+                    DisposalType.Sync => stringBuilder.AppendLine($"{reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable.ClassName}(({WellKnownTypes.Disposable.FullName()}) this);"),
+                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable.ClassName}.{_containerResolution.NopAsyncDisposable.InstanceReference};"),
                     _ => stringBuilder
                 };
                 break;

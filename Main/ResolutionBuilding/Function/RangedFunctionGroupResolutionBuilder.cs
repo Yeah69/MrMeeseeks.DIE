@@ -70,7 +70,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
     public void DoWork()
     {
         while (_functionQueue.Any(f => f.HasWorkToDo))
-            foreach (var function in _functionQueue.Where(f => f.HasWorkToDo))
+            foreach (var function in _functionQueue.Where(f => f.HasWorkToDo).ToList())
                 function.DoWork();
     }
 

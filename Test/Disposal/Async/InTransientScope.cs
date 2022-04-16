@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Disposal.Async.Normal;
+namespace MrMeeseeks.DIE.Test.Disposal.Async.InTransientScope;
 
 internal class Dependency :  IAsyncDisposable
 {
@@ -16,7 +16,14 @@ internal class Dependency :  IAsyncDisposable
     }
 }
 
-[CreateFunction(typeof(Dependency), "Create")]
+internal class TransientScopeRoot : ITransientScopeRoot
+{
+    public TransientScopeRoot(Dependency dependency) => Dependency = dependency;
+
+    internal Dependency Dependency { get; }
+}
+
+[CreateFunction(typeof(TransientScopeRoot), "Create")]
 internal partial class Container
 {
     
@@ -29,8 +36,8 @@ public class Tests
     {
         await using var container = new Container();
         var dependency = container.Create();
-        Assert.False(dependency.IsDisposed);
+        Assert.False(dependency.Dependency.IsDisposed);
         await container.DisposeAsync().ConfigureAwait(false);
-        Assert.True(dependency.IsDisposed);
+        Assert.True(dependency.Dependency.IsDisposed);
     }
 }

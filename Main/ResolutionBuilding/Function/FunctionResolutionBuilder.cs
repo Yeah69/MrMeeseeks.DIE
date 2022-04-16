@@ -939,7 +939,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         var _ = Resolvable.Value;
         while (LocalFunctions.Any(lf => lf.HasWorkToDo))
         {
-            foreach (var localFunction in LocalFunctions)
+            foreach (var localFunction in LocalFunctions.ToList())
             {
                 localFunction.DoWork();
             }

@@ -17,13 +17,13 @@ public class FilterSpyAggregationAttribute : Attribute
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
 public class SpyConstructorChoiceAggregationAttribute : Attribute
 {
-    public SpyConstructorChoiceAggregationAttribute(params Enum[] references) {}
+    public SpyConstructorChoiceAggregationAttribute(params Type[] references) {}
 }
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class FilterSpyConstructorChoiceAggregationAttribute : Attribute
 {
-    public FilterSpyConstructorChoiceAggregationAttribute(params Enum[] references) {}
+    public FilterSpyConstructorChoiceAggregationAttribute(params Type[] references) {}
 }
 
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]

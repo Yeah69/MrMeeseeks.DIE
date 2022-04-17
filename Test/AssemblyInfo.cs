@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Test;
+using TestChild;
 
 [assembly:ContainerInstanceAggregation(typeof(IContainerInstance))]
 [assembly:TransientScopeInstanceAggregation(typeof(ITransientScopeInstance))]

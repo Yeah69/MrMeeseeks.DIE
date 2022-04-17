@@ -52,8 +52,6 @@ internal record WellKnownTypes(
     INamedTypeSymbol ConcurrentBagOfAsyncDisposable,
     INamedTypeSymbol ConcurrentDictionaryOfSyncDisposable,
     INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,
-    INamedTypeSymbol Action,
-    INamedTypeSymbol Func,
     INamedTypeSymbol Exception,
     INamedTypeSymbol TaskCanceledException,
     INamedTypeSymbol SemaphoreSlim)
@@ -85,8 +83,6 @@ internal record WellKnownTypes(
         var concurrentDictionary2OfAsyncDisposable = iAsyncDisposable is null
             ? null
             : concurrentDictionary2?.Construct(iAsyncDisposable, iAsyncDisposable);
-        var action = compilation.GetTypeOrReport("System.Action");
-        var func = compilation.GetTypeOrReport("System.Func`3");
         var exception = compilation.GetTypeOrReport("System.Exception");
         var taskCanceledException = compilation.GetTypeOrReport("System.Threading.Tasks.TaskCanceledException");
         var semaphoreSlim = compilation.GetTypeOrReport("System.Threading.SemaphoreSlim");
@@ -243,8 +239,6 @@ internal record WellKnownTypes(
             && concurrentBagOfAsyncDisposable is not null
             && concurrentDictionary2OfSyncDisposable is not null
             && concurrentDictionary2OfAsyncDisposable is not null
-            && action is not null
-            && func is not null
             && exception is not null
             && semaphoreSlim is not null)
         {
@@ -299,8 +293,6 @@ internal record WellKnownTypes(
                 ConcurrentBagOfAsyncDisposable: concurrentBagOfAsyncDisposable,
                 ConcurrentDictionaryOfSyncDisposable: concurrentDictionary2OfSyncDisposable,
                 ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2OfAsyncDisposable,
-                Action: action,
-                Func: func,
                 Exception: exception,
                 TaskCanceledException: taskCanceledException,
                 SemaphoreSlim: semaphoreSlim);

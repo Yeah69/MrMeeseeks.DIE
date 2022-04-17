@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 
@@ -68,28 +67,41 @@ internal class TypeReportGenerator : ITypeReportGenerator
 
             generatedContainer = generatedContainer
                 .AppendLine("}")
-                .AppendLine($"{lowerCaseAccessModifier} enum {pascalCaseAccessModifier}ConstructorReport")
+                .AppendLine($"{lowerCaseAccessModifier} static class {pascalCaseAccessModifier}ConstructorReport")
                 .AppendLine("{");
-
-             generatedContainer = allNonStaticImplementations
-                .SelectMany(i => i.Constructors)
-                .Where(c => c.DeclaredAccessibility == accessModifier)
-                .Select(c => (c, $"{c.ContainingType.Name}{(c.Parameters.Any() ? $"_{string.Join("_", c.Parameters.Select(p => p.Type.Name))}" : "")}"))
-                .GroupBy(t => t.Item2)
-                .SelectMany(g => !g.Any()
-                    ? Array.Empty<(IMethodSymbol, string)>()
-                    : g.Count() == 1
-                        ? new (IMethodSymbol, string)[] { (g.First().c, g.Key) }
-                        : g.Select((t, i) => (t.c, $"{t.Item2}_{i}")))
-                .Select(t => @$"
-[global::{typeof(EnumMemberAttribute).FullName}({nameof(EnumMemberAttribute.Value)} = ""{t.c.ToDisplayString()}"")]
-[global::{typeof(ConstructorChoiceAttribute).FullName}(typeof({t.c.ContainingType.FullName()}){(t.c.Parameters.Any() ? $", {string.Join(", ", t.c.Parameters.Select(p => $"typeof({p.Type.FullName()})"))}" : "")})]
-{t.Item2},")
-                .Aggregate(
-                    generatedContainer,
-                    (current, line) => current.AppendLine(line));
+            
+            foreach (var implementation in allNonStaticImplementations
+                         .Where(i => i.Constructors.Any(c => c.DeclaredAccessibility == accessModifier)))
+            {
+                generatedContainer = generatedContainer
+                    .AppendLine($"{lowerCaseAccessModifier} static class {implementation.FullName().Replace(':','_').Replace('.', '_')}")
+                    .AppendLine("{");
+                
+                foreach (var constructor in implementation.Constructors
+                             .Where(c => c.DeclaredAccessibility == accessModifier))
+                {
+                    int j = 0;
+                    generatedContainer = generatedContainer
+                        .AppendLine(
+                            $"{lowerCaseAccessModifier} interface {(constructor.Parameters.Any() ? "" : "_")}{string.Join("_", constructor.Parameters.Select(p => p.Type.Name))}")
+                        .AppendLine($"{{")
+                        .AppendLine($"{implementation.FullName()} _{(j++).ToString().PadLeft(20, '0')}();");
+                    
+                    foreach (var constructorParameter in constructor.Parameters)
+                    {
+                        generatedContainer = generatedContainer
+                            .AppendLine($"{constructorParameter.Type.FullName()} _{(j++).ToString().PadLeft(20, '0')}();");
+                    }
+                    
+                    generatedContainer = generatedContainer
+                        .AppendLine($"}}");
+                }
+                
+                generatedContainer = generatedContainer
+                    .AppendLine("}");
+            }
              
-             generatedContainer = generatedContainer
+            generatedContainer = generatedContainer
                  .AppendLine("}");
                 
             return generatedContainer;

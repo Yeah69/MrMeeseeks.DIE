@@ -1,48 +1,16 @@
 ﻿using System;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Sample;
+using MrMeeseeks.DIE.SampleChild;
+using SampleChild;
 
-namespace MrMeeseeks.DIE.Test.Disposal.Async.InTransientScopeInTransientScope;
+namespace MrMeeseeks.DIE.Test.Spy.Implementations;
 
-internal class Dependency :  IAsyncDisposable
-{
-    public bool IsDisposed { get; private set; }
-    
-    public async ValueTask DisposeAsync()
-    {
-        await Task.Delay(500).ConfigureAwait(false);
-        IsDisposed = true;
-    }
-}
-
-internal class TransientScopeRootInner : ITransientScopeRoot
-{
-    public TransientScopeRootInner(Dependency dependency) => Dependency = dependency;
-
-    internal Dependency Dependency { get; }
-}
-
-internal class TransientScopeRoot : ITransientScopeRoot
-{
-    public TransientScopeRootInner TransientScopeRootInner { get; }
-    public Dependency Dependency { get; }
-    private readonly IAsyncDisposable _disposable;
-
-    internal TransientScopeRoot(
-        TransientScopeRootInner transientScopeRootInner,
-        Dependency dependency,
-        IAsyncDisposable disposable)
-    {
-        TransientScopeRootInner = transientScopeRootInner;
-        Dependency = dependency;
-        _disposable = disposable;
-    }
-
-    internal ValueTask Cleanup() => _disposable.DisposeAsync();
-}
-
-[CreateFunction(typeof(TransientScopeRoot), "Create")]
+[SpyAggregation(typeof(IPublicTypeReport))]
+[SpyConstructorChoiceAggregation(
+    typeof(PublicConstructorReport.global__MrMeeseeks_DIE_SampleChild_Class._),
+    typeof(PublicConstructorReport.global__MrMeeseeks_DIE_SampleChild_ClassToo.Int32))]
+[CreateFunction(typeof(Class), "CreateClass")]
+[CreateFunction(typeof(Func<int, ClassToo>), "CreateClassToo")]
 internal partial class Container
 {
     

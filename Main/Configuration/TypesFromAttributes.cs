@@ -128,7 +128,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(ad =>
             {
                 if (ad.ConstructorArguments.Length < 2)
-                    return null;
+                    return ((INamedTypeSymbol, IList<INamedTypeSymbol>)?) null;
                 var implementationType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
                 var parameterTypes = ad
                     .ConstructorArguments[1]
@@ -137,32 +137,71 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     .OfType<INamedTypeSymbol>()
                     .ToList();
 
-                if (implementationType is { })
+                return implementationType is {}
+                    ? (implementationType, parameterTypes) 
+                    : null;
+            })
+            .Concat(GetTypesFromAttribute(wellKnownTypes.SpyConstructorChoiceAggregationAttribute)
+                .Select(t =>
                 {
-                    var constructorChoice = implementationType
-                        .Constructors
-                        .Where(c => c.Parameters.Length == parameterTypes.Count)
-                        .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
-                            .Zip(parameterTypes,
-                                (pLeft, pRight) => pLeft.Equals(pRight, SymbolEqualityComparer.Default))
-                            .All(b => b));
-                    return constructorChoice is { }
-                        ? (implementationType, constructorChoice)
-                        : ((INamedTypeSymbol, IMethodSymbol)?)null;
-                }
+                    var members = t
+                        .GetMembers()
+                        .OfType<IMethodSymbol>()
+                        .OrderBy(m => m.Name)
+                        .Select(m => m.ReturnType)
+                        .OfType<INamedTypeSymbol>()
+                        .ToImmutableArray();
+                    if (members.Length < 1)
+                        return ((INamedTypeSymbol, IList<INamedTypeSymbol>)?) null;
 
-                return null;
+                    return (members[0], members.Skip(1).ToList());
+                }))
+            .Select(t =>
+            {
+                if (t is null) return null;
+
+                var implementationType = t.Value.Item1;
+                var parameterTypes = t.Value.Item2;
+
+                if (implementationType is null) return null;
+                
+                var constructorChoice = implementationType
+                    .Constructors
+                    .Where(c => c.Parameters.Length == parameterTypes.Count)
+                    .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
+                        .Zip(parameterTypes,
+                            (pLeft, pRight) => pLeft.Equals(pRight, SymbolEqualityComparer.Default))
+                        .All(b => b));
+                return constructorChoice is { }
+                    ? (implementationType, constructorChoice)
+                    : ((INamedTypeSymbol, IMethodSymbol)?)null;
+
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>()
             .ToList();
         
         FilterConstructorChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterConstructorChoiceAttribute, out var group2) ? group2 : Enumerable.Empty<AttributeData>())
+            .Concat(GetTypesFromAttribute(wellKnownTypes.FilterSpyConstructorChoiceAggregationAttribute)
+                .Select(t => t.GetAttributes().FirstOrDefault(ad => ad.AttributeClass?.Name == nameof(ConstructorChoiceAttribute)))
+                .OfType<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length != 1)
+                if (ad.ConstructorArguments.Length < 1)
                     return null;
                 return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
             })
+            .Concat(GetTypesFromAttribute(wellKnownTypes.FilterSpyConstructorChoiceAggregationAttribute)
+                .Select(t =>
+                {
+                    var members = t
+                        .GetMembers()
+                        .OfType<IMethodSymbol>()
+                        .OrderBy(m => m.Name)
+                        .Select(m => m.ReturnType)
+                        .OfType<INamedTypeSymbol>()
+                        .ToImmutableArray();
+                    return members.Length < 1 ? null : members[0];
+                }))
             .OfType<INamedTypeSymbol>()
             .ToList();
 

@@ -3,22 +3,22 @@ using System.IO;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-[assembly:ImplementationAggregation(typeof(FileInfo))]
+namespace MrMeeseeks.DIE.Test.ImplementationAggregation.ExternalType;
 
-namespace MrMeeseeks.DIE.Test;
 
+[ImplementationAggregation(typeof(FileInfo))]
 [CreateFunction(typeof(Func<string, FileInfo>), "Create")]
-internal partial class ImplementationAggregationContainer
+internal partial class Container
 {
     
 }
 
-public partial class ConstructorChoiceTests
+public class Tests
 {
     [Fact]
-    public void ResolveExternalType()
+    public void Test()
     {
-        var container = new ImplementationAggregationContainer();
+        var container = new Container();
         var path = @"C:\HelloWorld.txt";
         var fileInfo = container.Create()(path);
         Assert.NotNull(fileInfo);

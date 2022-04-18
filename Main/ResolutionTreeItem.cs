@@ -272,6 +272,10 @@ internal record DisposalHandling(
     string DisposedPropertyReference,
     string DisposableLocalReference);
 
+internal record NullResolution(
+    string Reference,
+    string TypeFullName) : Resolvable(Reference, TypeFullName);
+
 internal record FieldResolution(
     string Reference,
     string TypeFullName,

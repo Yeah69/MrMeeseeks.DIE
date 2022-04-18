@@ -46,7 +46,8 @@ public static class RoslynExtensions
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
             parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeParamsRefOut,
-            memberOptions: SymbolDisplayMemberOptions.IncludeRef));
+            memberOptions: SymbolDisplayMemberOptions.IncludeRef,
+            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
 
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
     internal static string FullName(this INamespaceSymbol @namespace) =>

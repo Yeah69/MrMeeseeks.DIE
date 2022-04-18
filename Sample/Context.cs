@@ -1,17 +1,22 @@
-﻿using System;
-using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.SampleChild;
-using SampleChild;
+﻿using MrMeeseeks.DIE.Configuration;
 
-namespace MrMeeseeks.DIE.Test.Spy.Implementations;
+namespace MrMeeseeks.DIE.Test.Nullability.MultipleConstructors;
 
-[SpyAggregation(typeof(IPublicTypeReport))]
-[SpyConstructorChoiceAggregation(
-    typeof(PublicConstructorReport.global__MrMeeseeks_DIE_SampleChild_Class._),
-    typeof(PublicConstructorReport.global__MrMeeseeks_DIE_SampleChild_ClassToo.Int32))]
-[CreateFunction(typeof(Class), "CreateClass")]
-[CreateFunction(typeof(Func<int, ClassToo>), "CreateClassToo")]
+internal class Dependency
+{
+    internal Dependency() {}
+    internal Dependency(int _) {}
+}
+
+internal class Wrapper
+{
+    public Dependency? Dependency { get; }
+
+    internal Wrapper(Dependency? dependency) => Dependency = dependency;
+}
+
+[CreateFunction(typeof(Wrapper), "Create")]
 internal partial class Container
 {
-    
+    private int DIE_Counter() => 69;
 }

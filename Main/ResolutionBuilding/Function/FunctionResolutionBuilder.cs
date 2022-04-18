@@ -451,7 +451,9 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         var interfaceType = (INamedTypeSymbol) typeSymbol;
         var implementations = _checkTypeProperties
             .MapToImplementations(typeSymbol);
-        var shouldBeScopeRoot = implementations.Max(i => _checkTypeProperties.ShouldBeScopeRoot(i));
+        var shouldBeScopeRoot = implementations.Any() 
+            ? implementations.Max(i => _checkTypeProperties.ShouldBeScopeRoot(i)) 
+            : ScopeLevel.None;
 
         var nextParameter = new SwitchInterfaceAfterScopeRootParameter(
             interfaceType,
@@ -508,17 +510,18 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 currentParameters, 
                 composition));
         }
-        if (implementations.SingleOrDefault() is not { } implementationType)
+        if (implementations.FirstOrDefault() is not { } implementationType || implementations.Count > 1)
         {
-            return (
-                new ErrorTreeItem(implementations.Count switch
-                {
-                    0 => $"[{interfaceType.FullName()}] Interface: No implementation found",
-                    > 1 => $"[{interfaceType.FullName()}] Interface: more than one implementation found",
-                    _ =>
-                        $"[{interfaceType.FullName()}] Interface: Found single implementation {implementations[0].FullName()} is not a named type symbol"
-                }),
-                null);
+            return interfaceType.NullableAnnotation == NullableAnnotation.Annotated 
+                    ? (new NullResolution(RootReferenceGenerator.Generate(interfaceType), interfaceType.FullName()), null) // todo warning
+                    : (new ErrorTreeItem(implementations.Count switch 
+                        {
+                            0 => $"[{interfaceType.FullName()}] Interface: No implementation found",
+                            > 1 => $"[{interfaceType.FullName()}] Interface: more than one implementation found",
+                            _ =>
+                                $"[{interfaceType.FullName()}] Interface: Found single implementation {implementations[0].FullName()} is not a named type symbol"
+                        }), 
+                        null);
         }
 
         return CreateInterface(new CreateInterfaceParameter(
@@ -616,17 +619,18 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         var (typeSymbol, currentParameters) = parameter;
         var implementations = _checkTypeProperties
             .MapToImplementations(typeSymbol);
-        var implementationType = implementations.SingleOrDefault();
-        if (implementationType is not { })
+        var implementationType = implementations.FirstOrDefault();
+        if (implementationType is not { } || implementations.Count > 1)
         {
-            return (
-                new ErrorTreeItem(implementations.Count switch
-                {
-                    0 => $"[{typeSymbol.FullName()}] Class: No implementation found",
-                    > 1 => $"[{typeSymbol.FullName()}] Class: more than one implementation found",
-                    _ => $"[{typeSymbol.FullName()}] Class: Found single implementation{implementations[0].FullName()} is not a named type symbol"
-                }),
-                null);
+            return typeSymbol.NullableAnnotation == NullableAnnotation.Annotated 
+                ? (new NullResolution(RootReferenceGenerator.Generate(typeSymbol), typeSymbol.FullName()), null) // todo warning
+                : (new ErrorTreeItem(implementations.Count switch
+                    {
+                        0 => $"[{typeSymbol.FullName()}] Class: No implementation found",
+                        > 1 => $"[{typeSymbol.FullName()}] Class: more than one implementation found",
+                        _ => $"[{typeSymbol.FullName()}] Class: Found single implementation{implementations[0].FullName()} is not a named type symbol"
+                    }),
+                    null);
         }
 
         var nextParameter = new SwitchImplementationParameter(
@@ -715,14 +719,15 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         
         if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is not { } constructor)
         {
-            return (
-                new ErrorTreeItem(implementationType.Constructors.Length switch
-                {
-                    0 => $"[{implementationType.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                    > 1 => $"[{implementationType.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                    _ => $"[{implementationType.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
-                }),
-                null);
+            return implementationType.NullableAnnotation == NullableAnnotation.Annotated 
+                ? (new NullResolution(RootReferenceGenerator.Generate(implementationType), implementationType.FullName()), null) // todo warning
+                : (new ErrorTreeItem(implementationType.Constructors.Length switch
+                    {
+                        0 => $"[{implementationType.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                        > 1 => $"[{implementationType.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                        _ => $"[{implementationType.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
+                    }),
+                    null);
         }
 
         var checkForDecoration = false;

@@ -270,6 +270,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder.AppendLine($"{scopeTypeFullName} {scopeReference};");  
                 stringBuilder = GenerateFields(stringBuilder, functionCallResolution);
                 break;
+            case NullResolution(var reference, var typeFullName):
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
+                break;
             case TransientScopeAsDisposableResolution(var reference, var typeFullName):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                 break;
@@ -530,6 +533,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case ParameterResolution:
                 break; // parameter exists already
+            case NullResolution(var reference, var typeFullName):
+                stringBuilder = stringBuilder.AppendLine($"{reference} = ({typeFullName}) null;");
+                break;
             case FieldResolution(var reference, _, var fieldName):
                 stringBuilder = stringBuilder.AppendLine($"{reference} = this.{fieldName};");
                 break;

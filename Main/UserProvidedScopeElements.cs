@@ -27,7 +27,7 @@ internal class UserProvidedScopeElements : IUserProvidedScopeElements
             .ToList();
 
         _typeToField = dieMembers
-            .Where(s => s is IFieldSymbol fieldSymbol && (fieldSymbol.IsConst || fieldSymbol.IsReadOnly))
+            .Where(s => s is IFieldSymbol)
             .OfType<IFieldSymbol>()
             .ToDictionary(fs => fs.Type, fs => fs, SymbolEqualityComparer.IncludeNullability);
         

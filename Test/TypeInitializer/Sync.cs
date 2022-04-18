@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.SyncTypeInitializationTest;
+namespace MrMeeseeks.DIE.Test.TypeInitializer.Sync;
 
 internal class Dependency : ITypeInitializer
 {
@@ -10,18 +10,18 @@ internal class Dependency : ITypeInitializer
     void ITypeInitializer.Initialize() => IsInitialized = true;
 }
 
-[CreateFunction(typeof(Dependency), "Create0")]
+[CreateFunction(typeof(Dependency), "Create")]
 internal partial class Container 
 {
 }
 
-public partial class Tests
+public class Tests
 {
     [Fact]
     public void Test()
     {
         var container = new Container();
-        var instance = container.Create0();
+        var instance = container.Create();
         Assert.True(instance.IsInitialized);
     }
 }

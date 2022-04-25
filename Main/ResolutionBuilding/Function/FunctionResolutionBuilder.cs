@@ -335,8 +335,9 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (type.TypeKind == TypeKind.Interface)
             return SwitchInterface(new SwitchInterfaceParameter(type, currentFuncParameters));
 
-        if (type.TypeKind is TypeKind.Class or TypeKind.Struct)
-            return SwitchClass(new SwitchClassParameter(type, currentFuncParameters));
+        if (type.TypeKind is TypeKind.Class or TypeKind.Struct
+            && type is INamedTypeSymbol classOrStructType)
+            return SwitchClass(new SwitchClassParameter(classOrStructType, currentFuncParameters));
 
         return (
             new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation."),
@@ -450,7 +451,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         var (typeSymbol, currentParameters) = parameter;
         var interfaceType = (INamedTypeSymbol) typeSymbol;
         var implementations = _checkTypeProperties
-            .MapToImplementations(typeSymbol);
+            .MapToImplementations(interfaceType);
         var shouldBeScopeRoot = implementations.Any() 
             ? implementations.Max(i => _checkTypeProperties.ShouldBeScopeRoot(i)) 
             : ScopeLevel.None;

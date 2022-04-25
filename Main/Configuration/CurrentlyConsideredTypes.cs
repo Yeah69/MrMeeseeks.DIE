@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using MrMeeseeks.DIE.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
@@ -16,7 +17,7 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
     IReadOnlyDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> InterfaceSequenceChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> ImplementationSequenceChoices { get; }
-    IReadOnlyDictionary<ITypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
     IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
 }
 
@@ -36,7 +37,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 .Where(e => e is ClassDeclarationSyntax or StructDeclarationSyntax or RecordDeclarationSyntax)
                 .Select(c => t.Item2.GetDeclaredSymbol(c))
                 .Where(c => c is not null)
-                .OfType<INamedTypeSymbol>()));
+                .OfType<INamedTypeSymbol>()
+                .Where(nts => !nts.IsAbstract)));
         
         foreach (var types in typesFromAttributes)
         {
@@ -49,7 +51,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                     .OfType<IMethodSymbol>()
                     .Where(ms => !ms.ReturnsVoid)
                     .Select(ms => ms.ReturnType)
-                    .OfType<INamedTypeSymbol>());
+                    .OfType<INamedTypeSymbol>()
+                    .Where(nts => !nts.IsAbstract));
 
             allImplementations.AddRange(types.Implementation
                 .Concat(spiedImplementations));
@@ -139,10 +142,10 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         ImplementationMap = allImplementations
             .Where(t => !decoratorTypes.Contains(t.OriginalDefinition))
             .Where(t => !compositeTypes.Contains(t.OriginalDefinition))
-            .SelectMany(i => { return i.AllInterfaces.OfType<ITypeSymbol>().Select(ii => (ii, i)).Prepend((i, i)); })
-            .GroupBy(t => t.Item1, t => t.Item2)
+            .SelectMany(i => { return i.AllInterfaces.OfType<INamedTypeSymbol>().Select(ii => (ii, i)).Prepend((i, i)); })
+            .GroupBy(t => t.Item1.UnboundIfGeneric(), t => t.Item2)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>().ToList());
-        
+
         var initializers = new Dictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)>(SymbolEqualityComparer.Default);
         
         foreach (var types in typesFromAttributes)
@@ -153,7 +156,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 .ToImmutableHashSet(SymbolEqualityComparer.Default);
             
             foreach (var filterConcreteType in allImplementations
-                         .Where(i => AllDerivedTypes(i)
+                         .Where(i => i.AllDerivedTypes()
                              .Select(t => t.OriginalDefinition)
                              .Any(inter => filterInterfaceTypes.Contains(inter))))
                 initializers.Remove(filterConcreteType);
@@ -176,7 +179,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                          {
                              foreach (var (interfaceType, initializer) in interfaceTypes)
                              {
-                                 if (AllDerivedTypes(i).Select(d => d.OriginalDefinition).Contains(interfaceType, SymbolEqualityComparer.Default))
+                                 if (i.AllDerivedTypes().Select(d => d.OriginalDefinition).Contains(interfaceType, SymbolEqualityComparer.Default))
                                  {
                                      return ((INamedTypeSymbol, INamedTypeSymbol, IMethodSymbol)?) (i, interfaceType, initializer);
                                  }
@@ -211,7 +214,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 ret = ret.Union(allImplementations
                     .Where(i =>
                     {
-                        var derivedTypes = AllDerivedTypes(i).Select(t => t.OriginalDefinition).ToList();
+                        var derivedTypes = i.AllDerivedTypes().Select(t => t.OriginalDefinition).ToList();
                         return propertyGivingTypes.Any(t =>
                             derivedTypes.Contains(t.OriginalDefinition, SymbolEqualityComparer.Default));
                     })
@@ -220,21 +223,6 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             }
             
             return ret;
-        }
-        
-        IEnumerable<INamedTypeSymbol> AllDerivedTypes(INamedTypeSymbol type)
-        {
-            var concreteTypes = new List<INamedTypeSymbol>();
-            var temp = type;
-            while (temp is {})
-            {
-                concreteTypes.Add(temp);
-                temp = temp.BaseType;
-            }
-            return type
-                .AllInterfaces
-                .Append(type)
-                .Concat(concreteTypes);
         }
     }
     
@@ -250,6 +238,6 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> InterfaceSequenceChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationSequenceChoices { get; }
-    public IReadOnlyDictionary<ITypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
 }

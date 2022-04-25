@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Extensions;
+
 namespace MrMeeseeks.DIE.Configuration;
 
 internal enum ScopeLevel
@@ -27,7 +29,7 @@ internal interface ICheckTypeProperties
     bool ShouldBeDecorated(INamedTypeSymbol interfaceType);
     IReadOnlyList<INamedTypeSymbol> GetSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType);
     
-    IReadOnlyList<INamedTypeSymbol> MapToImplementations(ITypeSymbol typeSymbol);
+    IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol);
     (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType);
 }
 
@@ -101,10 +103,70 @@ internal class CheckTypeProperties : ICheckTypeProperties
         throw new Exception("Couldn't find unambiguous sequence of decorators");
     }
     
-    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(ITypeSymbol typeSymbol) =>
-        _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol, out var implementations) 
-            ? implementations 
-            : new List<INamedTypeSymbol>();
+    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol) =>
+        _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol.UnboundIfGeneric(), out var implementations) 
+            ? GetClosedImplementations(typeSymbol, implementations)
+            : Array.Empty<INamedTypeSymbol>();
+
+    private IReadOnlyList<INamedTypeSymbol> GetClosedImplementations(
+        INamedTypeSymbol targetType,
+        IReadOnlyList<INamedTypeSymbol> rawImplementations)
+    {
+        var targetClosedGenericParameters = targetType
+            .TypeArguments
+            .OfType<INamedTypeSymbol>()
+            .ToImmutableArray();
+        var unboundTargetType = targetType.UnboundIfGeneric();
+        var isTargetGeneric = targetType.IsGenericType;
+        if (isTargetGeneric && targetType.TypeArguments.Any(tp => tp is not INamedTypeSymbol)) 
+            throw new Exception("Target type at this point should only have closed generic parameters");
+
+        var ret = new List<INamedTypeSymbol>();
+        foreach (var implementation in rawImplementations)
+        {
+            if (!implementation.IsGenericType)
+            {
+                ret.Add(implementation);
+                continue;
+            }
+
+            if (implementation.AllDerivedTypes()
+                    .FirstOrDefault(t =>
+                        SymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), unboundTargetType)) is { } implementationsTarget)
+            {
+                var newTypeArguments = implementation.TypeArguments
+                    .Select(ta => ta switch
+                    {
+                        INamedTypeSymbol nts => nts,
+                        ITypeParameterSymbol tps =>
+                            implementationsTarget
+                                .TypeArguments
+                                .IndexOf(tps, SymbolEqualityComparer.Default) is int index
+                            && index >= 0 
+                                ? targetClosedGenericParameters[index]
+                                : throw new Exception("huh?"),
+                        _ => ta
+                    })
+                    .OfType<INamedTypeSymbol>()
+                    .OfType<ITypeSymbol>()
+                    .ToArray();
+
+
+                if (newTypeArguments.Length == implementation.TypeArguments.Length)
+                {
+                    var closedImplementation = implementation.Construct(newTypeArguments);
+                    if (closedImplementation
+                        .AllDerivedTypes()
+                        .Any(t => SymbolEqualityComparer.Default.Equals(targetType, t)))
+                    {
+                        ret.Add(closedImplementation);
+                    }
+                }
+            }
+        }
+
+        return ret;
+    }
 
     public (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType) =>
         _currentlyConsideredTypes.ImplementationToInitializer.TryGetValue(implementationType, out var tuple)

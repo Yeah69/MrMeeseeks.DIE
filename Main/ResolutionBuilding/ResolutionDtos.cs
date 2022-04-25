@@ -99,7 +99,7 @@ internal record CreateInterfaceParameterAsComposition(
 }
 
 internal record SwitchClassParameter(
-    ITypeSymbol TypeSymbol,
+    INamedTypeSymbol TypeSymbol,
     IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
     
 internal record SwitchImplementationParameter(

@@ -1,22 +1,14 @@
-﻿using MrMeeseeks.DIE.Configuration;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Sample;
+ 
+namespace MrMeeseeks.DIE.Test.Generics.Interface_SingleAndImplementationDoubleButOneFixed;
 
-namespace MrMeeseeks.DIE.Test.Nullability.MultipleConstructors;
+internal interface IInterface<T0> {}
 
-internal class Dependency
-{
-    internal Dependency() {}
-    internal Dependency(int _) {}
-}
+internal abstract class BaseClass<T0, T1> : IInterface<T0> {}
 
-internal class Wrapper
-{
-    public Dependency? Dependency { get; }
+internal class Class<T0> : BaseClass<T0, string> {}
 
-    internal Wrapper(Dependency? dependency) => Dependency = dependency;
-}
-
-[CreateFunction(typeof(Wrapper), "Create")]
-internal partial class Container
-{
-    private int DIE_Counter() => 69;
-}
+[CreateFunction(typeof(IInterface<int>), "Create")]
+internal partial class Container {}

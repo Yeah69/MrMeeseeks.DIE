@@ -159,6 +159,30 @@ public class FilterCompositeAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class GenericParameterSubstituteAggregationAttribute : Attribute
+{
+    public GenericParameterSubstituteAggregationAttribute(Type unboundGenericType, string genericArgumentName, params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterGenericParameterSubstituteAggregationAttribute : Attribute
+{
+    public FilterGenericParameterSubstituteAggregationAttribute(Type unboundGenericType, string genericArgumentName, params Type[] types) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class GenericParameterSubstituteChoiceAttribute : Attribute
+{
+    public GenericParameterSubstituteChoiceAttribute(Type unboundGenericType, string genericArgumentName, Type chosenType) {}
+}
+    
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterGenericParameterSubstituteChoiceAttribute : Attribute
+{
+    public FilterGenericParameterSubstituteChoiceAttribute(Type unboundGenericType, string genericArgumentName) {}
+}
+    
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
 public class DecoratorSequenceChoiceAttribute : Attribute
 {
     public DecoratorSequenceChoiceAttribute(Type decoratedType, params Type[] types) {}

@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.ScopeSpecificAttributesTestsWithImplementations;
+namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.Implementation;
 
 internal interface IDependency {}
 

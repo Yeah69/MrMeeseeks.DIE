@@ -311,8 +311,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 .Select(i =>
                 {
                     var itemResolution = itemTypeIsInterface
-                        ? SwitchInterfaceForSpecificImplementation(
-                            new SwitchInterfaceForSpecificImplementationParameter(unwrappedItemType, i, currentFuncParameters))
+                        ? SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(unwrappedItemType, i, currentFuncParameters))
                         : SwitchClass(new SwitchClassParameter(i, currentFuncParameters));
                     return (taskType switch
                     {
@@ -332,11 +331,12 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 null);
         }
 
-        if (type.TypeKind == TypeKind.Interface)
-            return SwitchInterface(new SwitchInterfaceParameter(type, currentFuncParameters));
+        if (type is { TypeKind: TypeKind.Interface} 
+            or { TypeKind: TypeKind.Class, IsAbstract: true }
+            && type is INamedTypeSymbol interfaceOrAbstractType)
+            return SwitchInterface(new SwitchInterfaceAfterScopeRootParameter(interfaceOrAbstractType, currentFuncParameters));
 
-        if (type.TypeKind is TypeKind.Class or TypeKind.Struct
-            && type is INamedTypeSymbol classOrStructType)
+        if (type is INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct} classOrStructType)
             return SwitchClass(new SwitchClassParameter(classOrStructType, currentFuncParameters));
 
         return (
@@ -446,57 +446,15 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         return (new TaskFromSyncResolution(resolution.Item1, wrappedValueTaskReference, boundValueTaskTypeFullName), resolution.Item2);
     }
 
-    private (Resolvable, ITaskConsumableResolution?) SwitchInterface(SwitchInterfaceParameter parameter)
-    {
-        var (typeSymbol, currentParameters) = parameter;
-        var interfaceType = (INamedTypeSymbol) typeSymbol;
-        var implementations = _checkTypeProperties
-            .MapToImplementations(interfaceType);
-        var shouldBeScopeRoot = implementations.Any() 
-            ? implementations.Max(i => _checkTypeProperties.ShouldBeScopeRoot(i)) 
-            : ScopeLevel.None;
-
-        var nextParameter = new SwitchInterfaceAfterScopeRootParameter(
-            interfaceType,
-            implementations,
-            currentParameters);
-        
-        var ret = shouldBeScopeRoot switch
-        {
-            ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
-                nextParameter,
-                interfaceType,
-                currentParameters), null),
-            ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
-                nextParameter,
-                interfaceType,
-                currentParameters), null),
-            _ => SwitchInterfaceAfterScopeRoot(nextParameter)
-        };
-
-        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
-            _synchronicityDecisionMaker.Register(awaitableResolution);
-
-        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
-            _synchronicityDecisionMaker.Register(awaitableResolution0);
-
-        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
-            ret.Item2 = taskConsumableResolution;
-
-        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution0 })
-            ret.Item2 = taskConsumableResolution0;
-
-        return ret;
-    }
-
-    protected (Resolvable, ITaskConsumableResolution?) SwitchInterfaceAfterScopeRoot(
+    private (Resolvable, ITaskConsumableResolution?) SwitchInterface(
         SwitchInterfaceAfterScopeRootParameter parameter)
     {
-        var (interfaceType, implementations, currentParameters) = parameter;
+        var (interfaceType, currentParameters) = parameter;
         if (_checkTypeProperties.ShouldBeComposite(interfaceType))
         {
+            var implementations = _checkTypeProperties.MapToImplementations(interfaceType);
             var compositeImplementationType = _checkTypeProperties.GetCompositeFor(interfaceType);
-            var interfaceResolutions = implementations.Select(i => CreateInterface(new CreateInterfaceParameter(
+            var interfaceResolutions = implementations.Select(i => SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(
                 interfaceType,
                 i,
                 currentParameters))).ToList();
@@ -505,90 +463,45 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 implementations.ToList(),
                 compositeImplementationType,
                 interfaceResolutions.Select(ir => ir.Item1).ToList());
-            return CreateInterface(new CreateInterfaceParameterAsComposition(
+            return SwitchInterfaceWithoutComposition(new CreateInterfaceParameterAsComposition(
                 interfaceType, 
                 compositeImplementationType,
                 currentParameters, 
                 composition));
         }
-        if (implementations.FirstOrDefault() is not { } implementationType || implementations.Count > 1)
+        if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType) is not { } implementationType)
         {
             return interfaceType.NullableAnnotation == NullableAnnotation.Annotated 
-                    ? (new NullResolution(RootReferenceGenerator.Generate(interfaceType), interfaceType.FullName()), null) // todo warning
-                    : (new ErrorTreeItem(implementations.Count switch 
-                        {
-                            0 => $"[{interfaceType.FullName()}] Interface: No implementation found",
-                            > 1 => $"[{interfaceType.FullName()}] Interface: more than one implementation found",
-                            _ =>
-                                $"[{interfaceType.FullName()}] Interface: Found single implementation {implementations[0].FullName()} is not a named type symbol"
-                        }), 
-                        null);
+                ? (new NullResolution(RootReferenceGenerator.Generate(interfaceType), interfaceType.FullName()), null) // todo warning
+                : (new ErrorTreeItem($"[{interfaceType.FullName()}] Interface: Multiple or no implementations where a single is required"), null);
         }
 
-        return CreateInterface(new CreateInterfaceParameter(
+        return SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(
             interfaceType,
             implementationType,
             currentParameters));
     }
 
-    private (Resolvable, ITaskConsumableResolution?) SwitchInterfaceForSpecificImplementation(
-        SwitchInterfaceForSpecificImplementationParameter parameter)
-    {
-        var (interfaceType, implementationType, currentParameters) = parameter;
-        
-        var nextParameter = new CreateInterfaceParameter(
-            interfaceType,
-            implementationType,
-            currentParameters);
-
-        (Resolvable, ITaskConsumableResolution?) ret = _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
-        {
-            ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
-                nextParameter,
-                interfaceType,
-                currentParameters), null),
-            ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
-                nextParameter,
-                interfaceType,
-                currentParameters), null),
-            _ => CreateInterface(nextParameter)
-        };
-
-        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
-            _synchronicityDecisionMaker.Register(awaitableResolution);
-
-        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
-            _synchronicityDecisionMaker.Register(awaitableResolution0);
-
-        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
-            ret.Item2 = taskConsumableResolution;
-
-        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution0 })
-            ret.Item2 = taskConsumableResolution0;
-
-        return ret;
-    }
-
-    protected (InterfaceResolution, ITaskConsumableResolution?) CreateInterface(CreateInterfaceParameter parameter)
+    private (InterfaceResolution, ITaskConsumableResolution?) SwitchInterfaceWithoutComposition(CreateInterfaceParameter parameter)
     {
         var (interfaceType, implementationType, currentParameters) = parameter;
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
 
-        var nextParameter = parameter switch
+        var (nextResolvable, _) = parameter switch
         {
-            CreateInterfaceParameterAsComposition asComposition => new SwitchImplementationParameterWithComposition(
+            CreateInterfaceParameterAsComposition asComposition => SwitchImplementation(new SwitchImplementationParameterWithComposition(
                 asComposition.Composition.CompositeType,
                 currentParameters,
-                asComposition.Composition),
-            _ => new SwitchImplementationParameter(
+                asComposition.Composition)),
+            _ => SwitchClass(new SwitchClassParameter(
                 implementationType,
-                currentParameters)
+                currentParameters))
         };
 
         var currentInterfaceResolution = new InterfaceResolution(
             RootReferenceGenerator.Generate(interfaceType),
             interfaceType.FullName(),
-            SwitchImplementation(nextParameter).Item1);
+            nextResolvable);
 
         if (shouldBeDecorated)
         {
@@ -617,22 +530,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
     private (Resolvable, ITaskConsumableResolution?) SwitchClass(SwitchClassParameter parameter)
     {
-        var (typeSymbol, currentParameters) = parameter;
-        var implementations = _checkTypeProperties
-            .MapToImplementations(typeSymbol);
-        var implementationType = implementations.FirstOrDefault();
-        if (implementationType is not { } || implementations.Count > 1)
-        {
-            return typeSymbol.NullableAnnotation == NullableAnnotation.Annotated 
-                ? (new NullResolution(RootReferenceGenerator.Generate(typeSymbol), typeSymbol.FullName()), null) // todo warning
-                : (new ErrorTreeItem(implementations.Count switch
-                    {
-                        0 => $"[{typeSymbol.FullName()}] Class: No implementation found",
-                        > 1 => $"[{typeSymbol.FullName()}] Class: more than one implementation found",
-                        _ => $"[{typeSymbol.FullName()}] Class: Found single implementation{implementations[0].FullName()} is not a named type symbol"
-                    }),
-                    null);
-        }
+        var (implementationType, currentParameters) = parameter;
 
         var nextParameter = new SwitchImplementationParameter(
             implementationType,
@@ -785,7 +683,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
         var resolution = new ConstructorResolution(
             RootReferenceGenerator.Generate(implementationType),
-            implementationType.FullName(),
+            implementationType.FullName(SymbolDisplayMiscellaneousOptions.None),
             GetDisposalTypeFor(implementationType),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                 .Parameters

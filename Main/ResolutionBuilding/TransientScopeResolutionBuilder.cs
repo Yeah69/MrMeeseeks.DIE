@@ -6,7 +6,7 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 internal interface ITransientScopeResolutionBuilder : ITransientScopeImplementationResolutionBuilder, IRangeResolutionBaseBuilder, IResolutionBuilder<TransientScopeResolution>
 {
     TransientScopeRootResolution AddCreateResolveFunction(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
@@ -17,7 +17,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
     private readonly IContainerResolutionBuilder _containerResolutionBuilder;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
     private readonly IScopeManager _scopeManager;
-    private readonly Func<IRangeResolutionBaseBuilder, IScopeRootParameter, IScopeRootCreateFunctionResolutionBuilder> _scopeRootCreateFunctionResolutionBuilderFactory;
+    private readonly Func<IRangeResolutionBaseBuilder, SwitchImplementationParameter, IScopeRootCreateFunctionResolutionBuilder> _scopeRootCreateFunctionResolutionBuilderFactory;
     private readonly string _containerReference;
     private readonly string _containerParameterReference;
     
@@ -35,7 +35,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        Func<IRangeResolutionBaseBuilder, IScopeRootParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
+        Func<IRangeResolutionBaseBuilder, SwitchImplementationParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory) 
         : base(
@@ -62,7 +62,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, "this");
 
     public override TransientScopeRootResolution CreateTransientScopeRootResolution(
-        IScopeRootParameter parameter, 
+        SwitchImplementationParameter parameter, 
         INamedTypeSymbol rootType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
@@ -74,7 +74,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
                 currentParameters);
 
     public override ScopeRootResolution CreateScopeRootResolution(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType, 
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
@@ -93,12 +93,12 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo);
 
     public TransientScopeRootResolution AddCreateResolveFunction(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
-        var key = $"{rootType.FullName()}{parameter.KeySuffix()}";
+        var key = rootType.FullName();
         if (!_transientScopeRootFunctionResolutions.TryGetValue(
                 key,
                 out var function))

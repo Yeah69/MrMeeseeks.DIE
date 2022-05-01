@@ -17,6 +17,8 @@ internal interface ITypesFromAttributes
     IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
     IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
+    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutes { get; } 
+    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
     IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
@@ -32,6 +34,8 @@ internal interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
     IReadOnlyList<INamedTypeSymbol> FilterConstructorChoices { get; }
     IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
+    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> FilterGenericParameterSubstitutes { get; } 
+    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; } 
 }
 
 internal class TypesFromAttributes : ScopeTypesFromAttributes
@@ -98,7 +102,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             {
                 if (ad.ConstructorArguments.Length < 2)
                     return null;
-                var decoratedType = ad.ConstructorArguments[0].Value;
+                var decoratedType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
                 var decorators = ad
                     .ConstructorArguments[1]
                     .Values
@@ -179,7 +183,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>()
             .ToList();
-        
+
         FilterConstructorChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterConstructorChoiceAttribute, out var group2) ? group2 : Enumerable.Empty<AttributeData>())
             .Concat(GetTypesFromAttribute(wellKnownTypes.FilterSpyConstructorChoiceAggregationAttribute)
                 .Select(t => t.GetAttributes().FirstOrDefault(ad => ad.AttributeClass?.Name == nameof(ConstructorChoiceAttribute)))
@@ -237,6 +241,118 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<INamedTypeSymbol>()
             .ToList();
+        
+        GenericParameterSubstitutes = (AttributeDictionary.TryGetValue(wellKnownTypes.GenericParameterSubstituteAggregationAttribute, out var group5) ? group5 : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length < 3)
+                    return null;
+                var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
+                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter) 
+                    return null;
+
+                var typeParameterSymbol = genericType
+                    .OriginalDefinition
+                    .TypeArguments
+                    .OfType<ITypeParameterSymbol>()
+                    .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
+
+                var substitutes = ad
+                    .ConstructorArguments[2]
+                    .Values
+                    .Select(tc => tc.Value)
+                    .OfType<INamedTypeSymbol>()
+                    .ToList();
+                
+                return typeParameterSymbol is null 
+                    ? null 
+                    : ((INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)?) (genericType, typeParameterSymbol, substitutes);
+            })
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)>()
+            .ToList();
+        
+        GenericParameterChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.GenericParameterChoiceAttribute, out var group6) ? group6 : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length < 3)
+                    return null;
+                var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+                var typeChoice = ad.ConstructorArguments[2].Value as INamedTypeSymbol;
+
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
+                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter
+                    || typeChoice is null) 
+                    return null;
+
+                var typeParameterSymbol = genericType
+                    .OriginalDefinition
+                    .TypeArguments
+                    .OfType<ITypeParameterSymbol>()
+                    .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
+                
+                return typeParameterSymbol is null 
+                    ? null 
+                    : ((INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)?) (genericType, typeParameterSymbol, typeChoice);
+            })
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)>()
+            .ToList();
+        
+        FilterGenericParameterSubstitutes = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterGenericParameterSubstituteAggregationAttribute, out var group7) ? group7 : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length < 3)
+                    return null;
+                var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
+                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter) 
+                    return null;
+
+                var typeParameterSymbol = genericType
+                    .OriginalDefinition
+                    .TypeArguments
+                    .OfType<ITypeParameterSymbol>()
+                    .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
+
+                var substitutes = ad
+                    .ConstructorArguments[2]
+                    .Values
+                    .Select(tc => tc.Value)
+                    .OfType<INamedTypeSymbol>()
+                    .ToList();
+                
+                return typeParameterSymbol is null 
+                    ? null 
+                    : ((INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)?) (genericType, typeParameterSymbol, substitutes);
+            })
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)>()
+            .ToList();
+        
+        FilterGenericParameterChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterGenericParameterChoiceAttribute, out var group8) ? group8 : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length < 2)
+                    return null;
+                var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
+                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter) 
+                    return null;
+
+                var typeParameterSymbol = genericType
+                    .OriginalDefinition
+                    .TypeArguments
+                    .OfType<ITypeParameterSymbol>()
+                    .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
+                
+                return typeParameterSymbol is null 
+                    ? null 
+                    : ((INamedTypeSymbol, ITypeParameterSymbol)?) (genericType, typeParameterSymbol);
+            })
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol)>()
+            .ToList();
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
@@ -278,6 +394,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     public IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
     public IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
+    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutes { get; }
+    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
@@ -293,4 +411,6 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterConstructorChoices { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
+    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> FilterGenericParameterSubstitutes { get; }
+    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
 }

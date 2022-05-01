@@ -17,7 +17,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol DecoratorAggregationAttribute,
     INamedTypeSymbol CompositeAggregationAttribute,
     INamedTypeSymbol GenericParameterSubstituteAggregationAttribute,
-    INamedTypeSymbol GenericParameterSubstituteChoiceAttribute,
+    INamedTypeSymbol GenericParameterChoiceAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,
     INamedTypeSymbol ConstructorChoiceAttribute,
     INamedTypeSymbol TypeInitializerAttribute,
@@ -35,7 +35,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterDecoratorAggregationAttribute,
     INamedTypeSymbol FilterCompositeAggregationAttribute,
     INamedTypeSymbol FilterGenericParameterSubstituteAggregationAttribute,
-    INamedTypeSymbol FilterGenericParameterSubstituteChoiceAttribute,
+    INamedTypeSymbol FilterGenericParameterChoiceAttribute,
     INamedTypeSymbol FilterDecoratorSequenceChoiceAttribute,
     INamedTypeSymbol FilterConstructorChoiceAttribute,
     INamedTypeSymbol FilterTypeInitializerAttribute,
@@ -136,11 +136,11 @@ internal record WellKnownTypes(
         var filterGenericParameterSubstituteAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterGenericParameterSubstituteAggregationAttribute).FullName ?? "");
 
-        var genericParameterSubstituteChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(GenericParameterSubstituteChoiceAttribute).FullName ?? "");
+        var genericParameterChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(GenericParameterChoiceAttribute).FullName ?? "");
 
-        var filterGenericParameterSubstituteChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterGenericParameterSubstituteChoiceAttribute).FullName ?? "");
+        var filterGenericParameterChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterGenericParameterChoiceAttribute).FullName ?? "");
 
         var decoratorSequenceChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(DecoratorSequenceChoiceAttribute).FullName ?? "");
@@ -219,7 +219,7 @@ internal record WellKnownTypes(
             && decoratorAggregationAttribute is not null
             && compositeAggregationAttribute is not null
             && genericParameterSubstituteAggregationAttribute is not null
-            && genericParameterSubstituteChoiceAttribute is not null
+            && genericParameterChoiceAttribute is not null
             && decoratorSequenceChoiceAttribute is not null
             && constructorChoiceAttribute is not null
             && typeInitializerAttribute is not null
@@ -237,7 +237,7 @@ internal record WellKnownTypes(
             && filterDecoratorAggregationAttribute is not null
             && filterCompositeAggregationAttribute is not null
             && filterGenericParameterSubstituteAggregationAttribute is not null
-            && filterGenericParameterSubstituteChoiceAttribute is not null
+            && filterGenericParameterChoiceAttribute is not null
             && filterDecoratorSequenceChoiceAttribute is not null
             && filterConstructorChoiceAttribute is not null
             && filterTypeInitializerAttribute is not null
@@ -278,7 +278,7 @@ internal record WellKnownTypes(
                 DecoratorAggregationAttribute: decoratorAggregationAttribute,
                 CompositeAggregationAttribute: compositeAggregationAttribute,
                 GenericParameterSubstituteAggregationAttribute: genericParameterSubstituteAggregationAttribute,
-                GenericParameterSubstituteChoiceAttribute: genericParameterSubstituteChoiceAttribute,
+                GenericParameterChoiceAttribute: genericParameterChoiceAttribute,
                 DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
                 ConstructorChoiceAttribute: constructorChoiceAttribute,
                 TypeInitializerAttribute: typeInitializerAttribute,
@@ -296,7 +296,7 @@ internal record WellKnownTypes(
                 FilterDecoratorAggregationAttribute: filterDecoratorAggregationAttribute,
                 FilterCompositeAggregationAttribute: filterCompositeAggregationAttribute,
                 FilterGenericParameterSubstituteAggregationAttribute: filterGenericParameterSubstituteAggregationAttribute,
-                FilterGenericParameterSubstituteChoiceAttribute: filterGenericParameterSubstituteChoiceAttribute,
+                FilterGenericParameterChoiceAttribute: filterGenericParameterChoiceAttribute,
                 FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
                 FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
                 FilterTypeInitializerAttribute: filterTypeInitializerAttribute,

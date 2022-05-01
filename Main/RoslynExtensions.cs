@@ -40,14 +40,14 @@ public static class RoslynExtensions
     }
 
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
-    public static string FullName(this ITypeSymbol type) =>
+    public static string FullName(this ITypeSymbol type, SymbolDisplayMiscellaneousOptions miscellaneousOptions = SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier) =>
         type.ToDisplayString(new SymbolDisplayFormat(
             globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
             parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeParamsRefOut,
             memberOptions: SymbolDisplayMemberOptions.IncludeRef,
-            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+            miscellaneousOptions: miscellaneousOptions));
 
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
     internal static string FullName(this INamespaceSymbol @namespace) =>

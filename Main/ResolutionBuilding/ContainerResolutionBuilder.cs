@@ -81,7 +81,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, _transientScopeAdapterReference);
 
     public override TransientScopeRootResolution CreateTransientScopeRootResolution(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager
@@ -93,7 +93,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 currentParameters);
 
     public override ScopeRootResolution CreateScopeRootResolution(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType, 
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
         _scopeManager

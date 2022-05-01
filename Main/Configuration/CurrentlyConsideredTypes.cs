@@ -15,10 +15,12 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
-    IReadOnlyDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> InterfaceSequenceChoices { get; }
-    IReadOnlyDictionary<INamedTypeSymbol,IReadOnlyList<INamedTypeSymbol>> ImplementationSequenceChoices { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> InterfaceSequenceChoices { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationSequenceChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
     IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
+    IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutes { get; }
+    IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol> GenericParameterChoices { get; } 
 }
 
 internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
@@ -200,6 +202,58 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         }
 
         ImplementationToInitializer = initializers;
+
+        var genericParameterSubstitutes =
+            new Dictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>>();
+        
+        foreach (var typesFromAttribute in typesFromAttributes)
+        {
+            foreach (var tuple in typesFromAttribute.FilterGenericParameterSubstitutes)
+            {
+                var key = (tuple.Item1, tuple.Item2);
+                if (genericParameterSubstitutes.TryGetValue(key, out var currentGenericTypes))
+                {
+                    var newGenericTypes = currentGenericTypes
+                        .Where(gt => !tuple.Item3.Contains(gt, SymbolEqualityComparer.Default)).ToImmutableList();
+                    if (newGenericTypes.Any())
+                        genericParameterSubstitutes[key] = newGenericTypes;
+                    else
+                        genericParameterSubstitutes.Remove(key);
+                }
+            }
+
+            foreach (var tuple in typesFromAttribute.GenericParameterSubstitutes)
+            {
+                var key = (tuple.Item1, tuple.Item2);
+                var list = new List<INamedTypeSymbol>(
+                    genericParameterSubstitutes.TryGetValue(key, out var currentGenericTypes)
+                        ? currentGenericTypes
+                        : Array.Empty<INamedTypeSymbol>());
+                foreach (var newGenericType in tuple.Item3)
+                {
+                    if (!list.Contains(newGenericType, SymbolEqualityComparer.Default))
+                        list.Add(newGenericType);
+                }
+
+                genericParameterSubstitutes[key] = list;
+            }
+        }
+
+        GenericParameterSubstitutes = genericParameterSubstitutes;
+
+        var genericParameterChoices =
+            new Dictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol>();
+        
+        foreach (var typesFromAttribute in typesFromAttributes)
+        {
+            foreach (var tuple in typesFromAttribute.FilterGenericParameterChoices)
+                genericParameterChoices.Remove((tuple.Item1, tuple.Item2));
+
+            foreach (var tuple in typesFromAttribute.GenericParameterChoices)
+                genericParameterChoices[(tuple.Item1, tuple.Item2)] = tuple.Item3;
+        }
+
+        GenericParameterChoices = genericParameterChoices;
         
         IImmutableSet<ISymbol?> GetSetOfTypesWithProperties(
             Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> propertyGivingTypesGetter, 
@@ -240,4 +294,6 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationSequenceChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
+    public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutes { get; }
+    public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol> GenericParameterChoices { get; }
 }

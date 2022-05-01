@@ -6,13 +6,12 @@ internal interface IScopeRootCreateFunctionResolutionBuilder : IFunctionResoluti
 
 internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuilder, IScopeRootCreateFunctionResolutionBuilder
 {
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
-    private readonly IScopeRootParameter _scopeRootParameter;
+    private readonly SwitchImplementationParameter _parameter;
 
     public ScopeRootCreateFunctionResolutionBuilder(
         // parameter
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-        IScopeRootParameter scopeRootParameter,
+        SwitchImplementationParameter parameter,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         
         
@@ -20,23 +19,16 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, scopeRootParameter.ReturnType, scopeRootParameter.CurrentParameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+        : base(rangeResolutionBaseBuilder, parameter.ReturnType, parameter.CurrentParameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
     {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
-        _scopeRootParameter = scopeRootParameter;
+        _parameter = parameter;
 
         Name = RootReferenceGenerator.Generate("Create");
     }
 
     protected override string Name { get; }
 
-    protected override Resolvable CreateResolvable() => _scopeRootParameter switch
-    {
-        CreateInterfaceParameter createInterfaceParameter => CreateInterface(createInterfaceParameter).Item1,
-        SwitchImplementationParameter switchImplementationParameter => SwitchImplementation(switchImplementationParameter).Item1,
-        SwitchInterfaceAfterScopeRootParameter switchInterfaceAfterScopeRootParameter => SwitchInterfaceAfterScopeRoot(switchInterfaceAfterScopeRootParameter).Item1,
-        _ => throw new ArgumentOutOfRangeException(nameof(_scopeRootParameter))
-    };
+    protected override Resolvable CreateResolvable() => SwitchImplementation(_parameter).Item1;
 
     public override FunctionResolution Build()
     {

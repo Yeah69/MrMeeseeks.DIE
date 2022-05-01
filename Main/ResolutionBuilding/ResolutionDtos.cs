@@ -45,27 +45,9 @@ internal record SwitchInterfaceParameter(
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentFuncParameters)
     : Parameter;
 
-internal interface IScopeRootParameter
-{
-    INamedTypeSymbol ReturnType { get; }
-    IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters { get; }
-
-    string KeySuffix();
-    string RootFunctionSuffix();
-}
-
 internal record SwitchInterfaceAfterScopeRootParameter(
-        INamedTypeSymbol InterfaceType,
-        IReadOnlyList<INamedTypeSymbol> ImplementationTypes,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters) 
-    : IScopeRootParameter
-{
-    public INamedTypeSymbol ReturnType => InterfaceType;
-    
-    public string KeySuffix() => ":::InterfaceAfterRoot";
-
-    public string RootFunctionSuffix() => "_InterfaceAfterRoot";
-}
+    INamedTypeSymbol InterfaceType,
+    IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
 
 
 internal record SwitchInterfaceForSpecificImplementationParameter(
@@ -74,29 +56,16 @@ internal record SwitchInterfaceForSpecificImplementationParameter(
     IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
 
 internal record CreateInterfaceParameter(
-        INamedTypeSymbol InterfaceType,
-        INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
-    : IScopeRootParameter
-{
-    public INamedTypeSymbol ReturnType => InterfaceType;
-
-    public virtual string KeySuffix() => ":::NormalInterface";
-
-    public virtual string RootFunctionSuffix() => "_NormalInterface";
-}
+    INamedTypeSymbol InterfaceType,
+    INamedTypeSymbol ImplementationType,
+    IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters);
 
 internal record CreateInterfaceParameterAsComposition(
         INamedTypeSymbol InterfaceType,
         INamedTypeSymbol ImplementationType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
         CompositionInterfaceExtension Composition)
-    : CreateInterfaceParameter(InterfaceType, ImplementationType, CurrentParameters)
-{
-    public override string KeySuffix() => ":::CompositeInterface";
-
-    public override string RootFunctionSuffix() => "_CompositeInterface";
-}
+    : CreateInterfaceParameter(InterfaceType, ImplementationType, CurrentParameters);
 
 internal record SwitchClassParameter(
     INamedTypeSymbol TypeSymbol,
@@ -105,13 +74,8 @@ internal record SwitchClassParameter(
 internal record SwitchImplementationParameter(
         INamedTypeSymbol ImplementationType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters)
-    : IScopeRootParameter
 {
     public INamedTypeSymbol ReturnType => ImplementationType;
-
-    public virtual string KeySuffix() => ":::Implementation";
-
-    public virtual string RootFunctionSuffix() => "";
 }
     
 internal record SwitchImplementationParameterWithDecoration(

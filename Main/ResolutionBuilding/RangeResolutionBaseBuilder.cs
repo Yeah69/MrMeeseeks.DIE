@@ -18,12 +18,12 @@ internal interface IRangeResolutionBaseBuilder
         ForConstructorParameter parameter);
     
     TransientScopeRootResolution CreateTransientScopeRootResolution(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
     
     ScopeRootResolution CreateScopeRootResolution(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 
@@ -81,12 +81,12 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             new (_synchronicityDecisionMakerFactory));
     
     public abstract TransientScopeRootResolution CreateTransientScopeRootResolution(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
     
     public abstract ScopeRootResolution CreateScopeRootResolution(
-        IScopeRootParameter parameter,
+        SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
 

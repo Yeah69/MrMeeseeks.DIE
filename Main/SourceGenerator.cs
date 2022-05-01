@@ -133,9 +133,9 @@ public class SourceGenerator : ISourceGenerator
 
             IScopeRootCreateFunctionResolutionBuilder ScopeRootCreateFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-                IScopeRootParameter scopeRootParameter) => new ScopeRootCreateFunctionResolutionBuilder(
+                SwitchImplementationParameter parameter) => new ScopeRootCreateFunctionResolutionBuilder(
                 rangeResolutionBaseBuilder,
-                scopeRootParameter,
+                parameter,
                 FunctionResolutionSynchronicityDecisionMakerFactory(),
 
                 wellKnownTypes,

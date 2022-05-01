@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.ScopeSpecificAttributesTestsWithImplementationLists;
+namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.ImplementationCollection;
 
 internal interface IDependency {}
 

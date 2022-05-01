@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.ScopeSpecificAttributesTestsWithDecorator;
+namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.Decorator;
 
 internal interface IInterface
 {
@@ -123,7 +123,7 @@ internal partial class Container
     }
 }
 
-public class ScopeSpecificAttributesTests
+public class Tests
 {
     [Fact]
     public void Container()

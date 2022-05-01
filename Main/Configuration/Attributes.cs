@@ -171,15 +171,15 @@ public class FilterGenericParameterSubstituteAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
-public class GenericParameterSubstituteChoiceAttribute : Attribute
+public class GenericParameterChoiceAttribute : Attribute
 {
-    public GenericParameterSubstituteChoiceAttribute(Type unboundGenericType, string genericArgumentName, Type chosenType) {}
+    public GenericParameterChoiceAttribute(Type unboundGenericType, string genericArgumentName, Type chosenType) {}
 }
     
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class FilterGenericParameterSubstituteChoiceAttribute : Attribute
+public class FilterGenericParameterChoiceAttribute : Attribute
 {
-    public FilterGenericParameterSubstituteChoiceAttribute(Type unboundGenericType, string genericArgumentName) {}
+    public FilterGenericParameterChoiceAttribute(Type unboundGenericType, string genericArgumentName) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]

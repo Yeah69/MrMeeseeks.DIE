@@ -21,4 +21,9 @@ internal static class INamedTypeSymbolExtensions
         type.IsGenericType && !type.IsUnboundGenericType
             ? type.ConstructUnboundGenericType()
             : type;
+    
+    internal static INamedTypeSymbol OriginalDefinitionIfUnbound(this INamedTypeSymbol type) =>
+        type.IsUnboundGenericType
+            ? type.OriginalDefinition
+            : type;
 }

@@ -7,6 +7,8 @@ using MrMeeseeks.DIE.Sample;
 [assembly:TransientScopeRootAggregation(typeof(ITransientScopeRoot))]
 [assembly:ScopeRootAggregation(typeof(IScopeRoot))]
 [assembly:TransientAggregation(typeof(ITransient))]
+[assembly:SyncTransientAggregation(typeof(ISyncTransient))]
+[assembly:AsyncTransientAggregation(typeof(IAsyncTransient))]
 [assembly:DecoratorAggregation(typeof(IDecorator<>))]
 [assembly:CompositeAggregation(typeof(IComposite<>))]
 [assembly:TypeInitializer(typeof(ITypeInitializer), nameof(ITypeInitializer.Initialize))]

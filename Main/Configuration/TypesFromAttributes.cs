@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Extensions;
+
 namespace MrMeeseeks.DIE.Configuration;
 
 internal interface ITypesFromAttributes
@@ -164,7 +166,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             {
                 if (t is null) return null;
 
-                var implementationType = t.Value.Item1;
+                var implementationType = t.Value.Item1.OriginalDefinitionIfUnbound();
                 var parameterTypes = t.Value.Item2;
 
                 if (implementationType is null) return null;
@@ -218,6 +220,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     return ((INamedTypeSymbol, IMethodSymbol)?) null;
 
                 var initializationMethod = type
+                    .OriginalDefinitionIfUnbound()
                     .GetMembers(methodName)
                     .OfType<IMethodSymbol>()
                     .FirstOrDefault(m => m.Parameters.Length == 0);

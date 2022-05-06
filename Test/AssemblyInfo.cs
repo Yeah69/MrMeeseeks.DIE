@@ -1,6 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Test;
-using TestChild;
 
 [assembly:ContainerInstanceAggregation(typeof(IContainerInstance))]
 [assembly:TransientScopeInstanceAggregation(typeof(ITransientScopeInstance))]
@@ -8,6 +7,8 @@ using TestChild;
 [assembly:TransientScopeRootAggregation(typeof(ITransientScopeRoot))]
 [assembly:ScopeRootAggregation(typeof(IScopeRoot))]
 [assembly:TransientAggregation(typeof(ITransient))]
+[assembly:SyncTransientAggregation(typeof(ISyncTransient))]
+[assembly:AsyncTransientAggregation(typeof(IAsyncTransient))]
 [assembly:DecoratorAggregation(typeof(IDecorator<>))]
 [assembly:CompositeAggregation(typeof(IComposite<>))]
 [assembly:TypeInitializer(typeof(ITypeInitializer), nameof(ITypeInitializer.Initialize))]

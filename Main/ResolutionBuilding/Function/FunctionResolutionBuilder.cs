@@ -453,7 +453,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (_checkTypeProperties.ShouldBeComposite(interfaceType))
         {
             var implementations = _checkTypeProperties.MapToImplementations(interfaceType);
-            var compositeImplementationType = _checkTypeProperties.GetCompositeFor(interfaceType);
+            var compositeImplementationType = _checkTypeProperties.GetCompositeFor(interfaceType)
+                ?? throw new Exception("No or multiple composite implementations");
             var interfaceResolutions = implementations.Select(i => SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(
                 interfaceType,
                 i,

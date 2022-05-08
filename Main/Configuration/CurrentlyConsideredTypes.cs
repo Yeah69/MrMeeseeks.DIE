@@ -21,6 +21,7 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
     IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutes { get; }
     IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol> GenericParameterChoices { get; } 
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>> PropertyChoices { get; }
 }
 
 internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
@@ -131,7 +132,20 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         }
         
         ImplementationToConstructorChoice = constructorChoices;
+
+        var propertyChoices = new Dictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>>(SymbolEqualityComparer.Default);
         
+        foreach (var types in typesFromAttributes)
+        {
+            foreach (var filterPropertyChoice in types.FilterPropertyChoices)
+                propertyChoices.Remove(filterPropertyChoice);
+
+            foreach (var (implementationType, properties) in types.PropertyChoices)
+                propertyChoices[implementationType.UnboundIfGeneric()] = properties;
+        }
+        
+        PropertyChoices = propertyChoices;
+
         var decoratorInterfaces = ImmutableHashSet<INamedTypeSymbol>.Empty;
         foreach (var types in typesFromAttributes)
         {
@@ -336,4 +350,5 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
     public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutes { get; }
     public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol> GenericParameterChoices { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>> PropertyChoices { get; }
 }

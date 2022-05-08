@@ -210,6 +210,22 @@ public class FilterConstructorChoiceAttribute : Attribute
     }
 }
 
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class PropertyChoiceAttribute : Attribute
+{
+    public PropertyChoiceAttribute(Type implementationType, params string[] propertyName)
+    {
+    }
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterPropertyChoiceAttribute : Attribute
+{
+    public FilterPropertyChoiceAttribute(Type implementationType)
+    {
+    }
+}
+
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class CustomScopeForRootTypesAttribute : Attribute
 {

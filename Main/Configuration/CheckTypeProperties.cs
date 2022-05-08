@@ -32,6 +32,7 @@ internal interface ICheckTypeProperties
     INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type);
     IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol);
     (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType);
+    IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType);
 }
 
 internal class CheckTypeProperties : ICheckTypeProperties
@@ -93,14 +94,52 @@ internal class CheckTypeProperties : ICheckTypeProperties
 
     public IMethodSymbol? GetConstructorChoiceFor(INamedTypeSymbol implementationType)
     {
+        if (_currentlyConsideredTypes.ImplementationToConstructorChoice.TryGetValue(
+                implementationType.UnboundIfGeneric(), out var constr))
+            return constr;
+        
         var typeToChoseFrom = implementationType.OriginalDefinitionIfUnbound();
         if (typeToChoseFrom.Constructors.Length == 1 
             && typeToChoseFrom.Constructors.SingleOrDefault() is { } constructor)
             return constructor;
 
-        return _currentlyConsideredTypes.ImplementationToConstructorChoice.TryGetValue(implementationType.UnboundIfGeneric(), out var constr) 
-            ? constr : 
-            null;
+        return typeToChoseFrom switch
+        {
+            // If reference record and two constructors, decide for the constructor which isn't the copy-constructor
+            { IsRecord: true, IsValueType: false, Constructors.Length: 2 } 
+                when typeToChoseFrom
+                    .Constructors.SingleOrDefault(c =>
+                        c.Parameters.Length != 1 ||
+                        !SymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
+                is { } constructor0 => constructor0,
+            
+            // If value record and three constructors, decide for the constructor which isn't the copy-constructor or the parameterless constructor
+            { IsRecord: true, IsValueType: true, Constructors.Length: 3 } 
+                when typeToChoseFrom.Constructors
+                        .Where(c => c.Parameters.Length > 0)
+                        .SingleOrDefault(c =>
+                            c.Parameters.Length != 1 ||
+                            !SymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
+                    is { } constructor1 => constructor1,
+            
+            // If value record and two constructors, decide for the parameterless constructor
+            { IsRecord: true, IsValueType: true, Constructors.Length: 2 } 
+                when typeToChoseFrom.Constructors
+                        .SingleOrDefault(c => c.Parameters.Length == 0) 
+                    is { } constructor2 => constructor2,
+
+            // If value type and two constructors, decide for the constructor which isn't the parameterless constructor
+            { IsRecord: false, IsValueType: true, Constructors.Length: 2 } when typeToChoseFrom.Constructors
+                .SingleOrDefault(c => c.Parameters.Length > 0)
+                is { } constructor3 => constructor3,
+
+            // If value type and one constructor, decide for the parameterless constructor
+            { IsRecord: false, IsValueType: true, Constructors.Length: 1 } when typeToChoseFrom.Constructors
+                .SingleOrDefault()
+                is { } constructor4 => constructor4,
+
+            _ => null
+        };
     }
     
     public bool ShouldBeDecorated(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.InterfaceToDecorators.ContainsKey(interfaceType.UnboundIfGeneric());
@@ -299,4 +338,11 @@ internal class CheckTypeProperties : ICheckTypeProperties
         }
         return null;
     }
+
+    public IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType) =>
+        _currentlyConsideredTypes.PropertyChoices.TryGetValue(
+            implementationType.UnboundIfGeneric(),
+            out var properties) 
+            ? properties 
+            : null;
 }

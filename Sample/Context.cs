@@ -1,22 +1,23 @@
 ﻿using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerImplementationSync;
+namespace MrMeeseeks.DIE.Test.Record.PrimaryConstr;
 
-internal class Dependency<T0>
+internal interface IInterface {}
+
+internal class Implementation : IInterface {}
+
+internal class ImplementationA : IInterface {}
+
+internal class Dependency
 {
-    internal void Initialize()
+    public IReadOnlyList<IInterface> Item { get; }
+
+    internal Dependency(IReadOnlyList<IInterface> item)
     {
-        IsInitialized = true;
+        Item = item;
     }
-
-    public bool IsInitialized { get; private set; }
 }
 
-[TypeInitializer(typeof(Dependency<>), nameof(Dependency<int>.Initialize))]
-[CreateFunction(typeof(Dependency<int>), "Create")]
-internal partial class Container
-{
-    
-}
+[CreateFunction(typeof(Dependency), "Create")]
+internal partial class Container{}

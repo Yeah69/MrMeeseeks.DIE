@@ -20,6 +20,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol GenericParameterChoiceAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,
     INamedTypeSymbol ConstructorChoiceAttribute,
+    INamedTypeSymbol PropertyChoiceAttribute,
     INamedTypeSymbol TypeInitializerAttribute,
     INamedTypeSymbol FilterSpyAggregationAttribute,
     INamedTypeSymbol FilterSpyConstructorChoiceAggregationAttribute,
@@ -38,6 +39,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterGenericParameterChoiceAttribute,
     INamedTypeSymbol FilterDecoratorSequenceChoiceAttribute,
     INamedTypeSymbol FilterConstructorChoiceAttribute,
+    INamedTypeSymbol FilterPropertyChoiceAttribute,
     INamedTypeSymbol FilterTypeInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
     INamedTypeSymbol CreateFunctionAttribute,
@@ -148,6 +150,9 @@ internal record WellKnownTypes(
         var constructorChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(ConstructorChoiceAttribute).FullName ?? "");
 
+        var propertyChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(PropertyChoiceAttribute).FullName ?? "");
+
         var filterSpyAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterSpyAggregationAttribute).FullName ?? "");
 
@@ -193,6 +198,9 @@ internal record WellKnownTypes(
         var filterConstructorChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterConstructorChoiceAttribute).FullName ?? "");
 
+        var filterPropertyChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterPropertyChoiceAttribute).FullName ?? "");
+
         var customScopeForRootTypesAttribute = compilation
             .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
 
@@ -222,6 +230,7 @@ internal record WellKnownTypes(
             && genericParameterChoiceAttribute is not null
             && decoratorSequenceChoiceAttribute is not null
             && constructorChoiceAttribute is not null
+            && propertyChoiceAttribute is not null
             && typeInitializerAttribute is not null
             && filterSpyAggregationAttribute is not null
             && filterSpyConstructorChoiceAggregationAttribute is not null
@@ -240,6 +249,7 @@ internal record WellKnownTypes(
             && filterGenericParameterChoiceAttribute is not null
             && filterDecoratorSequenceChoiceAttribute is not null
             && filterConstructorChoiceAttribute is not null
+            && filterPropertyChoiceAttribute is not null
             && filterTypeInitializerAttribute is not null
             && customScopeForRootTypesAttribute is not null
             && createFunctionAttribute is not null
@@ -281,6 +291,7 @@ internal record WellKnownTypes(
                 GenericParameterChoiceAttribute: genericParameterChoiceAttribute,
                 DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
                 ConstructorChoiceAttribute: constructorChoiceAttribute,
+                PropertyChoiceAttribute: propertyChoiceAttribute,
                 TypeInitializerAttribute: typeInitializerAttribute,
                 FilterSpyAggregationAttribute: filterSpyAggregationAttribute,
                 FilterSpyConstructorChoiceAggregationAttribute: filterSpyConstructorChoiceAggregationAttribute,
@@ -299,6 +310,7 @@ internal record WellKnownTypes(
                 FilterGenericParameterChoiceAttribute: filterGenericParameterChoiceAttribute,
                 FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
                 FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
+                FilterPropertyChoiceAttribute: filterPropertyChoiceAttribute,
                 FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
                 CreateFunctionAttribute: createFunctionAttribute,

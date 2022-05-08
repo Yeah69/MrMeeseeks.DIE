@@ -21,6 +21,7 @@ internal interface ITypesFromAttributes
     IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
     IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutes { get; } 
     IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
+    IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
     IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
@@ -37,7 +38,8 @@ internal interface ITypesFromAttributes
     IReadOnlyList<INamedTypeSymbol> FilterConstructorChoices { get; }
     IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
     IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> FilterGenericParameterSubstitutes { get; } 
-    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; } 
+    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
+    IReadOnlyList<INamedTypeSymbol> FilterPropertyChoices { get; }
 }
 
 internal class TypesFromAttributes : ScopeTypesFromAttributes
@@ -208,6 +210,42 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .ToImmutableArray();
                     return members.Length < 1 ? null : members[0];
                 }))
+            .OfType<INamedTypeSymbol>()
+            .ToList();
+
+        PropertyChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.PropertyChoiceAttribute, out var propertyChoiceGroup) ? propertyChoiceGroup : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length < 1)
+                    return ((INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)?) null;
+                if (ad.ConstructorArguments[0].Value is not INamedTypeSymbol implementationType) 
+                    return null;
+                var parameterTypes = ad
+                    .ConstructorArguments[1]
+                    .Values
+                    .Select(tc => tc.Value)
+                    .OfType<string>()
+                    .ToList();
+
+                var properties = implementationType
+                    .OriginalDefinitionIfUnbound()
+                    .GetMembers()
+                    .OfType<IPropertySymbol>()
+                    .Where(ps => parameterTypes.Contains(ps.Name))
+                    .ToList();
+
+                return (implementationType, properties);
+            })
+            .OfType<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)>()
+            .ToList();
+
+        FilterPropertyChoices = (AttributeDictionary.TryGetValue(wellKnownTypes.FilterPropertyChoiceAttribute, out var filterPropertyChoicesGroup) ? filterPropertyChoicesGroup : Enumerable.Empty<AttributeData>())
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length < 1)
+                    return null;
+                return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+            })
             .OfType<INamedTypeSymbol>()
             .ToList();
 
@@ -399,6 +437,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
     public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutes { get; }
     public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }
+    public IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterSpy { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
     public IReadOnlyList<INamedTypeSymbol> FilterTransient { get; }
@@ -416,4 +455,5 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
     public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> FilterGenericParameterSubstitutes { get; }
     public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
+    public IReadOnlyList<INamedTypeSymbol> FilterPropertyChoices { get; }
 }

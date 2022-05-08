@@ -690,10 +690,13 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 .Parameters
                 .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
                 .ToList()),
-            new ReadOnlyCollection<(string Name, Resolvable Dependency)>(implementationType
-                .GetMembers()
-                .OfType<IPropertySymbol>()
-                .Where(p => p.SetMethod?.IsInitOnly ?? false)
+            new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
+                (_checkTypeProperties.GetPropertyChoicesFor(implementationType) 
+                 ?? implementationType
+                     .GetMembers()
+                     .OfType<IPropertySymbol>()
+                     .Where(_ => !implementationType.IsRecord)
+                     .Where(p => p.SetMethod?.IsInitOnly ?? false))
                 .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
                 .ToList()),
             typeInitializationResolution);

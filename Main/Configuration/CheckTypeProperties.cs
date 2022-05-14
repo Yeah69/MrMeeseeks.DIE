@@ -50,6 +50,9 @@ internal class CheckTypeProperties : ICheckTypeProperties
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
     {
+        if (implementationType.TypeKind is TypeKind.Struct or TypeKind.Structure)
+            return DisposalType.None;
+        
         if (implementationType.AllInterfaces.Contains(_wellKnownTypes.AsyncDisposable)
             && !_currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
             return DisposalType.Async;
@@ -99,44 +102,25 @@ internal class CheckTypeProperties : ICheckTypeProperties
             return constr;
         
         var typeToChoseFrom = implementationType.OriginalDefinitionIfUnbound();
-        if (typeToChoseFrom.Constructors.Length == 1 
-            && typeToChoseFrom.Constructors.SingleOrDefault() is { } constructor)
-            return constructor;
 
         return typeToChoseFrom switch
         {
             // If reference record and two constructors, decide for the constructor which isn't the copy-constructor
-            { IsRecord: true, IsValueType: false, Constructors.Length: 2 } 
+            { IsRecord: true, IsReferenceType: true, IsValueType: false, Constructors.Length: 2 } 
                 when typeToChoseFrom
                     .Constructors.SingleOrDefault(c =>
                         c.Parameters.Length != 1 ||
                         !SymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
-                is { } constructor0 => constructor0,
+                is { } constructor => constructor,
             
-            // If value record and three constructors, decide for the constructor which isn't the copy-constructor or the parameterless constructor
-            { IsRecord: true, IsValueType: true, Constructors.Length: 3 } 
-                when typeToChoseFrom.Constructors
-                        .Where(c => c.Parameters.Length > 0)
-                        .SingleOrDefault(c =>
-                            c.Parameters.Length != 1 ||
-                            !SymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
-                    is { } constructor1 => constructor1,
-            
-            // If value record and two constructors, decide for the parameterless constructor
-            { IsRecord: true, IsValueType: true, Constructors.Length: 2 } 
-                when typeToChoseFrom.Constructors
-                        .SingleOrDefault(c => c.Parameters.Length == 0) 
-                    is { } constructor2 => constructor2,
-
             // If value type and two constructors, decide for the constructor which isn't the parameterless constructor
-            { IsRecord: false, IsValueType: true, Constructors.Length: 2 } when typeToChoseFrom.Constructors
-                .SingleOrDefault(c => c.Parameters.Length > 0)
-                is { } constructor3 => constructor3,
+            { IsRecord: true or false, IsReferenceType: false, IsValueType: true, Constructors.Length: 2 } 
+                when typeToChoseFrom.Constructors.SingleOrDefault(c => c.Parameters.Length > 0) 
+                    is { } constructor => constructor,
 
-            // If value type and one constructor, decide for the parameterless constructor
-            { IsRecord: false, IsValueType: true, Constructors.Length: 1 } when typeToChoseFrom.Constructors
-                .SingleOrDefault()
-                is { } constructor4 => constructor4,
+            // If only one constructor, just choose it
+            { Constructors.Length: 1 } when typeToChoseFrom.Constructors.SingleOrDefault()
+                is { } constructor => constructor,
 
             _ => null
         };

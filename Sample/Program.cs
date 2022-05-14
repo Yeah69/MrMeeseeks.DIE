@@ -1,4 +1,6 @@
-﻿using MrMeeseeks.DIE.Test.Generics.Configuration.Composite;
+﻿
+
+using MrMeeseeks.DIE.Test.Struct.RecordNoExplicitConstructor;
 
 internal class Program
 {

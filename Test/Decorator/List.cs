@@ -50,7 +50,7 @@ public class Tests
         Assert.NotEqual(decoratedBasisA, decoratedBasisB);
         Assert.IsType<Decorator>(decoratedOfA);
         Assert.IsType<Decorator>(decoratedOfB);
-        Assert.IsType<DependencyA>(decoratedBasisA);
-        Assert.IsType<DependencyB>(decoratedBasisB);
+        Assert.True(decoratedBasisA.GetType() == typeof(DependencyA) && decoratedBasisB.GetType() == typeof(DependencyB)
+        || decoratedBasisA.GetType() == typeof(DependencyB) && decoratedBasisB.GetType() == typeof(DependencyA));
     }
 }

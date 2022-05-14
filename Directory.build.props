@@ -9,7 +9,6 @@
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <Authors>Yeah69</Authors>
     <PackageIcon>Yeah69Logo_256.png</PackageIcon>
-    <AssemblyName>$(RootNamespace)</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,31 +1,5 @@
 namespace MrMeeseeks.DIE.Configuration;
 
-// ReSharper disable UnusedParameter.Local *** The constructor parameters of the attributes will be used. Trust me, imma dev.
-[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
-public class SpyAggregationAttribute : Attribute
-{
-    public SpyAggregationAttribute(params Type[] types) {}
-}
-
-// ReSharper disable UnusedParameter.Local *** The constructor parameters of the attributes will be used. Trust me, imma dev.
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class FilterSpyAggregationAttribute : Attribute
-{
-    public FilterSpyAggregationAttribute(params Type[] types) {}
-}
-
-[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
-public class SpyConstructorChoiceAggregationAttribute : Attribute
-{
-    public SpyConstructorChoiceAggregationAttribute(params Type[] references) {}
-}
-
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class FilterSpyConstructorChoiceAggregationAttribute : Attribute
-{
-    public FilterSpyConstructorChoiceAggregationAttribute(params Type[] references) {}
-}
-
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
 public class ImplementationAggregationAttribute : Attribute
 {
@@ -159,15 +133,15 @@ public class FilterCompositeAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
-public class GenericParameterSubstituteAggregationAttribute : Attribute
+public class GenericParameterSubstitutesChoiceAttribute : Attribute
 {
-    public GenericParameterSubstituteAggregationAttribute(Type unboundGenericType, string genericArgumentName, params Type[] types) {}
+    public GenericParameterSubstitutesChoiceAttribute(Type unboundGenericType, string genericArgumentName, params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class FilterGenericParameterSubstituteAggregationAttribute : Attribute
+public class FilterGenericParameterSubstitutesChoiceAttribute : Attribute
 {
-    public FilterGenericParameterSubstituteAggregationAttribute(Type unboundGenericType, string genericArgumentName, params Type[] types) {}
+    public FilterGenericParameterSubstitutesChoiceAttribute(Type unboundGenericType, string genericArgumentName) {}
 }
     
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
@@ -256,5 +230,51 @@ public class CreateFunctionAttribute : Attribute
     public CreateFunctionAttribute(Type type, string methodNamePrefix)
     {
     }
+}
+
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = false)]
+public class AllImplementationsAggregationAttribute : Attribute
+{
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class FilterAllImplementationsAggregationAttribute : Attribute
+{
+}
+
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class AssemblyImplementationsAggregationAttribute : Attribute
+{
+    public AssemblyImplementationsAggregationAttribute(params Type[] typesFromAssemblies) {}
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterAssemblyImplementationsAggregationAttribute : Attribute
+{
+    public FilterAssemblyImplementationsAggregationAttribute(params Type[] typesFromAssemblies) {}
+}
+
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class ImplementationChoiceAttribute : Attribute
+{
+    public ImplementationChoiceAttribute(Type type, Type implementationChoice) {}
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterImplementationChoiceAttribute : Attribute
+{
+    public FilterImplementationChoiceAttribute(Type type) {}
+}
+
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class ImplementationCollectionChoiceAttribute : Attribute
+{
+    public ImplementationCollectionChoiceAttribute(Type type, params Type[] implementationChoice) {}
+}
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class FilterImplementationCollectionChoiceAttribute : Attribute
+{
+    public FilterImplementationCollectionChoiceAttribute(Type type) {}
 }
 // ReSharper enable UnusedParameter.Local

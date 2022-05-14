@@ -171,6 +171,31 @@ internal class CheckTypeProperties : ICheckTypeProperties
 
     public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type)
     {
+        var choice =
+            _currentlyConsideredTypes.ImplementationChoices.TryGetValue(type.UnboundIfGeneric(), out var choice0)
+                ? choice0
+                : _currentlyConsideredTypes.ImplementationCollectionChoices.TryGetValue(type.UnboundIfGeneric(),
+                      out var choices)
+                  && choices.Count == 1 && choices[0] is { } choice1
+                    ? choice1
+                    : null;
+        
+        if (choice is not null)
+        {
+            var possibleChoices = GetClosedImplementations(type, new [] { choice }, true);
+            return possibleChoices.Count == 1
+                ? possibleChoices.FirstOrDefault()
+                : null;
+        }
+
+        if (type is { TypeKind: not TypeKind.Interface, IsAbstract: false, IsStatic: false })
+        {
+            var possibleConcreteTypeImplementations = GetClosedImplementations(type, new [] { type }, true);
+            return possibleConcreteTypeImplementations.Count == 1
+                ? possibleConcreteTypeImplementations.FirstOrDefault()
+                : null;
+        }
+
         var possibleImplementations = _currentlyConsideredTypes.ImplementationMap.TryGetValue(type.UnboundIfGeneric(), out var implementations) 
             ? GetClosedImplementations(type, implementations, true)
             : Array.Empty<INamedTypeSymbol>();
@@ -180,10 +205,35 @@ internal class CheckTypeProperties : ICheckTypeProperties
             : null;
     }
 
-    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol) =>
-        _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol.UnboundIfGeneric(), out var implementations) 
+    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol)
+    {
+        var isChoice =
+            _currentlyConsideredTypes
+                .ImplementationChoices
+                .TryGetValue(typeSymbol.UnboundIfGeneric(), out var choice);
+        
+        var isCollectionChoice =
+            _currentlyConsideredTypes
+                .ImplementationCollectionChoices
+                .TryGetValue(typeSymbol.UnboundIfGeneric(), out var choiceCollection);
+
+        if (isChoice || isCollectionChoice)
+        {
+            var set = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+                SymbolEqualityComparer.Default,
+                isCollectionChoice && choiceCollection is { }
+                    ? choiceCollection
+                    : Enumerable.Empty<INamedTypeSymbol>());
+            if (isChoice && choice is { })
+                set = set.Add(choice);
+            return GetClosedImplementations(typeSymbol, set.ToList(), false);
+        }
+        
+        return _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol.UnboundIfGeneric(),
+            out var implementations)
             ? GetClosedImplementations(typeSymbol, implementations, false)
             : Array.Empty<INamedTypeSymbol>();
+    }
 
     private IReadOnlyList<INamedTypeSymbol> GetClosedImplementations(
         INamedTypeSymbol targetType,
@@ -202,7 +252,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
         var ret = new List<INamedTypeSymbol>();
         foreach (var implementation in rawImplementations)
         {
-            if (!implementation.IsGenericType)
+            if (!implementation.IsGenericType || implementation.TypeArguments.All(ta => ta is INamedTypeSymbol and not IErrorTypeSymbol))
             {
                 ret.Add(implementation);
                 continue;
@@ -211,7 +261,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
             var unboundImplementation = implementation.UnboundIfGeneric();
             var originalImplementation = implementation.OriginalDefinitionIfUnbound();
 
-            if (originalImplementation.AllDerivedTypes()
+            if (originalImplementation.AllDerivedTypesAndSelf()
                     .FirstOrDefault(t =>
                         SymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), unboundTargetType)) is { } implementationsTarget)
             {
@@ -236,7 +286,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                         if (_currentlyConsideredTypes.GenericParameterChoices.TryGetValue(
                                 (unboundImplementation, tps), out var choice))
                             return choice;
-                        if (_currentlyConsideredTypes.GenericParameterSubstitutes.TryGetValue(
+                        if (_currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
                                 (unboundImplementation, tps), out var substitutes)
                             && substitutes.Count == 1)
                             return substitutes[0];
@@ -251,7 +301,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                 {
                     var closedImplementation = originalImplementation.Construct(newTypeArguments);
                     if (closedImplementation
-                        .AllDerivedTypes()
+                        .AllDerivedTypesAndSelf()
                         .Any(t => SymbolEqualityComparer.Default.Equals(targetType, t)))
                     {
                         ret.Add(closedImplementation);
@@ -265,7 +315,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                         .Select(tp =>
                         {
                             IImmutableSet<INamedTypeSymbol> substitutes = ImmutableHashSet.CreateRange(
-                                _currentlyConsideredTypes.GenericParameterSubstitutes.TryGetValue(
+                                _currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
                                     (unboundImplementation, tp), out var subs)
                                     ? subs
                                     : Array.Empty<INamedTypeSymbol>());
@@ -291,7 +341,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                             {
                                 var closedImplementation = originalImplementation.Construct(veryNewTypeArguments);
                                 if (closedImplementation
-                                    .AllDerivedTypes()
+                                    .AllDerivedTypesAndSelf()
                                     .Any(t => SymbolEqualityComparer.Default.Equals(targetType, t)))
                                 {
                                     ret.Add(closedImplementation);

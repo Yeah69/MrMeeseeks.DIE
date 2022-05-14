@@ -1,5 +1,4 @@
-﻿using System;
-using MrMeeseeks.DIE.Test.Record.PrimaryConstr;
+﻿using MrMeeseeks.DIE.Test.Generics.Configuration.Composite;
 
 internal class Program
 {

@@ -10,7 +10,7 @@ internal interface IInterface {}
 
 internal class Class<T0> : IInterface {}
 
-[GenericParameterSubstituteAggregation(typeof(Class<>), "T0", typeof(int))]
+[GenericParameterSubstitutesChoice(typeof(Class<>), "T0", typeof(int))]
 [GenericParameterChoice(typeof(Class<>), "T0", typeof(string))]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
 internal partial class Container {}

@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Extensions;
+
 namespace MrMeeseeks.DIE;
 
 internal interface IContainerInfo

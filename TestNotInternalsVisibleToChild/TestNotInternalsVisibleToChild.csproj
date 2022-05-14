@@ -3,9 +3,10 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
 
-        <RootNamespace>MrMeeseeks.DIE.SampleChild</RootNamespace>
-        <AssemblyName>MrMeeseeks.DIE.SampleChild</AssemblyName>
+        <RootNamespace>MrMeeseeks.DIE.TestNotInternalsVisibleToChild</RootNamespace>
+        <AssemblyName>MrMeeseeks.DIE.TestNotInternalsVisibleToChild</AssemblyName>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
+
 </Project>

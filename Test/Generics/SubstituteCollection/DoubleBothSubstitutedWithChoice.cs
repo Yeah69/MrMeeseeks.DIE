@@ -8,8 +8,8 @@ internal interface IInterface {}
 
 internal class Class<T0, T1> : IInterface {}
 
-[GenericParameterSubstituteAggregation(typeof(Class<,>), "T0", typeof(bool))]
-[GenericParameterSubstituteAggregation(typeof(Class<,>), "T1", typeof(int))]
+[GenericParameterSubstitutesChoice(typeof(Class<,>), "T0", typeof(bool))]
+[GenericParameterSubstitutesChoice(typeof(Class<,>), "T1", typeof(int))]
 [GenericParameterChoice(typeof(Class<,>), "T0", typeof(byte))]
 [GenericParameterChoice(typeof(Class<,>), "T1", typeof(string))]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]

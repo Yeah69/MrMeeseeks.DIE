@@ -3,9 +3,10 @@ using System.IO;
 using MrMeeseeks.DIE.Configuration;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.ImplementationAggregation.ExternalType;
+namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.ExternalType;
 
 
+[AssemblyImplementationsAggregation(typeof(FileInfo))]
 [ImplementationAggregation(typeof(FileInfo))]
 [CreateFunction(typeof(Func<string, FileInfo>), "Create")]
 internal partial class Container

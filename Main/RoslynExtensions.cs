@@ -40,6 +40,23 @@ public static class RoslynExtensions
     }
 
     // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
+    internal static bool IsAccessiblePublicly(this ITypeSymbol type)
+    {
+        if (type is ITypeParameterSymbol)
+            return true;
+        if (!type.ContainingType?.IsAccessiblePublicly() ?? false)
+            return false;
+        return type switch
+        {
+            IArrayTypeSymbol array => array.ElementType.IsAccessiblePublicly(),
+            IPointerTypeSymbol pointer => pointer.PointedAtType.IsAccessiblePublicly(),
+            INamedTypeSymbol named => named.DeclaredAccessibility is Accessibility.Public
+                                      && named.TypeArguments.All(IsAccessiblePublicly),
+            _ => false,
+        };
+    }
+
+    // Picked from https://github.com/YairHalberstadt/stronginject Thank you!
     public static string FullName(this ITypeSymbol type, SymbolDisplayMiscellaneousOptions miscellaneousOptions = SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier) =>
         type.ToDisplayString(new SymbolDisplayFormat(
             globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,

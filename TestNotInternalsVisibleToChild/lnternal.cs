@@ -1,4 +1,4 @@
-﻿namespace MrMeeseeks.DIE.SampleChild.Internal;
+﻿namespace MrMeeseeks.DIE.TestNotInternalsVisibleToChild.Internal;
 
 internal interface IClass {}
 
@@ -22,7 +22,7 @@ internal class ClassToo : IClassToo
     {
         
     }
-    
+
     internal ClassToo(int i)
     {
         

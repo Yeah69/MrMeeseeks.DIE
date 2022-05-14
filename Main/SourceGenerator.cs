@@ -24,6 +24,7 @@ public class SourceGenerator : ISourceGenerator
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerErrorGenerator = new ContainerErrorGenerator(context);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
+        var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
         new ExecuteImpl(
             context,
             wellKnownTypes,
@@ -45,7 +46,7 @@ public class SourceGenerator : ISourceGenerator
                 
                 new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory, wellKnownTypes, RangedFunctionGroupResolutionBuilderFactory, FunctionResolutionSynchronicityDecisionMakerFactory),
                 referenceGeneratorFactory,
-                new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, context), wellKnownTypes),
+                new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, implementationTypeSetCache), wellKnownTypes),
                 wellKnownTypes,
                 ScopeManagerFactory,
                 ContainerCreateFunctionResolutionBuilderFactory,
@@ -63,7 +64,7 @@ public class SourceGenerator : ISourceGenerator
                 TransientScopeResolutionBuilderFactory,
                 ScopeResolutionBuilderFactory,
                 ad => new ScopeTypesFromAttributes(ad, wellKnownTypes),
-                tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, context), wellKnownTypes),
+                tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, implementationTypeSetCache), wellKnownTypes),
                 st => new UserProvidedScopeElements(st),
                 new EmptyUserProvidedScopeElements(),
                 wellKnownTypes);

@@ -1,10 +1,9 @@
-﻿using MrMeeseeks.DIE.Configuration;
-
+﻿using System.Runtime.CompilerServices;
+using MrMeeseeks.DIE.Configuration;
+[assembly:InternalsVisibleTo("")]
 namespace MrMeeseeks.DIE;
 
 internal record WellKnownTypes(
-    INamedTypeSymbol SpyAggregationAttribute,
-    INamedTypeSymbol SpyConstructorChoiceAggregationAttribute,
     INamedTypeSymbol ImplementationAggregationAttribute,
     INamedTypeSymbol TransientAggregationAttribute,
     INamedTypeSymbol SyncTransientAggregationAttribute,
@@ -16,14 +15,16 @@ internal record WellKnownTypes(
     INamedTypeSymbol ScopeRootAggregationAttribute,
     INamedTypeSymbol DecoratorAggregationAttribute,
     INamedTypeSymbol CompositeAggregationAttribute,
-    INamedTypeSymbol GenericParameterSubstituteAggregationAttribute,
+    INamedTypeSymbol GenericParameterSubstitutesChoiceAttribute,
     INamedTypeSymbol GenericParameterChoiceAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,
     INamedTypeSymbol ConstructorChoiceAttribute,
     INamedTypeSymbol PropertyChoiceAttribute,
     INamedTypeSymbol TypeInitializerAttribute,
-    INamedTypeSymbol FilterSpyAggregationAttribute,
-    INamedTypeSymbol FilterSpyConstructorChoiceAggregationAttribute,
+    INamedTypeSymbol AllImplementationsAggregationAttribute,
+    INamedTypeSymbol AssemblyImplementationsAggregationAttribute,
+    INamedTypeSymbol ImplementationChoiceAttribute,
+    INamedTypeSymbol ImplementationCollectionChoiceAttribute,
     INamedTypeSymbol FilterImplementationAggregationAttribute,
     INamedTypeSymbol FilterTransientAggregationAttribute,
     INamedTypeSymbol FilterSyncTransientAggregationAttribute,
@@ -35,12 +36,16 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterScopeRootAggregationAttribute,
     INamedTypeSymbol FilterDecoratorAggregationAttribute,
     INamedTypeSymbol FilterCompositeAggregationAttribute,
-    INamedTypeSymbol FilterGenericParameterSubstituteAggregationAttribute,
+    INamedTypeSymbol FilterGenericParameterSubstitutesChoiceAttribute,
     INamedTypeSymbol FilterGenericParameterChoiceAttribute,
     INamedTypeSymbol FilterDecoratorSequenceChoiceAttribute,
     INamedTypeSymbol FilterConstructorChoiceAttribute,
     INamedTypeSymbol FilterPropertyChoiceAttribute,
     INamedTypeSymbol FilterTypeInitializerAttribute,
+    INamedTypeSymbol FilterAllImplementationsAggregationAttribute,
+    INamedTypeSymbol FilterAssemblyImplementationsAggregationAttribute,
+    INamedTypeSymbol FilterImplementationChoiceAttribute,
+    INamedTypeSymbol FilterImplementationCollectionChoiceAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
     INamedTypeSymbol CreateFunctionAttribute,
     INamedTypeSymbol Disposable,
@@ -60,7 +65,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,
     INamedTypeSymbol Exception,
     INamedTypeSymbol TaskCanceledException,
-    INamedTypeSymbol SemaphoreSlim)
+    INamedTypeSymbol SemaphoreSlim,
+    INamedTypeSymbol InternalsVisibleToAttribute)
 {
     internal static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
     {
@@ -92,12 +98,7 @@ internal record WellKnownTypes(
         var exception = compilation.GetTypeOrReport("System.Exception");
         var taskCanceledException = compilation.GetTypeOrReport("System.Threading.Tasks.TaskCanceledException");
         var semaphoreSlim = compilation.GetTypeOrReport("System.Threading.SemaphoreSlim");
-
-        var spyAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(SpyAggregationAttribute).FullName ?? "");
-
-        var spyConstructorChoiceAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(SpyConstructorChoiceAggregationAttribute).FullName ?? "");
+        var internalsVisibleToAttribute = compilation.GetTypeOrReport("System.Runtime.CompilerServices.InternalsVisibleToAttribute");
 
         var implementationAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(ImplementationAggregationAttribute).FullName ?? "");
@@ -132,11 +133,11 @@ internal record WellKnownTypes(
         var compositeAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(CompositeAggregationAttribute).FullName ?? "");
 
-        var genericParameterSubstituteAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(GenericParameterSubstituteAggregationAttribute).FullName ?? "");
+        var genericParameterSubstitutesChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(GenericParameterSubstitutesChoiceAttribute).FullName ?? "");
 
-        var filterGenericParameterSubstituteAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterGenericParameterSubstituteAggregationAttribute).FullName ?? "");
+        var filterGenericParameterSubstitutesChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterGenericParameterSubstitutesChoiceAttribute).FullName ?? "");
 
         var genericParameterChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(GenericParameterChoiceAttribute).FullName ?? "");
@@ -153,11 +154,17 @@ internal record WellKnownTypes(
         var propertyChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(PropertyChoiceAttribute).FullName ?? "");
 
-        var filterSpyAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterSpyAggregationAttribute).FullName ?? "");
+        var allImplementationsAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(AllImplementationsAggregationAttribute).FullName ?? "");
 
-        var filterSpyConstructorChoiceAggregationAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterSpyConstructorChoiceAggregationAttribute).FullName ?? "");
+        var assemblyImplementationsAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(AssemblyImplementationsAggregationAttribute).FullName ?? "");
+
+        var implementationChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(ImplementationChoiceAttribute).FullName ?? "");
+
+        var implementationCollectionChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(ImplementationCollectionChoiceAttribute).FullName ?? "");
 
         var filterImplementationAggregationAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterImplementationAggregationAttribute).FullName ?? "");
@@ -201,6 +208,18 @@ internal record WellKnownTypes(
         var filterPropertyChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterPropertyChoiceAttribute).FullName ?? "");
 
+        var filterAllImplementationsAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterAllImplementationsAggregationAttribute).FullName ?? "");
+
+        var filterAssemblyImplementationsAggregationAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterAssemblyImplementationsAggregationAttribute).FullName ?? "");
+
+        var filterImplementationChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterImplementationChoiceAttribute).FullName ?? "");
+
+        var filterImplementationCollectionChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterImplementationCollectionChoiceAttribute).FullName ?? "");
+
         var customScopeForRootTypesAttribute = compilation
             .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
 
@@ -213,27 +232,27 @@ internal record WellKnownTypes(
         var createFunctionAttribute = compilation
             .GetTypeByMetadataName(typeof(CreateFunctionAttribute).FullName ?? "");
 
-        if (spyAggregationAttribute is not null
-            && spyConstructorChoiceAggregationAttribute is not null
-            && implementationAggregationAttribute is not null
+        if (implementationAggregationAttribute is not null
             && transientAggregationAttribute is not null
             && syncTransientAggregationAttribute is not null
             && asyncTransientAggregationAttribute is not null
             && containerInstanceAggregationAttribute is not null
             && transientScopeInstanceAggregationAttribute is not null
             && scopeInstanceAggregationAttribute is not null
+            && allImplementationsAggregationAttribute is not null
+            && assemblyImplementationsAggregationAttribute is not null
+            && implementationChoiceAttribute is not null
+            && implementationCollectionChoiceAttribute is not null
             && transientScopeRootAggregationAttribute is not null
             && scopeRootAggregationAttribute is not null
             && decoratorAggregationAttribute is not null
             && compositeAggregationAttribute is not null
-            && genericParameterSubstituteAggregationAttribute is not null
+            && genericParameterSubstitutesChoiceAttribute is not null
             && genericParameterChoiceAttribute is not null
             && decoratorSequenceChoiceAttribute is not null
             && constructorChoiceAttribute is not null
             && propertyChoiceAttribute is not null
             && typeInitializerAttribute is not null
-            && filterSpyAggregationAttribute is not null
-            && filterSpyConstructorChoiceAggregationAttribute is not null
             && filterImplementationAggregationAttribute is not null
             && filterTransientAggregationAttribute is not null
             && filterSyncTransientAggregationAttribute is not null
@@ -245,12 +264,16 @@ internal record WellKnownTypes(
             && filterScopeRootAggregationAttribute is not null
             && filterDecoratorAggregationAttribute is not null
             && filterCompositeAggregationAttribute is not null
-            && filterGenericParameterSubstituteAggregationAttribute is not null
+            && filterGenericParameterSubstitutesChoiceAttribute is not null
             && filterGenericParameterChoiceAttribute is not null
             && filterDecoratorSequenceChoiceAttribute is not null
             && filterConstructorChoiceAttribute is not null
             && filterPropertyChoiceAttribute is not null
             && filterTypeInitializerAttribute is not null
+            && filterAllImplementationsAggregationAttribute is not null
+            && filterAssemblyImplementationsAggregationAttribute is not null
+            && filterImplementationChoiceAttribute is not null
+            && filterImplementationCollectionChoiceAttribute is not null
             && customScopeForRootTypesAttribute is not null
             && createFunctionAttribute is not null
             && iDisposable is not null
@@ -270,12 +293,11 @@ internal record WellKnownTypes(
             && concurrentDictionary2OfSyncDisposable is not null
             && concurrentDictionary2OfAsyncDisposable is not null
             && exception is not null
-            && semaphoreSlim is not null)
+            && semaphoreSlim is not null
+            && internalsVisibleToAttribute is not null)
         {
 
             wellKnownTypes = new WellKnownTypes(
-                SpyAggregationAttribute: spyAggregationAttribute,
-                SpyConstructorChoiceAggregationAttribute: spyConstructorChoiceAggregationAttribute,
                 ImplementationAggregationAttribute: implementationAggregationAttribute,
                 TransientAggregationAttribute: transientAggregationAttribute,
                 SyncTransientAggregationAttribute: syncTransientAggregationAttribute,
@@ -287,14 +309,16 @@ internal record WellKnownTypes(
                 ScopeRootAggregationAttribute: scopeRootAggregationAttribute,
                 DecoratorAggregationAttribute: decoratorAggregationAttribute,
                 CompositeAggregationAttribute: compositeAggregationAttribute,
-                GenericParameterSubstituteAggregationAttribute: genericParameterSubstituteAggregationAttribute,
+                AllImplementationsAggregationAttribute: allImplementationsAggregationAttribute,
+                AssemblyImplementationsAggregationAttribute: assemblyImplementationsAggregationAttribute,
+                ImplementationChoiceAttribute: implementationChoiceAttribute,
+                ImplementationCollectionChoiceAttribute: implementationCollectionChoiceAttribute,
+                GenericParameterSubstitutesChoiceAttribute: genericParameterSubstitutesChoiceAttribute,
                 GenericParameterChoiceAttribute: genericParameterChoiceAttribute,
                 DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
                 ConstructorChoiceAttribute: constructorChoiceAttribute,
                 PropertyChoiceAttribute: propertyChoiceAttribute,
                 TypeInitializerAttribute: typeInitializerAttribute,
-                FilterSpyAggregationAttribute: filterSpyAggregationAttribute,
-                FilterSpyConstructorChoiceAggregationAttribute: filterSpyConstructorChoiceAggregationAttribute,
                 FilterImplementationAggregationAttribute: filterImplementationAggregationAttribute,
                 FilterTransientAggregationAttribute: filterTransientAggregationAttribute,
                 FilterSyncTransientAggregationAttribute: filterSyncTransientAggregationAttribute,
@@ -306,12 +330,16 @@ internal record WellKnownTypes(
                 FilterScopeRootAggregationAttribute: filterScopeRootAggregationAttribute,
                 FilterDecoratorAggregationAttribute: filterDecoratorAggregationAttribute,
                 FilterCompositeAggregationAttribute: filterCompositeAggregationAttribute,
-                FilterGenericParameterSubstituteAggregationAttribute: filterGenericParameterSubstituteAggregationAttribute,
+                FilterGenericParameterSubstitutesChoiceAttribute: filterGenericParameterSubstitutesChoiceAttribute,
                 FilterGenericParameterChoiceAttribute: filterGenericParameterChoiceAttribute,
                 FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
                 FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
                 FilterPropertyChoiceAttribute: filterPropertyChoiceAttribute,
                 FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
+                FilterAllImplementationsAggregationAttribute: filterAllImplementationsAggregationAttribute,
+                FilterAssemblyImplementationsAggregationAttribute: filterAssemblyImplementationsAggregationAttribute,
+                FilterImplementationChoiceAttribute: filterImplementationChoiceAttribute,
+                FilterImplementationCollectionChoiceAttribute: filterImplementationCollectionChoiceAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
                 CreateFunctionAttribute: createFunctionAttribute,
                 Disposable: iDisposable,
@@ -331,7 +359,8 @@ internal record WellKnownTypes(
                 ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2OfAsyncDisposable,
                 Exception: exception,
                 TaskCanceledException: taskCanceledException,
-                SemaphoreSlim: semaphoreSlim);
+                SemaphoreSlim: semaphoreSlim,
+                InternalsVisibleToAttribute: internalsVisibleToAttribute);
             return true;
         }
         

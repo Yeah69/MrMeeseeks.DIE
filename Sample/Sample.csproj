@@ -5,6 +5,7 @@
     <TargetFramework>net6.0</TargetFramework>
 
     <RootNamespace>MrMeeseeks.DIE.Sample</RootNamespace>
+    <AssemblyName>MrMeeseeks.DIE.Sample</AssemblyName>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>

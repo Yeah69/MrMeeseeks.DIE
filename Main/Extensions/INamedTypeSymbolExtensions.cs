@@ -2,19 +2,24 @@
 
 internal static class INamedTypeSymbolExtensions
 {
-    internal static IEnumerable<INamedTypeSymbol> AllDerivedTypes(this INamedTypeSymbol type)
+    internal static IEnumerable<INamedTypeSymbol> AllDerivedTypesAndSelf(this INamedTypeSymbol type)
     {
-        var concreteTypes = new List<INamedTypeSymbol>();
-        var temp = type;
-        while (temp is {})
+        var baseTypesAndSelf = new List<INamedTypeSymbol>();
+        if (type.TypeKind is TypeKind.Class or TypeKind.Struct)
         {
-            concreteTypes.Add(temp);
-            temp = temp.BaseType;
+            var temp = type;
+            while (temp is {})
+            {
+                baseTypesAndSelf.Add(temp);
+                temp = temp.BaseType;
+            }
         }
+        else if (type.TypeKind is TypeKind.Interface)
+            baseTypesAndSelf.Add(type);
+        
         return type
             .AllInterfaces
-            .Append(type)
-            .Concat(concreteTypes);
+            .Concat(baseTypesAndSelf);
     }
     
     internal static INamedTypeSymbol UnboundIfGeneric(this INamedTypeSymbol type) =>

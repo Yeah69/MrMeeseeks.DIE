@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Spy": {
-      "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\TestChild\\TestChild.csproj"
-    }
-  }
-}

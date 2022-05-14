@@ -532,20 +532,27 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     private (Resolvable, ITaskConsumableResolution?) SwitchClass(SwitchClassParameter parameter)
     {
         var (implementationType, currentParameters) = parameter;
+        
+        if (_checkTypeProperties.MapToSingleFittingImplementation(implementationType) is not { } chosenImplementationType)
+        {
+            return implementationType.NullableAnnotation == NullableAnnotation.Annotated 
+                ? (new NullResolution(RootReferenceGenerator.Generate(implementationType), implementationType.FullName()), null) // todo warning
+                : (new ErrorTreeItem($"[{implementationType.FullName()}] Interface: Multiple or no implementations where a single is required"), null);
+        }
 
         var nextParameter = new SwitchImplementationParameter(
-            implementationType,
+            chosenImplementationType,
             currentParameters);
         
-        var ret = _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
+        var ret = _checkTypeProperties.ShouldBeScopeRoot(chosenImplementationType) switch
         {
             ScopeLevel.TransientScope => (_rangeResolutionBaseBuilder.CreateTransientScopeRootResolution(
                 nextParameter,
-                implementationType, 
+                chosenImplementationType, 
                 currentParameters), null),
             ScopeLevel.Scope => (_rangeResolutionBaseBuilder.CreateScopeRootResolution(
                 nextParameter, 
-                implementationType, 
+                chosenImplementationType, 
                 currentParameters), null),
             _ => SwitchImplementation(nextParameter)
         };

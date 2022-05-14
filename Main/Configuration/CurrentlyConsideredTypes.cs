@@ -19,72 +19,140 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> DecoratorImplementationSequenceChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
     IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
-    IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutes { get; }
+    IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutesChoices { get; }
     IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol> GenericParameterChoices { get; } 
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>> PropertyChoices { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
+}
+
+internal interface IImplementationTypeSetCache
+{
+    IImmutableSet<INamedTypeSymbol> All { get; }
+
+    IImmutableSet<INamedTypeSymbol> ForAssembly(IAssemblySymbol assembly);
+}
+
+internal class ImplementationTypeSetCache : IImplementationTypeSetCache
+{
+    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly Lazy<IImmutableSet<INamedTypeSymbol>> _all;
+    private IImmutableDictionary<IAssemblySymbol, IImmutableSet<INamedTypeSymbol>> _assemblyCache =
+        ImmutableDictionary<IAssemblySymbol, IImmutableSet<INamedTypeSymbol>>.Empty;
+
+    private readonly string _currentAssemblyName;
+
+    internal ImplementationTypeSetCache(
+        GeneratorExecutionContext context,
+        WellKnownTypes wellKnownTypes)
+    {
+        _wellKnownTypes = wellKnownTypes;
+        _currentAssemblyName = context.Compilation.AssemblyName ?? "";
+        _all = new Lazy<IImmutableSet<INamedTypeSymbol>>(
+            () =>
+            {
+                IImmutableSet<INamedTypeSymbol> set = ImmutableHashSet<INamedTypeSymbol>.Empty;
+                set = set.Union(context.Compilation.SyntaxTrees
+                    .Select(st => (st, context.Compilation.GetSemanticModel(st)))
+                    .SelectMany(t => t.st
+                        .GetRoot()
+                        .DescendantNodesAndSelf()
+                        .Where(e => e is ClassDeclarationSyntax or StructDeclarationSyntax or RecordDeclarationSyntax)
+                        .Select(c => t.Item2.GetDeclaredSymbol(c))
+                        .Where(c => c is not null)
+                        .OfType<INamedTypeSymbol>()
+                        .Where(nts => !nts.IsAbstract)));
+
+                set = set.Union(context
+                    .Compilation
+                    .SourceModule
+                    .ReferencedAssemblySymbols
+                    .SelectMany(ForAssembly)
+                    .ToImmutableHashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
+
+                return set;
+            });
+    }
+
+    public IImmutableSet<INamedTypeSymbol> All => _all.Value;
+    public IImmutableSet<INamedTypeSymbol> ForAssembly(IAssemblySymbol assembly)
+    {
+        if (_assemblyCache.TryGetValue(assembly, out var set)) return set;
+
+        var freshSet = GetImplementationsFrom(assembly);
+        _assemblyCache = _assemblyCache.Add(assembly, freshSet);
+        return freshSet;
+    }
+
+    private IImmutableSet<INamedTypeSymbol> GetImplementationsFrom(IAssemblySymbol assemblySymbol)
+    {
+        var internalsAreVisible = assemblySymbol.GetAttributes()
+            .Any(ad =>
+                SymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypes.InternalsVisibleToAttribute)
+                && ad.ConstructorArguments.Length == 1
+                && ad.ConstructorArguments[0].Value is string assemblyName
+                && Equals(assemblyName, _currentAssemblyName));
+                
+        return GetAllNamespaces(assemblySymbol.GlobalNamespace)
+            .SelectMany(ns => ns.GetTypeMembers())
+            .Where(nts => nts is
+            {
+                IsAbstract: false,
+                IsStatic: false,
+                IsImplicitClass: false,
+                IsScriptClass: false,
+                TypeKind: TypeKind.Class or TypeKind.Struct or TypeKind.Structure,
+                DeclaredAccessibility: Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal
+            })
+            .Where(nts => 
+                !nts.Name.StartsWith("<") 
+                && (nts.IsAccessiblePublicly() 
+                    || internalsAreVisible && nts.IsAccessibleInternally()))
+            .ToImmutableHashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+    }
+
+    private static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
+    {
+        yield return root;
+        foreach(var child in root.GetNamespaceMembers())
+        foreach(var next in GetAllNamespaces(child))
+            yield return next;
+    }
 }
 
 internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
 {
     public CurrentlyConsideredTypes(
         IReadOnlyList<ITypesFromAttributes> typesFromAttributes,
-        GeneratorExecutionContext context)
+        IImplementationTypeSetCache implementationTypeSetCache)
     {
-        var allImplementations = new List<INamedTypeSymbol>();
-        
-        allImplementations.AddRange(context.Compilation.SyntaxTrees
-            .Select(st => (st, context.Compilation.GetSemanticModel(st)))
-            .SelectMany(t => t.st
-                .GetRoot()
-                .DescendantNodesAndSelf()
-                .Where(e => e is ClassDeclarationSyntax or StructDeclarationSyntax or RecordDeclarationSyntax)
-                .Select(c => t.Item2.GetDeclaredSymbol(c))
-                .Where(c => c is not null)
-                .OfType<INamedTypeSymbol>()
-                .Where(nts => !nts.IsAbstract)));
-
-        var immutableHashSet = context
-            .Compilation
-            .SourceModule
-            .ReferencedAssemblySymbols
-            .SelectMany(a => GetAllNamespaces(a.GlobalNamespace))
-            .SelectMany(ns => ns.GetTypeMembers())
-            .Where(nts => nts is
-            {
-                IsAbstract: false, 
-                IsStatic: false,
-                IsImplicitClass: false,
-                IsScriptClass: false,
-                TypeKind: TypeKind.Class or TypeKind.Struct or TypeKind.Structure,
-                DeclaredAccessibility: Accessibility.Public or Accessibility.Internal
-            })
-            .Where(nts => !nts.Name.StartsWith("<") && nts.IsAccessibleInternally())
-            .ToImmutableHashSet(SymbolEqualityComparer.Default);
-
-        IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
-        {
-            yield return root;
-            foreach(var child in root.GetNamespaceMembers())
-                foreach(var next in GetAllNamespaces(child))
-                    yield return next;
-        }
+        IImmutableSet<INamedTypeSymbol> allImplementations = ImmutableHashSet<INamedTypeSymbol>.Empty;
 
         foreach (var types in typesFromAttributes)
         {
-            foreach (var filterType in types.FilterSpy.Concat(types.FilterImplementation))
-                allImplementations.Remove(filterType);
-            
-            var spiedImplementations = types
-                .Spy
-                .SelectMany(t => t?.GetMembers()
-                    .OfType<IMethodSymbol>()
-                    .Where(ms => !ms.ReturnsVoid)
-                    .Select(ms => ms.ReturnType)
-                    .OfType<INamedTypeSymbol>()
-                    .Where(nts => !nts.IsAbstract));
+            if (types.FilterAllImplementations)
+                allImplementations = ImmutableHashSet<INamedTypeSymbol>.Empty;
+            else
+            {
+                allImplementations = allImplementations.Except(
+                    types.FilterImplementation);
+                allImplementations = types.FilterAssemblyImplementations.Aggregate(
+                    allImplementations, 
+                    (current, assembly) => current.Except(implementationTypeSetCache.ForAssembly(assembly)));
+            }
 
-            allImplementations.AddRange(types.Implementation
-                .Concat(spiedImplementations));
+            if (types.AllImplementations)
+            {
+                allImplementations = implementationTypeSetCache.All;
+            }
+            else
+            {
+                allImplementations = allImplementations.Union(
+                    types.Implementation);
+                allImplementations = types.AssemblyImplementations.Aggregate(
+                    allImplementations, 
+                    (current, assembly) => current.Union(implementationTypeSetCache.ForAssembly(assembly)));
+            }
         }
 
         SyncTransientTypes = GetSetOfTypesWithProperties(
@@ -190,7 +258,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         ImplementationMap = allImplementations
             .Where(t => !decoratorTypes.Contains(t.UnboundIfGeneric()))
             .Where(t => !compositeTypes.Contains(t.UnboundIfGeneric()))
-            .SelectMany(i => { return i.AllInterfaces.OfType<INamedTypeSymbol>().Select(ii => (ii, i)).Prepend((i, i)); })
+            .SelectMany(i => { return i.AllDerivedTypesAndSelf().Select(ii => (ii, i)); })
             .GroupBy(t => t.Item1.UnboundIfGeneric(), t => t.Item2)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>().ToList());
 
@@ -204,7 +272,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 .ToImmutableHashSet(SymbolEqualityComparer.Default);
             
             foreach (var filterConcreteType in allImplementations
-                         .Where(i => i.OriginalDefinitionIfUnbound().AllDerivedTypes()
+                         .Where(i => i.OriginalDefinitionIfUnbound().AllDerivedTypesAndSelf()
                              .Any(inter => filterInterfaceTypes.Contains(inter))))
                 initializers.Remove(filterConcreteType);
 
@@ -226,7 +294,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                          {
                              foreach (var (interfaceType, initializer) in interfaceTypes)
                              {
-                                 if (i.OriginalDefinitionIfUnbound().AllDerivedTypes().Contains(interfaceType, SymbolEqualityComparer.Default))
+                                 if (i.OriginalDefinitionIfUnbound().AllDerivedTypesAndSelf().Contains(interfaceType, SymbolEqualityComparer.Default))
                                  {
                                      return ((INamedTypeSymbol, INamedTypeSymbol, IMethodSymbol)?) (i, interfaceType, initializer);
                                  }
@@ -253,38 +321,19 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         
         foreach (var typesFromAttribute in typesFromAttributes)
         {
-            foreach (var tuple in typesFromAttribute.FilterGenericParameterSubstitutes)
+            foreach (var tuple in typesFromAttribute.FilterGenericParameterSubstitutesChoices)
+                genericParameterSubstitutes.Remove(tuple);
+
+            foreach (var tuple in typesFromAttribute.GenericParameterSubstitutesChoices)
             {
                 var key = (tuple.Item1, tuple.Item2);
-                if (genericParameterSubstitutes.TryGetValue(key, out var currentGenericTypes))
-                {
-                    var newGenericTypes = currentGenericTypes
-                        .Where(gt => !tuple.Item3.Contains(gt, SymbolEqualityComparer.Default)).ToImmutableList();
-                    if (newGenericTypes.Any())
-                        genericParameterSubstitutes[key] = newGenericTypes;
-                    else
-                        genericParameterSubstitutes.Remove(key);
-                }
-            }
+                var choice = tuple.Item3;
 
-            foreach (var tuple in typesFromAttribute.GenericParameterSubstitutes)
-            {
-                var key = (tuple.Item1, tuple.Item2);
-                var list = new List<INamedTypeSymbol>(
-                    genericParameterSubstitutes.TryGetValue(key, out var currentGenericTypes)
-                        ? currentGenericTypes
-                        : Array.Empty<INamedTypeSymbol>());
-                foreach (var newGenericType in tuple.Item3)
-                {
-                    if (!list.Contains(newGenericType, SymbolEqualityComparer.Default))
-                        list.Add(newGenericType);
-                }
-
-                genericParameterSubstitutes[key] = list;
+                genericParameterSubstitutes[key] = choice;
             }
         }
 
-        GenericParameterSubstitutes = genericParameterSubstitutes;
+        GenericParameterSubstitutesChoices = genericParameterSubstitutes;
 
         var genericParameterChoices =
             new Dictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol>();
@@ -299,6 +348,35 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         }
 
         GenericParameterChoices = genericParameterChoices;
+
+
+        var implementationChoices =
+            new Dictionary<INamedTypeSymbol, INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        
+        foreach (var typesFromAttribute in typesFromAttributes)
+        {
+            foreach (var type in typesFromAttribute.FilterImplementationChoices)
+                implementationChoices.Remove(type);
+
+            foreach (var (type, choice) in typesFromAttribute.ImplementationChoices)
+                implementationChoices[type.UnboundIfGeneric()] = choice;
+        }
+
+        ImplementationChoices = implementationChoices;
+
+        var implementationCollectionChoices =
+            new Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
+        
+        foreach (var typesFromAttribute in typesFromAttributes)
+        {
+            foreach (var type in typesFromAttribute.FilterImplementationCollectionChoices)
+                implementationCollectionChoices.Remove(type);
+
+            foreach (var (type, choice) in typesFromAttribute.ImplementationCollectionChoices)
+                implementationCollectionChoices[type.UnboundIfGeneric()] = choice;
+        }
+
+        ImplementationCollectionChoices = implementationCollectionChoices;
         
         IImmutableSet<ISymbol?> GetSetOfTypesWithProperties(
             Func<ITypesFromAttributes, IReadOnlyList<INamedTypeSymbol>> propertyGivingTypesGetter, 
@@ -311,7 +389,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 ret = ret.Except(allImplementations
                     .Where(i =>
                     {
-                        var derivedTypes = i.AllDerivedTypes().Select(t => t.UnboundIfGeneric()).ToList();
+                        var derivedTypes = i.AllDerivedTypesAndSelf().Select(t => t.UnboundIfGeneric()).ToList();
                         return filterPropertyGivingTypes.Any(t =>
                             derivedTypes.Contains(t.UnboundIfGeneric(), SymbolEqualityComparer.Default));
                     })
@@ -322,7 +400,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 ret = ret.Union(allImplementations
                     .Where(i =>
                     {
-                        var derivedTypes = i.AllDerivedTypes().Select(t => t.UnboundIfGeneric()).ToList();
+                        var derivedTypes = i.AllDerivedTypesAndSelf().Select(t => t.UnboundIfGeneric()).ToList();
                         return propertyGivingTypes.Any(t =>
                             derivedTypes.Contains(t.UnboundIfGeneric(), SymbolEqualityComparer.Default));
                     })
@@ -348,7 +426,9 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> DecoratorImplementationSequenceChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationMap { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
-    public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutes { get; }
+    public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutesChoices { get; }
     public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), INamedTypeSymbol> GenericParameterChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>> PropertyChoices { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
 }

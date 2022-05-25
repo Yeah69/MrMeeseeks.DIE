@@ -19,6 +19,7 @@ internal class ContainerErrorGenerator : IContainerErrorGenerator
     public void Generate(IContainerInfo containerInfo, IReadOnlyList<ErrorTreeItem> errorTreeItems)
     {
         var generatedContainer = new StringBuilder()
+            .AppendLine($"#nullable enable")
             .AppendLine($"namespace {containerInfo.Namespace}")
             .AppendLine($"{{")
             .AppendLine($"partial class {containerInfo.Name}")
@@ -28,7 +29,8 @@ internal class ContainerErrorGenerator : IContainerErrorGenerator
             .AppendLine($"throw new Exception(@\"{string.Join(Environment.NewLine, errorTreeItems.Select(eri => eri.Message))}\");")
             .AppendLine($"}}")
             .AppendLine($"}}")
-            .AppendLine($"}}");
+            .AppendLine($"}}")
+            .AppendLine($"#nullable disable");
 
         var containerSource = CSharpSyntaxTree
             .ParseText(SourceText.From(generatedContainer.ToString(), Encoding.UTF8))

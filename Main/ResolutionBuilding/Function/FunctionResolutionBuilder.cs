@@ -51,7 +51,7 @@ internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResol
     MethodGroupResolution BuildMethodGroup();
 }
 
-internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
+internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionBuilder
 {
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly IFunctionResolutionSynchronicityDecisionMaker _synchronicityDecisionMaker;
@@ -107,7 +107,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
     protected (Resolvable, ITaskConsumableResolution?) SwitchType(SwitchTypeParameter parameter)
     {
-        var (type, currentFuncParameters) = parameter;
+        var (type, currentFuncParameters, implementationStack) = parameter;
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
             return (funcParameter.Resolution, null);
 
@@ -135,17 +135,19 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                     factory.Name,
                     factory
                         .Parameters
-                        .Select(p => (p.Name, SwitchType(new SwitchTypeParameter(p.Type, currentFuncParameters)).Item1))
+                        .Select(p => (p.Name, SwitchType(new SwitchTypeParameter(p.Type, currentFuncParameters, implementationStack)).Item1))
                         .ToList()),
                 null);
 
         if (type.OriginalDefinition.Equals(_wellKnownTypes.Task1, SymbolEqualityComparer.Default)
             && type is INamedTypeSymbol task)
-            return SwitchTask(new SwitchTaskParameter(SwitchType(new SwitchTypeParameter(task.TypeArguments[0], currentFuncParameters))));
+            return SwitchTask(new SwitchTaskParameter(
+                SwitchType(new SwitchTypeParameter(task.TypeArguments[0], currentFuncParameters, implementationStack))));
 
         if (type.OriginalDefinition.Equals(_wellKnownTypes.ValueTask1, SymbolEqualityComparer.Default)
             && type is INamedTypeSymbol valueTask)
-            return SwitchValueTask(new SwitchValueTaskParameter(SwitchType(new SwitchTypeParameter(valueTask.TypeArguments[0], currentFuncParameters))));
+            return SwitchValueTask(new SwitchValueTaskParameter(
+                SwitchType(new SwitchTypeParameter(valueTask.TypeArguments[0], currentFuncParameters, implementationStack))));
 
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
         {
@@ -155,7 +157,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 DisposalType.None,
                 valueTupleType
                     .TypeArguments
-                    .Select((t, i) => ($"item{(i + 1)}", SwitchType(new SwitchTypeParameter(t, currentFuncParameters)).Item1))
+                    .Select((t, i) => ($"item{(i + 1)}", SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
                     .ToList(),
                 Array.Empty<(string Name, Resolvable Dependency)>(),
                 null);
@@ -170,7 +172,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 RootReferenceGenerator.Generate("syntaxValueTuple"),
                 syntaxValueTupleType.FullName(),
                 itemTypes
-                    .Select(t => SwitchType(new SwitchTypeParameter(t, currentFuncParameters)).Item1)
+                    .Select(t => SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1)
                     .ToList()),
                     null);
 
@@ -311,8 +313,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 .Select(i =>
                 {
                     var itemResolution = itemTypeIsInterface
-                        ? SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(unwrappedItemType, i, currentFuncParameters))
-                        : SwitchClass(new SwitchClassParameter(i, currentFuncParameters));
+                        ? SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(unwrappedItemType, i, currentFuncParameters, implementationStack))
+                        : SwitchClass(new SwitchClassParameter(i, currentFuncParameters, implementationStack));
                     return (taskType switch
                     {
                         TaskType.Task => SwitchTask(new SwitchTaskParameter(itemResolution)),
@@ -334,10 +336,10 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         if (type is { TypeKind: TypeKind.Interface} 
             or { TypeKind: TypeKind.Class, IsAbstract: true }
             && type is INamedTypeSymbol interfaceOrAbstractType)
-            return SwitchInterface(new SwitchInterfaceAfterScopeRootParameter(interfaceOrAbstractType, currentFuncParameters));
+            return SwitchInterface(new SwitchInterfaceAfterScopeRootParameter(interfaceOrAbstractType, currentFuncParameters, implementationStack));
 
         if (type is INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct} classOrStructType)
-            return SwitchClass(new SwitchClassParameter(classOrStructType, currentFuncParameters));
+            return SwitchClass(new SwitchClassParameter(classOrStructType, currentFuncParameters, implementationStack));
 
         return (
             new ErrorTreeItem($"[{type.FullName()}] Couldn't process in resolution tree creation."),
@@ -449,7 +451,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
     private (Resolvable, ITaskConsumableResolution?) SwitchInterface(
         SwitchInterfaceAfterScopeRootParameter parameter)
     {
-        var (interfaceType, currentParameters) = parameter;
+        var (interfaceType, currentParameters, implementationStack) = parameter;
         if (_checkTypeProperties.ShouldBeComposite(interfaceType))
         {
             var implementations = _checkTypeProperties.MapToImplementations(interfaceType);
@@ -458,7 +460,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             var interfaceResolutions = implementations.Select(i => SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(
                 interfaceType,
                 i,
-                currentParameters))).ToList();
+                currentParameters,
+                implementationStack))).ToList();
             var composition = new CompositionInterfaceExtension(
                 interfaceType,
                 implementations.ToList(),
@@ -467,7 +470,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             return SwitchInterfaceWithoutComposition(new CreateInterfaceParameterAsComposition(
                 interfaceType, 
                 compositeImplementationType,
-                currentParameters, 
+                currentParameters,
+                implementationStack, 
                 composition));
         }
         if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType) is not { } implementationType)
@@ -480,12 +484,13 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
         return SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(
             interfaceType,
             implementationType,
-            currentParameters));
+            currentParameters,
+            implementationStack));
     }
 
     private (InterfaceResolution, ITaskConsumableResolution?) SwitchInterfaceWithoutComposition(CreateInterfaceParameter parameter)
     {
-        var (interfaceType, implementationType, currentParameters) = parameter;
+        var (interfaceType, implementationType, currentParameters, implementationStack) = parameter;
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
 
         var (nextResolvable, _) = parameter switch
@@ -493,10 +498,12 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             CreateInterfaceParameterAsComposition asComposition => SwitchImplementation(new SwitchImplementationParameterWithComposition(
                 asComposition.Composition.CompositeType,
                 currentParameters,
+                implementationStack,
                 asComposition.Composition)),
             _ => SwitchClass(new SwitchClassParameter(
                 implementationType,
-                currentParameters))
+                currentParameters,
+                implementationStack))
         };
 
         var currentInterfaceResolution = new InterfaceResolution(
@@ -518,6 +525,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 var decoratorResolution = SwitchImplementation(new SwitchImplementationParameterWithDecoration(
                     decorator,
                     currentParameters,
+                    implementationStack,
                     decoration)).Item1;
                 currentInterfaceResolution = new InterfaceResolution(
                     RootReferenceGenerator.Generate(interfaceType),
@@ -531,7 +539,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
     private (Resolvable, ITaskConsumableResolution?) SwitchClass(SwitchClassParameter parameter)
     {
-        var (implementationType, currentParameters) = parameter;
+        var (implementationType, currentParameters, implementationStack) = parameter;
         
         if (_checkTypeProperties.MapToSingleFittingImplementation(implementationType) is not { } chosenImplementationType)
         {
@@ -542,7 +550,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
         var nextParameter = new SwitchImplementationParameter(
             chosenImplementationType,
-            currentParameters);
+            currentParameters,
+            implementationStack);
         
         var ret = _checkTypeProperties.ShouldBeScopeRoot(chosenImplementationType) switch
         {
@@ -574,7 +583,7 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
     protected (Resolvable, ITaskConsumableResolution?) SwitchImplementation(SwitchImplementationParameter parameter)
     {
-        var (implementationType, currentParameters) = parameter;
+        var (implementationType, currentParameters, implementationStack) = parameter;
         var scopeLevel = parameter switch
         {
             SwitchImplementationParameterWithComposition withComposition =>
@@ -589,12 +598,14 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
             SwitchImplementationParameterWithComposition withComposition => new ForConstructorParameterWithComposition(
                 withComposition.Composition.CompositeType, 
                 currentParameters,
+                implementationStack,
                 withComposition.Composition),
             SwitchImplementationParameterWithDecoration withDecoration => new ForConstructorParameterWithDecoration(
                 withDecoration.Decoration.DecoratorType,
                 currentParameters,
+                implementationStack,
                 withDecoration.Decoration),
-            _ => new ForConstructorParameter(implementationType, currentParameters)
+            _ => new ForConstructorParameter(implementationType, currentParameters, implementationStack)
         };
 
         var ret = scopeLevel switch
@@ -622,21 +633,32 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
 
     protected (Resolvable, ITaskConsumableResolution?) CreateConstructorResolution(ForConstructorParameter parameter)
     {
-        var (implementationType, currentParameters) = parameter;
-        
+        var (implementationType, currentParameters, implementationStack) = parameter;
+
         if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is not { } constructor)
         {
-            return implementationType.NullableAnnotation == NullableAnnotation.Annotated 
-                ? (new NullResolution(RootReferenceGenerator.Generate(implementationType), implementationType.FullName()), null) // todo warning
+            return implementationType.NullableAnnotation == NullableAnnotation.Annotated
+                ? (new NullResolution(RootReferenceGenerator.Generate(implementationType),
+                        implementationType.FullName()), null) // todo warning
                 : (new ErrorTreeItem(implementationType.Constructors.Length switch
                     {
-                        0 => $"[{implementationType.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                        > 1 => $"[{implementationType.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                        _ => $"[{implementationType.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
+                        0 =>
+                            $"[{implementationType.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                        > 1 =>
+                            $"[{implementationType.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                        _ =>
+                            $"[{implementationType.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
                     }),
                     null);
         }
 
+        var implementationCycle = implementationStack.Contains(implementationType, SymbolEqualityComparer.Default);
+
+        if (implementationCycle)
+            throw new ImplementationCycleDieException();
+
+        implementationStack = implementationStack.Push(implementationType);
+        
         var checkForDecoration = false;
         DecorationInterfaceExtension? decoration = null;
         
@@ -797,7 +819,8 @@ internal abstract class FunctionResolutionBuilder : IFunctionResolutionBuilder
                 parameterName,
                 SwitchType(new SwitchTypeParameter(
                     parameterType,
-                    currParameter)).Item1);
+                    currParameter,
+                    implementationStack)).Item1);
         }
     }
 

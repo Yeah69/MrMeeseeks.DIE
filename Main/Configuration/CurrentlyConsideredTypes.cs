@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.DIE.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
@@ -35,6 +34,7 @@ internal interface IImplementationTypeSetCache
 
 internal class ImplementationTypeSetCache : IImplementationTypeSetCache
 {
+    private readonly GeneratorExecutionContext _context;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Lazy<IImmutableSet<INamedTypeSymbol>> _all;
     private IImmutableDictionary<IAssemblySymbol, IImmutableSet<INamedTypeSymbol>> _assemblyCache =
@@ -46,32 +46,17 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache
         GeneratorExecutionContext context,
         WellKnownTypes wellKnownTypes)
     {
+        _context = context;
         _wellKnownTypes = wellKnownTypes;
         _currentAssemblyName = context.Compilation.AssemblyName ?? "";
         _all = new Lazy<IImmutableSet<INamedTypeSymbol>>(
-            () =>
-            {
-                IImmutableSet<INamedTypeSymbol> set = ImmutableHashSet<INamedTypeSymbol>.Empty;
-                set = set.Union(context.Compilation.SyntaxTrees
-                    .Select(st => (st, context.Compilation.GetSemanticModel(st)))
-                    .SelectMany(t => t.st
-                        .GetRoot()
-                        .DescendantNodesAndSelf()
-                        .Where(e => e is ClassDeclarationSyntax or StructDeclarationSyntax or RecordDeclarationSyntax)
-                        .Select(c => t.Item2.GetDeclaredSymbol(c))
-                        .Where(c => c is not null)
-                        .OfType<INamedTypeSymbol>()
-                        .Where(nts => !nts.IsAbstract)));
-
-                set = set.Union(context
-                    .Compilation
-                    .SourceModule
-                    .ReferencedAssemblySymbols
-                    .SelectMany(ForAssembly)
-                    .ToImmutableHashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
-
-                return set;
-            });
+            () => context
+                .Compilation
+                .SourceModule
+                .ReferencedAssemblySymbols
+                .Prepend(_context.Compilation.Assembly)
+                .SelectMany(ForAssembly)
+                .ToImmutableHashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
     }
 
     public IImmutableSet<INamedTypeSymbol> All => _all.Value;
@@ -86,12 +71,15 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache
 
     private IImmutableSet<INamedTypeSymbol> GetImplementationsFrom(IAssemblySymbol assemblySymbol)
     {
-        var internalsAreVisible = assemblySymbol.GetAttributes()
-            .Any(ad =>
-                SymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypes.InternalsVisibleToAttribute)
-                && ad.ConstructorArguments.Length == 1
-                && ad.ConstructorArguments[0].Value is string assemblyName
-                && Equals(assemblyName, _currentAssemblyName));
+        var internalsAreVisible = 
+            SymbolEqualityComparer.Default.Equals(_context.Compilation.Assembly, assemblySymbol) 
+            ||assemblySymbol
+                .GetAttributes()
+                .Any(ad =>
+                    SymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypes.InternalsVisibleToAttribute)
+                    && ad.ConstructorArguments.Length == 1
+                    && ad.ConstructorArguments[0].Value is string assemblyName
+                    && Equals(assemblyName, _currentAssemblyName));
                 
         return GetAllNamespaces(assemblySymbol.GlobalNamespace)
             .SelectMany(ns => ns.GetTypeMembers())

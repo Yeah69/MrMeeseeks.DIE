@@ -6,7 +6,6 @@ internal interface IRangedFunctionResolutionBuilder : IFunctionResolutionBuilder
 
 internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRangedFunctionResolutionBuilder
 {
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly ForConstructorParameter _forConstructorParameter;
 
     public RangedFunctionResolutionBuilder(
@@ -23,7 +22,6 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
         : base(rangeResolutionBaseBuilder, forConstructorParameter.ImplementationType, forConstructorParameter.CurrentFuncParameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
     {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _forConstructorParameter = forConstructorParameter;
         
         Name = reference;
@@ -31,7 +29,8 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
 
     protected override string Name { get; }
 
-    protected override Resolvable CreateResolvable() => CreateConstructorResolution(_forConstructorParameter).Item1;
+    protected override Resolvable CreateResolvable() => CreateConstructorResolution(
+        _forConstructorParameter with { ImplementationStack = ImmutableStack<INamedTypeSymbol>.Empty }).Item1;
 
     public override FunctionResolution Build()
     {

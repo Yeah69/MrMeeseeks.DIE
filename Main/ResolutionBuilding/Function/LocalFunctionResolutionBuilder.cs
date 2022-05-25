@@ -6,7 +6,6 @@ internal interface ILocalFunctionResolutionBuilder : IFunctionResolutionBuilder
 
 internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILocalFunctionResolutionBuilder
 {
-    private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly INamedTypeSymbol _returnType;
     private readonly IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> _parameters;
 
@@ -24,7 +23,6 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
         : base(rangeResolutionBaseBuilder, returnType, parameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
     {
-        _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _returnType = returnType;
         _parameters = parameters;
 
@@ -33,7 +31,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
 
     protected override string Name { get; }
 
-    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(_returnType, _parameters)).Item1;
+    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(_returnType, _parameters, ImmutableStack<INamedTypeSymbol>.Empty)).Item1;
 
     public override FunctionResolution Build()
     {

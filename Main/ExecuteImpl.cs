@@ -15,6 +15,7 @@ internal class ExecuteImpl : IExecute
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly IContainerGenerator _containerGenerator;
     private readonly IContainerErrorGenerator _containerErrorGenerator;
+    private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly Func<IContainerInfo, IContainerResolutionBuilder> _containerResolutionBuilderFactory;
     private readonly IResolutionTreeCreationErrorHarvester _resolutionTreeCreationErrorHarvester;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
@@ -25,6 +26,7 @@ internal class ExecuteImpl : IExecute
         WellKnownTypes wellKnownTypes,
         IContainerGenerator containerGenerator,
         IContainerErrorGenerator containerErrorGenerator,
+        IContainerDieExceptionGenerator containerDieExceptionGenerator,
         Func<IContainerInfo, IContainerResolutionBuilder> containerResolutionBuilderFactory,
         IResolutionTreeCreationErrorHarvester resolutionTreeCreationErrorHarvester,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
@@ -34,6 +36,7 @@ internal class ExecuteImpl : IExecute
         _wellKnownTypes = wellKnownTypes;
         _containerGenerator = containerGenerator;
         _containerErrorGenerator = containerErrorGenerator;
+        _containerDieExceptionGenerator = containerDieExceptionGenerator;
         _containerResolutionBuilderFactory = containerResolutionBuilderFactory;
         _resolutionTreeCreationErrorHarvester = resolutionTreeCreationErrorHarvester;
         _containerInfoFactory = containerInfoFactory;
@@ -43,6 +46,10 @@ internal class ExecuteImpl : IExecute
     public void Execute()
     {
         _diagLogger.Log("Start Execute");
+
+        var errorDescriptionInsteadOfBuildFailure = _context.Compilation.Assembly.GetAttributes()
+            .Any(ad => _wellKnownTypes.ErrorDescriptionInsteadOfBuildFailureAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default));
+
         foreach (var syntaxTree in _context.Compilation.SyntaxTrees)
         {
             var semanticModel = _context.Compilation.GetSemanticModel(syntaxTree);
@@ -55,11 +62,11 @@ internal class ExecuteImpl : IExecute
                 .OfType<INamedTypeSymbol>()
                 .Where(x => x.GetAttributes().Any(ad => _wellKnownTypes.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default)))
                 .ToList();
-            foreach (var namedTypeSymbol in containerClasses)
+            foreach (var containerSymbol in containerClasses)
             {
                 try
                 {
-                    var containerInfo = _containerInfoFactory(namedTypeSymbol);
+                    var containerInfo = _containerInfoFactory(containerSymbol);
                     if (containerInfo.IsValid)
                     {
                         var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
@@ -69,7 +76,7 @@ internal class ExecuteImpl : IExecute
                         {
                             containerResolutionBuilder.DoWork();
                         }
-                        
+
                         var containerResolution = containerResolutionBuilder.Build();
                         var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
                         if (errorTreeItems.Any())
@@ -78,6 +85,16 @@ internal class ExecuteImpl : IExecute
                             _containerGenerator.Generate(containerInfo, containerResolution);
                     }
                     else throw new NotImplementedException("Handle non-valid container information");
+                }
+                catch (DieException dieException)
+                {
+                    if (errorDescriptionInsteadOfBuildFailure)
+                        _containerDieExceptionGenerator.Generate(
+                            containerSymbol.ContainingNamespace.FullName(), 
+                            containerSymbol.Name, 
+                            dieException);
+                    else
+                        _diagLogger.Error(dieException);
                 }
                 catch (Exception)
                 {

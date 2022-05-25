@@ -16,3 +16,5 @@ using MrMeeseeks.DIE.Test;
 [assembly:TypeInitializer(typeof(IValueTaskTypeInitializer), nameof(IValueTaskTypeInitializer.InitializeAsync))]
 
 [assembly:AllImplementationsAggregation]
+
+[assembly:ErrorDescriptionInsteadOfBuildFailure]

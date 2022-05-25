@@ -82,7 +82,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
         string label,
         string owningObjectReference)
     {
-        var (implementationType, currentParameters) = parameter;
+        var (implementationType, currentParameters, _) = parameter;
         InterfaceExtension? interfaceExtension = parameter switch
         {
             ForConstructorParameterWithComposition withComposition => withComposition.Composition,

@@ -23,6 +23,7 @@ public class SourceGenerator : ISourceGenerator
         var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerErrorGenerator = new ContainerErrorGenerator(context);
+        var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypes);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
         var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
         new ExecuteImpl(
@@ -30,6 +31,7 @@ public class SourceGenerator : ISourceGenerator
             wellKnownTypes,
             containerGenerator, 
             containerErrorGenerator,
+            containerDieExceptionGenerator,
             ResolutionTreeFactory,
             resolutionTreeCreationErrorHarvester,
             ContainerInfoFactory, 

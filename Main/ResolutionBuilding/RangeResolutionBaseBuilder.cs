@@ -99,7 +99,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         string owningObjectReference,
         Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker)
     {
-        var (implementationType, currentParameters) = parameter;
+        var (implementationType, currentParameters, _) = parameter;
         InterfaceExtension? interfaceExtension = parameter switch
         {
             ForConstructorParameterWithComposition withComposition => withComposition.Composition,

@@ -30,7 +30,8 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
 
     protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(
         _returnType,
-        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>())).Item1;
+        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+        ImmutableStack<INamedTypeSymbol>.Empty)).Item1;
 
     public override FunctionResolution Build()
     {

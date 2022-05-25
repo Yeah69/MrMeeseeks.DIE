@@ -277,4 +277,9 @@ public class FilterImplementationCollectionChoiceAttribute : Attribute
 {
     public FilterImplementationCollectionChoiceAttribute(Type type) {}
 }
+
+[AttributeUsage(AttributeTargets.Assembly)]
+public class ErrorDescriptionInsteadOfBuildFailureAttribute : Attribute
+{
+}
 // ReSharper enable UnusedParameter.Local

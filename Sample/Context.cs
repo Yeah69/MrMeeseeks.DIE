@@ -1,8 +1,14 @@
 ﻿using MrMeeseeks.DIE.Configuration;
 
-namespace MrMeeseeks.DIE.Test.Struct.RecordNoExplicitConstructor;
+namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation;
 
-internal record struct Dependency;
+internal class Dependency
+{
+    internal Dependency(Dependency inner) {}
+}
 
 [CreateFunction(typeof(Dependency), "Create")]
-internal partial class Container { }
+internal partial class Container
+{
+    
+}

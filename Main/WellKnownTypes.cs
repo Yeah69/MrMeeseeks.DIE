@@ -48,6 +48,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol FilterImplementationCollectionChoiceAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
     INamedTypeSymbol CreateFunctionAttribute,
+    INamedTypeSymbol ErrorDescriptionInsteadOfBuildFailureAttribute,
+    INamedTypeSymbol DieExceptionKind,
     INamedTypeSymbol Disposable,
     INamedTypeSymbol AsyncDisposable,
     INamedTypeSymbol Lazy1,
@@ -231,6 +233,12 @@ internal record WellKnownTypes(
 
         var createFunctionAttribute = compilation
             .GetTypeByMetadataName(typeof(CreateFunctionAttribute).FullName ?? "");
+        
+        var errorDescriptionInsteadOfBuildFailureAttribute = compilation
+            .GetTypeByMetadataName(typeof(ErrorDescriptionInsteadOfBuildFailureAttribute).FullName ?? "");
+        
+        var dieExceptionKind = compilation
+            .GetTypeByMetadataName(typeof(DieExceptionKind).FullName ?? "");
 
         if (implementationAggregationAttribute is not null
             && transientAggregationAttribute is not null
@@ -276,6 +284,8 @@ internal record WellKnownTypes(
             && filterImplementationCollectionChoiceAttribute is not null
             && customScopeForRootTypesAttribute is not null
             && createFunctionAttribute is not null
+            && errorDescriptionInsteadOfBuildFailureAttribute is not null
+            && dieExceptionKind is not null
             && iDisposable is not null
             && iAsyncDisposable is not null
             && lazy1 is not null
@@ -342,6 +352,8 @@ internal record WellKnownTypes(
                 FilterImplementationCollectionChoiceAttribute: filterImplementationCollectionChoiceAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
                 CreateFunctionAttribute: createFunctionAttribute,
+                ErrorDescriptionInsteadOfBuildFailureAttribute: errorDescriptionInsteadOfBuildFailureAttribute,
+                DieExceptionKind: dieExceptionKind,
                 Disposable: iDisposable,
                 AsyncDisposable: iAsyncDisposable,
                 Lazy1: lazy1,

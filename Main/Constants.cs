@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-
 namespace MrMeeseeks.DIE;
 
 internal static class Constants

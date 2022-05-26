@@ -151,7 +151,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             t => t.FilterAsyncTransientAbstraction.Concat(t.FilterTransientAbstraction).ToList());
         ContainerInstanceTypes = GetSetOfTypesWithProperties(t => t.ContainerInstanceAbstraction, t => t.FilterContainerInstanceAbstraction);
         TransientScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.TransientScopeInstanceAbstraction, t => t.FilterTransientScopeInstanceAbstraction);
-        ScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.ScopeInstance, t => t.FilterScopeInstanceAbstraction);
+        ScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.ScopeInstanceAbstraction, t => t.FilterScopeInstanceAbstraction);
         TransientScopeRootTypes = GetSetOfTypesWithProperties(t => t.TransientScopeRootAbstraction, t => t.FilterTransientScopeRootAbstraction);
         ScopeRootTypes = GetSetOfTypesWithProperties(t => t.ScopeRootAbstraction, t => t.FilterScopeRootAbstraction);
 

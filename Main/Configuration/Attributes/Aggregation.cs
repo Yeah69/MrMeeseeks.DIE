@@ -167,9 +167,9 @@ public class FilterScopeInstanceAbstractionAggregationAttribute : Attribute
 }
     
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
-public class ScopeInstanceAbstractionImplementationAttribute : Attribute
+public class ScopeInstanceImplementationAggregationAttribute : Attribute
 {
-    public ScopeInstanceAbstractionImplementationAttribute(params Type[] types) {}
+    public ScopeInstanceImplementationAggregationAttribute(params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]

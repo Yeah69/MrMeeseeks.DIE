@@ -11,14 +11,14 @@ internal interface IContainerDieExceptionGenerator
 internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
-        WellKnownTypes wellKnownTypes)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         _context = context;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
     }
 
     public void Generate(string namespaceName, string containerClassName, DieException exception)
@@ -29,7 +29,7 @@ internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
             .AppendLine($"{{")
             .AppendLine($"partial class {containerClassName}")
             .AppendLine($"{{")
-            .AppendLine($"public {_wellKnownTypes.DieExceptionKind.FullName()} ExceptionKind_0_0 => {_wellKnownTypes.DieExceptionKind.FullName()}.{exception.Kind.ToString()};")
+            .AppendLine($"public {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()} ExceptionKind_0_0 => {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{exception.Kind.ToString()};")
             .AppendLine($"}}")
             .AppendLine($"}}")
             .AppendLine($"#nullable disable");

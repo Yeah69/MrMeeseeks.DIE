@@ -1,4 +1,4 @@
-﻿using MrMeeseeks.DIE.Configuration;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation;
 

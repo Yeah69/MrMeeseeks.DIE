@@ -1,5 +1,3 @@
-using MrMeeseeks.DIE.Extensions;
-
 namespace MrMeeseeks.DIE;
 
 internal interface IContainerInfo
@@ -19,7 +17,7 @@ internal class ContainerInfo : IContainerInfo
         INamedTypeSymbol containerClass,
             
         // dependencies
-        WellKnownTypes wellKnowTypes)
+        WellKnownTypesMiscellaneous wellKnowTypesMiscellaneous)
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();
@@ -28,7 +26,7 @@ internal class ContainerInfo : IContainerInfo
             
         CreateFunctionData = containerClass
             .GetAttributes()
-            .Where(ad => wellKnowTypes.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default))
+            .Where(ad => wellKnowTypesMiscellaneous.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default))
             .Select(ad => ad.ConstructorArguments.Length == 2 
                           && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type
                           && ad.ConstructorArguments[0].Value is INamedTypeSymbol type

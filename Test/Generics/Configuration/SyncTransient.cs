@@ -1,5 +1,5 @@
 using System;
-using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.SyncTransient;

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Composite.Normal;

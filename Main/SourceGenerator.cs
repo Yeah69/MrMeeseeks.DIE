@@ -19,16 +19,23 @@ public class SourceGenerator : ISourceGenerator
     {
         var diagLogger = new DiagLogger(context);
         var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
-        var attributeTypesFromAttributes = new TypesFromAttributes(context.Compilation.Assembly.GetAttributes(), wellKnownTypes);
+        var __ = WellKnownTypesAggregation.TryCreate(context.Compilation, out var wellKnownTypesAggregation);
+        var ___ = WellKnownTypesChoice.TryCreate(context.Compilation, out var wellKnownTypesChoice);
+        var ____ = WellKnownTypesMiscellaneous.TryCreate(context.Compilation, out var wellKnownTypesMiscellaneous);
+        var attributeTypesFromAttributes = new TypesFromAttributes(
+            context.Compilation.Assembly.GetAttributes(), 
+            wellKnownTypesAggregation,
+            wellKnownTypesChoice,
+            wellKnownTypesMiscellaneous);
         var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerErrorGenerator = new ContainerErrorGenerator(context);
-        var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypes);
+        var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypesMiscellaneous);
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
         var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
         new ExecuteImpl(
             context,
-            wellKnownTypes,
+            wellKnownTypesMiscellaneous,
             containerGenerator, 
             containerErrorGenerator,
             containerDieExceptionGenerator,
@@ -41,7 +48,11 @@ public class SourceGenerator : ISourceGenerator
         {
             var containerTypesFromAttributesList = ImmutableList.Create(
                 (ITypesFromAttributes) attributeTypesFromAttributes,
-                new TypesFromAttributes(ci.ContainerType.GetAttributes(), wellKnownTypes));
+                new TypesFromAttributes(
+                    ci.ContainerType.GetAttributes(), 
+                    wellKnownTypesAggregation,
+                    wellKnownTypesChoice,
+                    wellKnownTypesMiscellaneous));
 
             return new ContainerResolutionBuilder(
                 ci,
@@ -65,11 +76,15 @@ public class SourceGenerator : ISourceGenerator
                 containerTypesFromAttributesList,
                 TransientScopeResolutionBuilderFactory,
                 ScopeResolutionBuilderFactory,
-                ad => new ScopeTypesFromAttributes(ad, wellKnownTypes),
+                ad => new ScopeTypesFromAttributes(
+                    ad, 
+                    wellKnownTypesAggregation,
+                    wellKnownTypesChoice,
+                    wellKnownTypesMiscellaneous),
                 tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, implementationTypeSetCache), wellKnownTypes),
                 st => new UserProvidedScopeElements(st),
                 new EmptyUserProvidedScopeElements(),
-                wellKnownTypes);
+                wellKnownTypesMiscellaneous);
 
             ITransientScopeResolutionBuilder TransientScopeResolutionBuilderFactory(
                 string name,
@@ -177,7 +192,7 @@ public class SourceGenerator : ISourceGenerator
             IFunctionResolutionSynchronicityDecisionMaker FunctionResolutionSynchronicityDecisionMakerFactory() =>
                 new FunctionResolutionSynchronicityDecisionMaker();
         }
-        IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypes);
+        IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypesMiscellaneous);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
 
         IContainerCodeBuilder ContainerCodeBuilderFactory(

@@ -144,25 +144,25 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         }
 
         SyncTransientTypes = GetSetOfTypesWithProperties(
-            t => t.SyncTransient.Concat(t.Transient).ToList(), 
-            t => t.FilterSyncTransient.Concat(t.FilterTransient).ToList());
+            t => t.SyncTransientAbstraction.Concat(t.TransientAbstraction).ToList(), 
+            t => t.FilterSyncTransientAbstraction.Concat(t.FilterTransientAbstraction).ToList());
         AsyncTransientTypes = GetSetOfTypesWithProperties(
-            t => t.AsyncTransient.Concat(t.Transient).ToList(), 
-            t => t.FilterAsyncTransient.Concat(t.FilterTransient).ToList());
-        ContainerInstanceTypes = GetSetOfTypesWithProperties(t => t.ContainerInstance, t => t.FilterContainerInstance);
-        TransientScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.TransientScopeInstance, t => t.FilterTransientScopeInstance);
-        ScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.ScopeInstance, t => t.FilterScopeInstance);
-        TransientScopeRootTypes = GetSetOfTypesWithProperties(t => t.TransientScopeRoot, t => t.FilterTransientScopeRoot);
-        ScopeRootTypes = GetSetOfTypesWithProperties(t => t.ScopeRoot, t => t.FilterScopeRoot);
+            t => t.AsyncTransientAbstraction.Concat(t.TransientAbstraction).ToList(), 
+            t => t.FilterAsyncTransientAbstraction.Concat(t.FilterTransientAbstraction).ToList());
+        ContainerInstanceTypes = GetSetOfTypesWithProperties(t => t.ContainerInstanceAbstraction, t => t.FilterContainerInstanceAbstraction);
+        TransientScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.TransientScopeInstanceAbstraction, t => t.FilterTransientScopeInstanceAbstraction);
+        ScopeInstanceTypes = GetSetOfTypesWithProperties(t => t.ScopeInstance, t => t.FilterScopeInstanceAbstraction);
+        TransientScopeRootTypes = GetSetOfTypesWithProperties(t => t.TransientScopeRootAbstraction, t => t.FilterTransientScopeRootAbstraction);
+        ScopeRootTypes = GetSetOfTypesWithProperties(t => t.ScopeRootAbstraction, t => t.FilterScopeRootAbstraction);
 
         var compositeInterfaces = ImmutableHashSet<INamedTypeSymbol>.Empty;
         foreach (var types in typesFromAttributes)
         {
-            compositeInterfaces = compositeInterfaces.Except(types.FilterComposite.Select(c => c.UnboundIfGeneric()));
-            compositeInterfaces = compositeInterfaces.Union(types.Composite.Select(c => c.UnboundIfGeneric()));
+            compositeInterfaces = compositeInterfaces.Except(types.FilterCompositeAbstraction.Select(c => c.UnboundIfGeneric()));
+            compositeInterfaces = compositeInterfaces.Union(types.CompositeAbstraction.Select(c => c.UnboundIfGeneric()));
         }
         
-        var compositeTypes = GetSetOfTypesWithProperties(t => t.Composite, t => t.FilterComposite);
+        var compositeTypes = GetSetOfTypesWithProperties(t => t.CompositeAbstraction, t => t.FilterCompositeAbstraction);
         InterfaceToComposite = compositeTypes
             .OfType<INamedTypeSymbol>()
             .GroupBy(nts =>
@@ -205,13 +205,13 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         var decoratorInterfaces = ImmutableHashSet<INamedTypeSymbol>.Empty;
         foreach (var types in typesFromAttributes)
         {
-            decoratorInterfaces = decoratorInterfaces.Except(types.FilterDecorator.Select(c => c.UnboundIfGeneric()));
-            decoratorInterfaces = decoratorInterfaces.Union(types.Decorator.Select(c => c.UnboundIfGeneric()));
+            decoratorInterfaces = decoratorInterfaces.Except(types.FilterDecoratorAbstraction.Select(c => c.UnboundIfGeneric()));
+            decoratorInterfaces = decoratorInterfaces.Union(types.DecoratorAbstraction.Select(c => c.UnboundIfGeneric()));
         }
         
         var decoratorTypes = GetSetOfTypesWithProperties(
-            t => t.Decorator, 
-            t => t.FilterDecorator);
+            t => t.DecoratorAbstraction, 
+            t => t.FilterDecoratorAbstraction);
         InterfaceToDecorators = decoratorTypes
             .OfType<INamedTypeSymbol>()
             .GroupBy(nts =>

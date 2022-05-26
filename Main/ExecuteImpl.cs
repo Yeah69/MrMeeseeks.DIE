@@ -12,7 +12,7 @@ internal interface IExecute
 internal class ExecuteImpl : IExecute
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly IContainerGenerator _containerGenerator;
     private readonly IContainerErrorGenerator _containerErrorGenerator;
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
@@ -23,7 +23,7 @@ internal class ExecuteImpl : IExecute
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
-        WellKnownTypes wellKnownTypes,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IContainerGenerator containerGenerator,
         IContainerErrorGenerator containerErrorGenerator,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
@@ -33,7 +33,7 @@ internal class ExecuteImpl : IExecute
         IDiagLogger diagLogger)
     {
         _context = context;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
         _containerGenerator = containerGenerator;
         _containerErrorGenerator = containerErrorGenerator;
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
@@ -48,7 +48,7 @@ internal class ExecuteImpl : IExecute
         _diagLogger.Log("Start Execute");
 
         var errorDescriptionInsteadOfBuildFailure = _context.Compilation.Assembly.GetAttributes()
-            .Any(ad => _wellKnownTypes.ErrorDescriptionInsteadOfBuildFailureAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default));
+            .Any(ad => _wellKnownTypesMiscellaneous.ErrorDescriptionInsteadOfBuildFailureAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default));
 
         foreach (var syntaxTree in _context.Compilation.SyntaxTrees)
         {
@@ -60,7 +60,7 @@ internal class ExecuteImpl : IExecute
                 .Select(x => semanticModel.GetDeclaredSymbol(x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x.GetAttributes().Any(ad => _wellKnownTypes.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default)))
+                .Where(x => x.GetAttributes().Any(ad => _wellKnownTypesMiscellaneous.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default)))
                 .ToList();
             foreach (var containerSymbol in containerClasses)
             {

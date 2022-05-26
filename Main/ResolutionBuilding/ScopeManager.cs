@@ -73,7 +73,7 @@ internal class ScopeManager : IScopeManager
         Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> checkTypePropertiesFactory,
         Func<INamedTypeSymbol, IUserProvidedScopeElements> userProvidedScopeElementsFactory,
         IUserProvidedScopeElements emptyUserProvidedScopeElements,
-        WellKnownTypes wellKnownTypes)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         _containerInfo = containerInfo;
         _containerResolutionBuilder = containerResolutionBuilder;
@@ -128,7 +128,7 @@ internal class ScopeManager : IScopeManager
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        wellKnownTypes.CustomScopeForRootTypesAttribute))
+                        wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch
@@ -151,7 +151,7 @@ internal class ScopeManager : IScopeManager
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        wellKnownTypes.CustomScopeForRootTypesAttribute))
+                        wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch

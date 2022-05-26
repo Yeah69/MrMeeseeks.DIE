@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Generics.SubstituteCollection.SingleWithChoice;

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.ContainerInstanceFunctionAsValueTask;

@@ -1,4 +1,4 @@
-﻿using MrMeeseeks.DIE.Test.CycleDetection.Implementation;
+﻿using MrMeeseeks.DIE.Test.Generics.Configuration.Decorator;
 
 internal class Program
 {

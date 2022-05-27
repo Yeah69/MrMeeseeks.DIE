@@ -4,64 +4,64 @@ namespace MrMeeseeks.DIE.Configuration;
 
 internal interface ITypesFromAttributes
 {
-    IReadOnlyList<INamedTypeSymbol> Implementation { get; }
-    IReadOnlyList<INamedTypeSymbol> TransientAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> SyncTransientAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> AsyncTransientAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> ContainerInstanceAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> ScopeInstanceAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> TransientScopeRootAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> ScopeRootAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> DecoratorAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> CompositeAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> TransientImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> SyncTransientImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> AsyncTransientImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> ContainerInstanceImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> TransientScopeInstanceImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> ScopeInstanceImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> TransientScopeRootImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> ScopeRootImplementation { get; }
-    IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
-    IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
-    IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
-    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; } 
-    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
-    IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
+    IImmutableSet<INamedTypeSymbol> Implementation { get; }
+    IImmutableSet<INamedTypeSymbol> TransientAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> SyncTransientAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> AsyncTransientAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> ContainerInstanceAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> ScopeInstanceAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> TransientScopeRootAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> ScopeRootAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> DecoratorAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> CompositeAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> TransientImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> SyncTransientImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> AsyncTransientImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> ContainerInstanceImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> TransientScopeInstanceImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> ScopeInstanceImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; }
+    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
+    IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; } 
+    IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
+    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
     bool AllImplementations { get; }
-    IReadOnlyList<IAssemblySymbol> AssemblyImplementations { get; }
-    IReadOnlyList<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
-    IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterTransientAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterAsyncTransientAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterScopeInstanceAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterScopeRootAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterDecoratorAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterCompositeAbstraction { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterTransientImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterSyncTransientImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterAsyncTransientImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterContainerInstanceImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterScopeRootImplementation { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterConstructorChoices { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
-    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; } 
-    IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterPropertyChoices { get; }
+    IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
+    IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
+    IImmutableSet<INamedTypeSymbol> FilterImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterAsyncTransientAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterScopeInstanceAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterScopeRootAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterDecoratorAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterCompositeAbstraction { get; }
+    IImmutableSet<INamedTypeSymbol> FilterTransientImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterSyncTransientImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterAsyncTransientImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterContainerInstanceImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; }
+    IImmutableSet<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
+    IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
+    IImmutableSet<INamedTypeSymbol> FilterTypeInitializers { get; }
+    IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; } 
+    IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
+    IImmutableSet<INamedTypeSymbol> FilterPropertyChoices { get; }
     bool FilterAllImplementations { get; }
-    IReadOnlyList<IAssemblySymbol> FilterAssemblyImplementations { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterImplementationChoices { get; }
-    IReadOnlyList<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
+    IImmutableSet<IAssemblySymbol> FilterAssemblyImplementations { get; }
+    IImmutableSet<INamedTypeSymbol> FilterImplementationChoices { get; }
+    IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
 }
 
 internal class TypesFromAttributes : ScopeTypesFromAttributes
@@ -76,22 +76,22 @@ internal class TypesFromAttributes : ScopeTypesFromAttributes
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
         : base(attributeData, wellKnownTypesAggregation, wellKnownTypesChoice, wellKnownTypesMiscellaneous)
     {
-        ContainerInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute).ToList();
-        TransientScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute).ToList();
-        TransientScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute).ToList();
-        ScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeRootAbstractionAggregationAttribute).ToList();
-        ContainerInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute).ToList();
-        TransientScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceImplementationAggregationAttribute).ToList();
-        TransientScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootImplementationAggregationAttribute).ToList();
-        ScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeRootImplementationAggregationAttribute).ToList();
-        FilterContainerInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute).ToList();
-        FilterTransientScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceAbstractionAggregationAttribute).ToList();
-        FilterTransientScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootAbstractionAggregationAttribute).ToList();
-        FilterScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootAbstractionAggregationAttribute).ToList();
-        FilterContainerInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceImplementationAggregationAttribute).ToList();
-        FilterTransientScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceImplementationAggregationAttribute).ToList();
-        FilterTransientScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootImplementationAggregationAttribute).ToList();
-        FilterScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootImplementationAggregationAttribute).ToList();
+        ContainerInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
+        TransientScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
+        TransientScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
+        ScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeRootAbstractionAggregationAttribute);
+        ContainerInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute);
+        TransientScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceImplementationAggregationAttribute);
+        TransientScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootImplementationAggregationAttribute);
+        ScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeRootImplementationAggregationAttribute);
+        FilterContainerInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootAbstractionAggregationAttribute);
+        FilterScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootAbstractionAggregationAttribute);
+        FilterContainerInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceImplementationAggregationAttribute);
+        FilterTransientScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceImplementationAggregationAttribute);
+        FilterTransientScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootImplementationAggregationAttribute);
+        FilterScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootImplementationAggregationAttribute);
     }
 }
 
@@ -110,47 +110,48 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .GroupBy(ad => ad.AttributeClass, SymbolEqualityComparer.Default)
             .ToDictionary(g => g.Key, g => g);
 
-        Implementation = GetTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute).ToList();
-        TransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute).ToList();
-        SyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.SyncTransientAbstractionAggregationAttribute).ToList();
-        AsyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientAbstractionAggregationAttribute).ToList();
-        ContainerInstanceAbstraction = new List<INamedTypeSymbol>();
-        TransientScopeInstanceAbstraction = new List<INamedTypeSymbol>();
-        ScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceAbstractionAggregationAttribute).ToList();
-        TransientScopeRootAbstraction = new List<INamedTypeSymbol>();
-        ScopeRootAbstraction = new List<INamedTypeSymbol>();
-        DecoratorAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.DecoratorAbstractionAggregationAttribute).ToList();
-        CompositeAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.CompositeAbstractionAggregationAttribute).ToList();
-        TransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientImplementationAggregationAttribute).ToList();
-        SyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.SyncTransientImplementationAggregationAttribute).ToList();
-        AsyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientImplementationAggregationAttribute).ToList();
-        ContainerInstanceImplementation = new List<INamedTypeSymbol>();
-        TransientScopeInstanceImplementation = new List<INamedTypeSymbol>();
-        ScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceImplementationAggregationAttribute).ToList();
-        TransientScopeRootImplementation = new List<INamedTypeSymbol>();
-        ScopeRootImplementation = new List<INamedTypeSymbol>();
+        Implementation = GetTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
+        TransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
+        SyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.SyncTransientAbstractionAggregationAttribute);
+        AsyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientAbstractionAggregationAttribute);
+        ContainerInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        TransientScopeInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        ScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceAbstractionAggregationAttribute);
+        TransientScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        ScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        DecoratorAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.DecoratorAbstractionAggregationAttribute);
+        CompositeAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.CompositeAbstractionAggregationAttribute);
+        TransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientImplementationAggregationAttribute);
+        SyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.SyncTransientImplementationAggregationAttribute);
+        AsyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientImplementationAggregationAttribute);
+        ContainerInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        TransientScopeInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        ScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceImplementationAggregationAttribute);
+        TransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        ScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
 
-        FilterImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterImplementationAggregationAttribute).ToList();
-        FilterTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientAbstractionAggregationAttribute).ToList();
-        FilterSyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientAbstractionAggregationAttribute).ToList();
-        FilterAsyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientAbstractionAggregationAttribute).ToList();
-        FilterContainerInstanceAbstraction = new List<INamedTypeSymbol>();
-        FilterTransientScopeInstanceAbstraction = new List<INamedTypeSymbol>();
-        FilterScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceAbstractionAggregationAttribute).ToList();
-        FilterTransientScopeRootAbstraction = new List<INamedTypeSymbol>();
-        FilterScopeRootAbstraction = new List<INamedTypeSymbol>();
-        FilterDecoratorAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterDecoratorAbstractionAggregationAttribute).ToList();
-        FilterCompositeAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterCompositeAbstractionAggregationAttribute).ToList();
-        FilterTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientImplementationAggregationAttribute).ToList();
-        FilterSyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientImplementationAggregationAttribute).ToList();
-        FilterAsyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientImplementationAggregationAttribute).ToList();
-        FilterContainerInstanceImplementation = new List<INamedTypeSymbol>();
-        FilterTransientScopeInstanceImplementation = new List<INamedTypeSymbol>();
-        FilterScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceImplementationAggregationAttribute).ToList();
-        FilterTransientScopeRootImplementation = new List<INamedTypeSymbol>();
-        FilterScopeRootImplementation = new List<INamedTypeSymbol>();
+        FilterImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterImplementationAggregationAttribute);
+        FilterTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientAbstractionAggregationAttribute);
+        FilterSyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientAbstractionAggregationAttribute);
+        FilterAsyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientAbstractionAggregationAttribute);
+        FilterContainerInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterTransientScopeInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterDecoratorAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterDecoratorAbstractionAggregationAttribute);
+        FilterCompositeAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterCompositeAbstractionAggregationAttribute);
+        FilterTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientImplementationAggregationAttribute);
+        FilterSyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientImplementationAggregationAttribute);
+        FilterAsyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientImplementationAggregationAttribute);
+        FilterContainerInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterTransientScopeInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceImplementationAggregationAttribute);
+        FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         
-        DecoratorSequenceChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.DecoratorSequenceChoiceAttribute, out var decoratorSequenceChoiceAttributes) 
+        DecoratorSequenceChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.DecoratorSequenceChoiceAttribute, out var decoratorSequenceChoiceAttributes) 
                 ? decoratorSequenceChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -169,10 +170,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     ? null 
                     : ((INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (decoratedType, decorators);
             })
-            .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
-        FilterDecoratorSequenceChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterDecoratorSequenceChoiceAttribute, out var filterDecoratorSequenceChoiceAttributes) 
+        FilterDecoratorSequenceChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterDecoratorSequenceChoiceAttribute, out var filterDecoratorSequenceChoiceAttributes) 
                 ? filterDecoratorSequenceChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -182,10 +183,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 
                 return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
             })
-            .OfType<INamedTypeSymbol>()
-            .ToList();
+            .OfType<INamedTypeSymbol>());
 
-        ConstructorChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ConstructorChoiceAttribute, out var constructorChoiceAttributes) 
+        ConstructorChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ConstructorChoiceAttribute, out var constructorChoiceAttributes) 
                 ? constructorChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -214,7 +215,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 if (implementationType is null) return null;
                 
                 var constructorChoice = implementationType
-                    .Constructors
+                    .InstanceConstructors
                     .Where(c => c.Parameters.Length == parameterTypes.Count)
                     .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
                         .Zip(parameterTypes,
@@ -225,19 +226,19 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     : ((INamedTypeSymbol, IMethodSymbol)?)null;
 
             })
-            .OfType<(INamedTypeSymbol, IMethodSymbol)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, IMethodSymbol)>());
 
-        FilterConstructorChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterConstructorChoiceAttribute, out var filterConstructorChoiceAttributes) 
+        FilterConstructorChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterConstructorChoiceAttribute, out var filterConstructorChoiceAttributes) 
                 ? filterConstructorChoiceAttributes
                 : Enumerable.Empty<AttributeData>())
             .Select(ad => ad.ConstructorArguments.Length < 1 
                 ? null 
                 : ad.ConstructorArguments[0].Value as INamedTypeSymbol)
-            .OfType<INamedTypeSymbol>()
-            .ToList();
+            .OfType<INamedTypeSymbol>());
 
-        PropertyChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.PropertyChoiceAttribute, out var propertyChoiceGroup) 
+        PropertyChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.PropertyChoiceAttribute, out var propertyChoiceGroup) 
                 ? propertyChoiceGroup 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -262,10 +263,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
                 return (implementationType, properties);
             })
-            .OfType<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)>());
 
-        FilterPropertyChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterPropertyChoiceAttribute, out var filterPropertyChoicesGroup)
+        FilterPropertyChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterPropertyChoiceAttribute, out var filterPropertyChoicesGroup)
                 ? filterPropertyChoicesGroup
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -274,10 +275,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     return null;
                 return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
             })
-            .OfType<INamedTypeSymbol>()
-            .ToList();
+            .OfType<INamedTypeSymbol>());
 
-        TypeInitializers = (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.TypeInitializerAttribute, out var typeInitializerAttributes) 
+        TypeInitializers = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.TypeInitializerAttribute, out var typeInitializerAttributes) 
                 ? typeInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -300,10 +301,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
                 return null;
             })
-            .OfType<(INamedTypeSymbol, IMethodSymbol)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, IMethodSymbol)>());
         
-        FilterTypeInitializers = (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterTypeInitializerAttribute, out var filterTypeInitializerAttributes) 
+        FilterTypeInitializers = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterTypeInitializerAttribute, out var filterTypeInitializerAttributes) 
                 ? filterTypeInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -312,10 +313,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     return null;
                 return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
             })
-            .OfType<INamedTypeSymbol>()
-            .ToList();
+            .OfType<INamedTypeSymbol>());
         
-        GenericParameterSubstitutesChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.GenericParameterSubstitutesChoiceAttribute, out var genericParameterSubstitutesChoiceAttributes) 
+        GenericParameterSubstitutesChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.GenericParameterSubstitutesChoiceAttribute, out var genericParameterSubstitutesChoiceAttributes) 
                 ? genericParameterSubstitutesChoiceAttributes
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -345,10 +346,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     ? null 
                     : ((INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)?) (genericType, typeParameterSymbol, substitutes);
             })
-            .OfType<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
-        GenericParameterChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.GenericParameterChoiceAttribute, out var genericParameterChoiceAttributes) 
+        GenericParameterChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.GenericParameterChoiceAttribute, out var genericParameterChoiceAttributes) 
                 ? genericParameterChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -373,10 +374,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     ? null 
                     : ((INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)?) (genericType, typeParameterSymbol, typeChoice);
             })
-            .OfType<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)>());
         
-        FilterGenericParameterSubstitutesChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterGenericParameterSubstitutesChoiceAttribute, out var filterGenericParameterSubstitutesChoiceAttributes) 
+        FilterGenericParameterSubstitutesChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterGenericParameterSubstitutesChoiceAttribute, out var filterGenericParameterSubstitutesChoiceAttributes) 
                 ? filterGenericParameterSubstitutesChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -399,10 +400,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     ? null 
                     : ((INamedTypeSymbol, ITypeParameterSymbol)?) (genericType, typeParameterSymbol);
             })
-            .OfType<(INamedTypeSymbol, ITypeParameterSymbol)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol)>());
         
-        FilterGenericParameterChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterGenericParameterChoiceAttribute, out var filterGenericParameterChoiceAttributes) 
+        FilterGenericParameterChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterGenericParameterChoiceAttribute, out var filterGenericParameterChoiceAttributes) 
                 ? filterGenericParameterChoiceAttributes
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -425,8 +426,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     ? null 
                     : ((INamedTypeSymbol, ITypeParameterSymbol)?) (genericType, typeParameterSymbol);
             })
-            .OfType<(INamedTypeSymbol, ITypeParameterSymbol)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, ITypeParameterSymbol)>());
 
         AllImplementations = (AttributeDictionary.TryGetValue(wellKnownTypesAggregation.AllImplementationsAggregationAttribute, out var allImplementationsAttributes)
                 ? allImplementationsAttributes
@@ -438,7 +438,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 : Enumerable.Empty<AttributeData>())
             .Any();
 
-        AssemblyImplementations = (AttributeDictionary.TryGetValue(wellKnownTypesAggregation.AssemblyImplementationsAggregationAttribute, out var assemblyImplementationsAttributes)
+        AssemblyImplementations = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesAggregation.AssemblyImplementationsAggregationAttribute, out var assemblyImplementationsAttributes)
                 ? assemblyImplementationsAttributes
                 : Enumerable.Empty<AttributeData>())
             .SelectMany(ad => ad.ConstructorArguments.Length < 1
@@ -450,10 +451,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     .Select(t => t.ContainingAssembly)
                     .OfType<IAssemblySymbol>())
             .Distinct(SymbolEqualityComparer.Default)
-            .OfType<IAssemblySymbol>()
-            .ToList();
+            .OfType<IAssemblySymbol>());
 
-        FilterAssemblyImplementations = (AttributeDictionary.TryGetValue(wellKnownTypesAggregation.FilterAssemblyImplementationsAggregationAttribute, out var filterAssemblyImplementationsAttributes)
+        FilterAssemblyImplementations = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesAggregation.FilterAssemblyImplementationsAggregationAttribute, out var filterAssemblyImplementationsAttributes)
                 ? filterAssemblyImplementationsAttributes
                 : Enumerable.Empty<AttributeData>())
             .SelectMany(ad => ad.ConstructorArguments.Length < 1
@@ -465,10 +466,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     .Select(t => t.ContainingAssembly)
                     .OfType<IAssemblySymbol>())
             .Distinct(SymbolEqualityComparer.Default)
-            .OfType<IAssemblySymbol>()
-            .ToList();
+            .OfType<IAssemblySymbol>());
         
-        ImplementationChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ImplementationChoiceAttribute, out var implementationChoiceAttributes) 
+        ImplementationChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ImplementationChoiceAttribute, out var implementationChoiceAttributes) 
                 ? implementationChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad => 
@@ -477,10 +478,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 || ad.ConstructorArguments[1].Value is not INamedTypeSymbol implementation 
                     ? null 
                     : ((INamedTypeSymbol, INamedTypeSymbol)?) (type, implementation))
-            .OfType<(INamedTypeSymbol, INamedTypeSymbol)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, INamedTypeSymbol)>());
         
-        ImplementationCollectionChoices = (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ImplementationCollectionChoiceAttribute, out var implementationCollectionChoicesAttributes) 
+        ImplementationCollectionChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ImplementationCollectionChoiceAttribute, out var implementationCollectionChoicesAttributes) 
                 ? implementationCollectionChoicesAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -501,30 +502,30 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     ? null 
                     : ((INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (type, implementations);
             })
-            .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>()
-            .ToList();
+            .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
-        FilterImplementationChoices = GetTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute).ToList();
+        FilterImplementationChoices = GetTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
         
-        FilterImplementationCollectionChoices = GetTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute).ToList();
+        FilterImplementationCollectionChoices = GetTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
     
-    protected IEnumerable<INamedTypeSymbol> GetTypesFromAttribute(
+    protected IImmutableSet<INamedTypeSymbol> GetTypesFromAttribute(
         INamedTypeSymbol attribute)
     {
-        return (AttributeDictionary.TryGetValue(attribute, out var attributes) ? attributes : Enumerable.Empty<AttributeData>())
-            .SelectMany(ad => ad.ConstructorArguments
-                .Where(tc => tc.Kind == TypedConstantKind.Type)
-                .OfType<TypedConstant>()
-                .Concat(ad.ConstructorArguments.SelectMany(ca => ca.Kind is TypedConstantKind.Array
-                    ? (IEnumerable<TypedConstant>)ca.Values
-                    : Array.Empty<TypedConstant>())))
-            .Select(tc => !CheckValidType(tc, out var type) ? null : type)
-            .Where(t => t is not null)
-            .OfType<INamedTypeSymbol>()
-            .Select(t => t.OriginalDefinition);
+        return ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(attribute, out var attributes) ? attributes : Enumerable.Empty<AttributeData>())
+                .SelectMany(ad => ad.ConstructorArguments
+                    .Where(tc => tc.Kind == TypedConstantKind.Type)
+                    .OfType<TypedConstant>()
+                    .Concat(ad.ConstructorArguments.SelectMany(ca => ca.Kind is TypedConstantKind.Array
+                        ? (IEnumerable<TypedConstant>)ca.Values
+                        : Array.Empty<TypedConstant>())))
+                .Select(tc => !CheckValidType(tc, out var type) ? null : type)
+                .Where(t => t is not null)
+                .OfType<INamedTypeSymbol>()
+                .Select(t => t.OriginalDefinition));
         
         bool CheckValidType(TypedConstant typedConstant, out INamedTypeSymbol type)
         {
@@ -533,62 +534,62 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         }
     }
 
-    public IReadOnlyList<INamedTypeSymbol> Implementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> TransientAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> SyncTransientAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> AsyncTransientAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> ContainerInstanceAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> ScopeInstanceAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> TransientScopeRootAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> ScopeRootAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> DecoratorAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> CompositeAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> TransientImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> SyncTransientImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> AsyncTransientImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> ContainerInstanceImplementation { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> TransientScopeInstanceImplementation { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> ScopeInstanceImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> TransientScopeRootImplementation { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> ScopeRootImplementation { get; protected init; }
-    public IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
-    public IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
-    public IReadOnlyList<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
-    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; }
-    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }
-    public IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> Implementation { get; }
+    public IImmutableSet<INamedTypeSymbol> TransientAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> SyncTransientAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> AsyncTransientAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> ContainerInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ScopeInstanceAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> DecoratorAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> CompositeAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> TransientImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> SyncTransientImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> AsyncTransientImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> ContainerInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ScopeInstanceImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected init; }
+    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
+    public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
     public bool AllImplementations { get; }
-    public IReadOnlyList<IAssemblySymbol> AssemblyImplementations { get; }
-    public IReadOnlyList<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
-    public IReadOnlyList<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterTransientAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterAsyncTransientAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterScopeInstanceAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterScopeRootAbstraction { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterDecoratorAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterCompositeAbstraction { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterTransientImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterSyncTransientImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterAsyncTransientImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterContainerInstanceImplementation { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterScopeRootImplementation { get; protected init; }
-    public IReadOnlyList<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterConstructorChoices { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterTypeInitializers { get; }
-    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; }
-    public IReadOnlyList<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterPropertyChoices { get; }
+    public IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
+    public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterAsyncTransientAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeInstanceAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterDecoratorAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterCompositeAbstraction { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterSyncTransientImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterAsyncTransientImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterTypeInitializers { get; }
+    public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterPropertyChoices { get; }
     public bool FilterAllImplementations { get; }
-    public IReadOnlyList<IAssemblySymbol> FilterAssemblyImplementations { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterImplementationChoices { get; }
-    public IReadOnlyList<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
+    public IImmutableSet<IAssemblySymbol> FilterAssemblyImplementations { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterImplementationChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
 }

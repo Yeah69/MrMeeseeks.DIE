@@ -640,14 +640,14 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             return implementationType.NullableAnnotation == NullableAnnotation.Annotated
                 ? (new NullResolution(RootReferenceGenerator.Generate(implementationType),
                         implementationType.FullName()), null) // todo warning
-                : (new ErrorTreeItem(implementationType.Constructors.Length switch
+                : (new ErrorTreeItem(implementationType.InstanceConstructors.Length switch
                     {
                         0 =>
                             $"[{implementationType.FullName()}] Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
                         > 1 =>
                             $"[{implementationType.FullName()}] Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
                         _ =>
-                            $"[{implementationType.FullName()}] Class.Constructor: {implementationType.Constructors[0].Name} is not a method symbol"
+                            $"[{implementationType.FullName()}] Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
                     }),
                     null);
         }

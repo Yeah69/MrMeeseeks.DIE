@@ -383,7 +383,9 @@ internal class CheckTypeProperties : ICheckTypeProperties
                 implementations.Add(added);
             if (!chooseComposite && !chooseDecorator
                 && !_currentlyConsideredTypes.DecoratorTypes.Contains(unbound) 
-                && !_currentlyConsideredTypes.CompositeTypes.Contains(unbound))
+                && !_currentlyConsideredTypes.CompositeTypes.Contains(unbound)
+                && _currentlyConsideredTypes.AllConsideredImplementations.Contains(unbound)
+                )
                 implementations.Add(added);
         }
     }

@@ -4,6 +4,7 @@ namespace MrMeeseeks.DIE.Configuration;
 
 internal interface ICurrentlyConsideredTypes
 {
+    IImmutableSet<INamedTypeSymbol> AllConsideredImplementations { get; }
     IImmutableSet<INamedTypeSymbol> SyncTransientTypes { get; }
     IImmutableSet<INamedTypeSymbol> AsyncTransientTypes { get; }
     IImmutableSet<INamedTypeSymbol> ContainerInstanceTypes { get; }
@@ -85,6 +86,7 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache
                 
         return GetAllNamespaces(assemblySymbol.GlobalNamespace)
             .SelectMany(ns => ns.GetTypeMembers())
+            .SelectMany(t => t.AllNestedTypesAndSelf())
             .Where(nts => nts is
             {
                 IsAbstract: false,
@@ -144,6 +146,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                     (current, assembly) => current.Union(implementationTypeSetCache.ForAssembly(assembly)));
             }
         }
+
+        AllConsideredImplementations = ImmutableHashSet.CreateRange(allImplementations.Select(t => t.UnboundIfGeneric()));
         
         ImplementationMap = allImplementations
             .SelectMany(i => { return i.AllDerivedTypesAndSelf().Select(ii => (ii, i)); })
@@ -443,7 +447,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             return ret;
         }
     }
-    
+
+    public IImmutableSet<INamedTypeSymbol> AllConsideredImplementations { get; }
     public IImmutableSet<INamedTypeSymbol> SyncTransientTypes { get; }
     public IImmutableSet<INamedTypeSymbol> AsyncTransientTypes { get; }
     public IImmutableSet<INamedTypeSymbol> ContainerInstanceTypes { get; }

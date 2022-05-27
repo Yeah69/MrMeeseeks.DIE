@@ -21,6 +21,17 @@ internal static class INamedTypeSymbolExtensions
             .AllInterfaces
             .Concat(baseTypesAndSelf);
     }
+    internal static IEnumerable<INamedTypeSymbol> AllNestedTypesAndSelf(this INamedTypeSymbol type)
+    {
+        yield return type;
+        foreach (var typeMember in type.GetTypeMembers())
+        {
+            foreach (var nestedType in typeMember.AllNestedTypesAndSelf())
+            {
+                yield return nestedType;
+            }
+        }
+    }
     
     internal static INamedTypeSymbol UnboundIfGeneric(this INamedTypeSymbol type) =>
         type.IsGenericType && !type.IsUnboundGenericType

@@ -1,12 +1,11 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.TestNotInternalsVisibleToChild.Public;
-using MrMeeseeks.DIE.TestNotInternalsVisibleToChild;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.AssemblyImplementationsAggregation;
 
 [FilterAllImplementationsAggregation]
-[AssemblyImplementationsAggregation(typeof(AssemblyInfo))]
+[AssemblyImplementationsAggregation(typeof(MrMeeseeks.DIE.TestNotInternalsVisibleToChild.AssemblyInfo))]
 [ConstructorChoice(typeof(Parent.ClassToo))]
 [CreateFunction(typeof(Parent.ClassToo), "Create")]
 internal partial class Container {}

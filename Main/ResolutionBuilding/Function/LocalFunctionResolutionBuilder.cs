@@ -16,12 +16,22 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> parameters,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         
-        
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
+        IFunctionCycleTracker functionCycleTracker,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, returnType, parameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+        : base(
+            rangeResolutionBaseBuilder, 
+            returnType, 
+            parameters,
+            synchronicityDecisionMaker, 
+            new object(),
+            
+            wellKnownTypes,
+            referenceGeneratorFactory,
+            functionCycleTracker,
+            localFunctionResolutionBuilderFactory)
     {
         _returnType = returnType;
         _parameters = parameters;

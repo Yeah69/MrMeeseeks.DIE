@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.ResolutionBuilding.Function;
+
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal abstract record InterfaceExtension(
@@ -80,4 +82,5 @@ internal record RangedInstanceResolutionsQueueItem(
     ForConstructorParameter Parameter,
     string Label,
     string Reference,
-    string Key);
+    string Key,
+    FunctionResolutionBuilderHandle Handle);

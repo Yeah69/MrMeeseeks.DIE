@@ -104,7 +104,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         string transientInstanceScopeReference,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
-        var key = rootType.FullName();
+        var key = $"{rootType.FullName()}{(currentParameters.Any() ? $"_{string.Join(";", currentParameters)}" : "")}";
         if (!_scopeRootFunctionResolutions.TryGetValue(
                 key,
                 out var function))

@@ -10,6 +10,8 @@ internal interface IContainerResolutionBuilder : IRangeResolutionBaseBuilder, IR
     MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter,
         string containerReference);
+    
+    IFunctionCycleTracker FunctionCycleTracker { get; }
 }
 
 internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContainerResolutionBuilder, ITransientScopeImplementationResolutionBuilder
@@ -39,7 +41,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IContainerCreateFunctionResolutionBuilder> createFunctionResolutionBuilderFactory,
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory,
-        IUserProvidedScopeElements userProvidedScopeElement) 
+        IUserProvidedScopeElements userProvidedScopeElement, 
+        IFunctionCycleTracker functionCycleTracker) 
         : base(
             containerInfo.Name, 
             checkTypeProperties,
@@ -54,6 +57,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         _wellKnownTypes = wellKnownTypes;
         _createFunctionResolutionBuilderFactory = createFunctionResolutionBuilderFactory;
         _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
+        FunctionCycleTracker = functionCycleTracker;
         _scopeManager = scopeManagerFactory(this, transientScopeInterfaceResolutionBuilder);
         
         transientScopeInterfaceResolutionBuilder.AddImplementation(this);
@@ -73,6 +77,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             null,
             containerReference,
             new (_synchronicityDecisionMakerFactory));
+
+    public IFunctionCycleTracker FunctionCycleTracker { get; }
 
     public override MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
         CreateContainerInstanceReferenceResolution(parameter, "this");
@@ -337,7 +343,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 RootReferenceGenerator.Generate("_disposable")));
     }
 
-    public void EnqueueRangedInstanceResolution(
+    public MultiSynchronicityFunctionCallResolution EnqueueRangedInstanceResolution(
         ForConstructorParameter parameter,
         string label,
         string reference,

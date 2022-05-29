@@ -595,7 +595,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 .AppendLine($"{{")
                 .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Release();")
                 .AppendLine($"}}")
-                .AppendLine($"return this.{rangedInstanceFunctionGroupResolution.FieldReference};")
+                .AppendLine($"return this.{rangedInstanceFunctionGroupResolution.FieldReference};");
+
+            stringBuilder = overload.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction)
                 .AppendLine($"}}");
         }
         

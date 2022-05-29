@@ -54,10 +54,12 @@ public class SourceGenerator : ISourceGenerator
                     wellKnownTypesChoice,
                     wellKnownTypesMiscellaneous));
 
+            var functionCycleTracker = new FunctionCycleTracker();
+
             return new ContainerResolutionBuilder(
                 ci,
                 
-                new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory, wellKnownTypes, RangedFunctionGroupResolutionBuilderFactory, FunctionResolutionSynchronicityDecisionMakerFactory),
+                new TransientScopeInterfaceResolutionBuilder(referenceGeneratorFactory, wellKnownTypes, functionCycleTracker, FunctionResolutionSynchronicityDecisionMakerFactory),
                 referenceGeneratorFactory,
                 new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, implementationTypeSetCache), wellKnownTypes),
                 wellKnownTypes,
@@ -65,7 +67,8 @@ public class SourceGenerator : ISourceGenerator
                 ContainerCreateFunctionResolutionBuilderFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
-                new UserProvidedScopeElements(ci.ContainerType));
+                new UserProvidedScopeElements(ci.ContainerType),
+                functionCycleTracker);
 
             IScopeManager ScopeManagerFactory(
                 IContainerResolutionBuilder containerResolutionBuilder,
@@ -136,6 +139,7 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
+                functionCycleTracker,
                 LocalFunctionResolutionBuilderFactory);
 
             IContainerCreateFunctionResolutionBuilder ContainerCreateFunctionResolutionBuilderFactory(
@@ -147,6 +151,7 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
+                functionCycleTracker,
                 LocalFunctionResolutionBuilderFactory);
 
             IScopeRootCreateFunctionResolutionBuilder ScopeRootCreateFunctionResolutionBuilderFactory(
@@ -158,20 +163,24 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
+                functionCycleTracker,
                 LocalFunctionResolutionBuilderFactory);
 
             IRangedFunctionResolutionBuilder RangedFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
                 string reference,
                 ForConstructorParameter forConstructorParameter,
-                IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker) => new RangedFunctionResolutionBuilder(
+                IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
+                object handleIdentity) => new RangedFunctionResolutionBuilder(
                 rangeResolutionBaseBuilder,
                 reference,
                 forConstructorParameter,
                 synchronicityDecisionMaker,
+                handleIdentity,
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
+                functionCycleTracker,
                 LocalFunctionResolutionBuilderFactory);
 
             IRangedFunctionGroupResolutionBuilder RangedFunctionGroupResolutionBuilderFactory(

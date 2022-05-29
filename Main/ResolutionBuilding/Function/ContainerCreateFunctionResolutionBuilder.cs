@@ -13,13 +13,23 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
         INamedTypeSymbol returnType,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
-        
-        
+
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
+        IFunctionCycleTracker functionCycleTracker,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, returnType, Array.Empty<(ITypeSymbol, ParameterResolution)>(), synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+        : base(
+            rangeResolutionBaseBuilder, 
+            returnType, 
+            Array.Empty<(ITypeSymbol, ParameterResolution)>(),
+            synchronicityDecisionMaker,
+            new object(),
+            
+            wellKnownTypes, 
+            referenceGeneratorFactory, 
+            functionCycleTracker,
+            localFunctionResolutionBuilderFactory)
     {
         _returnType = returnType;
         

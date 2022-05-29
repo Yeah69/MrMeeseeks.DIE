@@ -20,6 +20,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         string, 
         ForConstructorParameter, 
         IFunctionResolutionSynchronicityDecisionMaker, 
+        object,
         IRangedFunctionResolutionBuilder> _rangedFunctionResolutionBuilderFactory;
     private readonly string _reference;
     private readonly string _typeFullName;
@@ -39,7 +40,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         
         // dependencies
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        Func<IRangeResolutionBaseBuilder, string, ForConstructorParameter, IFunctionResolutionSynchronicityDecisionMaker, IRangedFunctionResolutionBuilder> rangedFunctionResolutionBuilderFactory)
+        Func<IRangeResolutionBaseBuilder, string, ForConstructorParameter, IFunctionResolutionSynchronicityDecisionMaker, object, IRangedFunctionResolutionBuilder> rangedFunctionResolutionBuilderFactory)
     {
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _rangedFunctionResolutionBuilderFactory = rangedFunctionResolutionBuilderFactory;
@@ -58,7 +59,12 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         var listedParameterTypes = string.Join(",", parameter.CurrentFuncParameters.Select(p => p.Item2.TypeFullName));
         if (!_overloads.TryGetValue(listedParameterTypes, out var function))
         {
-            function = _rangedFunctionResolutionBuilderFactory(_rangeResolutionBaseBuilder, _reference, parameter, synchronicityDecisionMaker.Value);
+            function = _rangedFunctionResolutionBuilderFactory(
+                _rangeResolutionBaseBuilder, 
+                _reference, 
+                parameter, 
+                synchronicityDecisionMaker.Value,
+                this);
             _overloads[listedParameterTypes] = function;
             _functionQueue.Add(function);
         }

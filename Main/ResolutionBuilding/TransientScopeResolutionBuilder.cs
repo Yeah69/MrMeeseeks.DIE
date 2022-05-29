@@ -98,7 +98,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         string containerInstanceScopeReference,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
     {
-        var key = rootType.FullName();
+        var key = $"{rootType.FullName()}{(currentParameters.Any() ? $"_{string.Join(";", currentParameters)}" : "")}";
         if (!_transientScopeRootFunctionResolutions.TryGetValue(
                 key,
                 out var function))
@@ -148,7 +148,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
             _containerParameterReference,
             Name);
 
-    public void EnqueueRangedInstanceResolution(
+    public MultiSynchronicityFunctionCallResolution EnqueueRangedInstanceResolution(
         ForConstructorParameter parameter,
         string label,
         string reference,

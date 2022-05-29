@@ -19,8 +19,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
-        IFunctionCycleTracker functionCycleTracker,
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        IFunctionCycleTracker functionCycleTracker)
         : base(
             rangeResolutionBaseBuilder, 
             returnType, 
@@ -30,8 +29,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
             
             wellKnownTypes,
             referenceGeneratorFactory,
-            functionCycleTracker,
-            localFunctionResolutionBuilderFactory)
+            functionCycleTracker)
     {
         _returnType = returnType;
         _parameters = parameters;
@@ -51,16 +49,6 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
             TypeFullName,
             Resolvable.Value,
             _parameters.Select(t => t.Resolution).ToList(),
-            LocalFunctions
-                .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
-                    f.Reference,
-                    f.TypeFullName,
-                    f.Resolvable,
-                    f.Parameter,
-                    f.LocalFunctions,
-                    f.SynchronicityDecision))
-                .ToList(),
             SynchronicityDecision.Value);
     }
 }

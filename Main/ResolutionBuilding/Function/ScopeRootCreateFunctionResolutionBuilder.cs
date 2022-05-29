@@ -17,8 +17,7 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
-        IFunctionCycleTracker functionCycleTracker,
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        IFunctionCycleTracker functionCycleTracker)
         : base(
             rangeResolutionBaseBuilder, 
             parameter.ReturnType, 
@@ -28,8 +27,7 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
             
             wellKnownTypes, 
             referenceGeneratorFactory, 
-            functionCycleTracker,
-            localFunctionResolutionBuilderFactory)
+            functionCycleTracker)
     {
         _parameter = parameter;
 
@@ -50,16 +48,6 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
             TypeFullName,
             Resolvable.Value,
             Parameters,
-            LocalFunctions
-                .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
-                    f.Reference,
-                    f.TypeFullName,
-                    f.Resolvable,
-                    f.Parameter,
-                    f.LocalFunctions,
-                    f.SynchronicityDecision))
-                .ToList(),
             SynchronicityDecision.Value);
     }
 }

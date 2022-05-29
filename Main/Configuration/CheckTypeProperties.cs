@@ -66,7 +66,6 @@ internal class CheckTypeProperties : ICheckTypeProperties
 
     public ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType)
     {
-        var unbound = implementationType.UnboundIfGeneric();
         if (_currentlyConsideredTypes.TransientScopeRootTypes.Contains(implementationType.UnboundIfGeneric()))
             return ScopeLevel.TransientScope;
         if (_currentlyConsideredTypes.ScopeRootTypes.Contains(implementationType.UnboundIfGeneric()))

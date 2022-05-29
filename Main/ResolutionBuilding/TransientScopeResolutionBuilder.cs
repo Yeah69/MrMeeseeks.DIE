@@ -37,7 +37,8 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         IReferenceGeneratorFactory referenceGeneratorFactory,
         Func<IRangeResolutionBaseBuilder, SwitchImplementationParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
-        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory) 
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
         : base(
             name, 
             checkTypeProperties,
@@ -45,7 +46,8 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
             wellKnownTypes, 
             referenceGeneratorFactory,
             rangedFunctionGroupResolutionBuilderFactory,
-            synchronicityDecisionMakerFactory)
+            synchronicityDecisionMakerFactory,
+            localFunctionResolutionBuilderFactory)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
@@ -90,7 +92,8 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
 
     public bool HasWorkToDo => 
         _transientScopeRootFunctionResolutions.Values.Any(f => f.HasWorkToDo) 
-        || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo);
+        || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
+        || LocalFunctions.Values.Any(r => r.HasWorkToDo);
 
     public TransientScopeRootResolution AddCreateResolveFunction(
         SwitchImplementationParameter parameter,
@@ -126,6 +129,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
             }
 
             DoRangedInstancesWork();
+            DoLocalFunctionsWork();
         }
     }
 
@@ -139,7 +143,16 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
                     "internal",
                     f.Resolvable,
                     f.Parameter,
-                    f.LocalFunctions,
+                    f.SynchronicityDecision))
+                .ToList(),
+            LocalFunctions
+                .Values
+                .Select(lf => lf.Build())
+                .Select(f => new LocalFunctionResolution(
+                    f.Reference,
+                    f.TypeFullName,
+                    f.Resolvable,
+                    f.Parameter,
                     f.SynchronicityDecision))
                 .ToList(),
             BuildDisposalHandling(),

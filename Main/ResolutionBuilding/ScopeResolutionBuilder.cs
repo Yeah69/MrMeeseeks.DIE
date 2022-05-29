@@ -40,7 +40,8 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         IReferenceGeneratorFactory referenceGeneratorFactory,
         Func<IRangeResolutionBaseBuilder, SwitchImplementationParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
-        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory) 
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
         : base(
             name,
             checkTypeProperties,
@@ -48,7 +49,8 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             wellKnownTypes, 
             referenceGeneratorFactory,
             rangedFunctionGroupResolutionBuilderFactory,
-            synchronicityDecisionMakerFactory)
+            synchronicityDecisionMakerFactory,
+            localFunctionResolutionBuilderFactory)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
@@ -95,7 +97,8 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
 
     public bool HasWorkToDo => 
         _scopeRootFunctionResolutions.Values.Any(f => f.HasWorkToDo) 
-        || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo);
+        || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
+        || LocalFunctions.Values.Any(r => r.HasWorkToDo);
 
     public ScopeRootResolution AddCreateResolveFunction(
         SwitchImplementationParameter parameter,
@@ -133,6 +136,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             }
 
             DoRangedInstancesWork();
+            DoLocalFunctionsWork();
         }
     }
 
@@ -146,7 +150,16 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                     "internal",
                     f.Resolvable,
                     f.Parameter,
-                    f.LocalFunctions,
+                    f.SynchronicityDecision))
+                .ToList(),
+            LocalFunctions
+                .Values
+                .Select(lf => lf.Build())
+                .Select(f => new LocalFunctionResolution(
+                    f.Reference,
+                    f.TypeFullName,
+                    f.Resolvable,
+                    f.Parameter,
                     f.SynchronicityDecision))
                 .ToList(),
             BuildDisposalHandling(),

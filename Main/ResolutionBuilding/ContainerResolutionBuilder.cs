@@ -16,7 +16,6 @@ internal interface IContainerResolutionBuilder : IRangeResolutionBaseBuilder, IR
 
 internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContainerResolutionBuilder, ITransientScopeImplementationResolutionBuilder
 {
-    private readonly IContainerInfo _containerInfo;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IContainerCreateFunctionResolutionBuilder> _createFunctionResolutionBuilderFactory;
@@ -39,8 +38,9 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         WellKnownTypes wellKnownTypes,
         Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeManager> scopeManagerFactory,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IContainerCreateFunctionResolutionBuilder> createFunctionResolutionBuilderFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
-        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory,
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory, 
+        Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
         IUserProvidedScopeElements userProvidedScopeElement, 
         IFunctionCycleTracker functionCycleTracker) 
         : base(
@@ -50,9 +50,9 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             wellKnownTypes, 
             referenceGeneratorFactory,
             rangedFunctionGroupResolutionBuilderFactory,
-            synchronicityDecisionMakerFactory)
+            synchronicityDecisionMakerFactory,
+            localFunctionResolutionBuilderFactory)
     {
-        _containerInfo = containerInfo;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
         _wellKnownTypes = wellKnownTypes;
         _createFunctionResolutionBuilderFactory = createFunctionResolutionBuilderFactory;
@@ -119,6 +119,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public bool HasWorkToDo =>
         _rootResolutions.Any(r => r.CreateFunction.HasWorkToDo)    
         || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
+        || LocalFunctions.Values.Any(r => r.HasWorkToDo)
         || _scopeManager.HasWorkToDo;
 
     public void DoWork()
@@ -131,6 +132,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             }
             
             DoRangedInstancesWork();
+            DoLocalFunctionsWork();
             _scopeManager.DoWork();
         }
     }
@@ -147,7 +149,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 "private",
                 privateFunctionResolution.Resolvable,
                 privateFunctionResolution.Parameter,
-                privateFunctionResolution.LocalFunctions,
                 privateFunctionResolution.SynchronicityDecision);
             
             rootFunctions.Add(privateRootResolutionFunction);
@@ -169,7 +170,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     "public",
                     call,
                     privateRootResolutionFunction.Parameter,
-                    Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
                 rootFunctions.Add(publicSyncResolutionFunction);
@@ -194,7 +194,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedTaskReference, 
                         boundTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
                 rootFunctions.Add(publicTaskResolutionFunction);
@@ -219,7 +218,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedValueTaskReference, 
                         boundValueTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
                 rootFunctions.Add(publicValueTaskResolutionFunction);
@@ -240,7 +238,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     "public",
                     call,
                     privateRootResolutionFunction.Parameter,
-                    Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
                 rootFunctions.Add(publicTaskResolutionFunction);
@@ -265,7 +262,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedValueTaskReference, 
                         boundValueTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
                 rootFunctions.Add(publicValueTaskResolutionFunction);
@@ -294,7 +290,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                         wrappedTaskReference, 
                         boundTaskTypeFullName),
                     privateRootResolutionFunction.Parameter,
-                    Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
                 rootFunctions.Add(publicTaskResolutionFunction);
@@ -311,17 +306,28 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     "public",
                     valueCall,
                     privateRootResolutionFunction.Parameter,
-                    Array.Empty<LocalFunctionResolution>(),
                     SynchronicityDecision.Sync);
             
                 rootFunctions.Add(publicValueTaskResolutionFunction);
             }
         }
+
+        var localFunctions = LocalFunctions
+            .Values
+            .Select(lf => lf.Build())
+            .Select(f => new LocalFunctionResolution(
+                f.Reference,
+                f.TypeFullName,
+                f.Resolvable,
+                f.Parameter,
+                f.SynchronicityDecision))
+            .ToList();
         
         var (transientScopeResolutions, scopeResolutions) = _scopeManager.Build();
 
         return new(
             rootFunctions,
+            localFunctions,
             BuildDisposalHandling(),
             RangedInstanceReferenceResolutions.Values.Select(b => b.Build()).ToList(),
             _transientScopeInterfaceResolutionBuilder.Build(),

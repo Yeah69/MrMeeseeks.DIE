@@ -346,7 +346,8 @@ internal record MultiSynchronicityFunctionCallResolution(
     FunctionCallResolution Sync,
     FunctionCallResolution AsyncTask,
     FunctionCallResolution AsyncValueTask,
-    Lazy<SynchronicityDecision> LazySynchronicityDecision) : Resolvable(Sync.Reference, ""), IAwaitableResolution, ITaskConsumableResolution
+    Lazy<SynchronicityDecision> LazySynchronicityDecision,
+    FunctionResolutionBuilderHandle FunctionResolutionBuilderHandle) : Resolvable(Sync.Reference, ""), IAwaitableResolution, ITaskConsumableResolution
 {
     internal FunctionCallResolution SelectedFunctionCall =>
         LazySynchronicityDecision.Value switch

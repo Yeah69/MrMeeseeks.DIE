@@ -20,8 +20,8 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
     private readonly IList<ITransientScopeImplementationResolutionBuilder> _implementations =
         new List<ITransientScopeImplementationResolutionBuilder>();
 
-    private readonly IDictionary<string, string> _rangedInstanceReferences =
-        new Dictionary<string, string>();
+    private readonly IDictionary<string, (string, FunctionResolutionBuilderHandle)> _rangedInstanceReferences =
+        new Dictionary<string, (string, FunctionResolutionBuilderHandle)>();
 
     private readonly IDictionary<string, InterfaceFunctionDeclarationResolution> _rangedInstanceReferenceResolutions =
         new Dictionary<string, InterfaceFunctionDeclarationResolution>();
@@ -30,7 +30,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
     
 
     private readonly WellKnownTypes _wellKnownTypes;
-    private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
+    private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
     private readonly string _name;
@@ -40,11 +40,11 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
     public TransientScopeInterfaceResolutionBuilder(
         IReferenceGeneratorFactory referenceGeneratorFactory,
         WellKnownTypes wellKnownTypes,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        IFunctionCycleTracker functionCycleTracker,
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory)
     {
         _wellKnownTypes = wellKnownTypes;
-        _rangedFunctionGroupResolutionBuilderFactory = rangedFunctionGroupResolutionBuilderFactory;
+        _functionCycleTracker = functionCycleTracker;
         _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
         _rootReferenceGenerator = referenceGeneratorFactory.Create();
 
@@ -56,12 +56,15 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
 
     public void AddImplementation(ITransientScopeImplementationResolutionBuilder implementation)
     {
-        foreach (var (parameter, label, reference, key) in _pastQueuedItems)
-            implementation.EnqueueRangedInstanceResolution(
+        foreach (var (parameter, label, reference, key, handle) in _pastQueuedItems)
+        {
+            var multiSynchronicityFunctionCallResolution = implementation.EnqueueRangedInstanceResolution(
                 parameter,
                 label,
                 reference,
                 new (() => _synchronicityDecisionMakers[key]));
+            _functionCycleTracker.TrackFunctionCall(handle, multiSynchronicityFunctionCallResolution.FunctionResolutionBuilderHandle);
+        }
 
         _implementations.Add(implementation);
     }
@@ -90,14 +93,18 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
             _ => null
         };
         var referenceKey = $"{implementationType.FullName()}{interfaceExtension?.KeySuffix() ?? ""}";
-        if (!_rangedInstanceReferences.TryGetValue(referenceKey, out var reference))
+        if (!_rangedInstanceReferences.TryGetValue(referenceKey, out var tuple))
         {
             var decorationSuffix = interfaceExtension?.RangedNameSuffix() ?? "";
-            reference =
-                _rootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix);
-            _rangedInstanceReferences[referenceKey] = reference;
+            tuple = (
+                _rootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix),
+                new FunctionResolutionBuilderHandle(new object(), "asdf"));
+            
+            _rangedInstanceReferences[referenceKey] = tuple;
         }
-        
+
+        var (reference, handle) = tuple;
+
         var key = $"{referenceKey}:::{string.Join(":::", currentParameters.Select(p => p.Type.FullName()))}";
         if (!_rangedInstanceReferenceResolutions.TryGetValue(key, out var interfaceDeclaration))
         {
@@ -105,7 +112,8 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
                 parameter,
                 label,
                 reference,
-                key);
+                key,
+                handle);
 
             _pastQueuedItems.Add(queueItem);
 
@@ -113,11 +121,14 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
             _synchronicityDecisionMakers[key] = synchronicityDecisionMaker;
 
             foreach (var implementation in _implementations)
-                implementation.EnqueueRangedInstanceResolution(
+            {
+                var multiSynchronicityFunctionCallResolution = implementation.EnqueueRangedInstanceResolution(
                     queueItem.Parameter,
                     queueItem.Label,
                     queueItem.Reference,
                     new (() => synchronicityDecisionMaker));
+                _functionCycleTracker.TrackFunctionCall(handle, multiSynchronicityFunctionCallResolution.FunctionResolutionBuilderHandle);
+            }
 
             interfaceDeclaration = new InterfaceFunctionDeclarationResolution(
                 reference,
@@ -155,6 +166,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
                 owningObjectReference,
                 interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference))
                     .ToList()),
-            _synchronicityDecisionMakers[key].Decision);
+            _synchronicityDecisionMakers[key].Decision,
+            handle);
     }
 }

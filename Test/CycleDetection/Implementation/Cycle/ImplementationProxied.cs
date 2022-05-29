@@ -1,8 +1,7 @@
-using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.CycleDetection.ImplementationProxied;
+namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation.Cycle.Proxied;
 
 
 internal class Proxy

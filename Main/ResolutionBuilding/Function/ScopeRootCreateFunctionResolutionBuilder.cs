@@ -14,12 +14,22 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         SwitchImplementationParameter parameter,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         
-        
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
+        IFunctionCycleTracker functionCycleTracker,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, parameter.ReturnType, parameter.CurrentParameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+        : base(
+            rangeResolutionBaseBuilder, 
+            parameter.ReturnType, 
+            parameter.CurrentParameters,
+            synchronicityDecisionMaker,
+            new object(),
+            
+            wellKnownTypes, 
+            referenceGeneratorFactory, 
+            functionCycleTracker,
+            localFunctionResolutionBuilderFactory)
     {
         _parameter = parameter;
 

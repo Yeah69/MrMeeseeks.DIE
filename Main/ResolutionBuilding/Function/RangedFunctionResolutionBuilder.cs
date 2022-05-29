@@ -14,13 +14,24 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         string reference,
         ForConstructorParameter forConstructorParameter,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
-        
+        object handleIdentity,
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
+        IFunctionCycleTracker functionCycleTracker,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
-        : base(rangeResolutionBaseBuilder, forConstructorParameter.ImplementationType, forConstructorParameter.CurrentFuncParameters, synchronicityDecisionMaker, wellKnownTypes, referenceGeneratorFactory, localFunctionResolutionBuilderFactory)
+        : base(
+            rangeResolutionBaseBuilder,
+            forConstructorParameter.ImplementationType,
+            forConstructorParameter.CurrentFuncParameters, 
+            synchronicityDecisionMaker, 
+            handleIdentity,
+            
+            wellKnownTypes, 
+            referenceGeneratorFactory, 
+            functionCycleTracker,
+            localFunctionResolutionBuilderFactory)
     {
         _forConstructorParameter = forConstructorParameter;
         

@@ -2,7 +2,7 @@ using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.CycleDetection.NoCycleInParallel;
+namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation.InParallel;
 
 internal class Dependency
 {

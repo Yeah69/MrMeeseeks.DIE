@@ -1,11 +1,16 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.SampleChild;
+﻿using System;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Sample;
 
+namespace MrMeeseeks.DIE.Test.CycleDetection.Function.NoCycle.DirectRecursionScope;
 
-namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.AssemblyImplementationsAggregation;
+internal class Dependency : IScopeInstance
+{
+    internal Dependency(Func<Dependency> inner) {}
+}
 
-[FilterAllImplementationsAggregation]
-[AssemblyImplementationsAggregation(typeof(MrMeeseeks.DIE.SampleChild.AssemblyInfo))]
-[ConstructorChoice(typeof(Parent.ClassToo))]
-[CreateFunction(typeof(Parent.ClassToo), "Create")]
-internal partial class Container {}
+[CreateFunction(typeof(Dependency), "Create")]
+internal partial class Container
+{
+    
+}

@@ -56,12 +56,15 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly IFunctionResolutionSynchronicityDecisionMaker _synchronicityDecisionMaker;
     private readonly WellKnownTypes _wellKnownTypes;
+    private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
     
     private readonly IUserProvidedScopeElements _userProvidedScopeElements;
+
+    private readonly FunctionResolutionBuilderHandle _handle;
 
     protected readonly IList<IFunctionResolutionBuilder> LocalFunctions = new List<IFunctionResolutionBuilder>();
     
@@ -82,24 +85,30 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         INamedTypeSymbol returnType,
         IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
+        object handleIdentity,
         
         
         // dependencies
         WellKnownTypes wellKnownTypes,
         IReferenceGeneratorFactory referenceGeneratorFactory,
+        IFunctionCycleTracker functionCycleTracker,
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
     {
         OriginalReturnType = returnType;
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _synchronicityDecisionMaker = synchronicityDecisionMaker;
         _wellKnownTypes = wellKnownTypes;
+        _functionCycleTracker = functionCycleTracker;
         _localFunctionResolutionBuilderFactory = localFunctionResolutionBuilderFactory;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
         _userProvidedScopeElements = rangeResolutionBaseBuilder.UserProvidedScopeElements;
+        _handle = new FunctionResolutionBuilderHandle(
+            handleIdentity,
+            $"{OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Resolution.TypeFullName))})");
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
         Parameters = currentParameters
-            .Select(p => new ParameterResolution(RootReferenceGenerator.Generate(p.Type), TypeFullName))
+            .Select(p => new ParameterResolution(RootReferenceGenerator.Generate(p.Type), p.Resolution.TypeFullName))
             .ToList();
 
         Resolvable = new(CreateResolvable);
@@ -565,6 +574,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 currentParameters), null),
             _ => SwitchImplementation(nextParameter)
         };
+        
+        if (ret.Item1 is MultiSynchronicityFunctionCallResolution multi)
+            _functionCycleTracker.TrackFunctionCall(_handle, multi.FunctionResolutionBuilderHandle);
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
             _synchronicityDecisionMaker.Register(awaitableResolution);
@@ -621,6 +633,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             _ => 
                 CreateConstructorResolution(nextParameter)
         };
+        
+        if (ret.Item1 is MultiSynchronicityFunctionCallResolution multi)
+            _functionCycleTracker.TrackFunctionCall(_handle, multi.FunctionResolutionBuilderHandle);
 
         if (ret.Item1 is IAwaitableResolution awaitableResolution)
             _synchronicityDecisionMaker.Register(awaitableResolution);
@@ -862,7 +877,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 Name,
                 ownerReference,
                 Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList()),
-            SynchronicityDecision);
+            SynchronicityDecision,
+            _handle);
     }
 
     public MethodGroupResolution BuildMethodGroup() => new (Name, TypeFullName, null);

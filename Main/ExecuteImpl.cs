@@ -77,6 +77,7 @@ internal class ExecuteImpl : IExecute
                             containerResolutionBuilder.DoWork();
                         }
 
+                        containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
                         var containerResolution = containerResolutionBuilder.Build();
                         var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
                         if (errorTreeItems.Any())

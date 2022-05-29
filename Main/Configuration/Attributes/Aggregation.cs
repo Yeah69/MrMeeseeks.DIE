@@ -1,3 +1,4 @@
+// ReSharper disable UnusedParameter.Local
 namespace MrMeeseeks.DIE.Configuration.Attributes;
 
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = false)]

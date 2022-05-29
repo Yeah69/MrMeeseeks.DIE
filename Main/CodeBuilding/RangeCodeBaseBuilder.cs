@@ -31,6 +31,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
 
         stringBuilder =  rangeResolution.RootResolutions.Aggregate(stringBuilder, GenerateResolutionFunction);
+
+        stringBuilder =  rangeResolution.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction);
         
         return GenerateDisposalFunction(
             stringBuilder,
@@ -157,9 +159,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     .AppendLine($"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
 
             stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
-                .AppendLine($"return {resolution.Resolvable.Reference};");
-
-            stringBuilder = resolution.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction)
+                .AppendLine($"return {resolution.Resolvable.Reference};")
                 .AppendLine($"}}");
             
             return stringBuilder;
@@ -168,20 +168,16 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
-                .AppendLine($"{(localFunctionResolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"private {(localFunctionResolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
                 .AppendLine($"{{");
             if (_containerResolution.DisposalType != DisposalType.None)
                 stringBuilder = stringBuilder
                     .AppendLine($"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
 
             stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
-                .AppendLine($"return {resolution.Resolvable.Reference};");
-
-            stringBuilder = resolution.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction)
+                .AppendLine($"return {resolution.Resolvable.Reference};")
                 .AppendLine($"}}");
 
-            
-        
             return stringBuilder;
         }
 
@@ -368,7 +364,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder
                     .AppendLine($"{reference} = new {fullName}({resolvable.Reference});");
                 break;
-            case TaskFromWrappedValueTaskResolution(var resolvable, var reference, var fullName):
+            case TaskFromWrappedValueTaskResolution(var resolvable, var reference, _):
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
                 stringBuilder = stringBuilder
                     .AppendLine($"{reference} = {resolvable.Reference}.AsTask();");
@@ -595,9 +591,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 .AppendLine($"{{")
                 .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Release();")
                 .AppendLine($"}}")
-                .AppendLine($"return this.{rangedInstanceFunctionGroupResolution.FieldReference};");
-
-            stringBuilder = overload.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction)
+                .AppendLine($"return this.{rangedInstanceFunctionGroupResolution.FieldReference};")
                 .AppendLine($"}}");
         }
         

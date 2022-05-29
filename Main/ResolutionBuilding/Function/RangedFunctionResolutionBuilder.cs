@@ -19,8 +19,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
-        IFunctionCycleTracker functionCycleTracker,
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        IFunctionCycleTracker functionCycleTracker)
         : base(
             rangeResolutionBaseBuilder,
             forConstructorParameter.ImplementationType,
@@ -30,8 +29,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
             
             wellKnownTypes, 
             referenceGeneratorFactory, 
-            functionCycleTracker,
-            localFunctionResolutionBuilderFactory)
+            functionCycleTracker)
     {
         _forConstructorParameter = forConstructorParameter;
         
@@ -52,16 +50,6 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
             TypeFullName,
             Resolvable.Value,
             _forConstructorParameter.CurrentFuncParameters.Select(t => t.Resolution).ToList(),
-            LocalFunctions
-                .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
-                    f.Reference,
-                    f.TypeFullName,
-                    f.Resolvable,
-                    f.Parameter,
-                    f.LocalFunctions,
-                    f.SynchronicityDecision))
-                .ToList(),
             SynchronicityDecision.Value);
     }
 }

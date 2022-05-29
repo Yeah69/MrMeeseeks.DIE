@@ -89,7 +89,6 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
                     functionResolution.TypeFullName, 
                     functionResolution.Resolvable,
                     functionResolution.Parameter, 
-                    functionResolution.LocalFunctions, 
                     functionResolution.SynchronicityDecision))
                 .ToList(),
             _fieldReference,

@@ -24,7 +24,6 @@ internal record FunctionResolution(
     string TypeFullName,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) : Resolvable(Reference, TypeFullName);
 
 internal record RootResolutionFunction(
@@ -33,27 +32,24 @@ internal record RootResolutionFunction(
     string AccessModifier,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, LocalFunctions, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, SynchronicityDecision);
 
 internal record LocalFunctionResolution(
     string Reference,
     string TypeFullName,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, LocalFunctions, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, SynchronicityDecision);
 
 internal record RangedInstanceFunctionResolution(
     string Reference,
     string TypeFullName,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
-    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, LocalFunctions, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, SynchronicityDecision);
 
 internal record RangedInstanceFunctionGroupResolution(
     string TypeFullName,
@@ -205,6 +201,7 @@ internal record AsyncDisposableCollectionResolution(
 
 internal abstract record RangeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     string ContainerReference) : ResolutionTreeItem;
@@ -216,6 +213,7 @@ internal record TransientScopeInterfaceResolution(
 
 internal record ScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     string ContainerReference,
@@ -223,19 +221,21 @@ internal record ScopeResolution(
     string TransientScopeReference,
     string TransientScopeParameterReference,
     string Name) 
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
+    : RangeResolution(RootResolutions, LocalFunctions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
 
 internal record TransientScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     string ContainerReference,
     string ContainerParameterReference,
     string Name) 
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
+    : RangeResolution(RootResolutions, LocalFunctions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
 
 internal record ContainerResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
+    IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     TransientScopeInterfaceResolution TransientScopeInterface,
@@ -248,7 +248,7 @@ internal record ContainerResolution(
     NopDisposable NopDisposable,
     NopAsyncDisposable NopAsyncDisposable,
     SyncToAsyncDisposable SyncToAsyncDisposable)
-    : RangeResolution(RootResolutions, DisposalHandling, RangedInstanceFunctionGroups, "this");
+    : RangeResolution(RootResolutions, LocalFunctions, DisposalHandling, RangedInstanceFunctionGroups, "this");
 
 internal record NopDisposable(
     string ClassName,

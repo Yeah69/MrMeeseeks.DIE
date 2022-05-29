@@ -57,7 +57,6 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     private readonly IFunctionResolutionSynchronicityDecisionMaker _synchronicityDecisionMaker;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly IFunctionCycleTracker _functionCycleTracker;
-    private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
@@ -65,8 +64,6 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     private readonly IUserProvidedScopeElements _userProvidedScopeElements;
 
     private readonly FunctionResolutionBuilderHandle _handle;
-
-    protected readonly IList<IFunctionResolutionBuilder> LocalFunctions = new List<IFunctionResolutionBuilder>();
     
     protected abstract string Name { get; }
     protected string TypeFullName => ActualReturnType?.FullName() ?? OriginalReturnType.FullName();
@@ -91,15 +88,13 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         // dependencies
         WellKnownTypes wellKnownTypes,
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        IFunctionCycleTracker functionCycleTracker,
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        IFunctionCycleTracker functionCycleTracker)
     {
         OriginalReturnType = returnType;
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _synchronicityDecisionMaker = synchronicityDecisionMaker;
         _wellKnownTypes = wellKnownTypes;
         _functionCycleTracker = functionCycleTracker;
-        _localFunctionResolutionBuilderFactory = localFunctionResolutionBuilderFactory;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
         _userProvidedScopeElements = rangeResolutionBaseBuilder.UserProvidedScopeElements;
         _handle = new FunctionResolutionBuilderHandle(
@@ -220,8 +215,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     null);
             }
 
-            var newLocalFunction = _localFunctionResolutionBuilderFactory(_rangeResolutionBaseBuilder, genericType, Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>());
-            LocalFunctions.Add(newLocalFunction);
+            var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
+                genericType,
+                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>());
 
             var constructorInjection = new LazyResolution(
                 RootReferenceGenerator.Generate(namedTypeSymbol),
@@ -249,8 +245,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 .Select(ts => (Type: ts, Resolution: new ParameterResolution(RootReferenceGenerator.Generate(ts), ts.FullName())))
                 .ToArray();
 
-            var newLocalFunction = _localFunctionResolutionBuilderFactory(_rangeResolutionBaseBuilder, returnType, parameterTypes);
-            LocalFunctions.Add(newLocalFunction);
+            var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
+                returnType,
+                parameterTypes);
             
             return (
                 new FuncResolution(
@@ -883,21 +880,13 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
     public MethodGroupResolution BuildMethodGroup() => new (Name, TypeFullName, null);
 
-    public bool HasWorkToDo => !Resolvable.IsValueCreated
-        || LocalFunctions.Any(lf => lf.HasWorkToDo);
+    public bool HasWorkToDo => !Resolvable.IsValueCreated;
 
     protected abstract Resolvable CreateResolvable();
     
     public void DoWork()
     {
         var _ = Resolvable.Value;
-        while (LocalFunctions.Any(lf => lf.HasWorkToDo))
-        {
-            foreach (var localFunction in LocalFunctions.ToList())
-            {
-                localFunction.DoWork();
-            }
-        }
     }
 
     public abstract FunctionResolution Build();

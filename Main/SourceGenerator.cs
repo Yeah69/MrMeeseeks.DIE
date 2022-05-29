@@ -67,6 +67,7 @@ public class SourceGenerator : ISourceGenerator
                 ContainerCreateFunctionResolutionBuilderFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
+                LocalFunctionResolutionBuilderFactory,
                 new UserProvidedScopeElements(ci.ContainerType),
                 functionCycleTracker);
 
@@ -107,7 +108,8 @@ public class SourceGenerator : ISourceGenerator
                 referenceGeneratorFactory,
                 ScopeRootCreateFunctionResolutionBuilderFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
-                FunctionResolutionSynchronicityDecisionMakerFactory);
+                FunctionResolutionSynchronicityDecisionMakerFactory,
+                LocalFunctionResolutionBuilderFactory);
             IScopeResolutionBuilder ScopeResolutionBuilderFactory(
                 string name,
                 IContainerResolutionBuilder containerBuilder, 
@@ -126,7 +128,8 @@ public class SourceGenerator : ISourceGenerator
                 referenceGeneratorFactory,
                 ScopeRootCreateFunctionResolutionBuilderFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
-                FunctionResolutionSynchronicityDecisionMakerFactory);
+                FunctionResolutionSynchronicityDecisionMakerFactory,
+                LocalFunctionResolutionBuilderFactory);
 
             ILocalFunctionResolutionBuilder LocalFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
@@ -139,8 +142,7 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
-                functionCycleTracker,
-                LocalFunctionResolutionBuilderFactory);
+                functionCycleTracker);
 
             IContainerCreateFunctionResolutionBuilder ContainerCreateFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
@@ -151,8 +153,7 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
-                functionCycleTracker,
-                LocalFunctionResolutionBuilderFactory);
+                functionCycleTracker);
 
             IScopeRootCreateFunctionResolutionBuilder ScopeRootCreateFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
@@ -163,8 +164,7 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
-                functionCycleTracker,
-                LocalFunctionResolutionBuilderFactory);
+                functionCycleTracker);
 
             IRangedFunctionResolutionBuilder RangedFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
@@ -180,8 +180,7 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
-                functionCycleTracker,
-                LocalFunctionResolutionBuilderFactory);
+                functionCycleTracker);
 
             IRangedFunctionGroupResolutionBuilder RangedFunctionGroupResolutionBuilderFactory(
                 string label,

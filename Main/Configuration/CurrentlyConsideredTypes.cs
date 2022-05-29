@@ -229,7 +229,6 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             ImplementationMap);
         
         InterfaceToComposite = CompositeTypes
-            .OfType<INamedTypeSymbol>()
             .GroupBy(nts =>
             {
                 var namedTypeSymbol = nts.OriginalDefinition.AllInterfaces
@@ -282,7 +281,6 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             ImplementationMap);
         
         InterfaceToDecorators = DecoratorTypes
-            .OfType<INamedTypeSymbol>()
             .GroupBy(nts =>
             {
                 var namedTypeSymbol = nts.OriginalDefinition.AllInterfaces

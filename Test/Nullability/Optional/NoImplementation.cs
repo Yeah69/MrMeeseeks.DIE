@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -20,9 +21,9 @@ internal partial class Container
 public class Tests
 {
     [Fact]
-    public void Test()
+    public async ValueTask Test()
     {
-        var container = new Container();
+        await using var container = new Container();
         var dependency = container.Create().Dependency;
         Assert.Null(dependency);
     }

@@ -26,7 +26,7 @@ public class Tests
     [Fact]
     public async ValueTask Test()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.CreateValueAsync();
         Assert.True((await instance.ConfigureAwait(false)).IsInitialized);
     }

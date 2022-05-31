@@ -1,5 +1,4 @@
-﻿using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE;
 

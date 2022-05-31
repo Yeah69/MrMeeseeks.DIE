@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -65,9 +66,9 @@ internal partial class Container
 public partial class Tests
 {
     [Fact]
-    public void TransientScopeWithScopes()
+    public async ValueTask TransientScopeWithScopes()
     {
-        using var container = new Container();
+        await using var container = new Container();
         var transientScopeRoot = container.Create();
         Assert.NotEqual(transientScopeRoot.A, transientScopeRoot.B);
         Assert.Equal(transientScopeRoot.A.TransientScopeInstance, transientScopeRoot.B.TransientScopeInstance);

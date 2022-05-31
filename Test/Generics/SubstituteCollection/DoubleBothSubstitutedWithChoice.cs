@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -18,9 +19,9 @@ internal partial class Container {}
 public class Tests
 {
     [Fact]
-    public void Test()
+    public async ValueTask Test()
     {
-        var container = new Container();
+        await using var container = new Container();
         var list = container.Create();
         Assert.Equal(4, list.Count);
         Assert.Contains(list, i => i.GetType() == typeof(Class<bool, int>));

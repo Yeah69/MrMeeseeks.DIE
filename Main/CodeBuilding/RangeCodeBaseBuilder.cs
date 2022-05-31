@@ -47,99 +47,109 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         StringBuilder stringBuilder,
         RangeResolution rangeResolution)
     {
-
-        if (_containerResolution.DisposalType != DisposalType.None)
+        if (_containerResolution.DisposalType == DisposalType.None)
         {
-            var returnType = _containerResolution.DisposalType switch
-            {
-                DisposalType.Async => $"async {WellKnownTypes.ValueTask.FullName()}",
-                _ => "void"
-            };
+            return stringBuilder
+                .AppendLine("public void Dispose() {}")
+                .AppendLine($"public {WellKnownTypes.ValueTask.FullName()} DisposeAsync() => new {WellKnownTypes.ValueTask.FullName()}({WellKnownTypes.Task.FullName()}.CompletedTask);");
+        }
+        
+        var returnType = _containerResolution.DisposalType switch
+        { 
+            DisposalType.Async => $"async {WellKnownTypes.ValueTask.FullName()}",
+            _ => "void"
+        };
 
-            var asyncSuffix = _containerResolution.DisposalType switch
-            {
-                DisposalType.Async => "Async",
-                _ => ""
-            };
+        var asyncSuffix = _containerResolution.DisposalType switch
+        {
+            DisposalType.Async => "Async",
+            _ => ""
+        };
 
-            var awaitPrefix = _containerResolution.DisposalType switch
-            {
-                DisposalType.Async => "await ",
-                _ => ""
-            };
+        var awaitPrefix = _containerResolution.DisposalType switch
+        {
+            DisposalType.Async => "await ",
+            _ => ""
+        };
 
-            stringBuilder = GenerateDisposalFunction_TransientScopeDictionary(stringBuilder);
+        stringBuilder = GenerateDisposalFunction_TransientScopeDictionary(stringBuilder);
             
-            var disposalHandling = rangeResolution.DisposalHandling;
-            if (_containerResolution.DisposalType == DisposalType.Async)
-            {
-                stringBuilder = stringBuilder.AppendLine(
-                    $"private {disposalHandling.AsyncDisposableCollection.TypeFullName} {disposalHandling.AsyncDisposableCollection.Reference} = new {disposalHandling.AsyncDisposableCollection.TypeFullName}();");
-            }
+        var disposalHandling = rangeResolution.DisposalHandling;
+        if (_containerResolution.DisposalType == DisposalType.Async)
+        {
+            stringBuilder = stringBuilder.AppendLine(
+                $"private {disposalHandling.AsyncDisposableCollection.TypeFullName} {disposalHandling.AsyncDisposableCollection.Reference} = new {disposalHandling.AsyncDisposableCollection.TypeFullName}();");
+        }
 
-            stringBuilder = stringBuilder
-                .AppendLine($"private {disposalHandling.SyncDisposableCollection.TypeFullName} {disposalHandling.SyncDisposableCollection.Reference} = new {disposalHandling.SyncDisposableCollection.TypeFullName}();")
-                .AppendLine($"private int {disposalHandling.DisposedFieldReference} = 0;")
-                .AppendLine($"private bool {disposalHandling.DisposedPropertyReference} => {disposalHandling.DisposedFieldReference} != 0;")
-                .AppendLine($"public {returnType} Dispose{asyncSuffix}()")
-                .AppendLine($"{{")
-                .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
-                .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;");
+        stringBuilder = stringBuilder
+            .AppendLine($"private {disposalHandling.SyncDisposableCollection.TypeFullName} {disposalHandling.SyncDisposableCollection.Reference} = new {disposalHandling.SyncDisposableCollection.TypeFullName}();")
+            .AppendLine($"private int {disposalHandling.DisposedFieldReference} = 0;")
+            .AppendLine($"private bool {disposalHandling.DisposedPropertyReference} => {disposalHandling.DisposedFieldReference} != 0;")
+            .AppendLine($"public {returnType} Dispose{asyncSuffix}()")
+            .AppendLine($"{{")
+            .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
+            .AppendLine($"if ({disposalHandling.DisposedLocalReference} != 0) return;");
             
-            stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(
-                stringBuilder, 
-                (current, containerInstanceResolution) => current.AppendLine($"{awaitPrefix}this.{containerInstanceResolution.LockReference}.Wait{asyncSuffix}();"));
+        stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(
+            stringBuilder, 
+            (current, containerInstanceResolution) => current.AppendLine($"{awaitPrefix}this.{containerInstanceResolution.LockReference}.Wait{asyncSuffix}();"));
 
+        stringBuilder = stringBuilder
+            .AppendLine($"try")
+            .AppendLine($"{{");
+
+        stringBuilder = GenerateDisposalFunction_TransientScopeDisposal(stringBuilder);
+
+        if (_containerResolution.DisposalType == DisposalType.Async)
+        {
             stringBuilder = stringBuilder
-                .AppendLine($"try")
-                .AppendLine($"{{");
-
-            stringBuilder = GenerateDisposalFunction_TransientScopeDisposal(stringBuilder);
-
-            if (_containerResolution.DisposalType == DisposalType.Async)
-            {
-                stringBuilder = stringBuilder
-                    .AppendLine(
-                        $"foreach(var {disposalHandling.DisposableLocalReference} in {disposalHandling.AsyncDisposableCollection.Reference})")
-                    .AppendLine($"{{")
-                    .AppendLine($"try")
-                    .AppendLine($"{{")
-                    .AppendLine($"await {disposalHandling.DisposableLocalReference}.DisposeAsync();")
-                    .AppendLine($"}}")
-                    .AppendLine($"catch({WellKnownTypes.Exception.FullName()})")
-                    .AppendLine($"{{")
-                    .AppendLine(
-                        $"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
-                    .AppendLine($"}}")
-                    .AppendLine($"}}")
-                    .AppendLine($"{disposalHandling.AsyncDisposableCollection.Reference}.Clear();");
-            }
-            
-            stringBuilder = stringBuilder
-                .AppendLine($"foreach(var {disposalHandling.DisposableLocalReference} in {disposalHandling.SyncDisposableCollection.Reference})")
+                .AppendLine(
+                    $"foreach(var {disposalHandling.DisposableLocalReference} in {disposalHandling.AsyncDisposableCollection.Reference})")
                 .AppendLine($"{{")
                 .AppendLine($"try")
                 .AppendLine($"{{")
-                .AppendLine($"{disposalHandling.DisposableLocalReference}.Dispose();")
+                .AppendLine($"await {disposalHandling.DisposableLocalReference}.DisposeAsync();")
                 .AppendLine($"}}")
                 .AppendLine($"catch({WellKnownTypes.Exception.FullName()})")
                 .AppendLine($"{{")
-                .AppendLine($"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
+                .AppendLine(
+                    $"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
                 .AppendLine($"}}")
                 .AppendLine($"}}")
-                .AppendLine($"{disposalHandling.SyncDisposableCollection.Reference}.Clear();")
-                .AppendLine($"}}")
-                .AppendLine($"finally")
-                .AppendLine($"{{");
-
-            stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(
-                stringBuilder, 
-                (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.LockReference}.Release();"));
-
-            return stringBuilder
-                .AppendLine($"}}")
-                .AppendLine($"}}");
+                .AppendLine($"{disposalHandling.AsyncDisposableCollection.Reference}.Clear();");
         }
+            
+        stringBuilder = stringBuilder
+            .AppendLine($"foreach(var {disposalHandling.DisposableLocalReference} in {disposalHandling.SyncDisposableCollection.Reference})")
+            .AppendLine($"{{")
+            .AppendLine($"try")
+            .AppendLine($"{{")
+            .AppendLine($"{disposalHandling.DisposableLocalReference}.Dispose();")
+            .AppendLine($"}}")
+            .AppendLine($"catch({WellKnownTypes.Exception.FullName()})")
+            .AppendLine($"{{")
+            .AppendLine($"// catch and ignore exceptions of individual disposals so the other disposals are triggered")
+            .AppendLine($"}}")
+            .AppendLine($"}}")
+            .AppendLine($"{disposalHandling.SyncDisposableCollection.Reference}.Clear();")
+            .AppendLine($"}}")
+            .AppendLine($"finally")
+            .AppendLine($"{{");
+
+        stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(
+            stringBuilder, 
+            (current, containerInstanceResolution) => current.AppendLine($"this.{containerInstanceResolution.LockReference}.Release();"));
+
+        stringBuilder = stringBuilder
+            .AppendLine($"}}")
+            .AppendLine($"}}");
+        if (_containerResolution.DisposalType == DisposalType.Sync)
+            stringBuilder = stringBuilder
+                .AppendLine($"public {WellKnownTypes.ValueTask.FullName()} DisposeAsync()")
+                .AppendLine($"{{")
+                .AppendLine($"Dispose();")
+                .AppendLine($"return new {WellKnownTypes.ValueTask.FullName()}({WellKnownTypes.Task.FullName()}.CompletedTask);")
+                .AppendLine($"}}");
 
         return stringBuilder;
     }

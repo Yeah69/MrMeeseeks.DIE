@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -126,37 +127,37 @@ internal partial class Container
 public class Tests
 {
     [Fact]
-    public void Container()
+    public async ValueTask Container()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.Create0();
         Assert.Equal(69, instance.CheckNumber);
     }
     [Fact]
-    public void TransientScope()
+    public async ValueTask TransientScope()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.Create1();
         Assert.Equal(23, instance.Dep.CheckNumber);
     }
     [Fact]
-    public void TransientScopeSpecific()
+    public async ValueTask TransientScopeSpecific()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.Create2();
         Assert.Equal(7, instance.Dep.CheckNumber);
     }
     [Fact]
-    public void Scope()
+    public async ValueTask Scope()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.Create3();
         Assert.Equal(3, instance.Dep.CheckNumber);
     }
     [Fact]
-    public void ScopeSpecific()
+    public async ValueTask ScopeSpecific()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.Create4();
         Assert.Equal(13, instance.Dep.CheckNumber);
     }

@@ -25,9 +25,8 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
         
         var disposableImplementation = _containerResolution.DisposalType switch
         {
-            DisposalType.Sync => $" : {WellKnownTypes.Disposable.FullName()}",
             DisposalType.Async => $" : {WellKnownTypes.AsyncDisposable.FullName()}",
-            _ => ""
+            _ => $" : {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}"
         };
         
         stringBuilder = stringBuilder

@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Implementation.Choice.WithSingleInCollection;
@@ -17,9 +18,9 @@ internal partial class Container {}
 public class Tests
 {
     [Fact]
-    public void Test()
+    public async ValueTask Test()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.Create();
         Assert.IsType<SubClassA>(instance);
     }

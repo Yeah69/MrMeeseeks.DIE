@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 

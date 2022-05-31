@@ -57,7 +57,7 @@ public class Tests
     [Fact]
     public async ValueTask Test()
     {
-        var container = new Container();
+        await using var container = new Container();
         var instance = container.Create();
         Assert.Equal(4, instance.Count);
         await Task.WhenAll(instance).ConfigureAwait(false);

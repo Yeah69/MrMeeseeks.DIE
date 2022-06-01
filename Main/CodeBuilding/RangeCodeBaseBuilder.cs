@@ -33,6 +33,20 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         stringBuilder =  rangeResolution.RootResolutions.Aggregate(stringBuilder, GenerateResolutionFunction);
 
         stringBuilder =  rangeResolution.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction);
+
+        if (_rangeResolution.AddForDisposal is { } addForDisposalMethod)
+        {
+            stringBuilder = stringBuilder
+                .AppendLine($"private partial void {addForDisposalMethod.Name}({WellKnownTypes.Disposable.FullName()} disposable) =>")
+                .AppendLine($"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) disposable);");
+        }
+
+        if (_rangeResolution.AddForDisposalAsync is { } addForDisposalAsyncMethod)
+        {
+            stringBuilder = stringBuilder
+                .AppendLine($"private partial void {addForDisposalAsyncMethod.Name}({WellKnownTypes.AsyncDisposable.FullName()} asyncDisposable) =>")
+                .AppendLine($"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.AsyncDisposable.FullName()}) asyncDisposable);");
+        }
         
         return GenerateDisposalFunction(
             stringBuilder,

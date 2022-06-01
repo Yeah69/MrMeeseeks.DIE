@@ -168,5 +168,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             _containerParameterReference,
             _transientScopeReference,
             _transientScopeParameterReference,
-            Name);
+            Name,
+            AddForDisposal,
+            AddForDisposalAsync);
 }

@@ -16,7 +16,7 @@ internal partial class Container
 {
     partial class DIE_DefaultTransientScope
     {
-        private readonly string DIE_Yeah = "Yeah";
+        private readonly string DIE_Factory_Yeah = "Yeah";
     }
 }
 

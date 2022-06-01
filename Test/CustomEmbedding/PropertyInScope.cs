@@ -16,7 +16,7 @@ internal partial class Container
 {
     partial class DIE_DefaultScope
     {
-        private string DIE_Yeah => "Yeah";
+        private string DIE_Factory_Yeah => "Yeah";
     }
 }
 

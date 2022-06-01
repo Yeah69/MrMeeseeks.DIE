@@ -17,7 +17,7 @@ internal partial class Container
 {
     partial class DIE_DefaultScope
     {
-        private string DIE_Path => "C:\\Yeah.txt";
+        private string DIE_Factory_Path => "C:\\Yeah.txt";
         private FileInfo DIE_Factory(string path) => new (path);
     }
 }

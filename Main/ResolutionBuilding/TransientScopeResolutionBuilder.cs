@@ -159,7 +159,9 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
             RangedInstanceReferenceResolutions.Values.Select(b => b.Build()).ToList(),
             _containerReference,
             _containerParameterReference,
-            Name);
+            Name,
+            AddForDisposal,
+            AddForDisposalAsync);
 
     public MultiSynchronicityFunctionCallResolution EnqueueRangedInstanceResolution(
         ForConstructorParameter parameter,

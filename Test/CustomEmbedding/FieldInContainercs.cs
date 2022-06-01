@@ -14,7 +14,7 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal partial class Container
 {
-    private readonly string DIE_Yeah = "Yeah";
+    private readonly string DIE_Factory_Yeah = "Yeah";
 }
 
 public class Tests

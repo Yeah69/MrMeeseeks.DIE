@@ -9,7 +9,7 @@ namespace MrMeeseeks.DIE.Test.CustomEmbedding.FactoryWithParameterInContainer;
 [CreateFunction(typeof(FileInfo), "Create")]
 internal partial class Container
 {
-    private string DIE_Path => "C:\\Yeah.txt";
+    private string DIE_Factory_Path => "C:\\Yeah.txt";
     private FileInfo DIE_Factory(string path) => new (path);
 }
 

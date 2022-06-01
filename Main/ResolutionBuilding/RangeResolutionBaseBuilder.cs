@@ -38,6 +38,9 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
 {
     public ICheckTypeProperties CheckTypeProperties { get; }
     public IUserProvidedScopeElements UserProvidedScopeElements { get; }
+    
+    protected IMethodSymbol? AddForDisposal { get; }
+    protected IMethodSymbol? AddForDisposalAsync { get; }
 
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
@@ -75,6 +78,9 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         RootReferenceGenerator = referenceGeneratorFactory.Create();
         
         Name = name;
+        
+        AddForDisposal = userProvidedScopeElements.AddForDisposal;
+        AddForDisposalAsync = userProvidedScopeElements.AddForDisposalAsync;
     }
 
     public abstract MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter);
@@ -162,8 +168,19 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         }
     }
 
-    protected DisposalHandling BuildDisposalHandling() =>
-        new(new SyncDisposableCollectionResolution(
+    protected DisposalHandling BuildDisposalHandling()
+    {
+        if (AddForDisposal is { })
+        {
+            RegisterDisposalType(DisposalType.Sync);
+        }
+
+        if (AddForDisposalAsync is { })
+        {
+            RegisterDisposalType(DisposalType.Async);
+        }
+        
+        return new(new SyncDisposableCollectionResolution(
                 RootReferenceGenerator.Generate(_wellKnownTypes.ConcurrentBagOfSyncDisposable),
                 _wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()),
             new AsyncDisposableCollectionResolution(
@@ -174,4 +191,5 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             RootReferenceGenerator.Generate("disposed"),
             RootReferenceGenerator.Generate("Disposed"),
             RootReferenceGenerator.Generate("disposable"));
+    }
 }

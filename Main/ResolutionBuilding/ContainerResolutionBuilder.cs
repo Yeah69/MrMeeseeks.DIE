@@ -346,7 +346,9 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             new SyncToAsyncDisposable(
                 RootReferenceGenerator.Generate("NopDisposable"),
                 RootReferenceGenerator.Generate("disposable"),
-                RootReferenceGenerator.Generate("_disposable")));
+                RootReferenceGenerator.Generate("_disposable")),
+            AddForDisposal,
+            AddForDisposalAsync);
     }
 
     public MultiSynchronicityFunctionCallResolution EnqueueRangedInstanceResolution(

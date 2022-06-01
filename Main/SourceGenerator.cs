@@ -68,7 +68,7 @@ public class SourceGenerator : ISourceGenerator
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
                 LocalFunctionResolutionBuilderFactory,
-                new UserProvidedScopeElements(ci.ContainerType),
+                new UserProvidedScopeElements(ci.ContainerType, wellKnownTypes),
                 functionCycleTracker);
 
             IScopeManager ScopeManagerFactory(
@@ -86,7 +86,7 @@ public class SourceGenerator : ISourceGenerator
                     wellKnownTypesChoice,
                     wellKnownTypesMiscellaneous),
                 tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, implementationTypeSetCache), wellKnownTypes),
-                st => new UserProvidedScopeElements(st),
+                st => new UserProvidedScopeElements(st, wellKnownTypes),
                 new EmptyUserProvidedScopeElements(),
                 wellKnownTypesMiscellaneous);
 

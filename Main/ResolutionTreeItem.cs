@@ -204,7 +204,9 @@ internal abstract record RangeResolution(
     IReadOnlyList<LocalFunctionResolution> LocalFunctions,
     DisposalHandling DisposalHandling,
     IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
-    string ContainerReference) : ResolutionTreeItem;
+    string ContainerReference,
+    IMethodSymbol? AddForDisposal,
+    IMethodSymbol? AddForDisposalAsync) : ResolutionTreeItem;
 
 internal record TransientScopeInterfaceResolution(
     IReadOnlyList<InterfaceFunctionDeclarationResolution> Functions,
@@ -220,8 +222,17 @@ internal record ScopeResolution(
     string ContainerParameterReference,
     string TransientScopeReference,
     string TransientScopeParameterReference,
-    string Name) 
-    : RangeResolution(RootResolutions, LocalFunctions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
+    string Name,
+    IMethodSymbol? AddForDisposal,
+    IMethodSymbol? AddForDisposalAsync) 
+    : RangeResolution(
+        RootResolutions, 
+        LocalFunctions, 
+        DisposalHandling, 
+        RangedInstanceFunctionGroups, 
+        ContainerReference,
+        AddForDisposal,
+        AddForDisposalAsync);
 
 internal record TransientScopeResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
@@ -230,8 +241,17 @@ internal record TransientScopeResolution(
     IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
     string ContainerReference,
     string ContainerParameterReference,
-    string Name) 
-    : RangeResolution(RootResolutions, LocalFunctions, DisposalHandling, RangedInstanceFunctionGroups, ContainerReference);
+    string Name,
+    IMethodSymbol? AddForDisposal,
+    IMethodSymbol? AddForDisposalAsync) 
+    : RangeResolution(
+        RootResolutions, 
+        LocalFunctions, 
+        DisposalHandling, 
+        RangedInstanceFunctionGroups, 
+        ContainerReference,
+        AddForDisposal,
+        AddForDisposalAsync);
 
 internal record ContainerResolution(
     IReadOnlyList<RootResolutionFunction> RootResolutions,
@@ -247,8 +267,17 @@ internal record ContainerResolution(
     string TransientScopeDisposalElement,
     NopDisposable NopDisposable,
     NopAsyncDisposable NopAsyncDisposable,
-    SyncToAsyncDisposable SyncToAsyncDisposable)
-    : RangeResolution(RootResolutions, LocalFunctions, DisposalHandling, RangedInstanceFunctionGroups, "this");
+    SyncToAsyncDisposable SyncToAsyncDisposable,
+    IMethodSymbol? AddForDisposal,
+    IMethodSymbol? AddForDisposalAsync)
+    : RangeResolution(
+        RootResolutions,
+        LocalFunctions,
+        DisposalHandling, 
+        RangedInstanceFunctionGroups, 
+        "this",
+        AddForDisposal,
+        AddForDisposalAsync);
 
 internal record NopDisposable(
     string ClassName,

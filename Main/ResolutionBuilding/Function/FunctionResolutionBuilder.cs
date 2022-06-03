@@ -164,6 +164,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     .Select((t, i) => ($"item{(i + 1)}", SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
                     .ToList(),
                 Array.Empty<(string Name, Resolvable Dependency)>(),
+                null,
                 null);
             return (constructorResolution, constructorResolution);
         }
@@ -692,6 +693,40 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var isTransientScopeRoot =
             _checkTypeProperties.ShouldBeScopeRoot(implementationType) == ScopeLevel.TransientScope;
 
+        var outParameters = ImmutableDictionary<string, OutParameterResolution>.Empty;
+        ConstructorParameterChoiceResolution? constructorParameterChoiceResolution = null;
+
+        if (_userProvidedScopeElements.GetCustomConstructorParameterChoiceFor(implementationType) is
+            { } parameterChoiceMethod)
+        {
+            constructorParameterChoiceResolution = new ConstructorParameterChoiceResolution(
+                parameterChoiceMethod.Name,
+                parameterChoiceMethod
+                    .Parameters
+                    .Select(p =>
+                    {
+                        var isOut = p.RefKind == RefKind.Out;
+
+                        if (isOut)
+                        {
+                            var outParameter = new OutParameterResolution(
+                                RootReferenceGenerator.Generate(p.Type),
+                                p.Type.FullName());
+                            outParameters = outParameters.Add(p.Name, outParameter);
+                            return (
+                                p.Name,
+                                outParameter,
+                                isOut);
+                        }
+
+                        return (
+                            p.Name,
+                            SwitchType(new SwitchTypeParameter(p.Type, currentParameters, implementationStack)).Item1,
+                            isOut);
+                    })
+                    .ToList());
+        }
+
         ITypeInitializationResolution? typeInitializationResolution = null;
 
         if (_checkTypeProperties.GetInitializerFor(implementationType) is { } tuple)
@@ -740,7 +775,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                      .Where(p => p.SetMethod?.IsInitOnly ?? false))
                 .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
                 .ToList()),
-            typeInitializationResolution);
+            typeInitializationResolution,
+            constructorParameterChoiceResolution);
 
         return (resolution, resolution);
 
@@ -750,6 +786,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             INamedTypeSymbol impType, 
             IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currParameter)
         {
+            if (outParameters.TryGetValue(parameterName, out var outParameterResolution))
+                return (parameterName, new ParameterResolution(outParameterResolution.Reference, outParameterResolution.TypeFullName));
+            
             if (checkForDecoration && decoration is {})
             {
                 if (typeSymbol.Equals(decoration.InterfaceType, SymbolEqualityComparer.Default))

@@ -119,7 +119,8 @@ internal record ConstructorResolution(
     DisposalType DisposalType,
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
-    ITypeInitializationResolution? Initialization) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
+    ITypeInitializationResolution? Initialization,
+    ConstructorParameterChoiceResolution? ParameterChoices) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
 
 internal record LazyResolution(
     string Reference,
@@ -171,6 +172,14 @@ internal record FactoryResolution(
     string FunctionName,
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
 
+internal record OutParameterResolution(
+    string Reference,
+    string TypeFullName) : Resolvable(Reference, TypeFullName);
+
+internal record ConstructorParameterChoiceResolution(
+    string FunctionName,
+    IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : Resolvable("foo", "bar");
+
 internal record CollectionResolution(
     string Reference,
     string TypeFullName,
@@ -186,6 +195,7 @@ internal record SyncDisposableCollectionResolution(
         DisposalType.None,
         Array.Empty<(string Name, Resolvable Dependency)>(), 
         Array.Empty<(string Name, Resolvable Dependency)>(),
+        null,
         null);
 
 internal record AsyncDisposableCollectionResolution(
@@ -197,6 +207,7 @@ internal record AsyncDisposableCollectionResolution(
         DisposalType.None,
         Array.Empty<(string Name, Resolvable Dependency)>(), 
         Array.Empty<(string Name, Resolvable Dependency)>(),
+        null,
         null);
 
 internal abstract record RangeResolution(

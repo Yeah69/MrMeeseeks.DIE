@@ -303,7 +303,15 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = GenerateFields(stringBuilder, resolutionBase);
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
                 break;
-            case ConstructorResolution(var reference, var typeFullName, _, var parameters, var initializedProperties, var initialization):
+            case OutParameterResolution(var reference, var typeFullName):
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");      
+                break;
+            case ConstructorParameterChoiceResolution(_, var parameters):
+                stringBuilder = parameters.Aggregate(stringBuilder, (builder, tuple) => GenerateFields(builder, tuple.Dependency));         
+                break;
+            case ConstructorResolution(var reference, var typeFullName, _, var parameters, var initializedProperties, var initialization, var parameterChoiceResolution):
+                if (parameterChoiceResolution is {})
+                    stringBuilder = GenerateFields(stringBuilder, parameterChoiceResolution);
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateFields(builder, tuple.Dependency));
                 stringBuilder = initializedProperties.Aggregate(stringBuilder,
@@ -503,7 +511,16 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     _ => stringBuilder
                 };
                 break;
-            case ConstructorResolution(var reference, var typeFullName, var disposalType, var parameters, var initializedProperties, var initialization):
+            case OutParameterResolution(_, _): 
+                break;
+            case ConstructorParameterChoiceResolution(var functionName, var parameters):
+                stringBuilder = parameters.Aggregate(stringBuilder,
+                    (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
+                stringBuilder = stringBuilder.AppendLine($"{functionName}({string.Join(", ", parameters.Select(p => $"{p.Name}: {(p.isOut ? "out " : "")}{p.Dependency.Reference}"))});");
+                break;
+            case ConstructorResolution(var reference, var typeFullName, var disposalType, var parameters, var initializedProperties, var initialization, var parameterChoiceResolution):
+                if (parameterChoiceResolution is { })
+                    GenerateResolutions(stringBuilder, parameterChoiceResolution);
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
                 stringBuilder = initializedProperties.Aggregate(stringBuilder,

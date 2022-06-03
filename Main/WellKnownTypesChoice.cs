@@ -16,7 +16,8 @@ internal record WellKnownTypesChoice(
     INamedTypeSymbol FilterConstructorChoiceAttribute,
     INamedTypeSymbol FilterPropertyChoiceAttribute,
     INamedTypeSymbol FilterImplementationChoiceAttribute,
-    INamedTypeSymbol FilterImplementationCollectionChoiceAttribute)
+    INamedTypeSymbol FilterImplementationCollectionChoiceAttribute,
+    INamedTypeSymbol CustomConstructorParameterChoiceAttribute)
 {
     internal static bool TryCreate(Compilation compilation, out WellKnownTypesChoice wellKnownTypes)
     {
@@ -62,6 +63,9 @@ internal record WellKnownTypesChoice(
         var filterImplementationCollectionChoiceAttribute = compilation
             .GetTypeByMetadataName(typeof(FilterImplementationCollectionChoiceAttribute).FullName ?? "");
 
+        var customConstructorParameterChoiceAttribute = compilation
+            .GetTypeByMetadataName(typeof(CustomConstructorParameterChoiceAttribute).FullName ?? "");
+
         if (implementationChoiceAttribute is not null
             && implementationCollectionChoiceAttribute is not null
             && genericParameterSubstitutesChoiceAttribute is not null
@@ -75,7 +79,8 @@ internal record WellKnownTypesChoice(
             && filterConstructorChoiceAttribute is not null
             && filterPropertyChoiceAttribute is not null
             && filterImplementationChoiceAttribute is not null
-            && filterImplementationCollectionChoiceAttribute is not null)
+            && filterImplementationCollectionChoiceAttribute is not null
+            && customConstructorParameterChoiceAttribute is not null)
         {
 
             wellKnownTypes = new WellKnownTypesChoice(
@@ -92,7 +97,8 @@ internal record WellKnownTypesChoice(
                 FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
                 FilterPropertyChoiceAttribute: filterPropertyChoiceAttribute,
                 FilterImplementationChoiceAttribute: filterImplementationChoiceAttribute,
-                FilterImplementationCollectionChoiceAttribute: filterImplementationCollectionChoiceAttribute);
+                FilterImplementationCollectionChoiceAttribute: filterImplementationCollectionChoiceAttribute,
+                CustomConstructorParameterChoiceAttribute: customConstructorParameterChoiceAttribute);
             return true;
         }
         

@@ -1,5 +1,6 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 
 namespace MrMeeseeks.DIE.Test.CustomEmbedding.ConstructorParameterWithDependencyInScope;
 
@@ -30,5 +31,16 @@ internal partial class Container
     {
         [CustomConstructorParameterChoice(typeof(Dependency))]
         private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
+    }
+}
+
+public class Tests
+{
+    [Fact]
+    public async ValueTask Test()
+    {
+        await using var container = new Container();
+        var instance = container.Create();
+        Assert.Equal(69, instance.Dependency.Number);
     }
 }

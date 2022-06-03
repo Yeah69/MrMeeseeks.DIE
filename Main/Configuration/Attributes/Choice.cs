@@ -92,3 +92,11 @@ public class FilterImplementationCollectionChoiceAttribute : Attribute
 {
     public FilterImplementationCollectionChoiceAttribute(Type type) {}
 }
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+public class CustomConstructorParameterChoiceAttribute : Attribute
+{
+    public CustomConstructorParameterChoiceAttribute(Type type)
+    {
+    }
+}

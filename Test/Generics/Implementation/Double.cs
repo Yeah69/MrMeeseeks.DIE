@@ -7,7 +7,7 @@ namespace MrMeeseeks.DIE.Test.Generics.Implementation.Double;
 internal class Class<T0, T1> {}
 
 [CreateFunction(typeof(Class<int, string>), "Create")]
-internal partial class Container {}
+internal sealed partial class Container {}
 
 public class Tests
 {

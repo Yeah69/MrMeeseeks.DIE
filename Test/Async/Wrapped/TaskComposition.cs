@@ -67,7 +67,7 @@ internal class Composite : ITaskTypeInitializer, IInterface, IComposite<IInterfa
     public int Count => _composition.Count;
 }
 [CreateFunction(typeof(Task<IInterface>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

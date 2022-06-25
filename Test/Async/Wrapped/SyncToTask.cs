@@ -15,7 +15,7 @@ internal class Dependency : ITypeInitializer
 }
 
 [CreateFunction(typeof(Task<Dependency>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

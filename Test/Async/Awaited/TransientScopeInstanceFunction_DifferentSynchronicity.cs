@@ -52,10 +52,10 @@ internal class TransientScopeRoot1 : ITransientScopeRoot
 [FilterImplementationAggregation(typeof(DependencyB))]
 [CreateFunction(typeof(TransientScopeRoot0), "Create0")]
 [CreateFunction(typeof(TransientScopeRoot1), "Create1")]
-internal partial class Container
+internal sealed partial class Container
 {
     [CustomScopeForRootTypes(typeof(TransientScopeRoot0))]
-    private partial class DIE_TransientScope0
+    private sealed partial class DIE_TransientScope0
     {
         
     }
@@ -63,7 +63,7 @@ internal partial class Container
     [FilterImplementationAggregation(typeof(DependencyA))]
     [ImplementationAggregation(typeof(DependencyB))]
     [CustomScopeForRootTypes(typeof(TransientScopeRoot1))]
-    private partial class DIE_TransientScope1
+    private sealed partial class DIE_TransientScope1
     {
         
     }

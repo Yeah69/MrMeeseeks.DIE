@@ -10,7 +10,7 @@ namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.ExternalType;
 [AssemblyImplementationsAggregation(typeof(FileInfo))]
 [ImplementationAggregation(typeof(FileInfo))]
 [CreateFunction(typeof(Func<string, FileInfo>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

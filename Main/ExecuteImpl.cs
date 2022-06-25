@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.DIE.CodeBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding;
+using MrMeeseeks.DIE.Validation.Range;
 
 namespace MrMeeseeks.DIE;
 
@@ -11,32 +12,38 @@ internal interface IExecute
 
 internal class ExecuteImpl : IExecute
 {
+    private readonly bool _errorDescriptionInsteadOfBuildFailure;
     private readonly GeneratorExecutionContext _context;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly IContainerGenerator _containerGenerator;
     private readonly IContainerErrorGenerator _containerErrorGenerator;
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
+    private readonly IValidateContainer _validateContainer;
     private readonly Func<IContainerInfo, IContainerResolutionBuilder> _containerResolutionBuilderFactory;
     private readonly IResolutionTreeCreationErrorHarvester _resolutionTreeCreationErrorHarvester;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
     private readonly IDiagLogger _diagLogger;
 
     internal ExecuteImpl(
+        bool errorDescriptionInsteadOfBuildFailure,
         GeneratorExecutionContext context,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IContainerGenerator containerGenerator,
         IContainerErrorGenerator containerErrorGenerator,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
+        IValidateContainer validateContainer,
         Func<IContainerInfo, IContainerResolutionBuilder> containerResolutionBuilderFactory,
         IResolutionTreeCreationErrorHarvester resolutionTreeCreationErrorHarvester,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
         IDiagLogger diagLogger)
     {
+        _errorDescriptionInsteadOfBuildFailure = errorDescriptionInsteadOfBuildFailure;
         _context = context;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
         _containerGenerator = containerGenerator;
         _containerErrorGenerator = containerErrorGenerator;
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
+        _validateContainer = validateContainer;
         _containerResolutionBuilderFactory = containerResolutionBuilderFactory;
         _resolutionTreeCreationErrorHarvester = resolutionTreeCreationErrorHarvester;
         _containerInfoFactory = containerInfoFactory;
@@ -46,9 +53,6 @@ internal class ExecuteImpl : IExecute
     public void Execute()
     {
         _diagLogger.Log("Start Execute");
-
-        var errorDescriptionInsteadOfBuildFailure = _context.Compilation.Assembly.GetAttributes()
-            .Any(ad => _wellKnownTypesMiscellaneous.ErrorDescriptionInsteadOfBuildFailureAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default));
 
         foreach (var syntaxTree in _context.Compilation.SyntaxTrees)
         {
@@ -67,7 +71,9 @@ internal class ExecuteImpl : IExecute
                 try
                 {
                     var containerInfo = _containerInfoFactory(containerSymbol);
-                    if (containerInfo.IsValid)
+                    var validationDiagnostics = _validateContainer.Validate(containerInfo.ContainerType, containerInfo.ContainerType)
+                        .ToImmutableArray();
+                    if (!validationDiagnostics.Any())
                     {
                         var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
                         containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.CreateFunctionData);
@@ -85,11 +91,17 @@ internal class ExecuteImpl : IExecute
                         else
                             _containerGenerator.Generate(containerInfo, containerResolution);
                     }
-                    else throw new NotImplementedException("Handle non-valid container information");
+                    else
+                    {
+                        foreach (var validationDiagnostic in validationDiagnostics)
+                            _diagLogger.Log(validationDiagnostic);
+
+                        throw new ValidationDieException();
+                    }
                 }
                 catch (DieException dieException)
                 {
-                    if (errorDescriptionInsteadOfBuildFailure)
+                    if (_errorDescriptionInsteadOfBuildFailure)
                         _containerDieExceptionGenerator.Generate(
                             containerSymbol.ContainingNamespace.FullName(), 
                             containerSymbol.Name, 

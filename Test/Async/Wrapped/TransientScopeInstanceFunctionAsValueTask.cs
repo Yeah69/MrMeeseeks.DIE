@@ -16,7 +16,7 @@ internal class Dependency : ITaskTypeInitializer, ITransientScopeInstance
 }
 
 [CreateFunction(typeof(ValueTask<Dependency>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

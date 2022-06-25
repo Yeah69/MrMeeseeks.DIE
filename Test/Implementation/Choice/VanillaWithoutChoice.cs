@@ -9,7 +9,7 @@ internal class Class {}
 internal class SubClass : Class {}
 
 [CreateFunction(typeof(Class), "Create")]
-internal partial class Container {}
+internal sealed partial class Container {}
 
 public class Tests
 {

@@ -12,9 +12,9 @@ internal class TransientScopeRoot : ITransientScopeRoot
 }
 
 [CreateFunction(typeof(TransientScopeRoot), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
-    partial class DIE_DefaultTransientScope
+    private sealed partial class DIE_DefaultTransientScope
     {
         private string DIE_Factory_Yeah => "Yeah";
     }

@@ -30,18 +30,18 @@ internal class Scope : IScopeRoot
 [CreateFunction(typeof(IReadOnlyList<IDependency>), "Create0")]
 [CreateFunction(typeof(TransientScope), "Create1")]
 [CreateFunction(typeof(Scope), "Create2")]
-internal partial class Container
+internal sealed partial class Container
 {
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyScope))]
-    partial class DIE_DefaultTransientScope
+    private sealed partial class DIE_DefaultTransientScope
     {
         
     }
 
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyTransientScope))]
-    partial class DIE_DefaultScope
+    private sealed partial class DIE_DefaultScope
     {
         
     }

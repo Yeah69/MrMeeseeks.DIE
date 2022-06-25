@@ -10,7 +10,7 @@ internal class Class<T0> : IInterface {}
 
 [GenericParameterChoice(typeof(Class<>), "T0", typeof(int))]
 [CreateFunction(typeof(IInterface), "Create")]
-internal partial class Container {}
+internal sealed partial class Container {}
 
 public class Tests
 {

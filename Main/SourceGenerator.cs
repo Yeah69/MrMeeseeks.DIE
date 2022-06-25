@@ -2,6 +2,8 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
+using MrMeeseeks.DIE.Validation.Range;
+using MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 namespace MrMeeseeks.DIE;
 
@@ -17,11 +19,45 @@ public class SourceGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
-        var diagLogger = new DiagLogger(context);
         var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
         var __ = WellKnownTypesAggregation.TryCreate(context.Compilation, out var wellKnownTypesAggregation);
         var ___ = WellKnownTypesChoice.TryCreate(context.Compilation, out var wellKnownTypesChoice);
         var ____ = WellKnownTypesMiscellaneous.TryCreate(context.Compilation, out var wellKnownTypesMiscellaneous);
+        var errorDescriptionInsteadOfBuildFailure = context.Compilation.Assembly.GetAttributes()
+            .Any(ad => wellKnownTypesMiscellaneous.ErrorDescriptionInsteadOfBuildFailureAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default));
+        var diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
+        var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(wellKnownTypes);
+        var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);
+        var validateUserDefinedConstrParam = new ValidateUserDefinedConstrParam(wellKnownTypesChoice);
+        var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
+        var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
+        var validateTransientScope = new ValidateTransientScope(
+            validateUserDefinedAddForDisposalSync, 
+            validateUserDefinedAddForDisposalAsync, 
+            validateUserDefinedConstrParam, 
+            validateUserDefinedFactoryMethod,
+            validateUserDefinedFactoryField,
+            wellKnownTypes, 
+            wellKnownTypesAggregation,
+            wellKnownTypesMiscellaneous);
+        var validateScope = new ValidateScope(
+            validateUserDefinedAddForDisposalSync,
+            validateUserDefinedAddForDisposalAsync, 
+            validateUserDefinedConstrParam, 
+            validateUserDefinedFactoryMethod,
+            validateUserDefinedFactoryField,
+            wellKnownTypes,
+            wellKnownTypesAggregation,
+            wellKnownTypesMiscellaneous);
+        var validateContainer = new ValidateContainer(
+            validateTransientScope, 
+            validateScope, 
+            validateUserDefinedAddForDisposalSync,
+            validateUserDefinedAddForDisposalAsync, 
+            validateUserDefinedConstrParam,
+            validateUserDefinedFactoryMethod,
+            validateUserDefinedFactoryField,
+            wellKnownTypes);
         var attributeTypesFromAttributes = new TypesFromAttributes(
             context.Compilation.Assembly.GetAttributes(), 
             wellKnownTypesAggregation,
@@ -34,11 +70,13 @@ public class SourceGenerator : ISourceGenerator
         var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
         var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
         new ExecuteImpl(
+            errorDescriptionInsteadOfBuildFailure,
             context,
             wellKnownTypesMiscellaneous,
             containerGenerator, 
             containerErrorGenerator,
             containerDieExceptionGenerator,
+            validateContainer,
             ResolutionTreeFactory,
             resolutionTreeCreationErrorHarvester,
             ContainerInfoFactory, 
@@ -68,7 +106,7 @@ public class SourceGenerator : ISourceGenerator
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
                 LocalFunctionResolutionBuilderFactory,
-                new UserProvidedScopeElements(ci.ContainerType, wellKnownTypes, wellKnownTypesChoice),
+                new UserDefinedElements(ci.ContainerType, wellKnownTypes, wellKnownTypesChoice),
                 functionCycleTracker);
 
             IScopeManager ScopeManagerFactory(
@@ -86,8 +124,8 @@ public class SourceGenerator : ISourceGenerator
                     wellKnownTypesChoice,
                     wellKnownTypesMiscellaneous),
                 tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, implementationTypeSetCache), wellKnownTypes),
-                st => new UserProvidedScopeElements(st, wellKnownTypes, wellKnownTypesChoice),
-                new EmptyUserProvidedScopeElements(),
+                st => new UserDefinedElements(st, wellKnownTypes, wellKnownTypesChoice),
+                new EmptyUserDefinedElements(),
                 wellKnownTypesMiscellaneous);
 
             ITransientScopeResolutionBuilder TransientScopeResolutionBuilderFactory(
@@ -95,7 +133,7 @@ public class SourceGenerator : ISourceGenerator
                 IContainerResolutionBuilder containerBuilder, 
                 ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder, 
                 IScopeManager scopeManager,
-                IUserProvidedScopeElements userProvidedScopeElements,
+                IUserDefinedElements userProvidedScopeElements,
                 ICheckTypeProperties checkTypeProperties) => new TransientScopeResolutionBuilder(
                 name,
                 containerBuilder,
@@ -115,7 +153,7 @@ public class SourceGenerator : ISourceGenerator
                 IContainerResolutionBuilder containerBuilder, 
                 ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder, 
                 IScopeManager scopeManager,
-                IUserProvidedScopeElements userProvidedScopeElements,
+                IUserDefinedElements userProvidedScopeElements,
                 ICheckTypeProperties checkTypeProperties) => new ScopeResolutionBuilder(
                 name,
                 containerBuilder,

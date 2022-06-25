@@ -27,9 +27,9 @@ internal class TransientScopeRoot : ITransientScopeRoot
 }
 
 [CreateFunction(typeof(TransientScopeRoot), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
-    private partial class DIE_DefaultTransientScope
+    private sealed partial class DIE_DefaultTransientScope
     {
         private Dependency DIE_Factory_Dependency
         {
@@ -41,7 +41,7 @@ internal partial class Container
             }
         }
 
-        private partial void DIE_AddForDisposalAsync(IAsyncDisposable disposable);
+        private partial void DIE_AddForDisposalAsync(IAsyncDisposable asyncDisposable);
     }
 }
 

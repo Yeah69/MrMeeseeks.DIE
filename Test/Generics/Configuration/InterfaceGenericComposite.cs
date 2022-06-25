@@ -31,7 +31,7 @@ internal class Composite<T0, T1> : IInterface<T0>, IComposite<IInterface<T0>>
 
 [GenericParameterChoice(typeof(Composite<,>), "T1", typeof(string))]
 [CreateFunction(typeof(IInterface<int>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

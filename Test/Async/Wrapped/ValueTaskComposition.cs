@@ -68,7 +68,7 @@ internal class Composite : ITaskTypeInitializer, IInterface, IComposite<IInterfa
 }
 
 [CreateFunction(typeof(ValueTask<IInterface>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

@@ -13,7 +13,7 @@ internal class DependencyB : IInterface {}
 [FilterAllImplementationsAggregation]
 [ImplementationAggregation(typeof(DependencyB))]
 [CreateFunction(typeof(IInterface), "Create")]
-internal partial class Container {}
+internal sealed partial class Container {}
 
 public class Tests
 {

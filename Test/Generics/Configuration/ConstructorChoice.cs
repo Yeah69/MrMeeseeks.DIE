@@ -21,7 +21,7 @@ internal class Implementation<T0>
 
 [ConstructorChoice(typeof(Implementation<>), typeof(DependencyB))]
 [CreateFunction(typeof(Implementation<int>), "Create")]
-internal partial class Container {}
+internal sealed partial class Container {}
 
 public class Tests
 {

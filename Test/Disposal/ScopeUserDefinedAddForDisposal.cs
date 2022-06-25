@@ -23,9 +23,9 @@ internal class ScopeRoot : IScopeRoot
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
-    private partial class DIE_DefaultScope
+    private sealed partial class DIE_DefaultScope
     {
         private Dependency DIE_Factory_Dependency
         {

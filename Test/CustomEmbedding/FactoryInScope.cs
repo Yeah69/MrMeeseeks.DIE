@@ -12,9 +12,9 @@ internal class ScopeRoot : IScopeRoot
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
-    partial class DIE_DefaultScope
+    private sealed partial class DIE_DefaultScope
     {
         private string DIE_Factory_Yeah() => "Yeah";
     }

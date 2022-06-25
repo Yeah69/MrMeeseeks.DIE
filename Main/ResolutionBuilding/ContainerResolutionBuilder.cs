@@ -41,12 +41,12 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory, 
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
-        IUserProvidedScopeElements userProvidedScopeElement, 
+        IUserDefinedElements userDefinedElement, 
         IFunctionCycleTracker functionCycleTracker) 
         : base(
             containerInfo.Name, 
             checkTypeProperties,
-            userProvidedScopeElement,
+            userDefinedElement,
             wellKnownTypes, 
             referenceGeneratorFactory,
             rangedFunctionGroupResolutionBuilderFactory,
@@ -81,7 +81,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public IFunctionCycleTracker FunctionCycleTracker { get; }
 
     public override MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
-        CreateContainerInstanceReferenceResolution(parameter, "this");
+        CreateContainerInstanceReferenceResolution(parameter, Constants.ThisKeyword);
 
     public override MultiSynchronicityFunctionCallResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, _transientScopeAdapterReference);
@@ -95,7 +95,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             .AddCreateResolveFunction(
                 parameter,
                 rootType, 
-                "this",
+                Constants.ThisKeyword,
                 currentParameters);
 
     public override ScopeRootResolution CreateScopeRootResolution(
@@ -107,7 +107,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             .AddCreateResolveFunction(
                 parameter,
                 rootType, 
-                "this",
+                Constants.ThisKeyword,
                 _transientScopeAdapterReference,
                 currentParameters);
 
@@ -160,7 +160,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             {
                 var call = createFunction.BuildFunctionCall(
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
-                    "this");
+                    Constants.ThisKeyword);
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
@@ -181,7 +181,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
                 var taskCall = createFunction.BuildFunctionCall(
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
-                    "this");
+                    Constants.ThisKeyword);
                 taskCall.Sync.Await = false;
                 taskCall.AsyncTask.Await = false;
                 taskCall.AsyncValueTask.Await = false;
@@ -205,7 +205,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
                 var valueTaskCall = createFunction.BuildFunctionCall(
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
-                    "this");
+                    Constants.ThisKeyword);
                 valueTaskCall.Sync.Await = false;
                 valueTaskCall.AsyncTask.Await = false;
                 valueTaskCall.AsyncValueTask.Await = false;
@@ -228,7 +228,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             {
                 var call = createFunction.BuildFunctionCall(
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
-                    "this");
+                    Constants.ThisKeyword);
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
@@ -249,7 +249,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
                 var valueCall = createFunction.BuildFunctionCall(
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
-                    "this");
+                    Constants.ThisKeyword);
                 valueCall.Sync.Await = false;
                 valueCall.AsyncTask.Await = false;
                 valueCall.AsyncValueTask.Await = false;
@@ -276,7 +276,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     .FullName();
                 var call = createFunction.BuildFunctionCall(
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
-                    "this");
+                    Constants.ThisKeyword);
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
@@ -296,7 +296,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 
                 var valueCall = createFunction.BuildFunctionCall(
                     Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
-                    "this");
+                    Constants.ThisKeyword);
                 valueCall.Sync.Await = false;
                 valueCall.AsyncTask.Await = false;
                 valueCall.AsyncValueTask.Await = false;

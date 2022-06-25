@@ -31,25 +31,24 @@ internal class Scope : IScopeRoot
 [CreateFunction(typeof(Scope), "Create2")]
 [FilterImplementationAggregation(typeof(DependencyScope))]
 [FilterImplementationAggregation(typeof(DependencyTransientScope))]
-internal partial class Container
+internal sealed partial class Container
 {
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyTransientScope))]
-    partial class DIE_DefaultTransientScope
+    private sealed partial class DIE_DefaultTransientScope
     {
         
     }
 
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyScope))]
-    partial class DIE_DefaultScope
+    private sealed partial class DIE_DefaultScope
     {
         
     }
 }
 public class Tests
 {
-    
     [Fact]
     public async ValueTask Container()
     {

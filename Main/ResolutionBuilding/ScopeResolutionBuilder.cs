@@ -32,7 +32,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         IContainerResolutionBuilder containerResolutionBuilder,
         ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder,
         IScopeManager scopeManager,
-        IUserProvidedScopeElements userProvidedScopeElements, 
+        IUserDefinedElements userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
         
         // dependencies
@@ -45,7 +45,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         : base(
             name,
             checkTypeProperties,
-            userProvidedScopeElements,
+            userDefinedElements,
             wellKnownTypes, 
             referenceGeneratorFactory,
             rangedFunctionGroupResolutionBuilderFactory,

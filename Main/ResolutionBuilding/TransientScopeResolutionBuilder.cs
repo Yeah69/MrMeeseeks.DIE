@@ -29,7 +29,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         IContainerResolutionBuilder containerResolutionBuilder,
         ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder,
         IScopeManager scopeManager,
-        IUserProvidedScopeElements userProvidedScopeElements, 
+        IUserDefinedElements userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
         
         // dependencies
@@ -42,7 +42,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         : base(
             name, 
             checkTypeProperties,
-            userProvidedScopeElements,
+            userDefinedElements,
             wellKnownTypes, 
             referenceGeneratorFactory,
             rangedFunctionGroupResolutionBuilderFactory,
@@ -61,7 +61,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         _containerResolutionBuilder.CreateContainerInstanceReferenceResolution(parameter, _containerReference);
 
     public override MultiSynchronicityFunctionCallResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
-        _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, "this");
+        _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, Constants.ThisKeyword);
 
     public override TransientScopeRootResolution CreateTransientScopeRootResolution(
         SwitchImplementationParameter parameter, 
@@ -85,7 +85,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
                 parameter,
                 rootType, 
                 _containerReference,
-                "this",
+                Constants.ThisKeyword,
                 currentParameters);
 
     public override void RegisterDisposalType(DisposalType disposalType) => _containerResolutionBuilder.RegisterDisposalType(disposalType);

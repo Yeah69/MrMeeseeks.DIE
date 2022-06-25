@@ -14,7 +14,7 @@ internal record Implementation(Dependency Dependency)
 
 [PropertyChoice(typeof(Implementation), nameof(Implementation.DependencyA))]
 [CreateFunction(typeof(Implementation), "Create")]
-internal partial class Container{}
+internal sealed partial class Container{}
 
 public class Tests
 {

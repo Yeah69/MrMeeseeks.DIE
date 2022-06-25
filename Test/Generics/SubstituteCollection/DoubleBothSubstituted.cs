@@ -12,7 +12,7 @@ internal class Class<T0, T1> : IInterface {}
 [GenericParameterSubstitutesChoice(typeof(Class<,>), "T0", typeof(bool), typeof(byte))]
 [GenericParameterSubstitutesChoice(typeof(Class<,>), "T1", typeof(int), typeof(string))]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
-internal partial class Container {}
+internal sealed partial class Container {}
 
 public class Tests
 {

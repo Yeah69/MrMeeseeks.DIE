@@ -286,7 +286,7 @@ internal record ContainerResolution(
         LocalFunctions,
         DisposalHandling, 
         RangedInstanceFunctionGroups, 
-        "this",
+        Constants.ThisKeyword,
         AddForDisposal,
         AddForDisposalAsync);
 

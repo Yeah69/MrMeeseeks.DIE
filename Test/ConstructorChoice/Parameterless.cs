@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE.Test.ConstructorChoice.Parameterless;
 [ImplementationAggregation(typeof(DateTime))]
 [ConstructorChoice(typeof(DateTime))]
 [CreateFunction(typeof(DateTime), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

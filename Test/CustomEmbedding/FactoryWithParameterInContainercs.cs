@@ -7,7 +7,7 @@ namespace MrMeeseeks.DIE.Test.CustomEmbedding.FactoryWithParameterInContainer;
 
 [ImplementationAggregation(typeof(FileInfo))]
 [CreateFunction(typeof(FileInfo), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     private string DIE_Factory_Path => "C:\\Yeah.txt";
     private FileInfo DIE_Factory(string path) => new (path);

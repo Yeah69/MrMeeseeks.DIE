@@ -17,7 +17,7 @@ internal class Dependency : ITaskTypeInitializer, IScopeInstance
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

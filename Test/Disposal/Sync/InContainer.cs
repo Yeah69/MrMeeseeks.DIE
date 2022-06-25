@@ -15,7 +15,7 @@ internal class Dependency :  IDisposable
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

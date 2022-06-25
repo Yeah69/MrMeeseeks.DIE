@@ -61,7 +61,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
     
-    private readonly IUserProvidedScopeElements _userProvidedScopeElements;
+    private readonly IUserDefinedElements _userDefinedElements;
 
     private readonly FunctionResolutionBuilderHandle _handle;
     
@@ -96,7 +96,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         _wellKnownTypes = wellKnownTypes;
         _functionCycleTracker = functionCycleTracker;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
-        _userProvidedScopeElements = rangeResolutionBaseBuilder.UserProvidedScopeElements;
+        _userDefinedElements = rangeResolutionBaseBuilder.UserDefinedElements;
         _handle = new FunctionResolutionBuilderHandle(
             handleIdentity,
             $"{OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Resolution.TypeFullName))})");
@@ -115,7 +115,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
             return (funcParameter.Resolution, null);
 
-        if (_userProvidedScopeElements.GetInstanceFor(type) is { } instance)
+        if (_userDefinedElements.GetInstanceFor(type) is { } instance)
             return (
                 new FieldResolution(
                     RootReferenceGenerator.Generate(instance.Type),
@@ -123,7 +123,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     instance.Name),
                 null);
 
-        if (_userProvidedScopeElements.GetPropertyFor(type) is { } property)
+        if (_userDefinedElements.GetPropertyFor(type) is { } property)
             return (
                 new FieldResolution(
                     RootReferenceGenerator.Generate(property.Type),
@@ -131,7 +131,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     property.Name),
                 null);
 
-        if (_userProvidedScopeElements.GetFactoryFor(type) is { } factory)
+        if (_userDefinedElements.GetFactoryFor(type) is { } factory)
             return (
                 new FactoryResolution(
                     RootReferenceGenerator.Generate(factory.ReturnType),
@@ -696,7 +696,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var outParameters = ImmutableDictionary<string, OutParameterResolution>.Empty;
         ConstructorParameterChoiceResolution? constructorParameterChoiceResolution = null;
 
-        if (_userProvidedScopeElements.GetCustomConstructorParameterChoiceFor(implementationType) is
+        if (_userDefinedElements.GetCustomConstructorParameterChoiceFor(implementationType) is
             { } parameterChoiceMethod)
         {
             constructorParameterChoiceResolution = new ConstructorParameterChoiceResolution(

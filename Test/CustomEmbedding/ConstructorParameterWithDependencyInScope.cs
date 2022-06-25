@@ -25,9 +25,9 @@ internal class ScopeRoot : IScopeRoot
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
-    partial class DIE_DefaultScope
+    private sealed partial class DIE_DefaultScope
     {
         [CustomConstructorParameterChoice(typeof(Dependency))]
         private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;

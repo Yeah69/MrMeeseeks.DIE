@@ -9,7 +9,7 @@ namespace MrMeeseeks.DIE.Test.Func.Vanilla;
 internal class Dependency{}
 
 [CreateFunction(typeof(Func<DateTime, IList<object>, Dependency>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

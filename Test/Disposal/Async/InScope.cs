@@ -24,7 +24,7 @@ internal class ScopeRoot : IScopeRoot
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

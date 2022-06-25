@@ -17,7 +17,7 @@ internal class Dependency : IAsyncDisposable
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     private Dependency DIE_Factory_Dependency
     {

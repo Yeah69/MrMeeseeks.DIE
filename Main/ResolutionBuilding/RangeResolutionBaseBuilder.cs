@@ -6,7 +6,7 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 internal interface IRangeResolutionBaseBuilder
 {
     ICheckTypeProperties CheckTypeProperties { get; }
-    IUserProvidedScopeElements UserProvidedScopeElements { get; }
+    IUserDefinedElements UserDefinedElements { get; }
     
     MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter);
@@ -37,7 +37,7 @@ internal interface IRangeResolutionBaseBuilder
 internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
 {
     public ICheckTypeProperties CheckTypeProperties { get; }
-    public IUserProvidedScopeElements UserProvidedScopeElements { get; }
+    public IUserDefinedElements UserDefinedElements { get; }
     
     protected IMethodSymbol? AddForDisposal { get; }
     protected IMethodSymbol? AddForDisposalAsync { get; }
@@ -59,7 +59,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         // parameters
         string name,
         ICheckTypeProperties checkTypeProperties,
-        IUserProvidedScopeElements userProvidedScopeElements,
+        IUserDefinedElements userDefinedElements,
         
         // dependencies
         WellKnownTypes wellKnownTypes,
@@ -69,7 +69,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
     {
         CheckTypeProperties = checkTypeProperties;
-        UserProvidedScopeElements = userProvidedScopeElements;
+        UserDefinedElements = userDefinedElements;
         _wellKnownTypes = wellKnownTypes;
         _rangedFunctionGroupResolutionBuilderFactory = rangedFunctionGroupResolutionBuilderFactory;
         _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
@@ -79,8 +79,8 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         
         Name = name;
         
-        AddForDisposal = userProvidedScopeElements.AddForDisposal;
-        AddForDisposalAsync = userProvidedScopeElements.AddForDisposalAsync;
+        AddForDisposal = userDefinedElements.AddForDisposal;
+        AddForDisposalAsync = userDefinedElements.AddForDisposalAsync;
     }
 
     public abstract MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter);
@@ -93,7 +93,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             parameter,
             "Scope",
             null,
-            "this",
+            Constants.ThisKeyword,
             new (_synchronicityDecisionMakerFactory));
     
     public abstract TransientScopeRootResolution CreateTransientScopeRootResolution(

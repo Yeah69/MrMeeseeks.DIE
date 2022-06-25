@@ -16,7 +16,7 @@ internal class Dependency<T0>
 
 [TypeInitializer(typeof(Dependency<>), nameof(Dependency<int>.Initialize))]
 [CreateFunction(typeof(Dependency<int>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

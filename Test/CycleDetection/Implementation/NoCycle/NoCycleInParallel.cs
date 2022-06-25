@@ -19,7 +19,7 @@ internal class Parent
 }
 
 [CreateFunction(typeof(Parent), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

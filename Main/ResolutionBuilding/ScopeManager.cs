@@ -26,7 +26,7 @@ internal class ScopeManager : IScopeManager
             IContainerResolutionBuilder,
             ITransientScopeInterfaceResolutionBuilder ,
             IScopeManager,
-            IUserProvidedScopeElements, 
+            IUserDefinedElements, 
             ICheckTypeProperties, 
             IScopeResolutionBuilder> _scopeResolutionBuilderFactory;
     private readonly Func<
@@ -34,12 +34,12 @@ internal class ScopeManager : IScopeManager
         IContainerResolutionBuilder,
         ITransientScopeInterfaceResolutionBuilder ,
         IScopeManager,
-        IUserProvidedScopeElements, 
+        IUserDefinedElements, 
         ICheckTypeProperties, 
         ITransientScopeResolutionBuilder> _transientScopeResolutionBuilderFactory;
     private readonly Func<ImmutableArray<AttributeData>, ScopeTypesFromAttributes> _scopeTypesFromAttributesFactory;
     private readonly Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> _checkTypePropertiesFactory;
-    private readonly Func<INamedTypeSymbol, IUserProvidedScopeElements> _userProvidedScopeElementsFactory;
+    private readonly Func<INamedTypeSymbol, IUserDefinedElements> _userProvidedScopeElementsFactory;
     private readonly Lazy<IScopeResolutionBuilder> _defaultScopeBuilder;
     private readonly Lazy<ITransientScopeResolutionBuilder> _defaultTransientScopeBuilder;
     private readonly IDictionary<INamedTypeSymbol, IScopeResolutionBuilder> _customScopeBuilders;
@@ -57,7 +57,7 @@ internal class ScopeManager : IScopeManager
             IContainerResolutionBuilder,
             ITransientScopeInterfaceResolutionBuilder ,
             IScopeManager,
-            IUserProvidedScopeElements, 
+            IUserDefinedElements, 
             ICheckTypeProperties, 
             ITransientScopeResolutionBuilder> transientScopeResolutionBuilderFactory,
         Func<
@@ -65,13 +65,13 @@ internal class ScopeManager : IScopeManager
             IContainerResolutionBuilder,
             ITransientScopeInterfaceResolutionBuilder ,
             IScopeManager,
-            IUserProvidedScopeElements, 
+            IUserDefinedElements, 
             ICheckTypeProperties, 
             IScopeResolutionBuilder> scopeResolutionBuilderFactory,
         Func<ImmutableArray<AttributeData>, ScopeTypesFromAttributes> scopeTypesFromAttributesFactory,
         Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> checkTypePropertiesFactory,
-        Func<INamedTypeSymbol, IUserProvidedScopeElements> userProvidedScopeElementsFactory,
-        IUserProvidedScopeElements emptyUserProvidedScopeElements,
+        Func<INamedTypeSymbol, IUserDefinedElements> userProvidedScopeElementsFactory,
+        IUserDefinedElements emptyUserDefinedElements,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         _containerResolutionBuilder = containerResolutionBuilder;
@@ -94,7 +94,7 @@ internal class ScopeManager : IScopeManager
                     this,
                     defaultScopeType is {} 
                         ? _userProvidedScopeElementsFactory(defaultScopeType) 
-                        : emptyUserProvidedScopeElements,
+                        : emptyUserDefinedElements,
                     _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(defaultScopeTypesFromAttributes)));
             },
             LazyThreadSafetyMode.ExecutionAndPublication);
@@ -110,7 +110,7 @@ internal class ScopeManager : IScopeManager
                     this,
                     defaultTransientScopeType is {} 
                         ? _userProvidedScopeElementsFactory(defaultTransientScopeType) 
-                        : emptyUserProvidedScopeElements,
+                        : emptyUserDefinedElements,
                     _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(defaultTransientScopeTypesFromAttributes)));
                 _transientScopeInterfaceResolutionBuilder.AddImplementation(ret);
                 return ret;

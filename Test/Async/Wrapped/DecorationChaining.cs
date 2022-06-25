@@ -49,7 +49,7 @@ internal class DecoratorB : IValueTaskTypeInitializer, IInterface, IDecorator<II
 
 [CreateFunction(typeof(Task<IInterface>), "Create")]
 [DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

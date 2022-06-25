@@ -9,7 +9,7 @@ internal interface IInterface {}
 internal class Dependency : IInterface, ITransientScopeInstance {}
 
 [CreateFunction(typeof(IInterface), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     
 }

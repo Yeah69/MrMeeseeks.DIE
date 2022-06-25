@@ -1,6 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-internal interface IUserProvidedScopeElements
+internal interface IUserDefinedElements
 {
     IFieldSymbol? GetInstanceFor(ITypeSymbol type);
     IPropertySymbol? GetPropertyFor(ITypeSymbol type);
@@ -10,7 +10,7 @@ internal interface IUserProvidedScopeElements
     IMethodSymbol? GetCustomConstructorParameterChoiceFor(INamedTypeSymbol type);
 }
 
-internal class EmptyUserProvidedScopeElements : IUserProvidedScopeElements
+internal class EmptyUserDefinedElements : IUserDefinedElements
 {
     public IFieldSymbol? GetInstanceFor(ITypeSymbol type) => null;
     public IPropertySymbol? GetPropertyFor(ITypeSymbol type) => null;
@@ -20,14 +20,14 @@ internal class EmptyUserProvidedScopeElements : IUserProvidedScopeElements
     public IMethodSymbol? GetCustomConstructorParameterChoiceFor(INamedTypeSymbol type) => null;
 }
 
-internal class UserProvidedScopeElements : IUserProvidedScopeElements
+internal class UserDefinedElements : IUserDefinedElements
 {
     private readonly IReadOnlyDictionary<ISymbol?, IFieldSymbol> _typeToField;
     private readonly IReadOnlyDictionary<ISymbol?, IPropertySymbol> _typeToProperty;
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _typeToMethod;
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _customConstructorParameterChoiceMethods;
 
-    public UserProvidedScopeElements(
+    public UserDefinedElements(
         // parameter
         INamedTypeSymbol scopeType,
         
@@ -36,22 +36,22 @@ internal class UserProvidedScopeElements : IUserProvidedScopeElements
         WellKnownTypesChoice wellKnownTypesChoice)
     {
         var dieMembers = scopeType.GetMembers()
-            .Where(s => s.Name.StartsWith("DIE_"))
+            .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_"))
             .ToList();
 
         _typeToField = dieMembers
-            .Where(s => s.Name.StartsWith("DIE_Factory_"))
+            .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
             .OfType<IFieldSymbol>()
             .ToDictionary(fs => fs.Type, fs => fs, SymbolEqualityComparer.IncludeNullability);
         
         _typeToProperty = dieMembers
-            .Where(s => s.Name.StartsWith("DIE_Factory_"))
+            .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
             .Where(s => s is IPropertySymbol { GetMethod: { } })
             .OfType<IPropertySymbol>()
             .ToDictionary(ps => ps.Type, ps => ps, SymbolEqualityComparer.IncludeNullability);
         
         _typeToMethod = dieMembers
-            .Where(s => s.Name.StartsWith("DIE_Factory_"))
+            .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
             .Where(s => s is IMethodSymbol { ReturnsVoid: false, Arity: 0, IsConditional: false, MethodKind: MethodKind.Ordinary })
             .OfType<IMethodSymbol>()
             .ToDictionary(ps => ps.ReturnType, ps => ps, SymbolEqualityComparer.IncludeNullability);
@@ -62,7 +62,7 @@ internal class UserProvidedScopeElements : IUserProvidedScopeElements
                 DeclaredAccessibility: Accessibility.Private,
                 ReturnsVoid: true,
                 IsPartialDefinition: true,
-                Name: "DIE_AddForDisposal",
+                Name: Constants.UserDefinedAddForDisposal,
                 Parameters.Length: 1
             } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.Disposable))
             .OfType<IMethodSymbol>()
@@ -74,14 +74,14 @@ internal class UserProvidedScopeElements : IUserProvidedScopeElements
                 DeclaredAccessibility: Accessibility.Private,
                 ReturnsVoid: true,
                 IsPartialDefinition: true,
-                Name: "DIE_AddForDisposalAsync",
+                Name: Constants.UserDefinedAddForDisposalAsync,
                 Parameters.Length: 1
             } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.AsyncDisposable))
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
         
         _customConstructorParameterChoiceMethods = dieMembers
-            .Where(s => s.Name.StartsWith("DIE_ConstrParam_"))
+            .Where(s => s.Name.StartsWith(Constants.UserDefinedConstructorParameters))
             .Where(s => s is IMethodSymbol { ReturnsVoid: true, Arity: 0, IsConditional: false, MethodKind: MethodKind.Ordinary } method
                 && method.Parameters.Any(p => p.RefKind == RefKind.Out))
             .OfType<IMethodSymbol>()

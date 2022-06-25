@@ -3,7 +3,8 @@ namespace MrMeeseeks.DIE;
 public enum DieExceptionKind
 {
     ImplementationCycle,
-    FunctionCycle
+    FunctionCycle,
+    Validation
 }
 
 public abstract class DieException : Exception
@@ -19,4 +20,9 @@ public class ImplementationCycleDieException : DieException
 public class FunctionCycleDieException : DieException
 {
     public override DieExceptionKind Kind => DieExceptionKind.FunctionCycle;
+}
+
+public class ValidationDieException : DieException
+{
+    public override DieExceptionKind Kind => DieExceptionKind.Validation;
 }

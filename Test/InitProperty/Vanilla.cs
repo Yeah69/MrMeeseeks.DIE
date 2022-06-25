@@ -12,7 +12,7 @@ internal class Wrapper
 }
 
 [CreateFunction(typeof(Wrapper), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
 }
 

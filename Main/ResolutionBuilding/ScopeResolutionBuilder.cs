@@ -34,6 +34,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         IScopeManager scopeManager,
         IUserDefinedElements userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
+        IErrorContext errorContext,
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
@@ -52,6 +53,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             synchronicityDecisionMakerFactory,
             localFunctionResolutionBuilderFactory)
     {
+        ErrorContext = errorContext;
         _containerResolutionBuilder = containerResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
         _scopeManager = scopeManager;
@@ -61,6 +63,8 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         _transientScopeReference = RootReferenceGenerator.Generate("_transientScope");
         _transientScopeParameterReference = RootReferenceGenerator.Generate("transientScope");
     }
+
+    public override IErrorContext ErrorContext { get; }
 
     public override MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
         _containerResolutionBuilder.CreateContainerInstanceReferenceResolution(parameter, _containerReference);

@@ -17,6 +17,7 @@ internal interface IScopeManager
 
 internal class ScopeManager : IScopeManager
 {
+    private readonly IContainerInfo _containerInfo;
     private readonly IContainerResolutionBuilder _containerResolutionBuilder;
     private readonly ITransientScopeInterfaceResolutionBuilder _transientScopeInterfaceResolutionBuilder;
     private readonly ImmutableList<ITypesFromAttributes> _containerTypesFromAttributesList;
@@ -28,6 +29,7 @@ internal class ScopeManager : IScopeManager
             IScopeManager,
             IUserDefinedElements, 
             ICheckTypeProperties, 
+            IErrorContext,
             IScopeResolutionBuilder> _scopeResolutionBuilderFactory;
     private readonly Func<
         string, 
@@ -36,6 +38,7 @@ internal class ScopeManager : IScopeManager
         IScopeManager,
         IUserDefinedElements, 
         ICheckTypeProperties, 
+        IErrorContext,
         ITransientScopeResolutionBuilder> _transientScopeResolutionBuilderFactory;
     private readonly Func<ImmutableArray<AttributeData>, ScopeTypesFromAttributes> _scopeTypesFromAttributesFactory;
     private readonly Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> _checkTypePropertiesFactory;
@@ -59,6 +62,7 @@ internal class ScopeManager : IScopeManager
             IScopeManager,
             IUserDefinedElements, 
             ICheckTypeProperties, 
+            IErrorContext,
             ITransientScopeResolutionBuilder> transientScopeResolutionBuilderFactory,
         Func<
             string, 
@@ -67,6 +71,7 @@ internal class ScopeManager : IScopeManager
             IScopeManager,
             IUserDefinedElements, 
             ICheckTypeProperties, 
+            IErrorContext,
             IScopeResolutionBuilder> scopeResolutionBuilderFactory,
         Func<ImmutableArray<AttributeData>, ScopeTypesFromAttributes> scopeTypesFromAttributesFactory,
         Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> checkTypePropertiesFactory,
@@ -74,6 +79,7 @@ internal class ScopeManager : IScopeManager
         IUserDefinedElements emptyUserDefinedElements,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
+        _containerInfo = containerInfo;
         _containerResolutionBuilder = containerResolutionBuilder;
         _transientScopeInterfaceResolutionBuilder = transientScopeInterfaceResolutionBuilder;
         _containerTypesFromAttributesList = containerTypesFromAttributesList;
@@ -95,7 +101,8 @@ internal class ScopeManager : IScopeManager
                     defaultScopeType is {} 
                         ? _userProvidedScopeElementsFactory(defaultScopeType) 
                         : emptyUserDefinedElements,
-                    _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(defaultScopeTypesFromAttributes)));
+                    _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(defaultScopeTypesFromAttributes)),
+                    new ErrorContext($"{Constants.DefaultScopeName} (in {containerInfo.Name})", defaultScopeType?.Locations.FirstOrDefault() ?? Location.None));
             },
             LazyThreadSafetyMode.ExecutionAndPublication);
         _defaultTransientScopeBuilder = new Lazy<ITransientScopeResolutionBuilder>(
@@ -111,7 +118,8 @@ internal class ScopeManager : IScopeManager
                     defaultTransientScopeType is {} 
                         ? _userProvidedScopeElementsFactory(defaultTransientScopeType) 
                         : emptyUserDefinedElements,
-                    _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(defaultTransientScopeTypesFromAttributes)));
+                    _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(defaultTransientScopeTypesFromAttributes)),
+                    new ErrorContext($"{Constants.DefaultTransientScopeName} (in {containerInfo.Name})", defaultTransientScopeType?.Locations.FirstOrDefault() ?? Location.None));
                 _transientScopeInterfaceResolutionBuilder.AddImplementation(ret);
                 return ret;
             },
@@ -181,7 +189,8 @@ internal class ScopeManager : IScopeManager
             _transientScopeInterfaceResolutionBuilder,
             this,
             _userProvidedScopeElementsFactory(scopeType),
-            _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(scopeTypesFromAttributes)));
+            _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(scopeTypesFromAttributes)),
+            new ErrorContext($"{scopeType.Name} (in {_containerInfo.Name})", scopeType.Locations.FirstOrDefault() ?? Location.None));
         _customScopeBuilders[scopeRootType] = ret;
         return ret;
     }
@@ -191,17 +200,18 @@ internal class ScopeManager : IScopeManager
         if (_customTransientScopeBuilders.TryGetValue(transientScopeRootType, out var builder))
             return builder;
 
-        if (!_transientScopeRootTypeToScopeType.TryGetValue(transientScopeRootType, out var scopeType)) 
+        if (!_transientScopeRootTypeToScopeType.TryGetValue(transientScopeRootType, out var transientScopeType)) 
             return _defaultTransientScopeBuilder.Value;
         
-        var scopeTypesFromAttributes = _scopeTypesFromAttributesFactory(scopeType.GetAttributes());
+        var scopeTypesFromAttributes = _scopeTypesFromAttributesFactory(transientScopeType.GetAttributes());
         var ret = _transientScopeResolutionBuilderFactory(
-            scopeType.Name,
+            transientScopeType.Name,
             _containerResolutionBuilder,
             _transientScopeInterfaceResolutionBuilder,
             this,
-            _userProvidedScopeElementsFactory(scopeType),
-            _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(scopeTypesFromAttributes)));
+            _userProvidedScopeElementsFactory(transientScopeType),
+            _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(scopeTypesFromAttributes)),
+            new ErrorContext($"{transientScopeType.Name} (in {_containerInfo.Name})", transientScopeType.Locations.FirstOrDefault() ?? Location.None));
         _customTransientScopeBuilders[transientScopeRootType] = ret;
         _transientScopeInterfaceResolutionBuilder.AddImplementation(ret);
         return ret;

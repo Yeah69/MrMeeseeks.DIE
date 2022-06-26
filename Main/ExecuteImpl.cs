@@ -16,11 +16,9 @@ internal class ExecuteImpl : IExecute
     private readonly GeneratorExecutionContext _context;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly IContainerGenerator _containerGenerator;
-    private readonly IContainerErrorGenerator _containerErrorGenerator;
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly IValidateContainer _validateContainer;
     private readonly Func<IContainerInfo, IContainerResolutionBuilder> _containerResolutionBuilderFactory;
-    private readonly IResolutionTreeCreationErrorHarvester _resolutionTreeCreationErrorHarvester;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
     private readonly IDiagLogger _diagLogger;
 
@@ -29,11 +27,9 @@ internal class ExecuteImpl : IExecute
         GeneratorExecutionContext context,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IContainerGenerator containerGenerator,
-        IContainerErrorGenerator containerErrorGenerator,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
         IValidateContainer validateContainer,
         Func<IContainerInfo, IContainerResolutionBuilder> containerResolutionBuilderFactory,
-        IResolutionTreeCreationErrorHarvester resolutionTreeCreationErrorHarvester,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
         IDiagLogger diagLogger)
     {
@@ -41,11 +37,9 @@ internal class ExecuteImpl : IExecute
         _context = context;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
         _containerGenerator = containerGenerator;
-        _containerErrorGenerator = containerErrorGenerator;
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
         _validateContainer = validateContainer;
         _containerResolutionBuilderFactory = containerResolutionBuilderFactory;
-        _resolutionTreeCreationErrorHarvester = resolutionTreeCreationErrorHarvester;
         _containerInfoFactory = containerInfoFactory;
         _diagLogger = diagLogger;
     }
@@ -85,11 +79,7 @@ internal class ExecuteImpl : IExecute
 
                         containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
                         var containerResolution = containerResolutionBuilder.Build();
-                        var errorTreeItems = _resolutionTreeCreationErrorHarvester.Harvest(containerResolution);
-                        if (errorTreeItems.Any())
-                            _containerErrorGenerator.Generate(containerInfo, errorTreeItems);
-                        else
-                            _containerGenerator.Generate(containerInfo, containerResolution);
+                        _containerGenerator.Generate(containerInfo, containerResolution);
                     }
                     else
                     {

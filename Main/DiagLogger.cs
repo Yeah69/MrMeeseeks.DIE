@@ -43,8 +43,8 @@ internal class DiagLogger : IDiagLogger
                 break;
             case ValidationDieException:
                 break;
-            case SlippedResolutionDieException slippedResolution:
-                _context.ReportDiagnostic(Diagnostics.SlippedResolutionError(slippedResolution));
+            case CompilationDieException slippedResolution:
+                _context.ReportDiagnostic(slippedResolution.Diagnostic);
                 break;
             default:
                 _context.ReportDiagnostic(Diagnostics.UnexpectedException(exception));

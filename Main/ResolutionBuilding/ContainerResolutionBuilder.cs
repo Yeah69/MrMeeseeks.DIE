@@ -62,6 +62,10 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         
         transientScopeInterfaceResolutionBuilder.AddImplementation(this);
         _transientScopeAdapterReference = RootReferenceGenerator.Generate("TransientScopeAdapter");
+
+        ErrorContext = new ErrorContext(
+            containerInfo.Name,
+            containerInfo.ContainerType.Locations.FirstOrDefault() ?? Location.None);
     }
 
     public void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData)
@@ -79,6 +83,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             new (_synchronicityDecisionMakerFactory));
 
     public IFunctionCycleTracker FunctionCycleTracker { get; }
+
+    public override IErrorContext ErrorContext { get; }
 
     public override MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter) =>
         CreateContainerInstanceReferenceResolution(parameter, Constants.ThisKeyword);

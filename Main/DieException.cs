@@ -5,7 +5,7 @@ public enum DieExceptionKind
     ImplementationCycle,
     FunctionCycle,
     Validation,
-    SlippedResolutionError
+    Compilation
 }
 
 public abstract class DieException : Exception
@@ -35,10 +35,10 @@ public class ValidationDieException : DieException
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
 }
 
-public class SlippedResolutionDieException : DieException
+public class CompilationDieException : DieException
 {
-    public string ErrorMessage { get; }
+    public Diagnostic Diagnostic { get; }
 
-    public SlippedResolutionDieException(string errorMessage) => ErrorMessage = errorMessage;
-    public override DieExceptionKind Kind => DieExceptionKind.SlippedResolutionError;
+    public CompilationDieException(Diagnostic diagnostic) => Diagnostic = diagnostic;
+    public override DieExceptionKind Kind => DieExceptionKind.Compilation;
 }

@@ -49,7 +49,7 @@ public static class Diagnostics
             : $"Range \"{parentRange.Name}\" in parent-Container \"{parentContainer.Name}\"";
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_03",
                 "Validation (User-Defined Element)",
-                $"The user-defined \"{userDefinedElement.Name}\" (of \"{rangeDescription}) isn't validly defined: {specification}",
+                $"The user-defined \"{userDefinedElement.Name}\" (of {rangeDescription}) isn't validly defined: {specification}",
                 "Error", DiagnosticSeverity.Error,
                 true),
             userDefinedElement.Locations.FirstOrDefault() ?? Location.None);

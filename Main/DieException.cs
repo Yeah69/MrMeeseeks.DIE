@@ -24,5 +24,9 @@ public class FunctionCycleDieException : DieException
 
 public class ValidationDieException : DieException
 {
+    public IImmutableList<Diagnostic> Diagnostics { get; }
+
+    public ValidationDieException(IImmutableList<Diagnostic> diagnostics) => Diagnostics = diagnostics;
+
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
 }

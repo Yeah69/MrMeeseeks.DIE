@@ -17,4 +17,4 @@ using MrMeeseeks.DIE.Sample;
 
 [assembly:AllImplementationsAggregation]
 
-//[assembly:ErrorDescriptionInsteadOfBuildFailure]
+[assembly:ErrorDescriptionInsteadOfBuildFailure]

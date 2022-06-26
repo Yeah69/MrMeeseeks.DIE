@@ -668,7 +668,19 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var implementationCycle = implementationStack.Contains(implementationType, SymbolEqualityComparer.Default);
 
         if (implementationCycle)
-            throw new ImplementationCycleDieException();
+        {
+            var cycleStack = ImmutableStack.Create(implementationType);
+            var stack = implementationStack;
+            var i = implementationType;
+            do
+            {
+                stack = stack.Pop(out var popped);
+                cycleStack = cycleStack.Push(popped);
+                i = popped;
+            } while (!SymbolEqualityComparer.Default.Equals(implementationType, i));
+            
+            throw new ImplementationCycleDieException(cycleStack);
+        }
 
         implementationStack = implementationStack.Push(implementationType);
         

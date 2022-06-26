@@ -4,7 +4,8 @@ public enum DieExceptionKind
 {
     ImplementationCycle,
     FunctionCycle,
-    Validation
+    Validation,
+    SlippedResolutionError
 }
 
 public abstract class DieException : Exception
@@ -14,7 +15,10 @@ public abstract class DieException : Exception
 
 public class ImplementationCycleDieException : DieException
 {
+    public ImplementationCycleDieException(IImmutableStack<INamedTypeSymbol> cycle) => Cycle = cycle;
+
     public override DieExceptionKind Kind => DieExceptionKind.ImplementationCycle;
+    public IImmutableStack<INamedTypeSymbol> Cycle { get; }
 }
 
 public class FunctionCycleDieException : DieException
@@ -29,4 +33,12 @@ public class ValidationDieException : DieException
     public ValidationDieException(IImmutableList<Diagnostic> diagnostics) => Diagnostics = diagnostics;
 
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
+}
+
+public class SlippedResolutionDieException : DieException
+{
+    public string ErrorMessage { get; }
+
+    public SlippedResolutionDieException(string errorMessage) => ErrorMessage = errorMessage;
+    public override DieExceptionKind Kind => DieExceptionKind.SlippedResolutionError;
 }

@@ -93,11 +93,20 @@ internal class ExecuteImpl : IExecute
                     }
                     else
                     {
-                        foreach (var validationDiagnostic in validationDiagnostics)
-                            _diagLogger.Log(validationDiagnostic);
 
-                        throw new ValidationDieException();
+                        throw new ValidationDieException(validationDiagnostics);
                     }
+                }
+                catch (ValidationDieException validationDieException)
+                {
+                    if (_errorDescriptionInsteadOfBuildFailure)
+                        _containerDieExceptionGenerator.Generate(
+                            containerSymbol.ContainingNamespace.FullName(), 
+                            containerSymbol.Name, 
+                            validationDieException);
+                    else
+                        foreach (var validationDiagnostic in validationDieException.Diagnostics)
+                            _diagLogger.Log(validationDiagnostic);
                 }
                 catch (DieException dieException)
                 {

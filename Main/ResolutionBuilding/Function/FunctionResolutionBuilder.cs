@@ -115,7 +115,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
             return (funcParameter.Resolution, null);
 
-        if (_userDefinedElements.GetInstanceFor(type) is { } instance)
+        if (_userDefinedElements.GetFactoryFieldFor(type) is { } instance)
             return (
                 new FieldResolution(
                     RootReferenceGenerator.Generate(instance.Type),
@@ -123,7 +123,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     instance.Name),
                 null);
 
-        if (_userDefinedElements.GetPropertyFor(type) is { } property)
+        if (_userDefinedElements.GetFactoryPropertyFor(type) is { } property)
             return (
                 new FieldResolution(
                     RootReferenceGenerator.Generate(property.Type),
@@ -131,7 +131,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     property.Name),
                 null);
 
-        if (_userDefinedElements.GetFactoryFor(type) is { } factory)
+        if (_userDefinedElements.GetFactoryMethodFor(type) is { } factory)
             return (
                 new FactoryResolution(
                     RootReferenceGenerator.Generate(factory.ReturnType),

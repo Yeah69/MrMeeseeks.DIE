@@ -2,13 +2,18 @@ namespace MrMeeseeks.DIE;
 
 public static class Diagnostics
 {
-    public static Diagnostic CircularReferenceInsideFactory => 
-        Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_00", 
-            "Circular Reference Exception (inside factory)",
-            "This container and/or its configuration lead to a circular reference inside one of its factory functions, which need to be generated.", 
-            "Error", DiagnosticSeverity.Error, 
-            true),
+    public static Diagnostic CircularReferenceInsideFactory(ImplementationCycleDieException exception)
+    {
+        var cycleText = string.Join(" --> ", exception.Cycle.Select(nts => nts.FullName()));
+        
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_00", 
+                "Circular Reference Exception (inside factory)",
+                $"This container and/or its configuration lead to a circular reference inside one of its factory functions, which need to be generated. The implementations involved in the cycle are: {cycleText}", 
+                "Error", DiagnosticSeverity.Error, 
+                true),
             Location.None);
+    }
+        
     
     public static Diagnostic CircularReferenceAmongFactories => 
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_01", 
@@ -53,5 +58,25 @@ public static class Diagnostics
                 "Error", DiagnosticSeverity.Error,
                 true),
             userDefinedElement.Locations.FirstOrDefault() ?? Location.None);
+    }
+    
+    public static Diagnostic UnexpectedException(DieException exception)
+    {
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_00", 
+                "Unexpected Exception",
+                exception.ToString(), 
+                "Error", DiagnosticSeverity.Error, 
+                true),
+            Location.None);
+    }
+    
+    public static Diagnostic SlippedResolutionError(SlippedResolutionDieException exception)
+    {
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_00", 
+                "Unexpected Exception",
+                exception.ErrorMessage, 
+                "Error", DiagnosticSeverity.Error, 
+                true),
+            Location.None);
     }
 }

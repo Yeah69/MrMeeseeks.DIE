@@ -31,10 +31,26 @@ internal class DiagLogger : IDiagLogger
 
     public void Log(string message) => Log(0, "INFO", message, "INFO", DiagnosticSeverity.Warning);
     
-    public void Error(DieException exception) => 
-        _context.ReportDiagnostic(Diagnostic.Create(
-            new DiagnosticDescriptor($"DIE{69.ToString().PadLeft(3, '0')}", "Error", "Circular implementation references", "Error", DiagnosticSeverity.Error, true),
-            Location.None));
+    public void Error(DieException exception)
+    {
+        switch (exception)
+        {
+            case ImplementationCycleDieException implementationCycle:
+                _context.ReportDiagnostic(Diagnostics.CircularReferenceInsideFactory(implementationCycle));
+                break;
+            case FunctionCycleDieException:
+                _context.ReportDiagnostic(Diagnostics.CircularReferenceAmongFactories);
+                break;
+            case ValidationDieException:
+                break;
+            case SlippedResolutionDieException slippedResolution:
+                _context.ReportDiagnostic(Diagnostics.SlippedResolutionError(slippedResolution));
+                break;
+            default:
+                _context.ReportDiagnostic(Diagnostics.UnexpectedException(exception));
+                break;
+        }
+    }
 
     public void Log(Diagnostic diagnostic)
     {

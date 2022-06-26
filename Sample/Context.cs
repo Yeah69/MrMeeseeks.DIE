@@ -1,37 +1,24 @@
-﻿using System;
-using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.CustomEmbedding.ConstructorParameterWithDependencyInScope;
+namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation.Cycle.Proxied;
+
+
+internal class Proxy1
+{
+    internal Proxy1(Dependency inner) {}
+}
+internal class Proxy0
+{
+    internal Proxy0(Proxy1 inner) {}
+}
 
 internal class Dependency
 {
-    public int Number { get; }
-
-    internal Dependency(int number) => Number = number;
+    internal Dependency(Proxy0 inner) {}
 }
 
-internal class OtherDependency
-{
-    public int Number => 69;
-}
-
-internal class ScopeRoot : IScopeRoot
-{
-    public Dependency Dependency { get; }
-
-    internal ScopeRoot(
-        Dependency dependency) => Dependency = dependency;
-}
-
-[CreateFunction(typeof(ScopeRoot), "Create")]
+[CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    private partial void DIE_AddForDisposal(IDisposable disposable);
     
-    sealed partial class DIE_DefaultScope
-    {
-        [CustomConstructorParameterChoice(typeof(Dependency))]
-        private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
-    }
 }

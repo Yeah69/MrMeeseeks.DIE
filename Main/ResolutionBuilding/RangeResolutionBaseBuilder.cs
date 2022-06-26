@@ -8,6 +8,8 @@ internal interface IRangeResolutionBaseBuilder
     ICheckTypeProperties CheckTypeProperties { get; }
     IUserDefinedElements UserDefinedElements { get; }
     
+    IErrorContext ErrorContext { get; }
+    
     MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter);
 
@@ -38,7 +40,8 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
 {
     public ICheckTypeProperties CheckTypeProperties { get; }
     public IUserDefinedElements UserDefinedElements { get; }
-    
+    public abstract IErrorContext ErrorContext { get; }
+
     protected IMethodSymbol? AddForDisposal { get; }
     protected IMethodSymbol? AddForDisposalAsync { get; }
 

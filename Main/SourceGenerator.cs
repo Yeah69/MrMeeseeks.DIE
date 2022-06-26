@@ -65,20 +65,16 @@ public class SourceGenerator : ISourceGenerator
             wellKnownTypesMiscellaneous);
         var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
-        var containerErrorGenerator = new ContainerErrorGenerator(context);
         var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypesMiscellaneous);
-        var resolutionTreeCreationErrorHarvester = new ResolutionTreeCreationErrorHarvester();
         var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
         new ExecuteImpl(
             errorDescriptionInsteadOfBuildFailure,
             context,
             wellKnownTypesMiscellaneous,
             containerGenerator, 
-            containerErrorGenerator,
             containerDieExceptionGenerator,
             validateContainer,
             ResolutionTreeFactory,
-            resolutionTreeCreationErrorHarvester,
             ContainerInfoFactory, 
             diagLogger).Execute();
             
@@ -134,13 +130,15 @@ public class SourceGenerator : ISourceGenerator
                 ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder, 
                 IScopeManager scopeManager,
                 IUserDefinedElements userProvidedScopeElements,
-                ICheckTypeProperties checkTypeProperties) => new TransientScopeResolutionBuilder(
+                ICheckTypeProperties checkTypeProperties,
+                IErrorContext errorContext) => new TransientScopeResolutionBuilder(
                 name,
                 containerBuilder,
                 transientScopeInterfaceResolutionBuilder,
                 scopeManager,
                 userProvidedScopeElements,
                 checkTypeProperties,
+                errorContext,
             
                 wellKnownTypes, 
                 referenceGeneratorFactory,
@@ -154,13 +152,15 @@ public class SourceGenerator : ISourceGenerator
                 ITransientScopeInterfaceResolutionBuilder transientScopeInterfaceResolutionBuilder, 
                 IScopeManager scopeManager,
                 IUserDefinedElements userProvidedScopeElements,
-                ICheckTypeProperties checkTypeProperties) => new ScopeResolutionBuilder(
+                ICheckTypeProperties checkTypeProperties,
+                IErrorContext errorContext) => new ScopeResolutionBuilder(
                 name,
                 containerBuilder,
                 transientScopeInterfaceResolutionBuilder,
                 scopeManager,
                 userProvidedScopeElements,
                 checkTypeProperties,
+                errorContext,
             
                 wellKnownTypes, 
                 referenceGeneratorFactory,

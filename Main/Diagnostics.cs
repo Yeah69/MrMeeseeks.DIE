@@ -70,11 +70,11 @@ public static class Diagnostics
             Location.None);
     }
     
-    public static Diagnostic SlippedResolutionError(SlippedResolutionDieException exception)
+    public static Diagnostic CompilationError(string message, Location location)
     {
-        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_00", 
-                "Unexpected Exception",
-                exception.ErrorMessage, 
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_65_00", 
+                "Error During Compilation",
+                message, 
                 "Error", DiagnosticSeverity.Error, 
                 true),
             Location.None);

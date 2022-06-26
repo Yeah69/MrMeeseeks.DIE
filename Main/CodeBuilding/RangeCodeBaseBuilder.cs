@@ -343,8 +343,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateFields);
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                 break;
-            case ErrorTreeItem(var message):
-                throw new SlippedResolutionDieException(message);
+            case ErrorTreeItem(var diagnostic):
+                throw new CompilationDieException(diagnostic);
             case var (reference, typeFullName):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};"); 
                 break;
@@ -588,8 +588,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder.AppendLine(
                     $"{reference} = new {itemFullName}[]{{{string.Join(", ", items.Select(d => $"({itemFullName}) {(d as Resolvable)?.Reference}"))}}};");
                 break;
-            case ErrorTreeItem(var message):
-                throw new SlippedResolutionDieException(message);
+            case ErrorTreeItem(var diagnostic):
+                throw new CompilationDieException(diagnostic);
             default:
                 throw new Exception("Unexpected case or not implemented.");
         }

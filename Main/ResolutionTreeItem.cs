@@ -72,7 +72,7 @@ internal record TransientScopeAsAsyncDisposableResolution(
     string TypeFullName) : Resolvable(Reference, TypeFullName);
 
 internal record ErrorTreeItem(
-    string Message) : Resolvable("error_99_99", "Error");
+    Diagnostic Diagnostic) : Resolvable("error_99_99", "Error");
 
 internal record InterfaceResolution(
     string Reference,

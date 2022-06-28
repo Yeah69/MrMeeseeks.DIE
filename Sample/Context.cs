@@ -1,23 +1,12 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using System.IO;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation.Cycle.Proxied;
+namespace MrMeeseeks.DIE.Test.ConstructorChoice.WithParameter;
 
-
-internal class Proxy1
-{
-    internal Proxy1(Dependency inner) {}
-}
-internal class Proxy0
-{
-    internal Proxy0(Proxy1 inner) {}
-}
-
-internal class Dependency
-{
-    internal Dependency(Proxy0 inner) {}
-}
-
-[CreateFunction(typeof(Dependency), "Create")]
+[ImplementationAggregation(typeof(FileInfo))]
+[ConstructorChoice(typeof(FileInfo), typeof(string))]
+[CreateFunction(typeof(Func<string, FileInfo>), "Create")]
 internal sealed partial class Container
 {
     

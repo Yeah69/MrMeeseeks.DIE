@@ -7,7 +7,6 @@ internal interface ILocalFunctionResolutionBuilder : IFunctionResolutionBuilder
 internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILocalFunctionResolutionBuilder
 {
     private readonly INamedTypeSymbol _returnType;
-    private readonly IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> _parameters;
 
     public LocalFunctionResolutionBuilder(
         // parameter
@@ -32,14 +31,13 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
             functionCycleTracker)
     {
         _returnType = returnType;
-        _parameters = parameters;
 
         Name = RootReferenceGenerator.Generate("Create", _returnType);
     }
 
     protected override string Name { get; }
 
-    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(_returnType, _parameters, ImmutableStack<INamedTypeSymbol>.Empty)).Item1;
+    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(_returnType, CurrentParameters, ImmutableStack<INamedTypeSymbol>.Empty)).Item1;
 
     public override FunctionResolution Build()
     {
@@ -48,7 +46,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
             Name,
             TypeFullName,
             Resolvable.Value,
-            _parameters.Select(t => t.Resolution).ToList(),
+            Parameters,
             SynchronicityDecision.Value);
     }
 }

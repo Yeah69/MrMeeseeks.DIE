@@ -37,7 +37,11 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
     protected override string Name { get; }
 
     protected override Resolvable CreateResolvable() => SwitchImplementation(
-        _parameter with { ImplementationStack = ImmutableStack<INamedTypeSymbol>.Empty }).Item1;
+        _parameter with
+        {
+            ImplementationStack = ImmutableStack<INamedTypeSymbol>.Empty,
+            CurrentParameters = CurrentParameters
+        }).Item1;
 
     public override FunctionResolution Build()
     {

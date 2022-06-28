@@ -71,6 +71,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     public Lazy<SynchronicityDecision> SynchronicityDecision => _synchronicityDecisionMaker.Decision;
     protected Lazy<Resolvable> Resolvable { get; } 
     
+    protected IReadOnlyList<(ITypeSymbol, ParameterResolution)> CurrentParameters { get; }
+    
     protected IReadOnlyList<ParameterResolution> Parameters { get; }
     
     public INamedTypeSymbol OriginalReturnType { get; }
@@ -101,8 +103,11 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             $"{OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Resolution.TypeFullName))})");
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
-        Parameters = currentParameters
-            .Select(p => new ParameterResolution(RootReferenceGenerator.Generate(p.Type), p.Resolution.TypeFullName))
+        CurrentParameters = currentParameters
+            .Select(p => (p.Type, new ParameterResolution(RootReferenceGenerator.Generate(p.Type), p.Resolution.TypeFullName)))
+            .ToList();
+        Parameters = CurrentParameters
+            .Select(p => p.Item2)
             .ToList();
 
         Resolvable = new(CreateResolvable);

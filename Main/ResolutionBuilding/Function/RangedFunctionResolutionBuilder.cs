@@ -39,7 +39,11 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
     protected override string Name { get; }
 
     protected override Resolvable CreateResolvable() => CreateConstructorResolution(
-        _forConstructorParameter with { ImplementationStack = ImmutableStack<INamedTypeSymbol>.Empty }).Item1;
+        _forConstructorParameter with
+        {
+            ImplementationStack = ImmutableStack<INamedTypeSymbol>.Empty,
+            CurrentFuncParameters = CurrentParameters
+        }).Item1;
 
     public override FunctionResolution Build()
     {
@@ -49,7 +53,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
             Name,
             TypeFullName,
             Resolvable.Value,
-            _forConstructorParameter.CurrentFuncParameters.Select(t => t.Resolution).ToList(),
+            Parameters,
             SynchronicityDecision.Value);
     }
 }

@@ -32,12 +32,6 @@ internal class ContainerGenerator : IContainerGenerator
 
     public void Generate(IContainerInfo containerInfo, ContainerResolution containerResolution)
     {
-        if (!containerInfo.IsValid)
-        {
-            _diagLogger.Log($"return generation");
-            return;
-        }
-
         var containerCodeBuilder = _containerCodeBuilderFactory(
             containerInfo, 
             containerResolution,

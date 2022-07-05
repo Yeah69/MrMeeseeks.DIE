@@ -2,10 +2,6 @@
 
 internal interface IDiagLogger
 {
-    void Log(string message);
-
-    void Log(int id, string title, string message, string category, DiagnosticSeverity diagnosticSeverity);
-    
     void Error(DieException exception);
 
     void Log(Diagnostic diagnostic);
@@ -23,13 +19,6 @@ internal class DiagLogger : IDiagLogger
         _ignoreErrors = ignoreErrors;
         _context = context;
     }
-
-    public void Log(int id, string title, string message, string category, DiagnosticSeverity diagnosticSeverity) =>
-        _context.ReportDiagnostic(Diagnostic.Create(
-            new DiagnosticDescriptor($"DIE{id.ToString().PadLeft(3, '0')}", title, message, category, diagnosticSeverity, true),
-            Location.None));
-
-    public void Log(string message) => Log(0, "INFO", message, "INFO", DiagnosticSeverity.Warning);
     
     public void Error(DieException exception)
     {

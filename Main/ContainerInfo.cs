@@ -5,7 +5,6 @@ internal interface IContainerInfo
     string Name { get; }
     string Namespace { get; }
     string FullName { get; }
-    bool IsValid { get; }
     INamedTypeSymbol ContainerType { get; }
     IReadOnlyList<(INamedTypeSymbol, string)> CreateFunctionData { get; }
 }
@@ -36,14 +35,11 @@ internal class ContainerInfo : IContainerInfo
                           : ((INamedTypeSymbol, string)?) null)
             .OfType<(INamedTypeSymbol, string)>()
             .ToList();
-
-        IsValid = CreateFunctionData.Any();
     }
 
     public string Name { get; }
     public string Namespace { get; }
     public string FullName { get; }
-    public bool IsValid { get; }
     public INamedTypeSymbol ContainerType { get; }
     public IReadOnlyList<(INamedTypeSymbol, string)> CreateFunctionData { get; }
 }

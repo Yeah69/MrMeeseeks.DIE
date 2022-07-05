@@ -46,8 +46,6 @@ internal class ExecuteImpl : IExecute
 
     public void Execute()
     {
-        _diagLogger.Log("Start Execute");
-
         foreach (var syntaxTree in _context.Compilation.SyntaxTrees)
         {
             var semanticModel = _context.Compilation.GetSemanticModel(syntaxTree);
@@ -114,7 +112,5 @@ internal class ExecuteImpl : IExecute
                 }
             }
         }
-            
-        _diagLogger.Log("End Execute");
     }
 }

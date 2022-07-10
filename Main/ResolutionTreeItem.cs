@@ -125,7 +125,7 @@ internal record ConstructorResolution(
 internal record LazyResolution(
     string Reference,
     string TypeFullName,
-    MethodGroupResolution MethodGroup) : Resolvable(Reference, TypeFullName);
+    MultiSynchronicityFunctionCallResolution InnerCallOfLambda) : Resolvable(Reference, TypeFullName);
 
 internal record SyntaxValueTupleResolution(
     string Reference,
@@ -164,7 +164,8 @@ internal record InterfaceFunctionDeclarationResolution(
 internal record FuncResolution(
     string Reference,
     string TypeFullName,
-    MethodGroupResolution MethodGroupResolution) : Resolvable(Reference, TypeFullName);
+    IReadOnlyList<ParameterResolution> LambdaParameters,
+    MultiSynchronicityFunctionCallResolution InnerCallOfLambda) : Resolvable(Reference, TypeFullName);
 
 internal record FactoryResolution(
     string Reference,

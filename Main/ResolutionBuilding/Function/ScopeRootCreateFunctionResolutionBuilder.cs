@@ -40,7 +40,10 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         _parameter with
         {
             ImplementationStack = ImmutableStack<INamedTypeSymbol>.Empty,
-            CurrentParameters = CurrentParameters
+            CurrentParameters = ImmutableSortedDictionary.CreateRange(
+                CurrentParameters.Select(t => new KeyValuePair<string, (ITypeSymbol, ParameterResolution)>(
+                    t.Item1.FullName(),
+                    t)))
         }).Item1;
 
     public override FunctionResolution Build()

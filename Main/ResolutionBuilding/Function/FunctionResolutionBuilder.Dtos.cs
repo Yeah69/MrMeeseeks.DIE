@@ -4,38 +4,38 @@ internal abstract partial class FunctionResolutionBuilder
 {
     private record SwitchInterfaceAfterScopeRootParameter(
         INamedTypeSymbol InterfaceType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> CurrentParameters,
         IImmutableStack<INamedTypeSymbol> ImplementationStack);
 
     private record CreateInterfaceParameter(
         INamedTypeSymbol InterfaceType,
         INamedTypeSymbol ImplementationType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> CurrentParameters,
         IImmutableStack<INamedTypeSymbol> ImplementationStack);
 
     private record CreateInterfaceParameterAsComposition(
             INamedTypeSymbol InterfaceType,
             INamedTypeSymbol ImplementationType,
-            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> CurrentParameters,
             IImmutableStack<INamedTypeSymbol> ImplementationStack,
             CompositionInterfaceExtension Composition)
         : CreateInterfaceParameter(InterfaceType, ImplementationType, CurrentParameters, ImplementationStack);
 
     private record SwitchClassParameter(
         INamedTypeSymbol TypeSymbol,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> CurrentParameters,
         IImmutableStack<INamedTypeSymbol> ImplementationStack);
     
     private record SwitchImplementationParameterWithDecoration(
             INamedTypeSymbol ImplementationType,
-            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> CurrentParameters,
             IImmutableStack<INamedTypeSymbol> ImplementationStack,
             DecorationInterfaceExtension Decoration)
         : SwitchImplementationParameter(ImplementationType, CurrentParameters, ImplementationStack);
     
     private record SwitchImplementationParameterWithComposition(
             INamedTypeSymbol ImplementationType,
-            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> CurrentParameters,
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> CurrentParameters,
             IImmutableStack<INamedTypeSymbol> ImplementationStack,
             CompositionInterfaceExtension Composition)
         : SwitchImplementationParameter(ImplementationType, CurrentParameters, ImplementationStack);

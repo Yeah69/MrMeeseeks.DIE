@@ -21,7 +21,7 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
         : base(
             rangeResolutionBaseBuilder, 
             returnType, 
-            Array.Empty<(ITypeSymbol, ParameterResolution)>(),
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
             synchronicityDecisionMaker,
             new object(),
             
@@ -38,7 +38,7 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
 
     protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(
         _returnType,
-        Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
         ImmutableStack<INamedTypeSymbol>.Empty)).Item1;
 
     public override FunctionResolution Build()

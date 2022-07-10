@@ -22,18 +22,18 @@ internal interface IRangeResolutionBaseBuilder
     TransientScopeRootResolution CreateTransientScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
     
     ScopeRootResolution CreateScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
 
     void RegisterDisposalType(DisposalType disposalType);
 
     IFunctionResolutionBuilder CreateLocalFunctionResolution(
         INamedTypeSymbol type,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
 }
 
 internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
@@ -47,7 +47,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
 
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
-    private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
+    private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
     private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
@@ -69,7 +69,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         IReferenceGeneratorFactory referenceGeneratorFactory,
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
     {
         CheckTypeProperties = checkTypeProperties;
         UserDefinedElements = userDefinedElements;
@@ -102,17 +102,17 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
     public abstract TransientScopeRootResolution CreateTransientScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
     
     public abstract ScopeRootResolution CreateScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
 
     public abstract void RegisterDisposalType(DisposalType disposalType);
-    public IFunctionResolutionBuilder CreateLocalFunctionResolution(INamedTypeSymbol type, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
+    public IFunctionResolutionBuilder CreateLocalFunctionResolution(INamedTypeSymbol type, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters)
     {
-        var key = $"{type.FullName()}:::{string.Join(":::", currentParameters.Select(p => p.Resolution.TypeFullName))}";
+        var key = $"{type.FullName()}:::{string.Join(":::", currentParameters.Select(p => p.Value.Item2.TypeFullName))}";
         if (!LocalFunctions.TryGetValue(key, out var localFunction))
         {
             localFunction = _localFunctionResolutionBuilderFactory(this, type, currentParameters);

@@ -40,7 +40,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IContainerCreateFunctionResolutionBuilder> createFunctionResolutionBuilderFactory,
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory, 
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
         IUserDefinedElements userDefinedElement, 
         IFunctionCycleTracker functionCycleTracker) 
         : base(
@@ -95,7 +95,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public override TransientScopeRootResolution CreateTransientScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters) =>
         _scopeManager
             .GetTransientScopeBuilder(rootType)
             .AddCreateResolveFunction(
@@ -107,7 +107,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public override ScopeRootResolution CreateScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType, 
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters) =>
         _scopeManager
             .GetScopeBuilder(rootType)
             .AddCreateResolveFunction(
@@ -165,7 +165,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     SymbolEqualityComparer.Default))
             {
                 var call = createFunction.BuildFunctionCall(
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
                     Constants.ThisKeyword);
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
@@ -186,7 +186,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     .FullName();
                 var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
                 var taskCall = createFunction.BuildFunctionCall(
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
                     Constants.ThisKeyword);
                 taskCall.Sync.Await = false;
                 taskCall.AsyncTask.Await = false;
@@ -210,7 +210,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     .FullName();
                 var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
                 var valueTaskCall = createFunction.BuildFunctionCall(
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
                     Constants.ThisKeyword);
                 valueTaskCall.Sync.Await = false;
                 valueTaskCall.AsyncTask.Await = false;
@@ -233,7 +233,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                          SymbolEqualityComparer.Default))
             {
                 var call = createFunction.BuildFunctionCall(
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
                     Constants.ThisKeyword);
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
@@ -254,7 +254,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     .FullName();
                 var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
                 var valueCall = createFunction.BuildFunctionCall(
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
                     Constants.ThisKeyword);
                 valueCall.Sync.Await = false;
                 valueCall.AsyncTask.Await = false;
@@ -281,7 +281,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     .Construct(createFunction.OriginalReturnType)
                     .FullName();
                 var call = createFunction.BuildFunctionCall(
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
                     Constants.ThisKeyword);
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
@@ -301,7 +301,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 rootFunctions.Add(publicTaskResolutionFunction);
                 
                 var valueCall = createFunction.BuildFunctionCall(
-                    Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>(),
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
                     Constants.ThisKeyword);
                 valueCall.Sync.Await = false;
                 valueCall.AsyncTask.Await = false;

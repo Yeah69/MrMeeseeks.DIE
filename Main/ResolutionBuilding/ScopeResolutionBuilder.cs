@@ -10,7 +10,7 @@ internal interface IScopeResolutionBuilder : IRangeResolutionBaseBuilder, IResol
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
         string transientInstanceScopeReference,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters);
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
 }
 
 internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolutionBuilder
@@ -42,7 +42,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         Func<IRangeResolutionBaseBuilder, SwitchImplementationParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
         Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
+        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
         : base(
             name,
             checkTypeProperties,
@@ -75,7 +75,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     public override TransientScopeRootResolution CreateTransientScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters) =>
         _scopeManager
             .GetTransientScopeBuilder(rootType)
             .AddCreateResolveFunction(
@@ -87,7 +87,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     public override ScopeRootResolution CreateScopeRootResolution(
         SwitchImplementationParameter parameter,
         INamedTypeSymbol rootType, 
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters) =>
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters) =>
         _scopeManager
             .GetScopeBuilder(rootType)
             .AddCreateResolveFunction(
@@ -109,7 +109,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         INamedTypeSymbol rootType,
         string containerInstanceScopeReference,
         string transientInstanceScopeReference,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters)
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters)
     {
         var key = $"{rootType.FullName()}{(currentParameters.Any() ? $"_{string.Join(";", currentParameters)}" : "")}";
         if (!_scopeRootFunctionResolutions.TryGetValue(

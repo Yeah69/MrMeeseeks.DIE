@@ -56,7 +56,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         ForConstructorParameter parameter,
         Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker)
     {
-        var listedParameterTypes = string.Join(",", parameter.CurrentFuncParameters.Select(p => p.Item2.TypeFullName));
+        var listedParameterTypes = string.Join(",", parameter.CurrentParameters.Select(p => p.Value.Item2.TypeFullName));
         if (!_overloads.TryGetValue(listedParameterTypes, out var function))
         {
             function = _rangedFunctionResolutionBuilderFactory(

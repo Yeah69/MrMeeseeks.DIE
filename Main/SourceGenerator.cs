@@ -172,7 +172,7 @@ public class SourceGenerator : ISourceGenerator
             ILocalFunctionResolutionBuilder LocalFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
                 INamedTypeSymbol returnType,
-                IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> parameters) => new LocalFunctionResolutionBuilder(
+                ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters) => new LocalFunctionResolutionBuilder(
                 rangeResolutionBaseBuilder,
                 returnType,
                 parameters,

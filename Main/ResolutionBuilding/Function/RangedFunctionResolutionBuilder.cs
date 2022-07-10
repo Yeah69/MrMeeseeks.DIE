@@ -23,7 +23,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         : base(
             rangeResolutionBaseBuilder,
             forConstructorParameter.ImplementationType,
-            forConstructorParameter.CurrentFuncParameters, 
+            forConstructorParameter.CurrentParameters, 
             synchronicityDecisionMaker, 
             handleIdentity,
             
@@ -42,7 +42,10 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         _forConstructorParameter with
         {
             ImplementationStack = ImmutableStack<INamedTypeSymbol>.Empty,
-            CurrentFuncParameters = CurrentParameters
+            CurrentParameters = ImmutableSortedDictionary.CreateRange(
+                CurrentParameters.Select(t => new KeyValuePair<string, (ITypeSymbol, ParameterResolution)>(
+                    t.Item1.FullName(),
+                    t)))
         }).Item1;
 
     public override FunctionResolution Build()

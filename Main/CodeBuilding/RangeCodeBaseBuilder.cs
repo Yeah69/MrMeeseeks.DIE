@@ -324,7 +324,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = items.Aggregate(stringBuilder, GenerateFields);
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                 break;
-            case FuncResolution(var reference, var typeFullName, _):
+            case FuncResolution(var reference, var typeFullName, _, _):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
                 break;
             case ParameterResolution:
@@ -375,12 +375,17 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case MultiSynchronicityFunctionCallResolution { SelectedFunctionCall: {} selectedFunctionCall}:
                 stringBuilder = GenerateResolutions(stringBuilder, selectedFunctionCall);
                 break;
-            case LazyResolution(var reference, var typeFullName, var methodGroup):
-                string owner = "";
-                if (methodGroup.OwnerReference is { } explicitOwner)
-                    owner = $"{explicitOwner}.";
+            case LazyResolution(var reference, var typeFullName, var innerCallOfLambda):
+                if (innerCallOfLambda.SelectedFunctionCall != innerCallOfLambda.Sync)
+                    throw new Exception("Lazy resolution has to call sync function"); // todo
                 stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = new {typeFullName}({owner}{methodGroup.Reference});");
+                    .AppendLine($"{reference} = new {typeFullName}(() => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))}));");
+                break;
+            case FuncResolution(var reference, _, var lambdaParameters, var innerCallOfLambda):
+                if (innerCallOfLambda.SelectedFunctionCall != innerCallOfLambda.Sync)
+                    throw new Exception("Func resolution has to call sync function"); // todo
+                stringBuilder = stringBuilder
+                    .AppendLine($"{reference} = ({string.Join(", " ,lambdaParameters.Select(p => p.Reference))}) => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
                 break;
             case FunctionCallResolution(var reference, _, _, var functionReference, var functionOwner, var parameters) functionCallResolution:
                 string owner2 = "";
@@ -562,13 +567,6 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case SyntaxValueTupleResolution(var reference, _, var items):
                 stringBuilder = items.Aggregate(stringBuilder, GenerateResolutions);
                 stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", items.Select(d => d.Reference))});");
-                break;
-            case FuncResolution(var reference, _, var methodGroup):
-                string owner1 = "";
-                if (methodGroup.OwnerReference is { } explicitOwner1)
-                    owner1 = $"{explicitOwner1}.";
-                stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = {owner1}{methodGroup.Reference};");
                 break;
             case ParameterResolution:
                 break; // parameter exists already

@@ -45,7 +45,7 @@ internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResol
     INamedTypeSymbol? ActualReturnType { get; }
     
     MultiSynchronicityFunctionCallResolution BuildFunctionCall(
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         string? ownerReference);
 
     MethodGroupResolution BuildMethodGroup();
@@ -82,7 +82,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         // parameters
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
         INamedTypeSymbol returnType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters,
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         object handleIdentity,
 
@@ -100,11 +100,11 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         _userDefinedElements = rangeResolutionBaseBuilder.UserDefinedElements;
         _handle = new FunctionResolutionBuilderHandle(
             handleIdentity,
-            $"{OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Resolution.TypeFullName))})");
+            $"{OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Value.Item2.TypeFullName))})");
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
         CurrentParameters = currentParameters
-            .Select(p => (p.Type, new ParameterResolution(RootReferenceGenerator.Generate(p.Type), p.Resolution.TypeFullName)))
+            .Select(p => (p.Value.Item1, new ParameterResolution(RootReferenceGenerator.Generate(p.Value.Item1), p.Value.Item2.TypeFullName)))
             .ToList();
         Parameters = CurrentParameters
             .Select(p => p.Item2)
@@ -119,8 +119,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     protected (Resolvable, ITaskConsumableResolution?) SwitchType(SwitchTypeParameter parameter)
     {
         var (type, currentFuncParameters, implementationStack) = parameter;
-        if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(t.Type.OriginalDefinition, type.OriginalDefinition)) is { Type: not null, Resolution: not null } funcParameter)
-            return (funcParameter.Resolution, null);
+        if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(
+                t.Value.Item1.OriginalDefinition, type.OriginalDefinition)) is { Value.Item1: not null, Value.Item2: not null } funcParameter)
+            return (funcParameter.Value.Item2, null);
 
         if (_userDefinedElements.GetFactoryFieldFor(type) is { } instance)
             return (
@@ -222,14 +223,22 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     null);
             }
 
+            var currentParameters = ImmutableSortedDictionary.CreateRange(
+                currentFuncParameters.Select(cp => 
+                    new KeyValuePair<string, (ITypeSymbol, ParameterResolution)>(
+                        cp.Value.Item1.FullName(),
+                        cp.Value)));
+
             var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
                 genericType,
-                Array.Empty<(ITypeSymbol Type, ParameterResolution Resolution)>());
+                currentParameters);
 
             var constructorInjection = new LazyResolution(
                 RootReferenceGenerator.Generate(namedTypeSymbol),
                 namedTypeSymbol.FullName(),
-                newLocalFunction.BuildMethodGroup());
+                newLocalFunction.BuildFunctionCall(
+                    currentParameters,
+                    Constants.ThisKeyword));
             return (constructorInjection, null);
         }
 
@@ -247,21 +256,37 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     null);
             }
             
-            var parameterTypes = namedTypeSymbol0
+            var lambdaParameters = namedTypeSymbol0
                 .TypeArguments
                 .Take(namedTypeSymbol0.TypeArguments.Length - 1)
                 .Select(ts => (Type: ts, Resolution: new ParameterResolution(RootReferenceGenerator.Generate(ts), ts.FullName())))
                 .ToArray();
 
+            var setOfProcessedTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.IncludeNullability);
+
+            var nextCurrentParameters = currentFuncParameters;
+            
+            foreach (var lambdaParameter in lambdaParameters)
+            {
+                if (setOfProcessedTypes.Contains(lambdaParameter.Type, SymbolEqualityComparer.IncludeNullability)
+                    || lambdaParameter.Type is not INamedTypeSymbol lambdaType)
+                    continue;
+
+                setOfProcessedTypes.Add(lambdaType);
+
+                nextCurrentParameters = nextCurrentParameters.Add(lambdaParameter.Type.FullName(), lambdaParameter);
+            }
+
             var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
                 returnType,
-                parameterTypes);
+                nextCurrentParameters);
             
             return (
                 new FuncResolution(
                     RootReferenceGenerator.Generate(type),
                     type.FullName(),
-                    newLocalFunction.BuildMethodGroup()),
+                    lambdaParameters.Select(t => t.Resolution).ToImmutableArray(),
+                    newLocalFunction.BuildFunctionCall(nextCurrentParameters, Constants.ThisKeyword)),
                 null);
         }
 
@@ -807,7 +832,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             ITypeSymbol typeSymbol, 
             string parameterName, 
             INamedTypeSymbol impType, 
-            IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currParameter)
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currParameter)
         {
             if (outParameters.TryGetValue(parameterName, out var outParameterResolution))
                 return (parameterName, new ParameterResolution(outParameterResolution.Reference, outParameterResolution.TypeFullName));
@@ -914,7 +939,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         };
 
     public MultiSynchronicityFunctionCallResolution BuildFunctionCall(
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> currentParameters, string? ownerReference)
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters, string? ownerReference)
     {
         var returnReference = RootReferenceGenerator.Generate("ret");
         return new(new(returnReference,
@@ -922,20 +947,20 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 OriginalReturnType.FullName(),
                 Name,
                 ownerReference,
-                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList()) 
+                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList()) 
                 { Await = false },
             new(returnReference,
                 _wellKnownTypes.Task1.Construct(OriginalReturnType).FullName(),
                 OriginalReturnType.FullName(),
                 Name,
                 ownerReference,
-                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList()),
+                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList()),
             new(returnReference,
                 _wellKnownTypes.ValueTask1.Construct(OriginalReturnType).FullName(),
                 OriginalReturnType.FullName(),
                 Name,
                 ownerReference,
-                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference)).ToList()),
+                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList()),
             SynchronicityDecision,
             _handle);
     }

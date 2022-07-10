@@ -105,7 +105,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
 
         var (reference, handle) = tuple;
 
-        var key = $"{referenceKey}:::{string.Join(":::", currentParameters.Select(p => p.Type.FullName()))}";
+        var key = $"{referenceKey}:::{string.Join(":::", currentParameters.Select(p => p.Value.Item1.FullName()))}";
         if (!_rangedInstanceReferenceResolutions.TryGetValue(key, out var interfaceDeclaration))
         {
             var queueItem = new RangedInstanceResolutionsQueueItem(
@@ -136,7 +136,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
                 _wellKnownTypes.Task1.Construct(implementationType).FullName(),
                 _wellKnownTypes.ValueTask1.Construct(implementationType).FullName(),
                 currentParameters.Select(t =>
-                    new ParameterResolution(_rootReferenceGenerator.Generate(t.Type), t.Type.FullName())).ToList(),
+                    new ParameterResolution(_rootReferenceGenerator.Generate(t.Value.Item1), t.Value.Item1.FullName())).ToList(),
                 synchronicityDecisionMaker.Decision);
             _rangedInstanceReferenceResolutions[key] = interfaceDeclaration;
         }
@@ -149,7 +149,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
                 interfaceDeclaration.TypeFullName,
                 interfaceDeclaration.Reference,
                 owningObjectReference,
-                interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference))
+                interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference))
                     .ToList())
                 { Await = false },
             new(returnReference,
@@ -157,14 +157,14 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
                 interfaceDeclaration.TypeFullName,
                 interfaceDeclaration.Reference,
                 owningObjectReference,
-                interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference))
+                interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference))
                     .ToList()),
             new(returnReference,
                 _wellKnownTypes.ValueTask1.Construct(implementationType).FullName(),
                 interfaceDeclaration.TypeFullName,
                 interfaceDeclaration.Reference,
                 owningObjectReference,
-                interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Resolution.Reference))
+                interfaceDeclaration.Parameter.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference))
                     .ToList()),
             _synchronicityDecisionMakers[key].Decision,
             handle);

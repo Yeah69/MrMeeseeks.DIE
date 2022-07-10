@@ -12,7 +12,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
         // parameter
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
         INamedTypeSymbol returnType,
-        IReadOnlyList<(ITypeSymbol Type, ParameterResolution Resolution)> parameters,
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         
         // dependencies
@@ -37,7 +37,13 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
 
     protected override string Name { get; }
 
-    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(_returnType, CurrentParameters, ImmutableStack<INamedTypeSymbol>.Empty)).Item1;
+    protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(
+        _returnType, 
+        ImmutableSortedDictionary.CreateRange(
+            CurrentParameters.Select(t => new KeyValuePair<string, (ITypeSymbol, ParameterResolution)>(
+                t.Item1.FullName(),
+                t))), 
+        ImmutableStack<INamedTypeSymbol>.Empty)).Item1;
 
     public override FunctionResolution Build()
     {

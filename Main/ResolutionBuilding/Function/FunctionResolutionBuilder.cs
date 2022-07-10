@@ -274,7 +274,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
                 setOfProcessedTypes.Add(lambdaType);
 
-                nextCurrentParameters = nextCurrentParameters.Add(lambdaParameter.Type.FullName(), lambdaParameter);
+                nextCurrentParameters = nextCurrentParameters.SetItem(lambdaParameter.Type.FullName(), lambdaParameter);
             }
 
             var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(

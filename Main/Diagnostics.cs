@@ -60,10 +60,20 @@ public static class Diagnostics
             userDefinedElement.Locations.FirstOrDefault() ?? Location.None);
     }
     
-    public static Diagnostic UnexpectedException(DieException exception)
+    public static Diagnostic UnexpectedDieException(DieException exception)
     {
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_00", 
-                "Unexpected Exception",
+                "Unexpected Exception (DIE)",
+                exception.ToString(), 
+                "Error", DiagnosticSeverity.Error, 
+                true),
+            Location.None);
+    }
+    
+    public static Diagnostic UnexpectedException(Exception exception)
+    {
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_01", 
+                "Unexpected Exception (General)",
                 exception.ToString(), 
                 "Error", DiagnosticSeverity.Error, 
                 true),
@@ -77,6 +87,6 @@ public static class Diagnostics
                 message, 
                 "Error", DiagnosticSeverity.Error, 
                 true),
-            Location.None);
+            location);
     }
 }

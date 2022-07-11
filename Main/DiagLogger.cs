@@ -3,6 +3,7 @@
 internal interface IDiagLogger
 {
     void Error(DieException exception);
+    void Error(Diagnostic diagnostic);
 
     void Log(Diagnostic diagnostic);
 }
@@ -36,10 +37,12 @@ internal class DiagLogger : IDiagLogger
                 _context.ReportDiagnostic(slippedResolution.Diagnostic);
                 break;
             default:
-                _context.ReportDiagnostic(Diagnostics.UnexpectedException(exception));
+                _context.ReportDiagnostic(Diagnostics.UnexpectedDieException(exception));
                 break;
         }
     }
+
+    public void Error(Diagnostic diagnostic) => _context.ReportDiagnostic(diagnostic);
 
     public void Log(Diagnostic diagnostic)
     {

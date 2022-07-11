@@ -35,6 +35,8 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
     }
 
     protected override string Name { get; }
+    
+    protected override string TypeForLog => "ScopeRoot";
 
     protected override Resolvable CreateResolvable() => SwitchImplementation(
         _parameter with

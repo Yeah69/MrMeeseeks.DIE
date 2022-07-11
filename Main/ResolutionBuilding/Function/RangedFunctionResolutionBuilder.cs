@@ -37,6 +37,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
     }
 
     protected override string Name { get; }
+    protected override string TypeForLog => "ScopedInstance";
 
     protected override Resolvable CreateResolvable() => CreateConstructorResolution(
         _forConstructorParameter with

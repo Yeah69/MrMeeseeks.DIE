@@ -113,7 +113,13 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             .ToList();
 
         Resolvable = new(CreateResolvable);
+        
+        FunctionLog.Add($"{_rangeResolutionBaseBuilder.ErrorContext.Prefix}/{OriginalReturnType.FullName()}/{TypeForLog}/{string.Join(",", Parameters.Select(p => p.TypeFullName))}");
     }
+    
+    protected abstract string TypeForLog { get; }
+
+    internal static List<string> FunctionLog = new();
 
     private string ErrorMessage(IImmutableStack<INamedTypeSymbol> stack, ITypeSymbol currentType, string message) => 
         $"[R:{_rangeResolutionBaseBuilder.ErrorContext.Prefix}][TS:{(stack.IsEmpty ? "empty" : stack.Peek().FullName())}][CT:{currentType.FullName()}] {message} [S:{(stack.IsEmpty ? "empty" : string.Join("<==", stack.Select(t => t.FullName())))}]";

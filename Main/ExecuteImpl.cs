@@ -60,6 +60,7 @@ internal class ExecuteImpl : IExecute
                 .ToList();
             foreach (var containerSymbol in containerClasses)
             {
+                ResolutionTreeItem.Count = 0;
                 try
                 {
                     var containerInfo = _containerInfoFactory(containerSymbol);
@@ -74,9 +75,24 @@ internal class ExecuteImpl : IExecute
                         {
                             containerResolutionBuilder.DoWork();
                         }
-
                         containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
+                        
+                        _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
+                                "Debug",
+                                $"Resolution tree item count: {ResolutionTreeItem.Count} ({containerSymbol.FullName()})", 
+                                "Warning", DiagnosticSeverity.Warning, 
+                                true),
+                            Location.None));
+                        
                         var containerResolution = containerResolutionBuilder.Build();
+                        
+                        _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_01", 
+                                "Debug",
+                                $"Starting code building", 
+                                "Warning", DiagnosticSeverity.Warning, 
+                                true),
+                            Location.None));
+                        
                         _containerGenerator.Generate(containerInfo, containerResolution);
                     }
                     else

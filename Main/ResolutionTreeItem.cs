@@ -3,7 +3,15 @@ using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE;
 
-internal abstract record ResolutionTreeItem;
+internal abstract record ResolutionTreeItem
+{
+    internal static int Count { get; set; }
+    
+    internal ResolutionTreeItem()
+    {
+        Count++;
+    }
+}
     
 internal abstract record Resolvable(
     string Reference,

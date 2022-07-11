@@ -212,150 +212,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         StringBuilder stringBuilder,
         Resolvable resolution)
     {
-        stringBuilder = GenerateFields(stringBuilder, resolution);
         return GenerateResolutions(stringBuilder, resolution);
-    }
-
-    private static StringBuilder GenerateFields(
-        StringBuilder stringBuilder,
-        Resolvable resolution)
-    {
-        switch (resolution)
-        {
-            case LazyResolution(var reference, var typeFullName, _):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
-                break;
-            case FunctionCallResolution(var reference, _, _, _, _, _) functionCallResolution:
-                stringBuilder = stringBuilder.AppendLine($"{functionCallResolution.SelectedTypeFullName} {reference};");
-                break;
-            case DeferringResolvable { Resolvable: {} resolvable}:
-                stringBuilder = GenerateFields(stringBuilder, resolvable);
-                break;
-            case ProxyResolvable(_, _):
-                // proxy resolvables don't produce own code
-                break;
-            case NewReferenceResolvable(var reference, var typeFullName, var resolvable):
-                stringBuilder = GenerateFields(stringBuilder, resolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{typeFullName} {reference};");
-                break;
-            case MultiTaskResolution { SelectedResolvable: {} resolvable}:
-                stringBuilder = GenerateFields(stringBuilder, resolvable);
-                break;
-            case MultiSynchronicityFunctionCallResolution { SelectedFunctionCall: {} selectedFunctionCall}:
-                stringBuilder = GenerateFields(stringBuilder, selectedFunctionCall);
-                break;
-            case ValueTaskFromWrappedTaskResolution(var resolvable, var reference, var fullName):
-                stringBuilder = GenerateFields(stringBuilder, resolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{fullName} {reference};");
-                break;
-            case TaskFromWrappedValueTaskResolution(var resolvable, var reference, var fullName):
-                stringBuilder = GenerateFields(stringBuilder, resolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{fullName} {reference};");
-                break;
-            case TaskFromTaskResolution(var wrappedResolvable, _, var taskReference, var taskFullName):
-                stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{taskFullName} {taskReference};");
-                break;
-            case TaskFromValueTaskResolution(var wrappedResolvable, _, var taskReference, var taskFullName):
-                stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{taskFullName} {taskReference};");
-                break;
-            case TaskFromSyncResolution(var wrappedResolvable, var taskReference, var taskFullName):
-                stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{taskFullName} {taskReference};");
-                break;
-            case ValueTaskFromTaskResolution(var wrappedResolvable, _, var valueTaskReference, var valueTaskFullName):
-                stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{valueTaskFullName} {valueTaskReference};");
-                break;
-            case ValueTaskFromValueTaskResolution(var wrappedResolvable, _, var valueTaskReference, var valueTaskFullName):
-                stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{valueTaskFullName} {valueTaskReference};");
-                break;
-            case ValueTaskFromSyncResolution(var wrappedResolvable, var valueTaskReference, var valueTaskFullName):
-                stringBuilder = GenerateFields(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder
-                    .AppendLine($"{valueTaskFullName} {valueTaskReference};");
-                break;
-            case TransientScopeRootResolution(var transientScopeReference, var transientScopeTypeFullName, _, var functionCallResolution):
-                stringBuilder = stringBuilder.AppendLine($"{transientScopeTypeFullName} {transientScopeReference};");
-                stringBuilder = GenerateFields(stringBuilder, functionCallResolution);
-                break;
-            case ScopeRootResolution(var scopeReference, var scopeTypeFullName, _, _, var functionCallResolution):
-                stringBuilder = stringBuilder.AppendLine($"{scopeTypeFullName} {scopeReference};");  
-                stringBuilder = GenerateFields(stringBuilder, functionCallResolution);
-                break;
-            case NullResolution(var reference, var typeFullName):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
-                break;
-            case TransientScopeAsDisposableResolution(var reference, var typeFullName):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
-                break;
-            case TransientScopeAsAsyncDisposableResolution(var reference, var typeFullName):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
-                break;
-            case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
-                stringBuilder = GenerateFields(stringBuilder, resolutionBase);
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");              
-                break;
-            case OutParameterResolution(var reference, var typeFullName):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");      
-                break;
-            case ConstructorParameterChoiceResolution(_, var parameters):
-                stringBuilder = parameters.Aggregate(stringBuilder, (builder, tuple) => GenerateFields(builder, tuple.Dependency));         
-                break;
-            case ConstructorResolution(var reference, var typeFullName, _, var parameters, var initializedProperties, var initialization, var parameterChoiceResolution):
-                if (parameterChoiceResolution is {})
-                    stringBuilder = GenerateFields(stringBuilder, parameterChoiceResolution);
-                stringBuilder = parameters.Aggregate(stringBuilder,
-                    (builder, tuple) => GenerateFields(builder, tuple.Dependency));
-                stringBuilder = initializedProperties.Aggregate(stringBuilder,
-                    (builder, tuple) => GenerateFields(builder, tuple.Dependency));
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
-                if (initialization is TaskBaseTypeInitializationResolution { Await: false } taskInit)
-                    stringBuilder = stringBuilder.AppendLine($"{taskInit.TaskTypeFullName} {taskInit.TaskReference};");
-                break;
-            case SyntaxValueTupleResolution(var reference, var typeFullName, var items):
-                stringBuilder = items.Aggregate(stringBuilder, GenerateFields);
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
-                break;
-            case FuncResolution(var reference, var typeFullName, _, _):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
-                break;
-            case ParameterResolution:
-                break; // the parameter is the field
-            case MethodGroupResolution:
-                break; // referenced directly
-            case FieldResolution(var reference, var typeFullName, _):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
-                break;
-            case FactoryResolution(var reference, var typeFullName, _, var parameters):
-                stringBuilder = parameters.Aggregate(stringBuilder,
-                    (builder, tuple) => GenerateFields(builder, tuple.Dependency));
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
-                break;
-            case CollectionResolution(var reference, var typeFullName, _, var items):
-                stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateFields);
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");
-                break;
-            case ErrorTreeItem(var diagnostic):
-                throw new CompilationDieException(diagnostic);
-            case var (reference, typeFullName):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};"); 
-                break;
-            default:
-                throw new Exception("Unexpected case or not implemented.");
-        }
-
-        return stringBuilder;
     }
 
     private StringBuilder GenerateResolutions(
@@ -376,7 +233,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case NewReferenceResolvable(var reference, var typeFullName, var resolvable):
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = ({typeFullName}) {resolvable.Reference};");
+                    .AppendLine($"{typeFullName} {reference} = ({typeFullName}) {resolvable.Reference};");
                 break;
             case MultiSynchronicityFunctionCallResolution { SelectedFunctionCall: {} selectedFunctionCall}:
                 stringBuilder = GenerateResolutions(stringBuilder, selectedFunctionCall);
@@ -385,13 +242,13 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 if (innerCallOfLambda.SelectedFunctionCall != innerCallOfLambda.Sync)
                     throw new Exception("Lazy resolution has to call sync function"); // todo
                 stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = new {typeFullName}(() => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))}));");
+                    .AppendLine($"{typeFullName} {reference} = new {typeFullName}(() => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))}));");
                 break;
-            case FuncResolution(var reference, _, var lambdaParameters, var innerCallOfLambda):
+            case FuncResolution(var reference, var typeFullName, var lambdaParameters, var innerCallOfLambda):
                 if (innerCallOfLambda.SelectedFunctionCall != innerCallOfLambda.Sync)
                     throw new Exception("Func resolution has to call sync function"); // todo
                 stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = ({string.Join(", " ,lambdaParameters.Select(p => p.Reference))}) => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
+                    .AppendLine($"{typeFullName} {reference} = ({string.Join(", " ,lambdaParameters.Select(p => p.Reference))}) => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
                 break;
             case FunctionCallResolution(var reference, _, _, var functionReference, var functionOwner, var parameters) functionCallResolution:
                 string owner2 = "";
@@ -399,25 +256,25 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     owner2 = $"{explicitOwner2}.";
                 if (functionCallResolution.Await)
                     stringBuilder = stringBuilder
-                        .AppendLine($"{reference} = ({functionCallResolution.SelectedTypeFullName})(await {owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))}));");
+                        .AppendLine($"{functionCallResolution.SelectedTypeFullName} {reference} = ({functionCallResolution.SelectedTypeFullName})(await {owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))}));");
                 else
                     stringBuilder = stringBuilder
-                        .AppendLine($"{reference} = ({functionCallResolution.SelectedTypeFullName}){owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
+                        .AppendLine($"{functionCallResolution.SelectedTypeFullName} {reference} = ({functionCallResolution.SelectedTypeFullName}){owner2}{functionReference}({string.Join(", ", parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
                 break;
             case ValueTaskFromWrappedTaskResolution(var resolvable, var reference, var fullName):
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = new {fullName}({resolvable.Reference});");
+                    .AppendLine($"{fullName} {reference} = new {fullName}({resolvable.Reference});");
                 break;
-            case TaskFromWrappedValueTaskResolution(var resolvable, var reference, _):
+            case TaskFromWrappedValueTaskResolution(var resolvable, var reference, var fullName):
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{reference} = {resolvable.Reference}.AsTask();");
+                    .AppendLine($"{fullName} {reference} = {resolvable.Reference}.AsTask();");
                 break;
-            case TaskFromTaskResolution(var wrappedResolvable, var initialization, var taskReference, _):
+            case TaskFromTaskResolution(var wrappedResolvable, var initialization, var taskReference, var taskFullName):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{taskReference} = {initialization.TaskReference}.ContinueWith(t =>")
+                    .AppendLine($"{taskFullName} {taskReference} = {initialization.TaskReference}.ContinueWith(t =>")
                     .AppendLine("{")
                     .AppendLine("if (t.IsCompletedSuccessfully)")
                     .AppendLine($"return {wrappedResolvable.Reference};")
@@ -428,10 +285,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     .AppendLine($"throw new {WellKnownTypes.Exception.FullName()}(\"Something unexpected.\");")
                     .AppendLine("});");        
                 break;
-            case TaskFromValueTaskResolution(var wrappedResolvable, var initialization, var taskReference, _):
+            case TaskFromValueTaskResolution(var wrappedResolvable, var initialization, var taskReference, var taskFullName):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{taskReference} = {initialization.TaskReference}.AsTask().ContinueWith(t =>")
+                    .AppendLine($"{taskFullName} {taskReference} = {initialization.TaskReference}.AsTask().ContinueWith(t =>")
                     .AppendLine("{")
                     .AppendLine("if (t.IsCompletedSuccessfully)")
                     .AppendLine($"return {wrappedResolvable.Reference};")
@@ -442,14 +299,14 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     .AppendLine($"throw new {WellKnownTypes.Exception.FullName()}(\"Something unexpected.\");")
                     .AppendLine("});");
                 break;
-            case TaskFromSyncResolution(var wrappedResolvable, var taskReference, _):
+            case TaskFromSyncResolution(var wrappedResolvable, var taskReference, var taskFullName):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder.AppendLine($"{taskReference} = {WellKnownTypes.Task.FullName()}.FromResult({wrappedResolvable.Reference});");      
+                stringBuilder = stringBuilder.AppendLine($"{taskFullName} {taskReference} = {WellKnownTypes.Task.FullName()}.FromResult({wrappedResolvable.Reference});");      
                 break;
             case ValueTaskFromTaskResolution(var wrappedResolvable, var initialization, var valueTaskReference, var valueTaskFullName):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{valueTaskReference} = new {valueTaskFullName}({initialization.TaskReference}.ContinueWith(t =>")
+                    .AppendLine($"{valueTaskFullName} {valueTaskReference} = new {valueTaskFullName}({initialization.TaskReference}.ContinueWith(t =>")
                     .AppendLine("{")
                     .AppendLine("if (t.IsCompletedSuccessfully)")
                     .AppendLine($"return {wrappedResolvable.Reference};")
@@ -463,7 +320,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case ValueTaskFromValueTaskResolution(var wrappedResolvable, var initialization, var valueTaskReference, var valueTaskFullName):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
                 stringBuilder = stringBuilder
-                    .AppendLine($"{valueTaskReference} = new {valueTaskFullName}({initialization.TaskReference}.AsTask().ContinueWith(t =>")
+                    .AppendLine($"{valueTaskFullName} {valueTaskReference} = new {valueTaskFullName}({initialization.TaskReference}.AsTask().ContinueWith(t =>")
                     .AppendLine("{")
                     .AppendLine("if (t.IsCompletedSuccessfully)")
                     .AppendLine($"return {wrappedResolvable.Reference};")
@@ -474,13 +331,13 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     .AppendLine($"throw new {WellKnownTypes.Exception.FullName()}(\"Something unexpected.\");")
                     .AppendLine("}));");
                 break;
-            case ValueTaskFromSyncResolution(var wrappedResolvable, var valueTaskReference, _):
+            case ValueTaskFromSyncResolution(var wrappedResolvable, var valueTaskReference, var valueTaskFullName):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder.AppendLine($"{valueTaskReference} = {WellKnownTypes.ValueTask.FullName()}.FromResult({wrappedResolvable.Reference});");      
+                stringBuilder = stringBuilder.AppendLine($"{valueTaskFullName} {valueTaskReference} = {WellKnownTypes.ValueTask.FullName()}.FromResult({wrappedResolvable.Reference});");      
                 break;
             case TransientScopeRootResolution(var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var createFunctionCall):
                 stringBuilder = stringBuilder
-                    .AppendLine($"{transientScopeReference} = new {transientScopeTypeFullName}({containerInstanceScopeReference});");
+                    .AppendLine($"{transientScopeTypeFullName} {transientScopeReference} = new {transientScopeTypeFullName}({containerInstanceScopeReference});");
                 if (_containerResolution.DisposalType is not DisposalType.None)
                 {
                     var disposalType = _containerResolution.DisposalType is DisposalType.Async 
@@ -494,7 +351,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case ScopeRootResolution(var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var createFunctionCall):
                 stringBuilder = stringBuilder
-                    .AppendLine($"{scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});");
+                    .AppendLine($"{scopeTypeFullName} {scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});");
                 if (_containerResolution.DisposalType is DisposalType.Async)
                     stringBuilder = stringBuilder.AppendLine($"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.AsyncDisposable.FullName()}) {scopeReference});");
                 if (_containerResolution.DisposalType is DisposalType.Sync)
@@ -504,27 +361,28 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
                 stringBuilder = GenerateResolutions(stringBuilder, resolutionBase);
                 stringBuilder = stringBuilder.AppendLine(
-                    $"{reference} = ({typeFullName}) {resolutionBase.Reference};");              
+                    $"{typeFullName} {reference} = ({typeFullName}) {resolutionBase.Reference};");              
                 break;
             case TransientScopeAsDisposableResolution(var reference, var typeFullName):
                 stringBuilder = _containerResolution.DisposalType switch
                 {
                     DisposalType.Async => throw new Exception("If the container disposal has to be async, then sync disposal handles in transient scopes are not allowed."),
-                    DisposalType.Sync => stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;"),
-                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopDisposable.ClassName}.{_containerResolution.NopDisposable.InstanceReference};"),
+                    DisposalType.Sync => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;"),
+                    DisposalType.None => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) {_containerResolution.NopDisposable.ClassName}.{_containerResolution.NopDisposable.InstanceReference};"),
                     _ => stringBuilder
                 };
                 break;
             case TransientScopeAsAsyncDisposableResolution(var reference, var typeFullName):
                 stringBuilder = _containerResolution.DisposalType switch
                 {
-                    DisposalType.Async => stringBuilder.AppendLine($"{reference} = ({typeFullName}) this;"),
-                    DisposalType.Sync => stringBuilder.AppendLine($"{reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable.ClassName}(({WellKnownTypes.Disposable.FullName()}) this);"),
-                    DisposalType.None => stringBuilder.AppendLine($"{reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable.ClassName}.{_containerResolution.NopAsyncDisposable.InstanceReference};"),
+                    DisposalType.Async => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;"),
+                    DisposalType.Sync => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable.ClassName}(({WellKnownTypes.Disposable.FullName()}) this);"),
+                    DisposalType.None => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable.ClassName}.{_containerResolution.NopAsyncDisposable.InstanceReference};"),
                     _ => stringBuilder
                 };
                 break;
-            case OutParameterResolution(_, _): 
+            case OutParameterResolution(var reference, var typeFullName):
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");      
                 break;
             case ConstructorParameterChoiceResolution(var functionName, var parameters):
                 stringBuilder = parameters.Aggregate(stringBuilder,
@@ -544,7 +402,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     ? $" {{ {string.Join(", ", initializedProperties.Select(p => $"{p.Name} = {p.Dependency.Reference}"))} }}"
                     : "";
                 stringBuilder = stringBuilder.AppendLine(
-                    $"{reference} = new {typeFullName}({constructorParameter}){objectInitializerParameter};");
+                    $"{typeFullName} {reference} = new {typeFullName}({constructorParameter}){objectInitializerParameter};");
                 if (disposalType is not DisposalType.None)
                 {
                     var interfaceType = disposalType is DisposalType.Sync
@@ -564,33 +422,33 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                             stringBuilder.AppendLine($"(({initInterfaceTypeName}) {reference}).{initMethodName}();"),
                         TaskBaseTypeInitializationResolution { Await: true, TypeFullName: {} initInterfaceTypeName, MethodName: {} initMethodName} => 
                             stringBuilder.AppendLine($"await (({initInterfaceTypeName}) {reference}).{initMethodName}();"),
-                        TaskBaseTypeInitializationResolution { Await: false, TypeFullName: {} initInterfaceTypeName, MethodName: {} initMethodName, TaskReference: {} taskReference} => 
-                            stringBuilder.AppendLine($"{taskReference} = (({initInterfaceTypeName}) {reference}).{initMethodName}();"),
+                        TaskBaseTypeInitializationResolution { Await: false, TypeFullName: {} initInterfaceTypeName, MethodName: {} initMethodName, TaskReference: {} taskReference} taskInit => 
+                            stringBuilder.AppendLine($"{taskInit.TaskTypeFullName} {taskReference} = (({initInterfaceTypeName}) {reference}).{initMethodName}();"),
                         _ => stringBuilder
                     };
                 }
                 break;
-            case SyntaxValueTupleResolution(var reference, _, var items):
+            case SyntaxValueTupleResolution(var reference, var typeFullName, var items):
                 stringBuilder = items.Aggregate(stringBuilder, GenerateResolutions);
-                stringBuilder = stringBuilder.AppendLine($"{reference} = ({string.Join(", ", items.Select(d => d.Reference))});");
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = ({string.Join(", ", items.Select(d => d.Reference))});");
                 break;
             case ParameterResolution:
                 break; // parameter exists already
             case NullResolution(var reference, var typeFullName):
-                stringBuilder = stringBuilder.AppendLine($"{reference} = ({typeFullName}) null;");
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) null;");
                 break;
-            case FieldResolution(var reference, _, var fieldName):
-                stringBuilder = stringBuilder.AppendLine($"{reference} = this.{fieldName};");
+            case FieldResolution(var reference, var typeFullName, var fieldName):
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = this.{fieldName};");
                 break;
-            case FactoryResolution(var reference, _, var functionName, var parameters):
+            case FactoryResolution(var reference, var typeFullName, var functionName, var parameters):
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
-                stringBuilder = stringBuilder.AppendLine($"{reference} = this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");
                 break;
-            case CollectionResolution(var reference, _, var itemFullName, var items):
+            case CollectionResolution(var reference, var typeFullName, var itemFullName, var items):
                 stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateResolutions);
                 stringBuilder = stringBuilder.AppendLine(
-                    $"{reference} = new {itemFullName}[]{{{string.Join(", ", items.Select(d => $"({itemFullName}) {(d as Resolvable)?.Reference}"))}}};");
+                    $"{typeFullName} {reference} = new {itemFullName}[]{{{string.Join(", ", items.Select(d => $"({itemFullName}) {(d as Resolvable)?.Reference}"))}}};");
                 break;
             case ErrorTreeItem(var diagnostic):
                 throw new CompilationDieException(diagnostic);

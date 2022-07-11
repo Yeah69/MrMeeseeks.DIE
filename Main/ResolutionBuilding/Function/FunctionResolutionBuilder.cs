@@ -114,7 +114,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     }
 
     private string ErrorMessage(IImmutableStack<INamedTypeSymbol> stack, ITypeSymbol currentType, string message) => 
-        $"[R:{_rangeResolutionBaseBuilder.ErrorContext.Prefix}][TS:{(stack.IsEmpty ? "empty" : stack.Peek().FullName())}][CT:{currentType.FullName()}] {message} [S:{string.Join("<==", stack.Select(t => t.FullName()))}]";
+        $"[R:{_rangeResolutionBaseBuilder.ErrorContext.Prefix}][TS:{(stack.IsEmpty ? "empty" : stack.Peek().FullName())}][CT:{currentType.FullName()}] {message} [S:{(stack.IsEmpty ? "empty" : string.Join("<==", stack.Select(t => t.FullName())))}]";
 
     protected (Resolvable, ITaskConsumableResolution?) SwitchType(SwitchTypeParameter parameter)
     {

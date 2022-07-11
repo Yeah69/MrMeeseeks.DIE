@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.DIE.CodeBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding;
+using MrMeeseeks.DIE.ResolutionBuilding.Function;
 using MrMeeseeks.DIE.Validation.Range;
 
 namespace MrMeeseeks.DIE;
@@ -63,6 +64,7 @@ internal class ExecuteImpl : IExecute
                 ResolutionTreeItem.ResolutionTreeItemCount = 0;
                 Resolvable.ResolvableCount = 0;
                 Resolvable.TypeToCountMap.Clear();
+                FunctionResolutionBuilder.FunctionLog.Clear();
                 try
                 {
                     var containerInfo = _containerInfoFactory(containerSymbol);
@@ -98,6 +100,16 @@ internal class ExecuteImpl : IExecute
                             _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
                                     "Debug",
                                     $"Count/Type: {keyValuePair.Value}/{keyValuePair.Key}", 
+                                    "Warning", DiagnosticSeverity.Warning, 
+                                    true),
+                                Location.None));
+                        }
+
+                        foreach (var s in FunctionResolutionBuilder.FunctionLog.OrderBy(s => s))
+                        {
+                            _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
+                                    "Debug",
+                                    $"Function: {s}", 
                                     "Warning", DiagnosticSeverity.Warning, 
                                     true),
                                 Location.None));

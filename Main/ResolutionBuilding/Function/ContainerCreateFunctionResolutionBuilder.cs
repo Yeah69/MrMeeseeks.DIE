@@ -35,6 +35,7 @@ internal class ContainerCreateFunctionResolutionBuilder : FunctionResolutionBuil
     }
 
     protected override string Name { get; }
+    protected override string TypeForLog => "ContainerCreate";
 
     protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(
         _returnType,

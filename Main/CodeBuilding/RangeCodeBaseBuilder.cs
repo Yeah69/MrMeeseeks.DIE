@@ -231,6 +231,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case DeferringResolvable { Resolvable: {} resolvable}:
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
                 break;
+            case ProxyResolvable(_, _):
+                // proxy resolvables don't produce own code
+                break;
             case NewReferenceResolvable(var reference, var typeFullName, var resolvable):
                 stringBuilder = GenerateFields(stringBuilder, resolvable);
                 stringBuilder = stringBuilder
@@ -366,6 +369,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case MultiTaskResolution { SelectedResolvable: {} resolvable}:
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
+                break;
+            case ProxyResolvable(_, _):
+                // proxy resolvables don't produce own code
                 break;
             case NewReferenceResolvable(var reference, var typeFullName, var resolvable):
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);

@@ -59,6 +59,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
+    private readonly Dictionary<INamedTypeSymbol, Resolvable> _scopedInstancesReferenceCache = new(SymbolEqualityComparer.Default);
+
     protected readonly IReferenceGenerator RootReferenceGenerator;
     
     private readonly IUserDefinedElements _userDefinedElements;
@@ -657,6 +659,10 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             _ => new ForConstructorParameter(implementationType, currentParameters, implementationStack)
         };
 
+        if (scopeLevel != ScopeLevel.None 
+            && _scopedInstancesReferenceCache.TryGetValue(implementationType, out var scopedReference))
+            return (scopedReference, null);
+
         var ret = scopeLevel switch
         {
             >= ScopeLevel.Scope when parameter is SwitchImplementationParameterWithDecoration or SwitchImplementationParameterWithDecoration => 
@@ -670,6 +676,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             _ => 
                 CreateConstructorResolution(nextParameter)
         };
+        
+        if (scopeLevel != ScopeLevel.None)
+            _scopedInstancesReferenceCache[implementationType] = new ProxyResolvable(ret.Item1.Reference, ret.Item1.TypeFullName);
         
         if (ret.Item1 is MultiSynchronicityFunctionCallResolution multi)
             _functionCycleTracker.TrackFunctionCall(_handle, multi.FunctionResolutionBuilderHandle);

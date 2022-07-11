@@ -1,9 +1,8 @@
-﻿using System;
-using System.IO;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Test.ConstructorChoice.WithParameter;
+namespace MrMeeseeks.DIE.Test.Scoping.MultipleReferencesOfSameScopedInstance;
 
 internal class Dependency : IContainerInstance {}
 
@@ -19,11 +18,25 @@ internal class Parent
         Dependency dependency6,
         Dependency dependency7,
         Dependency dependency8,
-        Dependency dependency9){}
+        Dependency dependency9)
+    {
+        
+    }
 }
 
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container
 {
     
+}
+
+public class Tests
+{
+    [Fact]
+    public async ValueTask Test()
+    {
+        await using var container = new Container();
+        var instance = container.Create();
+        Assert.IsType<Parent>(instance);
+    }
 }

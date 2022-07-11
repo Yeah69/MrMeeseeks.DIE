@@ -5,17 +5,32 @@ namespace MrMeeseeks.DIE;
 
 internal abstract record ResolutionTreeItem
 {
-    internal static int Count { get; set; }
+    internal static int ResolutionTreeItemCount { get; set; }
     
     internal ResolutionTreeItem()
     {
-        Count++;
+        ResolutionTreeItemCount++;
     }
 }
-    
-internal abstract record Resolvable(
-    string Reference,
-    string TypeFullName) : ResolutionTreeItem;
+
+internal abstract record Resolvable : ResolutionTreeItem
+{
+    public string Reference { get; }
+    public string TypeFullName { get; }
+    internal static int ResolvableCount { get; set; }
+    internal static Dictionary<string, int> TypeToCountMap { get; } = new();
+
+    internal Resolvable(
+        string Reference,
+        string TypeFullName)
+    {
+        this.Reference = Reference;
+        this.TypeFullName = TypeFullName;
+        ResolvableCount++;
+        if (!string.IsNullOrWhiteSpace(TypeFullName))
+        TypeToCountMap[TypeFullName] = TypeToCountMap.TryGetValue(TypeFullName, out var count) ? count + 1 : 1;
+    }
+}
 
 internal record DeferringResolvable() : Resolvable("", "")
 {

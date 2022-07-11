@@ -60,7 +60,9 @@ internal class ExecuteImpl : IExecute
                 .ToList();
             foreach (var containerSymbol in containerClasses)
             {
-                ResolutionTreeItem.Count = 0;
+                ResolutionTreeItem.ResolutionTreeItemCount = 0;
+                Resolvable.ResolvableCount = 0;
+                Resolvable.TypeToCountMap.Clear();
                 try
                 {
                     var containerInfo = _containerInfoFactory(containerSymbol);
@@ -79,10 +81,27 @@ internal class ExecuteImpl : IExecute
                         
                         _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
                                 "Debug",
-                                $"Resolution tree item count: {ResolutionTreeItem.Count} ({containerSymbol.FullName()})", 
+                                $"Resolution tree item count: {ResolutionTreeItem.ResolutionTreeItemCount} ({containerSymbol.FullName()})", 
                                 "Warning", DiagnosticSeverity.Warning, 
                                 true),
                             Location.None));
+                        
+                        _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
+                                "Debug",
+                                $"Resolution tree (Resolvable) item count: {Resolvable.ResolvableCount} ({containerSymbol.FullName()})", 
+                                "Warning", DiagnosticSeverity.Warning, 
+                                true),
+                            Location.None));
+
+                        foreach (var keyValuePair in Resolvable.TypeToCountMap.OrderByDescending(kvp => kvp.Value))
+                        {
+                            _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
+                                    "Debug",
+                                    $"Count/Type: {keyValuePair.Value}/{keyValuePair.Key}", 
+                                    "Warning", DiagnosticSeverity.Warning, 
+                                    true),
+                                Location.None));
+                        }
                         
                         var containerResolution = containerResolutionBuilder.Build();
                         

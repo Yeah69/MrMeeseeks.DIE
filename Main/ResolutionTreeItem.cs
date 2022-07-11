@@ -19,6 +19,10 @@ internal record NewReferenceResolvable(
     string TypeFullName,
     Resolvable Resolvable) : Resolvable(Reference, TypeFullName);
 
+internal record ProxyResolvable(
+    string Reference,
+    string TypeFullName) : Resolvable(Reference, TypeFullName);
+
 internal record FunctionResolution(
     string Reference,
     string TypeFullName,

@@ -106,9 +106,14 @@ internal class ExecuteImpl : IExecute
                     else
                         _diagLogger.Error(dieException);
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
-                    // ignore
+                    if (_errorDescriptionInsteadOfBuildFailure)
+                    {
+                        // ignore
+                    }
+                    else
+                        _diagLogger.Error(Diagnostics.UnexpectedException(exception));
                 }
             }
         }

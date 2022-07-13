@@ -36,7 +36,6 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
     }
 
     protected override string Name { get; }
-    protected override string TypeForLog => "LocalFunction";
 
     protected override Resolvable CreateResolvable() => SwitchType(new SwitchTypeParameter(
         _returnType, 

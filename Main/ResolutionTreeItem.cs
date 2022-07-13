@@ -3,23 +3,9 @@ using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE;
 
-internal abstract record ResolutionTreeItem { }
+internal abstract record ResolutionTreeItem;
 
-internal abstract record Resolvable : ResolutionTreeItem
-{
-    public string Reference { get; }
-    public string TypeFullName { get; }
-    internal static int ResolvableCount { get; set; }
-
-    internal Resolvable(
-        string Reference,
-        string TypeFullName)
-    {
-        this.Reference = Reference;
-        this.TypeFullName = TypeFullName;
-        ResolvableCount++;
-    }
-}
+internal abstract record Resolvable(string Reference, string TypeFullName) : ResolutionTreeItem;
 
 internal record DeferringResolvable() : Resolvable("", "")
 {

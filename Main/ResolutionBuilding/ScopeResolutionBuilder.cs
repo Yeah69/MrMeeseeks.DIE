@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
@@ -111,28 +112,11 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         string transientInstanceScopeReference,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters)
     {
-        var key = $"{rootType.FullName()}{(currentParameters.Any() ? $"_{string.Join(";", currentParameters)}" : "")}";
-        if (!_scopeRootFunctionResolutions.TryGetValue(
-                key,
-                out var function))
-        {
-            if (_scopeRootFunctionResolutions
-                     .Values
-                    .Where(f =>
-                        SymbolEqualityComparer.Default.Equals(f.OriginalReturnType, rootType)
-                        && f.CurrentParameters.All(cp => currentParameters.Any(p =>
-                            SymbolEqualityComparer.IncludeNullability.Equals(cp.Item1, p.Value.Item1))))
-                    .OrderByDescending(f => f.CurrentParameters.Count)
-                    .FirstOrDefault() is { } greatestCommonParameterSetFunction)
-            {
-                function = greatestCommonParameterSetFunction;
-            }
-            else
-            {
-                function = _scopeRootCreateFunctionResolutionBuilderFactory(this, parameter);
-                _scopeRootFunctionResolutions[key] = function;
-            }
-        }
+        var function = FunctionResolutionUtility.GetOrCreateFunction(
+            _scopeRootFunctionResolutions, 
+            rootType, 
+            currentParameters,
+            () => _scopeRootCreateFunctionResolutionBuilderFactory(this, parameter));
 
         var scopeRootReference = RootReferenceGenerator.Generate("scopeRoot");
 

@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
@@ -110,31 +111,12 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
 
     public abstract void RegisterDisposalType(DisposalType disposalType);
-    public IFunctionResolutionBuilder CreateLocalFunctionResolution(INamedTypeSymbol type, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters)
-    {
-        var key = $"{type.FullName()}:::{string.Join(":::", currentParameters.Select(p => p.Value.Item2.TypeFullName))}";
-        if (!LocalFunctions.TryGetValue(key, out var localFunction))
-        {
-            if (LocalFunctions
-                    .Values
-                    .Where(f =>
-                        SymbolEqualityComparer.Default.Equals(f.OriginalReturnType, type)
-                        && f.CurrentParameters.All(cp => currentParameters.Any(p =>
-                            SymbolEqualityComparer.IncludeNullability.Equals(cp.Item1, p.Value.Item1))))
-                    .OrderByDescending(f => f.CurrentParameters.Count)
-                    .FirstOrDefault() is { } greatestCommonParameterSetFunction)
-            {
-                localFunction = greatestCommonParameterSetFunction;
-            }
-            else
-            {
-                localFunction = _localFunctionResolutionBuilderFactory(this, type, currentParameters);
-                LocalFunctions[key] = localFunction;
-            }
-        }
-
-        return localFunction;
-    }
+    public IFunctionResolutionBuilder CreateLocalFunctionResolution(INamedTypeSymbol type, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters) =>
+        FunctionResolutionUtility.GetOrCreateFunction(
+            LocalFunctions, 
+            type, 
+            currentParameters,
+            () => _localFunctionResolutionBuilderFactory(this, type, currentParameters));
 
     protected MultiSynchronicityFunctionCallResolution CreateRangedInstanceReferenceResolution(
         ForConstructorParameter parameter,

@@ -61,9 +61,7 @@ internal class ExecuteImpl : IExecute
                 .ToList();
             foreach (var containerSymbol in containerClasses)
             {
-                ResolutionTreeItem.ResolutionTreeItemCount = 0;
                 Resolvable.ResolvableCount = 0;
-                Resolvable.TypeToCountMap.Clear();
                 FunctionResolutionBuilder.FunctionLog.Clear();
                 try
                 {
@@ -83,46 +81,20 @@ internal class ExecuteImpl : IExecute
                         
                         _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
                                 "Debug",
-                                $"Resolution tree item count: {ResolutionTreeItem.ResolutionTreeItemCount} ({containerSymbol.FullName()})", 
-                                "Warning", DiagnosticSeverity.Warning, 
-                                true),
-                            Location.None));
-                        
-                        _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
-                                "Debug",
                                 $"Resolution tree (Resolvable) item count: {Resolvable.ResolvableCount} ({containerSymbol.FullName()})", 
                                 "Warning", DiagnosticSeverity.Warning, 
                                 true),
                             Location.None));
 
-                        foreach (var keyValuePair in Resolvable.TypeToCountMap.OrderByDescending(kvp => kvp.Value))
-                        {
-                            _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
-                                    "Debug",
-                                    $"Count/Type: {keyValuePair.Value}/{keyValuePair.Key}", 
-                                    "Warning", DiagnosticSeverity.Warning, 
-                                    true),
-                                Location.None));
-                        }
-
-                        foreach (var s in FunctionResolutionBuilder.FunctionLog.OrderBy(s => s))
-                        {
-                            _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
-                                    "Debug",
-                                    $"Function: {s}", 
-                                    "Warning", DiagnosticSeverity.Warning, 
-                                    true),
-                                Location.None));
-                        }
+                        _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(
+                            $"{Constants.DieAbbreviation}_00_00",
+                            "Debug",
+                            $"Function Count: {FunctionResolutionBuilder.FunctionLog.Count}",
+                            "Warning", DiagnosticSeverity.Warning,
+                            true),
+                            Location.None));
                         
                         var containerResolution = containerResolutionBuilder.Build();
-                        
-                        _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_01", 
-                                "Debug",
-                                $"Starting code building", 
-                                "Warning", DiagnosticSeverity.Warning, 
-                                true),
-                            Location.None));
                         
                         _containerGenerator.Generate(containerInfo, containerResolution);
                     }

@@ -115,8 +115,22 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         var key = $"{type.FullName()}:::{string.Join(":::", currentParameters.Select(p => p.Value.Item2.TypeFullName))}";
         if (!LocalFunctions.TryGetValue(key, out var localFunction))
         {
-            localFunction = _localFunctionResolutionBuilderFactory(this, type, currentParameters);
-            LocalFunctions[key] = localFunction;
+            if (LocalFunctions
+                    .Values
+                    .Where(f =>
+                        SymbolEqualityComparer.Default.Equals(f.OriginalReturnType, type)
+                        && f.CurrentParameters.All(cp => currentParameters.Any(p =>
+                            SymbolEqualityComparer.IncludeNullability.Equals(cp.Item1, p.Value.Item1))))
+                    .OrderByDescending(f => f.CurrentParameters.Count)
+                    .FirstOrDefault() is { } greatestCommonParameterSetFunction)
+            {
+                localFunction = greatestCommonParameterSetFunction;
+            }
+            else
+            {
+                localFunction = _localFunctionResolutionBuilderFactory(this, type, currentParameters);
+                LocalFunctions[key] = localFunction;
+            }
         }
 
         return localFunction;

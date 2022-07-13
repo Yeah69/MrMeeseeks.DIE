@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Utility;
+
 namespace MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 internal interface IRangedFunctionGroupResolutionBuilder
@@ -54,22 +56,22 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
 
     public IRangedFunctionResolutionBuilder GetInstanceFunction(
         ForConstructorParameter parameter,
-        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker)
-    {
-        var listedParameterTypes = string.Join(",", parameter.CurrentParameters.Select(p => p.Value.Item2.TypeFullName));
-        if (!_overloads.TryGetValue(listedParameterTypes, out var function))
-        {
-            function = _rangedFunctionResolutionBuilderFactory(
-                _rangeResolutionBaseBuilder, 
-                _reference, 
-                parameter, 
-                synchronicityDecisionMaker.Value,
-                this);
-            _overloads[listedParameterTypes] = function;
-            _functionQueue.Add(function);
-        }
-        return function;
-    }
+        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker) =>
+        FunctionResolutionUtility.GetOrCreateFunction(
+            _overloads, 
+            parameter.ImplementationType, 
+            parameter.CurrentParameters,
+            () =>
+            {
+                var newFunction = _rangedFunctionResolutionBuilderFactory(
+                    _rangeResolutionBaseBuilder,
+                    _reference,
+                    parameter,
+                    synchronicityDecisionMaker.Value,
+                    this);
+                _functionQueue.Add(newFunction);
+                return newFunction;
+            });
 
     public bool HasWorkToDo => _functionQueue.Any(f => f.HasWorkToDo);
     

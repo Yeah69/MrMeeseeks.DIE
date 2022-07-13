@@ -128,7 +128,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     protected (Resolvable, ITaskConsumableResolution?) SwitchType(SwitchTypeParameter parameter)
     {
         var (type, currentFuncParameters, implementationStack) = parameter;
-        if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.Default.Equals(
+        if (currentFuncParameters.FirstOrDefault(t => SymbolEqualityComparer.IncludeNullability.Equals(
                 t.Value.Item1.OriginalDefinition, type.OriginalDefinition)) is { Value.Item1: not null, Value.Item2: not null } funcParameter)
             return (funcParameter.Value.Item2, null);
 

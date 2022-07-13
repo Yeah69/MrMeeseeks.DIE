@@ -39,13 +39,6 @@ internal class ContainerGenerator : IContainerGenerator
             containerResolution.Scopes.Select(s => _scopeCodeBuilderFactory(containerInfo, s, containerResolution.TransientScopeInterface, containerResolution)).ToList());
 
         var generatedContainer = containerCodeBuilder.Build(new StringBuilder());
-        
-        _context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_01", 
-                "Debug",
-                "Starting file creation", 
-                "Warning", DiagnosticSeverity.Warning, 
-                true),
-            Location.None));
 
         var containerSource = CSharpSyntaxTree
             .ParseText(SourceText.From(generatedContainer.ToString(), Encoding.UTF8))

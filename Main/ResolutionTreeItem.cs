@@ -3,22 +3,13 @@ using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE;
 
-internal abstract record ResolutionTreeItem
-{
-    internal static int ResolutionTreeItemCount { get; set; }
-    
-    internal ResolutionTreeItem()
-    {
-        ResolutionTreeItemCount++;
-    }
-}
+internal abstract record ResolutionTreeItem { }
 
 internal abstract record Resolvable : ResolutionTreeItem
 {
     public string Reference { get; }
     public string TypeFullName { get; }
     internal static int ResolvableCount { get; set; }
-    internal static Dictionary<string, int> TypeToCountMap { get; } = new();
 
     internal Resolvable(
         string Reference,
@@ -27,8 +18,6 @@ internal abstract record Resolvable : ResolutionTreeItem
         this.Reference = Reference;
         this.TypeFullName = TypeFullName;
         ResolvableCount++;
-        if (!string.IsNullOrWhiteSpace(TypeFullName))
-        TypeToCountMap[TypeFullName] = TypeToCountMap.TryGetValue(TypeFullName, out var count) ? count + 1 : 1;
     }
 }
 

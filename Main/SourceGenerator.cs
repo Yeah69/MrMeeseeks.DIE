@@ -57,7 +57,8 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedConstrParam,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes);
+            wellKnownTypes,
+            wellKnownTypesMiscellaneous);
         var attributeTypesFromAttributes = new TypesFromAttributes(
             context.Compilation.Assembly.GetAttributes(), 
             wellKnownTypesAggregation,

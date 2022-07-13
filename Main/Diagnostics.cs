@@ -31,6 +31,14 @@ public static class Diagnostics
                 true),
             container.Locations.FirstOrDefault() ?? Location.None);
     
+    public static Diagnostic ValidationContainer(INamedTypeSymbol container, string specification, Location location) => 
+        Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_00", 
+                "Validation (Container)",
+                $"The Container \"{container.Name}\" isn't validly defined: {specification}", 
+                "Error", DiagnosticSeverity.Error, 
+                true),
+            location);
+    
     public static Diagnostic ValidationTransientScope(INamedTypeSymbol transientScope, INamedTypeSymbol parentContainer, string specification) => 
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_01", 
                 "Validation (TransientScope)",

@@ -171,7 +171,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
                 var publicSyncResolutionFunction = new RootResolutionFunction(
-                    methodNamePrefix,
+                    $"{methodNamePrefix}{Constants.CreateFunctionSuffix}",
                     privateRootResolutionFunction.TypeFullName,
                     "public",
                     call,
@@ -192,7 +192,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 taskCall.AsyncTask.Await = false;
                 taskCall.AsyncValueTask.Await = false;
                 var publicTaskResolutionFunction = new RootResolutionFunction(
-                    $"{methodNamePrefix}Async",
+                    $"{methodNamePrefix}{Constants.CreateFunctionSuffixAsync}",
                     boundTaskTypeFullName,
                     "public",
                     new TaskFromSyncResolution(
@@ -216,7 +216,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 valueTaskCall.AsyncTask.Await = false;
                 valueTaskCall.AsyncValueTask.Await = false;
                 var publicValueTaskResolutionFunction = new RootResolutionFunction(
-                    $"{methodNamePrefix}ValueAsync",
+                    $"{methodNamePrefix}{Constants.CreateFunctionSuffixValueAsync}",
                     boundValueTaskTypeFullName,
                     "public",
                     new ValueTaskFromSyncResolution(
@@ -239,7 +239,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
                 var publicTaskResolutionFunction = new RootResolutionFunction(
-                    $"{methodNamePrefix}Async",
+                    $"{methodNamePrefix}{Constants.CreateFunctionSuffixAsync}",
                     actual.FullName(),
                     "public",
                     call,
@@ -260,7 +260,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 valueCall.AsyncTask.Await = false;
                 valueCall.AsyncValueTask.Await = false;
                 var publicValueTaskResolutionFunction = new RootResolutionFunction(
-                    $"{methodNamePrefix}ValueAsync",
+                    $"{methodNamePrefix}{Constants.CreateFunctionSuffixValueAsync}",
                     boundValueTaskTypeFullName,
                     "public",
                     new ValueTaskFromWrappedTaskResolution(
@@ -288,7 +288,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 call.AsyncValueTask.Await = false;
                 var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask);
                 var publicTaskResolutionFunction = new RootResolutionFunction(
-                    $"{methodNamePrefix}Async",
+                    $"{methodNamePrefix}{Constants.CreateFunctionSuffixAsync}",
                     boundTaskTypeFullName,
                     "public",
                     new TaskFromWrappedValueTaskResolution(
@@ -307,7 +307,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 valueCall.AsyncTask.Await = false;
                 valueCall.AsyncValueTask.Await = false;
                 var publicValueTaskResolutionFunction = new RootResolutionFunction(
-                    $"{methodNamePrefix}ValueAsync",
+                    $"{methodNamePrefix}{Constants.CreateFunctionSuffixValueAsync}",
                     actual1.FullName(),
                     "public",
                     valueCall,

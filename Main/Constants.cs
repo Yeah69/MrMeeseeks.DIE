@@ -2,6 +2,7 @@ namespace MrMeeseeks.DIE;
 
 internal static class Constants
 {
+    // General
     internal const string DieAbbreviation = "DIE";
     internal const string ThisKeyword = "this";
     
@@ -18,4 +19,9 @@ internal static class Constants
     internal const string UserDefinedConstructorParameters = $"{DieAbbreviation}_ConstrParam";
     internal const string UserDefinedAddForDisposal = $"{DieAbbreviation}_AddForDisposal";
     internal const string UserDefinedAddForDisposalAsync = $"{DieAbbreviation}_AddForDisposalAsync";
+    
+    // Create Functions
+    internal const string CreateFunctionSuffix = "";
+    internal const string CreateFunctionSuffixAsync = "Async";
+    internal const string CreateFunctionSuffixValueAsync = "ValueAsync";
 }

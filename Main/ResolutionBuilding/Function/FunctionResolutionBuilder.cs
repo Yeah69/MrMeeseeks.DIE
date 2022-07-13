@@ -43,6 +43,7 @@ internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResol
 {
     INamedTypeSymbol OriginalReturnType { get; }
     INamedTypeSymbol? ActualReturnType { get; }
+    IReadOnlyList<(ITypeSymbol, ParameterResolution)> CurrentParameters { get; }
     
     MultiSynchronicityFunctionCallResolution BuildFunctionCall(
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
@@ -73,7 +74,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     public Lazy<SynchronicityDecision> SynchronicityDecision => _synchronicityDecisionMaker.Decision;
     protected Lazy<Resolvable> Resolvable { get; } 
     
-    protected IReadOnlyList<(ITypeSymbol, ParameterResolution)> CurrentParameters { get; }
+    public IReadOnlyList<(ITypeSymbol, ParameterResolution)> CurrentParameters { get; }
     
     protected IReadOnlyList<ParameterResolution> Parameters { get; }
     
@@ -962,22 +963,29 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 OriginalReturnType.FullName(),
                 Name,
                 ownerReference,
-                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList()) 
+                CreateParameter()) 
                 { Await = false },
             new(returnReference,
                 _wellKnownTypes.Task1.Construct(OriginalReturnType).FullName(),
                 OriginalReturnType.FullName(),
                 Name,
                 ownerReference,
-                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList()),
+                CreateParameter()),
             new(returnReference,
                 _wellKnownTypes.ValueTask1.Construct(OriginalReturnType).FullName(),
                 OriginalReturnType.FullName(),
                 Name,
                 ownerReference,
-                Parameters.Zip(currentParameters, (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList()),
+                CreateParameter()),
             SynchronicityDecision,
             _handle);
+
+        IReadOnlyList<(string Name, string Reference)> CreateParameter() =>
+            Parameters.Join(
+                currentParameters,
+                p => p.TypeFullName,
+                p => p.Value.Item2.TypeFullName,
+                (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList();
     }
 
     public MethodGroupResolution BuildMethodGroup() => new (Name, TypeFullName, null);

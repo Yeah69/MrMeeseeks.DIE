@@ -116,8 +116,22 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                 key,
                 out var function))
         {
-            function = _scopeRootCreateFunctionResolutionBuilderFactory(this, parameter);
-            _scopeRootFunctionResolutions[key] = function;
+            if (_scopeRootFunctionResolutions
+                     .Values
+                    .Where(f =>
+                        SymbolEqualityComparer.Default.Equals(f.OriginalReturnType, rootType)
+                        && f.CurrentParameters.All(cp => currentParameters.Any(p =>
+                            SymbolEqualityComparer.IncludeNullability.Equals(cp.Item1, p.Value.Item1))))
+                    .OrderByDescending(f => f.CurrentParameters.Count)
+                    .FirstOrDefault() is { } greatestCommonParameterSetFunction)
+            {
+                function = greatestCommonParameterSetFunction;
+            }
+            else
+            {
+                function = _scopeRootCreateFunctionResolutionBuilderFactory(this, parameter);
+                _scopeRootFunctionResolutions[key] = function;
+            }
         }
 
         var scopeRootReference = RootReferenceGenerator.Generate("scopeRoot");

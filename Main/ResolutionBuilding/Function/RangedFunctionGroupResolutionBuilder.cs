@@ -28,6 +28,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
     private readonly string _typeFullName;
     private readonly string _fieldReference;
     private readonly string _lockReference;
+    private readonly string? _isCreatedForStructs;
 
     private readonly Dictionary<string, IRangedFunctionResolutionBuilder> _overloads = new();
     private readonly List<IRangedFunctionResolutionBuilder> _functionQueue = new();
@@ -52,6 +53,7 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         _fieldReference =
             rootReferenceGenerator.Generate($"_{label.ToLower()}InstanceField", implementationType, decorationSuffix);
         _lockReference = rootReferenceGenerator.Generate($"_{label.ToLower()}InstanceLock{decorationSuffix}");
+        _isCreatedForStructs = implementationType.IsValueType ? rootReferenceGenerator.Generate("isCreated") : null;
     }
 
     public IRangedFunctionResolutionBuilder GetInstanceFunction(
@@ -94,5 +96,6 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
                     functionResolution.SynchronicityDecision))
                 .ToList(),
             _fieldReference,
-            _lockReference);
+            _lockReference,
+            _isCreatedForStructs);
 }

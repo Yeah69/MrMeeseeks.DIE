@@ -57,7 +57,8 @@ internal record RangedInstanceFunctionGroupResolution(
     string TypeFullName,
     IReadOnlyList<RangedInstanceFunctionResolution> Overloads,
     string FieldReference,
-    string LockReference);
+    string LockReference,
+    string? IsCreatedForStructs);
 
 internal record MethodGroupResolution(
     string Reference,

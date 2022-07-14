@@ -9,6 +9,14 @@ public class CustomScopeForRootTypesAttribute : Attribute
     }
 }
 
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+public class CustomConstructorParameterAttribute : Attribute
+{
+    public CustomConstructorParameterAttribute(Type type)
+    {
+    }
+}
+
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
 public class TypeInitializerAttribute : Attribute
 {

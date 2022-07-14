@@ -29,7 +29,7 @@ internal sealed partial class Container
 {
     private sealed partial class DIE_DefaultTransientScope
     {
-        [CustomConstructorParameterChoice(typeof(Dependency))]
+        [CustomConstructorParameter(typeof(Dependency))]
         private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
     }
 }

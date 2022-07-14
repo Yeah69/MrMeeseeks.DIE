@@ -24,7 +24,7 @@ internal sealed partial class Container
 {
     private sealed partial class DIE_DefaultScope
     {
-        [CustomConstructorParameterChoice(typeof(Dependency))]
+        [CustomConstructorParameter(typeof(Dependency))]
         private void DIE_ConstrParam_Dependency(out int number) => number = 69;
     }
 }

@@ -7,12 +7,10 @@ internal interface IValidateUserDefinedConstrParam : IValidateUserDefinedMethod
 
 internal class ValidateUserDefinedConstrParam : ValidateUserDefinedMethod, IValidateUserDefinedConstrParam
 {
-    private readonly WellKnownTypesChoice _wellKnownTypesChoice;
+    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
-    internal ValidateUserDefinedConstrParam(WellKnownTypesChoice wellKnownTypesChoice)
-    {
-        _wellKnownTypesChoice = wellKnownTypesChoice;
-    }
+    internal ValidateUserDefinedConstrParam(WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) => 
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
 
     public override IEnumerable<Diagnostic> Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
@@ -75,8 +73,8 @@ internal class ValidateUserDefinedConstrParam : ValidateUserDefinedMethod, IVali
         
         if (method
                 .GetAttributes()
-                .Count(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypesChoice.CustomConstructorParameterChoiceAttribute))
+                .Count(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypesMiscellaneous.CustomConstructorParameterAttribute))
                 != 1)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have exactly one attribute of type \"{_wellKnownTypesChoice.CustomConstructorParameterChoiceAttribute.FullName()}\".");
+            yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have exactly one attribute of type \"{_wellKnownTypesMiscellaneous.CustomConstructorParameterAttribute.FullName()}\".");
     }
 }

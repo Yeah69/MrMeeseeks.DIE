@@ -34,7 +34,7 @@ internal class UserDefinedElements : IUserDefinedElements
 
         // dependencies
         WellKnownTypes wellKnownTypes,
-        WellKnownTypesChoice wellKnownTypesChoice)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         var validationErrors = new List<Diagnostic>();
         var dieMembers = scopeType.GetMembers()
@@ -126,7 +126,7 @@ internal class UserDefinedElements : IUserDefinedElements
             {
                 var type = m.GetAttributes()
                     .Where(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        wellKnownTypesChoice.CustomConstructorParameterChoiceAttribute))
+                        wellKnownTypesMiscellaneous.CustomConstructorParameterAttribute))
                     .Select(ad =>
                     {
                         if (ad.ConstructorArguments.Length != 1)

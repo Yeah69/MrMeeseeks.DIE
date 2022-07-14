@@ -28,7 +28,7 @@ public class SourceGenerator : ISourceGenerator
         var diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
         var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(wellKnownTypes);
         var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);
-        var validateUserDefinedConstrParam = new ValidateUserDefinedConstrParam(wellKnownTypesChoice);
+        var validateUserDefinedConstrParam = new ValidateUserDefinedConstrParam(wellKnownTypesMiscellaneous);
         var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
         var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
         var validateTransientScope = new ValidateTransientScope(
@@ -103,7 +103,7 @@ public class SourceGenerator : ISourceGenerator
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
                 LocalFunctionResolutionBuilderFactory,
-                new UserDefinedElements(ci.ContainerType, ci.ContainerType, wellKnownTypes, wellKnownTypesChoice),
+                new UserDefinedElements(ci.ContainerType, ci.ContainerType, wellKnownTypes, wellKnownTypesMiscellaneous),
                 functionCycleTracker);
 
             IScopeManager ScopeManagerFactory(
@@ -121,7 +121,7 @@ public class SourceGenerator : ISourceGenerator
                     wellKnownTypesChoice,
                     wellKnownTypesMiscellaneous),
                 tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, implementationTypeSetCache), wellKnownTypes),
-                st => new UserDefinedElements(st, ci.ContainerType, wellKnownTypes, wellKnownTypesChoice),
+                st => new UserDefinedElements(st, ci.ContainerType, wellKnownTypes, wellKnownTypesMiscellaneous),
                 new EmptyUserDefinedElements(),
                 wellKnownTypesMiscellaneous);
 

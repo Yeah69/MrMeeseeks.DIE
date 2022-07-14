@@ -461,12 +461,17 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
     private StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution)
     {
+        var isRefType = rangedInstanceFunctionGroupResolution.IsCreatedForStructs is null;
         stringBuilder = stringBuilder
             .AppendLine(
-                $"private {rangedInstanceFunctionGroupResolution.TypeFullName}? {rangedInstanceFunctionGroupResolution.FieldReference};")
+                $"private {rangedInstanceFunctionGroupResolution.TypeFullName}{(isRefType ? "?" : "")} {rangedInstanceFunctionGroupResolution.FieldReference};")
             .AppendLine(
                 $"private {WellKnownTypes.SemaphoreSlim.FullName()} {rangedInstanceFunctionGroupResolution.LockReference} = new {WellKnownTypes.SemaphoreSlim.FullName()}(1);");
-            
+
+        if (!isRefType)
+            stringBuilder = stringBuilder.AppendLine(
+                $"private bool {rangedInstanceFunctionGroupResolution.IsCreatedForStructs};");
+
         foreach (var overload in rangedInstanceFunctionGroupResolution.Overloads)
         {
             var isAsync =
@@ -475,8 +480,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 overload.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"));
             stringBuilder = stringBuilder.AppendLine(
                     $"public {(isAsync ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})")
-                .AppendLine($"{{").AppendLine(
-                    $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};")
+                .AppendLine($"{{")
+                .AppendLine(isRefType
+                    ? $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};"
+                    : $"if ({rangedInstanceFunctionGroupResolution.IsCreatedForStructs}) return {rangedInstanceFunctionGroupResolution.FieldReference};")
                 .AppendLine($"{(isAsync ? "await " : "")}this.{rangedInstanceFunctionGroupResolution.LockReference}.Wait{(isAsync ? "Async" : "")}();")
                 .AppendLine($"try")
                 .AppendLine($"{{");
@@ -485,8 +492,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     .AppendLine(
                     $"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(nameof({_rangeResolution.DisposalHandling.RangeName}));");
             stringBuilder = stringBuilder
-                .AppendLine(
-                    $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};");
+                .AppendLine(isRefType
+                    ? $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};"
+                    : $"if ({rangedInstanceFunctionGroupResolution.IsCreatedForStructs}) return {rangedInstanceFunctionGroupResolution.FieldReference};");
 
             stringBuilder = GenerateResolutionFunctionContent(stringBuilder, overload.Resolvable);
 

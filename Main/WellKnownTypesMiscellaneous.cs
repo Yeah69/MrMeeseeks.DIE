@@ -6,6 +6,7 @@ internal record WellKnownTypesMiscellaneous(
     INamedTypeSymbol TypeInitializerAttribute,
     INamedTypeSymbol FilterTypeInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
+    INamedTypeSymbol CustomConstructorParameterAttribute,
     INamedTypeSymbol CreateFunctionAttribute,
     INamedTypeSymbol ErrorDescriptionInsteadOfBuildFailureAttribute,
     INamedTypeSymbol DieExceptionKind)
@@ -14,6 +15,9 @@ internal record WellKnownTypesMiscellaneous(
     {
         var customScopeForRootTypesAttribute = compilation
             .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
+
+        var customConstructorParameterAttribute = compilation
+            .GetTypeByMetadataName(typeof(CustomConstructorParameterAttribute).FullName ?? "");
 
         var typeInitializerAttribute = compilation
             .GetTypeByMetadataName(typeof(TypeInitializerAttribute).FullName ?? "");
@@ -33,6 +37,7 @@ internal record WellKnownTypesMiscellaneous(
         if (typeInitializerAttribute is not null
             && filterTypeInitializerAttribute is not null
             && customScopeForRootTypesAttribute is not null
+            && customConstructorParameterAttribute is not null
             && createFunctionAttribute is not null
             && errorDescriptionInsteadOfBuildFailureAttribute is not null
             && dieExceptionKind is not null)
@@ -42,6 +47,7 @@ internal record WellKnownTypesMiscellaneous(
                 TypeInitializerAttribute: typeInitializerAttribute,
                 FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
+                CustomConstructorParameterAttribute: customConstructorParameterAttribute,
                 CreateFunctionAttribute: createFunctionAttribute,
                 ErrorDescriptionInsteadOfBuildFailureAttribute: errorDescriptionInsteadOfBuildFailureAttribute,
                 DieExceptionKind: dieExceptionKind);

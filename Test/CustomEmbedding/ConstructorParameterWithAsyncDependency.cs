@@ -20,7 +20,7 @@ internal class OtherDependency : IValueTaskTypeInitializer
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    [CustomConstructorParameterChoice(typeof(Dependency))]
+    [CustomConstructorParameter(typeof(Dependency))]
     private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
 }
 

@@ -14,7 +14,7 @@ internal class Dependency
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    [CustomConstructorParameterChoice(typeof(Dependency))]
+    [CustomConstructorParameter(typeof(Dependency))]
     private void DIE_ConstrParam_Dependency(out int number) => number = 69;
 }
 

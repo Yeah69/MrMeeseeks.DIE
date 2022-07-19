@@ -105,40 +105,56 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
 
         var (reference, handle) = tuple;
 
-        var key = $"{referenceKey}:::{string.Join(":::", currentParameters.Select(p => p.Value.Item1.FullName()))}";
-        if (!_rangedInstanceReferenceResolutions.TryGetValue(key, out var interfaceDeclaration))
-        {
-            var queueItem = new RangedInstanceResolutionsQueueItem(
-                parameter,
-                label,
-                reference,
+        var key = $"{referenceKey}:::{string.Join(":::", currentParameters.Select(p => p.Value.Item2.TypeFullName))}";
+        if (!_rangedInstanceReferenceResolutions.TryGetValue(
                 key,
-                handle);
-
-            _pastQueuedItems.Add(queueItem);
-
-            var synchronicityDecisionMaker = _synchronicityDecisionMakerFactory();
-            _synchronicityDecisionMakers[key] = synchronicityDecisionMaker;
-
-            foreach (var implementation in _implementations)
+                out var interfaceDeclaration))
+        {
+            if (_rangedInstanceReferenceResolutions
+                    .Values
+                    .Where(f =>
+                        f.TypeFullName == implementationType.FullName(SymbolDisplayMiscellaneousOptions.None)
+                        && f.Parameter.All(cp => currentParameters.Any(p =>
+                            cp.TypeFullName == p.Value.Item2.TypeFullName)))
+                    .OrderByDescending(f => f.Parameter.Count)
+                    .FirstOrDefault() is { } greatestCommonParameterSetFunction)
             {
-                var multiSynchronicityFunctionCallResolution = implementation.EnqueueRangedInstanceResolution(
-                    queueItem.Parameter,
-                    queueItem.Label,
-                    queueItem.Reference,
-                    new (() => synchronicityDecisionMaker));
-                _functionCycleTracker.TrackFunctionCall(handle, multiSynchronicityFunctionCallResolution.FunctionResolutionBuilderHandle);
+                interfaceDeclaration = greatestCommonParameterSetFunction;
             }
+            else
+            {
+                var queueItem = new RangedInstanceResolutionsQueueItem(
+                    parameter,
+                    label,
+                    reference,
+                    key,
+                    handle);
 
-            interfaceDeclaration = new InterfaceFunctionDeclarationResolution(
-                reference,
-                implementationType.FullName(),
-                _wellKnownTypes.Task1.Construct(implementationType).FullName(),
-                _wellKnownTypes.ValueTask1.Construct(implementationType).FullName(),
-                currentParameters.Select(t =>
-                    new ParameterResolution(_rootReferenceGenerator.Generate(t.Value.Item1), t.Value.Item1.FullName())).ToList(),
-                synchronicityDecisionMaker.Decision);
-            _rangedInstanceReferenceResolutions[key] = interfaceDeclaration;
+                _pastQueuedItems.Add(queueItem);
+
+                var synchronicityDecisionMaker = _synchronicityDecisionMakerFactory();
+                _synchronicityDecisionMakers[key] = synchronicityDecisionMaker;
+
+                foreach (var implementation in _implementations)
+                {
+                    var multiSynchronicityFunctionCallResolution = implementation.EnqueueRangedInstanceResolution(
+                        queueItem.Parameter,
+                        queueItem.Label,
+                        queueItem.Reference,
+                        new (() => synchronicityDecisionMaker));
+                    _functionCycleTracker.TrackFunctionCall(handle, multiSynchronicityFunctionCallResolution.FunctionResolutionBuilderHandle);
+                }
+
+                interfaceDeclaration = new InterfaceFunctionDeclarationResolution(
+                    reference,
+                    implementationType.FullName(),
+                    _wellKnownTypes.Task1.Construct(implementationType).FullName(),
+                    _wellKnownTypes.ValueTask1.Construct(implementationType).FullName(),
+                    currentParameters.Select(t =>
+                        new ParameterResolution(_rootReferenceGenerator.Generate(t.Value.Item1), t.Value.Item1.FullName())).ToList(),
+                    synchronicityDecisionMaker.Decision);
+                _rangedInstanceReferenceResolutions[key] = interfaceDeclaration;
+            }
         }
 
         var returnReference = _rootReferenceGenerator.Generate("ret");

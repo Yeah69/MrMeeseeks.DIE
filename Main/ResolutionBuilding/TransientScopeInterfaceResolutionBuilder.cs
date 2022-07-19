@@ -111,15 +111,15 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
                 out var interfaceDeclaration))
         {
             if (_rangedInstanceReferenceResolutions
-                    .Values
-                    .Where(f =>
-                        f.TypeFullName == implementationType.FullName(SymbolDisplayMiscellaneousOptions.None)
-                        && f.Parameter.All(cp => currentParameters.Any(p =>
+                    .Where(kvp =>
+                        kvp.Value.TypeFullName == implementationType.FullName(SymbolDisplayMiscellaneousOptions.None)
+                        && kvp.Value.Parameter.All(cp => currentParameters.Any(p =>
                             cp.TypeFullName == p.Value.Item2.TypeFullName)))
-                    .OrderByDescending(f => f.Parameter.Count)
-                    .FirstOrDefault() is { } greatestCommonParameterSetFunction)
+                    .OrderByDescending(kvp => kvp.Value.Parameter.Count)
+                    .FirstOrDefault() is { Key: { } reducedKey, Value: { } greatestCommonParameterSetFunction })
             {
                 interfaceDeclaration = greatestCommonParameterSetFunction;
+                _synchronicityDecisionMakers[key] = _synchronicityDecisionMakers[reducedKey];
             }
             else
             {

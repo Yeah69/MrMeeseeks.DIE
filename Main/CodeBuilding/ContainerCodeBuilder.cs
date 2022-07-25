@@ -74,7 +74,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
             _containerResolution);
         
         stringBuilder = stringBuilder
-            .AppendLine($"internal interface {_containerResolution.TransientScopeInterface.Name}")
+            .AppendLine($"private interface {_containerResolution.TransientScopeInterface.Name}")
             .AppendLine($"{{");
 
         stringBuilder = _containerResolution.TransientScopeInterface.Functions.Aggregate(
@@ -86,7 +86,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
             .AppendLine($"}}");
 
         stringBuilder = stringBuilder
-            .AppendLine($"internal class {_containerResolution.TransientScopeInterface.ContainerAdapterName} : {_containerResolution.TransientScopeInterface.Name}")
+            .AppendLine($"private class {_containerResolution.TransientScopeInterface.ContainerAdapterName} : {_containerResolution.TransientScopeInterface.Name}")
             .AppendLine($"{{")
             .AppendLine($"private {_containerInfo.FullName} _container;")
             .AppendLine($"internal {_containerResolution.TransientScopeInterface.ContainerAdapterName}({_containerInfo.FullName} container) => _container = container;");

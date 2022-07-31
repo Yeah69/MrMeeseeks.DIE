@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Extensions;
+
 namespace MrMeeseeks.DIE;
 
 public static class Diagnostics
@@ -66,6 +68,23 @@ public static class Diagnostics
                 "Error", DiagnosticSeverity.Error,
                 true),
             userDefinedElement.Locations.FirstOrDefault() ?? Location.None);
+    }
+    
+    public static Diagnostic ValidationConfigurationAttribute(AttributeData attributeData, INamedTypeSymbol? parentRange, INamedTypeSymbol? parentContainer, string specification)
+    {
+        var rangeDescription = parentRange is null && parentContainer is null 
+            ? "assembly level"
+            : parentRange is null || parentContainer is null 
+                ? "default Range"
+                : SymbolEqualityComparer.Default.Equals(parentRange, parentContainer)
+                    ? $"parent-Container \"{parentContainer.Name}\""
+                    : $"Range \"{parentRange.Name}\" in parent-Container \"{parentContainer.Name}\"";
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_03",
+                "Validation (Configuration Attribute)",
+                $"The configuration attribute \"{attributeData.AttributeClass?.Name}\" (of {rangeDescription}) isn't validly defined: {specification}",
+                "Error", DiagnosticSeverity.Error,
+                true),
+            attributeData.GetLocation());
     }
     
     public static Diagnostic UnexpectedDieException(DieException exception)

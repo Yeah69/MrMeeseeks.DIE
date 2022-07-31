@@ -2,6 +2,7 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
+using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 
@@ -31,6 +32,7 @@ public class SourceGenerator : ISourceGenerator
         var validateUserDefinedConstrParam = new ValidateUserDefinedConstrParam(wellKnownTypesMiscellaneous);
         var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
         var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
+        var validateAttributes = new ValidateAttributes();
         var validateTransientScope = new ValidateTransientScope(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
@@ -59,11 +61,23 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedFactoryField,
             wellKnownTypes,
             wellKnownTypesMiscellaneous);
-        var attributeTypesFromAttributes = new TypesFromAttributes(
+        var assemblyTypesFromAttributes = new TypesFromAttributes(
             context.Compilation.Assembly.GetAttributes(), 
+            null,
+            null,
+            validateAttributes,
             wellKnownTypesAggregation,
             wellKnownTypesChoice,
             wellKnownTypesMiscellaneous);
+        
+        foreach (var diagnostic in assemblyTypesFromAttributes
+                     .Warnings
+                     .Concat(assemblyTypesFromAttributes.Errors))
+            diagLogger.Log(diagnostic);
+
+        if (assemblyTypesFromAttributes.Errors.Any())
+            return;
+        
         var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypesMiscellaneous);
@@ -81,13 +95,24 @@ public class SourceGenerator : ISourceGenerator
             
         IContainerResolutionBuilder ResolutionTreeFactory(IContainerInfo ci)
         {
+            var containerTypesFromAttributes = new TypesFromAttributes(
+                ci.ContainerType.GetAttributes(), 
+                ci.ContainerType,
+                ci.ContainerType,
+                validateAttributes,
+                wellKnownTypesAggregation,
+                wellKnownTypesChoice,
+                wellKnownTypesMiscellaneous);
+        
+            foreach (var diagnostic in containerTypesFromAttributes.Warnings)
+                diagLogger.Log(diagnostic);
+
+            if (containerTypesFromAttributes.Errors.Any())
+                throw new ValidationDieException(containerTypesFromAttributes.Errors.ToImmutableArray());
+            
             var containerTypesFromAttributesList = ImmutableList.Create(
-                (ITypesFromAttributes) attributeTypesFromAttributes,
-                new TypesFromAttributes(
-                    ci.ContainerType.GetAttributes(), 
-                    wellKnownTypesAggregation,
-                    wellKnownTypesChoice,
-                    wellKnownTypesMiscellaneous));
+                (ITypesFromAttributes) assemblyTypesFromAttributes,
+                containerTypesFromAttributes);
 
             var functionCycleTracker = new FunctionCycleTracker();
 
@@ -115,11 +140,25 @@ public class SourceGenerator : ISourceGenerator
                 containerTypesFromAttributesList,
                 TransientScopeResolutionBuilderFactory,
                 ScopeResolutionBuilderFactory,
-                ad => new ScopeTypesFromAttributes(
-                    ad, 
-                    wellKnownTypesAggregation,
-                    wellKnownTypesChoice,
-                    wellKnownTypesMiscellaneous),
+                (rangeType, ad) =>
+                {
+                    var scopeTypesFromAttributes = new ScopeTypesFromAttributes(
+                        ad,
+                        rangeType,
+                        ci.ContainerType,
+                        validateAttributes,
+                        wellKnownTypesAggregation,
+                        wellKnownTypesChoice,
+                        wellKnownTypesMiscellaneous);
+                    
+                    foreach (var diagnostic in scopeTypesFromAttributes.Warnings)
+                        diagLogger.Log(diagnostic);
+
+                    if (scopeTypesFromAttributes.Errors.Any())
+                        throw new ValidationDieException(scopeTypesFromAttributes.Errors.ToImmutableArray());
+                    
+                    return scopeTypesFromAttributes;
+                },
                 tfa => new CheckTypeProperties(new CurrentlyConsideredTypes(tfa, implementationTypeSetCache), wellKnownTypes),
                 st => new UserDefinedElements(st, ci.ContainerType, wellKnownTypes, wellKnownTypesMiscellaneous),
                 new EmptyUserDefinedElements(),

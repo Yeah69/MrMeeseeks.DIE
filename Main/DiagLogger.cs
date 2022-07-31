@@ -3,7 +3,6 @@
 internal interface IDiagLogger
 {
     void Error(DieException exception);
-    void Error(Diagnostic diagnostic);
 
     void Log(Diagnostic diagnostic);
 }
@@ -26,23 +25,23 @@ internal class DiagLogger : IDiagLogger
         switch (exception)
         {
             case ImplementationCycleDieException implementationCycle:
-                _context.ReportDiagnostic(Diagnostics.CircularReferenceInsideFactory(implementationCycle));
+                Log(Diagnostics.CircularReferenceInsideFactory(implementationCycle));
                 break;
             case FunctionCycleDieException:
-                _context.ReportDiagnostic(Diagnostics.CircularReferenceAmongFactories);
+                Log(Diagnostics.CircularReferenceAmongFactories);
                 break;
-            case ValidationDieException:
+            case ValidationDieException validationDieException:
+                foreach (var error in validationDieException.Diagnostics)
+                    Log(error);
                 break;
             case CompilationDieException slippedResolution:
-                _context.ReportDiagnostic(slippedResolution.Diagnostic);
+                Log(slippedResolution.Diagnostic);
                 break;
             default:
-                _context.ReportDiagnostic(Diagnostics.UnexpectedDieException(exception));
+                Log(Diagnostics.UnexpectedDieException(exception));
                 break;
         }
     }
-
-    public void Error(Diagnostic diagnostic) => _context.ReportDiagnostic(diagnostic);
 
     public void Log(Diagnostic diagnostic)
     {

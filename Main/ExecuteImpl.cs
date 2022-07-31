@@ -82,20 +82,8 @@ internal class ExecuteImpl : IExecute
                     }
                     else
                     {
-
                         throw new ValidationDieException(validationDiagnostics);
                     }
-                }
-                catch (ValidationDieException validationDieException)
-                {
-                    if (_errorDescriptionInsteadOfBuildFailure)
-                        _containerDieExceptionGenerator.Generate(
-                            containerSymbol.ContainingNamespace.FullName(), 
-                            containerSymbol.Name, 
-                            validationDieException);
-                    else
-                        foreach (var validationDiagnostic in validationDieException.Diagnostics)
-                            _diagLogger.Log(validationDiagnostic);
                 }
                 catch (DieException dieException)
                 {
@@ -109,12 +97,7 @@ internal class ExecuteImpl : IExecute
                 }
                 catch (Exception exception)
                 {
-                    if (_errorDescriptionInsteadOfBuildFailure)
-                    {
-                        // ignore
-                    }
-                    else
-                        _diagLogger.Error(Diagnostics.UnexpectedException(exception));
+                    _diagLogger.Log(Diagnostics.UnexpectedException(exception));
                 }
             }
         }

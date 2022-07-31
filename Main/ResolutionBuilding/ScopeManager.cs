@@ -40,7 +40,7 @@ internal class ScopeManager : IScopeManager
         ICheckTypeProperties, 
         IErrorContext,
         ITransientScopeResolutionBuilder> _transientScopeResolutionBuilderFactory;
-    private readonly Func<ImmutableArray<AttributeData>, ScopeTypesFromAttributes> _scopeTypesFromAttributesFactory;
+    private readonly Func<INamedTypeSymbol?, ImmutableArray<AttributeData>, ScopeTypesFromAttributes> _scopeTypesFromAttributesFactory;
     private readonly Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> _checkTypePropertiesFactory;
     private readonly Func<INamedTypeSymbol, IUserDefinedElements> _userProvidedScopeElementsFactory;
     private readonly Lazy<IScopeResolutionBuilder> _defaultScopeBuilder;
@@ -73,7 +73,7 @@ internal class ScopeManager : IScopeManager
             ICheckTypeProperties, 
             IErrorContext,
             IScopeResolutionBuilder> scopeResolutionBuilderFactory,
-        Func<ImmutableArray<AttributeData>, ScopeTypesFromAttributes> scopeTypesFromAttributesFactory,
+        Func<INamedTypeSymbol?, ImmutableArray<AttributeData>, ScopeTypesFromAttributes> scopeTypesFromAttributesFactory,
         Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> checkTypePropertiesFactory,
         Func<INamedTypeSymbol, IUserDefinedElements> userProvidedScopeElementsFactory,
         IUserDefinedElements emptyUserDefinedElements,
@@ -92,7 +92,9 @@ internal class ScopeManager : IScopeManager
             () =>
             {
                 var defaultScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultScopeName).FirstOrDefault();
-                var defaultScopeTypesFromAttributes = _scopeTypesFromAttributesFactory(defaultScopeType?.GetAttributes() ?? ImmutableArray<AttributeData>.Empty);
+                var defaultScopeTypesFromAttributes = _scopeTypesFromAttributesFactory(
+                    defaultScopeType, 
+                    defaultScopeType?.GetAttributes() ?? ImmutableArray<AttributeData>.Empty);
                 return _scopeResolutionBuilderFactory(
                     Constants.DefaultScopeName,
                     _containerResolutionBuilder,
@@ -109,7 +111,9 @@ internal class ScopeManager : IScopeManager
             () =>
             {
                 var defaultTransientScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultTransientScopeName).FirstOrDefault();
-                var defaultTransientScopeTypesFromAttributes = _scopeTypesFromAttributesFactory(defaultTransientScopeType?.GetAttributes() ?? ImmutableArray<AttributeData>.Empty);
+                var defaultTransientScopeTypesFromAttributes = _scopeTypesFromAttributesFactory(
+                    defaultTransientScopeType, 
+                    defaultTransientScopeType?.GetAttributes() ?? ImmutableArray<AttributeData>.Empty);
                 var ret = _transientScopeResolutionBuilderFactory(
                     Constants.DefaultTransientScopeName,
                     _containerResolutionBuilder, 
@@ -182,7 +186,7 @@ internal class ScopeManager : IScopeManager
         if (!_scopeRootTypeToScopeType.TryGetValue(scopeRootType, out var scopeType)) 
             return _defaultScopeBuilder.Value;
         
-        var scopeTypesFromAttributes = _scopeTypesFromAttributesFactory(scopeType.GetAttributes());
+        var scopeTypesFromAttributes = _scopeTypesFromAttributesFactory(scopeType, scopeType.GetAttributes());
         var ret = _scopeResolutionBuilderFactory(
             scopeType.Name,
             _containerResolutionBuilder,
@@ -203,7 +207,7 @@ internal class ScopeManager : IScopeManager
         if (!_transientScopeRootTypeToScopeType.TryGetValue(transientScopeRootType, out var transientScopeType)) 
             return _defaultTransientScopeBuilder.Value;
         
-        var scopeTypesFromAttributes = _scopeTypesFromAttributesFactory(transientScopeType.GetAttributes());
+        var scopeTypesFromAttributes = _scopeTypesFromAttributesFactory(transientScopeType, transientScopeType.GetAttributes());
         var ret = _transientScopeResolutionBuilderFactory(
             transientScopeType.Name,
             _containerResolutionBuilder,

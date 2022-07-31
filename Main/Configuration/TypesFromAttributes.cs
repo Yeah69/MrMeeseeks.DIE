@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.Validation.Attributes;
 
 namespace MrMeeseeks.DIE.Configuration;
 
@@ -69,84 +70,99 @@ internal class TypesFromAttributes : ScopeTypesFromAttributes
     internal TypesFromAttributes(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
+        INamedTypeSymbol? rangeType,
+        INamedTypeSymbol? containerType,
 
         // dependencies
+        IValidateAttributes validateAttributes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
-        : base(attributeData, wellKnownTypesAggregation, wellKnownTypesChoice, wellKnownTypesMiscellaneous)
+        : base(attributeData, rangeType, containerType, validateAttributes, wellKnownTypesAggregation, wellKnownTypesChoice, wellKnownTypesMiscellaneous)
     {
-        ContainerInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
-        TransientScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
-        TransientScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
-        ScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeRootAbstractionAggregationAttribute);
-        ContainerInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute);
-        TransientScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceImplementationAggregationAttribute);
-        TransientScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootImplementationAggregationAttribute);
-        ScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeRootImplementationAggregationAttribute);
-        FilterContainerInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute);
-        FilterTransientScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceAbstractionAggregationAttribute);
-        FilterTransientScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootAbstractionAggregationAttribute);
-        FilterScopeRootAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootAbstractionAggregationAttribute);
-        FilterContainerInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceImplementationAggregationAttribute);
-        FilterTransientScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceImplementationAggregationAttribute);
-        FilterTransientScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootImplementationAggregationAttribute);
-        FilterScopeRootImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootImplementationAggregationAttribute);
+        ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
+        TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
+        TransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
+        ScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ScopeRootAbstractionAggregationAttribute);
+        ContainerInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute);
+        TransientScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceImplementationAggregationAttribute);
+        TransientScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootImplementationAggregationAttribute);
+        ScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ScopeRootImplementationAggregationAttribute);
+        FilterContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootAbstractionAggregationAttribute);
+        FilterScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootAbstractionAggregationAttribute);
+        FilterContainerInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceImplementationAggregationAttribute);
+        FilterTransientScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceImplementationAggregationAttribute);
+        FilterTransientScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootImplementationAggregationAttribute);
+        FilterScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootImplementationAggregationAttribute);
     }
 }
 
 internal class ScopeTypesFromAttributes : ITypesFromAttributes
 {
+    private readonly INamedTypeSymbol? _rangeType;
+    private readonly INamedTypeSymbol? _containerType;
+    private readonly IValidateAttributes _validateAttributes;
+    protected readonly List<Diagnostic> _warnings = new(); 
+    protected readonly List<Diagnostic> _errors = new();
+
     internal ScopeTypesFromAttributes(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
+        INamedTypeSymbol? rangeType,
+        INamedTypeSymbol? containerType,
 
         // dependencies
+        IValidateAttributes validateAttributes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
+        _rangeType = rangeType;
+        _containerType = containerType;
+        _validateAttributes = validateAttributes;
         AttributeDictionary = attributeData
             .GroupBy(ad => ad.AttributeClass, SymbolEqualityComparer.Default)
             .ToDictionary(g => g.Key, g => g);
 
-        Implementation = GetTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
-        TransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
-        SyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.SyncTransientAbstractionAggregationAttribute);
-        AsyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientAbstractionAggregationAttribute);
+        Implementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
+        TransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
+        SyncTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.SyncTransientAbstractionAggregationAttribute);
+        AsyncTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientAbstractionAggregationAttribute);
         ContainerInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
         TransientScopeInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
-        ScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceAbstractionAggregationAttribute);
+        ScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceAbstractionAggregationAttribute);
         TransientScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
         ScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
-        DecoratorAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.DecoratorAbstractionAggregationAttribute);
-        CompositeAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.CompositeAbstractionAggregationAttribute);
-        TransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.TransientImplementationAggregationAttribute);
-        SyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.SyncTransientImplementationAggregationAttribute);
-        AsyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientImplementationAggregationAttribute);
+        DecoratorAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.DecoratorAbstractionAggregationAttribute);
+        CompositeAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.CompositeAbstractionAggregationAttribute);
+        TransientImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.TransientImplementationAggregationAttribute);
+        SyncTransientImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.SyncTransientImplementationAggregationAttribute);
+        AsyncTransientImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.AsyncTransientImplementationAggregationAttribute);
         ContainerInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         TransientScopeInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
-        ScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceImplementationAggregationAttribute);
+        ScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceImplementationAggregationAttribute);
         TransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         ScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
 
-        FilterImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterImplementationAggregationAttribute);
-        FilterTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientAbstractionAggregationAttribute);
-        FilterSyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientAbstractionAggregationAttribute);
-        FilterAsyncTransientAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientAbstractionAggregationAttribute);
+        FilterImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterImplementationAggregationAttribute);
+        FilterTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientAbstractionAggregationAttribute);
+        FilterSyncTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientAbstractionAggregationAttribute);
+        FilterAsyncTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientAbstractionAggregationAttribute);
         FilterContainerInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterTransientScopeInstanceAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
-        FilterScopeInstanceAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceAbstractionAggregationAttribute);
+        FilterScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceAbstractionAggregationAttribute);
         FilterTransientScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootAbstraction = ImmutableHashSet<INamedTypeSymbol>.Empty;
-        FilterDecoratorAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterDecoratorAbstractionAggregationAttribute);
-        FilterCompositeAbstraction = GetTypesFromAttribute(wellKnownTypesAggregation.FilterCompositeAbstractionAggregationAttribute);
-        FilterTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterTransientImplementationAggregationAttribute);
-        FilterSyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientImplementationAggregationAttribute);
-        FilterAsyncTransientImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientImplementationAggregationAttribute);
+        FilterDecoratorAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterDecoratorAbstractionAggregationAttribute);
+        FilterCompositeAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterCompositeAbstractionAggregationAttribute);
+        FilterTransientImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterTransientImplementationAggregationAttribute);
+        FilterSyncTransientImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterSyncTransientImplementationAggregationAttribute);
+        FilterAsyncTransientImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterAsyncTransientImplementationAggregationAttribute);
         FilterContainerInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterTransientScopeInstanceImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
-        FilterScopeInstanceImplementation = GetTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceImplementationAggregationAttribute);
+        FilterScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceImplementationAggregationAttribute);
         FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         
@@ -504,35 +520,66 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
-        FilterImplementationChoices = GetTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
+        FilterImplementationChoices = GetImplementationTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
         
-        FilterImplementationCollectionChoices = GetTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
+        FilterImplementationCollectionChoices = GetImplementationTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
     
-    protected IImmutableSet<INamedTypeSymbol> GetTypesFromAttribute(
+    protected IImmutableSet<INamedTypeSymbol> GetAbstractionTypesFromAttribute(
         INamedTypeSymbol attribute)
     {
         return ImmutableHashSet.CreateRange(
-            (AttributeDictionary.TryGetValue(attribute, out var attributes) ? attributes : Enumerable.Empty<AttributeData>())
-                .SelectMany(ad => ad.ConstructorArguments
-                    .Where(tc => tc.Kind == TypedConstantKind.Type)
-                    .OfType<TypedConstant>()
-                    .Concat(ad.ConstructorArguments.SelectMany(ca => ca.Kind is TypedConstantKind.Array
-                        ? (IEnumerable<TypedConstant>)ca.Values
-                        : Array.Empty<TypedConstant>())))
-                .Select(tc => !CheckValidType(tc, out var type) ? null : type)
-                .Where(t => t is not null)
-                .OfType<INamedTypeSymbol>()
-                .Select(t => t.OriginalDefinition));
-        
-        bool CheckValidType(TypedConstant typedConstant, out INamedTypeSymbol type)
-        {
-            type = (typedConstant.Value as INamedTypeSymbol)!;
-            return typedConstant.Value is not null;
-        }
+            GetTypesFromAttribute(attribute)
+                .Where(t =>
+                {
+                    var ret = _validateAttributes.ValidateAbstraction(t.Item2);
+
+                    _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                        t.Item1,
+                        _rangeType, 
+                        _containerType, 
+                        $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored."));
+                
+                    return ret;
+                })
+                .Select(t => t.Item2));
     }
+    
+    protected IImmutableSet<INamedTypeSymbol> GetImplementationTypesFromAttribute(
+        INamedTypeSymbol attribute)
+    {
+        return ImmutableHashSet.CreateRange(
+            GetTypesFromAttribute(attribute)
+            .Where(t =>
+            {
+                var ret = _validateAttributes.ValidateImplementation(t.Item2);
+
+                _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                    t.Item1,
+                    _rangeType, 
+                    _containerType, 
+                    $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored."));
+                
+                return ret;
+            })
+            .Select(t => t.Item2));
+    }
+    
+    private IEnumerable<(AttributeData, INamedTypeSymbol)> GetTypesFromAttribute(
+        INamedTypeSymbol attribute) =>
+        (AttributeDictionary.TryGetValue(attribute, out var attributes) ? attributes : Enumerable.Empty<AttributeData>())
+        .SelectMany(ad => ad.ConstructorArguments
+            .Where(tc => tc.Kind == TypedConstantKind.Type)
+            .Select(tc => (ad, tc))
+            .Concat(ad.ConstructorArguments.SelectMany(ca => ca.Kind is TypedConstantKind.Array
+                ? (IEnumerable<(AttributeData, TypedConstant)>)ca.Values.Select(tc => (ad, tc))
+                : Array.Empty<(AttributeData, TypedConstant)>())))
+        .Select(t => t.Item2.Value is INamedTypeSymbol type
+            ? (t.Item1, type.OriginalDefinition)
+            : ((AttributeData, INamedTypeSymbol)?)null)
+        .OfType<(AttributeData, INamedTypeSymbol)>();
 
     public IImmutableSet<INamedTypeSymbol> Implementation { get; }
     public IImmutableSet<INamedTypeSymbol> TransientAbstraction { get; }
@@ -592,4 +639,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<IAssemblySymbol> FilterAssemblyImplementations { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
+
+    public IReadOnlyList<Diagnostic> Warnings => _warnings;
+
+    public IReadOnlyList<Diagnostic> Errors => _errors;
 }

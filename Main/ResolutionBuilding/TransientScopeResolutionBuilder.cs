@@ -65,7 +65,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         _containerResolutionBuilder.CreateContainerInstanceReferenceResolution(parameter, _containerReference);
 
     public override MultiSynchronicityFunctionCallResolution CreateTransientScopeInstanceReferenceResolution(ForConstructorParameter parameter) =>
-        _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, Constants.ThisKeyword);
+        _transientScopeInterfaceResolutionBuilder.CreateTransientScopeInstanceReferenceResolution(parameter, $"({Constants.ThisKeyword} as {_transientScopeInterfaceResolutionBuilder.Name})");
 
     public override TransientScopeRootResolution CreateTransientScopeRootResolution(
         SwitchImplementationParameter parameter, 

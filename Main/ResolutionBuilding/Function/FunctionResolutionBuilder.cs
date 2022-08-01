@@ -49,8 +49,6 @@ internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResol
     MultiSynchronicityFunctionCallResolution BuildFunctionCall(
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         string? ownerReference);
-
-    MethodGroupResolution BuildMethodGroup();
 }
 
 internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionBuilder
@@ -982,8 +980,6 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 p => p.Value.Item2.TypeFullName,
                 (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList();
     }
-
-    public MethodGroupResolution BuildMethodGroup() => new (Name, TypeFullName, null);
 
     public bool HasWorkToDo => !Resolvable.IsValueCreated;
 

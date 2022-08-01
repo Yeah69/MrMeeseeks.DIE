@@ -41,9 +41,14 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory,
         Func<IRangeResolutionBaseBuilder, SwitchImplementationParameter, IScopeRootCreateFunctionResolutionBuilder> scopeRootCreateFunctionResolutionBuilderFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, bool, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
+        Func<
+            IRangeResolutionBaseBuilder, 
+            INamedTypeSymbol, 
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
+            string,
+            ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
         : base(
             name,
             checkTypeProperties,
@@ -160,6 +165,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
                 .Select(f => new LocalFunctionResolution(
                     f.Reference,
                     f.TypeFullName,
+                    f.AccessModifier,
                     f.Resolvable,
                     f.Parameter,
                     f.SynchronicityDecision))

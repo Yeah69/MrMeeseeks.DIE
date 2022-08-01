@@ -24,6 +24,7 @@ internal record ProxyResolvable(
 internal record FunctionResolution(
     string Reference,
     string TypeFullName,
+    string AccessModifier,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     SynchronicityDecision SynchronicityDecision) : Resolvable(Reference, TypeFullName);
@@ -35,15 +36,16 @@ internal record RootResolutionFunction(
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, AccessModifier, Resolvable, Parameter, SynchronicityDecision);
 
 internal record LocalFunctionResolution(
     string Reference,
     string TypeFullName,
+    string AccessModifier,
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, AccessModifier, Resolvable, Parameter, SynchronicityDecision);
 
 internal record RangedInstanceFunctionResolution(
     string Reference,
@@ -51,20 +53,15 @@ internal record RangedInstanceFunctionResolution(
     Resolvable Resolvable,
     IReadOnlyList<ParameterResolution> Parameter,
     SynchronicityDecision SynchronicityDecision) 
-    : FunctionResolution(Reference, TypeFullName, Resolvable, Parameter, SynchronicityDecision);
+    : FunctionResolution(Reference, TypeFullName, Constants.PrivateKeyword, Resolvable, Parameter, SynchronicityDecision);
 
 internal record RangedInstanceFunctionGroupResolution(
     string TypeFullName,
     IReadOnlyList<RangedInstanceFunctionResolution> Overloads,
     string FieldReference,
     string LockReference,
-    string? IsCreatedForStructs);
-
-internal record MethodGroupResolution(
-    string Reference,
-    string TypeFullName,
-    string? OwnerReference)
-    : Resolvable(Reference, TypeFullName);
+    string? IsCreatedForStructs,
+    bool IsTransientScopeInstance);
 
 internal record TransientScopeAsDisposableResolution(
     string Reference,

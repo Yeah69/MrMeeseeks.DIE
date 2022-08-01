@@ -36,9 +36,14 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         Func<IContainerResolutionBuilder, ITransientScopeInterfaceResolutionBuilder, IScopeManager> scopeManagerFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory, 
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, bool, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory, 
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
+        Func<
+            IRangeResolutionBaseBuilder, 
+            INamedTypeSymbol, 
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
+            string,
+            ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
         IUserDefinedElements userDefinedElement, 
         IFunctionCycleTracker functionCycleTracker) 
         : base(
@@ -68,7 +73,11 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData)
     {
         foreach (var (typeSymbol, methodNamePrefix) in createFunctionData)
-            _rootResolutions.Add((CreateLocalFunctionResolution(typeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty), methodNamePrefix));
+            _rootResolutions.Add((CreateLocalFunctionResolution(
+                typeSymbol, 
+                ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
+                Constants.PrivateKeyword), 
+                methodNamePrefix));
     }
 
     public MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter, string containerReference) =>
@@ -77,7 +86,8 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             "Container",
             null,
             containerReference,
-            new (_synchronicityDecisionMakerFactory));
+            new (_synchronicityDecisionMakerFactory),
+            false);
 
     public IFunctionCycleTracker FunctionCycleTracker { get; }
 
@@ -148,6 +158,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             .Select(f => new LocalFunctionResolution(
                 f.Reference,
                 f.TypeFullName,
+                f.AccessModifier,
                 f.Resolvable,
                 f.Parameter,
                 f.SynchronicityDecision))
@@ -352,5 +363,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         label,
         reference,
         "Doesn't Matter, because for interface",
-        synchronicityDecisionMaker);
+        synchronicityDecisionMaker,
+        true);
 }

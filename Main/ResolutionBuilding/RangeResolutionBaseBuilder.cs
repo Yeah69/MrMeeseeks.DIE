@@ -34,7 +34,8 @@ internal interface IRangeResolutionBaseBuilder
 
     IFunctionResolutionBuilder CreateLocalFunctionResolution(
         INamedTypeSymbol type,
-        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
+        string accessModifier);
 }
 
 internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
@@ -47,8 +48,13 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
     protected IMethodSymbol? AddForDisposalAsync { get; }
 
     private readonly WellKnownTypes _wellKnownTypes;
-    private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
-    private readonly Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
+    private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, bool, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
+    private readonly Func<
+        IRangeResolutionBaseBuilder, 
+        INamedTypeSymbol,
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>,
+        string,
+        ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
     private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
@@ -68,9 +74,14 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         // dependencies
         WellKnownTypes wellKnownTypes,
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
+        Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, bool, IRangedFunctionGroupResolutionBuilder> rangedFunctionGroupResolutionBuilderFactory,
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
-        Func<IRangeResolutionBaseBuilder, INamedTypeSymbol, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+        Func<
+            IRangeResolutionBaseBuilder, 
+            INamedTypeSymbol, 
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
+            string,
+            ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
     {
         CheckTypeProperties = checkTypeProperties;
         UserDefinedElements = userDefinedElements;
@@ -98,7 +109,8 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             "Scope",
             null,
             Constants.ThisKeyword,
-            new (_synchronicityDecisionMakerFactory));
+            new (_synchronicityDecisionMakerFactory),
+            false);
     
     public abstract TransientScopeRootResolution CreateTransientScopeRootResolution(
         SwitchImplementationParameter parameter,
@@ -111,19 +123,23 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
 
     public abstract void RegisterDisposalType(DisposalType disposalType);
-    public IFunctionResolutionBuilder CreateLocalFunctionResolution(INamedTypeSymbol type, ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters) =>
+    public IFunctionResolutionBuilder CreateLocalFunctionResolution(
+        INamedTypeSymbol type, 
+        ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
+        string accessModifier) =>
         FunctionResolutionUtility.GetOrCreateFunction(
             LocalFunctions, 
             type, 
             currentParameters,
-            () => _localFunctionResolutionBuilderFactory(this, type, currentParameters));
+            () => _localFunctionResolutionBuilderFactory(this, type, currentParameters, accessModifier));
 
     protected MultiSynchronicityFunctionCallResolution CreateRangedInstanceReferenceResolution(
         ForConstructorParameter parameter,
         string label,
         string? reference,
         string owningObjectReference,
-        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker)
+        Lazy<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMaker,
+        bool isTransientScopeInstance)
     {
         var (implementationType, currentParameters, _) = parameter;
         InterfaceExtension? interfaceExtension = parameter switch
@@ -136,7 +152,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         if (!RangedInstanceReferenceResolutions.TryGetValue(key, out var functionGroup))
         {
             var decorationSuffix = interfaceExtension?.RangedNameSuffix() ?? "";
-            functionGroup = _rangedFunctionGroupResolutionBuilderFactory(label, reference, implementationType, decorationSuffix, this);
+            functionGroup = _rangedFunctionGroupResolutionBuilderFactory(label, reference, implementationType, decorationSuffix, this, isTransientScopeInstance);
             RangedInstanceReferenceResolutions[key] = functionGroup;
         }
 

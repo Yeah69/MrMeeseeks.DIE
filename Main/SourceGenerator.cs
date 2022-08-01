@@ -211,11 +211,13 @@ public class SourceGenerator : ISourceGenerator
             ILocalFunctionResolutionBuilder LocalFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
                 INamedTypeSymbol returnType,
-                ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters) => new LocalFunctionResolutionBuilder(
+                ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters,
+                string accessModifier) => new LocalFunctionResolutionBuilder(
                 rangeResolutionBaseBuilder,
                 returnType,
                 parameters,
                 FunctionResolutionSynchronicityDecisionMakerFactory(),
+                accessModifier,
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
@@ -253,12 +255,14 @@ public class SourceGenerator : ISourceGenerator
                 string? reference,
                 INamedTypeSymbol implementationType,
                 string decorationSuffix, 
-                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder) => new RangedFunctionGroupResolutionBuilder(
+                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+                bool isTransientScopeInstance) => new RangedFunctionGroupResolutionBuilder(
                 label,
                 reference,
                 implementationType,
                 decorationSuffix,
                 rangeResolutionBaseBuilder,
+                isTransientScopeInstance,
 
                 referenceGeneratorFactory,
                 RangedFunctionResolutionBuilderFactory);

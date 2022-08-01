@@ -16,6 +16,7 @@ internal interface IRangedFunctionGroupResolutionBuilder
 internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolutionBuilder
 {
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
+    private readonly bool _isTransientScopeInstance;
 
     private readonly Func<
         IRangeResolutionBaseBuilder, 
@@ -40,12 +41,20 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
         INamedTypeSymbol implementationType,
         string decorationSuffix,
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
+        bool isTransientScopeInstance,
         
         // dependencies
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        Func<IRangeResolutionBaseBuilder, string, ForConstructorParameter, IFunctionResolutionSynchronicityDecisionMaker, object, IRangedFunctionResolutionBuilder> rangedFunctionResolutionBuilderFactory)
+        Func<
+            IRangeResolutionBaseBuilder, 
+            string, 
+            ForConstructorParameter, 
+            IFunctionResolutionSynchronicityDecisionMaker, 
+            object, 
+            IRangedFunctionResolutionBuilder> rangedFunctionResolutionBuilderFactory)
     {
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
+        _isTransientScopeInstance = isTransientScopeInstance;
         _rangedFunctionResolutionBuilderFactory = rangedFunctionResolutionBuilderFactory;
         var rootReferenceGenerator = referenceGeneratorFactory.Create();
         _reference = reference ?? rootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix);
@@ -97,5 +106,6 @@ internal class RangedFunctionGroupResolutionBuilder : IRangedFunctionGroupResolu
                 .ToList(),
             _fieldReference,
             _lockReference,
-            _isCreatedForStructs);
+            _isCreatedForStructs,
+            _isTransientScopeInstance);
 }

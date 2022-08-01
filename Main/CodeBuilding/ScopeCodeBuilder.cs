@@ -18,6 +18,8 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
 
     protected override StringBuilder GenerateDisposalFunction_TransientScopeDisposal(StringBuilder stringBuilder) => stringBuilder;
 
+    protected override bool ExplicitTransientScopeInstanceImplementation => false;
+
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         if (!_scopeResolution.RootResolutions.Any() && !_scopeResolution.RangedInstanceFunctionGroups.Any()) 

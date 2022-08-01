@@ -31,7 +31,7 @@ internal class DecoratorB : IInterface, IDecorator<IInterface>
 }
 
 [CreateFunction(typeof(IInterface), "Create")]
-[DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
+[DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
 internal sealed partial class Container
 {
     

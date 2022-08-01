@@ -17,8 +17,7 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
-    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> DecoratorInterfaceSequenceChoices { get; }
-    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> DecoratorImplementationSequenceChoices { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>> DecoratorSequenceChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IImmutableSet<INamedTypeSymbol>> ImplementationMap { get; }
     IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
     IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutesChoices { get; }
@@ -291,24 +290,28 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             }, SymbolEqualityComparer.Default)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.ToList(), SymbolEqualityComparer.Default);
         
-        var decoratorSequenceChoices = new Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
+        var decoratorSequenceChoices = new Dictionary<INamedTypeSymbol, DecoratorSequenceMap>(SymbolEqualityComparer.Default);
         
         foreach (var types in typesFromAttributes)
         {
-            foreach (var filterDecoratorSequenceChoice in types.FilterDecoratorSequenceChoices)
-                decoratorSequenceChoices.Remove(filterDecoratorSequenceChoice);
+            foreach (var (interfaceType, decoratedType) in types.FilterDecoratorSequenceChoices)
+                if (decoratorSequenceChoices.TryGetValue(interfaceType, out var sequenceMap))
+                    sequenceMap.Remove(decoratedType);
 
-            foreach (var (decoratedType, decoratorSequence) in types.DecoratorSequenceChoices)
-                decoratorSequenceChoices[decoratedType] = decoratorSequence;
+            foreach (var (interfaceType, decoratedType, decoratorSequence) in types.DecoratorSequenceChoices)
+            {
+                if (!decoratorSequenceChoices.TryGetValue(interfaceType, out var sequenceMap))
+                {
+                    sequenceMap = new DecoratorSequenceMap();
+                    decoratorSequenceChoices[interfaceType] = sequenceMap;
+                }
+                sequenceMap.Add(decoratedType, decoratorSequence);
+            }
         }
 
-        DecoratorInterfaceSequenceChoices = decoratorSequenceChoices
-            .Where(kvp => kvp.Key.TypeKind == TypeKind.Interface)
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-        DecoratorImplementationSequenceChoices = decoratorSequenceChoices
-            .Where(kvp => kvp.Key.TypeKind is TypeKind.Class or TypeKind.Struct)
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        DecoratorSequenceChoices = decoratorSequenceChoices
+            .Where(kvp => kvp.Value.Any)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToReadOnlyDictionary());
 
         var initializers = new Dictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)>(SymbolEqualityComparer.Default);
         
@@ -459,8 +462,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     public IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
-    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> DecoratorInterfaceSequenceChoices { get; }
-    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> DecoratorImplementationSequenceChoices { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>> DecoratorSequenceChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IImmutableSet<INamedTypeSymbol>> ImplementationMap { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)> ImplementationToInitializer { get; }
     public IReadOnlyDictionary<(INamedTypeSymbol, ITypeParameterSymbol), IReadOnlyList<INamedTypeSymbol>> GenericParameterSubstitutesChoices { get; }
@@ -468,4 +470,21 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>> PropertyChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
+
+    private class DecoratorSequenceMap
+    {
+        private readonly Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> _map = new(SymbolEqualityComparer.Default);
+
+        public void Add(INamedTypeSymbol decoratedType, IReadOnlyList<INamedTypeSymbol> decoratorSequence) => 
+            _map[decoratedType] = decoratorSequence;
+
+        public void Remove(INamedTypeSymbol decoratedType) =>
+            _map.Remove(decoratedType);
+
+        public bool Any => 
+            _map.Any();
+
+        public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => 
+            _map;
+    }
 }

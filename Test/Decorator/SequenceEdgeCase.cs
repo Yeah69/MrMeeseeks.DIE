@@ -45,17 +45,17 @@ internal class ScopeRoot1 : IScopeRoot
 [CreateFunction(typeof(ScopeRoot0), "Create0")]
 [CreateFunction(typeof(ScopeRoot1), "Create1")]
 [CreateFunction(typeof(IInterface), "CreateFromContainerAsSanityCheck")]
-[DecoratorSequenceChoice(typeof(IInterface))]
+[DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface))]
 internal sealed partial class Container
 {
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
+    [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
     [CustomScopeForRootTypes(typeof(ScopeRoot0))]
     private sealed partial class DIE_Scope_0
     {
         
     }
     
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA))]
+    [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA))]
     [CustomScopeForRootTypes(typeof(ScopeRoot1))]
     private sealed partial class DIE_Scope_1
     {

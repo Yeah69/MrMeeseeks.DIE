@@ -28,13 +28,13 @@ public class FilterGenericParameterChoiceAttribute : Attribute
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
 public class DecoratorSequenceChoiceAttribute : Attribute
 {
-    public DecoratorSequenceChoiceAttribute(Type decoratedType, params Type[] types) {}
+    public DecoratorSequenceChoiceAttribute(Type interfaceType, Type decoratedType, params Type[] types) {}
 }
     
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class FilterDecoratorSequenceChoiceAttribute : Attribute
 {
-    public FilterDecoratorSequenceChoiceAttribute(Type decoratedType) {}
+    public FilterDecoratorSequenceChoiceAttribute(Type interfaceType, Type decoratedType) {}
 }
 
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]

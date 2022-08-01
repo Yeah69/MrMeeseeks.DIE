@@ -30,6 +30,8 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
         return stringBuilder;
     }
 
+    protected override bool ExplicitTransientScopeInstanceImplementation => true;
+
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         if (!_transientScopeResolution.RootResolutions.Any() && !_transientScopeResolution.RangedInstanceFunctionGroups.Any()) 

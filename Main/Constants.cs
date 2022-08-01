@@ -5,6 +5,9 @@ internal static class Constants
     // General
     internal const string DieAbbreviation = "DIE";
     internal const string ThisKeyword = "this";
+    internal const string PublicKeyword = "public";
+    internal const string InternalKeyword = "internal";
+    internal const string PrivateKeyword = "private";
     
     // Ranges
     internal const string ScopeName = "Scope";

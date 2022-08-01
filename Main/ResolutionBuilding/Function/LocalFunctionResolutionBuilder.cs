@@ -7,6 +7,7 @@ internal interface ILocalFunctionResolutionBuilder : IFunctionResolutionBuilder
 internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILocalFunctionResolutionBuilder
 {
     private readonly INamedTypeSymbol _returnType;
+    private readonly string _accessModifier;
 
     public LocalFunctionResolutionBuilder(
         // parameter
@@ -14,6 +15,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
         INamedTypeSymbol returnType,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
+        string accessModifier,
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
@@ -31,6 +33,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
             functionCycleTracker)
     {
         _returnType = returnType;
+        _accessModifier = accessModifier;
 
         Name = RootReferenceGenerator.Generate("Create", _returnType);
     }
@@ -51,6 +54,7 @@ internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILoca
         return new(
             Name,
             TypeFullName,
+            _accessModifier,
             Resolvable.Value,
             Parameters,
             SynchronicityDecision.Value);

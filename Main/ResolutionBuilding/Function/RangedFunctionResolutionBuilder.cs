@@ -32,7 +32,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
             functionCycleTracker)
     {
         _forConstructorParameter = forConstructorParameter;
-        
+
         Name = reference;
     }
 
@@ -55,6 +55,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         return new(
             Name,
             TypeFullName,
+            Constants.PrivateKeyword,
             Resolvable.Value,
             Parameters,
             SynchronicityDecision.Value);

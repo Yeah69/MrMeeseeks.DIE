@@ -192,7 +192,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         {
             var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
-                .AppendLine($"private {(localFunctionResolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
+                .AppendLine($"{resolution.AccessModifier} {(localFunctionResolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
                 .AppendLine($"{{");
             if (_containerResolution.DisposalType != DisposalType.None)
                 stringBuilder = stringBuilder
@@ -459,6 +459,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         return stringBuilder;
     }
 
+    protected abstract bool ExplicitTransientScopeInstanceImplementation { get; }
+
     private StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution)
     {
         var isRefType = rangedInstanceFunctionGroupResolution.IsCreatedForStructs is null;
@@ -478,9 +480,18 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
             var parameters = string.Join(", ",
                 overload.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"));
-            stringBuilder = stringBuilder.AppendLine(
-                    $"public {(isAsync ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})")
-                .AppendLine($"{{")
+            if (rangedInstanceFunctionGroupResolution.IsTransientScopeInstance 
+                && ExplicitTransientScopeInstanceImplementation)
+            {
+                stringBuilder = stringBuilder.AppendLine(
+                    $"{(isAsync ? "async " : "")}{overload.TypeFullName} {_containerResolution.TransientScopeInterface.Name}.{overload.Reference}({parameters})");
+            }
+            else
+            {
+                stringBuilder = stringBuilder.AppendLine(
+                    $"{Constants.PrivateKeyword} {(isAsync ? "async " : "")}{overload.TypeFullName} {overload.Reference}({parameters})");
+            }
+            stringBuilder = stringBuilder.AppendLine($"{{")
                 .AppendLine(isRefType
                     ? $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};"
                     : $"if ({rangedInstanceFunctionGroupResolution.IsCreatedForStructs}) return {rangedInstanceFunctionGroupResolution.FieldReference};")

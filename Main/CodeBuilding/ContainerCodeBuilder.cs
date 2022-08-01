@@ -54,6 +54,8 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         return stringBuilder;
     }
 
+    protected override bool ExplicitTransientScopeInstanceImplementation => false;
+
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         var disposableImplementation = _containerResolution.DisposalType switch
@@ -80,7 +82,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         stringBuilder = _containerResolution.TransientScopeInterface.Functions.Aggregate(
             stringBuilder,
             (sb, f) => sb.AppendLine(
-                $"{SelectFullName(f)} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))});"));
+                $"{Constants.PublicKeyword} {SelectFullName(f)} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))});"));
         
         stringBuilder = stringBuilder
             .AppendLine($"}}");
@@ -94,7 +96,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         stringBuilder = _containerResolution.TransientScopeInterface.Functions.Aggregate(
             stringBuilder,
             (sb, f) => sb.AppendLine(
-                $"public {SelectFullName(f)} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))}) =>")
+                $"{Constants.PublicKeyword} {SelectFullName(f)} {f.Reference}({string.Join(", ", f.Parameter.Select(p => $"{p.TypeFullName} {p.Reference}"))}) =>")
                 .AppendLine($"_container.{f.Reference}({string.Join(", ", f.Parameter.Select(p => p.Reference))});"));
         
         stringBuilder = stringBuilder

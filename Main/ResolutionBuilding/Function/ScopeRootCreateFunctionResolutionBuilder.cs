@@ -53,6 +53,7 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         return new(
             Name,
             TypeFullName,
+            Constants.InternalKeyword,
             Resolvable.Value,
             Parameters,
             SynchronicityDecision.Value);

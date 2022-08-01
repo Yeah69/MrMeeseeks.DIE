@@ -233,7 +233,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
             var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
                 genericType,
-                currentParameters);
+                currentParameters,
+                Constants.PrivateKeyword);
 
             var constructorInjection = new LazyResolution(
                 RootReferenceGenerator.Generate(namedTypeSymbol),
@@ -281,7 +282,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
             var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
                 returnType,
-                nextCurrentParameters);
+                nextCurrentParameters,
+                Constants.PrivateKeyword);
             
             return (
                 new FuncResolution(

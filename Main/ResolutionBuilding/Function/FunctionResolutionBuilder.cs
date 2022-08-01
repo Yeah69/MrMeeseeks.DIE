@@ -43,6 +43,7 @@ internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResol
 {
     INamedTypeSymbol OriginalReturnType { get; }
     INamedTypeSymbol? ActualReturnType { get; }
+    IReadOnlyList<ParameterResolution> Parameters { get; }
     IReadOnlyList<(ITypeSymbol, ParameterResolution)> CurrentParameters { get; }
     
     MultiSynchronicityFunctionCallResolution BuildFunctionCall(
@@ -76,7 +77,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     
     public IReadOnlyList<(ITypeSymbol, ParameterResolution)> CurrentParameters { get; }
     
-    protected IReadOnlyList<ParameterResolution> Parameters { get; }
+    public IReadOnlyList<ParameterResolution> Parameters { get; }
     
     public INamedTypeSymbol OriginalReturnType { get; }
     public INamedTypeSymbol? ActualReturnType { get; protected set; }

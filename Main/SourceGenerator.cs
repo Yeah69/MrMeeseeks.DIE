@@ -124,7 +124,6 @@ public class SourceGenerator : ISourceGenerator
                 new CheckTypeProperties(new CurrentlyConsideredTypes(containerTypesFromAttributesList, implementationTypeSetCache), wellKnownTypes),
                 wellKnownTypes,
                 ScopeManagerFactory,
-                ContainerCreateFunctionResolutionBuilderFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
                 LocalFunctionResolutionBuilderFactory,
@@ -216,17 +215,6 @@ public class SourceGenerator : ISourceGenerator
                 rangeResolutionBaseBuilder,
                 returnType,
                 parameters,
-                FunctionResolutionSynchronicityDecisionMakerFactory(),
-
-                wellKnownTypes,
-                referenceGeneratorFactory,
-                functionCycleTracker);
-
-            IContainerCreateFunctionResolutionBuilder ContainerCreateFunctionResolutionBuilderFactory(
-                IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-                INamedTypeSymbol returnType) => new ContainerCreateFunctionResolutionBuilder(
-                rangeResolutionBaseBuilder,
-                returnType,
                 FunctionResolutionSynchronicityDecisionMakerFactory(),
 
                 wellKnownTypes,

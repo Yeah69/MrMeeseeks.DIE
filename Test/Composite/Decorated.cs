@@ -52,8 +52,8 @@ internal class Composite : IInterface, IComposite<IInterface>
     public IInterface Decorated => this;
 }
 
-[DecoratorSequenceChoice(typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
-[DecoratorSequenceChoice(typeof(Composite), typeof(DecoratorB))]
+[DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
+[DecoratorSequenceChoice(typeof(IInterface), typeof(Composite), typeof(DecoratorB))]
 [CreateFunction(typeof(IInterface), "CreateDep")]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "CreateCollection")]
 internal sealed partial class Container

@@ -137,13 +137,26 @@ internal class CheckTypeProperties : ICheckTypeProperties
     public IReadOnlyList<INamedTypeSymbol> GetSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
     {
         IEnumerable<INamedTypeSymbol> sequence = Array.Empty<INamedTypeSymbol>();
-        if (_currentlyConsideredTypes.DecoratorImplementationSequenceChoices.TryGetValue(implementationType.UnboundIfGeneric(), out var implementationSequence))
-            sequence = implementationSequence;
-        else if (_currentlyConsideredTypes.DecoratorInterfaceSequenceChoices.TryGetValue(interfaceType.UnboundIfGeneric(), out var interfaceSequence))
-            sequence = interfaceSequence;
-        else if (_currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators)
-            && allDecorators.Count == 1)
+        bool found = false;
+        if (_currentlyConsideredTypes.DecoratorSequenceChoices.TryGetValue(interfaceType.UnboundIfGeneric(),
+                out var sequenceMap))
+        {
+            if (sequenceMap.TryGetValue(implementationType.UnboundIfGeneric(), out var implementationSequence))
+            {
+                sequence = implementationSequence;
+                found = true;
+            }
+            else if (sequenceMap.TryGetValue(implementationType.UnboundIfGeneric(), out var interfaceSequence))
+            {
+                sequence = interfaceSequence;
+                found = true;
+            }
+        }
+        
+        if (!found && _currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators)
+                 && allDecorators.Count == 1)
             sequence = allDecorators;
+        
         return sequence
             .Select(imp =>
             {

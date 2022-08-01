@@ -94,29 +94,29 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(TransientScopeRootSpecific), "Create2")]
 [CreateFunction(typeof(ScopeRoot), "Create3")]
 [CreateFunction(typeof(ScopeRootSpecific), "Create4")]
-[DecoratorSequenceChoice(typeof(IInterface), typeof(ContainerDecorator))]
+[DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(ContainerDecorator))]
 internal sealed partial class Container
 {
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(TransientScopeDecorator))]
+    [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(TransientScopeDecorator))]
     private sealed partial class DIE_DefaultTransientScope
     {
         
     }
     
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(TransientScopeSpecificDecorator))]
+    [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(TransientScopeSpecificDecorator))]
     [CustomScopeForRootTypes(typeof(TransientScopeRootSpecific))]
     private sealed partial class DIE_TransientScope_A
     {
         
     }
 
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(ScopeDecorator))]
+    [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(ScopeDecorator))]
     private sealed partial class DIE_DefaultScope
     {
         
     }
     
-    [DecoratorSequenceChoice(typeof(IInterface), typeof(ScopeSpecificDecorator))]
+    [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(ScopeSpecificDecorator))]
     [CustomScopeForRootTypes(typeof(ScopeRootSpecific))]
     private sealed partial class DIE_Scope_A
     {

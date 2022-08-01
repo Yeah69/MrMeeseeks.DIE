@@ -24,7 +24,7 @@ internal interface ITypesFromAttributes
     IImmutableSet<INamedTypeSymbol> ScopeInstanceImplementation { get; }
     IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; }
     IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; }
-    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
     IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; } 
@@ -53,7 +53,7 @@ internal interface ITypesFromAttributes
     IImmutableSet<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
     IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; }
     IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; }
-    IImmutableSet<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> FilterDecoratorSequenceChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterTypeInitializers { get; }
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; } 
@@ -172,21 +172,22 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length < 2)
+                if (ad.ConstructorArguments.Length < 3)
                     return null;
-                var decoratedType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+                var interfaceType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+                var decoratedType = ad.ConstructorArguments[1].Value as INamedTypeSymbol;
                 var decorators = ad
-                    .ConstructorArguments[1]
+                    .ConstructorArguments[2]
                     .Values
                     .Select(tc => tc.Value)
                     .OfType<INamedTypeSymbol>()
                     .ToList();
                 
-                return decoratedType is null 
+                return decoratedType is null || interfaceType is null
                     ? null 
-                    : ((INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (decoratedType, decorators);
+                    : ((INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (interfaceType, decoratedType, decorators);
             })
-            .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
+            .OfType<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
         FilterDecoratorSequenceChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterDecoratorSequenceChoiceAttribute, out var filterDecoratorSequenceChoiceAttributes) 
@@ -194,12 +195,14 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length != 1)
-                    return null;
+                if (ad.ConstructorArguments.Length != 2
+                    || ad.ConstructorArguments[0].Value is not INamedTypeSymbol interfaceType
+                    || ad.ConstructorArguments[1].Value is not INamedTypeSymbol decoratedType)
+                    return ((INamedTypeSymbol, INamedTypeSymbol)?) null;
                 
-                return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
+                return (interfaceType, decoratedType);
             })
-            .OfType<INamedTypeSymbol>());
+            .OfType<(INamedTypeSymbol, INamedTypeSymbol)>());
 
         ConstructorChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ConstructorChoiceAttribute, out var constructorChoiceAttributes) 
@@ -600,7 +603,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<INamedTypeSymbol> ScopeInstanceImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; protected init; }
     public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected init; }
-    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; }
@@ -629,7 +632,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; protected init; }
     public IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterDecoratorSequenceChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> FilterDecoratorSequenceChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterTypeInitializers { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; }

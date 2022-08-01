@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.ResolutionBuilding;
 
@@ -110,14 +111,11 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         string containerInstanceScopeReference,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters)
     {
-        var key = $"{rootType.FullName()}{(currentParameters.Any() ? $"_{string.Join(";", currentParameters)}" : "")}";
-        if (!_transientScopeRootFunctionResolutions.TryGetValue(
-                key,
-                out var function))
-        {
-            function = _scopeRootCreateFunctionResolutionBuilderFactory(this, parameter);
-            _transientScopeRootFunctionResolutions[key] = function;
-        }
+        var function = FunctionResolutionUtility.GetOrCreateFunction(
+            _transientScopeRootFunctionResolutions, 
+            rootType, 
+            currentParameters,
+            () => _scopeRootCreateFunctionResolutionBuilderFactory(this, parameter));
 
         var transientScopeRootReference = RootReferenceGenerator.Generate("transientScopeRoot");
 

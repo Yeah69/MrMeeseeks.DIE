@@ -500,7 +500,11 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
             stringBuilder = stringBuilder
                 .AppendLine(
-                    $"this.{rangedInstanceFunctionGroupResolution.FieldReference} = {overload.Resolvable.Reference};")
+                    $"this.{rangedInstanceFunctionGroupResolution.FieldReference} = {overload.Resolvable.Reference};");
+            if (!isRefType)
+                stringBuilder = stringBuilder.AppendLine(
+                    $"{rangedInstanceFunctionGroupResolution.IsCreatedForStructs} = true;");
+            stringBuilder = stringBuilder
                 .AppendLine($"}}")
                 .AppendLine($"finally")
                 .AppendLine($"{{")

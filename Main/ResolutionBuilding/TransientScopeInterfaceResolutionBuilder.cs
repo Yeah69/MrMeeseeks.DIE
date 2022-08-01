@@ -4,6 +4,7 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface ITransientScopeInterfaceResolutionBuilder
 {
+    string Name { get; }
     void AddImplementation(ITransientScopeImplementationResolutionBuilder implementation);
     MultiSynchronicityFunctionCallResolution CreateTransientScopeInstanceReferenceResolution(
         ForConstructorParameter parameter,
@@ -33,7 +34,6 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
     private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
-    private readonly string _name;
     private readonly string _containerAdapterName;
 
 
@@ -48,11 +48,13 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
         _synchronicityDecisionMakerFactory = synchronicityDecisionMakerFactory;
         _rootReferenceGenerator = referenceGeneratorFactory.Create();
 
-        _name = _rootReferenceGenerator.Generate("ITransientScope");
+        Name = _rootReferenceGenerator.Generate("ITransientScope");
 
         _containerAdapterName = _rootReferenceGenerator.Generate("ContainerTransientScopeAdapter");
     }
 
+
+    public string Name { get; }
 
     public void AddImplementation(ITransientScopeImplementationResolutionBuilder implementation)
     {
@@ -77,7 +79,7 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
 
     public TransientScopeInterfaceResolution Build() => new(
         _rangedInstanceReferenceResolutions.Values.ToList(),
-        _name,
+        Name,
         _containerAdapterName);
 
     private MultiSynchronicityFunctionCallResolution CreateRangedInstanceReferenceResolution(

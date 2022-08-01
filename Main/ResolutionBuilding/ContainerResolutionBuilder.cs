@@ -43,7 +43,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             INamedTypeSymbol, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
             string,
-            ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
+            ICreateFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
         IUserDefinedElements userDefinedElement, 
         IFunctionCycleTracker functionCycleTracker) 
         : base(
@@ -73,7 +73,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData)
     {
         foreach (var (typeSymbol, methodNamePrefix) in createFunctionData)
-            _rootResolutions.Add((CreateLocalFunctionResolution(
+            _rootResolutions.Add((CreateCreateFunctionResolution(
                 typeSymbol, 
                 ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
                 Constants.PrivateKeyword), 
@@ -132,7 +132,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public bool HasWorkToDo =>
         _rootResolutions.Any(r => r.CreateFunction.HasWorkToDo)    
         || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
-        || LocalFunctions.Values.Any(r => r.HasWorkToDo)
+        || CreateFunctions.Values.Any(r => r.HasWorkToDo)
         || _scopeManager.HasWorkToDo;
 
     public void DoWork()
@@ -145,17 +145,17 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             }
             
             DoRangedInstancesWork();
-            DoLocalFunctionsWork();
+            DoCreateFunctionsWork();
             _scopeManager.DoWork();
         }
     }
 
     public ContainerResolution Build()
     {
-        var localFunctions = LocalFunctions
+        var localFunctions = CreateFunctions
             .Values
             .Select(lf => lf.Build())
-            .Select(f => new LocalFunctionResolution(
+            .Select(f => new CreateFunctionResolution(
                 f.Reference,
                 f.TypeFullName,
                 f.AccessModifier,
@@ -164,7 +164,6 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 f.SynchronicityDecision))
             .ToList();
         
-        var rootFunctions = new List<RootResolutionFunction>();
         foreach (var (createFunction, methodNamePrefix) in _rootResolutions)
         {
             // Create function stays sync
@@ -178,15 +177,15 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
-                var publicSyncResolutionFunction = new RootResolutionFunction(
+                var publicSyncResolutionFunction = new CreateFunctionResolution(
                     $"{methodNamePrefix}{Constants.CreateFunctionSuffix}",
                     createFunction.OriginalReturnType.FullName(),
-                    "public",
+                    Constants.PublicKeyword,
                     call,
                     createFunction.Parameters,
                     SynchronicityDecision.Sync);
             
-                rootFunctions.Add(publicSyncResolutionFunction);
+                localFunctions.Add(publicSyncResolutionFunction);
                 
                 var boundTaskTypeFullName = _wellKnownTypes
                     .Task1
@@ -199,10 +198,10 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 taskCall.Sync.Await = false;
                 taskCall.AsyncTask.Await = false;
                 taskCall.AsyncValueTask.Await = false;
-                var publicTaskResolutionFunction = new RootResolutionFunction(
+                var publicTaskResolutionFunction = new CreateFunctionResolution(
                     $"{methodNamePrefix}{Constants.CreateFunctionSuffixAsync}",
                     boundTaskTypeFullName,
-                    "public",
+                    Constants.PublicKeyword,
                     new TaskFromSyncResolution(
                         taskCall, 
                         wrappedTaskReference, 
@@ -210,7 +209,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     createFunction.Parameters,
                     SynchronicityDecision.Sync);
             
-                rootFunctions.Add(publicTaskResolutionFunction);
+                localFunctions.Add(publicTaskResolutionFunction);
                 
                 var boundValueTaskTypeFullName = _wellKnownTypes
                     .ValueTask1
@@ -223,10 +222,10 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 valueTaskCall.Sync.Await = false;
                 valueTaskCall.AsyncTask.Await = false;
                 valueTaskCall.AsyncValueTask.Await = false;
-                var publicValueTaskResolutionFunction = new RootResolutionFunction(
+                var publicValueTaskResolutionFunction = new CreateFunctionResolution(
                     $"{methodNamePrefix}{Constants.CreateFunctionSuffixValueAsync}",
                     boundValueTaskTypeFullName,
-                    "public",
+                    Constants.PublicKeyword,
                     new ValueTaskFromSyncResolution(
                         valueTaskCall, 
                         wrappedValueTaskReference, 
@@ -234,7 +233,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     createFunction.Parameters,
                     SynchronicityDecision.Sync);
             
-                rootFunctions.Add(publicValueTaskResolutionFunction);
+                localFunctions.Add(publicValueTaskResolutionFunction);
             }
             else if (createFunction.ActualReturnType is { } actual
                      && actual.Equals(_wellKnownTypes.Task1.Construct(createFunction.OriginalReturnType),
@@ -246,15 +245,15 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 call.Sync.Await = false;
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
-                var publicTaskResolutionFunction = new RootResolutionFunction(
+                var publicTaskResolutionFunction = new CreateFunctionResolution(
                     $"{methodNamePrefix}{Constants.CreateFunctionSuffixAsync}",
                     actual.FullName(),
-                    "public",
+                    Constants.PublicKeyword,
                     call,
                     createFunction.Parameters,
                     SynchronicityDecision.Sync);
             
-                rootFunctions.Add(publicTaskResolutionFunction);
+                localFunctions.Add(publicTaskResolutionFunction);
                 
                 var boundValueTaskTypeFullName = _wellKnownTypes
                     .ValueTask1
@@ -267,10 +266,10 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 valueCall.Sync.Await = false;
                 valueCall.AsyncTask.Await = false;
                 valueCall.AsyncValueTask.Await = false;
-                var publicValueTaskResolutionFunction = new RootResolutionFunction(
+                var publicValueTaskResolutionFunction = new CreateFunctionResolution(
                     $"{methodNamePrefix}{Constants.CreateFunctionSuffixValueAsync}",
                     boundValueTaskTypeFullName,
-                    "public",
+                    Constants.PublicKeyword,
                     new ValueTaskFromWrappedTaskResolution(
                         valueCall, 
                         wrappedValueTaskReference, 
@@ -278,7 +277,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     createFunction.Parameters,
                     SynchronicityDecision.Sync);
             
-                rootFunctions.Add(publicValueTaskResolutionFunction);
+                localFunctions.Add(publicValueTaskResolutionFunction);
             }
             else if (createFunction.ActualReturnType is { } actual1
                      && actual1.Equals(_wellKnownTypes.ValueTask1.Construct(createFunction.OriginalReturnType),
@@ -295,10 +294,10 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 call.AsyncTask.Await = false;
                 call.AsyncValueTask.Await = false;
                 var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask);
-                var publicTaskResolutionFunction = new RootResolutionFunction(
+                var publicTaskResolutionFunction = new CreateFunctionResolution(
                     $"{methodNamePrefix}{Constants.CreateFunctionSuffixAsync}",
                     boundTaskTypeFullName,
-                    "public",
+                    Constants.PublicKeyword,
                     new TaskFromWrappedValueTaskResolution(
                         call, 
                         wrappedTaskReference, 
@@ -306,7 +305,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                     createFunction.Parameters,
                     SynchronicityDecision.Sync);
             
-                rootFunctions.Add(publicTaskResolutionFunction);
+                localFunctions.Add(publicTaskResolutionFunction);
                 
                 var valueCall = createFunction.BuildFunctionCall(
                     ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
@@ -314,22 +313,21 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 valueCall.Sync.Await = false;
                 valueCall.AsyncTask.Await = false;
                 valueCall.AsyncValueTask.Await = false;
-                var publicValueTaskResolutionFunction = new RootResolutionFunction(
+                var publicValueTaskResolutionFunction = new CreateFunctionResolution(
                     $"{methodNamePrefix}{Constants.CreateFunctionSuffixValueAsync}",
                     actual1.FullName(),
-                    "public",
+                    Constants.PublicKeyword,
                     valueCall,
                     createFunction.Parameters,
                     SynchronicityDecision.Sync);
             
-                rootFunctions.Add(publicValueTaskResolutionFunction);
+                localFunctions.Add(publicValueTaskResolutionFunction);
             }
         }
         
         var (transientScopeResolutions, scopeResolutions) = _scopeManager.Build();
 
         return new(
-            rootFunctions,
             localFunctions,
             BuildDisposalHandling(),
             RangedInstanceReferenceResolutions.Values.Select(b => b.Build()).ToList(),

@@ -231,7 +231,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                         cp.Value.Item1.FullName(),
                         cp.Value)));
 
-            var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
+            var newCreateFunction = _rangeResolutionBaseBuilder.CreateCreateFunctionResolution(
                 genericType,
                 currentParameters,
                 Constants.PrivateKeyword);
@@ -239,7 +239,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             var constructorInjection = new LazyResolution(
                 RootReferenceGenerator.Generate(namedTypeSymbol),
                 namedTypeSymbol.FullName(),
-                newLocalFunction.BuildFunctionCall(
+                newCreateFunction.BuildFunctionCall(
                     currentParameters,
                     Constants.ThisKeyword));
             return (constructorInjection, null);
@@ -280,7 +280,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 nextCurrentParameters = nextCurrentParameters.SetItem(lambdaParameter.Type.FullName(), lambdaParameter);
             }
 
-            var newLocalFunction = _rangeResolutionBaseBuilder.CreateLocalFunctionResolution(
+            var newCreateFunction = _rangeResolutionBaseBuilder.CreateCreateFunctionResolution(
                 returnType,
                 nextCurrentParameters,
                 Constants.PrivateKeyword);
@@ -290,7 +290,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     RootReferenceGenerator.Generate(type),
                     type.FullName(),
                     lambdaParameters.Select(t => t.Resolution).ToImmutableArray(),
-                    newLocalFunction.BuildFunctionCall(nextCurrentParameters, Constants.ThisKeyword)),
+                    newCreateFunction.BuildFunctionCall(nextCurrentParameters, Constants.ThisKeyword)),
                 null);
         }
 

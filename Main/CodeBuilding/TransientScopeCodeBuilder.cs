@@ -34,9 +34,6 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
-        if (!_transientScopeResolution.RootResolutions.Any() && !_transientScopeResolution.RangedInstanceFunctionGroups.Any()) 
-            return stringBuilder;
-        
         var disposableImplementation = _containerResolution.DisposalType switch
         {
             DisposalType.Async => $", {WellKnownTypes.AsyncDisposable.FullName()}",

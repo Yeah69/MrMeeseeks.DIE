@@ -126,7 +126,7 @@ public class SourceGenerator : ISourceGenerator
                 ScopeManagerFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
-                LocalFunctionResolutionBuilderFactory,
+                CreateFunctionResolutionBuilderFactory,
                 new UserDefinedElements(ci.ContainerType, ci.ContainerType, wellKnownTypes, wellKnownTypesMiscellaneous),
                 functionCycleTracker);
 
@@ -184,7 +184,7 @@ public class SourceGenerator : ISourceGenerator
                 ScopeRootCreateFunctionResolutionBuilderFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
-                LocalFunctionResolutionBuilderFactory);
+                CreateFunctionResolutionBuilderFactory);
             IScopeResolutionBuilder ScopeResolutionBuilderFactory(
                 string name,
                 IContainerResolutionBuilder containerBuilder, 
@@ -206,13 +206,13 @@ public class SourceGenerator : ISourceGenerator
                 ScopeRootCreateFunctionResolutionBuilderFactory,
                 RangedFunctionGroupResolutionBuilderFactory,
                 FunctionResolutionSynchronicityDecisionMakerFactory,
-                LocalFunctionResolutionBuilderFactory);
+                CreateFunctionResolutionBuilderFactory);
 
-            ILocalFunctionResolutionBuilder LocalFunctionResolutionBuilderFactory(
+            ICreateFunctionResolutionBuilder CreateFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
                 INamedTypeSymbol returnType,
                 ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters,
-                string accessModifier) => new LocalFunctionResolutionBuilder(
+                string accessModifier) => new CreateFunctionResolutionBuilder(
                 rangeResolutionBaseBuilder,
                 returnType,
                 parameters,

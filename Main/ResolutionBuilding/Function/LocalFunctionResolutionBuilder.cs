@@ -1,15 +1,15 @@
 namespace MrMeeseeks.DIE.ResolutionBuilding.Function;
 
-internal interface ILocalFunctionResolutionBuilder : IFunctionResolutionBuilder
+internal interface ICreateFunctionResolutionBuilder : IFunctionResolutionBuilder
 {
 }
 
-internal class LocalFunctionResolutionBuilder : FunctionResolutionBuilder, ILocalFunctionResolutionBuilder
+internal class CreateFunctionResolutionBuilder : FunctionResolutionBuilder, ICreateFunctionResolutionBuilder
 {
     private readonly INamedTypeSymbol _returnType;
     private readonly string _accessModifier;
 
-    public LocalFunctionResolutionBuilder(
+    public CreateFunctionResolutionBuilder(
         // parameter
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
         INamedTypeSymbol returnType,

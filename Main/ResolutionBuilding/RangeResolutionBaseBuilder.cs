@@ -32,7 +32,7 @@ internal interface IRangeResolutionBaseBuilder
 
     void RegisterDisposalType(DisposalType disposalType);
 
-    IFunctionResolutionBuilder CreateLocalFunctionResolution(
+    IFunctionResolutionBuilder CreateCreateFunctionResolution(
         INamedTypeSymbol type,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         string accessModifier);
@@ -54,14 +54,14 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         INamedTypeSymbol,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>,
         string,
-        ILocalFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
+        ICreateFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
     private readonly Func<IFunctionResolutionSynchronicityDecisionMaker> _synchronicityDecisionMakerFactory;
 
     protected readonly IReferenceGenerator RootReferenceGenerator;
     protected readonly IDictionary<string, IRangedFunctionGroupResolutionBuilder> RangedInstanceReferenceResolutions =
         new Dictionary<string, IRangedFunctionGroupResolutionBuilder>();
     
-    protected readonly IDictionary<string, IFunctionResolutionBuilder> LocalFunctions = new Dictionary<string, IFunctionResolutionBuilder>();
+    protected readonly IDictionary<string, IFunctionResolutionBuilder> CreateFunctions = new Dictionary<string, IFunctionResolutionBuilder>();
     
     protected readonly string Name;
 
@@ -81,7 +81,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
             INamedTypeSymbol, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
             string,
-            ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
+            ICreateFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
     {
         CheckTypeProperties = checkTypeProperties;
         UserDefinedElements = userDefinedElements;
@@ -123,12 +123,12 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters);
 
     public abstract void RegisterDisposalType(DisposalType disposalType);
-    public IFunctionResolutionBuilder CreateLocalFunctionResolution(
+    public IFunctionResolutionBuilder CreateCreateFunctionResolution(
         INamedTypeSymbol type, 
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         string accessModifier) =>
         FunctionResolutionUtility.GetOrCreateFunction(
-            LocalFunctions, 
+            CreateFunctions, 
             type, 
             currentParameters,
             () => _localFunctionResolutionBuilderFactory(this, type, currentParameters, accessModifier));
@@ -172,11 +172,11 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         }
     }
 
-    protected void DoLocalFunctionsWork()
+    protected void DoCreateFunctionsWork()
     {
-        while (LocalFunctions.Values.Any(lf => lf.HasWorkToDo))
+        while (CreateFunctions.Values.Any(lf => lf.HasWorkToDo))
         {
-            foreach (var localFunction in LocalFunctions.Values.Where(lf => lf.HasWorkToDo).ToList())
+            foreach (var localFunction in CreateFunctions.Values.Where(lf => lf.HasWorkToDo).ToList())
             {
                 localFunction.DoWork();
             }

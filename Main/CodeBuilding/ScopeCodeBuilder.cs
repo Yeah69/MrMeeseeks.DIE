@@ -22,9 +22,6 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
-        if (!_scopeResolution.RootResolutions.Any() && !_scopeResolution.RangedInstanceFunctionGroups.Any()) 
-            return stringBuilder;
-        
         var disposableImplementation = _containerResolution.DisposalType switch
         {
             DisposalType.Async => $" : {WellKnownTypes.AsyncDisposable.FullName()}",

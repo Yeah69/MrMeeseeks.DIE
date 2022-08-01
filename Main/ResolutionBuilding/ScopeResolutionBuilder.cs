@@ -25,8 +25,6 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     private readonly string _transientScopeReference;
     private readonly string _transientScopeParameterReference;
     
-    private readonly Dictionary<string, IScopeRootCreateFunctionResolutionBuilder> _scopeRootFunctionResolutions = new ();
-    
     internal ScopeResolutionBuilder(
         // parameter
         string name,
@@ -48,7 +46,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
             INamedTypeSymbol, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
             string,
-            ILocalFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
+            ICreateFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 
         : base(
             name,
             checkTypeProperties,
@@ -106,9 +104,8 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     public override void RegisterDisposalType(DisposalType disposalType) => _containerResolutionBuilder.RegisterDisposalType(disposalType);
 
     public bool HasWorkToDo => 
-        _scopeRootFunctionResolutions.Values.Any(f => f.HasWorkToDo) 
-        || RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
-        || LocalFunctions.Values.Any(r => r.HasWorkToDo);
+        RangedInstanceReferenceResolutions.Values.Any(r => r.HasWorkToDo)
+        || CreateFunctions.Values.Any(r => r.HasWorkToDo);
 
     public ScopeRootResolution AddCreateResolveFunction(
         SwitchImplementationParameter parameter,
@@ -118,7 +115,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters)
     {
         var function = FunctionResolutionUtility.GetOrCreateFunction(
-            _scopeRootFunctionResolutions, 
+            CreateFunctions, 
             rootType, 
             currentParameters,
             () => _scopeRootCreateFunctionResolutionBuilderFactory(this, parameter));
@@ -137,32 +134,16 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
     {
         while (HasWorkToDo)
         {
-            foreach (var functionResolutionBuilder in _scopeRootFunctionResolutions.Values.Where(f => f.HasWorkToDo).ToList())
-            {
-                functionResolutionBuilder.DoWork();
-            }
-
             DoRangedInstancesWork();
-            DoLocalFunctionsWork();
+            DoCreateFunctionsWork();
         }
     }
 
     public ScopeResolution Build() =>
-        new(_scopeRootFunctionResolutions
-                .Values
-                .Select(fr => fr.Build())
-                .Select(f => new RootResolutionFunction(
-                    f.Reference,
-                    f.TypeFullName,
-                    "internal",
-                    f.Resolvable,
-                    f.Parameter,
-                    f.SynchronicityDecision))
-                .ToList(),
-            LocalFunctions
+        new(CreateFunctions
                 .Values
                 .Select(lf => lf.Build())
-                .Select(f => new LocalFunctionResolution(
+                .Select(f => new CreateFunctionResolution(
                     f.Reference,
                     f.TypeFullName,
                     f.AccessModifier,

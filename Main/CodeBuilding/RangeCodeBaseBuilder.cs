@@ -30,9 +30,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
 
-        stringBuilder =  rangeResolution.RootResolutions.Aggregate(stringBuilder, GenerateResolutionFunction);
-
-        stringBuilder =  rangeResolution.LocalFunctions.Aggregate(stringBuilder, GenerateResolutionFunction);
+        stringBuilder =  rangeResolution.CreateFunctions.Aggregate(stringBuilder, GenerateResolutionFunction);
 
         if (_rangeResolution.AddForDisposal is { } addForDisposalMethod)
         {
@@ -172,23 +170,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         StringBuilder stringBuilder,
         FunctionResolution resolution)
     {
-        if (resolution is RootResolutionFunction rootResolutionFunction)
-        {
-            var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
-            stringBuilder = stringBuilder
-                .AppendLine($"{rootResolutionFunction.AccessModifier} {(rootResolutionFunction.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
-                .AppendLine($"{{");
-            if (_containerResolution.DisposalType != DisposalType.None)
-                stringBuilder = stringBuilder
-                    .AppendLine($"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
-
-            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
-                .AppendLine($"return {resolution.Resolvable.Reference};")
-                .AppendLine($"}}");
-            
-            return stringBuilder;
-        }
-        else if (resolution is LocalFunctionResolution localFunctionResolution)
+        if (resolution is CreateFunctionResolution localFunctionResolution)
         {
             var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
             stringBuilder = stringBuilder
@@ -205,7 +187,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             return stringBuilder;
         }
 
-        throw new Exception();
+        throw new Exception(); // todo message
     }
 
     private StringBuilder GenerateResolutionFunctionContent(

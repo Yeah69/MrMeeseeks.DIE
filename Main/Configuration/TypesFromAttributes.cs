@@ -77,8 +77,17 @@ internal class TypesFromAttributes : ScopeTypesFromAttributes
         IValidateAttributes validateAttributes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
-        : base(attributeData, rangeType, containerType, validateAttributes, wellKnownTypesAggregation, wellKnownTypesChoice, wellKnownTypesMiscellaneous)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
+        WellKnownTypes wellKnownTypes) 
+        : base(
+            attributeData, 
+            rangeType, 
+            containerType, 
+            validateAttributes, 
+            wellKnownTypesAggregation, 
+            wellKnownTypesChoice, 
+            wellKnownTypesMiscellaneous, 
+            wellKnownTypes)
     {
         ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
         TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
@@ -117,7 +126,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         IValidateAttributes validateAttributes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
+        WellKnownTypes wellKnownTypes)
     {
         _rangeType = rangeType;
         _containerType = containerType;
@@ -166,26 +176,74 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         
+        void NotParsableAttribute(AttributeData attributeData) =>
+            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                attributeData,
+                _rangeType,
+                _containerType,
+                "Not parsable attribute."));
+        
         DecoratorSequenceChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.DecoratorSequenceChoiceAttribute, out var decoratorSequenceChoiceAttributes) 
                 ? decoratorSequenceChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length < 3)
+                if (ad.ConstructorArguments.Length != 3
+                    || ad.ConstructorArguments[0].Value is not INamedTypeSymbol interfaceType
+                    || ad.ConstructorArguments[1].Value is not INamedTypeSymbol decoratedType)
+                {
+                    NotParsableAttribute(ad);
                     return null;
-                var interfaceType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
-                var decoratedType = ad.ConstructorArguments[1].Value as INamedTypeSymbol;
+                }
+                
+                interfaceType = interfaceType.UnboundIfGeneric();
+                
+                if (!decoratedType
+                        .OriginalDefinition
+                        .AllDerivedTypesAndSelf()
+                        .Select(t => t.UnboundIfGeneric())
+                        .Contains(interfaceType, SymbolEqualityComparer.Default))
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."));
+                    return null;
+                }
+                
                 var decorators = ad
                     .ConstructorArguments[2]
                     .Values
-                    .Select(tc => tc.Value)
+                    .Select(tc =>
+                    {
+                        if (tc.Value is not INamedTypeSymbol decoratorType)
+                        {
+                            NotParsableAttribute(ad);
+                            return null;
+                        }
+
+                        if (!decoratorType
+                                .OriginalDefinition
+                                .AllDerivedTypesAndSelf()
+                                .Select(t => t.UnboundIfGeneric())
+                                .Contains(interfaceType, SymbolEqualityComparer.Default))
+                        {
+                            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                                ad,
+                                _rangeType,
+                                _containerType,
+                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."));
+                            return null;
+                        }
+                        
+                        return decoratorType;
+                    })
                     .OfType<INamedTypeSymbol>()
                     .ToList();
                 
-                return decoratedType is null || interfaceType is null
-                    ? null 
-                    : ((INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (interfaceType, decoratedType, decorators);
+                return ((INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (interfaceType, decoratedType, decorators);
             })
             .OfType<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
@@ -198,7 +256,26 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 if (ad.ConstructorArguments.Length != 2
                     || ad.ConstructorArguments[0].Value is not INamedTypeSymbol interfaceType
                     || ad.ConstructorArguments[1].Value is not INamedTypeSymbol decoratedType)
+                {
+                    NotParsableAttribute(ad);
                     return ((INamedTypeSymbol, INamedTypeSymbol)?) null;
+                }
+
+                interfaceType = interfaceType.UnboundIfGeneric();
+                
+                if (!decoratedType
+                        .OriginalDefinition
+                        .AllDerivedTypesAndSelf()
+                        .Select(t => t.UnboundIfGeneric())
+                        .Contains(interfaceType, SymbolEqualityComparer.Default))
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."));
+                    return null;
+                }
                 
                 return (interfaceType, decoratedType);
             })
@@ -211,7 +288,11 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(ad =>
             {
                 if (ad.ConstructorArguments.Length < 2)
-                    return ((INamedTypeSymbol, IList<INamedTypeSymbol>)?) null;
+                {
+                    NotParsableAttribute(ad);
+                    return ((INamedTypeSymbol, IMethodSymbol)?) null;
+                }
+                
                 var implementationType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
                 var parameterTypes = ad
                     .ConstructorArguments[1]
@@ -220,40 +301,53 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     .OfType<INamedTypeSymbol>()
                     .ToList();
 
-                return implementationType is {}
-                    ? (implementationType, parameterTypes) 
-                    : null;
-            })
-            .Select(t =>
-            {
-                if (t is null) return null;
+                if (implementationType is { })
+                {
+                    implementationType = implementationType.OriginalDefinitionIfUnbound();
 
-                var implementationType = t.Value.Item1.OriginalDefinitionIfUnbound();
-                var parameterTypes = t.Value.Item2;
+                    var constructorChoice = implementationType
+                        .InstanceConstructors
+                        .Where(c => c.Parameters.Length == parameterTypes.Count)
+                        .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
+                            .Zip(parameterTypes,
+                                (pLeft, pRight) => pLeft.Equals(pRight, SymbolEqualityComparer.Default))
+                            .All(b => b));
 
-                if (implementationType is null) return null;
-                
-                var constructorChoice = implementationType
-                    .InstanceConstructors
-                    .Where(c => c.Parameters.Length == parameterTypes.Count)
-                    .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
-                        .Zip(parameterTypes,
-                            (pLeft, pRight) => pLeft.Equals(pRight, SymbolEqualityComparer.Default))
-                        .All(b => b));
-                return constructorChoice is { }
-                    ? (implementationType, constructorChoice)
-                    : ((INamedTypeSymbol, IMethodSymbol)?)null;
+                    if (constructorChoice is { })
+                    {
+                        return (implementationType, constructorChoice);
+                    }
 
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\"."));
+                    
+                    return null;
+                }
+
+                NotParsableAttribute(ad);
+                return null;
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
+
+        INamedTypeSymbol? SingleTypeArgument(AttributeData attributeData)
+        {
+            if (attributeData.ConstructorArguments.Length != 1
+                || attributeData.ConstructorArguments[0].Value is not INamedTypeSymbol type)
+            {
+                NotParsableAttribute(attributeData);
+                return null;
+            }
+            return type;
+        }
 
         FilterConstructorChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterConstructorChoiceAttribute, out var filterConstructorChoiceAttributes) 
                 ? filterConstructorChoiceAttributes
                 : Enumerable.Empty<AttributeData>())
-            .Select(ad => ad.ConstructorArguments.Length < 1 
-                ? null 
-                : ad.ConstructorArguments[0].Value as INamedTypeSymbol)
+            .Select(SingleTypeArgument)
             .OfType<INamedTypeSymbol>());
 
         PropertyChoices = ImmutableHashSet.CreateRange(
@@ -263,21 +357,44 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(ad =>
             {
                 if (ad.ConstructorArguments.Length < 1)
+                {
+                    NotParsableAttribute(ad);
                     return ((INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)?) null;
-                if (ad.ConstructorArguments[0].Value is not INamedTypeSymbol implementationType) 
+                }
+
+                if (ad.ConstructorArguments[0].Value is not INamedTypeSymbol implementationType)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
                 var parameterTypes = ad
                     .ConstructorArguments[1]
                     .Values
                     .Select(tc => tc.Value)
                     .OfType<string>()
-                    .ToList();
+                    .ToImmutableHashSet();
 
+                var propertyNames = implementationType
+                    .OriginalDefinitionIfUnbound()
+                    .GetMembers()
+                    .OfType<IPropertySymbol>()
+                    .Select(ps => ps.Name)
+                    .ToImmutableHashSet();
+                
+                foreach (var nonExistent in parameterTypes.Except(propertyNames))
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\"."));
+
+                var pickedProperties = propertyNames.Intersect(parameterTypes);
+                
                 var properties = implementationType
                     .OriginalDefinitionIfUnbound()
                     .GetMembers()
                     .OfType<IPropertySymbol>()
-                    .Where(ps => parameterTypes.Contains(ps.Name))
+                    .Where(ps => pickedProperties.Contains(ps.Name))
                     .ToList();
 
                 return (implementationType, properties);
@@ -288,12 +405,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterPropertyChoiceAttribute, out var filterPropertyChoicesGroup)
                 ? filterPropertyChoicesGroup
                 : Enumerable.Empty<AttributeData>())
-            .Select(ad =>
-            {
-                if (ad.ConstructorArguments.Length < 1)
-                    return null;
-                return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
-            })
+            .Select(SingleTypeArgument)
             .OfType<INamedTypeSymbol>());
 
         TypeInitializers = ImmutableHashSet.CreateRange(
@@ -302,22 +414,50 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length != 2 
+                if (ad.ConstructorArguments.Length != 2
                     || ad.ConstructorArguments[0].Value is not INamedTypeSymbol type
                     || ad.ConstructorArguments[1].Value is not string methodName)
+                {
+                    NotParsableAttribute(ad);
                     return ((INamedTypeSymbol, IMethodSymbol)?) null;
+                }
 
                 var initializationMethod = type
                     .OriginalDefinitionIfUnbound()
                     .GetMembers(methodName)
                     .OfType<IMethodSymbol>()
-                    .FirstOrDefault(m => m.Parameters.Length == 0);
+                    .FirstOrDefault();
 
                 if (initializationMethod is { })
                 {
+                    if (initializationMethod.Parameters.Any())
+                    {
+                        _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                            ad,
+                            _rangeType,
+                            _containerType,
+                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it isn't allowed to have parameters."));
+                    }
+                    if (!initializationMethod.ReturnsVoid
+                        && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
+                        && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
+                    {
+                        _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                            ad,
+                            _rangeType,
+                            _containerType,
+                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\"."));
+                        return null;
+                    }
+                    
                     return (type, initializationMethod);
                 }
-
+                
+                _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    ad,
+                    _rangeType,
+                    _containerType,
+                    $"Couldn't find a method with the name \"{methodName}\" on \"{type.FullName()}\"."));
                 return null;
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
@@ -326,12 +466,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterTypeInitializerAttribute, out var filterTypeInitializerAttributes) 
                 ? filterTypeInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
-            .Select(ad =>
-            {
-                if (ad.ConstructorArguments.Length != 1)
-                    return null;
-                return ad.ConstructorArguments[0].Value as INamedTypeSymbol;
-            })
+            .Select(SingleTypeArgument)
             .OfType<INamedTypeSymbol>());
         
         GenericParameterSubstitutesChoices = ImmutableHashSet.CreateRange(
@@ -341,12 +476,18 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(ad =>
             {
                 if (ad.ConstructorArguments.Length < 3)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
                 var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
 
-                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
-                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter) 
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true }
+                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
 
                 var typeParameterSymbol = genericType
                     .OriginalDefinition
@@ -354,16 +495,30 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     .OfType<ITypeParameterSymbol>()
                     .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
 
+                if (typeParameterSymbol is null)
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                    return null;
+                }
+
                 var substitutes = ad
                     .ConstructorArguments[2]
                     .Values
                     .Select(tc => tc.Value)
                     .OfType<INamedTypeSymbol>()
                     .ToList();
+
+                if (substitutes.Count != ad.ConstructorArguments[2].Values.Length)
+                {
+                    NotParsableAttribute(ad);
+                    return null;
+                }
                 
-                return typeParameterSymbol is null 
-                    ? null 
-                    : ((INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)?) (genericType, typeParameterSymbol, substitutes);
+                return ((INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)?) (genericType, typeParameterSymbol, substitutes);
             })
             .OfType<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
@@ -374,24 +529,38 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(ad =>
             {
                 if (ad.ConstructorArguments.Length < 3)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
                 var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
                 var typeChoice = ad.ConstructorArguments[2].Value as INamedTypeSymbol;
 
-                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true }
                     || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter
-                    || typeChoice is null) 
+                    || typeChoice is null)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
 
                 var typeParameterSymbol = genericType
                     .OriginalDefinition
                     .TypeArguments
                     .OfType<ITypeParameterSymbol>()
                     .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
+
+                if (typeParameterSymbol is null)
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                    return null;
+                }
                 
-                return typeParameterSymbol is null 
-                    ? null 
-                    : ((INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)?) (genericType, typeParameterSymbol, typeChoice);
+                return ((INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)?) (genericType, typeParameterSymbol, typeChoice);
             })
             .OfType<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)>());
         
@@ -402,22 +571,36 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(ad =>
             {
                 if (ad.ConstructorArguments.Length < 2)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
                 var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
 
-                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
-                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter) 
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true }
+                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
 
                 var typeParameterSymbol = genericType
                     .OriginalDefinition
                     .TypeArguments
                     .OfType<ITypeParameterSymbol>()
                     .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
+
+                if (typeParameterSymbol is null)
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                    return null;
+                }
                 
-                return typeParameterSymbol is null 
-                    ? null 
-                    : ((INamedTypeSymbol, ITypeParameterSymbol)?) (genericType, typeParameterSymbol);
+                return ((INamedTypeSymbol, ITypeParameterSymbol)?) (genericType, typeParameterSymbol);
             })
             .OfType<(INamedTypeSymbol, ITypeParameterSymbol)>());
         
@@ -428,22 +611,36 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(ad =>
             {
                 if (ad.ConstructorArguments.Length < 2)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
                 var genericType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
 
-                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true } 
-                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter) 
+                if (genericType is not { IsGenericType: true, IsUnboundGenericType: true }
+                    || ad.ConstructorArguments[1].Value is not string nameOfGenericParameter)
+                {
+                    NotParsableAttribute(ad);
                     return null;
+                }
 
                 var typeParameterSymbol = genericType
                     .OriginalDefinition
                     .TypeArguments
                     .OfType<ITypeParameterSymbol>()
                     .FirstOrDefault(tps => tps.Name == nameOfGenericParameter);
+
+                if (typeParameterSymbol is null)
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                    return null;
+                }
                 
-                return typeParameterSymbol is null 
-                    ? null 
-                    : ((INamedTypeSymbol, ITypeParameterSymbol)?) (genericType, typeParameterSymbol);
+                return ((INamedTypeSymbol, ITypeParameterSymbol)?) (genericType, typeParameterSymbol);
             })
             .OfType<(INamedTypeSymbol, ITypeParameterSymbol)>());
 
@@ -457,46 +654,86 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 : Enumerable.Empty<AttributeData>())
             .Any();
 
-        AssemblyImplementations = ImmutableHashSet.CreateRange(
-            (AttributeDictionary.TryGetValue(wellKnownTypesAggregation.AssemblyImplementationsAggregationAttribute, out var assemblyImplementationsAttributes)
-                ? assemblyImplementationsAttributes
-                : Enumerable.Empty<AttributeData>())
-            .SelectMany(ad => ad.ConstructorArguments.Length < 1
-                ? Array.Empty<IAssemblySymbol>()
-                : ad.ConstructorArguments[0]
-                    .Values
-                    .Select(tc => tc.Value)
-                    .OfType<INamedTypeSymbol>()
-                    .Select(t => t.ContainingAssembly)
-                    .OfType<IAssemblySymbol>())
-            .Distinct(SymbolEqualityComparer.Default)
-            .OfType<IAssemblySymbol>());
+        IImmutableSet<IAssemblySymbol> GetAssemblies(INamedTypeSymbol attributeType) =>
+            ImmutableHashSet.CreateRange(
+                (AttributeDictionary.TryGetValue(attributeType, out var assemblyImplementationsAttributes)
+                    ? assemblyImplementationsAttributes
+                    : Enumerable.Empty<AttributeData>())
+                .SelectMany(ad => ad.ConstructorArguments.Length < 1
+                    ? Array.Empty<IAssemblySymbol>()
+                    : ad.ConstructorArguments[0]
+                        .Values
+                        .Select(tc =>
+                        {
+                            if (tc.Value is not INamedTypeSymbol)
+                            {
+                                NotParsableAttribute(ad);
+                                return null;
+                            }
+                            return tc.Value;
+                        })
+                        .OfType<INamedTypeSymbol>()
+                        .Select(t =>
+                        {
+                            if (t.ContainingAssembly is null)
+                            {
+                                _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                                    ad,
+                                    _rangeType,
+                                    _containerType,
+                                    $"Type \"{t.FullName()}\" doesn't lead to a single known assembly."));
+                            }
+                            return t.ContainingAssembly;
+                        })
+                        .OfType<IAssemblySymbol>())
+                .Distinct(SymbolEqualityComparer.Default)
+                .OfType<IAssemblySymbol>());
 
-        FilterAssemblyImplementations = ImmutableHashSet.CreateRange(
-            (AttributeDictionary.TryGetValue(wellKnownTypesAggregation.FilterAssemblyImplementationsAggregationAttribute, out var filterAssemblyImplementationsAttributes)
-                ? filterAssemblyImplementationsAttributes
-                : Enumerable.Empty<AttributeData>())
-            .SelectMany(ad => ad.ConstructorArguments.Length < 1
-                ? Array.Empty<IAssemblySymbol>()
-                : ad.ConstructorArguments[0]
-                    .Values
-                    .Select(tc => tc.Value)
-                    .OfType<INamedTypeSymbol>()
-                    .Select(t => t.ContainingAssembly)
-                    .OfType<IAssemblySymbol>())
-            .Distinct(SymbolEqualityComparer.Default)
-            .OfType<IAssemblySymbol>());
+        AssemblyImplementations = GetAssemblies(wellKnownTypesAggregation.AssemblyImplementationsAggregationAttribute);
+
+        FilterAssemblyImplementations = GetAssemblies(wellKnownTypesAggregation.FilterAssemblyImplementationsAggregationAttribute);
         
         ImplementationChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.ImplementationChoiceAttribute, out var implementationChoiceAttributes) 
                 ? implementationChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
-            .Select(ad => 
-                ad.ConstructorArguments.Length < 2 
-                || ad.ConstructorArguments[0].Value is not INamedTypeSymbol type 
-                || ad.ConstructorArguments[1].Value is not INamedTypeSymbol implementation 
-                    ? null 
-                    : ((INamedTypeSymbol, INamedTypeSymbol)?) (type, implementation))
+            .Select(ad =>
+            {
+                if (ad.ConstructorArguments.Length < 2
+                    || ad.ConstructorArguments[0].Value is not INamedTypeSymbol type
+                    || ad.ConstructorArguments[1].Value is not INamedTypeSymbol implementation)
+                {
+                    NotParsableAttribute(ad);
+                    return null;
+                }
+                
+                if (!validateAttributes.ValidateImplementation(implementation))
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Type \"{implementation.FullName()}\" has to be an implementation."));
+                    return null;
+                }
+
+                var unboundType = type.UnboundIfGeneric();
+                if (!implementation
+                        .OriginalDefinitionIfUnbound()
+                        .AllDerivedTypesAndSelf()
+                        .Select(t => t.UnboundIfGeneric())
+                        .Contains(unboundType, SymbolEqualityComparer.Default))
+                {
+                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        ad,
+                        _rangeType,
+                        _containerType,
+                        $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."));
+                    return null;
+                }
+                
+                return ((INamedTypeSymbol, INamedTypeSymbol)?)(type, implementation);
+            })
             .OfType<(INamedTypeSymbol, INamedTypeSymbol)>());
         
         ImplementationCollectionChoices = ImmutableHashSet.CreateRange(
@@ -505,21 +742,45 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
             {
-                if (ad.ConstructorArguments.Length < 2)
+                if (ad.ConstructorArguments.Length < 2
+                    || ad.ConstructorArguments[0].Value is not INamedTypeSymbol type)
+                {
+                    NotParsableAttribute(ad);
                     return null;
-                
-                var type = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
-                
+                }
+
+                var unboundType = type.UnboundIfGeneric();
                 var implementations = ad
                     .ConstructorArguments[1]
                     .Values
-                    .Select(tc => tc.Value)
+                    .Select(tc =>
+                    {
+                        if (tc.Value is not INamedTypeSymbol implementation)
+                        {
+                            NotParsableAttribute(ad);
+                            return null;
+                        }
+                        
+                        if (!implementation
+                                .OriginalDefinitionIfUnbound()
+                                .AllDerivedTypesAndSelf()
+                                .Select(t => t.UnboundIfGeneric())
+                                .Contains(unboundType, SymbolEqualityComparer.Default))
+                        {
+                            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                                ad,
+                                _rangeType,
+                                _containerType,
+                                $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."));
+                            return null;
+                        }
+                        
+                        return tc.Value;
+                    })
                     .OfType<INamedTypeSymbol>()
                     .ToList();
                 
-                return type is null 
-                    ? null 
-                    : ((INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (type, implementations);
+                return ((INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)?) (type, implementations);
             })
             .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         

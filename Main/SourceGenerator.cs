@@ -68,7 +68,8 @@ public class SourceGenerator : ISourceGenerator
             validateAttributes,
             wellKnownTypesAggregation,
             wellKnownTypesChoice,
-            wellKnownTypesMiscellaneous);
+            wellKnownTypesMiscellaneous,
+            wellKnownTypes);
         
         foreach (var diagnostic in assemblyTypesFromAttributes
                      .Warnings
@@ -102,7 +103,8 @@ public class SourceGenerator : ISourceGenerator
                 validateAttributes,
                 wellKnownTypesAggregation,
                 wellKnownTypesChoice,
-                wellKnownTypesMiscellaneous);
+                wellKnownTypesMiscellaneous,
+                wellKnownTypes);
         
             foreach (var diagnostic in containerTypesFromAttributes.Warnings)
                 diagLogger.Log(diagnostic);
@@ -148,7 +150,8 @@ public class SourceGenerator : ISourceGenerator
                         validateAttributes,
                         wellKnownTypesAggregation,
                         wellKnownTypesChoice,
-                        wellKnownTypesMiscellaneous);
+                        wellKnownTypesMiscellaneous,
+                        wellKnownTypes);
                     
                     foreach (var diagnostic in scopeTypesFromAttributes.Warnings)
                         diagLogger.Log(diagnostic);

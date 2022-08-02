@@ -800,11 +800,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 {
                     var ret = _validateAttributes.ValidateAbstraction(t.Item2);
 
-                    _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
-                        t.Item1,
-                        _rangeType, 
-                        _containerType, 
-                        $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored."));
+                    if (!ret)
+                        _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                            t.Item1,
+                            _rangeType, 
+                            _containerType, 
+                            $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored."));
                 
                     return ret;
                 })
@@ -820,11 +821,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             {
                 var ret = _validateAttributes.ValidateImplementation(t.Item2);
 
-                _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
-                    t.Item1,
-                    _rangeType, 
-                    _containerType, 
-                    $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored."));
+                if (!ret)
+                    _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                        t.Item1,
+                        _rangeType, 
+                        _containerType, 
+                        $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored."));
                 
                 return ret;
             })

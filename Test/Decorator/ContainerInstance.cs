@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
@@ -9,7 +10,12 @@ internal interface IInterface
     IInterface Decorated { get; }
 }
 
-internal class Dependency : IInterface, IContainerInstance
+internal class DependencyA : IInterface, IContainerInstance
+{
+    public IInterface Decorated => this;
+}
+
+internal class DependencyB : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }
@@ -22,7 +28,7 @@ internal class Decorator : IInterface, IDecorator<IInterface>
     public IInterface Decorated { get; }
 }
 
-[CreateFunction(typeof(IInterface), "Create")]
+[CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
 internal sealed partial class Container
 {
     
@@ -34,13 +40,15 @@ public class Tests
     public async ValueTask Test()
     {
         await using var container = new Container();
-        var decorated = container.Create();
-        Assert.NotEqual(decorated, decorated.Decorated);
-        Assert.IsType<Decorator>(decorated);
-        Assert.IsType<Dependency>(decorated.Decorated);
+        var collection = container.Create();
         
-        var decoratedNextReference = container.Create();
-        Assert.Equal(decorated, decoratedNextReference);
-        Assert.Equal(decorated.Decorated, decoratedNextReference.Decorated);
+        Assert.NotEqual(collection[0], collection[1]);
+        Assert.NotEqual(collection[0].Decorated, collection[1].Decorated);
+        Assert.NotEqual(collection[0], collection[0].Decorated);
+        Assert.NotEqual(collection[1], collection[1].Decorated);
+        Assert.IsType<Decorator>(collection[0]);
+        Assert.IsType<Decorator>(collection[1]);
+        Assert.True(typeof(DependencyA) == collection[0].Decorated.GetType() && typeof(DependencyB) == collection[1].Decorated.GetType()
+            || typeof(DependencyB) == collection[0].Decorated.GetType() && typeof(DependencyA) == collection[1].Decorated.GetType());
     }
 }

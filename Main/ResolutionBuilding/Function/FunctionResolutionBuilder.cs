@@ -639,11 +639,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var (implementationType, currentParameters, implementationStack) = parameter;
         var scopeLevel = parameter switch
         {
-            SwitchImplementationParameterWithComposition withComposition =>
-                withComposition.Composition.ImplementationTypes.Select(i => _checkTypeProperties.GetScopeLevelFor(i))
-                    .Min(),
-            SwitchImplementationParameterWithDecoration withDecoration => _checkTypeProperties.GetScopeLevelFor(
-                withDecoration.Decoration.ImplementationType),
+            SwitchImplementationParameterWithDecoration or SwitchImplementationParameterWithComposition => ScopeLevel.None,
             _ => _checkTypeProperties.GetScopeLevelFor(parameter.ImplementationType)
         };
         var nextParameter = parameter switch
@@ -667,8 +663,6 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
         var ret = scopeLevel switch
         {
-            >= ScopeLevel.Scope when parameter is SwitchImplementationParameterWithDecoration or SwitchImplementationParameterWithDecoration => 
-                (_rangeResolutionBaseBuilder.CreateScopeInstanceReferenceResolution(nextParameter), null),
             ScopeLevel.Container => 
                 (_rangeResolutionBaseBuilder.CreateContainerInstanceReferenceResolution(nextParameter), null),
             ScopeLevel.TransientScope => 

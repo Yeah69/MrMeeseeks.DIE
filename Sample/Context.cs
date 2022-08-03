@@ -1,37 +1,34 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Func.OverrideScoped;
+namespace MrMeeseeks.DIE.Test.Decorator.ContainerInstanceMultipeImplementations;
 
-internal class DependencyInner
+internal interface IInterface
 {
-    internal DependencyInner(
-        Lazy<Parent> lazyParent,
-        string asdf)
-    {
-        
-    }
+    IInterface Decorated { get; }
 }
 
-internal class Dependency
+internal class DependencyA : IInterface, IContainerInstance
 {
-    public int Value { get; }
-
-    internal Dependency(int value, Func<string, DependencyInner> fac) => Value = value;
+    public IInterface Decorated => this;
 }
 
-internal class Parent : IScopeRoot
+internal class DependencyB : IInterface, IContainerInstance
 {
-    public Dependency Dependency { get; }
-    
-    internal Parent(
-        Func<int, Dependency> fac) =>
-        Dependency = fac(1);
+    public IInterface Decorated => this;
 }
 
-[CreateFunction(typeof(Parent), "Create")]
+internal class Decorator : IInterface, IDecorator<IInterface>
+{
+    public Decorator(IInterface decoratedContainerInstance) => 
+        Decorated = decoratedContainerInstance;
+
+    public IInterface Decorated { get; }
+}
+
+[CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
 internal sealed partial class Container
 {
-    private int DIE_Factory_int => 0;
+    
 }

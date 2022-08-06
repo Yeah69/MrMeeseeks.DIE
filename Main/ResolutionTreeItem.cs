@@ -162,7 +162,8 @@ internal record FactoryResolution(
     string Reference,
     string TypeFullName,
     string FunctionName,
-    IReadOnlyList<(string Name, Resolvable Dependency)> Parameter) : Resolvable(Reference, TypeFullName);
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
+    bool Await) : Resolvable(Reference, TypeFullName);
 
 internal record OutParameterResolution(
     string Reference,
@@ -304,7 +305,8 @@ internal record NullResolution(
 internal record FieldResolution(
     string Reference,
     string TypeFullName,
-    string FieldName) : Resolvable(Reference, TypeFullName);
+    string FieldName,
+    bool Await) : Resolvable(Reference, TypeFullName);
 
 internal abstract record TaskBaseResolution(
     Resolvable WrappedResolvable,

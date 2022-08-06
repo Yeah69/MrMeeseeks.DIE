@@ -15,16 +15,18 @@ internal interface IFunctionResolutionSynchronicityDecisionMaker
     Lazy<SynchronicityDecision> Decision { get; }
     
     void Register(IAwaitableResolution awaitableResolution);
+    void ForceAwait();
 }
 
 internal class FunctionResolutionSynchronicityDecisionMaker : IFunctionResolutionSynchronicityDecisionMaker
 {
     private readonly ISet<IAwaitableResolution> _potentialAwaits = new HashSet<IAwaitableResolution>();
+    private bool _forceAwait;
     
     public Lazy<SynchronicityDecision> Decision { get; }
 
     public FunctionResolutionSynchronicityDecisionMaker() =>
-        Decision = new(() => _potentialAwaits.Any(pa => pa.Await)
+        Decision = new(() => _forceAwait || _potentialAwaits.Any(pa => pa.Await)
             ? SynchronicityDecision.AsyncValueTask
             : SynchronicityDecision.Sync);
 
@@ -37,6 +39,8 @@ internal class FunctionResolutionSynchronicityDecisionMaker : IFunctionResolutio
 
         _potentialAwaits.Add(awaitableResolution);
     }
+
+    public void ForceAwait() => _forceAwait = true;
 }
 
 internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResolution>
@@ -125,33 +129,113 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 t.Value.Item1.OriginalDefinition, type.OriginalDefinition)) is { Value.Item1: not null, Value.Item2: not null } funcParameter)
             return (funcParameter.Value.Item2, null);
 
+        var valueTaskedType = _wellKnownTypes.ValueTask1.Construct(type);
+        var taskedType = _wellKnownTypes.Task1.Construct(type);
+
         if (_userDefinedElements.GetFactoryFieldFor(type) is { } instance)
             return (
                 new FieldResolution(
-                    RootReferenceGenerator.Generate(instance.Type),
-                    instance.Type.FullName(),
-                    instance.Name),
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    instance.Name,
+                    false),
                 null);
+        if (_userDefinedElements.GetFactoryFieldFor(valueTaskedType) is { } valueTaskedInstance)
+        {
+            _synchronicityDecisionMaker.ForceAwait();
+            return (
+                new FieldResolution(
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    valueTaskedInstance.Name,
+                    true),
+                null);
+        }
+        if (_userDefinedElements.GetFactoryFieldFor(taskedType) is { } taskedInstance)
+        {
+            _synchronicityDecisionMaker.ForceAwait();
+            return (
+                new FieldResolution(
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    taskedInstance.Name,
+                    true),
+                null);
+        }
 
         if (_userDefinedElements.GetFactoryPropertyFor(type) is { } property)
             return (
                 new FieldResolution(
-                    RootReferenceGenerator.Generate(property.Type),
-                    property.Type.FullName(),
-                    property.Name),
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    property.Name,
+                    false),
                 null);
+        if (_userDefinedElements.GetFactoryPropertyFor(valueTaskedType) is { } valueTaskedProperty)
+        {
+            _synchronicityDecisionMaker.ForceAwait();
+            return (
+                new FieldResolution(
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    valueTaskedProperty.Name,
+                    true),
+                null);
+        }
+        if (_userDefinedElements.GetFactoryPropertyFor(taskedType) is { } taskedProperty)
+        {
+            _synchronicityDecisionMaker.ForceAwait();
+            return (
+                new FieldResolution(
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    taskedProperty.Name,
+                    true),
+                null);
+        }
 
-        if (_userDefinedElements.GetFactoryMethodFor(type) is { } factory)
+        if (_userDefinedElements.GetFactoryMethodFor(type) is { } method)
             return (
                 new FactoryResolution(
-                    RootReferenceGenerator.Generate(factory.ReturnType),
-                    factory.ReturnType.FullName(),
-                    factory.Name,
-                    factory
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    method.Name,
+                    method
                         .Parameters
                         .Select(p => (p.Name, SwitchType(new SwitchTypeParameter(p.Type, currentFuncParameters, implementationStack)).Item1))
-                        .ToList()),
+                        .ToList(),
+                    false),
                 null);
+        if (_userDefinedElements.GetFactoryMethodFor(valueTaskedType) is { } valueTaskedMethod)
+        {
+            _synchronicityDecisionMaker.ForceAwait();
+            return (
+                new FactoryResolution(
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    valueTaskedMethod.Name,
+                    valueTaskedMethod
+                        .Parameters
+                        .Select(p => (p.Name, SwitchType(new SwitchTypeParameter(p.Type, currentFuncParameters, implementationStack)).Item1))
+                        .ToList(),
+                    true),
+                null);
+        }
+        if (_userDefinedElements.GetFactoryMethodFor(taskedType) is { } taskedMethod)
+        {
+            _synchronicityDecisionMaker.ForceAwait();
+            return (
+                new FactoryResolution(
+                    RootReferenceGenerator.Generate(type),
+                    type.FullName(),
+                    taskedMethod.Name,
+                    taskedMethod
+                        .Parameters
+                        .Select(p => (p.Name, SwitchType(new SwitchTypeParameter(p.Type, currentFuncParameters, implementationStack)).Item1))
+                        .ToList(),
+                    true),
+                null);
+        }
 
         if (type.OriginalDefinition.Equals(_wellKnownTypes.Task1, SymbolEqualityComparer.Default)
             && type is INamedTypeSymbol task)

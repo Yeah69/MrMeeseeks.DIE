@@ -419,13 +419,13 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case NullResolution(var reference, var typeFullName):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) null;");
                 break;
-            case FieldResolution(var reference, var typeFullName, var fieldName):
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = this.{fieldName};");
+            case FieldResolution(var reference, var typeFullName, var fieldName, var isAwait):
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = {(isAwait ? "await " : "")}this.{fieldName};");
                 break;
-            case FactoryResolution(var reference, var typeFullName, var functionName, var parameters):
+            case FactoryResolution(var reference, var typeFullName, var functionName, var parameters, bool isAwait):
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
-                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");
+                stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = {(isAwait ? "await " : "")}this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");
                 break;
             case CollectionResolution(var reference, var typeFullName, var itemFullName, var items):
                 stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateResolutions);

@@ -1,20 +1,34 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System.Collections.Generic;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 
-[assembly:ContainerInstanceAbstractionAggregation(typeof(IContainerInstance))]
-[assembly:TransientScopeInstanceAbstractionAggregation(typeof(ITransientScopeInstance))]
-[assembly:ScopeInstanceAbstractionAggregation(typeof(IScopeInstance))]
-[assembly:TransientScopeRootAbstractionAggregation(typeof(ITransientScopeRoot))]
-[assembly:ScopeRootAbstractionAggregation(typeof(IScopeRoot))]
-[assembly:TransientAbstractionAggregation(typeof(ITransient))]
-[assembly:SyncTransientAbstractionAggregation(typeof(ISyncTransient))]
-[assembly:AsyncTransientAbstractionAggregation(typeof(IAsyncTransient))]
-[assembly:DecoratorAbstractionAggregation(typeof(IDecorator<>))]
-[assembly:CompositeAbstractionAggregation(typeof(IComposite<>))]
-[assembly:TypeInitializer(typeof(ITypeInitializer), nameof(ITypeInitializer.Initialize))]
-[assembly:TypeInitializer(typeof(ITaskTypeInitializer), nameof(ITaskTypeInitializer.InitializeAsync))]
-[assembly:TypeInitializer(typeof(IValueTaskTypeInitializer), nameof(IValueTaskTypeInitializer.InitializeAsync))]
+namespace MrMeeseeks.DIE.Test.Decorator.ContainerInstanceMultipeImplementations;
 
-[assembly:AllImplementationsAggregation]
+internal interface IInterface
+{
+    IInterface Decorated { get; }
+}
 
-[assembly:ErrorDescriptionInsteadOfBuildFailure]
+internal class DependencyA : IInterface, IContainerInstance
+{
+    public IInterface Decorated => this;
+}
+
+internal class DependencyB : IInterface, IContainerInstance
+{
+    public IInterface Decorated => this;
+}
+
+internal class Decorator : IInterface, IDecorator<IInterface>
+{
+    public Decorator(IInterface decoratedContainerInstance) => 
+        Decorated = decoratedContainerInstance;
+
+    public IInterface Decorated { get; }
+}
+
+[CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
+internal sealed partial class Container
+{
+    
+}

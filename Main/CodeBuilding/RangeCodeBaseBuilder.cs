@@ -59,11 +59,21 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         StringBuilder stringBuilder,
         RangeResolution rangeResolution)
     {
+        var disposalHandling = rangeResolution.DisposalHandling;
         if (_containerResolution.DisposalType == DisposalType.None)
         {
             return stringBuilder
-                .AppendLine("public void Dispose() {}")
-                .AppendLine($"public {WellKnownTypes.ValueTask.FullName()} DisposeAsync() => new {WellKnownTypes.ValueTask.FullName()}({WellKnownTypes.Task.FullName()}.CompletedTask);");
+                .AppendLine($"private int {disposalHandling.DisposedFieldReference} = 0;")
+                .AppendLine($"private bool {disposalHandling.DisposedPropertyReference} => {disposalHandling.DisposedFieldReference} != 0;")
+                .AppendLine("public void Dispose()")
+                .AppendLine("{")
+                .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
+                .AppendLine("}")
+                .AppendLine($"public {WellKnownTypes.ValueTask.FullName()} DisposeAsync()")
+                .AppendLine("{")
+                .AppendLine($"Dispose();")
+                .AppendLine($"return new {WellKnownTypes.ValueTask.FullName()}({WellKnownTypes.Task.FullName()}.CompletedTask);")
+                .AppendLine("}");
         }
         
         var returnType = _containerResolution.DisposalType switch
@@ -86,7 +96,6 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
         stringBuilder = GenerateDisposalFunction_TransientScopeDictionary(stringBuilder);
             
-        var disposalHandling = rangeResolution.DisposalHandling;
         if (_containerResolution.DisposalType == DisposalType.Async)
         {
             stringBuilder = stringBuilder.AppendLine(
@@ -176,11 +185,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             stringBuilder = stringBuilder
                 .AppendLine($"{resolution.AccessModifier} {(localFunctionResolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
                 .AppendLine($"{{");
-            if (_containerResolution.DisposalType != DisposalType.None)
-                stringBuilder = stringBuilder
-                    .AppendLine($"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"\");");
-
-            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable)
+            stringBuilder = ObjectDisposedCheck(stringBuilder, resolution.TypeFullName);
+            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable);
+            stringBuilder = ObjectDisposedCheck(stringBuilder, resolution.TypeFullName);
+            stringBuilder = stringBuilder
                 .AppendLine($"return {resolution.Resolvable.Reference};")
                 .AppendLine($"}}");
 
@@ -443,6 +451,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
     protected abstract bool ExplicitTransientScopeInstanceImplementation { get; }
 
+    private StringBuilder ObjectDisposedCheck(StringBuilder stringBuilder, string returnTypeFullName) => stringBuilder
+        .AppendLine($"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"{_rangeResolution.DisposalHandling.RangeName}\", $\"[DIE] This scope \\\"{_rangeResolution.DisposalHandling.RangeName}\\\" is already disposed, so it can't create a \\\"{returnTypeFullName}\\\" instance anymore.\");");
+
     private StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution)
     {
         var isRefType = rangedInstanceFunctionGroupResolution.IsCreatedForStructs is null;
@@ -480,10 +491,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 .AppendLine($"{(isAsync ? "await " : "")}this.{rangedInstanceFunctionGroupResolution.LockReference}.Wait{(isAsync ? "Async" : "")}();")
                 .AppendLine($"try")
                 .AppendLine($"{{");
-            if (_containerResolution.DisposalType != DisposalType.None)
-                stringBuilder = stringBuilder
-                    .AppendLine(
-                    $"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(nameof({_rangeResolution.DisposalHandling.RangeName}));");
+            stringBuilder = ObjectDisposedCheck(stringBuilder, rangedInstanceFunctionGroupResolution.TypeFullName);
             stringBuilder = stringBuilder
                 .AppendLine(isRefType
                     ? $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupResolution.FieldReference}, null)) return {rangedInstanceFunctionGroupResolution.FieldReference};"
@@ -502,7 +510,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 .AppendLine($"finally")
                 .AppendLine($"{{")
                 .AppendLine($"this.{rangedInstanceFunctionGroupResolution.LockReference}.Release();")
-                .AppendLine($"}}")
+                .AppendLine($"}}");
+            
+            stringBuilder = ObjectDisposedCheck(stringBuilder, rangedInstanceFunctionGroupResolution.TypeFullName);    
+            stringBuilder = stringBuilder
                 .AppendLine($"return this.{rangedInstanceFunctionGroupResolution.FieldReference};")
                 .AppendLine($"}}");
         }

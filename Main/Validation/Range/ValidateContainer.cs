@@ -47,22 +47,34 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             foreach (var diagnostic in _validateTransientScopeFactory.Validate(defaultTransientScope, rangeType))
                 yield return diagnostic;
 
+        var customTransientScopeTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
         foreach (var customTransientScope in rangeType
                      .GetTypeMembers()
                      .Where(nts => nts.Name.StartsWith(Constants.CustomTransientScopeName)))
+        {
+            foreach (var diagnostic in ValidateCustomScope(customTransientScope, customTransientScopeTypes))
+                yield return diagnostic;
+            
             foreach (var diagnostic in _validateTransientScopeFactory.Validate(customTransientScope, rangeType))
                 yield return diagnostic;
+        }
 
         if (rangeType.GetTypeMembers(Constants.DefaultScopeName, 0).FirstOrDefault() is
             { } defaultScope)
             foreach (var diagnostic in _validateScopeFactory.Validate(defaultScope, rangeType))
                 yield return diagnostic;
 
+        var customScopeTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
         foreach (var customScope in rangeType
                      .GetTypeMembers()
                      .Where(nts => nts.Name.StartsWith(Constants.CustomScopeName)))
+        {
+            foreach (var diagnostic in ValidateCustomScope(customScope, customScopeTypes))
+                yield return diagnostic;
+
             foreach (var diagnostic in _validateScopeFactory.Validate(customScope, rangeType))
                 yield return diagnostic;
+        }
 
         var createFunctionAttributes = rangeType
             .GetAttributes()
@@ -98,6 +110,31 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             }
             else
                 yield return ValidationErrorDiagnostic(rangeType, "Attribute doesn't have expected constructor arguments.", location);
+        }
+
+        IEnumerable<Diagnostic> ValidateCustomScope(INamedTypeSymbol customScope, ISet<INamedTypeSymbol> customScopeTypes)
+        {
+            var customScopeAttributes = customScope
+                .GetAttributes()
+                .Where(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
+                    _wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
+                .ToArray();
+
+            if (customScopeAttributes.Length == 0)
+            {
+                yield return ValidationErrorDiagnostic(rangeType, containerType, $"Custom scope \"{customScope.Name}\" has to have at least one \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\"-attribute.");
+            }
+
+            var scopeRootTypes = customScopeAttributes
+                .SelectMany(ad => ad.ConstructorArguments[0].Values)
+                .OfType<INamedTypeSymbol>()
+                .ToList();
+            foreach (var scopeRootType in scopeRootTypes
+                         .Where(scopeRootType => customScopeTypes.Contains(scopeRootType, SymbolEqualityComparer.Default)))
+            {
+                yield return ValidationErrorDiagnostic(rangeType, containerType, $"Custom scope \"{customScope.Name}\" gets the type \"{scopeRootType.FullName()}\" passed into one of its \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\"-attributes, but it is already in use in another custom scope.");
+            }
+            customScopeTypes.UnionWith(scopeRootTypes);
         }
     }
 

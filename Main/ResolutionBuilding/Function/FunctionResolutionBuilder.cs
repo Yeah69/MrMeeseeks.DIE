@@ -255,7 +255,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 DisposalType.None,
                 valueTupleType
                     .TypeArguments
-                    .Select((t, i) => ($"item{(i + 1)}", SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
+                    .Select((t, i) => (valueTupleType.InstanceConstructors[0].Parameters[i].Name, SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
                     .ToList(),
                 Array.Empty<(string Name, Resolvable Dependency)>(),
                 null,
@@ -293,6 +293,22 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     }
                 }
             }
+        }
+
+        if (type.FullName().StartsWith("global::System.Tuple<") && type is INamedTypeSymbol tupleType)
+        {
+            var constructorResolution = new ConstructorResolution(
+                RootReferenceGenerator.Generate(tupleType),
+                tupleType.FullName(),
+                DisposalType.None,
+                tupleType
+                    .TypeArguments
+                    .Select((t, i) => (tupleType.InstanceConstructors[0].Parameters[i].Name, SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
+                    .ToList(),
+                Array.Empty<(string Name, Resolvable Dependency)>(),
+                null,
+                null);
+            return (constructorResolution, constructorResolution);
         }
 
         if (type.OriginalDefinition.Equals(_wellKnownTypes.Lazy1, SymbolEqualityComparer.Default)

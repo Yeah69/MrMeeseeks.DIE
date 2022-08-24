@@ -262,6 +262,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     .ToList(),
                 Array.Empty<(string Name, Resolvable Dependency)>(),
                 null,
+                null,
                 null);
             return (constructorResolution, constructorResolution);
         }
@@ -309,6 +310,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     .Select((t, i) => (tupleType.InstanceConstructors[0].Parameters[i].Name, SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
                     .ToList(),
                 Array.Empty<(string Name, Resolvable Dependency)>(),
+                null,
                 null,
                 null);
             return (constructorResolution, constructorResolution);
@@ -849,39 +851,13 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var isTransientScopeRoot =
             _checkTypeProperties.ShouldBeScopeRoot(implementationType) == ScopeLevel.TransientScope;
 
-        var outParameters = ImmutableDictionary<string, OutParameterResolution>.Empty;
-        ConstructorParameterChoiceResolution? constructorParameterChoiceResolution = null;
+        var (userDefinedConstrParamsInjection, outConstrParams) = GetUserDefinedInjectionResolution(
+            _userDefinedElements.GetConstrParamsInjectionFor(implementationType),
+            (name, parameters) => new UserDefinedConstrParamsInjectionResolution(name, parameters));
 
-        if (_userDefinedElements.GetCustomConstructorParameterChoiceFor(implementationType) is
-            { } parameterChoiceMethod)
-        {
-            constructorParameterChoiceResolution = new ConstructorParameterChoiceResolution(
-                parameterChoiceMethod.Name,
-                parameterChoiceMethod
-                    .Parameters
-                    .Select(p =>
-                    {
-                        var isOut = p.RefKind == RefKind.Out;
-
-                        if (isOut)
-                        {
-                            var outParameter = new OutParameterResolution(
-                                RootReferenceGenerator.Generate(p.Type),
-                                p.Type.FullName());
-                            outParameters = outParameters.Add(p.Name, outParameter);
-                            return (
-                                p.Name,
-                                outParameter,
-                                isOut);
-                        }
-
-                        return (
-                            p.Name,
-                            SwitchType(new SwitchTypeParameter(p.Type, currentParameters, implementationStack)).Item1,
-                            isOut);
-                    })
-                    .ToList());
-        }
+        var (userDefinedPropertiesInjection, outProperties) = GetUserDefinedInjectionResolution(
+            _userDefinedElements.GetPropertiesInjectionFor(implementationType),
+            (name, parameters) => new UserDefinedPropertiesInjectionResolution(name, parameters));
 
         ITypeInitializationResolution? typeInitializationResolution = null;
 
@@ -920,7 +896,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             GetDisposalTypeFor(implementationType),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                 .Parameters
-                .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
+                .Select(p => ProcessConstrParamChildType(p.Type, p.Name, currentParameters))
                 .ToList()),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
                 (_checkTypeProperties.GetPropertyChoicesFor(implementationType) 
@@ -929,22 +905,41 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                      .OfType<IPropertySymbol>()
                      .Where(_ => !implementationType.IsRecord)
                      .Where(p => p.SetMethod?.IsInitOnly ?? false))
-                .Select(p => ProcessChildType(p.Type, p.Name, implementationType, currentParameters))
+                .Select(p => ProcessPropertyChildType(p.Type, p.Name, currentParameters))
                 .ToList()),
             typeInitializationResolution,
-            constructorParameterChoiceResolution);
+            userDefinedConstrParamsInjection,
+            userDefinedPropertiesInjection);
 
         return (resolution, resolution);
+
+        (string Name, Resolvable Dependency) ProcessConstrParamChildType(
+            ITypeSymbol typeSymbol,
+            string parameterName,
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currParameter)
+        {
+            if (outConstrParams.TryGetValue(parameterName, out var outParameterResolution))
+                return (parameterName,
+                    new ParameterResolution(outParameterResolution.Reference, outParameterResolution.TypeFullName));
+            return ProcessChildType(typeSymbol, parameterName, currParameter);
+        }
+
+        (string Name, Resolvable Dependency) ProcessPropertyChildType(
+            ITypeSymbol typeSymbol,
+            string parameterName,
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currParameter)
+        {
+            if (outProperties.TryGetValue(parameterName, out var outPropertyResolution))
+                return (parameterName,
+                    new ParameterResolution(outPropertyResolution.Reference, outPropertyResolution.TypeFullName));
+            return ProcessChildType(typeSymbol, parameterName, currParameter);
+        }
 
         (string Name, Resolvable Dependency) ProcessChildType(
             ITypeSymbol typeSymbol, 
             string parameterName, 
-            INamedTypeSymbol impType, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currParameter)
         {
-            if (outParameters.TryGetValue(parameterName, out var outParameterResolution))
-                return (parameterName, new ParameterResolution(outParameterResolution.Reference, outParameterResolution.TypeFullName));
-            
             if (checkForDecoration && decoration is {})
             {
                 if (typeSymbol.Equals(decoration.InterfaceType, SymbolEqualityComparer.Default))
@@ -1028,6 +1023,47 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     parameterType,
                     currParameter,
                     implementationStack)).Item1);
+        }
+
+        (TInjection?, IImmutableDictionary<string, OutParameterResolution>) GetUserDefinedInjectionResolution<TInjection>(
+            IMethodSymbol? userDefinedInjectionMethod, 
+            Func<string, IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)>, TInjection> injectionResolutionFactory) 
+            where TInjection : UserDefinedInjectionResolution
+        {
+            var outParameters = ImmutableDictionary<string, OutParameterResolution>.Empty;
+            TInjection? userDefinedInjectionResolution = null;
+
+            if (userDefinedInjectionMethod is not null)
+            {
+                userDefinedInjectionResolution = injectionResolutionFactory(
+                    userDefinedInjectionMethod.Name,
+                    userDefinedInjectionMethod
+                        .Parameters
+                        .Select(p =>
+                        {
+                            var isOut = p.RefKind == RefKind.Out;
+
+                            if (isOut)
+                            {
+                                var outParameter = new OutParameterResolution(
+                                    RootReferenceGenerator.Generate(p.Type),
+                                    p.Type.FullName());
+                                outParameters = outParameters.Add(p.Name, outParameter);
+                                return (
+                                    p.Name,
+                                    outParameter,
+                                    isOut);
+                            }
+
+                            return (
+                                p.Name,
+                                SwitchType(new SwitchTypeParameter(p.Type, currentParameters, implementationStack)).Item1,
+                                isOut);
+                        })
+                        .ToList());
+            }
+
+            return (userDefinedInjectionResolution, outParameters);
         }
     }
 

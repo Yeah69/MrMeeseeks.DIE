@@ -11,7 +11,8 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
     internal ValidateTransientScope(
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
-        IValidateUserDefinedConstrParam validateUserDefinedConstrParam,
+        IValidateUserDefinedConstrParamsInjectionMethod validateUserDefinedConstrParamsInjectionMethod,
+        IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         WellKnownTypes wellKnownTypes,
@@ -20,7 +21,8 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
         : base(
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParam,
+            validateUserDefinedConstrParamsInjectionMethod,
+            validateUserDefinedPropertiesMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes, 

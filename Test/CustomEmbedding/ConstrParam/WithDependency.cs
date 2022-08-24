@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.CustomEmbedding.ConstructorParameterWithAsyncDependency;
+namespace MrMeeseeks.DIE.Test.CustomEmbedding.ConstrParam.WithDependency;
 
 internal class Dependency
 {
@@ -11,16 +11,15 @@ internal class Dependency
     internal Dependency(int number) => Number = number;
 }
 
-internal class OtherDependency : IValueTaskTypeInitializer
+internal class OtherDependency
 {
     public int Number => 69;
-    public ValueTask InitializeAsync() => new (Task.CompletedTask);
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    [CustomConstructorParameter(typeof(Dependency))]
+    [UserDefinedConstrParamsInjection(typeof(Dependency))]
     private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
 }
 
@@ -30,7 +29,7 @@ public class Tests
     public async ValueTask Test()
     {
         await using var container = new Container();
-        var instance = await container.CreateAsync().ConfigureAwait(false);
+        var instance = container.Create();
         Assert.Equal(69, instance.Number);
     }
 }

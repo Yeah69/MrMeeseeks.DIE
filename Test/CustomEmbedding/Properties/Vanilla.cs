@@ -2,20 +2,18 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.CustomEmbedding.ConstructorParameter;
+namespace MrMeeseeks.DIE.Test.CustomEmbedding.Properties.Vanilla;
 
 internal class Dependency
 {
-    public int Number { get; }
-
-    internal Dependency(int number) => Number = number;
+    public int Number { get; init; }
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    [CustomConstructorParameter(typeof(Dependency))]
-    private void DIE_ConstrParam_Dependency(out int number) => number = 69;
+    [UserDefinedPropertiesInjection(typeof(Dependency))]
+    private void DIE_Properties_Dependency(out int Number) => Number = 69;
 }
 
 public class Tests

@@ -29,14 +29,16 @@ public class SourceGenerator : ISourceGenerator
         var diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
         var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(wellKnownTypes);
         var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);
-        var validateUserDefinedConstrParam = new ValidateUserDefinedConstrParam(wellKnownTypesMiscellaneous);
+        var validateUserDefinedConstrParamsInjectionMethod = new ValidateUserDefinedConstrParamsInjectionMethod(wellKnownTypesMiscellaneous);
+        var validateUserDefinedPropertiesInjectionMethod = new ValidateUserDefinedPropertiesInjectionMethod(wellKnownTypesMiscellaneous);
         var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
         var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
         var validateAttributes = new ValidateAttributes();
         var validateTransientScope = new ValidateTransientScope(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParam, 
+            validateUserDefinedConstrParamsInjectionMethod, 
+            validateUserDefinedPropertiesInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes, 
@@ -45,7 +47,8 @@ public class SourceGenerator : ISourceGenerator
         var validateScope = new ValidateScope(
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParam, 
+            validateUserDefinedConstrParamsInjectionMethod, 
+            validateUserDefinedPropertiesInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes,
@@ -56,7 +59,8 @@ public class SourceGenerator : ISourceGenerator
             validateScope, 
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParam,
+            validateUserDefinedConstrParamsInjectionMethod,
+            validateUserDefinedPropertiesInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes,

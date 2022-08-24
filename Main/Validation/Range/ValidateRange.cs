@@ -12,7 +12,8 @@ internal abstract class ValidateRange : IValidateRange
 {
     private readonly IValidateUserDefinedAddForDisposalSync _validateUserDefinedAddForDisposalSync;
     private readonly IValidateUserDefinedAddForDisposalAsync _validateUserDefinedAddForDisposalAsync;
-    private readonly IValidateUserDefinedConstrParam _validateUserDefinedConstrParam;
+    private readonly IValidateUserDefinedConstrParamsInjectionMethod _validateUserDefinedConstrParamsInjectionMethod;
+    private readonly IValidateUserDefinedPropertiesMethod _validateUserDefinedPropertiesMethod;
     private readonly IValidateUserDefinedFactoryMethod _validateUserDefinedFactoryMethod;
     private readonly IValidateUserDefinedFactoryField _validateUserDefinedFactoryField;
     private readonly WellKnownTypes _wellKnownTypes;
@@ -21,14 +22,16 @@ internal abstract class ValidateRange : IValidateRange
     internal ValidateRange(
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
-        IValidateUserDefinedConstrParam validateUserDefinedConstrParam,
+        IValidateUserDefinedConstrParamsInjectionMethod validateUserDefinedConstrParamsInjectionMethod,
+        IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         WellKnownTypes wellKnownTypes)
     {
         _validateUserDefinedAddForDisposalSync = validateUserDefinedAddForDisposalSync;
         _validateUserDefinedAddForDisposalAsync = validateUserDefinedAddForDisposalAsync;
-        _validateUserDefinedConstrParam = validateUserDefinedConstrParam;
+        _validateUserDefinedConstrParamsInjectionMethod = validateUserDefinedConstrParamsInjectionMethod;
+        _validateUserDefinedPropertiesMethod = validateUserDefinedPropertiesMethod;
         _validateUserDefinedFactoryMethod = validateUserDefinedFactoryMethod;
         _validateUserDefinedFactoryField = validateUserDefinedFactoryField;
         _wellKnownTypes = wellKnownTypes;
@@ -104,22 +107,10 @@ internal abstract class ValidateRange : IValidateRange
             foreach (var diagnostic in ValidateAddForDisposal(Constants.UserDefinedAddForDisposalAsync, false))
                 yield return diagnostic;
             
-            var userDefinedConstructorParameters = rangeType
-                .GetMembers()
-                .Where(s => s.Name.StartsWith(Constants.UserDefinedConstructorParameters))
-                .ToImmutableArray();
-
-            if (userDefinedConstructorParameters.Any())
-            {
-                foreach (var symbol in userDefinedConstructorParameters
-                             .Where(s => s is not IMethodSymbol))
-                    yield return ValidationErrorDiagnostic(rangeType, containerType, $"Member \"{symbol.Name}\" should be a method but isn't.");
-
-                foreach (var userDefinedConstructorParameterMethod in userDefinedConstructorParameters
-                             .OfType<IMethodSymbol>())
-                    foreach (var diagnostic in _validateUserDefinedConstrParam.Validate(userDefinedConstructorParameterMethod, rangeType, containerType))
-                        yield return diagnostic;
-            }
+            foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedConstrParams, _validateUserDefinedConstrParamsInjectionMethod))
+                yield return diagnostic;
+            foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedProperties, _validateUserDefinedPropertiesMethod))
+                yield return diagnostic;
 
             var userDefinedFactories = rangeType
                 .GetMembers()
@@ -175,6 +166,25 @@ internal abstract class ValidateRange : IValidateRange
                             foreach (var diagnostic in _validateUserDefinedAddForDisposalAsync.Validate(addForDisposalMember, rangeType, containerType))
                                 yield return diagnostic;
                     }
+                }
+            }
+
+            IEnumerable<Diagnostic> ValidateUserDefinedInjection(string prefix, IValidateUserDefinedInjectionMethod validateUserDefinedInjectionMethod)
+            {
+                var userDefinedInjectionMethods = rangeType
+                    .GetMembers()
+                    .Where(s => s.Name.StartsWith(prefix))
+                    .ToImmutableArray();
+
+                if (userDefinedInjectionMethods.Any())
+                {
+                    foreach (var symbol in userDefinedInjectionMethods
+                                 .Where(s => s is not IMethodSymbol))
+                        yield return ValidationErrorDiagnostic(rangeType, containerType, $"Member \"{symbol.Name}\" should be a method but isn't.");
+
+                    foreach (var userDefinedPropertyMethod in userDefinedInjectionMethods.OfType<IMethodSymbol>())
+                        foreach (var diagnostic in validateUserDefinedInjectionMethod.Validate(userDefinedPropertyMethod, rangeType, containerType))
+                            yield return diagnostic;
                 }
             }
         }

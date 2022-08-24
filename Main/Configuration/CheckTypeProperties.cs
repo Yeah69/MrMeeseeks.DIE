@@ -91,7 +91,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
         var compositeImplementation = _currentlyConsideredTypes.InterfaceToComposite[interfaceType.UnboundIfGeneric()];
         var implementations = GetClosedImplementations(
             interfaceType, 
-            ImmutableHashSet.Create(compositeImplementation), 
+            ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, compositeImplementation), 
             true,
             true,
             false);
@@ -162,7 +162,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
             {
                 var implementations = GetClosedImplementations(
                     interfaceType,
-                    ImmutableHashSet.Create(imp),
+                    ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, imp),
                     true,
                     false,
                     true);
@@ -187,7 +187,12 @@ internal class CheckTypeProperties : ICheckTypeProperties
         
         if (choice is not null)
         {
-            var possibleChoices = GetClosedImplementations(type, ImmutableHashSet.Create(choice), true, false, false);
+            var possibleChoices = GetClosedImplementations(
+                type, 
+                ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, choice), 
+                true, 
+                false, 
+                false);
             return possibleChoices.Count == 1
                 ? possibleChoices.FirstOrDefault()
                 : null;
@@ -195,7 +200,12 @@ internal class CheckTypeProperties : ICheckTypeProperties
 
         if (type is { TypeKind: not TypeKind.Interface, IsAbstract: false, IsStatic: false })
         {
-            var possibleConcreteTypeImplementations = GetClosedImplementations(type, ImmutableHashSet.Create(type), true, false, false);
+            var possibleConcreteTypeImplementations = GetClosedImplementations(
+                type,
+                ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, type),
+                true,
+                false,
+                false);
             return possibleConcreteTypeImplementations.Count == 1
                 ? possibleConcreteTypeImplementations.FirstOrDefault()
                 : null;
@@ -321,7 +331,8 @@ internal class CheckTypeProperties : ICheckTypeProperties
                     var queue = ImmutableQueue.CreateRange(openTypeParameters
                         .Select(tp =>
                         {
-                            IImmutableSet<INamedTypeSymbol> substitutes = ImmutableHashSet.CreateRange(
+                            IImmutableSet<INamedTypeSymbol> substitutes = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+                                SymbolEqualityComparer.Default,
                                 _currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
                                     (unboundImplementation, tp), out var subs)
                                     ? subs

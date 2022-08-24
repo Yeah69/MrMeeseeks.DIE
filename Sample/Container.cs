@@ -1,34 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Decorator.ContainerInstanceMultipeImplementations;
+namespace MrMeeseeks.DIE.Test.ValueTuple.NonSyntaxVariantSingleItem;
 
-internal interface IInterface
+internal class Wrapper
 {
-    IInterface Decorated { get; }
+    public Wrapper(
+        ValueTuple<int>
+            dependency) =>
+        Dependency = dependency;
+
+    public ValueTuple<int>
+        Dependency { get; }
 }
 
-internal class DependencyA : IInterface, IContainerInstance
-{
-    public IInterface Decorated => this;
-}
-
-internal class DependencyB : IInterface, IContainerInstance
-{
-    public IInterface Decorated => this;
-}
-
-internal class Decorator : IInterface, IDecorator<IInterface>
-{
-    public Decorator(IInterface decoratedContainerInstance) => 
-        Decorated = decoratedContainerInstance;
-
-    public IInterface Decorated { get; }
-}
-
-[CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
+[CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container
 {
-    
+    private int _i;
+
+    private int DIE_Counter() => _i++;
 }

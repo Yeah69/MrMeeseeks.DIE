@@ -249,13 +249,16 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
         {
+            var constructor = valueTupleType
+                .InstanceConstructors
+                .First(c => c.Parameters.Length > 0);
             var constructorResolution = new ConstructorResolution(
                 RootReferenceGenerator.Generate(valueTupleType),
                 valueTupleType.FullName(),
                 DisposalType.None,
                 valueTupleType
                     .TypeArguments
-                    .Select((t, i) => (valueTupleType.InstanceConstructors[0].Parameters[i].Name, SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
+                    .Select((t, i) => (constructor.Parameters[i].Name, SwitchType(new SwitchTypeParameter(t, currentFuncParameters, implementationStack)).Item1))
                     .ToList(),
                 Array.Empty<(string Name, Resolvable Dependency)>(),
                 null,

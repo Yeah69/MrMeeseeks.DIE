@@ -7,7 +7,8 @@ internal interface IUserDefinedElements
     IMethodSymbol? GetFactoryMethodFor(ITypeSymbol type);
     IMethodSymbol? AddForDisposal { get; }
     IMethodSymbol? AddForDisposalAsync { get; }
-    IMethodSymbol? GetCustomConstructorParameterChoiceFor(INamedTypeSymbol type);
+    IMethodSymbol? GetConstrParamsInjectionFor(INamedTypeSymbol type);
+    IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type);
 }
 
 internal class EmptyUserDefinedElements : IUserDefinedElements
@@ -17,7 +18,8 @@ internal class EmptyUserDefinedElements : IUserDefinedElements
     public IMethodSymbol? GetFactoryMethodFor(ITypeSymbol type) => null;
     public IMethodSymbol? AddForDisposal => null;
     public IMethodSymbol? AddForDisposalAsync => null;
-    public IMethodSymbol? GetCustomConstructorParameterChoiceFor(INamedTypeSymbol type) => null;
+    public IMethodSymbol? GetConstrParamsInjectionFor(INamedTypeSymbol type) => null;
+    public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) => null;
 }
 
 internal class UserDefinedElements : IUserDefinedElements
@@ -25,7 +27,8 @@ internal class UserDefinedElements : IUserDefinedElements
     private readonly IReadOnlyDictionary<ISymbol?, IFieldSymbol> _typeToField;
     private readonly IReadOnlyDictionary<ISymbol?, IPropertySymbol> _typeToProperty;
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _typeToMethod;
-    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _customConstructorParameterChoiceMethods;
+    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _constrParamsInjectionMethods;
+    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _propertiesInjectionMethods;
 
     public UserDefinedElements(
         // parameter
@@ -65,11 +68,11 @@ internal class UserDefinedElements : IUserDefinedElements
                             containerType,
                             "Multiple user-defined factories aren't allowed to have the same type."));
 
-            _typeToField = new Dictionary<ISymbol?, IFieldSymbol>();
+            _typeToField = new Dictionary<ISymbol?, IFieldSymbol>(SymbolEqualityComparer.Default);
         
-            _typeToProperty = new Dictionary<ISymbol?, IPropertySymbol>();
+            _typeToProperty = new Dictionary<ISymbol?, IPropertySymbol>(SymbolEqualityComparer.Default);
 
-            _typeToMethod = new Dictionary<ISymbol?, IMethodSymbol>();
+            _typeToMethod = new Dictionary<ISymbol?, IMethodSymbol>(SymbolEqualityComparer.Default);
         }
         else
         {
@@ -117,16 +120,24 @@ internal class UserDefinedElements : IUserDefinedElements
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
 
-        var constrParamCandidates = dieMembers
-            .Where(s => s.Name.StartsWith(Constants.UserDefinedConstructorParameters))
+        _constrParamsInjectionMethods = GetInjectionMethods(Constants.UserDefinedConstrParams, wellKnownTypesMiscellaneous.UserDefinedConstrParamsInjectionAttribute);
+        
+        _propertiesInjectionMethods = GetInjectionMethods(Constants.UserDefinedProperties, wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute);
+
+        if (validationErrors.Any())
+            throw new ValidationDieException(validationErrors.ToImmutableArray());
+
+        IReadOnlyDictionary<ISymbol?, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
+        {
+            var injectionMethodCandidates = dieMembers
+            .Where(s => s.Name.StartsWith(prefix))
             .Where(s => s is IMethodSymbol { ReturnsVoid: true, Arity: 0, IsConditional: false, MethodKind: MethodKind.Ordinary } method
                         && method.Parameters.Any(p => p.RefKind == RefKind.Out))
             .OfType<IMethodSymbol>()
             .Select(m =>
             {
                 var type = m.GetAttributes()
-                    .Where(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        wellKnownTypesMiscellaneous.CustomConstructorParameterAttribute))
+                    .Where(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, attributeType))
                     .Select(ad =>
                     {
                         if (ad.ConstructorArguments.Length != 1)
@@ -141,31 +152,29 @@ internal class UserDefinedElements : IUserDefinedElements
             .OfType<(INamedTypeSymbol, IMethodSymbol)>()
             .ToImmutableArray();
 
-        var constrParamGroupings = constrParamCandidates
-            .GroupBy(t => t.Item1, SymbolEqualityComparer.Default)
-            .Where(g => g.Count() > 1)
-            .ToImmutableArray();
-        
-        if (constrParamGroupings.Any())
-        {
-            foreach (var nonValidConstrParamGroup in constrParamGroupings)
-                foreach (var t in nonValidConstrParamGroup)
-                    validationErrors.Add(
-                        Diagnostics.ValidationUserDefinedElement(
-                            t.Item2, 
-                            scopeType, 
-                            containerType,
-                            "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on."));
+            var injectionMethodGroupings = injectionMethodCandidates
+                .GroupBy(t => t.Item1, SymbolEqualityComparer.Default)
+                .Where(g => g.Count() > 1)
+                .ToImmutableArray();
+            
+            if (injectionMethodGroupings.Any())
+            {
+                foreach (var nonValidInjectionMethodGroup in injectionMethodGroupings)
+                    foreach (var t in nonValidInjectionMethodGroup)
+                        validationErrors.Add(
+                            Diagnostics.ValidationUserDefinedElement(
+                                t.Item2, 
+                                scopeType, 
+                                containerType,
+                                "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on."));
 
-            _customConstructorParameterChoiceMethods = new Dictionary<ISymbol?, IMethodSymbol>();
-        }
-        else
-            _customConstructorParameterChoiceMethods = constrParamCandidates
+                return new Dictionary<ISymbol?, IMethodSymbol>(SymbolEqualityComparer.Default);
+            }
+            
+            return injectionMethodCandidates
                 .OfType<(INamedTypeSymbol, IMethodSymbol)>()
                 .ToDictionary(t => t.Item1, t => t.Item2, SymbolEqualityComparer.Default);
-
-        if (validationErrors.Any())
-            throw new ValidationDieException(validationErrors.ToImmutableArray());
+        }
     }
 
     public IFieldSymbol? GetFactoryFieldFor(ITypeSymbol typeSymbol) => 
@@ -179,6 +188,9 @@ internal class UserDefinedElements : IUserDefinedElements
 
     public IMethodSymbol? AddForDisposal { get; }
     public IMethodSymbol? AddForDisposalAsync { get; }
-    public IMethodSymbol? GetCustomConstructorParameterChoiceFor(INamedTypeSymbol type) => 
-        _customConstructorParameterChoiceMethods.TryGetValue(type, out var ret) ? ret : null;
+    public IMethodSymbol? GetConstrParamsInjectionFor(INamedTypeSymbol type) => 
+        _constrParamsInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+
+    public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) =>
+        _propertiesInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
 }

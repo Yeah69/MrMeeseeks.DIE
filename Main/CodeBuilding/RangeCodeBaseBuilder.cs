@@ -374,14 +374,24 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case OutParameterResolution(var reference, var typeFullName):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");      
                 break;
-            case ConstructorParameterChoiceResolution(var functionName, var parameters):
+            case UserDefinedInjectionResolution(var functionName, var parameters):
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
                 stringBuilder = stringBuilder.AppendLine($"{functionName}({string.Join(", ", parameters.Select(p => $"{p.Name}: {(p.isOut ? "out " : "")}{p.Dependency.Reference}"))});");
                 break;
-            case ConstructorResolution(var reference, var typeFullName, var disposalType, var parameters, var initializedProperties, var initialization, var parameterChoiceResolution):
-                if (parameterChoiceResolution is { })
-                    GenerateResolutions(stringBuilder, parameterChoiceResolution);
+            case ConstructorResolution(
+                var reference, 
+                var typeFullName, 
+                var disposalType, 
+                var parameters, 
+                var initializedProperties,
+                var initialization, 
+                var userDefinedConstrParamsInjection,
+                var userDefinedPropertiesInjection):
+                if (userDefinedConstrParamsInjection is { })
+                    GenerateResolutions(stringBuilder, userDefinedConstrParamsInjection);
+                if (userDefinedPropertiesInjection is { })
+                    GenerateResolutions(stringBuilder, userDefinedPropertiesInjection);
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
                 stringBuilder = initializedProperties.Aggregate(stringBuilder,

@@ -152,7 +152,10 @@ internal class ScopeManager : IScopeManager
                     }))
                 .OfType<INamedTypeSymbol>()
                 .Select(rootType => (rootType, nts)))
-            .ToDictionary(t => t.rootType, t => t.nts);
+            .ToDictionary<(INamedTypeSymbol rootType, INamedTypeSymbol nts), INamedTypeSymbol, INamedTypeSymbol>(
+                t => t.rootType, 
+                t => t.nts,
+                SymbolEqualityComparer.Default);
         
         _scopeRootTypeToScopeType = containerInfo
             .ContainerType
@@ -175,7 +178,10 @@ internal class ScopeManager : IScopeManager
                     }))
                 .OfType<INamedTypeSymbol>()
                 .Select(rootType => (rootType, nts)))
-            .ToDictionary(t => t.rootType, t => t.nts);
+            .ToDictionary<(INamedTypeSymbol rootType, INamedTypeSymbol nts), INamedTypeSymbol, INamedTypeSymbol>(
+                t => t.rootType, 
+                t => t.nts,
+                SymbolEqualityComparer.Default);
     }
 
     public IScopeResolutionBuilder GetScopeBuilder(INamedTypeSymbol scopeRootType)

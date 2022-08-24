@@ -19,7 +19,8 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         IValidateScope validateScopeFactory,
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
-        IValidateUserDefinedConstrParam validateUserDefinedConstrParam,
+        IValidateUserDefinedConstrParamsInjectionMethod validateUserDefinedConstrParamsInjectionMethod,
+        IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         WellKnownTypes wellKnownTypes,
@@ -27,7 +28,8 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParam, 
+            validateUserDefinedConstrParamsInjectionMethod,
+            validateUserDefinedPropertiesMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes)
@@ -112,7 +114,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
                 yield return ValidationErrorDiagnostic(rangeType, "Attribute doesn't have expected constructor arguments.", location);
         }
 
-        IEnumerable<Diagnostic> ValidateCustomScope(INamedTypeSymbol customScope, ISet<INamedTypeSymbol> customScopeTypes)
+        IEnumerable<Diagnostic> ValidateCustomScope(INamedTypeSymbol customScope, ISet<INamedTypeSymbol> customScopeTypesSet)
         {
             var customScopeAttributes = customScope
                 .GetAttributes()
@@ -127,14 +129,15 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
 
             var scopeRootTypes = customScopeAttributes
                 .SelectMany(ad => ad.ConstructorArguments[0].Values)
+                .Select(tc => tc.Value)
                 .OfType<INamedTypeSymbol>()
                 .ToList();
             foreach (var scopeRootType in scopeRootTypes
-                         .Where(scopeRootType => customScopeTypes.Contains(scopeRootType, SymbolEqualityComparer.Default)))
+                         .Where(scopeRootType => customScopeTypesSet.Contains(scopeRootType, SymbolEqualityComparer.Default)))
             {
                 yield return ValidationErrorDiagnostic(rangeType, containerType, $"Custom scope \"{customScope.Name}\" gets the type \"{scopeRootType.FullName()}\" passed into one of its \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\"-attributes, but it is already in use in another custom scope.");
             }
-            customScopeTypes.UnionWith(scopeRootTypes);
+            customScopeTypesSet.UnionWith(scopeRootTypes);
         }
     }
 

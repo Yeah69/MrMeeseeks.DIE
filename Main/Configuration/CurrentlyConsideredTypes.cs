@@ -146,12 +146,20 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             }
         }
 
-        AllConsideredImplementations = ImmutableHashSet.CreateRange(allImplementations.Select(t => t.UnboundIfGeneric()));
+        AllConsideredImplementations = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default,
+            allImplementations.Select(t => t.UnboundIfGeneric()));
         
         ImplementationMap = allImplementations
             .SelectMany(i => { return i.AllDerivedTypesAndSelf().Select(ii => (ii, i)); })
-            .GroupBy(t => t.Item1.UnboundIfGeneric(), t => t.Item2)
-            .ToDictionary(g => g.Key, g => (IImmutableSet<INamedTypeSymbol>) ImmutableHashSet.CreateRange(g));
+            .GroupBy<(INamedTypeSymbol, INamedTypeSymbol), INamedTypeSymbol, INamedTypeSymbol>(
+                t => t.Item1.UnboundIfGeneric(), 
+                t => t.Item2, 
+                SymbolEqualityComparer.Default)
+            .ToDictionary<IGrouping<INamedTypeSymbol, INamedTypeSymbol>, INamedTypeSymbol, IImmutableSet<INamedTypeSymbol>>(
+                g => g.Key, 
+                g => ImmutableHashSet.CreateRange<INamedTypeSymbol>(SymbolEqualityComparer.Default, g),
+                SymbolEqualityComparer.Default);
         
         var transientTypes = GetSetOfTypesWithProperties(
             t => t.TransientAbstraction,
@@ -311,7 +319,10 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
 
         DecoratorSequenceChoices = decoratorSequenceChoices
             .Where(kvp => kvp.Value.Any)
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToReadOnlyDictionary());
+            .ToDictionary<KeyValuePair<INamedTypeSymbol, DecoratorSequenceMap>, INamedTypeSymbol, IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>>(
+                kvp => kvp.Key, 
+                kvp => kvp.Value.ToReadOnlyDictionary(),
+                SymbolEqualityComparer.Default);
 
         var initializers = new Dictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)>(SymbolEqualityComparer.Default);
         
@@ -428,7 +439,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             
             foreach (var types in typesFromAttributes)
             {
-                var filteredTypes = ImmutableHashSet.CreateRange(
+                var filteredTypes = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+                    SymbolEqualityComparer.Default,
                     filteredPropertyGivingImplementationTypesGetter(types).Select(t => t.UnboundIfGeneric()));
                 foreach (var type in filteredPropertyGivingAbstractTypesGetter(types))
                     if (implementationMap.TryGetValue(type.UnboundIfGeneric(), out var set)) 
@@ -436,7 +448,8 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 
                 ret = ret.Except(filteredTypes);
                 
-                var addedTypes = ImmutableHashSet.CreateRange(
+                var addedTypes = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+                    SymbolEqualityComparer.Default,
                     propertyGivingImplementationTypesGetter(types).Select(t => t.UnboundIfGeneric()));
                 foreach (var type in propertyGivingAbstractTypesGetter(types))
                     if (implementationMap.TryGetValue(type.UnboundIfGeneric(), out var set)) 

@@ -2,18 +2,17 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.CustomEmbedding.ConstructorParameterWithDependencyInScope;
+namespace MrMeeseeks.DIE.Test.CustomEmbedding.Properties.WithAsyncDependencyInScope;
 
 internal class Dependency
 {
-    public int Number { get; }
-
-    internal Dependency(int number) => Number = number;
+    public int Number { get; init; }
 }
 
-internal class OtherDependency
+internal class OtherDependency : IValueTaskTypeInitializer
 {
     public int Number => 69;
+    public ValueTask InitializeAsync() => new (Task.CompletedTask);
 }
 
 internal class ScopeRoot : IScopeRoot
@@ -29,8 +28,8 @@ internal sealed partial class Container
 {
     private sealed partial class DIE_DefaultScope
     {
-        [CustomConstructorParameter(typeof(Dependency))]
-        private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
+        [UserDefinedPropertiesInjection(typeof(Dependency))]
+        private void DIE_Properties_Dependency(OtherDependency otherDependency, out int Number) => Number = otherDependency.Number;
     }
 }
 
@@ -40,7 +39,7 @@ public class Tests
     public async ValueTask Test()
     {
         await using var container = new Container();
-        var instance = container.Create();
+        var instance = await container.CreateAsync().ConfigureAwait(false);
         Assert.Equal(69, instance.Dependency.Number);
     }
 }

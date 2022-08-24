@@ -10,9 +10,17 @@ public class CustomScopeForRootTypesAttribute : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-public class CustomConstructorParameterAttribute : Attribute
+public class UserDefinedConstrParamsInjectionAttribute : Attribute
 {
-    public CustomConstructorParameterAttribute(Type type)
+    public UserDefinedConstrParamsInjectionAttribute(Type type)
+    {
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+public class UserDefinedPropertiesInjectionAttribute : Attribute
+{
+    public UserDefinedPropertiesInjectionAttribute(Type type)
     {
     }
 }

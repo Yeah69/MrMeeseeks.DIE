@@ -14,7 +14,8 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
     internal ValidateScopeBase(
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
-        IValidateUserDefinedConstrParam validateUserDefinedConstrParam,
+        IValidateUserDefinedConstrParamsInjectionMethod validateUserDefinedConstrParamsInjectionMethod,
+        IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         WellKnownTypes wellKnownTypes,
@@ -23,14 +24,16 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync,
-            validateUserDefinedConstrParam,
+            validateUserDefinedConstrParamsInjectionMethod,
+            validateUserDefinedPropertiesMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes)
     {
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
 
-        _notAllowedAttributeTypes = ImmutableHashSet.Create(
+        _notAllowedAttributeTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default,
             wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute,
             wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute,
             wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute,

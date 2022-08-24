@@ -111,7 +111,8 @@ internal record ConstructorResolution(
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
     ITypeInitializationResolution? Initialization,
-    ConstructorParameterChoiceResolution? ParameterChoices) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
+    UserDefinedConstrParamsInjectionResolution? UserDefinedConstrParamsInjection,
+    UserDefinedPropertiesInjectionResolution? UserDefinedPropertiesInjection) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
 
 internal record LazyResolution(
     string Reference,
@@ -169,9 +170,17 @@ internal record OutParameterResolution(
     string Reference,
     string TypeFullName) : Resolvable(Reference, TypeFullName);
 
-internal record ConstructorParameterChoiceResolution(
+internal abstract record UserDefinedInjectionResolution(
     string FunctionName,
     IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : Resolvable("foo", "bar");
+
+internal record UserDefinedConstrParamsInjectionResolution(
+    string FunctionName,
+    IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : UserDefinedInjectionResolution(FunctionName, Parameter);
+
+internal record UserDefinedPropertiesInjectionResolution(
+    string FunctionName,
+    IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : UserDefinedInjectionResolution(FunctionName, Parameter);
 
 internal record CollectionResolution(
     string Reference,
@@ -189,6 +198,7 @@ internal record SyncDisposableCollectionResolution(
         Array.Empty<(string Name, Resolvable Dependency)>(), 
         Array.Empty<(string Name, Resolvable Dependency)>(),
         null,
+        null,
         null);
 
 internal record AsyncDisposableCollectionResolution(
@@ -200,6 +210,7 @@ internal record AsyncDisposableCollectionResolution(
         DisposalType.None,
         Array.Empty<(string Name, Resolvable Dependency)>(), 
         Array.Empty<(string Name, Resolvable Dependency)>(),
+        null,
         null,
         null);
 

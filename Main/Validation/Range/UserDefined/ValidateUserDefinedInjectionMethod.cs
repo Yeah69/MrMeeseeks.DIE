@@ -1,16 +1,13 @@
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
-internal interface IValidateUserDefinedConstrParam : IValidateUserDefinedMethod
+internal interface IValidateUserDefinedInjectionMethod : IValidateUserDefinedMethod
 {
     
 }
 
-internal class ValidateUserDefinedConstrParam : ValidateUserDefinedMethod, IValidateUserDefinedConstrParam
+internal abstract class ValidateUserDefinedInjectionMethod : ValidateUserDefinedMethod, IValidateUserDefinedInjectionMethod
 {
-    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
-
-    internal ValidateUserDefinedConstrParam(WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) => 
-        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+    protected abstract INamedTypeSymbol InjectionAttribute { get; }
 
     public override IEnumerable<Diagnostic> Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
@@ -73,8 +70,8 @@ internal class ValidateUserDefinedConstrParam : ValidateUserDefinedMethod, IVali
         
         if (method
                 .GetAttributes()
-                .Count(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypesMiscellaneous.CustomConstructorParameterAttribute))
+                .Count(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, InjectionAttribute))
                 != 1)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have exactly one attribute of type \"{_wellKnownTypesMiscellaneous.CustomConstructorParameterAttribute.FullName()}\".");
+            yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have exactly one attribute of type \"{InjectionAttribute.FullName()}\".");
     }
 }

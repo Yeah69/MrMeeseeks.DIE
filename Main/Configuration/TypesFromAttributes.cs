@@ -134,7 +134,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         _validateAttributes = validateAttributes;
         AttributeDictionary = attributeData
             .GroupBy(ad => ad.AttributeClass, SymbolEqualityComparer.Default)
-            .ToDictionary(g => g.Key, g => g);
+            .ToDictionary(g => g.Key, g => g, SymbolEqualityComparer.Default);
 
         Implementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
         TransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
@@ -343,7 +343,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             return type;
         }
 
-        FilterConstructorChoices = ImmutableHashSet.CreateRange(
+        FilterConstructorChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterConstructorChoiceAttribute, out var filterConstructorChoiceAttributes) 
                 ? filterConstructorChoiceAttributes
                 : Enumerable.Empty<AttributeData>())
@@ -401,7 +402,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)>());
 
-        FilterPropertyChoices = ImmutableHashSet.CreateRange(
+        FilterPropertyChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterPropertyChoiceAttribute, out var filterPropertyChoicesGroup)
                 ? filterPropertyChoicesGroup
                 : Enumerable.Empty<AttributeData>())
@@ -462,7 +464,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
         
-        FilterTypeInitializers = ImmutableHashSet.CreateRange(
+        FilterTypeInitializers = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterTypeInitializerAttribute, out var filterTypeInitializerAttributes) 
                 ? filterTypeInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
@@ -655,7 +658,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Any();
 
         IImmutableSet<IAssemblySymbol> GetAssemblies(INamedTypeSymbol attributeType) =>
-            ImmutableHashSet.CreateRange(
+            ImmutableHashSet.CreateRange<IAssemblySymbol>(
+                SymbolEqualityComparer.Default,
                 (AttributeDictionary.TryGetValue(attributeType, out var assemblyImplementationsAttributes)
                     ? assemblyImplementationsAttributes
                     : Enumerable.Empty<AttributeData>())
@@ -794,7 +798,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     protected IImmutableSet<INamedTypeSymbol> GetAbstractionTypesFromAttribute(
         INamedTypeSymbol attribute)
     {
-        return ImmutableHashSet.CreateRange(
+        return ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default,
             GetTypesFromAttribute(attribute)
                 .Where(t =>
                 {
@@ -815,7 +820,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     protected IImmutableSet<INamedTypeSymbol> GetImplementationTypesFromAttribute(
         INamedTypeSymbol attribute)
     {
-        return ImmutableHashSet.CreateRange(
+        return ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default,
             GetTypesFromAttribute(attribute)
             .Where(t =>
             {

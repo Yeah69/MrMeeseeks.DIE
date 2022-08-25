@@ -6,7 +6,7 @@ internal record WellKnownTypesMiscellaneous(
     INamedTypeSymbol TypeInitializerAttribute,
     INamedTypeSymbol FilterTypeInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
-    INamedTypeSymbol UserDefinedConstrParamsInjectionAttribute,
+    INamedTypeSymbol UserDefinedConstructorParametersInjectionAttribute,
     INamedTypeSymbol UserDefinedPropertiesInjectionAttribute,
     INamedTypeSymbol CreateFunctionAttribute,
     INamedTypeSymbol ErrorDescriptionInsteadOfBuildFailureAttribute,
@@ -17,8 +17,8 @@ internal record WellKnownTypesMiscellaneous(
         var customScopeForRootTypesAttribute = compilation
             .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
 
-        var userDefinedConstrParamsInjectionAttribute = compilation
-            .GetTypeByMetadataName(typeof(UserDefinedConstrParamsInjectionAttribute).FullName ?? "");
+        var userDefinedConstructorParametersInjectionAttribute = compilation
+            .GetTypeByMetadataName(typeof(UserDefinedConstructorParametersInjectionAttribute).FullName ?? "");
 
         var userDefinedPropertiesInjectionAttribute = compilation
             .GetTypeByMetadataName(typeof(UserDefinedPropertiesInjectionAttribute).FullName ?? "");
@@ -41,7 +41,7 @@ internal record WellKnownTypesMiscellaneous(
         if (typeInitializerAttribute is not null
             && filterTypeInitializerAttribute is not null
             && customScopeForRootTypesAttribute is not null
-            && userDefinedConstrParamsInjectionAttribute is not null
+            && userDefinedConstructorParametersInjectionAttribute is not null
             && userDefinedPropertiesInjectionAttribute is not null
             && createFunctionAttribute is not null
             && errorDescriptionInsteadOfBuildFailureAttribute is not null
@@ -52,7 +52,7 @@ internal record WellKnownTypesMiscellaneous(
                 TypeInitializerAttribute: typeInitializerAttribute,
                 FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
-                UserDefinedConstrParamsInjectionAttribute: userDefinedConstrParamsInjectionAttribute,
+                UserDefinedConstructorParametersInjectionAttribute: userDefinedConstructorParametersInjectionAttribute,
                 UserDefinedPropertiesInjectionAttribute: userDefinedPropertiesInjectionAttribute,
                 CreateFunctionAttribute: createFunctionAttribute,
                 ErrorDescriptionInsteadOfBuildFailureAttribute: errorDescriptionInsteadOfBuildFailureAttribute,

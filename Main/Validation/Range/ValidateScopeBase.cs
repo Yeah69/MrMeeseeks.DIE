@@ -14,7 +14,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
     internal ValidateScopeBase(
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
-        IValidateUserDefinedConstrParamsInjectionMethod validateUserDefinedConstrParamsInjectionMethod,
+        IValidateUserDefinedConstructorParametersInjectionMethod validateUserDefinedConstructorParametersInjectionMethod,
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
@@ -24,7 +24,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync,
-            validateUserDefinedConstrParamsInjectionMethod,
+            validateUserDefinedConstructorParametersInjectionMethod,
             validateUserDefinedPropertiesMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,

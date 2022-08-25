@@ -7,7 +7,7 @@ internal interface IUserDefinedElements
     IMethodSymbol? GetFactoryMethodFor(ITypeSymbol type);
     IMethodSymbol? AddForDisposal { get; }
     IMethodSymbol? AddForDisposalAsync { get; }
-    IMethodSymbol? GetConstrParamsInjectionFor(INamedTypeSymbol type);
+    IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type);
     IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type);
 }
 
@@ -18,7 +18,7 @@ internal class EmptyUserDefinedElements : IUserDefinedElements
     public IMethodSymbol? GetFactoryMethodFor(ITypeSymbol type) => null;
     public IMethodSymbol? AddForDisposal => null;
     public IMethodSymbol? AddForDisposalAsync => null;
-    public IMethodSymbol? GetConstrParamsInjectionFor(INamedTypeSymbol type) => null;
+    public IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type) => null;
     public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) => null;
 }
 
@@ -27,7 +27,7 @@ internal class UserDefinedElements : IUserDefinedElements
     private readonly IReadOnlyDictionary<ISymbol?, IFieldSymbol> _typeToField;
     private readonly IReadOnlyDictionary<ISymbol?, IPropertySymbol> _typeToProperty;
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _typeToMethod;
-    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _constrParamsInjectionMethods;
+    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _constructorParametersInjectionMethods;
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _propertiesInjectionMethods;
 
     public UserDefinedElements(
@@ -120,9 +120,9 @@ internal class UserDefinedElements : IUserDefinedElements
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
 
-        _constrParamsInjectionMethods = GetInjectionMethods(Constants.UserDefinedConstrParams, wellKnownTypesMiscellaneous.UserDefinedConstrParamsInjectionAttribute);
+        _constructorParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedConstrParams, wellKnownTypesMiscellaneous.UserDefinedConstructorParametersInjectionAttribute);
         
-        _propertiesInjectionMethods = GetInjectionMethods(Constants.UserDefinedProperties, wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute);
+        _propertiesInjectionMethods = GetInjectionMethods(Constants.UserDefinedProps, wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute);
 
         if (validationErrors.Any())
             throw new ValidationDieException(validationErrors.ToImmutableArray());
@@ -188,8 +188,8 @@ internal class UserDefinedElements : IUserDefinedElements
 
     public IMethodSymbol? AddForDisposal { get; }
     public IMethodSymbol? AddForDisposalAsync { get; }
-    public IMethodSymbol? GetConstrParamsInjectionFor(INamedTypeSymbol type) => 
-        _constrParamsInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+    public IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type) => 
+        _constructorParametersInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
 
     public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) =>
         _propertiesInjectionMethods.TryGetValue(type, out var ret) ? ret : null;

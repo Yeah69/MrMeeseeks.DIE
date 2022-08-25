@@ -12,7 +12,7 @@ internal abstract class ValidateRange : IValidateRange
 {
     private readonly IValidateUserDefinedAddForDisposalSync _validateUserDefinedAddForDisposalSync;
     private readonly IValidateUserDefinedAddForDisposalAsync _validateUserDefinedAddForDisposalAsync;
-    private readonly IValidateUserDefinedConstrParamsInjectionMethod _validateUserDefinedConstrParamsInjectionMethod;
+    private readonly IValidateUserDefinedConstructorParametersInjectionMethod _validateUserDefinedConstructorParametersInjectionMethod;
     private readonly IValidateUserDefinedPropertiesMethod _validateUserDefinedPropertiesMethod;
     private readonly IValidateUserDefinedFactoryMethod _validateUserDefinedFactoryMethod;
     private readonly IValidateUserDefinedFactoryField _validateUserDefinedFactoryField;
@@ -22,7 +22,7 @@ internal abstract class ValidateRange : IValidateRange
     internal ValidateRange(
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
-        IValidateUserDefinedConstrParamsInjectionMethod validateUserDefinedConstrParamsInjectionMethod,
+        IValidateUserDefinedConstructorParametersInjectionMethod validateUserDefinedConstructorParametersInjectionMethod,
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
@@ -30,7 +30,7 @@ internal abstract class ValidateRange : IValidateRange
     {
         _validateUserDefinedAddForDisposalSync = validateUserDefinedAddForDisposalSync;
         _validateUserDefinedAddForDisposalAsync = validateUserDefinedAddForDisposalAsync;
-        _validateUserDefinedConstrParamsInjectionMethod = validateUserDefinedConstrParamsInjectionMethod;
+        _validateUserDefinedConstructorParametersInjectionMethod = validateUserDefinedConstructorParametersInjectionMethod;
         _validateUserDefinedPropertiesMethod = validateUserDefinedPropertiesMethod;
         _validateUserDefinedFactoryMethod = validateUserDefinedFactoryMethod;
         _validateUserDefinedFactoryField = validateUserDefinedFactoryField;
@@ -107,9 +107,9 @@ internal abstract class ValidateRange : IValidateRange
             foreach (var diagnostic in ValidateAddForDisposal(Constants.UserDefinedAddForDisposalAsync, false))
                 yield return diagnostic;
             
-            foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedConstrParams, _validateUserDefinedConstrParamsInjectionMethod))
+            foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedConstrParams, _validateUserDefinedConstructorParametersInjectionMethod))
                 yield return diagnostic;
-            foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedProperties, _validateUserDefinedPropertiesMethod))
+            foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedProps, _validateUserDefinedPropertiesMethod))
                 yield return diagnostic;
 
             var userDefinedFactories = rangeType

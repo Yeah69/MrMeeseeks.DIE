@@ -386,10 +386,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 var parameters, 
                 var initializedProperties,
                 var initialization, 
-                var userDefinedConstrParamsInjection,
+                var userDefinedConstructorParametersInjection,
                 var userDefinedPropertiesInjection):
-                if (userDefinedConstrParamsInjection is { })
-                    GenerateResolutions(stringBuilder, userDefinedConstrParamsInjection);
+                if (userDefinedConstructorParametersInjection is { })
+                    GenerateResolutions(stringBuilder, userDefinedConstructorParametersInjection);
                 if (userDefinedPropertiesInjection is { })
                     GenerateResolutions(stringBuilder, userDefinedPropertiesInjection);
                 stringBuilder = parameters.Aggregate(stringBuilder,

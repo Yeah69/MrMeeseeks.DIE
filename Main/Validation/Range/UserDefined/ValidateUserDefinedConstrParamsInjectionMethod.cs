@@ -1,14 +1,14 @@
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
-internal interface IValidateUserDefinedConstrParamsInjectionMethod : IValidateUserDefinedInjectionMethod
+internal interface IValidateUserDefinedConstructorParametersInjectionMethod : IValidateUserDefinedInjectionMethod
 {
     
 }
 
-internal class ValidateUserDefinedConstrParamsInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedConstrParamsInjectionMethod
+internal class ValidateUserDefinedConstructorParametersInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedConstructorParametersInjectionMethod
 {
-    internal ValidateUserDefinedConstrParamsInjectionMethod(WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) => 
-        InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedConstrParamsInjectionAttribute;
+    internal ValidateUserDefinedConstructorParametersInjectionMethod(WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) => 
+        InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedConstructorParametersInjectionAttribute;
 
     protected override INamedTypeSymbol InjectionAttribute { get; }
 }

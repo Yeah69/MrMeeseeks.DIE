@@ -19,7 +19,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         IValidateScope validateScopeFactory,
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
-        IValidateUserDefinedConstrParamsInjectionMethod validateUserDefinedConstrParamsInjectionMethod,
+        IValidateUserDefinedConstructorParametersInjectionMethod validateUserDefinedConstructorParametersInjectionMethod,
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
@@ -28,7 +28,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParamsInjectionMethod,
+            validateUserDefinedConstructorParametersInjectionMethod,
             validateUserDefinedPropertiesMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,

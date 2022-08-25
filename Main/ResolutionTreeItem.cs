@@ -111,7 +111,7 @@ internal record ConstructorResolution(
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
     ITypeInitializationResolution? Initialization,
-    UserDefinedConstrParamsInjectionResolution? UserDefinedConstrParamsInjection,
+    UserDefinedConstructorParametersInjectionResolution? UserDefinedConstructorParametersInjection,
     UserDefinedPropertiesInjectionResolution? UserDefinedPropertiesInjection) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
 
 internal record LazyResolution(
@@ -174,7 +174,7 @@ internal abstract record UserDefinedInjectionResolution(
     string FunctionName,
     IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : Resolvable("foo", "bar");
 
-internal record UserDefinedConstrParamsInjectionResolution(
+internal record UserDefinedConstructorParametersInjectionResolution(
     string FunctionName,
     IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : UserDefinedInjectionResolution(FunctionName, Parameter);
 

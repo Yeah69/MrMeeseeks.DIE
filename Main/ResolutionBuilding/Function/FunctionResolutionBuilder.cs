@@ -851,9 +851,9 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var isTransientScopeRoot =
             _checkTypeProperties.ShouldBeScopeRoot(implementationType) == ScopeLevel.TransientScope;
 
-        var (userDefinedConstrParamsInjection, outConstrParams) = GetUserDefinedInjectionResolution(
-            _userDefinedElements.GetConstrParamsInjectionFor(implementationType),
-            (name, parameters) => new UserDefinedConstrParamsInjectionResolution(name, parameters));
+        var (userDefinedConstructorParametersInjection, outConstructorsParameters) = GetUserDefinedInjectionResolution(
+            _userDefinedElements.GetConstructorParametersInjectionFor(implementationType),
+            (name, parameters) => new UserDefinedConstructorParametersInjectionResolution(name, parameters));
 
         var (userDefinedPropertiesInjection, outProperties) = GetUserDefinedInjectionResolution(
             _userDefinedElements.GetPropertiesInjectionFor(implementationType),
@@ -896,7 +896,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             GetDisposalTypeFor(implementationType),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(constructor
                 .Parameters
-                .Select(p => ProcessConstrParamChildType(p.Type, p.Name, currentParameters))
+                .Select(p => ProcessConstructorParametersChildType(p.Type, p.Name, currentParameters))
                 .ToList()),
             new ReadOnlyCollection<(string Name, Resolvable Dependency)>(
                 (_checkTypeProperties.GetPropertyChoicesFor(implementationType) 
@@ -908,17 +908,17 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 .Select(p => ProcessPropertyChildType(p.Type, p.Name, currentParameters))
                 .ToList()),
             typeInitializationResolution,
-            userDefinedConstrParamsInjection,
+            userDefinedConstructorParametersInjection,
             userDefinedPropertiesInjection);
 
         return (resolution, resolution);
 
-        (string Name, Resolvable Dependency) ProcessConstrParamChildType(
+        (string Name, Resolvable Dependency) ProcessConstructorParametersChildType(
             ITypeSymbol typeSymbol,
             string parameterName,
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currParameter)
         {
-            if (outConstrParams.TryGetValue(parameterName, out var outParameterResolution))
+            if (outConstructorsParameters.TryGetValue(parameterName, out var outParameterResolution))
                 return (parameterName,
                     new ParameterResolution(outParameterResolution.Reference, outParameterResolution.TypeFullName));
             return ProcessChildType(typeSymbol, parameterName, currParameter);

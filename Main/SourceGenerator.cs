@@ -29,7 +29,7 @@ public class SourceGenerator : ISourceGenerator
         var diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
         var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(wellKnownTypes);
         var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);
-        var validateUserDefinedConstrParamsInjectionMethod = new ValidateUserDefinedConstrParamsInjectionMethod(wellKnownTypesMiscellaneous);
+        var validateUserDefinedConstructorParametersInjectionMethod = new ValidateUserDefinedConstructorParametersInjectionMethod(wellKnownTypesMiscellaneous);
         var validateUserDefinedPropertiesInjectionMethod = new ValidateUserDefinedPropertiesInjectionMethod(wellKnownTypesMiscellaneous);
         var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
         var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
@@ -37,7 +37,7 @@ public class SourceGenerator : ISourceGenerator
         var validateTransientScope = new ValidateTransientScope(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParamsInjectionMethod, 
+            validateUserDefinedConstructorParametersInjectionMethod, 
             validateUserDefinedPropertiesInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
@@ -47,7 +47,7 @@ public class SourceGenerator : ISourceGenerator
         var validateScope = new ValidateScope(
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParamsInjectionMethod, 
+            validateUserDefinedConstructorParametersInjectionMethod, 
             validateUserDefinedPropertiesInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
@@ -59,7 +59,7 @@ public class SourceGenerator : ISourceGenerator
             validateScope, 
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
-            validateUserDefinedConstrParamsInjectionMethod,
+            validateUserDefinedConstructorParametersInjectionMethod,
             validateUserDefinedPropertiesInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,

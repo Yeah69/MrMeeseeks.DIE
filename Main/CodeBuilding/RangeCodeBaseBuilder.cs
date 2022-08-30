@@ -455,7 +455,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case FieldResolution(var reference, var typeFullName, var fieldName, var isAwait):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = {(isAwait ? "await " : "")}this.{fieldName};");
                 break;
-            case FactoryResolution(var reference, var typeFullName, var functionName, var parameters, bool isAwait):
+            case FactoryResolution(var reference, var typeFullName, var functionName, var parameters, var isAwait):
                 stringBuilder = parameters.Aggregate(stringBuilder,
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = {(isAwait ? "await " : "")}this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");

@@ -97,7 +97,13 @@ internal class ExecuteImpl : IExecute
                 }
                 catch (Exception exception)
                 {
-                    _diagLogger.Log(Diagnostics.UnexpectedException(exception));
+                    if (_errorDescriptionInsteadOfBuildFailure)
+                        _containerDieExceptionGenerator.Generate(
+                            containerSymbol.ContainingNamespace.FullName(), 
+                            containerSymbol.Name, 
+                            exception);
+                    else
+                        _diagLogger.Log(Diagnostics.UnexpectedException(exception));
                 }
             }
         }

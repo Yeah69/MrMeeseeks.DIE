@@ -5,7 +5,7 @@ namespace MrMeeseeks.DIE;
 
 internal interface IContainerDieExceptionGenerator 
 {
-    void Generate(string namespaceName, string containerClassName, DieException exception);
+    void Generate(string namespaceName, string containerClassName, Exception exception);
 }
 
 internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
@@ -21,7 +21,7 @@ internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
     }
 
-    public void Generate(string namespaceName, string containerClassName, DieException exception)
+    public void Generate(string namespaceName, string containerClassName, Exception exception)
     {
         var generatedContainer = new StringBuilder()
             .AppendLine($"#nullable enable")
@@ -29,7 +29,8 @@ internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
             .AppendLine($"{{")
             .AppendLine($"partial class {containerClassName}")
             .AppendLine($"{{")
-            .AppendLine($"public {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()} ExceptionKind_0_0 => {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{exception.Kind.ToString()};")
+            .AppendLine($"public {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()} ExceptionKind_0_0 => {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{((exception as DieException)?.Kind ?? DieExceptionKind.NoneDIE).ToString()};")
+            .AppendLine($"public string ExceptionToString_0_1 => @\"{exception}\";")
             .AppendLine($"}}")
             .AppendLine($"}}")
             .AppendLine($"#nullable disable");

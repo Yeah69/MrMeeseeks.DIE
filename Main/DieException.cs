@@ -2,6 +2,7 @@ namespace MrMeeseeks.DIE;
 
 public enum DieExceptionKind
 {
+    NoneDIE,
     ImplementationCycle,
     FunctionCycle,
     Validation,

@@ -504,7 +504,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             var currentResolution = (IFactoryResolution)functionCall;
             var currentType = mostInnerType;
 
-            if (asynchronicityStack.Any() && asynchronicityStack.Pop() is { } firstAsynchronicity)
+            if (asynchronicityStack.Any() && asynchronicityStack.Pop() is var firstAsynchronicity)
             {
                 currentType = firstAsynchronicity switch
                 {
@@ -518,7 +518,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     functionCall,
                     firstAsynchronicity);
 
-                while (asynchronicityStack.Any() && asynchronicityStack.Pop() is { } nextAsynchronicity)
+                while (asynchronicityStack.Any() && asynchronicityStack.Pop() is var nextAsynchronicity)
                 {
                     currentType = nextAsynchronicity switch
                     {

@@ -5,7 +5,6 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.Lazy;
 
-
 internal class Dependency : ITaskTypeInitializer
 {
     public bool IsInitialized { get; private set; }

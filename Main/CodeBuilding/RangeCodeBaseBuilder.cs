@@ -211,8 +211,11 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     {
         switch (resolution)
         {
-            case DeferringResolvable { Resolvable: {} resolvable}:
+            case DeferringResolvable { Resolvable: { } resolvable }:
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
+                break;
+            case AsyncFactoryCallResolution { Inner: { } inner }:
+                stringBuilder = GenerateResolutions(stringBuilder, inner);
                 break;
             case MultiTaskResolution { SelectedResolvable: {} resolvable}:
                 stringBuilder = GenerateResolutions(stringBuilder, resolvable);
@@ -228,17 +231,29 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case MultiSynchronicityFunctionCallResolution { SelectedFunctionCall: {} selectedFunctionCall}:
                 stringBuilder = GenerateResolutions(stringBuilder, selectedFunctionCall);
                 break;
-            case LazyResolution(var reference, var typeFullName, var innerCallOfLambda):
-                if (innerCallOfLambda.SelectedFunctionCall != innerCallOfLambda.Sync)
+            case LazyResolution(var reference, var typeFullName, var inner):
+                if (inner is MultiSynchronicityFunctionCallResolution { LazySynchronicityDecision.Value: not SynchronicityDecision.Sync })
                     throw new Exception("Lazy resolution has to call sync function"); // todo
+                var innerResolvable = (Resolvable)inner;
                 stringBuilder = stringBuilder
-                    .AppendLine($"{typeFullName} {reference} = new {typeFullName}(() => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))}));");
+                    .AppendLine($"{typeFullName} {reference} = new {typeFullName}(() =>")
+                    .AppendLine($"{{");
+                GenerateResolutions(stringBuilder, innerResolvable);
+                stringBuilder = stringBuilder
+                    .AppendLine($"return {(innerResolvable as AsyncFactoryCallResolution)?.Inner.Reference ?? innerResolvable.Reference};")
+                    .AppendLine($"}});");
                 break;
-            case FuncResolution(var reference, var typeFullName, var lambdaParameters, var innerCallOfLambda):
-                if (innerCallOfLambda.SelectedFunctionCall != innerCallOfLambda.Sync)
+            case FuncResolution(var reference, var typeFullName, var lambdaParameters, var inner):
+                if (inner is MultiSynchronicityFunctionCallResolution { LazySynchronicityDecision.Value: not SynchronicityDecision.Sync })
                     throw new Exception("Func resolution has to call sync function"); // todo
+                var innerResolvableFunc = (Resolvable)inner;
                 stringBuilder = stringBuilder
-                    .AppendLine($"{typeFullName} {reference} = ({string.Join(", " ,lambdaParameters.Select(p => p.Reference))}) => {Constants.ThisKeyword}.{innerCallOfLambda.Sync.FunctionReference}({string.Join(", ", innerCallOfLambda.Sync.Parameters.Select(p => $"{p.Name}: {p.Reference}"))});");
+                    .AppendLine($"{typeFullName} {reference} = ({string.Join(", " ,lambdaParameters.Select(p => p.Reference))}) =>")
+                    .AppendLine($"{{");
+                GenerateResolutions(stringBuilder, innerResolvableFunc);
+                stringBuilder = stringBuilder
+                    .AppendLine($"return {(innerResolvableFunc as AsyncFactoryCallResolution)?.Inner.Reference ?? innerResolvableFunc.Reference};")
+                    .AppendLine($"}};");
                 break;
             case FunctionCallResolution(var reference, _, _, var functionReference, var functionOwner, var parameters) functionCallResolution:
                 string owner2 = "";

@@ -117,7 +117,7 @@ internal record ConstructorResolution(
 internal record LazyResolution(
     string Reference,
     string TypeFullName,
-    MultiSynchronicityFunctionCallResolution InnerCallOfLambda) : Resolvable(Reference, TypeFullName);
+    IFactoryResolution Inner) : Resolvable(Reference, TypeFullName);
 
 internal record SyntaxValueTupleResolution(
     string Reference,
@@ -157,7 +157,7 @@ internal record FuncResolution(
     string Reference,
     string TypeFullName,
     IReadOnlyList<ParameterResolution> LambdaParameters,
-    MultiSynchronicityFunctionCallResolution InnerCallOfLambda) : Resolvable(Reference, TypeFullName);
+    IFactoryResolution Inner) : Resolvable(Reference, TypeFullName);
 
 internal record FactoryResolution(
     string Reference,
@@ -337,7 +337,7 @@ internal record TaskFromValueTaskResolution(
 internal record TaskFromSyncResolution(
     Resolvable WrappedResolvable,
     string TaskReference,
-    string TaskFullName) : TaskBaseResolution(WrappedResolvable, TaskReference, TaskFullName);
+    string TaskFullName) : TaskBaseResolution(WrappedResolvable, TaskReference, TaskFullName), IFactoryResolution;
     
 internal record ValueTaskFromTaskResolution(
     Resolvable WrappedResolvable,
@@ -352,7 +352,7 @@ internal record ValueTaskFromValueTaskResolution(
 internal record ValueTaskFromSyncResolution(
     Resolvable WrappedResolvable,
     string ValueTaskReference,
-    string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);
+    string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName), IFactoryResolution;
     
 internal record TaskFromWrappedValueTaskResolution(
     Resolvable WrappedResolvable,
@@ -380,12 +380,48 @@ internal record MultiTaskResolution(
         };
 }
 
+internal interface IFactoryResolution {}
+
+internal record AsyncFactoryCallResolution(
+    string Reference,
+    string TypeFullName,
+    MultiSynchronicityFunctionCallResolution FunctionCall,
+    SynchronicityDecision FirstWrapping) : Resolvable(Reference, TypeFullName), IFactoryResolution
+{
+
+    internal Resolvable Inner
+    {
+        get
+        {
+            FunctionCall.SelectedFunctionCall.Await = false;
+            switch (FunctionCall.LazySynchronicityDecision.Value, FirstWrapping)
+            {
+                case (SynchronicityDecision.Sync, SynchronicityDecision.AsyncValueTask):
+                    return new ValueTaskFromSyncResolution(FunctionCall.SelectedFunctionCall, Reference, TypeFullName);
+                case (SynchronicityDecision.Sync, SynchronicityDecision.AsyncTask):
+                    return new TaskFromSyncResolution(FunctionCall.SelectedFunctionCall, Reference, TypeFullName);
+                case (SynchronicityDecision.AsyncTask, SynchronicityDecision.AsyncValueTask):
+                    return new ValueTaskFromWrappedTaskResolution(FunctionCall.SelectedFunctionCall, Reference, TypeFullName);
+                case (SynchronicityDecision.AsyncTask, SynchronicityDecision.AsyncTask):
+                    return new NewReferenceResolvable(Reference, TypeFullName, FunctionCall.SelectedFunctionCall);
+                case (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.AsyncValueTask):
+                    return new NewReferenceResolvable(Reference, TypeFullName, FunctionCall.SelectedFunctionCall);
+                case (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.AsyncTask):
+                    return new TaskFromWrappedValueTaskResolution(FunctionCall.SelectedFunctionCall, Reference, TypeFullName);
+                default:
+                    throw new ArgumentOutOfRangeException(); // todo
+            }
+        }
+    }
+};
+
 internal record MultiSynchronicityFunctionCallResolution(
     FunctionCallResolution Sync,
     FunctionCallResolution AsyncTask,
     FunctionCallResolution AsyncValueTask,
     Lazy<SynchronicityDecision> LazySynchronicityDecision,
-    FunctionResolutionBuilderHandle FunctionResolutionBuilderHandle) : Resolvable(Sync.Reference, ""), IAwaitableResolution, ITaskConsumableResolution
+    FunctionResolutionBuilderHandle FunctionResolutionBuilderHandle)
+    : Resolvable(Sync.Reference, ""), IAwaitableResolution, ITaskConsumableResolution, IFactoryResolution
 {
     internal FunctionCallResolution SelectedFunctionCall =>
         LazySynchronicityDecision.Value switch

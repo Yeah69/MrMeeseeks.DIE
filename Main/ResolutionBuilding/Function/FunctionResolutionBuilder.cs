@@ -335,18 +335,11 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     new KeyValuePair<string, (ITypeSymbol, ParameterResolution)>(
                         cp.Value.Item1.FullName(),
                         cp.Value)));
-
-            var newCreateFunction = _rangeResolutionBaseBuilder.CreateCreateFunctionResolution(
-                genericType,
-                currentParameters,
-                Constants.PrivateKeyword);
-
+            
             var constructorInjection = new LazyResolution(
                 RootReferenceGenerator.Generate(namedTypeSymbol),
                 namedTypeSymbol.FullName(),
-                newCreateFunction.BuildFunctionCall(
-                    currentParameters,
-                    Constants.ThisKeyword));
+                CreateFactoryResolution(genericType, currentParameters));
             return (constructorInjection, null);
         }
 
@@ -384,18 +377,13 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
                 nextCurrentParameters = nextCurrentParameters.SetItem(lambdaParameter.Type.FullName(), lambdaParameter);
             }
-
-            var newCreateFunction = _rangeResolutionBaseBuilder.CreateCreateFunctionResolution(
-                returnType,
-                nextCurrentParameters,
-                Constants.PrivateKeyword);
             
             return (
                 new FuncResolution(
                     RootReferenceGenerator.Generate(type),
                     type.FullName(),
                     lambdaParameters.Select(t => t.Resolution).ToImmutableArray(),
-                    newCreateFunction.BuildFunctionCall(nextCurrentParameters, Constants.ThisKeyword)),
+                    CreateFactoryResolution(returnType, nextCurrentParameters)),
                 null);
         }
 
@@ -495,6 +483,85 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             new ErrorTreeItem(Diagnostics.CompilationError(
                 ErrorMessage(implementationStack, type, "Couldn't process in resolution tree creation."), _rangeResolutionBaseBuilder.ErrorContext.Location)),
             null);
+
+        IFactoryResolution CreateFactoryResolution(
+            INamedTypeSymbol mostOuterInnerType,
+            ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters)
+        {
+            var asynchronicityStack = new Stack<SynchronicityDecision>();
+
+            var mostInnerType = UnwrapAsynchronicity(mostOuterInnerType, asynchronicityStack);
+            
+            var newCreateFunction = _rangeResolutionBaseBuilder.CreateCreateFunctionResolution(
+                mostInnerType,
+                currentParameters,
+                Constants.PrivateKeyword);
+
+            var functionCall = newCreateFunction.BuildFunctionCall(
+                currentParameters,
+                Constants.ThisKeyword);
+
+            var currentResolution = (IFactoryResolution)functionCall;
+            var currentType = mostInnerType;
+
+            if (asynchronicityStack.Any() && asynchronicityStack.Pop() is { } firstAsynchronicity)
+            {
+                currentType = firstAsynchronicity switch
+                {
+                    Function.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(currentType),
+                    Function.SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(currentType),
+                    _ => throw new Exception("Shouldn't happen") // todo
+                };
+                currentResolution = new AsyncFactoryCallResolution(
+                    RootReferenceGenerator.Generate(currentType), 
+                    currentType.FullName(), 
+                    functionCall,
+                    firstAsynchronicity);
+
+                while (asynchronicityStack.Any() && asynchronicityStack.Pop() is { } nextAsynchronicity)
+                {
+                    currentType = nextAsynchronicity switch
+                    {
+                        Function.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(currentType),
+                        Function.SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(currentType),
+                        _ => throw new Exception("Shouldn't happen") // todo
+                    };
+                    currentResolution = nextAsynchronicity switch
+                    {
+                        Function.SynchronicityDecision.AsyncValueTask => new ValueTaskFromSyncResolution(
+                            (Resolvable) currentResolution,
+                            RootReferenceGenerator.Generate(currentType), 
+                            currentType.FullName()),
+                        Function.SynchronicityDecision.AsyncTask =>  new TaskFromSyncResolution(
+                            (Resolvable) currentResolution,
+                            RootReferenceGenerator.Generate(currentType), 
+                            currentType.FullName()),
+                        _ => throw new Exception("Shouldn't happen") // todo
+                    };
+                }
+            }
+
+            return currentResolution;
+
+            INamedTypeSymbol UnwrapAsynchronicity(INamedTypeSymbol currentWrappedType, Stack<SynchronicityDecision> stack)
+            {
+                if (currentWrappedType.OriginalDefinition.Equals(_wellKnownTypes.ValueTask1, SymbolEqualityComparer.Default)
+                    && currentWrappedType.TypeArguments.FirstOrDefault() is INamedTypeSymbol innerValueTaskType)
+                {
+                    stack.Push(Function.SynchronicityDecision.AsyncValueTask);
+                    return UnwrapAsynchronicity(innerValueTaskType, stack);
+                }
+            
+                if (currentWrappedType.OriginalDefinition.Equals(_wellKnownTypes.Task1, SymbolEqualityComparer.Default)
+                    && currentWrappedType.TypeArguments.FirstOrDefault() is INamedTypeSymbol innerTaskType)
+                {
+                    stack.Push(Function.SynchronicityDecision.AsyncTask);
+                    return UnwrapAsynchronicity(innerTaskType, stack);
+                }
+
+                return currentWrappedType;
+            }
+        }
     }
 
     private (Resolvable, ITaskConsumableResolution?) SwitchTask(SwitchTaskParameter parameter)

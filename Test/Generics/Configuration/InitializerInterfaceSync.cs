@@ -4,9 +4,9 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerInterfaceSync;
 
-internal class Dependency<T0> : ITypeInitializer
+internal class Dependency<T0> : IInitializer
 {
-    void ITypeInitializer.Initialize()
+    void IInitializer.Initialize()
     {
         IsInitialized = true;
     }

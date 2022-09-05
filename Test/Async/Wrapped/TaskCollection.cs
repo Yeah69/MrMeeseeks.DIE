@@ -10,33 +10,33 @@ internal interface IInterface
     bool IsInitialized { get; }
 }
 
-internal class DependencyA : ITaskTypeInitializer, IInterface
+internal class DependencyA : ITaskInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
-    async Task ITaskTypeInitializer.InitializeAsync()
+    async Task ITaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;
     }
 }
 
-internal class DependencyB : IValueTaskTypeInitializer, IInterface
+internal class DependencyB : IValueTaskInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
-    async ValueTask IValueTaskTypeInitializer.InitializeAsync()
+    async ValueTask IValueTaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;
     }
 }
 
-internal class DependencyC : ITypeInitializer, IInterface
+internal class DependencyC : IInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
-    void ITypeInitializer.Initialize()
+    void IInitializer.Initialize()
     {
         IsInitialized = true;
     }

@@ -20,7 +20,7 @@ internal class ReferenceGenerator : IReferenceGenerator
             string.Empty, 
             type.Name is { Length: > 1 }
                 ? $"{char.ToLower(type.Name[0])}{type.Name.Substring(1)}" 
-                : "empty", 
+                : "empty", // todo warning type without name seems strange
             string.Empty);
     
     public string Generate(string prefix, ITypeSymbol type) =>

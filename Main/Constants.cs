@@ -19,8 +19,9 @@ internal static class Constants
     
     // User-defined scope elements
     internal const string UserDefinedFactory = $"{DieAbbreviation}_Factory";
-    internal const string UserDefinedConstrParams = $"{DieAbbreviation}_ConstrParam";
+    internal const string UserDefinedConstrParams = $"{DieAbbreviation}_ConstrParams";
     internal const string UserDefinedProps = $"{DieAbbreviation}_Props";
+    internal const string UserDefinedInitParams = $"{DieAbbreviation}_InitParams";
     internal const string UserDefinedAddForDisposal = $"{DieAbbreviation}_AddForDisposal";
     internal const string UserDefinedAddForDisposalAsync = $"{DieAbbreviation}_AddForDisposalAsync";
     

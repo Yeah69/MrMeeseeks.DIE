@@ -16,6 +16,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
         IValidateUserDefinedConstructorParametersInjectionMethod validateUserDefinedConstructorParametersInjectionMethod,
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
+        IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         WellKnownTypes wellKnownTypes,
@@ -26,6 +27,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
             validateUserDefinedAddForDisposalAsync,
             validateUserDefinedConstructorParametersInjectionMethod,
             validateUserDefinedPropertiesMethod,
+            validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes)

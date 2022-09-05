@@ -31,6 +31,7 @@ public class SourceGenerator : ISourceGenerator
         var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);
         var validateUserDefinedConstructorParametersInjectionMethod = new ValidateUserDefinedConstructorParametersInjectionMethod(wellKnownTypesMiscellaneous);
         var validateUserDefinedPropertiesInjectionMethod = new ValidateUserDefinedPropertiesInjectionMethod(wellKnownTypesMiscellaneous);
+        var validateUserDefinedInitializerParametersInjectionMethod = new ValidateUserDefinedInitializerParametersInjectionMethod(wellKnownTypesMiscellaneous);
         var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
         var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
         var validateAttributes = new ValidateAttributes();
@@ -39,6 +40,7 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedAddForDisposalAsync, 
             validateUserDefinedConstructorParametersInjectionMethod, 
             validateUserDefinedPropertiesInjectionMethod,
+            validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes, 
@@ -49,6 +51,7 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedAddForDisposalAsync, 
             validateUserDefinedConstructorParametersInjectionMethod, 
             validateUserDefinedPropertiesInjectionMethod,
+            validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes,
@@ -61,6 +64,7 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedAddForDisposalAsync, 
             validateUserDefinedConstructorParametersInjectionMethod,
             validateUserDefinedPropertiesInjectionMethod,
+            validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes,

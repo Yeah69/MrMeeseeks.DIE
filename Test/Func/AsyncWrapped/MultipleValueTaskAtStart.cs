@@ -5,7 +5,7 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Func.AsyncWrapped.MultipleValueTaskAtStart;
 
-internal class Dependency : IValueTaskTypeInitializer
+internal class Dependency : IValueTaskInitializer
 {
     public ValueTask InitializeAsync()
     {

@@ -21,6 +21,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
         IValidateUserDefinedConstructorParametersInjectionMethod validateUserDefinedConstructorParametersInjectionMethod,
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
+        IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         WellKnownTypes wellKnownTypes,
@@ -30,6 +31,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             validateUserDefinedAddForDisposalAsync, 
             validateUserDefinedConstructorParametersInjectionMethod,
             validateUserDefinedPropertiesMethod,
+            validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             wellKnownTypes)

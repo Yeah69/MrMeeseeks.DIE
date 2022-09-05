@@ -9,7 +9,7 @@ internal class Dependency
     public int Number { get; init; }
 }
 
-internal class OtherDependency : IValueTaskTypeInitializer
+internal class OtherDependency : IValueTaskInitializer
 {
     public int Number => 69;
     public ValueTask InitializeAsync() => new (Task.CompletedTask);

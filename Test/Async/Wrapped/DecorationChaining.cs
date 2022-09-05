@@ -9,38 +9,38 @@ internal interface IInterface
     bool IsInitialized { get; }
 }
 
-internal class Dependency : ITaskTypeInitializer, IInterface
+internal class Dependency : ITaskInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
-    async Task ITaskTypeInitializer.InitializeAsync()
+    async Task ITaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;
     }
 }
 
-internal class DecoratorA : ITypeInitializer, IInterface, IDecorator<IInterface>
+internal class DecoratorA : IInitializer, IInterface, IDecorator<IInterface>
 {
     private readonly Task<IInterface> _task;
     public bool IsInitialized { get; private set; }
     
     internal DecoratorA(Task<IInterface> task) => _task = task;
 
-    void ITypeInitializer.Initialize()
+    void IInitializer.Initialize()
     {
         _task.Wait();
         IsInitialized = true;
     }
 }
 
-internal class DecoratorB : IValueTaskTypeInitializer, IInterface, IDecorator<IInterface>
+internal class DecoratorB : IValueTaskInitializer, IInterface, IDecorator<IInterface>
 {
     public bool IsInitialized { get; private set; }
     
     internal DecoratorB(IInterface _) {}
     
-    async ValueTask IValueTaskTypeInitializer.InitializeAsync()
+    async ValueTask IValueTaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;

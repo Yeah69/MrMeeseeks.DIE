@@ -2,17 +2,13 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.TypeInitializer.AsyncValueTask;
+namespace MrMeeseeks.DIE.Test.Initializer.Sync;
 
-internal class Dependency : IValueTaskTypeInitializer
+internal class Dependency : IInitializer
 {
     public bool IsInitialized { get; private set; }
     
-    ValueTask IValueTaskTypeInitializer.InitializeAsync()
-    {
-        IsInitialized = true;
-        return ValueTask.CompletedTask;
-    }
+    void IInitializer.Initialize() => IsInitialized = true;
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
@@ -26,7 +22,7 @@ public class Tests
     public async ValueTask Test()
     {
         await using var container = new Container();
-        var instance = await container.CreateValueAsync().ConfigureAwait(false);
+        var instance = container.Create();
         Assert.True(instance.IsInitialized);
     }
 }

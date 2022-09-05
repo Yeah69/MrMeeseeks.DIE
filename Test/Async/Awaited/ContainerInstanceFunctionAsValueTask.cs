@@ -5,11 +5,11 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Async.Awaited.ContainerInstanceFunctionAsValueTask;
 
 
-internal class Dependency : ITaskTypeInitializer, IContainerInstance
+internal class Dependency : ITaskInitializer, IContainerInstance
 {
     public bool IsInitialized { get; private set; }
     
-    async Task ITaskTypeInitializer.InitializeAsync()
+    async Task ITaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;

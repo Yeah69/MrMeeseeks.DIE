@@ -26,7 +26,7 @@ internal interface ITypesFromAttributes
     IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; }
     IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
-    IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
+    IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; } 
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
     IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
@@ -55,7 +55,7 @@ internal interface ITypesFromAttributes
     IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; }
     IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> FilterDecoratorSequenceChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
-    IImmutableSet<INamedTypeSymbol> FilterTypeInitializers { get; }
+    IImmutableSet<INamedTypeSymbol> FilterInitializers { get; }
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; } 
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterPropertyChoices { get; }
@@ -410,8 +410,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .Select(SingleTypeArgument)
             .OfType<INamedTypeSymbol>());
 
-        TypeInitializers = ImmutableHashSet.CreateRange(
-            (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.TypeInitializerAttribute, out var typeInitializerAttributes) 
+        Initializers = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.InitializerAttribute, out var typeInitializerAttributes) 
                 ? typeInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ad =>
@@ -432,14 +432,6 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
                 if (initializationMethod is { })
                 {
-                    if (initializationMethod.Parameters.Any())
-                    {
-                        _errors.Add(Diagnostics.ValidationConfigurationAttribute(
-                            ad,
-                            _rangeType,
-                            _containerType,
-                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it isn't allowed to have parameters."));
-                    }
                     if (!initializationMethod.ReturnsVoid
                         && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
                         && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
@@ -464,10 +456,10 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
         
-        FilterTypeInitializers = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+        FilterInitializers = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
             SymbolEqualityComparer.Default,
-            (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterTypeInitializerAttribute, out var filterTypeInitializerAttributes) 
-                ? filterTypeInitializerAttributes 
+            (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterInitializerAttribute, out var filterInitializerAttributes) 
+                ? filterInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(SingleTypeArgument)
             .OfType<INamedTypeSymbol>());
@@ -874,7 +866,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected init; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
-    public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> TypeInitializers { get; }
+    public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
@@ -903,7 +895,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; protected init; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> FilterDecoratorSequenceChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterTypeInitializers { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterInitializers { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterSubstitutesChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol)> FilterGenericParameterChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterPropertyChoices { get; }

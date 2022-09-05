@@ -14,6 +14,7 @@ internal abstract class ValidateRange : IValidateRange
     private readonly IValidateUserDefinedAddForDisposalAsync _validateUserDefinedAddForDisposalAsync;
     private readonly IValidateUserDefinedConstructorParametersInjectionMethod _validateUserDefinedConstructorParametersInjectionMethod;
     private readonly IValidateUserDefinedPropertiesMethod _validateUserDefinedPropertiesMethod;
+    private readonly IValidateUserDefinedInitializerParametersInjectionMethod _validateUserDefinedInitializerParametersInjectionMethod;
     private readonly IValidateUserDefinedFactoryMethod _validateUserDefinedFactoryMethod;
     private readonly IValidateUserDefinedFactoryField _validateUserDefinedFactoryField;
     private readonly WellKnownTypes _wellKnownTypes;
@@ -24,6 +25,7 @@ internal abstract class ValidateRange : IValidateRange
         IValidateUserDefinedAddForDisposalAsync validateUserDefinedAddForDisposalAsync,
         IValidateUserDefinedConstructorParametersInjectionMethod validateUserDefinedConstructorParametersInjectionMethod,
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
+        IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         WellKnownTypes wellKnownTypes)
@@ -32,6 +34,7 @@ internal abstract class ValidateRange : IValidateRange
         _validateUserDefinedAddForDisposalAsync = validateUserDefinedAddForDisposalAsync;
         _validateUserDefinedConstructorParametersInjectionMethod = validateUserDefinedConstructorParametersInjectionMethod;
         _validateUserDefinedPropertiesMethod = validateUserDefinedPropertiesMethod;
+        _validateUserDefinedInitializerParametersInjectionMethod = validateUserDefinedInitializerParametersInjectionMethod;
         _validateUserDefinedFactoryMethod = validateUserDefinedFactoryMethod;
         _validateUserDefinedFactoryField = validateUserDefinedFactoryField;
         _wellKnownTypes = wellKnownTypes;
@@ -110,6 +113,8 @@ internal abstract class ValidateRange : IValidateRange
             foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedConstrParams, _validateUserDefinedConstructorParametersInjectionMethod))
                 yield return diagnostic;
             foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedProps, _validateUserDefinedPropertiesMethod))
+                yield return diagnostic;
+            foreach (var diagnostic in ValidateUserDefinedInjection(Constants.UserDefinedInitParams, _validateUserDefinedInitializerParametersInjectionMethod))
                 yield return diagnostic;
 
             var userDefinedFactories = rangeType

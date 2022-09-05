@@ -4,11 +4,11 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.TransientScopeInstanceFunctionAsValueTask;
 
-internal class Dependency : ITaskTypeInitializer, ITransientScopeInstance
+internal class Dependency : ITaskInitializer, ITransientScopeInstance
 {
     public bool IsInitialized { get; private set; }
     
-    async Task ITaskTypeInitializer.InitializeAsync()
+    async Task ITaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;

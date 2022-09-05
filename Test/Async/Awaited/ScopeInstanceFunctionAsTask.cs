@@ -5,11 +5,11 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Async.Awaited.ScopeInstanceFunctionAsTask;
 
 
-internal class Dependency : ITaskTypeInitializer, IScopeInstance
+internal class Dependency : ITaskInitializer, IScopeInstance
 {
     public bool IsInitialized { get; private set; }
     
-    async Task ITaskTypeInitializer.InitializeAsync()
+    async Task ITaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;

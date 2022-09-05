@@ -15,7 +15,7 @@ internal class Dependency
 internal sealed partial class Container
 {
     [UserDefinedConstructorParametersInjection(typeof(Dependency))]
-    private void DIE_ConstrParam_Dependency(out int number) => number = 69;
+    private void DIE_ConstrParams_Dependency(out int number) => number = 69;
 }
 
 public class Tests

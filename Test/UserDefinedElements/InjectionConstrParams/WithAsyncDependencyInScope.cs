@@ -11,7 +11,7 @@ internal class Dependency
     internal Dependency(int number) => Number = number;
 }
 
-internal class OtherDependency : IValueTaskTypeInitializer
+internal class OtherDependency : IValueTaskInitializer
 {
     public int Number => 69;
     public ValueTask InitializeAsync() => new (Task.CompletedTask);
@@ -31,7 +31,7 @@ internal sealed partial class Container
     private sealed partial class DIE_DefaultScope
     {
         [UserDefinedConstructorParametersInjection(typeof(Dependency))]
-        private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
+        private void DIE_ConstrParams_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
     }
 }
 

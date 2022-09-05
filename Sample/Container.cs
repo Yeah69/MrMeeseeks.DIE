@@ -1,28 +1,27 @@
-﻿using System;
-using System.Threading.Tasks;
-using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.Func.AsyncWrapped.SingleValueTask;
+namespace MrMeeseeks.DIE.Test.Initializer.WithParameters;
 
-internal class Dependency : IValueTaskTypeInitializer
+internal class Dependency
 {
-    public ValueTask InitializeAsync()
+    public bool IsInitialized { get; private set; }
+
+    public int Number { get; private set; }
+
+    public string Text { get; private set; } = "";
+    
+    internal void Initialize(int number, string text)
     {
-        return ValueTask.CompletedTask;
+        IsInitialized = true;
+        Number = number;
+        Text = text;
     }
 }
 
-internal class OuterDependency
-{
-    internal OuterDependency(
-        Dependency dependency)
-    {
-        
-    }
-}
-
-[CreateFunction(typeof(Func<ValueTask<OuterDependency>>), "Create")]
+[Initializer(typeof(Dependency), nameof(Dependency.Initialize))]
+[CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    private readonly int DIE_Factory_Number = 69;
+    private readonly string DIE_Factory_Text = "foo";
 }

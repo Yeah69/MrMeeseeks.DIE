@@ -429,16 +429,23 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     stringBuilder = stringBuilder.AppendLine($"{disposableCollectionReference}.Add(({interfaceType}) {reference});");
                 }
 
-                if (initialization is {} init)
+                if (initialization is { Parameters: {} initParameters })
                 {
-                    stringBuilder = init switch
+                    if (initialization.UserDefinedInitializerParametersInjectionResolution is {} userDefinedInitializerParametersInjection)
+                        GenerateResolutions(stringBuilder, userDefinedInitializerParametersInjection);
+                    stringBuilder = initParameters.Aggregate(stringBuilder,
+                        (builder, tuple) => GenerateResolutions(builder, tuple.Dependency));
+                    var initializerParameters =
+                        string.Join(", ", initParameters.Select(d => $"{d.Name}: {d.Dependency.Reference}"));
+                    
+                    stringBuilder = initialization switch
                     {
-                        SyncTypeInitializationResolution (var initInterfaceTypeName, var initMethodName) => 
-                            stringBuilder.AppendLine($"(({initInterfaceTypeName}) {reference}).{initMethodName}();"),
-                        TaskBaseTypeInitializationResolution { Await: true, TypeFullName: {} initInterfaceTypeName, MethodName: {} initMethodName} => 
-                            stringBuilder.AppendLine($"await (({initInterfaceTypeName}) {reference}).{initMethodName}();"),
-                        TaskBaseTypeInitializationResolution { Await: false, TypeFullName: {} initInterfaceTypeName, MethodName: {} initMethodName, TaskReference: {} taskReference} taskInit => 
-                            stringBuilder.AppendLine($"{taskInit.TaskTypeFullName} {taskReference} = (({initInterfaceTypeName}) {reference}).{initMethodName}();"),
+                        SyncInitializationResolution (var initInterfaceTypeName, var initMethodName, _, _) => 
+                            stringBuilder.AppendLine($"(({initInterfaceTypeName}) {reference}).{initMethodName}({initializerParameters});"),
+                        TaskBaseInitializationResolution { Await: true, TypeFullName: {} initInterfaceTypeName, MethodName: {} initMethodName} => 
+                            stringBuilder.AppendLine($"await (({initInterfaceTypeName}) {reference}).{initMethodName}({initializerParameters});"),
+                        TaskBaseInitializationResolution { Await: false, TypeFullName: {} initInterfaceTypeName, MethodName: {} initMethodName, TaskReference: {} taskReference} taskInit => 
+                            stringBuilder.AppendLine($"{taskInit.TaskTypeFullName} {taskReference} = (({initInterfaceTypeName}) {reference}).{initMethodName}({initializerParameters});"),
                         _ => stringBuilder
                     };
                 }

@@ -12,15 +12,15 @@ public interface ISyncTransient { }
 public interface IAsyncTransient { }
 public interface IDecorator<T> { }
 public interface IComposite<T> { }
-public interface ITypeInitializer
+public interface IInitializer
 {
     void Initialize();
 }
-public interface ITaskTypeInitializer
+public interface ITaskInitializer
 {
     Task InitializeAsync();
 }
-public interface IValueTaskTypeInitializer
+public interface IValueTaskInitializer
 {
     ValueTask InitializeAsync();
 }

@@ -15,7 +15,7 @@ internal class Dependency<T0>
     public bool IsInitialized { get; private set; }
 }
 
-[TypeInitializer(typeof(Dependency<>), nameof(Dependency<int>.InitializeAsync))]
+[Initializer(typeof(Dependency<>), nameof(Dependency<int>.InitializeAsync))]
 [CreateFunction(typeof(Dependency<int>), "Create")]
 internal sealed partial class Container
 {

@@ -4,9 +4,9 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerInterfaceAsync;
 
-internal class Dependency<T0> : ITaskTypeInitializer
+internal class Dependency<T0> : ITaskInitializer
 {
-    async Task ITaskTypeInitializer.InitializeAsync()
+    async Task ITaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;

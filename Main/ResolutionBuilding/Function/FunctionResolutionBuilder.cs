@@ -575,18 +575,18 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var wrappedTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.Task);
         if (resolution.Item2 is ConstructorResolution constructorResolution)
         {
-            if (constructorResolution.Initialization is TaskBaseTypeInitializationResolution taskBaseResolution)
+            if (constructorResolution.Initialization is TaskBaseInitializationResolution taskBaseResolution)
                 taskBaseResolution.Await = false;
             var taskResolution = constructorResolution.Initialization switch
             {
-                TaskTypeInitializationResolution taskTypeInitialization => new TaskFromTaskResolution(
+                TaskInitializationResolution taskInitialization => new TaskFromTaskResolution(
                     resolution.Item1,
-                    taskTypeInitialization,
+                    taskInitialization,
                     wrappedTaskReference,
                     boundTaskTypeFullName),
-                ValueTaskTypeInitializationResolution taskTypeInitialization => new TaskFromValueTaskResolution(
+                ValueTaskInitializationResolution taskInitialization => new TaskFromValueTaskResolution(
                     resolution.Item1,
-                    taskTypeInitialization,
+                    taskInitialization,
                     wrappedTaskReference,
                     boundTaskTypeFullName),
                 _ => (Resolvable) new TaskFromSyncResolution(resolution.Item1, wrappedTaskReference, boundTaskTypeFullName)
@@ -626,18 +626,18 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var wrappedValueTaskReference = RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask);
         if (resolution.Item2 is ConstructorResolution constructorResolution)
         {
-            if (constructorResolution.Initialization is TaskBaseTypeInitializationResolution taskBaseResolution)
+            if (constructorResolution.Initialization is TaskBaseInitializationResolution taskBaseResolution)
                 taskBaseResolution.Await = false;
             var taskResolution = constructorResolution.Initialization switch
             {
-                TaskTypeInitializationResolution taskTypeInitialization => new ValueTaskFromTaskResolution(
+                TaskInitializationResolution taskInitialization => new ValueTaskFromTaskResolution(
                     resolution.Item1,
-                    taskTypeInitialization,
+                    taskInitialization,
                     wrappedValueTaskReference,
                     boundValueTaskTypeFullName),
-                ValueTaskTypeInitializationResolution taskTypeInitialization => new ValueTaskFromValueTaskResolution(
+                ValueTaskInitializationResolution taskInitialization => new ValueTaskFromValueTaskResolution(
                     resolution.Item1,
-                    taskTypeInitialization,
+                    taskInitialization,
                     wrappedValueTaskReference,
                     boundValueTaskTypeFullName),
                 _ => (Resolvable) new ValueTaskFromSyncResolution(resolution.Item1, wrappedValueTaskReference, boundValueTaskTypeFullName)
@@ -918,7 +918,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         var isTransientScopeRoot =
             _checkTypeProperties.ShouldBeScopeRoot(implementationType) == ScopeLevel.TransientScope;
 
-        var (userDefinedConstructorParametersInjection, outConstructorsParameters) = GetUserDefinedInjectionResolution(
+        var (userDefinedConstructorParametersInjection, outConstructorParameters) = GetUserDefinedInjectionResolution(
             _userDefinedElements.GetConstructorParametersInjectionFor(implementationType),
             (name, parameters) => new UserDefinedConstructorParametersInjectionResolution(name, parameters));
 
@@ -926,34 +926,64 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             _userDefinedElements.GetPropertiesInjectionFor(implementationType),
             (name, parameters) => new UserDefinedPropertiesInjectionResolution(name, parameters));
 
-        ITypeInitializationResolution? typeInitializationResolution = null;
+        IInitializationResolution? typeInitializationResolution = null;
 
         if (_checkTypeProperties.GetInitializerFor(implementationType) is { } tuple)
         {
+            var (userDefinedInitializerParametersInjection, outInitializerParameters) = GetUserDefinedInjectionResolution(
+                _userDefinedElements.GetInitializerParametersInjectionFor(implementationType),
+                (name, parameters) => new UserDefinedInitializerParametersInjectionResolution(name, parameters));
+            
             var (initializationInterface, initializationMethod) = tuple;
             var initializationTypeFullName = initializationInterface.FullName();
             var initializationMethodName = initializationMethod.Name;
+
+            var parameters = new ReadOnlyCollection<(string Name, Resolvable Dependency)>(tuple
+                .Initializer
+                .Parameters
+                .Select(p => ProcessInitializerParametersChildType(p.Type, p.Name, currentParameters))
+                .ToList());
+            
             typeInitializationResolution = initializationMethod.ReturnsVoid switch
             {
-                true => new SyncTypeInitializationResolution(initializationTypeFullName, initializationMethodName),
+                true => new SyncInitializationResolution(
+                    initializationTypeFullName, 
+                    initializationMethodName, 
+                    parameters, 
+                    userDefinedInitializerParametersInjection),
                 false when initializationMethod.ReturnType.Equals(_wellKnownTypes.Task, SymbolEqualityComparer.Default) =>
-                    new TaskTypeInitializationResolution(
+                    new TaskInitializationResolution(
                         initializationTypeFullName, 
                         initializationMethodName,
                         _wellKnownTypes.Task.FullName(),
-                        RootReferenceGenerator.Generate(_wellKnownTypes.Task)),
+                        RootReferenceGenerator.Generate(_wellKnownTypes.Task),
+                        parameters,
+                        userDefinedInitializerParametersInjection),
                 false when initializationMethod.ReturnType.Equals(_wellKnownTypes.ValueTask, SymbolEqualityComparer.Default) => 
-                    new ValueTaskTypeInitializationResolution(
+                    new ValueTaskInitializationResolution(
                         initializationTypeFullName, 
                         initializationMethodName, 
                         _wellKnownTypes.ValueTask.FullName(),
-                        RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask)),
+                        RootReferenceGenerator.Generate(_wellKnownTypes.ValueTask),
+                        parameters,
+                        userDefinedInitializerParametersInjection),
                 _ => typeInitializationResolution
             };
 
             if (typeInitializationResolution is IAwaitableResolution awaitableResolution)
             {
                 _synchronicityDecisionMaker.Register(awaitableResolution);
+            }
+
+            (string Name, Resolvable Dependency) ProcessInitializerParametersChildType(
+                ITypeSymbol typeSymbol,
+                string parameterName,
+                ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currParameter)
+            {
+                if (outInitializerParameters.TryGetValue(parameterName, out var outParameterResolution))
+                    return (parameterName,
+                        new ParameterResolution(outParameterResolution.Reference, outParameterResolution.TypeFullName));
+                return ProcessChildType(typeSymbol, parameterName, currParameter);
             }
         }
 
@@ -985,7 +1015,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             string parameterName,
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currParameter)
         {
-            if (outConstructorsParameters.TryGetValue(parameterName, out var outParameterResolution))
+            if (outConstructorParameters.TryGetValue(parameterName, out var outParameterResolution))
                 return (parameterName,
                     new ParameterResolution(outParameterResolution.Reference, outParameterResolution.TypeFullName));
             return ProcessChildType(typeSymbol, parameterName, currParameter);

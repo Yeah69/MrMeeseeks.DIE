@@ -3,11 +3,12 @@
 namespace MrMeeseeks.DIE;
 
 internal record WellKnownTypesMiscellaneous(
-    INamedTypeSymbol TypeInitializerAttribute,
-    INamedTypeSymbol FilterTypeInitializerAttribute,
+    INamedTypeSymbol InitializerAttribute,
+    INamedTypeSymbol FilterInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,
     INamedTypeSymbol UserDefinedConstructorParametersInjectionAttribute,
     INamedTypeSymbol UserDefinedPropertiesInjectionAttribute,
+    INamedTypeSymbol UserDefinedInitializerParametersInjectionAttribute,
     INamedTypeSymbol CreateFunctionAttribute,
     INamedTypeSymbol ErrorDescriptionInsteadOfBuildFailureAttribute,
     INamedTypeSymbol DieExceptionKind)
@@ -20,14 +21,17 @@ internal record WellKnownTypesMiscellaneous(
         var userDefinedConstructorParametersInjectionAttribute = compilation
             .GetTypeByMetadataName(typeof(UserDefinedConstructorParametersInjectionAttribute).FullName ?? "");
 
+        var userDefinedInitializerParametersInjectionAttribute = compilation
+            .GetTypeByMetadataName(typeof(UserDefinedInitializerParametersInjectionAttribute).FullName ?? "");
+
         var userDefinedPropertiesInjectionAttribute = compilation
             .GetTypeByMetadataName(typeof(UserDefinedPropertiesInjectionAttribute).FullName ?? "");
 
         var typeInitializerAttribute = compilation
-            .GetTypeByMetadataName(typeof(TypeInitializerAttribute).FullName ?? "");
+            .GetTypeByMetadataName(typeof(InitializerAttribute).FullName ?? "");
 
-        var filterTypeInitializerAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterTypeInitializerAttribute).FullName ?? "");
+        var filterInitializerAttribute = compilation
+            .GetTypeByMetadataName(typeof(FilterInitializerAttribute).FullName ?? "");
 
         var createFunctionAttribute = compilation
             .GetTypeByMetadataName(typeof(CreateFunctionAttribute).FullName ?? "");
@@ -39,21 +43,23 @@ internal record WellKnownTypesMiscellaneous(
             .GetTypeByMetadataName(typeof(DieExceptionKind).FullName ?? "");
 
         if (typeInitializerAttribute is not null
-            && filterTypeInitializerAttribute is not null
+            && filterInitializerAttribute is not null
             && customScopeForRootTypesAttribute is not null
             && userDefinedConstructorParametersInjectionAttribute is not null
             && userDefinedPropertiesInjectionAttribute is not null
+            && userDefinedInitializerParametersInjectionAttribute is not null
             && createFunctionAttribute is not null
             && errorDescriptionInsteadOfBuildFailureAttribute is not null
             && dieExceptionKind is not null)
         {
 
             wellKnownTypes = new WellKnownTypesMiscellaneous(
-                TypeInitializerAttribute: typeInitializerAttribute,
-                FilterTypeInitializerAttribute: filterTypeInitializerAttribute,
+                InitializerAttribute: typeInitializerAttribute,
+                FilterInitializerAttribute: filterInitializerAttribute,
                 CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
                 UserDefinedConstructorParametersInjectionAttribute: userDefinedConstructorParametersInjectionAttribute,
                 UserDefinedPropertiesInjectionAttribute: userDefinedPropertiesInjectionAttribute,
+                UserDefinedInitializerParametersInjectionAttribute: userDefinedInitializerParametersInjectionAttribute, 
                 CreateFunctionAttribute: createFunctionAttribute,
                 ErrorDescriptionInsteadOfBuildFailureAttribute: errorDescriptionInsteadOfBuildFailureAttribute,
                 DieExceptionKind: dieExceptionKind);

@@ -6,11 +6,11 @@ namespace MrMeeseeks.DIE.Test.Async.Wrapped.TransientScopeInstanceFunctionAsTask
 
 internal interface IInterface {}
 
-internal class DependencyA : IInterface, ITaskTypeInitializer
+internal class DependencyA : IInterface, ITaskInitializer
 {
     public bool IsInitialized { get; private set; }
     
-    async Task ITaskTypeInitializer.InitializeAsync()
+    async Task ITaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;

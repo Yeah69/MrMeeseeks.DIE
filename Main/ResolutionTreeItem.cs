@@ -70,11 +70,17 @@ internal record InterfaceResolution(
     string TypeFullName,
     ResolutionTreeItem Dependency) : Resolvable(Reference, TypeFullName);
 
-internal interface ITypeInitializationResolution {}
+internal interface IInitializationResolution
+{
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameters { get; }
+    UserDefinedInitializerParametersInjectionResolution? UserDefinedInitializerParametersInjectionResolution { get; } 
+}
 
-internal record SyncTypeInitializationResolution(
+internal record SyncInitializationResolution(
     string TypeFullName,
-    string MethodName) : ITypeInitializationResolution;
+    string MethodName,
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameters,
+    UserDefinedInitializerParametersInjectionResolution? UserDefinedInitializerParametersInjectionResolution) : IInitializationResolution;
 
 internal interface IAwaitableResolution
 {
@@ -83,26 +89,34 @@ internal interface IAwaitableResolution
 
 internal interface ITaskConsumableResolution {}
 
-internal record TaskBaseTypeInitializationResolution(
+internal record TaskBaseInitializationResolution(
     string TypeFullName,
     string MethodName,
     string TaskTypeFullName,
-    string TaskReference) : ITypeInitializationResolution, IAwaitableResolution
+    string TaskReference,
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameters,
+    UserDefinedInitializerParametersInjectionResolution? UserDefinedInitializerParametersInjectionResolution) : IInitializationResolution, IAwaitableResolution
 {
     public bool Await { get; set; } = true;
 }
 
-internal record TaskTypeInitializationResolution(
+internal record TaskInitializationResolution(
     string TypeFullName,
     string MethodName,
     string TaskTypeFullName,
-    string TaskReference) : TaskBaseTypeInitializationResolution(TypeFullName, MethodName, TaskTypeFullName, TaskReference);
+    string TaskReference,
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameters,
+    UserDefinedInitializerParametersInjectionResolution? UserDefinedInitializerParametersInjectionResolution) 
+    : TaskBaseInitializationResolution(TypeFullName, MethodName, TaskTypeFullName, TaskReference, Parameters, UserDefinedInitializerParametersInjectionResolution);
 
-internal record ValueTaskTypeInitializationResolution(
+internal record ValueTaskInitializationResolution(
     string TypeFullName,
     string MethodName,
     string TaskTypeFullName,
-    string TaskReference) : TaskBaseTypeInitializationResolution(TypeFullName, MethodName, TaskTypeFullName, TaskReference);
+    string TaskReference,
+    IReadOnlyList<(string Name, Resolvable Dependency)> Parameters,
+    UserDefinedInitializerParametersInjectionResolution? UserDefinedInitializerParametersInjectionResolution) 
+    : TaskBaseInitializationResolution(TypeFullName, MethodName, TaskTypeFullName, TaskReference, Parameters, UserDefinedInitializerParametersInjectionResolution);
 
 internal record ConstructorResolution(
     string Reference,
@@ -110,7 +124,7 @@ internal record ConstructorResolution(
     DisposalType DisposalType,
     IReadOnlyList<(string Name, Resolvable Dependency)> Parameter,
     IReadOnlyList<(string Name, Resolvable Dependency)> InitializedProperties,
-    ITypeInitializationResolution? Initialization,
+    IInitializationResolution? Initialization,
     UserDefinedConstructorParametersInjectionResolution? UserDefinedConstructorParametersInjection,
     UserDefinedPropertiesInjectionResolution? UserDefinedPropertiesInjection) : Resolvable(Reference, TypeFullName), ITaskConsumableResolution;
 
@@ -179,6 +193,10 @@ internal record UserDefinedConstructorParametersInjectionResolution(
     IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : UserDefinedInjectionResolution(FunctionName, Parameter);
 
 internal record UserDefinedPropertiesInjectionResolution(
+    string FunctionName,
+    IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : UserDefinedInjectionResolution(FunctionName, Parameter);
+
+internal record UserDefinedInitializerParametersInjectionResolution(
     string FunctionName,
     IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : UserDefinedInjectionResolution(FunctionName, Parameter);
 
@@ -326,12 +344,12 @@ internal abstract record TaskBaseResolution(
 
 internal record TaskFromTaskResolution(
     Resolvable WrappedResolvable,
-    TaskTypeInitializationResolution Initialization,
+    TaskInitializationResolution Initialization,
     string TaskReference,
     string TaskFullName) : TaskBaseResolution(WrappedResolvable, TaskReference, TaskFullName);
 internal record TaskFromValueTaskResolution(
     Resolvable WrappedResolvable,
-    ValueTaskTypeInitializationResolution Initialization,
+    ValueTaskInitializationResolution Initialization,
     string TaskReference,
     string TaskFullName) : TaskBaseResolution(WrappedResolvable, TaskReference, TaskFullName);
 internal record TaskFromSyncResolution(
@@ -341,12 +359,12 @@ internal record TaskFromSyncResolution(
     
 internal record ValueTaskFromTaskResolution(
     Resolvable WrappedResolvable,
-    TaskTypeInitializationResolution Initialization,
+    TaskInitializationResolution Initialization,
     string ValueTaskReference,
     string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);
 internal record ValueTaskFromValueTaskResolution(
     Resolvable WrappedResolvable,
-    ValueTaskTypeInitializationResolution Initialization,
+    ValueTaskInitializationResolution Initialization,
     string ValueTaskReference,
     string ValueTaskFullName) : TaskBaseResolution(WrappedResolvable, ValueTaskReference, ValueTaskFullName);
 internal record ValueTaskFromSyncResolution(

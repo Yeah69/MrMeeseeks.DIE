@@ -9,6 +9,7 @@ internal interface IUserDefinedElements
     IMethodSymbol? AddForDisposalAsync { get; }
     IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type);
     IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type);
+    IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type);
 }
 
 internal class EmptyUserDefinedElements : IUserDefinedElements
@@ -20,6 +21,7 @@ internal class EmptyUserDefinedElements : IUserDefinedElements
     public IMethodSymbol? AddForDisposalAsync => null;
     public IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type) => null;
     public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) => null;
+    public IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type) => null;
 }
 
 internal class UserDefinedElements : IUserDefinedElements
@@ -29,6 +31,7 @@ internal class UserDefinedElements : IUserDefinedElements
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _typeToMethod;
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _constructorParametersInjectionMethods;
     private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _propertiesInjectionMethods;
+    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _initializerParametersInjectionMethods;
 
     public UserDefinedElements(
         // parameter
@@ -123,6 +126,8 @@ internal class UserDefinedElements : IUserDefinedElements
         _constructorParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedConstrParams, wellKnownTypesMiscellaneous.UserDefinedConstructorParametersInjectionAttribute);
         
         _propertiesInjectionMethods = GetInjectionMethods(Constants.UserDefinedProps, wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute);
+        
+        _initializerParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedInitParams, wellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute);
 
         if (validationErrors.Any())
             throw new ValidationDieException(validationErrors.ToImmutableArray());
@@ -193,4 +198,7 @@ internal class UserDefinedElements : IUserDefinedElements
 
     public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) =>
         _propertiesInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+
+    public IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type) => 
+        _initializerParametersInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
 }

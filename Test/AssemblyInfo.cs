@@ -11,9 +11,9 @@ using MrMeeseeks.DIE.Test;
 [assembly:AsyncTransientAbstractionAggregation(typeof(IAsyncTransient))]
 [assembly:DecoratorAbstractionAggregation(typeof(IDecorator<>))]
 [assembly:CompositeAbstractionAggregation(typeof(IComposite<>))]
-[assembly:TypeInitializer(typeof(ITypeInitializer), nameof(ITypeInitializer.Initialize))]
-[assembly:TypeInitializer(typeof(ITaskTypeInitializer), nameof(ITaskTypeInitializer.InitializeAsync))]
-[assembly:TypeInitializer(typeof(IValueTaskTypeInitializer), nameof(IValueTaskTypeInitializer.InitializeAsync))]
+[assembly:Initializer(typeof(IInitializer), nameof(IInitializer.Initialize))]
+[assembly:Initializer(typeof(ITaskInitializer), nameof(ITaskInitializer.InitializeAsync))]
+[assembly:Initializer(typeof(IValueTaskInitializer), nameof(IValueTaskInitializer.InitializeAsync))]
 
 [assembly:AllImplementationsAggregation]
 

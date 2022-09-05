@@ -14,9 +14,9 @@ using MrMeeseeks.DIE.Sample;
 [assembly:AsyncTransientAbstractionAggregation(typeof(IAsyncTransient))]
 [assembly:DecoratorAbstractionAggregation(typeof(IDecorator<>))]
 [assembly:CompositeAbstractionAggregation(typeof(IComposite<>))]
-[assembly:TypeInitializer(typeof(ITypeInitializer), nameof(ITypeInitializer.Initialize))]
-[assembly:TypeInitializer(typeof(ITaskTypeInitializer), nameof(ITaskTypeInitializer.InitializeAsync))]
-[assembly:TypeInitializer(typeof(IValueTaskTypeInitializer), nameof(IValueTaskTypeInitializer.InitializeAsync))]
+[assembly:Initializer(typeof(IInitializer), nameof(IInitializer.Initialize))]
+[assembly:Initializer(typeof(ITaskInitializer), nameof(ITaskInitializer.InitializeAsync))]
+[assembly:Initializer(typeof(IValueTaskInitializer), nameof(IValueTaskInitializer.InitializeAsync))]
 
 [assembly:AllImplementationsAggregation]
 
@@ -32,15 +32,15 @@ public interface ISyncTransient { }
 public interface IAsyncTransient { }
 public interface IDecorator<T> { }
 public interface IComposite<T> { }
-public interface ITypeInitializer
+public interface IInitializer
 {
     void Initialize();
 }
-public interface ITaskTypeInitializer
+public interface ITaskInitializer
 {
     Task InitializeAsync();
 }
-public interface IValueTaskTypeInitializer
+public interface IValueTaskInitializer
 {
     ValueTask InitializeAsync();
 }

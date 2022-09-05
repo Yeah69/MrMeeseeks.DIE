@@ -20,7 +20,7 @@ internal class OtherDependency
 internal sealed partial class Container
 {
     [UserDefinedConstructorParametersInjection(typeof(Dependency))]
-    private void DIE_ConstrParam_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
+    private void DIE_ConstrParams_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
 }
 
 public class Tests

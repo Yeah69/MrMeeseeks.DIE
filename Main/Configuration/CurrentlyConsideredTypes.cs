@@ -329,7 +329,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         foreach (var types in typesFromAttributes)
         {
             var filterInterfaceTypes = types
-                .FilterTypeInitializers
+                .FilterInitializers
                 .Where(t => t is { TypeKind: TypeKind.Interface} or { TypeKind: not TypeKind.Interface, IsAbstract: true});
 
             foreach (var interfaceType in filterInterfaceTypes)
@@ -338,7 +338,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                         initializers.Remove(concreteType.UnboundIfGeneric());
 
             var filterConcreteTypes = types
-                .FilterTypeInitializers
+                .FilterInitializers
                 .Where(t => t is { TypeKind: TypeKind.Class or TypeKind.Struct, IsAbstract: false })
                 .ToList();
             
@@ -346,7 +346,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 initializers.Remove(filterConcreteType.UnboundIfGeneric());
             
             var interfaceTypes = types
-                .TypeInitializers
+                .Initializers
                 .Where(t => t.Item1 is { TypeKind: TypeKind.Interface} or { TypeKind: not TypeKind.Interface, IsAbstract: true})
                 .ToList();
             
@@ -356,7 +356,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                         initializers[concreteType.UnboundIfGeneric()] = (tuple.Item1.UnboundIfGeneric(), tuple.Item2);
 
             var concreteTypes = types
-                .TypeInitializers
+                .Initializers
                 .Where(t => t.Item1 is { TypeKind: TypeKind.Class or TypeKind.Struct, IsAbstract: false })
                 .ToList();
             

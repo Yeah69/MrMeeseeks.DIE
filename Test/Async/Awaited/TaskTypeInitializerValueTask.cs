@@ -2,14 +2,14 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Async.Awaited.TaskTypeInitializerValueTask;
+namespace MrMeeseeks.DIE.Test.Async.Awaited.TaskInitializerValueTask;
 
 
-internal class Dependency : IValueTaskTypeInitializer
+internal class Dependency : IValueTaskInitializer
 {
     public bool IsInitialized { get; private set; }
     
-    async ValueTask IValueTaskTypeInitializer.InitializeAsync()
+    async ValueTask IValueTaskInitializer.InitializeAsync()
     {
         await Task.Delay(500).ConfigureAwait(false);
         IsInitialized = true;

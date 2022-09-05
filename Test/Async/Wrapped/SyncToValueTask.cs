@@ -4,11 +4,11 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.SyncToValueTask;
 
-internal class Dependency : ITypeInitializer
+internal class Dependency : IInitializer
 {
     public bool IsInitialized { get; private set; }
     
-    void ITypeInitializer.Initialize()
+    void IInitializer.Initialize()
     {
         IsInitialized = true;
     }

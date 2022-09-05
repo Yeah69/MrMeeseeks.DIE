@@ -25,18 +25,26 @@ public class UserDefinedPropertiesInjectionAttribute : Attribute
     }
 }
 
-[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
-public class TypeInitializerAttribute : Attribute
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+public class UserDefinedInitializerParametersInjectionAttribute : Attribute
 {
-    public TypeInitializerAttribute(Type type, string methodName)
+    public UserDefinedInitializerParametersInjectionAttribute(Type type)
+    {
+    }
+}
+
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class, AllowMultiple = true)]
+public class InitializerAttribute : Attribute
+{
+    public InitializerAttribute(Type type, string methodName)
     {
     }
 }
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class FilterTypeInitializerAttribute : Attribute
+public class FilterInitializerAttribute : Attribute
 {
-    public FilterTypeInitializerAttribute(Type type)
+    public FilterInitializerAttribute(Type type)
     {
     }
 }

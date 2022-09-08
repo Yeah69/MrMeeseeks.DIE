@@ -76,27 +76,21 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 .AppendLine("}");
         }
         
-        var returnType = _containerResolution.DisposalType switch
-        { 
-            DisposalType.Async => $"async {WellKnownTypes.ValueTask.FullName()}",
-            _ => "void"
-        };
+        var returnType = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
+            ? $"async {WellKnownTypes.ValueTask.FullName()}"
+            : "void";
 
-        var asyncSuffix = _containerResolution.DisposalType switch
-        {
-            DisposalType.Async => "Async",
-            _ => ""
-        };
+        var asyncSuffix = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
+            ? "Async"
+            : "";
 
-        var awaitPrefix = _containerResolution.DisposalType switch
-        {
-            DisposalType.Async => "await ",
-            _ => ""
-        };
+        var awaitPrefix = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
+            ? "await "
+            : "";
 
         stringBuilder = GenerateDisposalFunction_TransientScopeDictionary(stringBuilder);
             
-        if (_containerResolution.DisposalType == DisposalType.Async)
+        if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
         {
             stringBuilder = stringBuilder.AppendLine(
                 $"private {disposalHandling.AsyncDisposableCollection.TypeFullName} {disposalHandling.AsyncDisposableCollection.Reference} = new {disposalHandling.AsyncDisposableCollection.TypeFullName}();");
@@ -121,7 +115,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
         stringBuilder = GenerateDisposalFunction_TransientScopeDisposal(stringBuilder);
 
-        if (_containerResolution.DisposalType == DisposalType.Async)
+        if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
         {
             stringBuilder = stringBuilder
                 .AppendLine(
@@ -164,7 +158,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         stringBuilder = stringBuilder
             .AppendLine($"}}")
             .AppendLine($"}}");
-        if (_containerResolution.DisposalType == DisposalType.Sync)
+        if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync) 
+            && !_containerResolution.DisposalType.HasFlag(DisposalType.Async))
             stringBuilder = stringBuilder
                 .AppendLine($"public {WellKnownTypes.ValueTask.FullName()} DisposeAsync()")
                 .AppendLine($"{{")
@@ -345,7 +340,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     .AppendLine($"{transientScopeTypeFullName} {transientScopeReference} = new {transientScopeTypeFullName}({containerInstanceScopeReference});");
                 if (_containerResolution.DisposalType is not DisposalType.None)
                 {
-                    var disposalType = _containerResolution.DisposalType is DisposalType.Async 
+                    var disposalType = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
                         ? WellKnownTypes.AsyncDisposable.FullName()
                         : WellKnownTypes.Disposable.FullName();
                     stringBuilder = stringBuilder
@@ -357,9 +352,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case ScopeRootResolution(var scopeReference, var scopeTypeFullName, var containerInstanceScopeReference, var transientInstanceScopeReference, var createFunctionCall):
                 stringBuilder = stringBuilder
                     .AppendLine($"{scopeTypeFullName} {scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});");
-                if (_containerResolution.DisposalType is DisposalType.Async)
+                if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
                     stringBuilder = stringBuilder.AppendLine($"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.AsyncDisposable.FullName()}) {scopeReference});");
-                if (_containerResolution.DisposalType is DisposalType.Sync)
+                else if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync))
                     stringBuilder = stringBuilder.AppendLine($"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});");
                 stringBuilder = GenerateResolutions(stringBuilder, createFunctionCall);
                 break;
@@ -368,23 +363,21 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder.AppendLine(
                     $"{typeFullName} {reference} = ({typeFullName}) {resolutionBase.Reference};");              
                 break;
-            case TransientScopeAsDisposableResolution(var reference, var typeFullName):
-                stringBuilder = _containerResolution.DisposalType switch
-                {
-                    DisposalType.Async => throw new Exception("If the container disposal has to be async, then sync disposal handles in transient scopes are not allowed."),
-                    DisposalType.Sync => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;"),
-                    DisposalType.None => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) {_containerResolution.NopDisposable.ClassName}.{_containerResolution.NopDisposable.InstanceReference};"),
-                    _ => stringBuilder
-                };
+            case TransientScopeAsSyncDisposableResolution(var reference, var typeFullName):
+                if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
+                    throw new Exception("If the container disposal has to be async, then sync disposal handles in transient scopes are not allowed.");
+                else if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync))
+                    stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;");
+                else
+                    stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) {_containerResolution.NopDisposable.ClassName}.{_containerResolution.NopDisposable.InstanceReference};");
                 break;
             case TransientScopeAsAsyncDisposableResolution(var reference, var typeFullName):
-                stringBuilder = _containerResolution.DisposalType switch
-                {
-                    DisposalType.Async => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;"),
-                    DisposalType.Sync => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable.ClassName}(({WellKnownTypes.Disposable.FullName()}) this);"),
-                    DisposalType.None => stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable.ClassName}.{_containerResolution.NopAsyncDisposable.InstanceReference};"),
-                    _ => stringBuilder
-                };
+                if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
+                    stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;");
+                else if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync))
+                    stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable.ClassName}(({WellKnownTypes.Disposable.FullName()}) this);");
+                else
+                    stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable.ClassName}.{_containerResolution.NopAsyncDisposable.InstanceReference};");
                 break;
             case OutParameterResolution(var reference, var typeFullName):
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference};");      
@@ -418,16 +411,13 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     : "";
                 stringBuilder = stringBuilder.AppendLine(
                     $"{typeFullName} {reference} = new {typeFullName}({constructorParameter}){objectInitializerParameter};");
-                if (disposalType is not DisposalType.None)
-                {
-                    var interfaceType = disposalType is DisposalType.Sync
-                        ? WellKnownTypes.Disposable.FullName()
-                        : WellKnownTypes.AsyncDisposable.FullName();
-                    var disposableCollectionReference = disposalType is DisposalType.Sync
-                        ? _rangeResolution.DisposalHandling.SyncDisposableCollection.Reference
-                        : _rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference;
-                    stringBuilder = stringBuilder.AppendLine($"{disposableCollectionReference}.Add(({interfaceType}) {reference});");
-                }
+                
+                if (disposalType.HasFlag(DisposalType.Async))
+                    stringBuilder = stringBuilder.AppendLine(
+                        $"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.AsyncDisposable.FullName()}) {reference});");
+                if (disposalType.HasFlag(DisposalType.Sync))
+                    stringBuilder = stringBuilder.AppendLine(
+                        $"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {reference});");
 
                 if (initialization is { Parameters: {} initParameters })
                 {

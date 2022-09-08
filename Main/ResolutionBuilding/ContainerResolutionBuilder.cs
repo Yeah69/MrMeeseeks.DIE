@@ -124,10 +124,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 _transientScopeAdapterReference,
                 currentParameters);
 
-    public override void RegisterDisposalType(DisposalType disposalType)
-    {
-        if (disposalType > _disposalType) _disposalType = disposalType;
-    }
+    public override void RegisterDisposalType(DisposalType disposalType) => _disposalType |= disposalType;
 
     public bool HasWorkToDo =>
         _rootResolutions.Any(r => r.CreateFunction.HasWorkToDo)    

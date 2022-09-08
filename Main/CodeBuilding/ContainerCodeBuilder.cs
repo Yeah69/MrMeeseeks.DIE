@@ -20,7 +20,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         if (_containerResolution.DisposalType is DisposalType.None)
             return stringBuilder;
 
-        var dictionaryTypeName = _containerResolution.DisposalType is DisposalType.Async
+        var dictionaryTypeName = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
             ? WellKnownTypes.ConcurrentDictionaryOfAsyncDisposable.FullName()
             : WellKnownTypes.ConcurrentDictionaryOfSyncDisposable.FullName();
 
@@ -37,8 +37,8 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 
         var elementName = _containerResolution.TransientScopeDisposalElement;
 
-        var asyncSuffix = _containerResolution.DisposalType is DisposalType.Async ? "Async" : "";
-        var awaitPrefix = _containerResolution.DisposalType is DisposalType.Async ? "await " : "";
+        var asyncSuffix = _containerResolution.DisposalType.HasFlag(DisposalType.Async) ? "Async" : "";
+        var awaitPrefix = _containerResolution.DisposalType.HasFlag(DisposalType.Async) ? "await " : "";
 
         stringBuilder
             .AppendLine($"while ({_containerResolution.TransientScopeDisposalReference}.Count > 0)")
@@ -58,11 +58,9 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
-        var disposableImplementation = _containerResolution.DisposalType switch
-        {
-            DisposalType.Async => $" : {WellKnownTypes.AsyncDisposable.FullName()}",
-            _ => $" : {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}"
-        };
+        var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
+            ? $" : {WellKnownTypes.AsyncDisposable.FullName()}"
+            : $" : {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}";
         
         stringBuilder = stringBuilder
             .AppendLine($"#nullable enable")

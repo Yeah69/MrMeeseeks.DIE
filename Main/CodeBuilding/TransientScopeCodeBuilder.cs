@@ -20,7 +20,7 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
         if (_containerResolution.DisposalType is DisposalType.None)
             return stringBuilder;
 
-        var disposalType = _containerResolution.DisposalType is DisposalType.Async 
+        var disposalType = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
             ? WellKnownTypes.AsyncDisposable.FullName() 
             : WellKnownTypes.Disposable.FullName();
 
@@ -34,11 +34,9 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
-        var disposableImplementation = _containerResolution.DisposalType switch
-        {
-            DisposalType.Async => $", {WellKnownTypes.AsyncDisposable.FullName()}",
-            _ => $", {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}"
-        };
+        var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
+            ? $", {WellKnownTypes.AsyncDisposable.FullName()}" 
+            : $", {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}";
         
         stringBuilder = stringBuilder
             .AppendLine($"private partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}{disposableImplementation}")

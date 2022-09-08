@@ -10,11 +10,12 @@ internal enum ScopeLevel
     Container
 }
 
+[Flags]
 internal enum DisposalType
 {
-    None,
-    Sync,
-    Async
+    None = 0,
+    Sync = 1,
+    Async = 2
 }
 
 internal interface ICheckTypeProperties
@@ -52,16 +53,18 @@ internal class CheckTypeProperties : ICheckTypeProperties
     {
         if (implementationType.TypeKind is TypeKind.Struct or TypeKind.Structure)
             return DisposalType.None;
+
+        var ret = DisposalType.None;
         
         if (implementationType.AllInterfaces.Contains(_wellKnownTypes.AsyncDisposable)
             && !_currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
-            return DisposalType.Async;
+            ret |= DisposalType.Async;
         
         if (implementationType.AllInterfaces.Contains(_wellKnownTypes.Disposable)
             && !_currentlyConsideredTypes.SyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
-            return DisposalType.Sync;
+            ret |= DisposalType.Sync;
         
-        return DisposalType.None;
+        return ret;
     }
 
     public ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType)

@@ -1099,7 +1099,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
             if (isTransientScopeRoot
                 && typeSymbol.Equals(_wellKnownTypes.Disposable, SymbolEqualityComparer.Default))
-                return (parameterName, new TransientScopeAsDisposableResolution(
+                return (parameterName, new TransientScopeAsSyncDisposableResolution(
                     RootReferenceGenerator.Generate(_wellKnownTypes.Disposable),
                     _wellKnownTypes.Disposable.FullName()));
 

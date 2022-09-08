@@ -54,7 +54,7 @@ internal record RangedInstanceFunctionGroupResolution(
     string? IsCreatedForStructs,
     bool IsTransientScopeInstance);
 
-internal record TransientScopeAsDisposableResolution(
+internal record TransientScopeAsSyncDisposableResolution(
     string Reference,
     string TypeFullName) : Resolvable(Reference, TypeFullName);
 

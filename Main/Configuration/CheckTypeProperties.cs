@@ -272,14 +272,17 @@ internal class CheckTypeProperties : ICheckTypeProperties
         var ret = new List<INamedTypeSymbol>();
         foreach (var implementation in rawImplementations)
         {
-            if (!implementation.IsGenericType || implementation.TypeArguments.All(ta => ta is INamedTypeSymbol and not IErrorTypeSymbol))
-            {
-                AddImplementation(ret, implementation);
-                continue;
-            }
-
             var unboundImplementation = implementation.UnboundIfGeneric();
             var originalImplementation = implementation.OriginalDefinitionIfUnbound();
+
+            if (!implementation.IsGenericType || implementation.TypeArguments.All(ta => ta is INamedTypeSymbol and not IErrorTypeSymbol))
+            {
+                if (originalImplementation.AllDerivedTypesAndSelf()
+                    .FirstOrDefault(t =>
+                        SymbolEqualityComparer.Default.Equals(t, targetType)) is { })
+                    AddImplementation(ret, implementation);
+                continue;
+            }
 
             if (originalImplementation.AllDerivedTypesAndSelf()
                     .FirstOrDefault(t =>

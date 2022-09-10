@@ -15,14 +15,20 @@ internal class ReferenceGenerator : IReferenceGenerator
 
     internal ReferenceGenerator(int j) => _j = j;
 
-    public string Generate(ITypeSymbol type) => 
-        GenerateInner(
-            string.Empty, 
-            type.Name is { Length: > 1 }
-                ? $"{char.ToLower(type.Name[0])}{type.Name.Substring(1)}" 
-                : "empty", // todo warning type without name seems strange
-            string.Empty);
-    
+    public string Generate(ITypeSymbol type)
+    {
+        var baseName = type switch
+        {
+            INamedTypeSymbol namedTypeSymbol => 
+                $"{char.ToLower(namedTypeSymbol.Name[0])}{namedTypeSymbol.Name.Substring(1)}",
+            IArrayTypeSymbol { ElementType: {} elementType } => 
+                $"{char.ToLower(elementType.Name[0])}{elementType.Name.Substring(1)}Array",
+            _ => "empty" // todo warning type without name seems strange
+        };
+        
+        return GenerateInner(string.Empty, baseName, string.Empty);
+    }
+
     public string Generate(string prefix, ITypeSymbol type) =>
         GenerateInner(prefix, type.Name, string.Empty);
 

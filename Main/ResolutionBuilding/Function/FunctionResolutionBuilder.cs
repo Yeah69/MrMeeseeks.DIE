@@ -45,8 +45,8 @@ internal class FunctionResolutionSynchronicityDecisionMaker : IFunctionResolutio
 
 internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResolution>
 {
-    INamedTypeSymbol OriginalReturnType { get; }
-    INamedTypeSymbol? ActualReturnType { get; }
+    ITypeSymbol OriginalReturnType { get; }
+    ITypeSymbol? ActualReturnType { get; }
     IReadOnlyList<ParameterResolution> Parameters { get; }
     IReadOnlyList<(ITypeSymbol, ParameterResolution)> CurrentParameters { get; }
     
@@ -81,13 +81,13 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     
     public IReadOnlyList<ParameterResolution> Parameters { get; }
     
-    public INamedTypeSymbol OriginalReturnType { get; }
-    public INamedTypeSymbol? ActualReturnType { get; protected set; }
+    public ITypeSymbol OriginalReturnType { get; }
+    public ITypeSymbol? ActualReturnType { get; protected set; }
 
     internal FunctionResolutionBuilder(
         // parameters
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-        INamedTypeSymbol returnType,
+        ITypeSymbol returnType,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         object handleIdentity,
@@ -363,17 +363,17 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 .Select(ts => (Type: ts, Resolution: new ParameterResolution(RootReferenceGenerator.Generate(ts), ts.FullName())))
                 .ToArray();
 
-            var setOfProcessedTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.IncludeNullability);
+            var setOfProcessedTypes = new HashSet<ITypeSymbol>(SymbolEqualityComparer.IncludeNullability);
 
             var nextCurrentParameters = currentFuncParameters;
             
             foreach (var lambdaParameter in lambdaParameters)
             {
                 if (setOfProcessedTypes.Contains(lambdaParameter.Type, SymbolEqualityComparer.IncludeNullability)
-                    || lambdaParameter.Type is not INamedTypeSymbol lambdaType)
+                    || lambdaParameter.Type is not INamedTypeSymbol && lambdaParameter.Type is not IArrayTypeSymbol)
                     continue;
 
-                setOfProcessedTypes.Add(lambdaType);
+                setOfProcessedTypes.Add(lambdaParameter.Type);
 
                 nextCurrentParameters = nextCurrentParameters.SetItem(lambdaParameter.Type.FullName(), lambdaParameter);
             }
@@ -389,25 +389,34 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
         if (type.OriginalDefinition.Equals(_wellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
             || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
-            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default))
+            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default)
+            || type is IArrayTypeSymbol)
         {
-            if (type is not INamedTypeSymbol collectionType)
+            if (type is not INamedTypeSymbol && type is not IArrayTypeSymbol)
             {
                 return (
                     new ErrorTreeItem(Diagnostics.CompilationError(
                         ErrorMessage(implementationStack, type, "Collection: Collection is not a named type symbol"), _rangeResolutionBaseBuilder.ErrorContext.Location)),
                     null);
             }
-            if (collectionType.TypeArguments.SingleOrDefault() is not INamedTypeSymbol wrappedType)
+
+            INamedTypeSymbol wrappedType;
+            switch (type)
             {
-                return (new ErrorTreeItem(Diagnostics.CompilationError(collectionType.TypeArguments.Length switch
-                    {
-                        0 => ErrorMessage(implementationStack, type, "Collection: No item type argument"),
-                        >1 => ErrorMessage(implementationStack, type, "Collection: More than one item type argument"),
-                        _ => ErrorMessage(implementationStack, type, $"Collection: {collectionType.TypeArguments[0].FullName()} is not a named type symbol")
-                    }, _rangeResolutionBaseBuilder.ErrorContext.Location)),
-                    null);
+                case INamedTypeSymbol collectionType
+                    when collectionType.TypeArguments.SingleOrDefault() is INamedTypeSymbol innerType:
+                    wrappedType = innerType;
+                    break;
+                case IArrayTypeSymbol { ElementType: INamedTypeSymbol innerType1 }:
+                    wrappedType = innerType1;
+                    break;
+                default:
+                    return (new ErrorTreeItem(Diagnostics.CompilationError(
+                            "Collection: Item type couldn't be determined", 
+                            _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                        null);
             }
+
             ITypeSymbol wrappedItemTypeSymbol = wrappedType;
             ITypeSymbol unwrappedItemTypeSymbol = wrappedType;
             TaskType? taskType = null;
@@ -1109,7 +1118,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     RootReferenceGenerator.Generate(_wellKnownTypes.AsyncDisposable),
                     _wellKnownTypes.AsyncDisposable.FullName()));
             
-            if (typeSymbol is not INamedTypeSymbol parameterType)
+            if (typeSymbol is not INamedTypeSymbol && typeSymbol is not IArrayTypeSymbol)
                 return ("",
                     new ErrorTreeItem(Diagnostics.CompilationError(
                         ErrorMessage(implementationStack, typeSymbol, $"Class.Constructor.Parameter: Parameter type {typeSymbol.FullName()} is not a named type symbol"), _rangeResolutionBaseBuilder.ErrorContext.Location)));
@@ -1117,7 +1126,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             return (
                 parameterName,
                 SwitchType(new SwitchTypeParameter(
-                    parameterType,
+                    typeSymbol,
                     currParameter,
                     implementationStack)).Item1);
         }

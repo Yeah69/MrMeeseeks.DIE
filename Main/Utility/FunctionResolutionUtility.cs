@@ -6,7 +6,7 @@ internal static class FunctionResolutionUtility
 {
     internal static T GetOrCreateFunction<T>(
         IDictionary<string, T> functionMap, 
-        INamedTypeSymbol type, 
+        ITypeSymbol type, 
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         Func<T> functionFactory) 
         where T : IFunctionResolutionBuilder

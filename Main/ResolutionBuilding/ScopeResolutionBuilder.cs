@@ -43,7 +43,7 @@ internal class ScopeResolutionBuilder : RangeResolutionBaseBuilder, IScopeResolu
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
         Func<
             IRangeResolutionBaseBuilder, 
-            INamedTypeSymbol, 
+            ITypeSymbol, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
             string,
             ICreateFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 

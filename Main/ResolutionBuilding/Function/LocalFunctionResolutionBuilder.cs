@@ -6,13 +6,13 @@ internal interface ICreateFunctionResolutionBuilder : IFunctionResolutionBuilder
 
 internal class CreateFunctionResolutionBuilder : FunctionResolutionBuilder, ICreateFunctionResolutionBuilder
 {
-    private readonly INamedTypeSymbol _returnType;
+    private readonly ITypeSymbol _returnType;
     private readonly string _accessModifier;
 
     public CreateFunctionResolutionBuilder(
         // parameter
         IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-        INamedTypeSymbol returnType,
+        ITypeSymbol returnType,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters,
         IFunctionResolutionSynchronicityDecisionMaker synchronicityDecisionMaker,
         string accessModifier,

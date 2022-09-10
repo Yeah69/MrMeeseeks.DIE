@@ -5,7 +5,7 @@ namespace MrMeeseeks.DIE.ResolutionBuilding;
 
 internal interface IContainerResolutionBuilder : IRangeResolutionBaseBuilder, IResolutionBuilder<ContainerResolution>
 {
-    void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData);
+    void AddCreateResolveFunctions(IReadOnlyList<(ITypeSymbol, string)> createFunctionData);
 
     MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(
         ForConstructorParameter parameter,
@@ -40,7 +40,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
         Func<
             IRangeResolutionBaseBuilder, 
-            INamedTypeSymbol, 
+            ITypeSymbol, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
             string,
             ICreateFunctionResolutionBuilder> localFunctionResolutionBuilderFactory,
@@ -70,7 +70,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
             containerInfo.ContainerType.Locations.FirstOrDefault() ?? Location.None);
     }
 
-    public void AddCreateResolveFunctions(IReadOnlyList<(INamedTypeSymbol, string)> createFunctionData)
+    public void AddCreateResolveFunctions(IReadOnlyList<(ITypeSymbol, string)> createFunctionData)
     {
         foreach (var (typeSymbol, methodNamePrefix) in createFunctionData)
             _rootResolutions.Add((CreateCreateFunctionResolution(

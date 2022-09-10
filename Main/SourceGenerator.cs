@@ -221,7 +221,7 @@ public class SourceGenerator : ISourceGenerator
 
             ICreateFunctionResolutionBuilder CreateFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
-                INamedTypeSymbol returnType,
+                ITypeSymbol returnType,
                 ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> parameters,
                 string accessModifier) => new CreateFunctionResolutionBuilder(
                 rangeResolutionBaseBuilder,

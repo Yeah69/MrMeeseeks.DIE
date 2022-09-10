@@ -33,7 +33,7 @@ internal interface IRangeResolutionBaseBuilder
     void RegisterDisposalType(DisposalType disposalType);
 
     IFunctionResolutionBuilder CreateCreateFunctionResolution(
-        INamedTypeSymbol type,
+        ITypeSymbol type,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         string accessModifier);
 }
@@ -51,7 +51,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
     private readonly Func<string, string?, INamedTypeSymbol, string, IRangeResolutionBaseBuilder, bool, IRangedFunctionGroupResolutionBuilder> _rangedFunctionGroupResolutionBuilderFactory;
     private readonly Func<
         IRangeResolutionBaseBuilder, 
-        INamedTypeSymbol,
+        ITypeSymbol,
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>,
         string,
         ICreateFunctionResolutionBuilder> _localFunctionResolutionBuilderFactory;
@@ -78,7 +78,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
         Func<
             IRangeResolutionBaseBuilder, 
-            INamedTypeSymbol, 
+            ITypeSymbol, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
             string,
             ICreateFunctionResolutionBuilder> localFunctionResolutionBuilderFactory)
@@ -124,7 +124,7 @@ internal abstract class RangeResolutionBaseBuilder : IRangeResolutionBaseBuilder
 
     public abstract void RegisterDisposalType(DisposalType disposalType);
     public IFunctionResolutionBuilder CreateCreateFunctionResolution(
-        INamedTypeSymbol type, 
+        ITypeSymbol type, 
         ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)> currentParameters,
         string accessModifier) =>
         FunctionResolutionUtility.GetOrCreateFunction(

@@ -40,7 +40,7 @@ internal class TransientScopeResolutionBuilder : RangeResolutionBaseBuilder, ITr
         Func<IFunctionResolutionSynchronicityDecisionMaker> synchronicityDecisionMakerFactory, 
         Func<
             IRangeResolutionBaseBuilder, 
-            INamedTypeSymbol, 
+            ITypeSymbol, 
             ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>, 
             string,
             ICreateFunctionResolutionBuilder> localFunctionResolutionBuilderFactory) 

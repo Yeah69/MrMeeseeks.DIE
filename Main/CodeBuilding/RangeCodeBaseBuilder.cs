@@ -5,7 +5,9 @@ namespace MrMeeseeks.DIE.CodeBuilding;
 
 internal interface IRangeCodeBaseBuilder
 {
-    StringBuilder Build(StringBuilder stringBuilder);
+    StringBuilder BuildGeneral(StringBuilder stringBuilder);
+    StringBuilder BuildCreateFunction(StringBuilder stringBuilder, FunctionResolution functionResolution);
+    StringBuilder BuildRangedFunction(StringBuilder stringBuilder, RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution);
 }
 
 internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
@@ -28,10 +30,6 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         StringBuilder stringBuilder,
         RangeResolution rangeResolution)
     {
-        stringBuilder = rangeResolution.RangedInstanceFunctionGroups.Aggregate(stringBuilder, GenerateRangedInstanceFunction);
-
-        stringBuilder =  rangeResolution.CreateFunctions.Aggregate(stringBuilder, GenerateResolutionFunction);
-
         if (_rangeResolution.AddForDisposal is { } addForDisposalMethod)
         {
             stringBuilder = stringBuilder
@@ -170,7 +168,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         return stringBuilder;
     }
 
-    private StringBuilder GenerateResolutionFunction(
+    protected StringBuilder GenerateResolutionFunction(
         StringBuilder stringBuilder,
         FunctionResolution resolution)
     {
@@ -476,7 +474,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
     private StringBuilder ObjectDisposedCheck(StringBuilder stringBuilder, string returnTypeFullName) => stringBuilder
         .AppendLine($"if (this.{_rangeResolution.DisposalHandling.DisposedPropertyReference}) throw new {WellKnownTypes.ObjectDisposedException}(\"{_rangeResolution.DisposalHandling.RangeName}\", $\"[DIE] This scope \\\"{_rangeResolution.DisposalHandling.RangeName}\\\" is already disposed, so it can't create a \\\"{returnTypeFullName}\\\" instance anymore.\");");
 
-    private StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution)
+    protected StringBuilder GenerateRangedInstanceFunction(StringBuilder stringBuilder, RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution)
     {
         var isRefType = rangedInstanceFunctionGroupResolution.IsCreatedForStructs is null;
         stringBuilder = stringBuilder
@@ -543,5 +541,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         return stringBuilder;
     }
 
-    public abstract StringBuilder Build(StringBuilder stringBuilder);
+    public abstract StringBuilder BuildGeneral(StringBuilder stringBuilder);
+    public abstract StringBuilder BuildCreateFunction(StringBuilder stringBuilder, FunctionResolution functionResolution);
+
+    public abstract StringBuilder BuildRangedFunction(
+        StringBuilder stringBuilder,
+        RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution);
 }

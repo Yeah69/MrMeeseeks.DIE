@@ -245,6 +245,13 @@ internal record TransientScopeInterfaceResolution(
     string Name,
     string ContainerAdapterName);
 
+internal interface IRangeResolution
+{
+    string Name { get; }
+    IReadOnlyList<CreateFunctionResolution> CreateFunctions { get; }
+    IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups { get; }
+}
+
 internal record ScopeResolution(
     IReadOnlyList<CreateFunctionResolution> CreateFunctions,
     DisposalHandling DisposalHandling,
@@ -262,7 +269,7 @@ internal record ScopeResolution(
         RangedInstanceFunctionGroups, 
         ContainerReference,
         AddForDisposal,
-        AddForDisposalAsync);
+        AddForDisposalAsync), IRangeResolution;
 
 internal record TransientScopeResolution(
     IReadOnlyList<CreateFunctionResolution> CreateFunctions,
@@ -279,31 +286,34 @@ internal record TransientScopeResolution(
         RangedInstanceFunctionGroups, 
         ContainerReference,
         AddForDisposal,
-        AddForDisposalAsync);
+        AddForDisposalAsync), IRangeResolution;
 
 internal record ContainerResolution(
-    IReadOnlyList<CreateFunctionResolution> CreateFunctions,
-    DisposalHandling DisposalHandling,
-    IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
-    TransientScopeInterfaceResolution TransientScopeInterface,
-    string TransientScopeAdapterReference,
-    IReadOnlyList<TransientScopeResolution> TransientScopes,
-    IReadOnlyList<ScopeResolution> Scopes,
-    DisposalType DisposalType,
-    string TransientScopeDisposalReference,
-    string TransientScopeDisposalElement,
-    NopDisposable NopDisposable,
-    NopAsyncDisposable NopAsyncDisposable,
-    SyncToAsyncDisposable SyncToAsyncDisposable,
-    IMethodSymbol? AddForDisposal,
-    IMethodSymbol? AddForDisposalAsync)
+        IReadOnlyList<CreateFunctionResolution> CreateFunctions,
+        DisposalHandling DisposalHandling,
+        IReadOnlyList<RangedInstanceFunctionGroupResolution> RangedInstanceFunctionGroups,
+        TransientScopeInterfaceResolution TransientScopeInterface,
+        string TransientScopeAdapterReference,
+        IReadOnlyList<TransientScopeResolution> TransientScopes,
+        IReadOnlyList<ScopeResolution> Scopes,
+        DisposalType DisposalType,
+        string TransientScopeDisposalReference,
+        string TransientScopeDisposalElement,
+        NopDisposable NopDisposable,
+        NopAsyncDisposable NopAsyncDisposable,
+        SyncToAsyncDisposable SyncToAsyncDisposable,
+        IMethodSymbol? AddForDisposal,
+        IMethodSymbol? AddForDisposalAsync)
     : RangeResolution(
         CreateFunctions,
-        DisposalHandling, 
-        RangedInstanceFunctionGroups, 
+        DisposalHandling,
+        RangedInstanceFunctionGroups,
         Constants.ThisKeyword,
         AddForDisposal,
-        AddForDisposalAsync);
+        AddForDisposalAsync), IRangeResolution
+{
+    public string Name => "Container";
+};
 
 internal record NopDisposable(
     string ClassName,

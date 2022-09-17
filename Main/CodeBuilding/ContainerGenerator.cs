@@ -30,31 +30,42 @@ internal class ContainerGenerator : IContainerGenerator
     public void Generate(IContainerInfo containerInfo, ContainerResolution containerResolution)
     {
         var containerCodeBuilder = _containerCodeBuilderFactory(containerInfo, containerResolution);
-
-        var generatedContainer = containerCodeBuilder.Build(new StringBuilder());
         
-        RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", generatedContainer);
-
-        generatedContainer.Clear();
+        GenerateRange(containerCodeBuilder, containerResolution);
         
-        foreach (var transientScopeCodeBuilder in containerResolution.TransientScopes.Select(ts => _transientScopeCodeBuilderFactory(containerInfo, ts, containerResolution)).ToList())
+        foreach (var transientScopeResolution in containerResolution.TransientScopes)
         {
-            var generatedTransientScope = transientScopeCodeBuilder.Build(new StringBuilder());
-            
-            RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{transientScopeCodeBuilder.TransientScopeResolution.Name}.g.cs", generatedTransientScope);
-
-            generatedTransientScope.Clear();
+            var transientScopeCodeBuilder = _transientScopeCodeBuilderFactory(containerInfo, transientScopeResolution, containerResolution);
+            GenerateRange(transientScopeCodeBuilder, transientScopeResolution);
         }
         
-        foreach (var scopeCodeBuilder in containerResolution.Scopes.Select(s => _scopeCodeBuilderFactory(containerInfo, s, containerResolution.TransientScopeInterface, containerResolution)).ToList())
+        foreach (var scopeResolution in containerResolution.Scopes)
         {
-            var generatedTransientScope = scopeCodeBuilder.Build(new StringBuilder());
-            
-            RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{scopeCodeBuilder.ScopeResolution.Name}.g.cs", generatedTransientScope);
-
-            generatedTransientScope.Clear();
+            var scopeCodeBuilder = _scopeCodeBuilderFactory(containerInfo, scopeResolution, containerResolution.TransientScopeInterface, containerResolution);
+            GenerateRange(scopeCodeBuilder, scopeResolution);
         }
 
+        void GenerateRange(IRangeCodeBaseBuilder rangeCodeBaseBuilder, IRangeResolution rangeResolution)
+        {
+            var generatedGeneral = rangeCodeBaseBuilder.BuildGeneral(new StringBuilder());
+            RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{rangeResolution.Name}.g.cs", generatedGeneral);
+            generatedGeneral.Clear();
+        
+            foreach (var createFunction in rangeResolution.CreateFunctions)
+            {
+                var generatedCreateFunction = rangeCodeBaseBuilder.BuildCreateFunction(new StringBuilder(), createFunction);
+                RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{rangeResolution.Name}.{createFunction.Reference}.g.cs", generatedCreateFunction);
+                generatedCreateFunction.Clear();
+            }
+        
+            foreach (var rangedInstanceFunctionGroup in rangeResolution.RangedInstanceFunctionGroups)
+            {
+                var generatedInstanceFunctionGroupFunction = rangeCodeBaseBuilder.BuildRangedFunction(new StringBuilder(), rangedInstanceFunctionGroup);
+                RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{rangeResolution.Name}.{rangedInstanceFunctionGroup.Overloads[0].Reference}.g.cs", generatedInstanceFunctionGroupFunction);
+                generatedInstanceFunctionGroupFunction.Clear();
+            }
+        }
+        
         void RenderSourceFile(string fileName, StringBuilder compiledCode)
         {
             var containerSource = CSharpSyntaxTree

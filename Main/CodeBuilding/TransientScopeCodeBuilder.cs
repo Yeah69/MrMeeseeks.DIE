@@ -4,14 +4,15 @@ namespace MrMeeseeks.DIE.CodeBuilding;
 
 internal interface ITransientScopeCodeBuilder : IRangeCodeBaseBuilder
 {
-    
+    public TransientScopeResolution TransientScopeResolution { get; }
 }
 
 internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScopeCodeBuilder
 {
     private readonly IContainerInfo _containerInfo;
-    private readonly TransientScopeResolution _transientScopeResolution;
     private readonly ContainerResolution _containerResolution;
+    
+    public TransientScopeResolution TransientScopeResolution { get; }
 
     protected override StringBuilder GenerateDisposalFunction_TransientScopeDictionary(StringBuilder stringBuilder) => stringBuilder;
 
@@ -25,7 +26,7 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
             : WellKnownTypes.Disposable.FullName();
 
         stringBuilder
-            .AppendLine($"{_transientScopeResolution.ContainerReference}.{_containerResolution.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
+            .AppendLine($"{TransientScopeResolution.ContainerReference}.{_containerResolution.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
 
         return stringBuilder;
     }
@@ -34,28 +35,38 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
 
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
-        var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
-            ? $", {WellKnownTypes.AsyncDisposable.FullName()}" 
+        var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
+            ? $", {WellKnownTypes.AsyncDisposable.FullName()}"
             : $", {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}";
         
         stringBuilder = stringBuilder
-            .AppendLine($"private partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}{disposableImplementation}")
+            .AppendLine($"#nullable enable")
+            .AppendLine($"namespace {_containerInfo.Namespace}")
             .AppendLine($"{{")
-            .AppendLine($"private readonly {_containerInfo.FullName} {_transientScopeResolution.ContainerReference};")
-            .AppendLine($"internal {_transientScopeResolution.Name}(")
-            .AppendLine($"{_containerInfo.FullName} {_transientScopeResolution.ContainerParameterReference})")
+            .AppendLine($"partial class {_containerInfo.Name}")
+            .AppendLine($"{{");
+        
+        stringBuilder = stringBuilder
+            .AppendLine($"private partial class {TransientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}{disposableImplementation}")
             .AppendLine($"{{")
-            .AppendLine($"{_transientScopeResolution.ContainerReference} = {_transientScopeResolution.ContainerParameterReference};")
+            .AppendLine($"private readonly {_containerInfo.FullName} {TransientScopeResolution.ContainerReference};")
+            .AppendLine($"internal {TransientScopeResolution.Name}(")
+            .AppendLine($"{_containerInfo.FullName} {TransientScopeResolution.ContainerParameterReference})")
+            .AppendLine($"{{")
+            .AppendLine($"{TransientScopeResolution.ContainerReference} = {TransientScopeResolution.ContainerParameterReference};")
             .AppendLine($"}}");
 
         stringBuilder = GenerateResolutionRange(
             stringBuilder,
-            _transientScopeResolution);
+            TransientScopeResolution);
 
         stringBuilder = stringBuilder
             .AppendLine($"}}");
-
-        return stringBuilder;
+        
+        return stringBuilder
+            .AppendLine($"}}")
+            .AppendLine($"}}")
+            .AppendLine($"#nullable disable");
     }
 
     public TransientScopeCodeBuilder(
@@ -69,7 +80,7 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
         : base(transientScopeResolution, containerResolution, wellKnownTypes)
     {
         _containerInfo = containerInfo;
-        _transientScopeResolution = transientScopeResolution;
+        TransientScopeResolution = transientScopeResolution;
         _containerResolution = containerResolution;
     }
 }

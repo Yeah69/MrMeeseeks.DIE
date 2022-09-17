@@ -12,8 +12,6 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 {
     private readonly IContainerInfo _containerInfo;
     private readonly ContainerResolution _containerResolution;
-    private readonly IReadOnlyList<ITransientScopeCodeBuilder> _transientScopeCodeBuilders;
-    private readonly IReadOnlyList<IScopeCodeBuilder> _scopeCodeBuilders;
 
     protected override StringBuilder GenerateDisposalFunction_TransientScopeDictionary(StringBuilder stringBuilder)
     {
@@ -102,10 +100,6 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
             .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName}? _{_containerResolution.TransientScopeAdapterReference};")
             .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} {_containerResolution.TransientScopeAdapterReference} => _{_containerResolution.TransientScopeAdapterReference} ??= new {_containerResolution.TransientScopeInterface.ContainerAdapterName}(this);");
 
-        stringBuilder = _transientScopeCodeBuilders.Aggregate(stringBuilder, (sb, cb) => cb.Build(sb));
-        
-        stringBuilder = _scopeCodeBuilders.Aggregate(stringBuilder, (sb, cb) => cb.Build(sb));
-
         var disposableTypeFullName = WellKnownTypes.Disposable.FullName();
         var asyncDisposableTypeFullName = WellKnownTypes.AsyncDisposable.FullName();
         var valueTaskFullName = WellKnownTypes.ValueTask.FullName();
@@ -152,8 +146,6 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         // parameter
         IContainerInfo containerInfo,
         ContainerResolution containerResolution,
-        IReadOnlyList<ITransientScopeCodeBuilder> transientScopeCodeBuilders,
-        IReadOnlyList<IScopeCodeBuilder> scopeCodeBuilders,
         
         // dependencies
         WellKnownTypes wellKnownTypes) 
@@ -161,7 +153,5 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
     {
         _containerInfo = containerInfo;
         _containerResolution = containerResolution;
-        _transientScopeCodeBuilders = transientScopeCodeBuilders;
-        _scopeCodeBuilders = scopeCodeBuilders;
     }
 }

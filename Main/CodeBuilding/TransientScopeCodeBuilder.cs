@@ -33,7 +33,31 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
 
     protected override bool ExplicitTransientScopeInstanceImplementation => true;
 
-    public override StringBuilder Build(StringBuilder stringBuilder)
+    public StringBuilder BuildFunction(StringBuilder stringBuilder, Func<StringBuilder, StringBuilder> functionResolution)
+    {
+        stringBuilder = stringBuilder
+            .AppendLine($"#nullable enable")
+            .AppendLine($"namespace {_containerInfo.Namespace}")
+            .AppendLine($"{{")
+            .AppendLine($"partial class {_containerInfo.Name}")
+            .AppendLine($"{{");
+        
+        stringBuilder = stringBuilder
+            .AppendLine($"private partial class {TransientScopeResolution.Name}")
+            .AppendLine($"{{");
+
+        stringBuilder = functionResolution(stringBuilder);
+
+        stringBuilder = stringBuilder
+            .AppendLine($"}}");
+        
+        return stringBuilder
+            .AppendLine($"}}")
+            .AppendLine($"}}")
+            .AppendLine($"#nullable disable");
+    }
+
+    public override StringBuilder BuildGeneral(StringBuilder stringBuilder)
     {
         var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
             ? $", {WellKnownTypes.AsyncDisposable.FullName()}"
@@ -68,6 +92,13 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
             .AppendLine($"}}")
             .AppendLine($"#nullable disable");
     }
+
+    public override StringBuilder BuildCreateFunction(StringBuilder stringBuilder, FunctionResolution functionResolution) => 
+        BuildFunction(stringBuilder, sb => GenerateResolutionFunction(sb, functionResolution));
+
+    public override StringBuilder BuildRangedFunction(StringBuilder stringBuilder,
+        RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution) =>
+        BuildFunction(stringBuilder, sb => GenerateRangedInstanceFunction(sb, rangedInstanceFunctionGroupResolution));
 
     public TransientScopeCodeBuilder(
         // parameter

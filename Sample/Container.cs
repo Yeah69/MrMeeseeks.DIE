@@ -1,70 +1,41 @@
-﻿using System.Threading.Tasks;
+﻿using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Async.Awaited.TransientScopeInstanceFunction_DifferentSynchronicity;
+namespace MrMeeseeks.DIE.Test.Disposal.ScopeUserDefinedAddForDisposal;
 
-internal interface IInterface {}
-
-internal class DependencyA : IInterface, ITaskInitializer
+internal class Dependency : IDisposable
 {
-    public bool IsInitialized { get; private set; }
-    
-    async Task ITaskInitializer.InitializeAsync()
-    {
-        await Task.Delay(500).ConfigureAwait(false);
-        IsInitialized = true;
-    }
+    internal bool IsDisposed { get; private set; }
+
+    public void Dispose() => IsDisposed = true;
 }
 
-internal class DependencyB : IInterface
+internal class ScopeRoot : IScopeRoot
 {
-}
+    public Dependency Dependency { get; }
 
-internal class Instance : ITransientScopeInstance
-{
-    public IInterface Inner { get; }
-
-    public Instance(IInterface inner)
-    {
-        Inner = inner;
-    }
-}
-
-internal class TransientScopeRoot0 : ITransientScopeRoot
-{
-    public Instance Dependency { get; }
-
-    internal TransientScopeRoot0(Instance dependency)
+    internal ScopeRoot(Dependency dependency)
     {
         Dependency = dependency;
     }
 }
 
-internal class TransientScopeRoot1 : ITransientScopeRoot
-{
-    internal TransientScopeRoot1(Instance dependency)
-    {
-        
-    }
-}
-
-[FilterImplementationAggregation(typeof(DependencyB))]
-[CreateFunction(typeof(TransientScopeRoot0), "Create0")]
-[CreateFunction(typeof(TransientScopeRoot1), "Create1")]
+[CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
-    [CustomScopeForRootTypes(typeof(TransientScopeRoot0))]
-    private sealed partial class DIE_TransientScope0
+    private sealed partial class DIE_DefaultScope
     {
-        
-    }
-    
-    [FilterImplementationAggregation(typeof(DependencyA))]
-    [ImplementationAggregation(typeof(DependencyB))]
-    [CustomScopeForRootTypes(typeof(TransientScopeRoot1))]
-    private sealed partial class DIE_TransientScope1
-    {
-        
+        private Dependency DIE_Factory_Dependency
+        {
+            get
+            {
+                var dependency = new Dependency();
+                DIE_AddForDisposal(dependency);
+                return dependency;
+            }
+        }
+
+        private partial void DIE_AddForDisposal(IDisposable disposable);
     }
 }

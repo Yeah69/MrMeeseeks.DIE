@@ -54,7 +54,24 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 
     protected override bool ExplicitTransientScopeInstanceImplementation => false;
 
-    public override StringBuilder Build(StringBuilder stringBuilder)
+    private StringBuilder BuildFunction(StringBuilder stringBuilder, Func<StringBuilder, StringBuilder> functionResolution)
+    {
+        stringBuilder = stringBuilder
+            .AppendLine($"#nullable enable")
+            .AppendLine($"namespace {_containerInfo.Namespace}")
+            .AppendLine($"{{")
+            .AppendLine($"partial class {_containerInfo.Name}")
+            .AppendLine($"{{");
+
+        stringBuilder = functionResolution(stringBuilder);
+
+        return stringBuilder
+            .AppendLine($"}}")
+            .AppendLine($"}}")
+            .AppendLine($"#nullable disable");
+    }
+
+    public override StringBuilder BuildGeneral(StringBuilder stringBuilder)
     {
         var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
             ? $" : {WellKnownTypes.AsyncDisposable.FullName()}"
@@ -141,6 +158,13 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
                 _ => throw new ArgumentException("Synchronicity not decided for the interface function at time of generating the sources")
             };
     }
+
+    public override StringBuilder BuildCreateFunction(StringBuilder stringBuilder, FunctionResolution functionResolution) => 
+        BuildFunction(stringBuilder, sb => GenerateResolutionFunction(sb, functionResolution));
+
+    public override StringBuilder BuildRangedFunction(StringBuilder stringBuilder,
+        RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution) =>
+        BuildFunction(stringBuilder, sb => GenerateRangedInstanceFunction(sb, rangedInstanceFunctionGroupResolution));
 
     public ContainerCodeBuilder(
         // parameter

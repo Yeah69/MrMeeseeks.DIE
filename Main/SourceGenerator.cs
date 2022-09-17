@@ -87,7 +87,7 @@ public class SourceGenerator : ISourceGenerator
         if (assemblyTypesFromAttributes.Errors.Any())
             return;
         
-        var containerGenerator = new ContainerGenerator(context, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
+        var containerGenerator = new ContainerGenerator(context, diagLogger, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypesMiscellaneous);
         var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
@@ -286,9 +286,13 @@ public class SourceGenerator : ISourceGenerator
 
         IContainerCodeBuilder ContainerCodeBuilderFactory(
             IContainerInfo containerInfo,
-            ContainerResolution containerResolution) => new ContainerCodeBuilder(
+            ContainerResolution containerResolution,
+            IReadOnlyList<ITransientScopeCodeBuilder> transientScopeCodeBuilders,
+            IReadOnlyList<IScopeCodeBuilder> scopeCodeBuilders) => new ContainerCodeBuilder(
             containerInfo,
             containerResolution,
+            transientScopeCodeBuilders,
+            scopeCodeBuilders,
             wellKnownTypes);
 
         ITransientScopeCodeBuilder TransientScopeCodeBuilderFactory(

@@ -4,15 +4,14 @@ namespace MrMeeseeks.DIE.CodeBuilding;
 
 internal interface ITransientScopeCodeBuilder : IRangeCodeBaseBuilder
 {
-    public TransientScopeResolution TransientScopeResolution { get; }
+    
 }
 
 internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScopeCodeBuilder
 {
     private readonly IContainerInfo _containerInfo;
+    private readonly TransientScopeResolution _transientScopeResolution;
     private readonly ContainerResolution _containerResolution;
-    
-    public TransientScopeResolution TransientScopeResolution { get; }
 
     protected override StringBuilder GenerateDisposalFunction_TransientScopeDictionary(StringBuilder stringBuilder) => stringBuilder;
 
@@ -26,79 +25,38 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
             : WellKnownTypes.Disposable.FullName();
 
         stringBuilder
-            .AppendLine($"{TransientScopeResolution.ContainerReference}.{_containerResolution.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
+            .AppendLine($"{_transientScopeResolution.ContainerReference}.{_containerResolution.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
 
         return stringBuilder;
     }
 
     protected override bool ExplicitTransientScopeInstanceImplementation => true;
 
-    public StringBuilder BuildFunction(StringBuilder stringBuilder, Func<StringBuilder, StringBuilder> functionResolution)
+    public override StringBuilder Build(StringBuilder stringBuilder)
     {
-        stringBuilder = stringBuilder
-            .AppendLine($"#nullable enable")
-            .AppendLine($"namespace {_containerInfo.Namespace}")
-            .AppendLine($"{{")
-            .AppendLine($"partial class {_containerInfo.Name}")
-            .AppendLine($"{{");
-        
-        stringBuilder = stringBuilder
-            .AppendLine($"private partial class {TransientScopeResolution.Name}")
-            .AppendLine($"{{");
-
-        stringBuilder = functionResolution(stringBuilder);
-
-        stringBuilder = stringBuilder
-            .AppendLine($"}}");
-        
-        return stringBuilder
-            .AppendLine($"}}")
-            .AppendLine($"}}")
-            .AppendLine($"#nullable disable");
-    }
-
-    public override StringBuilder BuildGeneral(StringBuilder stringBuilder)
-    {
-        var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
-            ? $", {WellKnownTypes.AsyncDisposable.FullName()}"
+        var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
+            ? $", {WellKnownTypes.AsyncDisposable.FullName()}" 
             : $", {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}";
         
         stringBuilder = stringBuilder
-            .AppendLine($"#nullable enable")
-            .AppendLine($"namespace {_containerInfo.Namespace}")
+            .AppendLine($"private partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}{disposableImplementation}")
             .AppendLine($"{{")
-            .AppendLine($"partial class {_containerInfo.Name}")
-            .AppendLine($"{{");
-        
-        stringBuilder = stringBuilder
-            .AppendLine($"private partial class {TransientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}{disposableImplementation}")
+            .AppendLine($"private readonly {_containerInfo.FullName} {_transientScopeResolution.ContainerReference};")
+            .AppendLine($"internal {_transientScopeResolution.Name}(")
+            .AppendLine($"{_containerInfo.FullName} {_transientScopeResolution.ContainerParameterReference})")
             .AppendLine($"{{")
-            .AppendLine($"private readonly {_containerInfo.FullName} {TransientScopeResolution.ContainerReference};")
-            .AppendLine($"internal {TransientScopeResolution.Name}(")
-            .AppendLine($"{_containerInfo.FullName} {TransientScopeResolution.ContainerParameterReference})")
-            .AppendLine($"{{")
-            .AppendLine($"{TransientScopeResolution.ContainerReference} = {TransientScopeResolution.ContainerParameterReference};")
+            .AppendLine($"{_transientScopeResolution.ContainerReference} = {_transientScopeResolution.ContainerParameterReference};")
             .AppendLine($"}}");
 
         stringBuilder = GenerateResolutionRange(
             stringBuilder,
-            TransientScopeResolution);
+            _transientScopeResolution);
 
         stringBuilder = stringBuilder
             .AppendLine($"}}");
-        
-        return stringBuilder
-            .AppendLine($"}}")
-            .AppendLine($"}}")
-            .AppendLine($"#nullable disable");
+
+        return stringBuilder;
     }
-
-    public override StringBuilder BuildCreateFunction(StringBuilder stringBuilder, FunctionResolution functionResolution) => 
-        BuildFunction(stringBuilder, sb => GenerateResolutionFunction(sb, functionResolution));
-
-    public override StringBuilder BuildRangedFunction(StringBuilder stringBuilder,
-        RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution) =>
-        BuildFunction(stringBuilder, sb => GenerateRangedInstanceFunction(sb, rangedInstanceFunctionGroupResolution));
 
     public TransientScopeCodeBuilder(
         // parameter
@@ -111,7 +69,7 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
         : base(transientScopeResolution, containerResolution, wellKnownTypes)
     {
         _containerInfo = containerInfo;
-        TransientScopeResolution = transientScopeResolution;
+        _transientScopeResolution = transientScopeResolution;
         _containerResolution = containerResolution;
     }
 }

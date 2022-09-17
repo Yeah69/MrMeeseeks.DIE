@@ -12,6 +12,8 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 {
     private readonly IContainerInfo _containerInfo;
     private readonly ContainerResolution _containerResolution;
+    private readonly IReadOnlyList<ITransientScopeCodeBuilder> _transientScopeCodeBuilders;
+    private readonly IReadOnlyList<IScopeCodeBuilder> _scopeCodeBuilders;
 
     protected override StringBuilder GenerateDisposalFunction_TransientScopeDictionary(StringBuilder stringBuilder)
     {
@@ -54,24 +56,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
 
     protected override bool ExplicitTransientScopeInstanceImplementation => false;
 
-    private StringBuilder BuildFunction(StringBuilder stringBuilder, Func<StringBuilder, StringBuilder> functionResolution)
-    {
-        stringBuilder = stringBuilder
-            .AppendLine($"#nullable enable")
-            .AppendLine($"namespace {_containerInfo.Namespace}")
-            .AppendLine($"{{")
-            .AppendLine($"partial class {_containerInfo.Name}")
-            .AppendLine($"{{");
-
-        stringBuilder = functionResolution(stringBuilder);
-
-        return stringBuilder
-            .AppendLine($"}}")
-            .AppendLine($"}}")
-            .AppendLine($"#nullable disable");
-    }
-
-    public override StringBuilder BuildGeneral(StringBuilder stringBuilder)
+    public override StringBuilder Build(StringBuilder stringBuilder)
     {
         var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
             ? $" : {WellKnownTypes.AsyncDisposable.FullName()}"
@@ -117,6 +102,10 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
             .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName}? _{_containerResolution.TransientScopeAdapterReference};")
             .AppendLine($"private {_containerResolution.TransientScopeInterface.ContainerAdapterName} {_containerResolution.TransientScopeAdapterReference} => _{_containerResolution.TransientScopeAdapterReference} ??= new {_containerResolution.TransientScopeInterface.ContainerAdapterName}(this);");
 
+        stringBuilder = _transientScopeCodeBuilders.Aggregate(stringBuilder, (sb, cb) => cb.Build(sb));
+        
+        stringBuilder = _scopeCodeBuilders.Aggregate(stringBuilder, (sb, cb) => cb.Build(sb));
+
         var disposableTypeFullName = WellKnownTypes.Disposable.FullName();
         var asyncDisposableTypeFullName = WellKnownTypes.AsyncDisposable.FullName();
         var valueTaskFullName = WellKnownTypes.ValueTask.FullName();
@@ -159,17 +148,12 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
             };
     }
 
-    public override StringBuilder BuildCreateFunction(StringBuilder stringBuilder, FunctionResolution functionResolution) => 
-        BuildFunction(stringBuilder, sb => GenerateResolutionFunction(sb, functionResolution));
-
-    public override StringBuilder BuildRangedFunction(StringBuilder stringBuilder,
-        RangedInstanceFunctionGroupResolution rangedInstanceFunctionGroupResolution) =>
-        BuildFunction(stringBuilder, sb => GenerateRangedInstanceFunction(sb, rangedInstanceFunctionGroupResolution));
-
     public ContainerCodeBuilder(
         // parameter
         IContainerInfo containerInfo,
         ContainerResolution containerResolution,
+        IReadOnlyList<ITransientScopeCodeBuilder> transientScopeCodeBuilders,
+        IReadOnlyList<IScopeCodeBuilder> scopeCodeBuilders,
         
         // dependencies
         WellKnownTypes wellKnownTypes) 
@@ -177,5 +161,7 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
     {
         _containerInfo = containerInfo;
         _containerResolution = containerResolution;
+        _transientScopeCodeBuilders = transientScopeCodeBuilders;
+        _scopeCodeBuilders = scopeCodeBuilders;
     }
 }

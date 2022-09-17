@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace MrMeeseeks.DIE.CodeBuilding;
 
-internal interface IContainerGenerator
+internal interface IContainerGenerator 
 {
     void Generate(IContainerInfo containerInfo, ContainerResolution resolvable);
 }
@@ -11,17 +11,20 @@ internal interface IContainerGenerator
 internal class ContainerGenerator : IContainerGenerator
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly Func<IContainerInfo, ContainerResolution, IContainerCodeBuilder> _containerCodeBuilderFactory;
+    private readonly IDiagLogger _diagLogger;
+    private readonly Func<IContainerInfo, ContainerResolution, IReadOnlyList<ITransientScopeCodeBuilder>, IReadOnlyList<IScopeCodeBuilder>, IContainerCodeBuilder> _containerCodeBuilderFactory;
     private readonly Func<IContainerInfo, TransientScopeResolution, ContainerResolution, ITransientScopeCodeBuilder> _transientScopeCodeBuilderFactory;
     private readonly Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, ContainerResolution, IScopeCodeBuilder> _scopeCodeBuilderFactory;
 
     internal ContainerGenerator(
         GeneratorExecutionContext context,
-        Func<IContainerInfo, ContainerResolution, IContainerCodeBuilder> containerCodeBuilderFactory,
+        IDiagLogger diagLogger,
+        Func<IContainerInfo, ContainerResolution, IReadOnlyList<ITransientScopeCodeBuilder>, IReadOnlyList<IScopeCodeBuilder>, IContainerCodeBuilder> containerCodeBuilderFactory,
         Func<IContainerInfo, TransientScopeResolution, ContainerResolution, ITransientScopeCodeBuilder> transientScopeCodeBuilderFactory,
         Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, ContainerResolution, IScopeCodeBuilder> scopeCodeBuilderFactory)
     {
         _context = context;
+        _diagLogger = diagLogger;
         _containerCodeBuilderFactory = containerCodeBuilderFactory;
         _transientScopeCodeBuilderFactory = transientScopeCodeBuilderFactory;
         _scopeCodeBuilderFactory = scopeCodeBuilderFactory;
@@ -29,53 +32,21 @@ internal class ContainerGenerator : IContainerGenerator
 
     public void Generate(IContainerInfo containerInfo, ContainerResolution containerResolution)
     {
-        var containerCodeBuilder = _containerCodeBuilderFactory(containerInfo, containerResolution);
-        
-        GenerateRange(containerCodeBuilder, containerResolution);
-        
-        foreach (var transientScopeResolution in containerResolution.TransientScopes)
-        {
-            var transientScopeCodeBuilder = _transientScopeCodeBuilderFactory(containerInfo, transientScopeResolution, containerResolution);
-            GenerateRange(transientScopeCodeBuilder, transientScopeResolution);
-        }
-        
-        foreach (var scopeResolution in containerResolution.Scopes)
-        {
-            var scopeCodeBuilder = _scopeCodeBuilderFactory(containerInfo, scopeResolution, containerResolution.TransientScopeInterface, containerResolution);
-            GenerateRange(scopeCodeBuilder, scopeResolution);
-        }
+        var containerCodeBuilder = _containerCodeBuilderFactory(
+            containerInfo, 
+            containerResolution,
+            containerResolution.TransientScopes.Select(ts => _transientScopeCodeBuilderFactory(containerInfo, ts, containerResolution)).ToList(),
+            containerResolution.Scopes.Select(s => _scopeCodeBuilderFactory(containerInfo, s, containerResolution.TransientScopeInterface, containerResolution)).ToList());
 
-        void GenerateRange(IRangeCodeBaseBuilder rangeCodeBaseBuilder, IRangeResolution rangeResolution)
-        {
-            var generatedGeneral = rangeCodeBaseBuilder.BuildGeneral(new StringBuilder());
-            RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{rangeResolution.Name}.g.cs", generatedGeneral);
-            generatedGeneral.Clear();
+        var generatedContainer = containerCodeBuilder.Build(new StringBuilder());
+
+        var containerSource = CSharpSyntaxTree
+            .ParseText(SourceText.From(generatedContainer.ToString(), Encoding.UTF8))
+            .GetRoot()
+            .NormalizeWhitespace()
+            .SyntaxTree
+            .GetText();
         
-            foreach (var createFunction in rangeResolution.CreateFunctions)
-            {
-                var generatedCreateFunction = rangeCodeBaseBuilder.BuildCreateFunction(new StringBuilder(), createFunction);
-                RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{rangeResolution.Name}.{createFunction.Reference}.g.cs", generatedCreateFunction);
-                generatedCreateFunction.Clear();
-            }
-        
-            foreach (var rangedInstanceFunctionGroup in rangeResolution.RangedInstanceFunctionGroups)
-            {
-                var generatedInstanceFunctionGroupFunction = rangeCodeBaseBuilder.BuildRangedFunction(new StringBuilder(), rangedInstanceFunctionGroup);
-                RenderSourceFile($"{containerInfo.Namespace}.{containerInfo.Name}.{rangeResolution.Name}.{rangedInstanceFunctionGroup.Overloads[0].Reference}.g.cs", generatedInstanceFunctionGroupFunction);
-                generatedInstanceFunctionGroupFunction.Clear();
-            }
-        }
-        
-        void RenderSourceFile(string fileName, StringBuilder compiledCode)
-        {
-            var containerSource = CSharpSyntaxTree
-                .ParseText(SourceText.From(compiledCode.ToString(), Encoding.UTF8))
-                .GetRoot()
-                .NormalizeWhitespace()
-                .SyntaxTree
-                .GetText();
-        
-            _context.AddSource(fileName, containerSource);
-        }
+        _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
     }
 }

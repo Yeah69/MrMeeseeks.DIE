@@ -2,6 +2,8 @@ namespace MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 internal interface IFunctionCycleTracker
 {
+    void RegisterRootHandle(FunctionResolutionBuilderHandle root);
+    
     void TrackFunctionCall(FunctionResolutionBuilderHandle from, FunctionResolutionBuilderHandle to);
 
     void DetectCycle();
@@ -10,6 +12,9 @@ internal interface IFunctionCycleTracker
 internal class FunctionCycleTracker : IFunctionCycleTracker
 {
     private readonly Dictionary<FunctionResolutionBuilderHandle, IList<FunctionResolutionBuilderHandle>> _adjacencyMap = new ();
+    private readonly List<FunctionResolutionBuilderHandle> _roots = new();
+
+    public void RegisterRootHandle(FunctionResolutionBuilderHandle root) => _roots.Add(root);
 
     public void TrackFunctionCall(FunctionResolutionBuilderHandle from, FunctionResolutionBuilderHandle to)
     {
@@ -21,7 +26,7 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
 
     public void DetectCycle()
     {
-        foreach (var function in _adjacencyMap.Keys)
+        foreach (var function in _roots)
             DetectCycleInner(function, new HashSet<object>());
 
         void DetectCycleInner(FunctionResolutionBuilderHandle current, HashSet<object> visited)

@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using System.CodeDom.Compiler;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.DIE.CodeBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding;
 using MrMeeseeks.DIE.Validation.Range;
@@ -62,23 +63,37 @@ internal class ExecuteImpl : IExecute
             {
                 try
                 {
+                    DateTime start = DateTime.Now;
+                    _context.ReportDiagnostic(Diagnostics.Logging($"Start {start}"));
                     var containerInfo = _containerInfoFactory(containerSymbol);
                     var validationDiagnostics = _validateContainer.Validate(containerInfo.ContainerType, containerInfo.ContainerType)
                         .ToImmutableArray();
                     if (!validationDiagnostics.Any())
                     {
+                        _context.ReportDiagnostic(Diagnostics.Logging($"Validation {DateTime.Now - start}"));
+                        start = DateTime.Now;
                         var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
+                        _context.ReportDiagnostic(Diagnostics.Logging($"Building Container Builder {DateTime.Now - start}"));
+                        start = DateTime.Now;
                         containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.CreateFunctionData);
+                        _context.ReportDiagnostic(Diagnostics.Logging($"Create Resolve Functions {DateTime.Now - start}"));
+                        start = DateTime.Now;
 
                         while (containerResolutionBuilder.HasWorkToDo)
                         {
                             containerResolutionBuilder.DoWork();
                         }
+                        _context.ReportDiagnostic(Diagnostics.Logging($"Do work {DateTime.Now - start}"));
+                        start = DateTime.Now;
                         containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
+                        _context.ReportDiagnostic(Diagnostics.Logging($"Detect cycles {DateTime.Now - start}"));
+                        start = DateTime.Now;
                         
                         var containerResolution = containerResolutionBuilder.Build();
                         
                         _containerGenerator.Generate(containerInfo, containerResolution);
+                        _context.ReportDiagnostic(Diagnostics.Logging($"Generate Code {DateTime.Now - start}"));
+                        start = DateTime.Now;
                     }
                     else
                     {

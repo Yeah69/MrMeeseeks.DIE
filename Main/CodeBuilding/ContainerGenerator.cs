@@ -40,13 +40,13 @@ internal class ContainerGenerator : IContainerGenerator
 
         var generatedContainer = containerCodeBuilder.Build(new StringBuilder());
 
-        var containerSource = CSharpSyntaxTree
+        /*var containerSource = CSharpSyntaxTree
             .ParseText(SourceText.From(generatedContainer.ToString(), Encoding.UTF8))
             .GetRoot()
             .NormalizeWhitespace()
             .SyntaxTree
-            .GetText();
+            .GetText();*/
         
-        _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
+        _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", generatedContainer.ToString());
     }
 }

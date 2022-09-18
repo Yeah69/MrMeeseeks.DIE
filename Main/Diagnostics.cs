@@ -11,7 +11,8 @@ public static class Diagnostics
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_00", 
                 "Circular Reference Exception (inside factory)",
                 $"This container and/or its configuration lead to a circular reference inside one of its factory functions, which need to be generated. The implementations involved in the cycle are: {cycleText}", 
-                "Error", DiagnosticSeverity.Error, 
+                "Error", 
+                DiagnosticSeverity.Error, 
                 true),
             Location.None);
     }
@@ -21,7 +22,8 @@ public static class Diagnostics
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_01", 
                 "Circular Reference Exception (among factories)",
                 "This container and/or its configuration lead to a circular reference among factory functions, which need to be generated.", 
-                "Error", DiagnosticSeverity.Error, 
+                "Error", 
+                DiagnosticSeverity.Error, 
                 true),
             Location.None);
     
@@ -29,7 +31,8 @@ public static class Diagnostics
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_00", 
                 "Validation (Container)",
                 $"The Container \"{container.Name}\" isn't validly defined: {specification}", 
-                "Error", DiagnosticSeverity.Error, 
+                "Error", 
+                DiagnosticSeverity.Error, 
                 true),
             container.Locations.FirstOrDefault() ?? Location.None);
     
@@ -37,7 +40,8 @@ public static class Diagnostics
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_00", 
                 "Validation (Container)",
                 $"The Container \"{container.Name}\" isn't validly defined: {specification}", 
-                "Error", DiagnosticSeverity.Error, 
+                "Error", 
+                DiagnosticSeverity.Error, 
                 true),
             location);
     
@@ -45,7 +49,8 @@ public static class Diagnostics
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_01", 
                 "Validation (TransientScope)",
                 $"The TransientScope \"{transientScope.Name}\" (of parent-Container \"{parentContainer.Name}\") isn't validly defined: {specification}", 
-                "Error", DiagnosticSeverity.Error, 
+                "Error", 
+                DiagnosticSeverity.Error, 
                 true),
             transientScope.Locations.FirstOrDefault() ?? Location.None);
     
@@ -53,7 +58,8 @@ public static class Diagnostics
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_02", 
                 "Validation (Scope)",
                 $"The Scope \"{scope.Name}\" (of parent-Container \"{parentContainer.Name}\") isn't validly defined: {specification}", 
-                "Error", DiagnosticSeverity.Error, 
+                "Error", 
+                DiagnosticSeverity.Error, 
                 true),
             scope.Locations.FirstOrDefault() ?? Location.None);
     
@@ -65,7 +71,8 @@ public static class Diagnostics
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_03",
                 "Validation (User-Defined Element)",
                 $"The user-defined \"{userDefinedElement.Name}\" (of {rangeDescription}) isn't validly defined: {specification}",
-                "Error", DiagnosticSeverity.Error,
+                "Error", 
+                DiagnosticSeverity.Error,
                 true),
             userDefinedElement.Locations.FirstOrDefault() ?? Location.None);
     }
@@ -82,7 +89,8 @@ public static class Diagnostics
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_03",
                 "Validation (Configuration Attribute)",
                 $"The configuration attribute \"{attributeData.AttributeClass?.Name}\" (of {rangeDescription}) isn't validly defined: {specification}",
-                "Error", DiagnosticSeverity.Error,
+                "Error", 
+                DiagnosticSeverity.Error,
                 true),
             attributeData.GetLocation());
     }
@@ -92,7 +100,8 @@ public static class Diagnostics
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_00", 
                 "Unexpected Exception (DIE)",
                 exception.ToString(), 
-                "Error", DiagnosticSeverity.Error, 
+                "Error",
+                DiagnosticSeverity.Error, 
                 true),
             Location.None);
     }
@@ -102,7 +111,8 @@ public static class Diagnostics
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_01", 
                 "Unexpected Exception (General)",
                 exception.ToString(), 
-                "Error", DiagnosticSeverity.Error, 
+                "Error", 
+                DiagnosticSeverity.Error, 
                 true),
             Location.None);
     }
@@ -112,8 +122,20 @@ public static class Diagnostics
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_65_00", 
                 "Error During Compilation",
                 message, 
-                "Error", DiagnosticSeverity.Error, 
+                "Error",
+                DiagnosticSeverity.Error, 
                 true),
             location);
+    }
+    
+    public static Diagnostic Logging(string message)
+    {
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 
+                "Logging",
+                message, 
+                "Log",
+                DiagnosticSeverity.Warning, 
+                true),
+            Location.None);
     }
 }

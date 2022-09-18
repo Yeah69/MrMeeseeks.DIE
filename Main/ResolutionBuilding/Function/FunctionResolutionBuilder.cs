@@ -45,6 +45,7 @@ internal class FunctionResolutionSynchronicityDecisionMaker : IFunctionResolutio
 
 internal interface IFunctionResolutionBuilder : IResolutionBuilder<FunctionResolution>
 {
+    FunctionResolutionBuilderHandle Handle { get; }
     ITypeSymbol OriginalReturnType { get; }
     ITypeSymbol? ActualReturnType { get; }
     IReadOnlyList<ParameterResolution> Parameters { get; }
@@ -69,7 +70,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     
     private readonly IUserDefinedElements _userDefinedElements;
 
-    private readonly FunctionResolutionBuilderHandle _handle;
+    public FunctionResolutionBuilderHandle Handle { get; }
     
     protected abstract string Name { get; }
     protected string TypeFullName => ActualReturnType?.FullName() ?? OriginalReturnType.FullName();
@@ -104,7 +105,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         _functionCycleTracker = functionCycleTracker;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
         _userDefinedElements = rangeResolutionBaseBuilder.UserDefinedElements;
-        _handle = new FunctionResolutionBuilderHandle(
+        Handle = new FunctionResolutionBuilderHandle(
             handleIdentity,
             $"{OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Value.Item2.TypeFullName))})");
 
@@ -798,7 +799,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         };
         
         if (ret.Item1 is MultiSynchronicityFunctionCallResolution multi)
-            _functionCycleTracker.TrackFunctionCall(_handle, multi.FunctionResolutionBuilderHandle);
+            _functionCycleTracker.TrackFunctionCall(Handle, multi.FunctionResolutionBuilderHandle);
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
             _synchronicityDecisionMaker.Register(awaitableResolution);
@@ -858,7 +859,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             _scopedInstancesReferenceCache[implementationType] = new ProxyResolvable(ret.Item1.Reference, ret.Item1.TypeFullName);
         
         if (ret.Item1 is MultiSynchronicityFunctionCallResolution multi)
-            _functionCycleTracker.TrackFunctionCall(_handle, multi.FunctionResolutionBuilderHandle);
+            _functionCycleTracker.TrackFunctionCall(Handle, multi.FunctionResolutionBuilderHandle);
 
         if (ret.Item1 is IAwaitableResolution awaitableResolution)
             _synchronicityDecisionMaker.Register(awaitableResolution);
@@ -1212,7 +1213,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 ownerReference,
                 CreateParameter()),
             SynchronicityDecision,
-            _handle);
+            Handle);
 
         IReadOnlyList<(string Name, string Reference)> CreateParameter() =>
             Parameters.Join(

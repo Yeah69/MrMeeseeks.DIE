@@ -73,11 +73,18 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
     public void AddCreateResolveFunctions(IReadOnlyList<(ITypeSymbol, string)> createFunctionData)
     {
         foreach (var (typeSymbol, methodNamePrefix) in createFunctionData)
-            _rootResolutions.Add((CreateCreateFunctionResolution(
-                typeSymbol, 
+        {
+            var functionResolution = CreateCreateFunctionResolution(
+                typeSymbol,
                 ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
-                Constants.PrivateKeyword), 
+                Constants.PrivateKeyword);
+            
+            _rootResolutions.Add((CreateCreateFunctionResolution(
+                    typeSymbol, 
+                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
+                    Constants.PrivateKeyword), 
                 methodNamePrefix));
+        }
     }
 
     public MultiSynchronicityFunctionCallResolution CreateContainerInstanceReferenceResolution(ForConstructorParameter parameter, string containerReference) =>

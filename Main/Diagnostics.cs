@@ -18,15 +18,19 @@ public static class Diagnostics
     }
         
     
-    public static Diagnostic CircularReferenceAmongFactories => 
-        Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_01", 
+    public static Diagnostic CircularReferenceAmongFactories(FunctionCycleDieException exception)
+    {
+        var cycleText = string.Join(" --> ", exception.Cycle.Select(f => f.Description));
+        
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_01",
                 "Circular Reference Exception (among factories)",
-                "This container and/or its configuration lead to a circular reference among factory functions, which need to be generated.", 
-                "Error", 
-                DiagnosticSeverity.Error, 
+                $"This container and/or its configuration lead to a circular reference among factory functions, which need to be generated. The involved factory functions are: {cycleText}",
+                "Error",
+                DiagnosticSeverity.Error,
                 true),
             Location.None);
-    
+    }
+
     public static Diagnostic ValidationContainer(INamedTypeSymbol container, string specification) => 
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_00", 
                 "Validation (Container)",

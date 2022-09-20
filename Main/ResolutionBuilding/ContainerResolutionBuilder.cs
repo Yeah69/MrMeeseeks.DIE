@@ -79,11 +79,9 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
                 Constants.PrivateKeyword);
             
-            _rootResolutions.Add((CreateCreateFunctionResolution(
-                    typeSymbol, 
-                    ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty,
-                    Constants.PrivateKeyword), 
-                methodNamePrefix));
+            FunctionCycleTracker.RegisterRootHandle(functionResolution.Handle);
+            
+            _rootResolutions.Add((functionResolution, methodNamePrefix));
         }
     }
 

@@ -27,17 +27,28 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
     public void DetectCycle()
     {
         foreach (var function in _roots)
-            DetectCycleInner(function, new HashSet<object>());
+            DetectCycleInner(function, new HashSet<object>(), new Stack<FunctionResolutionBuilderHandle>());
 
-        void DetectCycleInner(FunctionResolutionBuilderHandle current, HashSet<object> visited)
+        void DetectCycleInner(FunctionResolutionBuilderHandle current, HashSet<object> visited, Stack<FunctionResolutionBuilderHandle> stack)
         {
             if (visited.Contains(current.Identity))
-                throw new FunctionCycleDieException();
+            {
+                var cycleStack = ImmutableStack.Create(current);
+                var i = current;
+                do
+                {
+                    i = stack.Pop();
+                    cycleStack = cycleStack.Push(i);
+                } while (i.Identity != current.Identity && stack.Any());
+                throw new FunctionCycleDieException(cycleStack);
+            }
             if (_adjacencyMap.TryGetValue(current, out var neighbors))
             {
                 visited.Add(current.Identity);
+                stack.Push(current);
                 foreach (var neighbor in neighbors)
-                    DetectCycleInner(neighbor, visited);
+                    DetectCycleInner(neighbor, visited, stack);
+                stack.Pop();
                 visited.Remove(current.Identity);
             }
         }

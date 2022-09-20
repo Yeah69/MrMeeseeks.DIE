@@ -10,7 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MrMeeseeks.DIE" Version="1.0.0-beta.3" />
+        <PackageReference Include="MrMeeseeks.DIE" Version="1.0.0-beta.2" />
     </ItemGroup>
 
 </Project>

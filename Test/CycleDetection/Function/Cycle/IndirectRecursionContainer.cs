@@ -1,5 +1,5 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 
 namespace MrMeeseeks.DIE.Test.CycleDetection.Function.Cycle.IndirectRecursionContainer;
 
@@ -17,4 +17,14 @@ internal class InnerDependency : IContainerInstance
 internal sealed partial class Container
 {
     
+}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        var container = new Container();
+        Assert.Equal(DieExceptionKind.FunctionCycle , container.ExceptionKind_0_0);
+    }
 }

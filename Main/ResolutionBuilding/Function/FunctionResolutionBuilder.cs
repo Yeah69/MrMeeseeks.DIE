@@ -107,7 +107,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         _userDefinedElements = rangeResolutionBaseBuilder.UserDefinedElements;
         Handle = new FunctionResolutionBuilderHandle(
             handleIdentity,
-            $"{OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Value.Item2.TypeFullName))})");
+            $"(implementation) {OriginalReturnType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Value.Item2.TypeFullName))})");
 
         RootReferenceGenerator = referenceGeneratorFactory.Create();
         CurrentParameters = currentParameters

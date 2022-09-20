@@ -100,7 +100,8 @@ internal class TransientScopeInterfaceResolutionBuilder : ITransientScopeInterfa
             var decorationSuffix = interfaceExtension?.RangedNameSuffix() ?? "";
             tuple = (
                 _rootReferenceGenerator.Generate($"Get{label}Instance", implementationType, decorationSuffix),
-                new FunctionResolutionBuilderHandle(new object(), "asdf"));
+                new FunctionResolutionBuilderHandle(new object(), 
+                    $"(interface) {implementationType.FullName()}({string.Join(", ", currentParameters.Select(p => p.Value.Item2.TypeFullName))})"));
             
             _rangedInstanceReferences[referenceKey] = tuple;
         }

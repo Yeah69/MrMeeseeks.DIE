@@ -510,6 +510,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             var functionCall = newCreateFunction.BuildFunctionCall(
                 currentParameters,
                 Constants.ThisKeyword);
+            _functionCycleTracker.RegisterRootHandle(functionCall.FunctionResolutionBuilderHandle);
 
             var currentResolution = (IFactoryResolution)functionCall;
             var currentType = mostInnerType;
@@ -801,11 +802,17 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         if (ret.Item1 is MultiSynchronicityFunctionCallResolution multi)
             _functionCycleTracker.TrackFunctionCall(Handle, multi.FunctionResolutionBuilderHandle);
 
-        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution })
+        if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: { } awaitableResolution })
+        {
+            _functionCycleTracker.TrackFunctionCall(Handle, awaitableResolution.FunctionResolutionBuilderHandle);
             _synchronicityDecisionMaker.Register(awaitableResolution);
+        }
 
-        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: IAwaitableResolution awaitableResolution0 })
+        if (ret.Item1 is TransientScopeRootResolution { ScopeRootFunction: { } awaitableResolution0 })
+        {
+            _functionCycleTracker.TrackFunctionCall(Handle, awaitableResolution0.FunctionResolutionBuilderHandle);
             _synchronicityDecisionMaker.Register(awaitableResolution0);
+        }
 
         if (ret.Item1 is ScopeRootResolution { ScopeRootFunction: ITaskConsumableResolution taskConsumableResolution })
             ret.Item2 = taskConsumableResolution;

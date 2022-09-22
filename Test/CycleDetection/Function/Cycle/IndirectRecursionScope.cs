@@ -3,7 +3,7 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.CycleDetection.Function.Cycle.IndirectRecursionScope;
 
-/* todo internal class Dependency : IScopeRoot
+internal class Dependency : IScopeRoot
 {
     internal Dependency(InnerDependency inner) {}
 }
@@ -27,4 +27,4 @@ public class Tests
         var container = new Container();
         Assert.Equal(DieExceptionKind.FunctionCycle , container.ExceptionKind_0_0);
     }
-}*/
+}

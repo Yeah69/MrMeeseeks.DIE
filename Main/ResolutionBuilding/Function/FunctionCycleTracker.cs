@@ -27,14 +27,24 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
     public void DetectCycle()
     {
         foreach (var function in _roots)
-            DetectCycleInner(function, new HashSet<object>(), new Stack<FunctionResolutionBuilderHandle>());
+            DetectCycleInner(
+                function, 
+                new HashSet<object>(), 
+                new Stack<FunctionResolutionBuilderHandle>(),
+                new HashSet<Object>());
 
-        void DetectCycleInner(FunctionResolutionBuilderHandle current, HashSet<object> visited, Stack<FunctionResolutionBuilderHandle> stack)
+        void DetectCycleInner(
+            FunctionResolutionBuilderHandle current, 
+            HashSet<object> visited, 
+            Stack<FunctionResolutionBuilderHandle> stack,
+            HashSet<object> cycleFree)
         {
+            if (cycleFree.Contains(current.Identity))
+                return; // one of the previous roots checked this node already
             if (visited.Contains(current.Identity))
             {
                 var cycleStack = ImmutableStack.Create(current);
-                var i = current;
+                FunctionResolutionBuilderHandle i;
                 do
                 {
                     i = stack.Pop();
@@ -47,7 +57,8 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
                 visited.Add(current.Identity);
                 stack.Push(current);
                 foreach (var neighbor in neighbors)
-                    DetectCycleInner(neighbor, visited, stack);
+                    DetectCycleInner(neighbor, visited, stack, cycleFree);
+                cycleFree.Add(current.Identity);
                 stack.Pop();
                 visited.Remove(current.Identity);
             }

@@ -17,7 +17,8 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
-        IFunctionCycleTracker functionCycleTracker)
+        IFunctionCycleTracker functionCycleTracker,
+        IDiagLogger diagLogger)
         : base(
             rangeResolutionBaseBuilder, 
             parameter.ReturnType, 
@@ -27,7 +28,8 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
             
             wellKnownTypes, 
             referenceGeneratorFactory, 
-            functionCycleTracker)
+            functionCycleTracker,
+            diagLogger)
     {
         _parameter = parameter;
 

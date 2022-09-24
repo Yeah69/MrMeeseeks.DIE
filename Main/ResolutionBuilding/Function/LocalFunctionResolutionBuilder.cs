@@ -20,7 +20,8 @@ internal class CreateFunctionResolutionBuilder : FunctionResolutionBuilder, ICre
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
-        IFunctionCycleTracker functionCycleTracker)
+        IFunctionCycleTracker functionCycleTracker,
+        IDiagLogger diagLogger)
         : base(
             rangeResolutionBaseBuilder, 
             returnType, 
@@ -30,7 +31,8 @@ internal class CreateFunctionResolutionBuilder : FunctionResolutionBuilder, ICre
             
             wellKnownTypes,
             referenceGeneratorFactory,
-            functionCycleTracker)
+            functionCycleTracker,
+            diagLogger)
     {
         _returnType = returnType;
         _accessModifier = accessModifier;

@@ -19,7 +19,8 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         // dependencies
         WellKnownTypes wellKnownTypes, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
-        IFunctionCycleTracker functionCycleTracker)
+        IFunctionCycleTracker functionCycleTracker,
+        IDiagLogger diagLogger)
         : base(
             rangeResolutionBaseBuilder,
             forConstructorParameter.ImplementationType,
@@ -29,7 +30,8 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
             
             wellKnownTypes, 
             referenceGeneratorFactory, 
-            functionCycleTracker)
+            functionCycleTracker,
+            diagLogger)
     {
         _forConstructorParameter = forConstructorParameter;
 

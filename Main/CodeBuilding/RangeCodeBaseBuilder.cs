@@ -172,25 +172,20 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
 
     private StringBuilder GenerateResolutionFunction(
         StringBuilder stringBuilder,
-        FunctionResolution resolution)
+        CreateFunctionResolution resolution)
     {
-        if (resolution is CreateFunctionResolution localFunctionResolution)
-        {
-            var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
-            stringBuilder = stringBuilder
-                .AppendLine($"{resolution.AccessModifier} {(localFunctionResolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
-                .AppendLine($"{{");
-            stringBuilder = ObjectDisposedCheck(stringBuilder, resolution.TypeFullName);
-            stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable);
-            stringBuilder = ObjectDisposedCheck(stringBuilder, resolution.TypeFullName);
-            stringBuilder = stringBuilder
-                .AppendLine($"return {resolution.Resolvable.Reference};")
-                .AppendLine($"}}");
+        var parameter = string.Join(",", resolution.Parameter.Select(r => $"{r.TypeFullName} {r.Reference}"));
+        stringBuilder = stringBuilder
+            .AppendLine($"{resolution.AccessModifier} {(resolution.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask ? "async " : "")}{resolution.TypeFullName} {resolution.Reference}({parameter})")
+            .AppendLine($"{{");
+        stringBuilder = ObjectDisposedCheck(stringBuilder, resolution.TypeFullName);
+        stringBuilder = GenerateResolutionFunctionContent(stringBuilder, resolution.Resolvable);
+        stringBuilder = ObjectDisposedCheck(stringBuilder, resolution.TypeFullName);
+        stringBuilder = stringBuilder
+            .AppendLine($"return {resolution.Resolvable.Reference};")
+            .AppendLine($"}}");
 
-            return stringBuilder;
-        }
-
-        throw new Exception(); // todo message
+        return stringBuilder;
     }
 
     private StringBuilder GenerateResolutionFunctionContent(
@@ -228,7 +223,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case LazyResolution(var reference, var typeFullName, var inner):
                 if (inner is MultiSynchronicityFunctionCallResolution { LazySynchronicityDecision.Value: not SynchronicityDecision.Sync })
-                    throw new Exception("Lazy resolution has to call sync function"); // todo
+                    throw new CompilationDieException(Diagnostics.SyncToAsyncCallCompilationError(
+                        "Return type of Lazy is sync, but the generated function is async.", 
+                        ExecutionPhase.CodeGeneration));
                 var innerResolvable = (Resolvable)inner;
                 stringBuilder = stringBuilder
                     .AppendLine($"{typeFullName} {reference} = new {typeFullName}(() =>")
@@ -240,7 +237,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case FuncResolution(var reference, var typeFullName, var lambdaParameters, var inner):
                 if (inner is MultiSynchronicityFunctionCallResolution { LazySynchronicityDecision.Value: not SynchronicityDecision.Sync })
-                    throw new Exception("Func resolution has to call sync function"); // todo
+                    throw new CompilationDieException(Diagnostics.SyncToAsyncCallCompilationError(
+                        "Return type of Func is sync, but the generated function is async.", 
+                        ExecutionPhase.CodeGeneration));
                 var innerResolvableFunc = (Resolvable)inner;
                 stringBuilder = stringBuilder
                     .AppendLine($"{typeFullName} {reference} = ({string.Join(", " ,lambdaParameters.Select(p => p.Reference))}) =>")
@@ -365,7 +364,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case TransientScopeAsSyncDisposableResolution(var reference, var typeFullName):
                 if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
-                    throw new Exception("If the container disposal has to be async, then sync disposal handles in transient scopes are not allowed.");
+                    throw new CompilationDieException(Diagnostics.SyncDisposalInAsyncContainerCompilationError(
+                        "If the container disposal has to be async, then sync disposal handles in transient scopes are not allowed.",
+                        ExecutionPhase.CodeGeneration));
                 else if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync))
                     stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;");
                 else
@@ -454,7 +455,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case FactoryResolution(var reference, var typeFullName, var functionName, var parameters, var isAwait):
                 stringBuilder = parameters.Aggregate(stringBuilder,
-                    (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
+                    (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new ImpossibleDieException(new Guid("2A43FF83-E6A1-47DC-A437-36464CC872F7"))));
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = {(isAwait ? "await " : "")}this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");
                 break;
             case ArrayResolution(var reference, var typeFullName, var itemFullName, var items):
@@ -465,7 +466,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
             case ErrorTreeItem(var diagnostic):
                 throw new CompilationDieException(diagnostic);
             default:
-                throw new Exception("Unexpected case or not implemented.");
+                throw new CompilationDieException(Diagnostics.IncompleteCompilationProcessingError(
+                    "Unfortunately, the compilation phase of DIE seems incomplete. Please open an issue at https://github.com/Yeah69/MrMeeseeks.DIE/issues/new.",
+                    ExecutionPhase.CodeGeneration));
         }
 
         return stringBuilder;

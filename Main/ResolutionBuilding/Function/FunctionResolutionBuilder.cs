@@ -388,10 +388,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 null);
         }
 
-        if (type.OriginalDefinition.Equals(_wellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
-            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
-            || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default)
-            || type is IArrayTypeSymbol)
+        if (IsCollectionType(type))
         {
             if (type is not INamedTypeSymbol && type is not IArrayTypeSymbol)
             {
@@ -473,7 +470,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 .ToList();
 
             return (
-                new CollectionResolution(
+                new ArrayResolution(
                     RootReferenceGenerator.Generate(type),
                     type.FullName(),
                     wrappedItemType.FullName(),
@@ -1070,19 +1067,15 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
             if (checkForComposition && composition is {})
             {
-                if (typeSymbol.Equals(_wellKnownTypes.Enumerable1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
-                    || typeSymbol.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default)
-                    || typeSymbol.Equals(_wellKnownTypes.ReadOnlyList1.Construct(composition.InterfaceType), SymbolEqualityComparer.Default))
-                    return (parameterName, new CollectionResolution(
+                if (IsConstructedCollectionType(typeSymbol, composition.InterfaceType))
+                    return (parameterName, new ArrayResolution(
                         RootReferenceGenerator.Generate(typeSymbol),
                         typeSymbol.FullName(),
                         composition.InterfaceType.FullName(),
                         composition.InterfaceResolutionComposition));
                 
-                if (typeSymbol.Equals(_wellKnownTypes.Enumerable1.Construct(_wellKnownTypes.Task1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default)
-                    || typeSymbol.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(_wellKnownTypes.Task1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default)
-                    || typeSymbol.Equals(_wellKnownTypes.ReadOnlyList1.Construct(_wellKnownTypes.Task1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default))
-                    return (parameterName, new CollectionResolution(
+                if (IsConstructedCollectionType(typeSymbol, _wellKnownTypes.Task1.Construct(composition.InterfaceType)))
+                    return (parameterName, new ArrayResolution(
                         RootReferenceGenerator.Generate(typeSymbol),
                         typeSymbol.FullName(),
                         _wellKnownTypes.Task1.Construct(composition.InterfaceType).FullName(),
@@ -1096,10 +1089,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                             .OfType<Resolvable>()
                             .ToList()));
                 
-                if (typeSymbol.Equals(_wellKnownTypes.Enumerable1.Construct(_wellKnownTypes.ValueTask1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default)
-                    || typeSymbol.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(_wellKnownTypes.ValueTask1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default)
-                    || typeSymbol.Equals(_wellKnownTypes.ReadOnlyList1.Construct(_wellKnownTypes.ValueTask1.Construct(composition.InterfaceType)), SymbolEqualityComparer.Default))
-                    return (parameterName, new CollectionResolution(
+                if (IsConstructedCollectionType(typeSymbol, _wellKnownTypes.ValueTask1.Construct(composition.InterfaceType)))
+                    return (parameterName, new ArrayResolution(
                         RootReferenceGenerator.Generate(typeSymbol),
                         typeSymbol.FullName(),
                         _wellKnownTypes.ValueTask1.Construct(composition.InterfaceType).FullName(),
@@ -1229,6 +1220,18 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 p => p.Value.Item2.TypeFullName,
                 (p, cp) => (p.Reference, cp.Value.Item2.Reference)).ToList();
     }
+
+    private bool IsCollectionType(ITypeSymbol type) =>
+        type.OriginalDefinition.Equals(_wellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
+        || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
+        || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default)
+        || type is IArrayTypeSymbol;
+
+    private bool IsConstructedCollectionType(ITypeSymbol type, INamedTypeSymbol interfaceType) =>
+        type.Equals(_wellKnownTypes.Enumerable1.Construct(interfaceType), SymbolEqualityComparer.Default)
+        || type.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(interfaceType), SymbolEqualityComparer.Default)
+        || type.Equals(_wellKnownTypes.ReadOnlyList1.Construct(interfaceType), SymbolEqualityComparer.Default)
+        || type is IArrayTypeSymbol { ElementType: {} elementType } && elementType.Equals(interfaceType, SymbolEqualityComparer.Default);
 
     public bool HasWorkToDo => !Resolvable.IsValueCreated;
 

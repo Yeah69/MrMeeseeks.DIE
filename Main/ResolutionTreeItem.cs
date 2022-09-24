@@ -200,7 +200,7 @@ internal record UserDefinedInitializerParametersInjectionResolution(
     string FunctionName,
     IReadOnlyList<(string Name, Resolvable Dependency, bool isOut)> Parameter) : UserDefinedInjectionResolution(FunctionName, Parameter);
 
-internal record CollectionResolution(
+internal record ArrayResolution(
     string Reference,
     string TypeFullName,
     string ItemFullName,

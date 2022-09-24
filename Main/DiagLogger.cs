@@ -37,6 +37,9 @@ internal class DiagLogger : IDiagLogger
             case CompilationDieException slippedResolution:
                 Log(slippedResolution.Diagnostic);
                 break;
+            case ImpossibleDieException impossibleDieException:
+                Log(Diagnostics.ImpossibleException(impossibleDieException, phase));
+                break;
             default:
                 Log(Diagnostics.UnexpectedDieException(exception, phase));
                 break;

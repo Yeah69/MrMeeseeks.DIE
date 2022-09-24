@@ -8,7 +8,8 @@ public enum DieExceptionKind
     ImplementationCycle,
     FunctionCycle,
     Validation,
-    Compilation
+    Compilation,
+    Impossible
 }
 
 internal enum ExecutionPhase
@@ -56,4 +57,12 @@ public class CompilationDieException : DieException
 
     public CompilationDieException(Diagnostic diagnostic) => Diagnostic = diagnostic;
     public override DieExceptionKind Kind => DieExceptionKind.Compilation;
+}
+
+public class ImpossibleDieException : DieException
+{
+    public Guid Code { get; }
+
+    public ImpossibleDieException(Guid code) => Code = code;
+    public override DieExceptionKind Kind => DieExceptionKind.Impossible;
 }

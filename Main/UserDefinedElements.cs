@@ -55,7 +55,7 @@ internal class UserDefinedElements : IUserDefinedElements
                 IFieldSymbol fs => fs.Type,
                 IPropertySymbol ps => ps.Type,
                 IMethodSymbol ms => ms.ReturnType,
-                _ => throw new Exception("Impossible")
+                _ => throw new ImpossibleDieException(new Guid("B75E24B2-61A3-4C37-B5A5-C7E6D390279D"))
             }, SymbolEqualityComparer.Default)
             .Where(g => g.Count() > 1)
             .ToImmutableArray();

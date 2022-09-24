@@ -266,8 +266,8 @@ internal class CheckTypeProperties : ICheckTypeProperties
             .ToImmutableArray();
         var unboundTargetType = targetType.UnboundIfGeneric();
         var isTargetGeneric = targetType.IsGenericType;
-        if (isTargetGeneric && targetType.TypeArguments.Any(tp => tp is not INamedTypeSymbol)) 
-            throw new Exception("Target type at this point should only have closed generic parameters");
+        if (isTargetGeneric && targetType.TypeArguments.Any(tp => tp is not INamedTypeSymbol))
+            throw new ImpossibleDieException(new Guid("94B3BC00-9D37-4991-A66A-DDDF7C8402B6")); // Target type at this point should only have closed generic parameters
 
         var ret = new List<INamedTypeSymbol>();
         foreach (var implementation in rawImplementations)

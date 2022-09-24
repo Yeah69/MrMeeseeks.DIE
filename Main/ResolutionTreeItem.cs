@@ -427,7 +427,7 @@ internal record AsyncFactoryCallResolution(
                 case (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.AsyncTask):
                     return new TaskFromWrappedValueTaskResolution(FunctionCall.SelectedFunctionCall, Reference, TypeFullName);
                 default:
-                    throw new ArgumentOutOfRangeException(); // todo
+                    throw new ImpossibleDieException(new Guid("822DB30A-0DB6-4560-8389-B5AF5D19481D"));
             }
         }
     }

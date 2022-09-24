@@ -62,6 +62,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     private readonly IFunctionResolutionSynchronicityDecisionMaker _synchronicityDecisionMaker;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly IFunctionCycleTracker _functionCycleTracker;
+    private readonly IDiagLogger _diagLogger;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
     private readonly Dictionary<INamedTypeSymbol, Resolvable> _scopedInstancesReferenceCache = new(SymbolEqualityComparer.Default);
@@ -96,13 +97,15 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         // dependencies
         WellKnownTypes wellKnownTypes,
         IReferenceGeneratorFactory referenceGeneratorFactory,
-        IFunctionCycleTracker functionCycleTracker)
+        IFunctionCycleTracker functionCycleTracker,
+        IDiagLogger diagLogger)
     {
         OriginalReturnType = returnType;
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _synchronicityDecisionMaker = synchronicityDecisionMaker;
         _wellKnownTypes = wellKnownTypes;
         _functionCycleTracker = functionCycleTracker;
+        _diagLogger = diagLogger;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
         _userDefinedElements = rangeResolutionBaseBuilder.UserDefinedElements;
         Handle = new FunctionResolutionBuilderHandle(
@@ -545,7 +548,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 {
                     Function.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(currentType),
                     Function.SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(currentType),
-                    _ => throw new Exception("Shouldn't happen") // todo
+                    _ => throw new ImpossibleDieException(new Guid("3946978C-4A1D-477B-8C4B-D610DE6BC6A7"))
                 };
                 currentResolution = new AsyncFactoryCallResolution(
                     RootReferenceGenerator.Generate(currentType), 
@@ -559,7 +562,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     {
                         Function.SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(currentType),
                         Function.SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(currentType),
-                        _ => throw new Exception("Shouldn't happen") // todo
+                        _ => throw new ImpossibleDieException(new Guid("041B43CA-287F-42BC-AEBB-36B931EDB424"))
                     };
                     currentResolution = nextAsynchronicity switch
                     {
@@ -571,7 +574,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                             (Resolvable) currentResolution,
                             RootReferenceGenerator.Generate(currentType), 
                             currentType.FullName()),
-                        _ => throw new Exception("Shouldn't happen") // todo
+                        _ => throw new ImpossibleDieException(new Guid("61F9F5A1-0E5B-418F-80D5-BAFC41DCB551"))
                     };
                 }
             }
@@ -709,7 +712,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         {
             var implementations = _checkTypeProperties.MapToImplementations(interfaceType);
             var compositeImplementationType = _checkTypeProperties.GetCompositeFor(interfaceType)
-                ?? throw new Exception("No or multiple composite implementations");
+                ?? throw new ImpossibleDieException(new Guid("2E4A28E8-573B-4087-95FE-BDED04DB3981"));
             var interfaceResolutions = implementations.Select(i => SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(
                 interfaceType,
                 i,
@@ -729,16 +732,22 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         }
         if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType) is not { } implementationType)
         {
-            return interfaceType.NullableAnnotation == NullableAnnotation.Annotated 
-                ? (new NullResolution(RootReferenceGenerator.Generate(interfaceType), interfaceType.FullName()), null) // todo warning
-                : (new ErrorTreeItem(Diagnostics.CompilationError(
-                    ErrorMessage(
-                        implementationStack, 
-                        interfaceType, 
-                        "Interface: Multiple or no implementations where a single is required"), 
-                    _rangeResolutionBaseBuilder.ErrorContext.Location,
-                    ExecutionPhase.Resolution)), 
+            if (interfaceType.NullableAnnotation == NullableAnnotation.Annotated)
+            {
+                _diagLogger.Log(Diagnostics.NullResolutionWarning(
+                    $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\", but injecting null instead.",
+                    ExecutionPhase.Resolution));
+                return (new NullResolution(RootReferenceGenerator.Generate(interfaceType), interfaceType.FullName()),
                     null);
+            }
+            return (new ErrorTreeItem(Diagnostics.CompilationError(
+                    ErrorMessage(
+                        implementationStack,
+                        interfaceType,
+                        $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\"."),
+                    _rangeResolutionBaseBuilder.ErrorContext.Location,
+                    ExecutionPhase.Resolution)),
+                null);
         }
 
         return SwitchInterfaceWithoutComposition(new CreateInterfaceParameter(
@@ -803,16 +812,23 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         
         if (_checkTypeProperties.MapToSingleFittingImplementation(implementationType) is not { } chosenImplementationType)
         {
-            return implementationType.NullableAnnotation == NullableAnnotation.Annotated 
-                ? (new NullResolution(RootReferenceGenerator.Generate(implementationType), implementationType.FullName()), null) // todo warning
-                : (new ErrorTreeItem(Diagnostics.CompilationError(
+            if (implementationType.NullableAnnotation == NullableAnnotation.Annotated)
+            {
+                _diagLogger.Log(Diagnostics.NullResolutionWarning(
+                    $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
+                    ExecutionPhase.Resolution));
+                return (
+                    new NullResolution(RootReferenceGenerator.Generate(implementationType),
+                        implementationType.FullName()), null);
+            }
+            return (new ErrorTreeItem(Diagnostics.CompilationError(
                     ErrorMessage(
-                        implementationStack, 
-                        implementationType, 
-                        "Interface: Multiple or no implementations where a single is required"), 
+                        implementationStack,
+                        implementationType,
+                        $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\","),
                     _rangeResolutionBaseBuilder.ErrorContext.Location,
-                    ExecutionPhase.Resolution)), 
-                    null);
+                    ExecutionPhase.Resolution)),
+                null);
         }
 
         var nextParameter = new SwitchImplementationParameter(
@@ -917,17 +933,26 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
         if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is not { } constructor)
         {
-            return implementationType.NullableAnnotation == NullableAnnotation.Annotated
-                ? (new NullResolution(RootReferenceGenerator.Generate(implementationType),
-                        implementationType.FullName()), null) // todo warning
-                : (new ErrorTreeItem(Diagnostics.CompilationError(implementationType.InstanceConstructors.Length switch
+            if (implementationType.NullableAnnotation == NullableAnnotation.Annotated)
+            {
+                _diagLogger.Log(Diagnostics.NullResolutionWarning(
+                    $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
+                    ExecutionPhase.Resolution));
+                return (new NullResolution(RootReferenceGenerator.Generate(implementationType),
+                    implementationType.FullName()), null);
+            }
+            return (new ErrorTreeItem(Diagnostics.CompilationError(
+                    implementationType.InstanceConstructors.Length switch
                     {
-                        0 => ErrorMessage(implementationStack, implementationType, $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}"),
-                        > 1 => ErrorMessage(implementationStack, implementationType, $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}"),
-                        _ => ErrorMessage(implementationStack, implementationType, $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol")
+                        0 => ErrorMessage(implementationStack, implementationType,
+                            $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}"),
+                        > 1 => ErrorMessage(implementationStack, implementationType,
+                            $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}"),
+                        _ => ErrorMessage(implementationStack, implementationType,
+                            $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol")
                     }, _rangeResolutionBaseBuilder.ErrorContext.Location,
-                        ExecutionPhase.Resolution)),
-                    null);
+                    ExecutionPhase.Resolution)),
+                null);
         }
 
         var implementationCycle = implementationStack.Contains(implementationType, SymbolEqualityComparer.Default);

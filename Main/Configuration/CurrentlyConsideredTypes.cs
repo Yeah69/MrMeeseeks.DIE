@@ -242,7 +242,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                     .Single(t => compositeInterfaces.Contains(t.UnboundIfGeneric(), SymbolEqualityComparer.Default));
                 return namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol
                     ? interfaceTypeSymbol.UnboundIfGeneric()
-                    : throw new Exception("Composite should implement composite interface");
+                    : throw new ValidationDieException(ImmutableList.Create(Diagnostics.ValidationGeneral("Composite should implement composite interface")));
             }, SymbolEqualityComparer.Default)
             .Where(g => g.Count() == 1)
             .ToDictionary(g => g.Key, g => g.Single(), SymbolEqualityComparer.Default);
@@ -294,7 +294,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                     .Single(t => decoratorInterfaces.Contains(t.UnboundIfGeneric(), SymbolEqualityComparer.Default));
                 return namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol
                     ? interfaceTypeSymbol.UnboundIfGeneric()
-                    : throw new Exception("Decorator should implement decorator interface");
+                    : throw new ValidationDieException(ImmutableList.Create(Diagnostics.ValidationGeneral("Decorator should implement decorator interface")));
             }, SymbolEqualityComparer.Default)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.ToList(), SymbolEqualityComparer.Default);
         

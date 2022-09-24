@@ -12,20 +12,38 @@ internal class ReferenceGenerator : IReferenceGenerator
 {
     private int _i = -1;
     private readonly int _j;
+    private readonly IDiagLogger _diagLogger;
 
-    internal ReferenceGenerator(int j) => _j = j;
+    internal ReferenceGenerator(
+        // parameters
+        int j,
+        
+        // dependencies
+        IDiagLogger diagLogger)
+    {
+        _j = j;
+        _diagLogger = diagLogger;
+    }
 
     public string Generate(ITypeSymbol type)
     {
-        var baseName = type switch
+        string baseName;
+        switch (type)
         {
-            INamedTypeSymbol namedTypeSymbol => 
-                $"{char.ToLower(namedTypeSymbol.Name[0])}{namedTypeSymbol.Name.Substring(1)}",
-            IArrayTypeSymbol { ElementType: {} elementType } => 
-                $"{char.ToLower(elementType.Name[0])}{elementType.Name.Substring(1)}Array",
-            _ => "empty" // todo warning type without name seems strange
-        };
-        
+            case INamedTypeSymbol namedTypeSymbol:
+                baseName = $"{char.ToLower(namedTypeSymbol.Name[0])}{namedTypeSymbol.Name.Substring(1)}";
+                break;
+            case IArrayTypeSymbol { ElementType: { } elementType }:
+                baseName = $"{char.ToLower(elementType.Name[0])}{elementType.Name.Substring(1)}Array";
+                break;
+            default:
+                _diagLogger.Log(Diagnostics.EmptyReferenceNameWarning(
+                    $"A reference name couldn't be generated for \"{type.FullName()}\"", 
+                    ExecutionPhase.Resolution));
+                baseName = "empty";
+                break;
+        }
+
         return GenerateInner(string.Empty, baseName, string.Empty);
     }
 

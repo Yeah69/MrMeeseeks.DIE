@@ -232,7 +232,8 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
-                functionCycleTracker);
+                functionCycleTracker,
+                diagLogger);
 
             IScopeRootCreateFunctionResolutionBuilder ScopeRootCreateFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
@@ -243,7 +244,8 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
-                functionCycleTracker);
+                functionCycleTracker,
+                diagLogger);
 
             IRangedFunctionResolutionBuilder RangedFunctionResolutionBuilderFactory(
                 IRangeResolutionBaseBuilder rangeResolutionBaseBuilder,
@@ -259,7 +261,8 @@ public class SourceGenerator : ISourceGenerator
 
                 wellKnownTypes,
                 referenceGeneratorFactory,
-                functionCycleTracker);
+                functionCycleTracker,
+                diagLogger);
 
             IRangedFunctionGroupResolutionBuilder RangedFunctionGroupResolutionBuilderFactory(
                 string label,
@@ -282,7 +285,7 @@ public class SourceGenerator : ISourceGenerator
                 new FunctionResolutionSynchronicityDecisionMaker();
         }
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypesMiscellaneous);
-        IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j);
+        IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j, diagLogger);
 
         IContainerCodeBuilder ContainerCodeBuilderFactory(
             IContainerInfo containerInfo,

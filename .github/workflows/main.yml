@@ -26,6 +26,8 @@ jobs:
       run: dotnet restore .\MrMeeseeks.DIE.sln
     - name: Build
       run: dotnet build .\MrMeeseeks.DIE.sln --configuration Release --no-restore
+    - name: Test
+      run: dotnet test .\Test\Test.csproj --no-restore --verbosity normal
     - name: Publish to NuGet
       uses: brandedoutcast/publish-nuget@master
       with:

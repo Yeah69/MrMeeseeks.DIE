@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Collection.IReadOnlyCollection;
+namespace MrMeeseeks.DIE.Test.Collection.Injection.IReadOnlyCollection;
 
 internal interface IInterface {}
 

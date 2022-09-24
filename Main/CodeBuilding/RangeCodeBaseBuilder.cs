@@ -457,7 +457,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                     (builder, tuple) => GenerateResolutions(builder, tuple.Dependency ?? throw new Exception()));
                 stringBuilder = stringBuilder.AppendLine($"{typeFullName} {reference} = {(isAwait ? "await " : "")}this.{functionName}({string.Join(", ", parameters.Select(t => $"{t.Name}: {t.Dependency.Reference}"))});");
                 break;
-            case CollectionResolution(var reference, var typeFullName, var itemFullName, var items):
+            case ArrayResolution(var reference, var typeFullName, var itemFullName, var items):
                 stringBuilder = items.OfType<Resolvable>().Aggregate(stringBuilder, GenerateResolutions);
                 stringBuilder = stringBuilder.AppendLine(
                     $"{typeFullName} {reference} = new {itemFullName}[]{{{string.Join(", ", items.Select(d => $"({itemFullName}) {(d as Resolvable)?.Reference}"))}}};");

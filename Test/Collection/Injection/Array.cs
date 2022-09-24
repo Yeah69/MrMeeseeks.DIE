@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Collection.IReadOnlyList;
+namespace MrMeeseeks.DIE.Test.Collection.Injection.Array;
 
 internal interface IInterface {}
 
@@ -13,7 +12,7 @@ internal class ClassB : IInterface {}
 
 internal class ClassC : IInterface {}
 
-[CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
+[CreateFunction(typeof(IInterface[]), "Create")]
 internal sealed partial class Container {}
 
 public class Tests
@@ -23,6 +22,6 @@ public class Tests
     {
         await using var container = new Container();
         var collection = container.Create();
-        Assert.Equal(3, collection.Count);
+        Assert.Equal(3, collection.Length);
     }
 }

@@ -144,8 +144,8 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
     }
 
     protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol _, string specification) => 
-        Diagnostics.ValidationContainer(rangeType, specification);
+        Diagnostics.ValidationContainer(rangeType, specification, ExecutionPhase.Validation);
     
     private Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, string specification, Location location) => 
-        Diagnostics.ValidationContainer(rangeType, specification, location);
+        Diagnostics.ValidationContainer(rangeType, specification, location, ExecutionPhase.Validation);
 }

@@ -39,5 +39,5 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
     protected override string ScopeName => Constants.ScopeName;
 
     protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) => 
-        Diagnostics.ValidationScope(rangeType, containerType, specification);
+        Diagnostics.ValidationScope(rangeType, containerType, specification, ExecutionPhase.Validation);
 }

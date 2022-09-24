@@ -69,7 +69,8 @@ internal class UserDefinedElements : IUserDefinedElements
                             symbol, 
                             scopeType, 
                             containerType,
-                            "Multiple user-defined factories aren't allowed to have the same type."));
+                            "Multiple user-defined factories aren't allowed to have the same type.",
+                            ExecutionPhase.Validation));
 
             _typeToField = new Dictionary<ISymbol?, IFieldSymbol>(SymbolEqualityComparer.Default);
         
@@ -171,7 +172,8 @@ internal class UserDefinedElements : IUserDefinedElements
                                 t.Item2, 
                                 scopeType, 
                                 containerType,
-                                "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on."));
+                                "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on.",
+                                ExecutionPhase.Validation));
 
                 return new Dictionary<ISymbol?, IMethodSymbol>(SymbolEqualityComparer.Default);
             }

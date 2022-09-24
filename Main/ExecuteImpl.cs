@@ -1,5 +1,4 @@
-﻿using System.CodeDom.Compiler;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.DIE.CodeBuilding;
 using MrMeeseeks.DIE.ResolutionBuilding;
 using MrMeeseeks.DIE.Validation.Range;
@@ -61,6 +60,7 @@ internal class ExecuteImpl : IExecute
                 .ToList();
             foreach (var containerSymbol in containerClasses)
             {
+                var currentPhase = ExecutionPhase.Validation;
                 try
                 {
                     var containerInfo = _containerInfoFactory(containerSymbol);
@@ -68,6 +68,7 @@ internal class ExecuteImpl : IExecute
                         .ToImmutableArray();
                     if (!validationDiagnostics.Any())
                     {
+                        currentPhase = ExecutionPhase.Resolution;
                         var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
                         containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.CreateFunctionData);
 
@@ -75,10 +76,13 @@ internal class ExecuteImpl : IExecute
                         {
                             containerResolutionBuilder.DoWork();
                         }
+                        currentPhase = ExecutionPhase.CycleDetection;
                         containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
                         
+                        currentPhase = ExecutionPhase.ResolutionBuilding;
                         var containerResolution = containerResolutionBuilder.Build();
                         
+                        currentPhase = ExecutionPhase.CodeGeneration;
                         _containerGenerator.Generate(containerInfo, containerResolution);
                     }
                     else
@@ -94,7 +98,7 @@ internal class ExecuteImpl : IExecute
                             containerSymbol.Name, 
                             dieException);
                     else
-                        _diagLogger.Error(dieException);
+                        _diagLogger.Error(dieException, currentPhase);
                 }
                 catch (Exception exception)
                 {
@@ -104,7 +108,7 @@ internal class ExecuteImpl : IExecute
                             containerSymbol.Name, 
                             exception);
                     else
-                        _diagLogger.Log(Diagnostics.UnexpectedException(exception));
+                        _diagLogger.Log(Diagnostics.UnexpectedException(exception, currentPhase));
                 }
             }
         }

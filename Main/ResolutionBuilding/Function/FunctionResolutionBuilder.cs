@@ -327,7 +327,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                         0 => ErrorMessage(implementationStack, namedTypeSymbol, "Lazy: No type argument"),
                         > 1 => ErrorMessage(implementationStack, namedTypeSymbol, "Lazy: more than one type argument"),
                         _ => ErrorMessage(implementationStack, namedTypeSymbol, "Lazy: {namedTypeSymbol.TypeArguments[0].FullName()} is not a named type symbol"),
-                    }, _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                    }, _rangeResolutionBaseBuilder.ErrorContext.Location,
+                        ExecutionPhase.Resolution)),
                     null);
             }
 
@@ -354,7 +355,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             {
                 return (
                     new ErrorTreeItem(Diagnostics.CompilationError(
-                        ErrorMessage(implementationStack, type, "Func: Return type not named"), _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                        ErrorMessage(
+                            implementationStack, 
+                            type, 
+                            "Func: Return type not named"), 
+                        _rangeResolutionBaseBuilder.ErrorContext.Location,
+                        ExecutionPhase.Resolution)),
                     null);
             }
             
@@ -394,7 +400,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             {
                 return (
                     new ErrorTreeItem(Diagnostics.CompilationError(
-                        ErrorMessage(implementationStack, type, "Collection: Collection is not a named type symbol"), _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                        ErrorMessage(
+                            implementationStack, 
+                            type, 
+                            "Collection: Collection is not a named type symbol"), 
+                        _rangeResolutionBaseBuilder.ErrorContext.Location,
+                        ExecutionPhase.Resolution)),
                     null);
             }
 
@@ -411,7 +422,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 default:
                     return (new ErrorTreeItem(Diagnostics.CompilationError(
                             "Collection: Item type couldn't be determined", 
-                            _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                            _rangeResolutionBaseBuilder.ErrorContext.Location,
+                            ExecutionPhase.Resolution)),
                         null);
             }
 
@@ -437,7 +449,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             {
                 return (
                     new ErrorTreeItem(Diagnostics.CompilationError(
-                        ErrorMessage(implementationStack, type, "Collection: Collection's inner type is not a named type symbol"), _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                        ErrorMessage(
+                            implementationStack, 
+                            type, 
+                            "Collection: Collection's inner type is not a named type symbol"), 
+                        _rangeResolutionBaseBuilder.ErrorContext.Location,
+                        ExecutionPhase.Resolution)),
                     null);
             }
 
@@ -448,7 +465,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             {
                 return (
                     new ErrorTreeItem(Diagnostics.CompilationError(
-                        ErrorMessage(implementationStack, type, "Collection: Collection's inner type is not a named type symbol"), _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                        ErrorMessage(
+                            implementationStack, 
+                            type, 
+                            "Collection: Collection's inner type is not a named type symbol"), 
+                        _rangeResolutionBaseBuilder.ErrorContext.Location,
+                        ExecutionPhase.Resolution)),
                     null);
             }
                 
@@ -488,7 +510,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
         return (
             new ErrorTreeItem(Diagnostics.CompilationError(
-                ErrorMessage(implementationStack, type, "Couldn't process in resolution tree creation."), _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                ErrorMessage(
+                    implementationStack, 
+                    type, 
+                    "Couldn't process in resolution tree creation."),
+                _rangeResolutionBaseBuilder.ErrorContext.Location,
+                ExecutionPhase.Resolution)),
             null);
 
         IFactoryResolution CreateFactoryResolution(
@@ -705,7 +732,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             return interfaceType.NullableAnnotation == NullableAnnotation.Annotated 
                 ? (new NullResolution(RootReferenceGenerator.Generate(interfaceType), interfaceType.FullName()), null) // todo warning
                 : (new ErrorTreeItem(Diagnostics.CompilationError(
-                    ErrorMessage(implementationStack, interfaceType, "Interface: Multiple or no implementations where a single is required"), _rangeResolutionBaseBuilder.ErrorContext.Location)), 
+                    ErrorMessage(
+                        implementationStack, 
+                        interfaceType, 
+                        "Interface: Multiple or no implementations where a single is required"), 
+                    _rangeResolutionBaseBuilder.ErrorContext.Location,
+                    ExecutionPhase.Resolution)), 
                     null);
         }
 
@@ -774,7 +806,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             return implementationType.NullableAnnotation == NullableAnnotation.Annotated 
                 ? (new NullResolution(RootReferenceGenerator.Generate(implementationType), implementationType.FullName()), null) // todo warning
                 : (new ErrorTreeItem(Diagnostics.CompilationError(
-                    ErrorMessage(implementationStack, implementationType, "Interface: Multiple or no implementations where a single is required"), _rangeResolutionBaseBuilder.ErrorContext.Location)), 
+                    ErrorMessage(
+                        implementationStack, 
+                        implementationType, 
+                        "Interface: Multiple or no implementations where a single is required"), 
+                    _rangeResolutionBaseBuilder.ErrorContext.Location,
+                    ExecutionPhase.Resolution)), 
                     null);
         }
 
@@ -888,7 +925,8 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                         0 => ErrorMessage(implementationStack, implementationType, $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}"),
                         > 1 => ErrorMessage(implementationStack, implementationType, $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}"),
                         _ => ErrorMessage(implementationStack, implementationType, $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol")
-                    }, _rangeResolutionBaseBuilder.ErrorContext.Location)),
+                    }, _rangeResolutionBaseBuilder.ErrorContext.Location,
+                        ExecutionPhase.Resolution)),
                     null);
         }
 
@@ -1120,7 +1158,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             if (typeSymbol is not INamedTypeSymbol && typeSymbol is not IArrayTypeSymbol)
                 return ("",
                     new ErrorTreeItem(Diagnostics.CompilationError(
-                        ErrorMessage(implementationStack, typeSymbol, $"Class.Constructor.Parameter: Parameter type {typeSymbol.FullName()} is not a named type symbol"), _rangeResolutionBaseBuilder.ErrorContext.Location)));
+                        ErrorMessage(
+                            implementationStack, 
+                            typeSymbol, 
+                            $"Class.Constructor.Parameter: Parameter type {typeSymbol.FullName()} is not a named type symbol"), 
+                        _rangeResolutionBaseBuilder.ErrorContext.Location,
+                        ExecutionPhase.Resolution)));
 
             return (
                 parameterName,

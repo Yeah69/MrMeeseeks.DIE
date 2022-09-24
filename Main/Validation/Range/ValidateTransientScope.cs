@@ -39,5 +39,5 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
     protected override string ScopeName => Constants.TransientScopeName;
 
     protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) => 
-        Diagnostics.ValidationTransientScope(rangeType, containerType, specification);
+        Diagnostics.ValidationTransientScope(rangeType, containerType, specification, ExecutionPhase.Validation);
 }

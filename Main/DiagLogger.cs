@@ -2,7 +2,7 @@
 
 internal interface IDiagLogger
 {
-    void Error(DieException exception);
+    void Error(DieException exception, ExecutionPhase phase);
 
     void Log(Diagnostic diagnostic);
 }
@@ -20,15 +20,15 @@ internal class DiagLogger : IDiagLogger
         _context = context;
     }
     
-    public void Error(DieException exception)
+    public void Error(DieException exception, ExecutionPhase phase)
     {
         switch (exception)
         {
             case ImplementationCycleDieException implementationCycle:
-                Log(Diagnostics.CircularReferenceInsideFactory(implementationCycle));
+                Log(Diagnostics.CircularReferenceInsideFactory(implementationCycle, phase));
                 break;
             case FunctionCycleDieException functionCycleDieException:
-                Log(Diagnostics.CircularReferenceAmongFactories(functionCycleDieException));
+                Log(Diagnostics.CircularReferenceAmongFactories(functionCycleDieException, phase));
                 break;
             case ValidationDieException validationDieException:
                 foreach (var error in validationDieException.Diagnostics)
@@ -38,7 +38,7 @@ internal class DiagLogger : IDiagLogger
                 Log(slippedResolution.Diagnostic);
                 break;
             default:
-                Log(Diagnostics.UnexpectedDieException(exception));
+                Log(Diagnostics.UnexpectedDieException(exception, phase));
                 break;
         }
     }

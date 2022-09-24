@@ -11,6 +11,15 @@ public enum DieExceptionKind
     Compilation
 }
 
+internal enum ExecutionPhase
+{
+    Validation,
+    Resolution,
+    CycleDetection,
+    ResolutionBuilding,
+    CodeGeneration
+}
+
 public abstract class DieException : Exception
 {
     public abstract DieExceptionKind Kind { get; }

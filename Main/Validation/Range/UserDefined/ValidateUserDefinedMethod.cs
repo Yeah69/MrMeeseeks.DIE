@@ -60,5 +60,5 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
     }
 
     protected static Diagnostic ValidationErrorDiagnostic(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification) =>
-        Diagnostics.ValidationUserDefinedElement(method, rangeType, container, specification);
+        Diagnostics.ValidationUserDefinedElement(method, rangeType, container, specification, ExecutionPhase.Validation);
 }

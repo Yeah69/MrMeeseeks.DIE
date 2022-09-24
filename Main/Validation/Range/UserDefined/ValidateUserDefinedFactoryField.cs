@@ -29,5 +29,5 @@ internal class ValidateUserDefinedFactoryField : IValidateUserDefinedFactoryFiel
     }
 
     protected static Diagnostic ValidationErrorDiagnostic(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification) =>
-        Diagnostics.ValidationUserDefinedElement(field, rangeType, container, specification);
+        Diagnostics.ValidationUserDefinedElement(field, rangeType, container, specification, ExecutionPhase.Validation);
 }

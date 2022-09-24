@@ -181,7 +181,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 attributeData,
                 _rangeType,
                 _containerType,
-                "Not parsable attribute."));
+                "Not parsable attribute.",
+                ExecutionPhase.Validation));
         
         DecoratorSequenceChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.DecoratorSequenceChoiceAttribute, out var decoratorSequenceChoiceAttributes) 
@@ -209,7 +210,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."));
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
+                        ExecutionPhase.Validation));
                     return null;
                 }
                 
@@ -234,7 +236,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                                 ad,
                                 _rangeType,
                                 _containerType,
-                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."));
+                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
+                                ExecutionPhase.Validation));
                             return null;
                         }
                         
@@ -273,7 +276,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."));
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
+                        ExecutionPhase.Validation));
                     return null;
                 }
                 
@@ -322,7 +326,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\"."));
+                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\".",
+                        ExecutionPhase.Validation));
                     
                     return null;
                 }
@@ -387,7 +392,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\"."));
+                        $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\".",
+                        ExecutionPhase.Validation));
 
                 var pickedProperties = propertyNames.Intersect(parameterTypes);
                 
@@ -440,7 +446,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                             ad,
                             _rangeType,
                             _containerType,
-                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\"."));
+                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\".",
+                            ExecutionPhase.Validation));
                         return null;
                     }
                     
@@ -451,7 +458,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     ad,
                     _rangeType,
                     _containerType,
-                    $"Couldn't find a method with the name \"{methodName}\" on \"{type.FullName()}\"."));
+                    $"Couldn't find a method with the name \"{methodName}\" on \"{type.FullName()}\".",
+                    ExecutionPhase.Validation));
                 return null;
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
@@ -496,7 +504,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
+                        ExecutionPhase.Validation));
                     return null;
                 }
 
@@ -551,7 +560,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
+                        ExecutionPhase.Validation));
                     return null;
                 }
                 
@@ -591,7 +601,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
+                        ExecutionPhase.Validation));
                     return null;
                 }
                 
@@ -631,7 +642,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
+                        ExecutionPhase.Validation));
                     return null;
                 }
                 
@@ -677,7 +689,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                                     ad,
                                     _rangeType,
                                     _containerType,
-                                    $"Type \"{t.FullName()}\" doesn't lead to a single known assembly."));
+                                    $"Type \"{t.FullName()}\" doesn't lead to a single known assembly.",
+                                    ExecutionPhase.Validation));
                             }
                             return t.ContainingAssembly;
                         })
@@ -709,7 +722,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Type \"{implementation.FullName()}\" has to be an implementation."));
+                        $"Type \"{implementation.FullName()}\" has to be an implementation.",
+                        ExecutionPhase.Validation));
                     return null;
                 }
 
@@ -724,7 +738,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."));
+                        $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\".",
+                        ExecutionPhase.Validation));
                     return null;
                 }
                 
@@ -767,7 +782,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                                 ad,
                                 _rangeType,
                                 _containerType,
-                                $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."));
+                                $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\".",
+                                ExecutionPhase.Validation));
                             return null;
                         }
                         
@@ -802,7 +818,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                             t.Item1,
                             _rangeType, 
                             _containerType, 
-                            $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored."));
+                            $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored.",
+                            ExecutionPhase.Validation));
                 
                     return ret;
                 })
@@ -824,7 +841,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         t.Item1,
                         _rangeType, 
                         _containerType, 
-                        $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored."));
+                        $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored.",
+                        ExecutionPhase.Validation));
                 
                 return ret;
             })

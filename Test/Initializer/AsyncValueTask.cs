@@ -8,10 +8,10 @@ internal class Dependency : IValueTaskInitializer
 {
     public bool IsInitialized { get; private set; }
     
-    ValueTask IValueTaskInitializer.InitializeAsync()
+    async ValueTask IValueTaskInitializer.InitializeAsync()
     {
+        await Task.Yield();
         IsInitialized = true;
-        return ValueTask.CompletedTask;
     }
 }
 

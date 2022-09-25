@@ -7,10 +7,7 @@ namespace MrMeeseeks.DIE.Test.Lazy.AsyncWrapped.SingleValueTask;
 
 internal class Dependency : IValueTaskInitializer
 {
-    public ValueTask InitializeAsync()
-    {
-        return ValueTask.CompletedTask;
-    }
+    public ValueTask InitializeAsync() => default;
 }
 
 internal class OuterDependency

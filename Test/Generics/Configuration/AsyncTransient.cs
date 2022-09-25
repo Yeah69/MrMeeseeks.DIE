@@ -7,10 +7,7 @@ namespace MrMeeseeks.DIE.Test.Generics.Configuration.AsyncTransient;
 
 internal class Managed : IAsyncDisposable
 {
-    public ValueTask DisposeAsync()
-    {
-        return ValueTask.CompletedTask;
-    }
+    public ValueTask DisposeAsync() => default;
 }
 
 internal class Class<T0> : IAsyncTransient, IAsyncDisposable

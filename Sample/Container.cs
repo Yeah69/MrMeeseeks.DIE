@@ -1,20 +1,13 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+﻿using System.IO;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace Asdf;
+namespace MrMeeseeks.DIE.Test.UserDefinedElements.FactoryMethod.WithParameterInContainer;
 
-internal class Dependency : IScopeRoot
-{
-    internal Dependency(InnerDependency inner) {}
-}
-
-internal class InnerDependency : IScopeInstance
-{
-    internal InnerDependency(Dependency inner) {}
-}
-
-[CreateFunction(typeof(Dependency), "Create")]
+[FilterAllImplementationsAggregation]
+[ImplementationAggregation(typeof(FileInfo))]
+[CreateFunction(typeof(FileInfo), "Create")]
 internal sealed partial class Container
 {
-    
+    private string DIE_Factory_Path => "C:\\Yeah.txt";
+    private FileInfo DIE_Factory(string path) => new (path);
 }

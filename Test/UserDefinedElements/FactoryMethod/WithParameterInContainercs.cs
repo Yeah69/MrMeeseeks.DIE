@@ -5,6 +5,7 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.FactoryMethod.WithParameterInContainer;
 
+[FilterAllImplementationsAggregation]
 [ImplementationAggregation(typeof(FileInfo))]
 [CreateFunction(typeof(FileInfo), "Create")]
 internal sealed partial class Container

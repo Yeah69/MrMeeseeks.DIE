@@ -14,7 +14,7 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container
 {
-    private readonly ValueTask<string> DIE_Factory_Yeah = ValueTask.FromResult("Yeah");
+    private readonly ValueTask<string> DIE_Factory_Yeah = new ("Yeah");
 }
 
 public class Tests

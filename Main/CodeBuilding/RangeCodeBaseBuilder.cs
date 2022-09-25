@@ -69,10 +69,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 .AppendLine("{")
                 .AppendLine($"var {disposalHandling.DisposedLocalReference} = global::System.Threading.Interlocked.Exchange(ref this.{disposalHandling.DisposedFieldReference}, 1);")
                 .AppendLine("}")
-                .AppendLine($"public {WellKnownTypes.ValueTask.FullName()} DisposeAsync()")
+                .AppendLine($"public async {WellKnownTypes.ValueTask.FullName()} DisposeAsync()")
                 .AppendLine("{")
+                .AppendLine($"await {WellKnownTypes.Task.FullName()}.Yield();")
                 .AppendLine($"Dispose();")
-                .AppendLine($"return new {WellKnownTypes.ValueTask.FullName()}({WellKnownTypes.Task.FullName()}.CompletedTask);")
                 .AppendLine("}");
         }
         
@@ -161,10 +161,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync) 
             && !_containerResolution.DisposalType.HasFlag(DisposalType.Async))
             stringBuilder = stringBuilder
-                .AppendLine($"public {WellKnownTypes.ValueTask.FullName()} DisposeAsync()")
+                .AppendLine($"public async {WellKnownTypes.ValueTask.FullName()} DisposeAsync()")
                 .AppendLine($"{{")
+                .AppendLine($"await {WellKnownTypes.Task.FullName()}.Yield();")
                 .AppendLine($"Dispose();")
-                .AppendLine($"return new {WellKnownTypes.ValueTask.FullName()}({WellKnownTypes.Task.FullName()}.CompletedTask);")
                 .AppendLine($"}}");
 
         return stringBuilder;
@@ -332,7 +332,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 break;
             case ValueTaskFromSyncResolution(var wrappedResolvable, var valueTaskReference, var valueTaskFullName):
                 stringBuilder = GenerateResolutions(stringBuilder, wrappedResolvable);
-                stringBuilder = stringBuilder.AppendLine($"{valueTaskFullName} {valueTaskReference} = {WellKnownTypes.ValueTask.FullName()}.FromResult({wrappedResolvable.Reference});");      
+                stringBuilder = stringBuilder.AppendLine($"{valueTaskFullName} {valueTaskReference} = new {valueTaskFullName}({wrappedResolvable.Reference});");      
                 break;
             case TransientScopeRootResolution(var transientScopeReference, var transientScopeTypeFullName, var containerInstanceScopeReference, var createFunctionCall):
                 stringBuilder = stringBuilder

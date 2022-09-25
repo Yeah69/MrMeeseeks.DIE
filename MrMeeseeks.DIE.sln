@@ -17,8 +17,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestChild", "TestChild\TestChild.csproj", "{1CCECD48-C564-4799-8A4C-19A9BF847795}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleChild", "SampleChild\SampleChild.csproj", "{73D1DC76-4CD8-4534-8717-0551B635F864}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestNotInternalsVisibleToChild", "TestNotInternalsVisibleToChild\TestNotInternalsVisibleToChild.csproj", "{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestInternalsVisibleToChild", "TestInternalsVisibleToChild\TestInternalsVisibleToChild.csproj", "{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}"
@@ -47,10 +45,6 @@ Global
 		{1CCECD48-C564-4799-8A4C-19A9BF847795}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CCECD48-C564-4799-8A4C-19A9BF847795}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CCECD48-C564-4799-8A4C-19A9BF847795}.Release|Any CPU.Build.0 = Release|Any CPU
-		{73D1DC76-4CD8-4534-8717-0551B635F864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{73D1DC76-4CD8-4534-8717-0551B635F864}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{73D1DC76-4CD8-4534-8717-0551B635F864}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{73D1DC76-4CD8-4534-8717-0551B635F864}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}.Release|Any CPU.ActiveCfg = Release|Any CPU

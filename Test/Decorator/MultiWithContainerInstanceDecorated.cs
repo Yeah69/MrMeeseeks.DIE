@@ -2,14 +2,14 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Decorator.Multi;
+namespace MrMeeseeks.DIE.Test.Decorator.MultiWithContainerInstanceDecorated;
 
 internal interface IInterface
 {
     IInterface Decorated { get; }
 }
 
-internal class Dependency : IInterface
+internal class Dependency : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }

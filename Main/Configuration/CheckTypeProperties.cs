@@ -149,7 +149,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                 sequence = implementationSequence;
                 found = true;
             }
-            else if (sequenceMap.TryGetValue(implementationType.UnboundIfGeneric(), out var interfaceSequence))
+            else if (sequenceMap.TryGetValue(interfaceType.UnboundIfGeneric(), out var interfaceSequence))
             {
                 sequence = interfaceSequence;
                 found = true;

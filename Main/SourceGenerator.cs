@@ -5,6 +5,7 @@ using MrMeeseeks.DIE.ResolutionBuilding.Function;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
+using System.Diagnostics;
 
 namespace MrMeeseeks.DIE;
 
@@ -16,6 +17,10 @@ public class SourceGenerator : ISourceGenerator
         new InitializeImpl(context, SyntaxReceiverFactory).Initialize();
             
         ISyntaxReceiver SyntaxReceiverFactory() => new SyntaxReceiver();
+        //if (!Debugger.IsAttached)
+        {
+            //Debugger.Launch();
+        }
     }
 
     public void Execute(GeneratorExecutionContext context)

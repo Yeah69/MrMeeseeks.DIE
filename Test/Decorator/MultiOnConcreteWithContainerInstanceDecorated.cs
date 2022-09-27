@@ -2,14 +2,14 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Decorator.Multi;
+namespace MrMeeseeks.DIE.Test.Decorator.MultiOnConcreteWithContainerInstanceDecorated;
 
 internal interface IInterface
 {
     IInterface Decorated { get; }
 }
 
-internal class Dependency : IInterface
+internal class Dependency : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }
@@ -31,7 +31,7 @@ internal class DecoratorB : IInterface, IDecorator<IInterface>
 }
 
 [CreateFunction(typeof(IInterface), "Create")]
-[DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
+[DecoratorSequenceChoice(typeof(IInterface), typeof(Dependency), typeof(DecoratorA), typeof(DecoratorB))]
 internal sealed partial class Container
 {
     

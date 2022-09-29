@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -16,9 +15,9 @@ internal sealed partial class Container
 public class Tests
 {
     [Fact]
-    public async ValueTask Test()
+    public void Test()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var dateTime = container.Create();
         Assert.Equal(DateTime.MinValue, dateTime);
     }

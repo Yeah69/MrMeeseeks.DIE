@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -73,15 +72,15 @@ internal sealed partial class Container
 public class Tests
 {
     [Fact]
-    public async ValueTask Test()
+    public void Test()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var parent = container.Create();
-        Assert.IsType<DecoratorAB>(parent.DependencyA.DecoratedA);
-        Assert.IsType<DecoratorAA>(parent.DependencyA.DecoratedA.DecoratedA);
-        Assert.IsType<Dependency>(parent.DependencyA.DecoratedA.DecoratedA.DecoratedA);
-        Assert.IsType<DecoratorBB>(parent.DependencyB.DecoratedB);
-        Assert.IsType<DecoratorBA>(parent.DependencyB.DecoratedB.DecoratedB);
-        Assert.IsType<Dependency>(parent.DependencyB.DecoratedB.DecoratedB.DecoratedB);
+        Assert.IsType<DecoratorAB>(parent.DependencyA);
+        Assert.IsType<DecoratorAA>(parent.DependencyA.DecoratedA);
+        Assert.IsType<Dependency>(parent.DependencyA.DecoratedA.DecoratedA);
+        Assert.IsType<DecoratorBB>(parent.DependencyB);
+        Assert.IsType<DecoratorBA>(parent.DependencyB.DecoratedB);
+        Assert.IsType<Dependency>(parent.DependencyB.DecoratedB.DecoratedB);
     }
 }

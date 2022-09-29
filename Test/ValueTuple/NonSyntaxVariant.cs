@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -27,15 +26,15 @@ internal sealed partial class Container
 {
     private int _i;
 
-    private int DIE_Counter() => _i++;
+    private int DIE_Factory_Counter() => _i++;
 }
 
 public class Tests
 {
     [Fact]
-    public async ValueTask Test()
+    public void Test()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var nonSyntaxValueTupleBase = container.Create();
         Assert.Equal(25, nonSyntaxValueTupleBase.Dependency.Item26);
     }

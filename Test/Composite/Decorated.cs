@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -64,9 +63,9 @@ internal sealed partial class Container
 public class Tests
 {
     [Fact]
-    public async ValueTask Test()
+    public void Test()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var composite = container.CreateDep();
         Assert.IsType<DecoratorB>(composite);
         Assert.IsType<Composite>(composite.Decorated);
@@ -81,9 +80,9 @@ public class Tests
     }
     
     [Fact]
-    public async ValueTask TestList()
+    public void TestList()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {

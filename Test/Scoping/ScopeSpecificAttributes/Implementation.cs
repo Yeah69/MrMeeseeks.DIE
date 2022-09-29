@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -50,23 +49,23 @@ internal sealed partial class Container
 public class Tests
 {
     [Fact]
-    public async ValueTask Container()
+    public void Container()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var dependency = container.Create0();
         Assert.IsType<DependencyContainer>(dependency);
     }
     [Fact]
-    public async ValueTask TransientScope()
+    public void TransientScope()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var dependency = container.Create1();
         Assert.IsType<DependencyTransientScope>(dependency.Dependency);
     }
     [Fact]
-    public async ValueTask Scope()
+    public void Scope()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var dependency = container.Create2();
         Assert.IsType<DependencyScope>(dependency.Dependency);
     }

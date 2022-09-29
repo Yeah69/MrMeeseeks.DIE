@@ -1,5 +1,4 @@
-﻿using System.IO;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 
 namespace MrMeeseeks.DIE.Test.Decorator.Multi;

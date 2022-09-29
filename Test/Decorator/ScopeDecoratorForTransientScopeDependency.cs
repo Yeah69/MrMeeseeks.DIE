@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -24,13 +23,8 @@ internal class Decorator : IInterface, IDecorator<IInterface>
 internal class ScopeRoot : IScopeRoot
 {
     public IInterface Decorated { get; }
-    public IInterface SecondDecorator { get; }
 
-    internal ScopeRoot(IInterface decorated, IInterface secondDecorator)
-    {
-        Decorated = decorated;
-        SecondDecorator = secondDecorator;
-    }
+    internal ScopeRoot(IInterface decorated) => Decorated = decorated;
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
@@ -41,9 +35,9 @@ internal sealed partial class Container
 public class Tests
 {
     [Fact]
-    public async ValueTask Test()
+    public void Test()
     {
-        await using var container = new Container();
+        using var container = new Container();
 
         var scopeRoot0 = container.Create();
         var decorator0 = scopeRoot0.Decorated;
@@ -60,7 +54,5 @@ public class Tests
         
         Assert.NotSame(decorator0, decorator1);
         Assert.Same(dependency0, dependency1);
-        Assert.Same(decorator0, scopeRoot0.SecondDecorator);
-        Assert.Same(decorator1, scopeRoot1.SecondDecorator);
     }
 }

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -50,9 +49,9 @@ public class Tests
 {
     
     [Fact]
-    public async ValueTask Container()
+    public void Container()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var dependencies = container.Create0();
         Assert.Equal(3, dependencies.Count);
         Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyContainer));
@@ -60,17 +59,17 @@ public class Tests
         Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyScope));
     }
     [Fact]
-    public async ValueTask TransientScope()
+    public void TransientScope()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var dependencies = container.Create1();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyTransientScope));
     }
     [Fact]
-    public async ValueTask Scope()
+    public void Scope()
     {
-        await using var container = new Container();
+        using var container = new Container();
         var dependencies = container.Create2();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyScope));

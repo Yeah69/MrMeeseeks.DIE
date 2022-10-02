@@ -44,7 +44,7 @@ internal sealed partial class Container
 public class Tests
 {
     [Fact]
-    public async ValueTask Test()
+    public async Task Test()
     {
         await using var container = new Container();
         var root = container.Create();

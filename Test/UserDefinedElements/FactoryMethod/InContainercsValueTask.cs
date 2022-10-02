@@ -21,7 +21,7 @@ public class Tests
 {
     
     [Fact]
-    public async ValueTask Test()
+    public async Task Test()
     {
         await using var container = new Container();
         var wrapper = await container.CreateValueAsync().ConfigureAwait(false);

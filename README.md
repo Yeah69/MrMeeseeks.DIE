@@ -12,17 +12,25 @@ MrMeeseeks.DIE (in this documentation just referred to as DIE) is a compile-time
 
 ## Nuget
 
-The easiest way of using DIE is by getting it through nuget. Here is the package page:
+The easiest way to use DIE is to get it via nuget. Here is the package page:
 
 https://www.nuget.org/packages/MrMeeseeks.DIE/
 
-Either search for `MrMeeseeks.DIE` in the nuget manager of the IDE of your choice.
+Either search for MrMeeseeks.DIE in the nuget manager of the IDE of your choice.
 
-Or call following PowerShell-command:
+Or call the following PowerShell command:
 
-> Install-Package MrMeeseeks.DIE
+```powershell
+Install-Package MrMeeseeks.DIE
+```
 
 Or manually insert the package reference into the target `.csproj`:
+
+```xml
+<PackageReference Include="MrMeeseeks.DIE" Version="[preferrably the current version]" />
+```
+
+Or manually add the package reference to the target `.csproj`:
 
 ```xml
 <PackageReference Include="MrMeeseeks.DIE" Version="[preferrably the current version]" />

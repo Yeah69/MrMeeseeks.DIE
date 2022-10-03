@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31423.177
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Main", "Main\Main.csproj", "{943520B9-1502-48BB-A8FE-57103557E256}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "Sample\Sample.csproj", "{5DFB446B-AAC8-450A-95A1-A55EF6BB37DB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{4BFDBE50-2316-463E-B587-3F367D591FDF}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.build.props = Directory.build.props
+		.github\workflows\main.yml = .github\workflows\main.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{5075D83B-EF12-4372-8210-CEB5D81A4FE2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestChild", "TestChild\TestChild.csproj", "{1CCECD48-C564-4799-8A4C-19A9BF847795}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestNotInternalsVisibleToChild", "TestNotInternalsVisibleToChild\TestNotInternalsVisibleToChild.csproj", "{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestInternalsVisibleToChild", "TestInternalsVisibleToChild\TestInternalsVisibleToChild.csproj", "{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{943520B9-1502-48BB-A8FE-57103557E256}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{943520B9-1502-48BB-A8FE-57103557E256}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{943520B9-1502-48BB-A8FE-57103557E256}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{943520B9-1502-48BB-A8FE-57103557E256}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5DFB446B-AAC8-450A-95A1-A55EF6BB37DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5DFB446B-AAC8-450A-95A1-A55EF6BB37DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5DFB446B-AAC8-450A-95A1-A55EF6BB37DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5DFB446B-AAC8-450A-95A1-A55EF6BB37DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5075D83B-EF12-4372-8210-CEB5D81A4FE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5075D83B-EF12-4372-8210-CEB5D81A4FE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5075D83B-EF12-4372-8210-CEB5D81A4FE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5075D83B-EF12-4372-8210-CEB5D81A4FE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CCECD48-C564-4799-8A4C-19A9BF847795}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CCECD48-C564-4799-8A4C-19A9BF847795}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CCECD48-C564-4799-8A4C-19A9BF847795}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CCECD48-C564-4799-8A4C-19A9BF847795}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1D7CC3A-1340-4817-81C7-6820A2F31A8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7BD98588-FA68-4B8A-A76B-DEA1CDE30E92}
+	EndGlobalSection
+EndGlobal

@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Extensions;
+
 namespace MrMeeseeks.DIE;
 
 internal interface IUserDefinedElements
@@ -26,12 +28,12 @@ internal class EmptyUserDefinedElements : IUserDefinedElements
 
 internal class UserDefinedElements : IUserDefinedElements
 {
-    private readonly IReadOnlyDictionary<ISymbol?, IFieldSymbol> _typeToField;
-    private readonly IReadOnlyDictionary<ISymbol?, IPropertySymbol> _typeToProperty;
-    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _typeToMethod;
-    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _constructorParametersInjectionMethods;
-    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _propertiesInjectionMethods;
-    private readonly IReadOnlyDictionary<ISymbol?, IMethodSymbol> _initializerParametersInjectionMethods;
+    private readonly IReadOnlyDictionary<string, IFieldSymbol> _typeToField;
+    private readonly IReadOnlyDictionary<string, IPropertySymbol> _typeToProperty;
+    private readonly IReadOnlyDictionary<string, IMethodSymbol> _typeToMethod;
+    private readonly IReadOnlyDictionary<string, IMethodSymbol> _constructorParametersInjectionMethods;
+    private readonly IReadOnlyDictionary<string, IMethodSymbol> _propertiesInjectionMethods;
+    private readonly IReadOnlyDictionary<string, IMethodSymbol> _initializerParametersInjectionMethods;
 
     public UserDefinedElements(
         // parameter
@@ -72,30 +74,30 @@ internal class UserDefinedElements : IUserDefinedElements
                             "Multiple user-defined factories aren't allowed to have the same type.",
                             ExecutionPhase.Validation));
 
-            _typeToField = new Dictionary<ISymbol?, IFieldSymbol>(SymbolEqualityComparer.Default);
+            _typeToField = new Dictionary<string, IFieldSymbol>();
         
-            _typeToProperty = new Dictionary<ISymbol?, IPropertySymbol>(SymbolEqualityComparer.Default);
+            _typeToProperty = new Dictionary<string, IPropertySymbol>();
 
-            _typeToMethod = new Dictionary<ISymbol?, IMethodSymbol>(SymbolEqualityComparer.Default);
+            _typeToMethod = new Dictionary<string, IMethodSymbol>();
         }
         else
         {
             _typeToField = dieMembers
                 .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
                 .OfType<IFieldSymbol>()
-                .ToDictionary(fs => fs.Type, fs => fs, SymbolEqualityComparer.IncludeNullability);
+                .ToDictionary(fs => fs.Type.ConstructTypeUniqueKey(), fs => fs);
         
             _typeToProperty = dieMembers
                 .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
                 .Where(s => s is IPropertySymbol { GetMethod: { } })
                 .OfType<IPropertySymbol>()
-                .ToDictionary(ps => ps.Type, ps => ps, SymbolEqualityComparer.IncludeNullability);
+                .ToDictionary(ps => ps.Type.ConstructTypeUniqueKey(), ps => ps);
         
             _typeToMethod = dieMembers
                 .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
                 .Where(s => s is IMethodSymbol { ReturnsVoid: false, Arity: 0, IsConditional: false, MethodKind: MethodKind.Ordinary })
                 .OfType<IMethodSymbol>()
-                .ToDictionary(ps => ps.ReturnType, ps => ps, SymbolEqualityComparer.IncludeNullability);
+                .ToDictionary(ps => ps.ReturnType.ConstructTypeUniqueKey(), ps => ps);
         }
 
         AddForDisposal = dieMembers
@@ -133,7 +135,7 @@ internal class UserDefinedElements : IUserDefinedElements
         if (validationErrors.Any())
             throw new ValidationDieException(validationErrors.ToImmutableArray());
 
-        IReadOnlyDictionary<ISymbol?, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
+        IReadOnlyDictionary<string, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
         {
             var injectionMethodCandidates = dieMembers
             .Where(s => s.Name.StartsWith(prefix))
@@ -175,32 +177,32 @@ internal class UserDefinedElements : IUserDefinedElements
                                 "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on.",
                                 ExecutionPhase.Validation));
 
-                return new Dictionary<ISymbol?, IMethodSymbol>(SymbolEqualityComparer.Default);
+                return new Dictionary<string, IMethodSymbol>();
             }
             
             return injectionMethodCandidates
                 .OfType<(INamedTypeSymbol, IMethodSymbol)>()
-                .ToDictionary(t => t.Item1, t => t.Item2, SymbolEqualityComparer.Default);
+                .ToDictionary(t => t.Item1.ConstructTypeUniqueKey(), t => t.Item2);
         }
     }
 
     public IFieldSymbol? GetFactoryFieldFor(ITypeSymbol typeSymbol) => 
-        _typeToField.TryGetValue(typeSymbol, out var ret) ? ret : null;
+        _typeToField.TryGetValue(typeSymbol.ConstructTypeUniqueKey(), out var ret) ? ret : null;
 
     public IPropertySymbol? GetFactoryPropertyFor(ITypeSymbol typeSymbol) => 
-        _typeToProperty.TryGetValue(typeSymbol, out var ret) ? ret : null;
+        _typeToProperty.TryGetValue(typeSymbol.ConstructTypeUniqueKey(), out var ret) ? ret : null;
 
     public IMethodSymbol? GetFactoryMethodFor(ITypeSymbol typeSymbol) => 
-        _typeToMethod.TryGetValue(typeSymbol, out var ret) ? ret : null;
+        _typeToMethod.TryGetValue(typeSymbol.ConstructTypeUniqueKey(), out var ret) ? ret : null;
 
     public IMethodSymbol? AddForDisposal { get; }
     public IMethodSymbol? AddForDisposalAsync { get; }
     public IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type) => 
-        _constructorParametersInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+        _constructorParametersInjectionMethods.TryGetValue(type.ConstructTypeUniqueKey(), out var ret) ? ret : null;
 
     public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) =>
-        _propertiesInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+        _propertiesInjectionMethods.TryGetValue(type.ConstructTypeUniqueKey(), out var ret) ? ret : null;
 
     public IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type) => 
-        _initializerParametersInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+        _initializerParametersInjectionMethods.TryGetValue(type.ConstructTypeUniqueKey(), out var ret) ? ret : null;
 }

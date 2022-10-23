@@ -1,37 +1,28 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Decorator.Multi;
+namespace MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
 
-internal interface IInterface
+internal interface IInterface<T> {}
+
+internal class Dependency : IInterface<int> {}
+
+internal class DependencyHolder
 {
-    IInterface Decorated { get; }
+    public IInterface<int> Dependency { get; }
+    internal DependencyHolder(IInterface<int> dependency)
+    {
+        Dependency = dependency;
+    }
 }
 
-internal class Dependency : IInterface
-{
-    public IInterface Decorated => this;
-}
-
-internal class DecoratorA : IInterface, IDecorator<IInterface>
-{
-    public DecoratorA(IInterface decorated) =>
-        Decorated = decorated;
-
-    public IInterface Decorated { get; }
-}
-
-internal class DecoratorB : IInterface, IDecorator<IInterface>
-{
-    public DecoratorB(IInterface decorated) =>
-        Decorated = decorated;
-
-    public IInterface Decorated { get; }
-}
-
-[CreateFunction(typeof(IInterface), "Create")]
-[DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
+[CreateFunction(typeof(DependencyHolder), "CreateHolder")]
+[CreateFunction(typeof(IInterface<int>), "CreateInterface")]
 internal sealed partial class Container
 {
-    
+    private readonly IInterface<int> DIE_Factory_dependency;
+
+    internal Container(IInterface<int> dependency)
+    {
+        DIE_Factory_dependency = dependency;
+    }
 }

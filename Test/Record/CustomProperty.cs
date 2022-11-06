@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Record.CustomPropert;
+namespace MrMeeseeks.DIE.Test.Record.CustomProperty;
 
 internal record Dependency;
 internal record DependencyA;

@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Extensions;
 
 namespace MrMeeseeks.DIE;
 
@@ -13,60 +14,15 @@ internal record WellKnownTypesMiscellaneous(
     INamedTypeSymbol ErrorDescriptionInsteadOfBuildFailureAttribute,
     INamedTypeSymbol DieExceptionKind)
 {
-    internal static bool TryCreate(Compilation compilation, out WellKnownTypesMiscellaneous wellKnownTypes)
-    {
-        var customScopeForRootTypesAttribute = compilation
-            .GetTypeByMetadataName(typeof(CustomScopeForRootTypesAttribute).FullName ?? "");
-
-        var userDefinedConstructorParametersInjectionAttribute = compilation
-            .GetTypeByMetadataName(typeof(UserDefinedConstructorParametersInjectionAttribute).FullName ?? "");
-
-        var userDefinedInitializerParametersInjectionAttribute = compilation
-            .GetTypeByMetadataName(typeof(UserDefinedInitializerParametersInjectionAttribute).FullName ?? "");
-
-        var userDefinedPropertiesInjectionAttribute = compilation
-            .GetTypeByMetadataName(typeof(UserDefinedPropertiesInjectionAttribute).FullName ?? "");
-
-        var typeInitializerAttribute = compilation
-            .GetTypeByMetadataName(typeof(InitializerAttribute).FullName ?? "");
-
-        var filterInitializerAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterInitializerAttribute).FullName ?? "");
-
-        var createFunctionAttribute = compilation
-            .GetTypeByMetadataName(typeof(CreateFunctionAttribute).FullName ?? "");
-        
-        var errorDescriptionInsteadOfBuildFailureAttribute = compilation
-            .GetTypeByMetadataName(typeof(ErrorDescriptionInsteadOfBuildFailureAttribute).FullName ?? "");
-        
-        var dieExceptionKind = compilation
-            .GetTypeByMetadataName(typeof(DieExceptionKind).FullName ?? "");
-
-        if (typeInitializerAttribute is not null
-            && filterInitializerAttribute is not null
-            && customScopeForRootTypesAttribute is not null
-            && userDefinedConstructorParametersInjectionAttribute is not null
-            && userDefinedPropertiesInjectionAttribute is not null
-            && userDefinedInitializerParametersInjectionAttribute is not null
-            && createFunctionAttribute is not null
-            && errorDescriptionInsteadOfBuildFailureAttribute is not null
-            && dieExceptionKind is not null)
-        {
-
-            wellKnownTypes = new WellKnownTypesMiscellaneous(
-                InitializerAttribute: typeInitializerAttribute,
-                FilterInitializerAttribute: filterInitializerAttribute,
-                CustomScopeForRootTypesAttribute: customScopeForRootTypesAttribute,
-                UserDefinedConstructorParametersInjectionAttribute: userDefinedConstructorParametersInjectionAttribute,
-                UserDefinedPropertiesInjectionAttribute: userDefinedPropertiesInjectionAttribute,
-                UserDefinedInitializerParametersInjectionAttribute: userDefinedInitializerParametersInjectionAttribute, 
-                CreateFunctionAttribute: createFunctionAttribute,
-                ErrorDescriptionInsteadOfBuildFailureAttribute: errorDescriptionInsteadOfBuildFailureAttribute,
-                DieExceptionKind: dieExceptionKind);
-            return true;
-        }
-        
-        wellKnownTypes = null!;
-        return false;
-    }
+    internal static WellKnownTypesMiscellaneous Create(Compilation compilation) =>
+        new (
+            InitializerAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InitializerAttribute).FullName ?? ""),
+            FilterInitializerAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInitializerAttribute).FullName ?? ""),
+            CustomScopeForRootTypesAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(CustomScopeForRootTypesAttribute).FullName ?? ""),
+            UserDefinedConstructorParametersInjectionAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(UserDefinedConstructorParametersInjectionAttribute).FullName ?? ""),
+            UserDefinedPropertiesInjectionAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(UserDefinedPropertiesInjectionAttribute).FullName ?? ""),
+            UserDefinedInitializerParametersInjectionAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(UserDefinedInitializerParametersInjectionAttribute).FullName ?? ""), 
+            CreateFunctionAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(CreateFunctionAttribute).FullName ?? ""),
+            ErrorDescriptionInsteadOfBuildFailureAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ErrorDescriptionInsteadOfBuildFailureAttribute).FullName ?? ""),
+            DieExceptionKind: compilation.GetTypeByMetadataNameOrThrow(typeof(DieExceptionKind).FullName ?? ""));
 }

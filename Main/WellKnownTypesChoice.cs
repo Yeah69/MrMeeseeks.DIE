@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Extensions;
 
 namespace MrMeeseeks.DIE;
 
@@ -18,85 +19,19 @@ internal record WellKnownTypesChoice(
     INamedTypeSymbol FilterImplementationChoiceAttribute,
     INamedTypeSymbol FilterImplementationCollectionChoiceAttribute)
 {
-    internal static bool TryCreate(Compilation compilation, out WellKnownTypesChoice wellKnownTypes)
-    {
-        var genericParameterSubstitutesChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(GenericParameterSubstitutesChoiceAttribute).FullName ?? "");
-
-        var filterGenericParameterSubstitutesChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterGenericParameterSubstitutesChoiceAttribute).FullName ?? "");
-
-        var genericParameterChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(GenericParameterChoiceAttribute).FullName ?? "");
-
-        var filterGenericParameterChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterGenericParameterChoiceAttribute).FullName ?? "");
-
-        var decoratorSequenceChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(DecoratorSequenceChoiceAttribute).FullName ?? "");
-
-        var constructorChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(ConstructorChoiceAttribute).FullName ?? "");
-
-        var propertyChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(PropertyChoiceAttribute).FullName ?? "");
-
-        var implementationChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(ImplementationChoiceAttribute).FullName ?? "");
-
-        var implementationCollectionChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(ImplementationCollectionChoiceAttribute).FullName ?? "");
-
-        var filterDecoratorSequenceChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterDecoratorSequenceChoiceAttribute).FullName ?? "");
-
-        var filterConstructorChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterConstructorChoiceAttribute).FullName ?? "");
-
-        var filterPropertyChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterPropertyChoiceAttribute).FullName ?? "");
-
-        var filterImplementationChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterImplementationChoiceAttribute).FullName ?? "");
-
-        var filterImplementationCollectionChoiceAttribute = compilation
-            .GetTypeByMetadataName(typeof(FilterImplementationCollectionChoiceAttribute).FullName ?? "");
-
-        if (implementationChoiceAttribute is not null
-            && implementationCollectionChoiceAttribute is not null
-            && genericParameterSubstitutesChoiceAttribute is not null
-            && genericParameterChoiceAttribute is not null
-            && decoratorSequenceChoiceAttribute is not null
-            && constructorChoiceAttribute is not null
-            && propertyChoiceAttribute is not null
-            && filterGenericParameterSubstitutesChoiceAttribute is not null
-            && filterGenericParameterChoiceAttribute is not null
-            && filterDecoratorSequenceChoiceAttribute is not null
-            && filterConstructorChoiceAttribute is not null
-            && filterPropertyChoiceAttribute is not null
-            && filterImplementationChoiceAttribute is not null
-            && filterImplementationCollectionChoiceAttribute is not null)
-        {
-
-            wellKnownTypes = new WellKnownTypesChoice(
-                ImplementationChoiceAttribute: implementationChoiceAttribute,
-                ImplementationCollectionChoiceAttribute: implementationCollectionChoiceAttribute,
-                GenericParameterSubstitutesChoiceAttribute: genericParameterSubstitutesChoiceAttribute,
-                GenericParameterChoiceAttribute: genericParameterChoiceAttribute,
-                DecoratorSequenceChoiceAttribute: decoratorSequenceChoiceAttribute,
-                ConstructorChoiceAttribute: constructorChoiceAttribute,
-                PropertyChoiceAttribute: propertyChoiceAttribute,
-                FilterGenericParameterSubstitutesChoiceAttribute: filterGenericParameterSubstitutesChoiceAttribute,
-                FilterGenericParameterChoiceAttribute: filterGenericParameterChoiceAttribute,
-                FilterDecoratorSequenceChoiceAttribute: filterDecoratorSequenceChoiceAttribute,
-                FilterConstructorChoiceAttribute: filterConstructorChoiceAttribute,
-                FilterPropertyChoiceAttribute: filterPropertyChoiceAttribute,
-                FilterImplementationChoiceAttribute: filterImplementationChoiceAttribute,
-                FilterImplementationCollectionChoiceAttribute: filterImplementationCollectionChoiceAttribute);
-            return true;
-        }
-        
-        wellKnownTypes = null!;
-        return false;
-    }
+    internal static WellKnownTypesChoice Create(Compilation compilation) => new (
+        ImplementationChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ImplementationChoiceAttribute).FullName ?? ""),
+        ImplementationCollectionChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ImplementationCollectionChoiceAttribute).FullName ?? ""),
+        GenericParameterSubstitutesChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(GenericParameterSubstitutesChoiceAttribute).FullName ?? ""),
+        GenericParameterChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(GenericParameterChoiceAttribute).FullName ?? ""),
+        DecoratorSequenceChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(DecoratorSequenceChoiceAttribute).FullName ?? ""),
+        ConstructorChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ConstructorChoiceAttribute).FullName ?? ""),
+        PropertyChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(PropertyChoiceAttribute).FullName ?? ""),
+        FilterGenericParameterSubstitutesChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterGenericParameterSubstitutesChoiceAttribute).FullName ?? ""),
+        FilterGenericParameterChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterGenericParameterChoiceAttribute).FullName ?? ""),
+        FilterDecoratorSequenceChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterDecoratorSequenceChoiceAttribute).FullName ?? ""),
+        FilterConstructorChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterConstructorChoiceAttribute).FullName ?? ""),
+        FilterPropertyChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterPropertyChoiceAttribute).FullName ?? ""),
+        FilterImplementationChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterImplementationChoiceAttribute).FullName ?? ""),
+        FilterImplementationCollectionChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterImplementationCollectionChoiceAttribute).FullName ?? ""));
 }

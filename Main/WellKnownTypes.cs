@@ -1,4 +1,6 @@
-﻿namespace MrMeeseeks.DIE;
+﻿using MrMeeseeks.DIE.Extensions;
+
+namespace MrMeeseeks.DIE;
 
 internal record WellKnownTypes(
     INamedTypeSymbol Disposable,
@@ -21,83 +23,32 @@ internal record WellKnownTypes(
     INamedTypeSymbol SemaphoreSlim,
     INamedTypeSymbol InternalsVisibleToAttribute)
 {
-    internal static bool TryCreate(Compilation compilation, out WellKnownTypes wellKnownTypes)
+    internal static WellKnownTypes Create(Compilation compilation)
     {
-        var iDisposable = compilation.GetTypeOrReport("System.IDisposable");
-        var iAsyncDisposable = compilation.GetTypeOrReport("System.IAsyncDisposable");
-        var lazy1 = compilation.GetTypeOrReport("System.Lazy`1");
-        var valueTask = compilation.GetTypeOrReport("System.Threading.Tasks.ValueTask");
-        var valueTask1 = compilation.GetTypeOrReport("System.Threading.Tasks.ValueTask`1");
-        var task = compilation.GetTypeOrReport("System.Threading.Tasks.Task");
-        var task1 = compilation.GetTypeOrReport("System.Threading.Tasks.Task`1");
-        var objectDisposedException = compilation.GetTypeOrReport("System.ObjectDisposedException");
-        var iEnumerable1 = compilation.GetTypeOrReport("System.Collections.Generic.IEnumerable`1");
-        var iReadOnlyCollection1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyCollection`1");
-        var iReadOnlyList1 = compilation.GetTypeOrReport("System.Collections.Generic.IReadOnlyList`1");
-        var concurrentBag = compilation.GetTypeOrReport("System.Collections.Concurrent.ConcurrentBag`1");
-        var concurrentBagOfSyncDisposable = iDisposable is null
-            ? null
-            : concurrentBag?.Construct(iDisposable);
-        var concurrentBagOfAsyncDisposable = iAsyncDisposable is null
-            ? null
-            : concurrentBag?.Construct(iAsyncDisposable);
-        var concurrentDictionary2= compilation.GetTypeOrReport("System.Collections.Concurrent.ConcurrentDictionary`2");
-        var concurrentDictionary2OfSyncDisposable = iDisposable is null
-            ? null
-            : concurrentDictionary2?.Construct(iDisposable, iDisposable);
-        var concurrentDictionary2OfAsyncDisposable = iAsyncDisposable is null
-            ? null
-            : concurrentDictionary2?.Construct(iAsyncDisposable, iAsyncDisposable);
-        var exception = compilation.GetTypeOrReport("System.Exception");
-        var taskCanceledException = compilation.GetTypeOrReport("System.Threading.Tasks.TaskCanceledException");
-        var semaphoreSlim = compilation.GetTypeOrReport("System.Threading.SemaphoreSlim");
-        var internalsVisibleToAttribute = compilation.GetTypeOrReport("System.Runtime.CompilerServices.InternalsVisibleToAttribute");
+        var iDisposable = compilation.GetTypeByMetadataNameOrThrow("System.IDisposable");
+        var iAsyncDisposable = compilation.GetTypeByMetadataNameOrThrow("System.IAsyncDisposable");
+        var concurrentBag = compilation.GetTypeByMetadataNameOrThrow("System.Collections.Concurrent.ConcurrentBag`1");
+        var concurrentDictionary2= compilation.GetTypeByMetadataNameOrThrow("System.Collections.Concurrent.ConcurrentDictionary`2");
 
-        if (iDisposable is not null
-            && iAsyncDisposable is not null
-            && lazy1 is not null
-            && valueTask is not null
-            && task is not null
-            && valueTask1 is not null
-            && task1 is not null
-            && taskCanceledException is not null
-            && objectDisposedException is not null
-            && iEnumerable1 is not null
-            && iReadOnlyCollection1 is not null
-            && iReadOnlyList1 is not null
-            && concurrentBagOfSyncDisposable is not null
-            && concurrentBagOfAsyncDisposable is not null
-            && concurrentDictionary2OfSyncDisposable is not null
-            && concurrentDictionary2OfAsyncDisposable is not null
-            && exception is not null
-            && semaphoreSlim is not null
-            && internalsVisibleToAttribute is not null)
-        {
-
-            wellKnownTypes = new WellKnownTypes(
-                Disposable: iDisposable,
-                AsyncDisposable: iAsyncDisposable,
-                Lazy1: lazy1,
-                ValueTask: valueTask,
-                ValueTask1: valueTask1,
-                Task: task,
-                Task1: task1,
-                ObjectDisposedException: objectDisposedException,
-                Enumerable1: iEnumerable1,
-                ReadOnlyCollection1: iReadOnlyCollection1,
-                ReadOnlyList1: iReadOnlyList1,
-                ConcurrentBagOfSyncDisposable: concurrentBagOfSyncDisposable,
-                ConcurrentBagOfAsyncDisposable: concurrentBagOfAsyncDisposable,
-                ConcurrentDictionaryOfSyncDisposable: concurrentDictionary2OfSyncDisposable,
-                ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2OfAsyncDisposable,
-                Exception: exception,
-                TaskCanceledException: taskCanceledException,
-                SemaphoreSlim: semaphoreSlim,
-                InternalsVisibleToAttribute: internalsVisibleToAttribute);
-            return true;
-        }
-        
-        wellKnownTypes = null!;
-        return false;
+        return new WellKnownTypes(
+                Disposable: compilation.GetTypeByMetadataNameOrThrow("System.IDisposable"),
+                AsyncDisposable: compilation.GetTypeByMetadataNameOrThrow("System.IAsyncDisposable"),
+                Lazy1: compilation.GetTypeByMetadataNameOrThrow("System.Lazy`1"),
+                ValueTask: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.ValueTask"),
+                ValueTask1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.ValueTask`1"),
+                Task: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task"),
+                Task1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task`1"),
+                ObjectDisposedException: compilation.GetTypeByMetadataNameOrThrow("System.ObjectDisposedException"),
+                Enumerable1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IEnumerable`1"),
+                ReadOnlyCollection1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IReadOnlyCollection`1"),
+                ReadOnlyList1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IReadOnlyList`1"),
+                ConcurrentBagOfSyncDisposable: concurrentBag.Construct(iDisposable),
+                ConcurrentBagOfAsyncDisposable: concurrentBag.Construct(iAsyncDisposable),
+                ConcurrentDictionaryOfSyncDisposable: concurrentDictionary2.Construct(iDisposable, iDisposable),
+                ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2.Construct(iAsyncDisposable, iAsyncDisposable),
+                Exception: compilation.GetTypeByMetadataNameOrThrow("System.Exception"),
+                TaskCanceledException: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.TaskCanceledException"),
+                SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
+                InternalsVisibleToAttribute: compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.InternalsVisibleToAttribute"));
     }
 }

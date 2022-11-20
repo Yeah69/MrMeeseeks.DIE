@@ -24,12 +24,13 @@ public class SourceGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
-        var _ = WellKnownTypes.TryCreate(context.Compilation, out var wellKnownTypes);
-        var __ = WellKnownTypesAggregation.TryCreate(context.Compilation, out var wellKnownTypesAggregation);
-        var ___ = WellKnownTypesChoice.TryCreate(context.Compilation, out var wellKnownTypesChoice);
-        var ____ = WellKnownTypesMiscellaneous.TryCreate(context.Compilation, out var wellKnownTypesMiscellaneous);
+        var wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
         var errorDescriptionInsteadOfBuildFailure = context.Compilation.Assembly.GetAttributes()
             .Any(ad => wellKnownTypesMiscellaneous.ErrorDescriptionInsteadOfBuildFailureAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default));
+
+        var wellKnownTypes = WellKnownTypes.Create(context.Compilation);
+        var wellKnownTypesAggregation = WellKnownTypesAggregation.Create(context.Compilation);
+        var wellKnownTypesChoice = WellKnownTypesChoice.Create(context.Compilation);
         var diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
         var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(wellKnownTypes);
         var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);

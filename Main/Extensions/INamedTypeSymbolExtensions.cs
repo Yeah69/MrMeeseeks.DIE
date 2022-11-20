@@ -44,5 +44,5 @@ internal static class INamedTypeSymbolExtensions
             : type;
 
     internal static string ConstructTypeUniqueKey(this INamedTypeSymbol type) => 
-        $"{type.FullName(SymbolDisplayMiscellaneousOptions.None)};{type.Arity};{string.Join(";", type.TypeArguments.Select(ta => ta.FullName(SymbolDisplayMiscellaneousOptions.None)))}";
+        $"{type.FullName(SymbolDisplayMiscellaneousOptions.None)};{type.Arity};{string.Join(";", type.TypeArguments.Select(ta => ta.FullName()))}";
 }

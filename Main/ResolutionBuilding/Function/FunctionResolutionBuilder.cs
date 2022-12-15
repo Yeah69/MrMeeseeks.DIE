@@ -241,12 +241,12 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                 null);
         }
 
-        if (type.OriginalDefinition.Equals(_wellKnownTypes.Task1, SymbolEqualityComparer.Default)
+        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.Task1)
             && type is INamedTypeSymbol task)
             return SwitchTask(new SwitchTaskParameter(
                 SwitchType(new SwitchTypeParameter(task.TypeArguments[0], currentFuncParameters, implementationStack))));
 
-        if (type.OriginalDefinition.Equals(_wellKnownTypes.ValueTask1, SymbolEqualityComparer.Default)
+        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.ValueTask1)
             && type is INamedTypeSymbol valueTask)
             return SwitchValueTask(new SwitchValueTaskParameter(
                 SwitchType(new SwitchTypeParameter(valueTask.TypeArguments[0], currentFuncParameters, implementationStack))));
@@ -320,7 +320,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             return (constructorResolution, constructorResolution);
         }
 
-        if (type.OriginalDefinition.Equals(_wellKnownTypes.Lazy1, SymbolEqualityComparer.Default)
+        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.Lazy1)
             && type is INamedTypeSymbol namedTypeSymbol)
         {
             if (namedTypeSymbol.TypeArguments.SingleOrDefault() is not INamedTypeSymbol genericType)
@@ -434,14 +434,14 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             ITypeSymbol unwrappedItemTypeSymbol = wrappedType;
             TaskType? taskType = null;
 
-            if (wrappedType.OriginalDefinition.Equals(_wellKnownTypes.Task1, SymbolEqualityComparer.Default)
+            if (SymbolEqualityComparer.Default.Equals(wrappedType.OriginalDefinition, _wellKnownTypes.Task1)
                 && type is INamedTypeSymbol enumerableTask)
             {
                 wrappedItemTypeSymbol = enumerableTask.TypeArguments[0];
                 taskType = TaskType.Task;
             }
 
-            if (wrappedType.OriginalDefinition.Equals(_wellKnownTypes.ValueTask1, SymbolEqualityComparer.Default)
+            if (SymbolEqualityComparer.Default.Equals(wrappedType.OriginalDefinition, _wellKnownTypes.ValueTask1)
                 && type is INamedTypeSymbol enumerableValueTask)
             {
                 wrappedItemTypeSymbol = enumerableValueTask.TypeArguments[0];
@@ -583,14 +583,14 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
             INamedTypeSymbol UnwrapAsynchronicity(INamedTypeSymbol currentWrappedType, Stack<SynchronicityDecision> stack)
             {
-                if (currentWrappedType.OriginalDefinition.Equals(_wellKnownTypes.ValueTask1, SymbolEqualityComparer.Default)
+                if (SymbolEqualityComparer.Default.Equals(currentWrappedType.OriginalDefinition, _wellKnownTypes.ValueTask1)
                     && currentWrappedType.TypeArguments.FirstOrDefault() is INamedTypeSymbol innerValueTaskType)
                 {
                     stack.Push(Function.SynchronicityDecision.AsyncValueTask);
                     return UnwrapAsynchronicity(innerValueTaskType, stack);
                 }
             
-                if (currentWrappedType.OriginalDefinition.Equals(_wellKnownTypes.Task1, SymbolEqualityComparer.Default)
+                if (SymbolEqualityComparer.Default.Equals(currentWrappedType.OriginalDefinition, _wellKnownTypes.Task1)
                     && currentWrappedType.TypeArguments.FirstOrDefault() is INamedTypeSymbol innerTaskType)
                 {
                     stack.Push(Function.SynchronicityDecision.AsyncTask);
@@ -1028,7 +1028,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                     initializationMethodName, 
                     parameters, 
                     userDefinedInitializerParametersInjection),
-                false when initializationMethod.ReturnType.Equals(_wellKnownTypes.Task, SymbolEqualityComparer.Default) =>
+                false when SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, _wellKnownTypes.Task) =>
                     new TaskInitializationResolution(
                         initializationTypeFullName, 
                         initializationMethodName,
@@ -1036,7 +1036,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
                         RootReferenceGenerator.Generate(_wellKnownTypes.Task),
                         parameters,
                         userDefinedInitializerParametersInjection),
-                false when initializationMethod.ReturnType.Equals(_wellKnownTypes.ValueTask, SymbolEqualityComparer.Default) => 
+                false when SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, _wellKnownTypes.ValueTask) => 
                     new ValueTaskInitializationResolution(
                         initializationTypeFullName, 
                         initializationMethodName, 
@@ -1116,14 +1116,14 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         {
             if (checkForDecoration && decoration is {})
             {
-                if (typeSymbol.Equals(decoration.InterfaceType, SymbolEqualityComparer.Default))
+                if (SymbolEqualityComparer.Default.Equals(typeSymbol, decoration.InterfaceType))
                     return (parameterName, decoration.CurrentInterfaceResolution);
                     
-                if (typeSymbol.Equals(_wellKnownTypes.Task1.Construct(decoration.InterfaceType), SymbolEqualityComparer.Default)
+                if (SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.Task1.Construct(decoration.InterfaceType))
                     && decoration.CurrentInterfaceResolution.Dependency is ConstructorResolution constrRes0)
                     return (parameterName, SwitchTask(new SwitchTaskParameter((decoration.CurrentInterfaceResolution, constrRes0))).Item1);
                     
-                if (typeSymbol.Equals(_wellKnownTypes.ValueTask1.Construct(decoration.InterfaceType), SymbolEqualityComparer.Default)
+                if (SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.ValueTask1.Construct(decoration.InterfaceType))
                     && decoration.CurrentInterfaceResolution.Dependency is ConstructorResolution constrRes1)
                     return (parameterName, SwitchValueTask(new SwitchValueTaskParameter((decoration.CurrentInterfaceResolution, constrRes1))).Item1);
             }
@@ -1169,13 +1169,13 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             }
 
             if (isTransientScopeRoot
-                && typeSymbol.Equals(_wellKnownTypes.Disposable, SymbolEqualityComparer.Default))
+                && SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.Disposable))
                 return (parameterName, new TransientScopeAsSyncDisposableResolution(
                     RootReferenceGenerator.Generate(_wellKnownTypes.Disposable),
                     _wellKnownTypes.Disposable.FullName()));
 
             if (isTransientScopeRoot
-                && typeSymbol.Equals(_wellKnownTypes.AsyncDisposable, SymbolEqualityComparer.Default))
+                && SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.AsyncDisposable))
                 return (parameterName, new TransientScopeAsAsyncDisposableResolution(
                     RootReferenceGenerator.Generate(_wellKnownTypes.AsyncDisposable),
                     _wellKnownTypes.AsyncDisposable.FullName()));
@@ -1290,16 +1290,16 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     }
 
     private bool IsCollectionType(ITypeSymbol type) =>
-        type.OriginalDefinition.Equals(_wellKnownTypes.Enumerable1, SymbolEqualityComparer.Default)
-        || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyCollection1, SymbolEqualityComparer.Default)
-        || type.OriginalDefinition.Equals(_wellKnownTypes.ReadOnlyList1, SymbolEqualityComparer.Default)
+        SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.Enumerable1)
+        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.ReadOnlyCollection1)
+        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.ReadOnlyList1)
         || type is IArrayTypeSymbol;
 
     private bool IsConstructedCollectionType(ITypeSymbol type, INamedTypeSymbol interfaceType) =>
-        type.Equals(_wellKnownTypes.Enumerable1.Construct(interfaceType), SymbolEqualityComparer.Default)
-        || type.Equals(_wellKnownTypes.ReadOnlyCollection1.Construct(interfaceType), SymbolEqualityComparer.Default)
-        || type.Equals(_wellKnownTypes.ReadOnlyList1.Construct(interfaceType), SymbolEqualityComparer.Default)
-        || type is IArrayTypeSymbol { ElementType: {} elementType } && elementType.Equals(interfaceType, SymbolEqualityComparer.Default);
+        SymbolEqualityComparer.Default.Equals(type, _wellKnownTypes.Enumerable1.Construct(interfaceType))
+        || SymbolEqualityComparer.Default.Equals(type, _wellKnownTypes.ReadOnlyCollection1.Construct(interfaceType))
+        || SymbolEqualityComparer.Default.Equals(type, _wellKnownTypes.ReadOnlyList1.Construct(interfaceType))
+        || type is IArrayTypeSymbol { ElementType: {} elementType } && SymbolEqualityComparer.Default.Equals(elementType, interfaceType);
 
     public bool HasWorkToDo => !Resolvable.IsValueCreated;
 

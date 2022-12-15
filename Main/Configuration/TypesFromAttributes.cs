@@ -314,7 +314,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .Where(c => c.Parameters.Length == parameterTypes.Count)
                         .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
                             .Zip(parameterTypes,
-                                (pLeft, pRight) => pLeft.Equals(pRight, SymbolEqualityComparer.Default))
+                                (pLeft, pRight) => SymbolEqualityComparer.Default.Equals(pLeft, pRight))
                             .All(b => b));
 
                     if (constructorChoice is { })

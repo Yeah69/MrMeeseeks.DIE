@@ -203,6 +203,10 @@ internal class CheckTypeProperties : ICheckTypeProperties
 
         if (type is { TypeKind: not TypeKind.Interface, IsAbstract: false, IsStatic: false })
         {
+            if (_currentlyConsideredTypes.DecoratorTypes.Contains(type) ||
+                _currentlyConsideredTypes.CompositeTypes.Contains(type))
+                // if concrete type is decorator or composite then just shortcut
+                return type;
             var possibleConcreteTypeImplementations = GetClosedImplementations(
                 type,
                 ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, type),

@@ -11,20 +11,17 @@ internal interface IContainerGenerator
 internal class ContainerGenerator : IContainerGenerator
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly IDiagLogger _diagLogger;
     private readonly Func<IContainerInfo, ContainerResolution, IReadOnlyList<ITransientScopeCodeBuilder>, IReadOnlyList<IScopeCodeBuilder>, IContainerCodeBuilder> _containerCodeBuilderFactory;
     private readonly Func<IContainerInfo, TransientScopeResolution, ContainerResolution, ITransientScopeCodeBuilder> _transientScopeCodeBuilderFactory;
     private readonly Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, ContainerResolution, IScopeCodeBuilder> _scopeCodeBuilderFactory;
 
     internal ContainerGenerator(
         GeneratorExecutionContext context,
-        IDiagLogger diagLogger,
         Func<IContainerInfo, ContainerResolution, IReadOnlyList<ITransientScopeCodeBuilder>, IReadOnlyList<IScopeCodeBuilder>, IContainerCodeBuilder> containerCodeBuilderFactory,
         Func<IContainerInfo, TransientScopeResolution, ContainerResolution, ITransientScopeCodeBuilder> transientScopeCodeBuilderFactory,
         Func<IContainerInfo, ScopeResolution, TransientScopeInterfaceResolution, ContainerResolution, IScopeCodeBuilder> scopeCodeBuilderFactory)
     {
         _context = context;
-        _diagLogger = diagLogger;
         _containerCodeBuilderFactory = containerCodeBuilderFactory;
         _transientScopeCodeBuilderFactory = transientScopeCodeBuilderFactory;
         _scopeCodeBuilderFactory = scopeCodeBuilderFactory;

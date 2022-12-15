@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Utility;
+
 namespace MrMeeseeks.DIE;
 
 internal interface IContainerInfo
@@ -25,7 +27,7 @@ internal class ContainerInfo : IContainerInfo
             
         CreateFunctionData = containerClass
             .GetAttributes()
-            .Where(ad => wellKnowTypesMiscellaneous.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default))
+            .Where(ad => SymbolEqualityComparer.Default.Equals(wellKnowTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass))
             .Select(ad => ad.ConstructorArguments.Length == 2 
                           && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type
                           && ad.ConstructorArguments[0].Value is ITypeSymbol type

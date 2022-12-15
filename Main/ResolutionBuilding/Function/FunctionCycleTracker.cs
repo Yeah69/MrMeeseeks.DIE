@@ -31,7 +31,7 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
                 function, 
                 new HashSet<object>(), 
                 new Stack<FunctionResolutionBuilderHandle>(),
-                new HashSet<Object>());
+                new HashSet<object>());
 
         void DetectCycleInner(
             FunctionResolutionBuilderHandle current, 

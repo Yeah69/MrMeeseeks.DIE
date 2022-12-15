@@ -169,9 +169,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
         foreach (var (createFunction, methodNamePrefix) in _rootResolutions)
         {
             // Create function stays sync
-            if (createFunction.OriginalReturnType.Equals(
-                    createFunction.ActualReturnType,
-                    SymbolEqualityComparer.Default))
+            if (SymbolEqualityComparer.Default.Equals(createFunction.OriginalReturnType, createFunction.ActualReturnType))
             {
                 var call = createFunction.BuildFunctionCall(
                     ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
@@ -238,8 +236,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 localFunctions.Add(publicValueTaskResolutionFunction);
             }
             else if (createFunction.ActualReturnType is { } actual
-                     && actual.Equals(_wellKnownTypes.Task1.Construct(createFunction.OriginalReturnType),
-                         SymbolEqualityComparer.Default))
+                     && SymbolEqualityComparer.Default.Equals(actual, _wellKnownTypes.Task1.Construct(createFunction.OriginalReturnType)))
             {
                 var call = createFunction.BuildFunctionCall(
                     ImmutableSortedDictionary<string, (ITypeSymbol, ParameterResolution)>.Empty, 
@@ -282,8 +279,7 @@ internal class ContainerResolutionBuilder : RangeResolutionBaseBuilder, IContain
                 localFunctions.Add(publicValueTaskResolutionFunction);
             }
             else if (createFunction.ActualReturnType is { } actual1
-                     && actual1.Equals(_wellKnownTypes.ValueTask1.Construct(createFunction.OriginalReturnType),
-                         SymbolEqualityComparer.Default))
+                     && SymbolEqualityComparer.Default.Equals(actual1, _wellKnownTypes.ValueTask1.Construct(createFunction.OriginalReturnType)))
             {
                 var boundTaskTypeFullName = _wellKnownTypes
                     .Task1

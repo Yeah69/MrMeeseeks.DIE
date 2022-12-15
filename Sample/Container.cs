@@ -1,28 +1,39 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
+namespace MrMeeseeks.DIE.Sample;
 
-internal interface IInterface<T> {}
+internal interface IInterface {}
 
-internal class Dependency : IInterface<int> {}
-
-internal class DependencyHolder
+internal class Dependency : ITransientScopeInstance, IValueTaskInitializer, IInterface
 {
-    public IInterface<int> Dependency { get; }
-    internal DependencyHolder(IInterface<int> dependency)
+    async ValueTask IValueTaskInitializer.InitializeAsync()
     {
-        Dependency = dependency;
+        await Task.Yield();
     }
 }
 
-[CreateFunction(typeof(DependencyHolder), "CreateHolder")]
-[CreateFunction(typeof(IInterface<int>), "CreateInterface")]
+internal class SyncDependency : IInterface
+{
+}
+
+internal class OuterDependency : ITransientScopeInstance
+{
+    internal OuterDependency(IInterface _) {}
+}
+
+internal class Root : ITransientScopeRoot
+{
+    internal Root(ValueTask<OuterDependency> ___, Func<Dependency, ValueTask<OuterDependency>> __, Func<ValueTask<OuterDependency>> _)
+    {
+    }
+}
+
+[ImplementationChoice(typeof(IInterface), typeof(SyncDependency))]
+[CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {
-    private readonly IInterface<int> DIE_Factory_dependency;
-
-    internal Container(IInterface<int> dependency)
-    {
-        DIE_Factory_dependency = dependency;
-    }
+    [ImplementationChoice(typeof(IInterface), typeof(Dependency))]
+    private sealed partial class DIE_DefaultTransientScope {}
 }

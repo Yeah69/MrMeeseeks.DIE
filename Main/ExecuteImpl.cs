@@ -1,7 +1,14 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.CodeBuilding;
+using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Nodes;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.ResolutionBuilding;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Range;
+using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE;
 
@@ -20,6 +27,9 @@ internal class ExecuteImpl : IExecute
     private readonly IValidateContainer _validateContainer;
     private readonly Func<IContainerInfo, IContainerResolutionBuilder> _containerResolutionBuilderFactory;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
+    private readonly Func<IContainerInfo, IContainerNode> _containerNodeFactory;
+    private readonly Func<ICodeGenerationVisitor> _codeGeneratorVisitorFactory;
+    private readonly IReferenceGeneratorFactory _referenceGeneratorFactory;
     private readonly IDiagLogger _diagLogger;
 
     internal ExecuteImpl(
@@ -31,6 +41,9 @@ internal class ExecuteImpl : IExecute
         IValidateContainer validateContainer,
         Func<IContainerInfo, IContainerResolutionBuilder> containerResolutionBuilderFactory,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
+        Func<IContainerInfo, IContainerNode> containerNodeFactory,
+        Func<ICodeGenerationVisitor> codeGeneratorVisitorFactory,
+        IReferenceGeneratorFactory referenceGeneratorFactory,
         IDiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = errorDescriptionInsteadOfBuildFailure;
@@ -41,6 +54,9 @@ internal class ExecuteImpl : IExecute
         _validateContainer = validateContainer;
         _containerResolutionBuilderFactory = containerResolutionBuilderFactory;
         _containerInfoFactory = containerInfoFactory;
+        _containerNodeFactory = containerNodeFactory;
+        _codeGeneratorVisitorFactory = codeGeneratorVisitorFactory;
+        _referenceGeneratorFactory = referenceGeneratorFactory;
         _diagLogger = diagLogger;
     }
 
@@ -53,10 +69,10 @@ internal class ExecuteImpl : IExecute
                 .GetRoot()
                 .DescendantNodesAndSelf()
                 .OfType<ClassDeclarationSyntax>()
-                .Select(x => semanticModel.GetDeclaredSymbol(x))
+                .Select(x => ModelExtensions.GetDeclaredSymbol(semanticModel, x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x.GetAttributes().Any(ad => _wellKnownTypesMiscellaneous.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default)))
+                .Where(x => x.GetAttributes().Any(ad => SymbolEqualityComparer.Default.Equals(_wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass)))
                 .ToList();
             foreach (var containerSymbol in containerClasses)
             {
@@ -72,18 +88,38 @@ internal class ExecuteImpl : IExecute
                         var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
                         containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.CreateFunctionData);
 
-                        while (containerResolutionBuilder.HasWorkToDo)
+                        /* todo replace while (containerResolutionBuilder.HasWorkToDo)
                         {
                             containerResolutionBuilder.DoWork();
-                        }
+                        }*/
                         currentPhase = ExecutionPhase.CycleDetection;
-                        containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
+                        // todo replace containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
                         
                         currentPhase = ExecutionPhase.ResolutionBuilding;
-                        var containerResolution = containerResolutionBuilder.Build();
+                        // todo replace var containerResolution = containerResolutionBuilder.Build();
                         
                         currentPhase = ExecutionPhase.CodeGeneration;
-                        _containerGenerator.Generate(containerInfo, containerResolution);
+                        // todo replace_containerGenerator.Generate(containerInfo, containerResolution);
+                        
+                        // todo complete visitor way
+                        var containerNode = _containerNodeFactory(containerInfo);
+                        var buildStack = new Stack<INode>();
+                        buildStack.Push(containerNode);
+                        while (buildStack.Any() && buildStack.Pop() is {} node)
+                        {
+                            node.Build();
+                        }
+                        var visitor = _codeGeneratorVisitorFactory();
+                        visitor.VisitContainerNode(containerNode);
+                        
+                        var containerSource = CSharpSyntaxTree
+                            .ParseText(SourceText.From(visitor.GenerateContainerFile(), Encoding.UTF8))
+                            .GetRoot()
+                            .NormalizeWhitespace()
+                            .SyntaxTree
+                            .GetText();
+        
+                        _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
                     }
                     else
                     {

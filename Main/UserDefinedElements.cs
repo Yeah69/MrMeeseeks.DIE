@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;
 
@@ -28,12 +29,12 @@ internal class EmptyUserDefinedElements : IUserDefinedElements
 
 internal class UserDefinedElements : IUserDefinedElements
 {
-    private readonly IReadOnlyDictionary<string, IFieldSymbol> _typeToField;
-    private readonly IReadOnlyDictionary<string, IPropertySymbol> _typeToProperty;
-    private readonly IReadOnlyDictionary<string, IMethodSymbol> _typeToMethod;
-    private readonly IReadOnlyDictionary<string, IMethodSymbol> _constructorParametersInjectionMethods;
-    private readonly IReadOnlyDictionary<string, IMethodSymbol> _propertiesInjectionMethods;
-    private readonly IReadOnlyDictionary<string, IMethodSymbol> _initializerParametersInjectionMethods;
+    private readonly IReadOnlyDictionary<TypeKey, IFieldSymbol> _typeToField;
+    private readonly IReadOnlyDictionary<TypeKey, IPropertySymbol> _typeToProperty;
+    private readonly IReadOnlyDictionary<TypeKey, IMethodSymbol> _typeToMethod;
+    private readonly IReadOnlyDictionary<TypeKey, IMethodSymbol> _constructorParametersInjectionMethods;
+    private readonly IReadOnlyDictionary<TypeKey, IMethodSymbol> _propertiesInjectionMethods;
+    private readonly IReadOnlyDictionary<TypeKey, IMethodSymbol> _initializerParametersInjectionMethods;
 
     public UserDefinedElements(
         // parameter
@@ -52,12 +53,16 @@ internal class UserDefinedElements : IUserDefinedElements
         var nonValidFactoryMembers = dieMembers
             .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory)
                         && s is IFieldSymbol or IPropertySymbol or IMethodSymbol)
-            .GroupBy(s => s switch
+            .GroupBy(s =>
             {
-                IFieldSymbol fs => fs.Type,
-                IPropertySymbol ps => ps.Type,
-                IMethodSymbol ms => ms.ReturnType,
-                _ => throw new ImpossibleDieException(new Guid("B75E24B2-61A3-4C37-B5A5-C7E6D390279D"))
+                var outerType = s switch
+                {
+                    IFieldSymbol fs => fs.Type,
+                    IPropertySymbol ps => ps.Type,
+                    IMethodSymbol ms => ms.ReturnType,
+                    _ => throw new ImpossibleDieException(new Guid("B75E24B2-61A3-4C37-B5A5-C7E6D390279D"))
+                };
+                return GetAsyncUnwrappedType(outerType, wellKnownTypes);
             }, SymbolEqualityComparer.Default)
             .Where(g => g.Count() > 1)
             .ToImmutableArray();
@@ -74,30 +79,36 @@ internal class UserDefinedElements : IUserDefinedElements
                             "Multiple user-defined factories aren't allowed to have the same type.",
                             ExecutionPhase.Validation));
 
-            _typeToField = new Dictionary<string, IFieldSymbol>();
+            _typeToField = new Dictionary<TypeKey, IFieldSymbol>();
         
-            _typeToProperty = new Dictionary<string, IPropertySymbol>();
+            _typeToProperty = new Dictionary<TypeKey, IPropertySymbol>();
 
-            _typeToMethod = new Dictionary<string, IMethodSymbol>();
+            _typeToMethod = new Dictionary<TypeKey, IMethodSymbol>();
         }
         else
         {
             _typeToField = dieMembers
                 .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
                 .OfType<IFieldSymbol>()
-                .ToDictionary(fs => fs.Type.ConstructTypeUniqueKey(), fs => fs);
+                .ToDictionary(
+                    fs => GetAsyncUnwrappedType(fs.Type, wellKnownTypes).ToTypeKey(), 
+                    fs => fs);
         
             _typeToProperty = dieMembers
                 .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
                 .Where(s => s is IPropertySymbol { GetMethod: { } })
                 .OfType<IPropertySymbol>()
-                .ToDictionary(ps => ps.Type.ConstructTypeUniqueKey(), ps => ps);
+                .ToDictionary(
+                    ps => GetAsyncUnwrappedType(ps.Type, wellKnownTypes).ToTypeKey(), 
+                    ps => ps);
         
             _typeToMethod = dieMembers
                 .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
                 .Where(s => s is IMethodSymbol { ReturnsVoid: false, Arity: 0, IsConditional: false, MethodKind: MethodKind.Ordinary })
                 .OfType<IMethodSymbol>()
-                .ToDictionary(ps => ps.ReturnType.ConstructTypeUniqueKey(), ps => ps);
+                .ToDictionary(
+                    ms => GetAsyncUnwrappedType(ms.ReturnType, wellKnownTypes).ToTypeKey(), 
+                    ms => ms);
         }
 
         AddForDisposal = dieMembers
@@ -135,7 +146,7 @@ internal class UserDefinedElements : IUserDefinedElements
         if (validationErrors.Any())
             throw new ValidationDieException(validationErrors.ToImmutableArray());
 
-        IReadOnlyDictionary<string, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
+        IReadOnlyDictionary<TypeKey, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
         {
             var injectionMethodCandidates = dieMembers
             .Where(s => s.Name.StartsWith(prefix))
@@ -177,23 +188,33 @@ internal class UserDefinedElements : IUserDefinedElements
                                 "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on.",
                                 ExecutionPhase.Validation));
 
-                return new Dictionary<string, IMethodSymbol>();
+                return new Dictionary<TypeKey, IMethodSymbol>();
             }
             
             return injectionMethodCandidates
                 .OfType<(INamedTypeSymbol, IMethodSymbol)>()
                 .ToDictionary(t => t.Item1.ConstructTypeUniqueKey(), t => t.Item2);
         }
+        
+        static ITypeSymbol GetAsyncUnwrappedType(ITypeSymbol type, WellKnownTypes wellKnownTypes)
+        {
+            if ((SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
+                 || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1))
+                && type is INamedTypeSymbol namedType)
+                return namedType.TypeArguments.First();
+
+            return type;
+        }
     }
 
     public IFieldSymbol? GetFactoryFieldFor(ITypeSymbol typeSymbol) => 
-        _typeToField.TryGetValue(typeSymbol.ConstructTypeUniqueKey(), out var ret) ? ret : null;
+        _typeToField.TryGetValue(typeSymbol.ToTypeKey(), out var ret) ? ret : null;
 
     public IPropertySymbol? GetFactoryPropertyFor(ITypeSymbol typeSymbol) => 
-        _typeToProperty.TryGetValue(typeSymbol.ConstructTypeUniqueKey(), out var ret) ? ret : null;
+        _typeToProperty.TryGetValue(typeSymbol.ToTypeKey(), out var ret) ? ret : null;
 
     public IMethodSymbol? GetFactoryMethodFor(ITypeSymbol typeSymbol) => 
-        _typeToMethod.TryGetValue(typeSymbol.ConstructTypeUniqueKey(), out var ret) ? ret : null;
+        _typeToMethod.TryGetValue(typeSymbol.ToTypeKey(), out var ret) ? ret : null;
 
     public IMethodSymbol? AddForDisposal { get; }
     public IMethodSymbol? AddForDisposalAsync { get; }

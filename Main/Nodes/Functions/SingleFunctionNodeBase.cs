@@ -39,8 +39,8 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         // dependencies
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IContainerNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         WellKnownTypes wellKnownTypes)
         : base(
             accessibility, 
@@ -48,6 +48,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
             parameters, 
             closureParameters, 
             parentContainer, 
+            parentNode,
             referenceGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,

@@ -25,8 +25,16 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNode> createScopeFunctionNodeFactory,
-        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory)
-        : base (name, userDefinedElements, checkTypeProperties, referenceGenerator, createFunctionNodeFactory, rangedInstanceFunctionGroupNodeFactory)
+        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
+        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
+        : base (
+            name, 
+            userDefinedElements, 
+            checkTypeProperties, 
+            referenceGenerator, 
+            createFunctionNodeFactory, 
+            rangedInstanceFunctionGroupNodeFactory,
+            disposalHandlingNodeFactory)
     {
         _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
         ParentContainer = parentContainer;
@@ -71,6 +79,7 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
     }
 
     public override string FullName { get; }
+    public override DisposalType DisposalType => ParentContainer.DisposalType;
     public string ContainerFullName { get; }
     public string ContainerReference { get; }
     public string ContainerParameterReference { get; }

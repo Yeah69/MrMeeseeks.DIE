@@ -20,11 +20,12 @@ internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedIn
     public RangedInstanceInterfaceFunctionNode(
         INamedTypeSymbol type, 
         IReadOnlyList<ITypeSymbol> parameters,
-        IContainerNode parentContainer, 
+        IContainerNode parentContainer,
+        IRangeNode parentRange,
         IReferenceGenerator referenceGenerator, 
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
-        Func<string, ITransientScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
+        Func<string, ITransientScopeNode, IContainerNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         WellKnownTypes wellKnownTypes) 
         : base(
@@ -33,6 +34,7 @@ internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedIn
             parameters,
             ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty, 
             parentContainer, 
+            parentRange,
             referenceGenerator, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,

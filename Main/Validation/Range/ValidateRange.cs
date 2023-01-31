@@ -72,7 +72,6 @@ internal abstract class ValidateRange : IValidateRange
 
                 // What it should be
                 IsType: true,
-                IsSealed: true,
                 IsReferenceType: true,
                 TypeKind: TypeKind.Class,
                 CanBeReferencedByName: true,
@@ -254,9 +253,6 @@ internal abstract class ValidateRange : IValidateRange
         
         if (!rangeType.IsType)
             yield return ValidationErrorDiagnostic(rangeType, containerType, "Has to be a type.");
-        
-        if (!rangeType.IsSealed)
-            yield return ValidationErrorDiagnostic(rangeType, containerType, "Has to be sealed.");
         
         if (!rangeType.IsReferenceType)
             yield return ValidationErrorDiagnostic(rangeType, containerType, "Has to be a reference type.");

@@ -156,8 +156,12 @@ public class SourceGenerator : ISourceGenerator
                 CreateRangedInstanceFunctionGroupNode,
                 CreateEntryFunctionNode,
                 CreateTransientScopeInterfaceNode,
-                CreateScopeManager);
+                CreateScopeManager,
+                CreateDisposalHandlingNode);
         }
+
+        IDisposalHandlingNode CreateDisposalHandlingNode(IReferenceGenerator referenceGenerator) =>
+            new DisposalHandlingNode(referenceGenerator, wellKnownTypes);
 
         ITransientScopeInterfaceNode CreateTransientScopeInterfaceNode(
             IContainerNode container,
@@ -168,11 +172,13 @@ public class SourceGenerator : ISourceGenerator
             INamedTypeSymbol type, 
             IReadOnlyList<ITypeSymbol> parameters,
             IContainerNode parentContainer, 
+            IRangeNode parentRange,
             IReferenceGenerator referenceGenerator) =>
             new RangedInstanceInterfaceFunctionNode(
                 type,
                 parameters,
                 parentContainer,
+                parentRange,
                 referenceGenerator,
                 CreatePlainFunctionCallNode,
                 CreateScopeCallNode,
@@ -237,7 +243,8 @@ public class SourceGenerator : ISourceGenerator
                 referenceGenerator,
                 CreateFunctionNode,
                 CreateScopeFunctionNode,
-                CreateRangedInstanceFunctionGroupNode);
+                CreateRangedInstanceFunctionGroupNode,
+                CreateDisposalHandlingNode);
 
         ITransientScopeNode CreateTransientScopeNode(
             string name,
@@ -255,7 +262,8 @@ public class SourceGenerator : ISourceGenerator
                 referenceGenerator,
                 CreateFunctionNode,
                 CreateScopeFunctionNode,
-                CreateRangedInstanceFunctionGroupNode);
+                CreateRangedInstanceFunctionGroupNode,
+                CreateDisposalHandlingNode);
 
         IPlainFunctionCallNode CreatePlainFunctionCallNode(
             string? ownerReference,
@@ -412,6 +420,7 @@ public class SourceGenerator : ISourceGenerator
             string containerParameter, 
             string transientScopeInterfaceParameter,
             IScopeNode scope,
+            IRangeNode callingRange,
             IFunctionNode calledFunction,
             IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
             IReferenceGenerator referenceGenerator) =>
@@ -419,6 +428,7 @@ public class SourceGenerator : ISourceGenerator
                 containerParameter,
                 transientScopeInterfaceParameter,
                 scope,
+                callingRange,
                 calledFunction,
                 parameters,
                 referenceGenerator);
@@ -426,12 +436,14 @@ public class SourceGenerator : ISourceGenerator
         ITransientScopeCallNode CreateTransientScopeCallNode(
             string containerParameter, 
             ITransientScopeNode transientScope,
+            IContainerNode parentContainer,
             IFunctionNode calledFunction,
             IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
             IReferenceGenerator referenceGenerator) =>
             new TransientScopeCallNode(
                 containerParameter,
                 transientScope,
+                parentContainer,
                 calledFunction,
                 parameters,
                 referenceGenerator);
@@ -572,6 +584,7 @@ public class SourceGenerator : ISourceGenerator
             INamedTypeSymbol implementationType, 
             IMethodSymbol constructor,
             IFunctionNode parentFunction,
+            IRangeNode parentRange,
             IElementNodeMapperBase typeToElementNodeMapper,
             ICheckTypeProperties checkTypeProperties,
             IUserDefinedElements userDefinedElements, 
@@ -580,6 +593,7 @@ public class SourceGenerator : ISourceGenerator
                 implementationType, 
                 constructor, 
                 parentFunction,
+                parentRange,
                 typeToElementNodeMapper,
                 checkTypeProperties,
                 userDefinedElements, 

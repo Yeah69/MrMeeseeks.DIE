@@ -11,7 +11,7 @@ internal interface IScopeNode : IScopeNodeBase
     string TransientScopeInterfaceFullName { get; }
     string TransientScopeInterfaceReference { get; }
     string TransientScopeInterfaceParameterReference { get; }
-    IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IFunctionNode callingFunction);
+    IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction);
 }
 
 internal class ScopeNode : RangeNode, IScopeNode
@@ -28,8 +28,16 @@ internal class ScopeNode : RangeNode, IScopeNode
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNode> createScopeFunctionNodeFactory,
-        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory)
-        : base (name, userDefinedElements, checkTypeProperties, referenceGenerator, createFunctionNodeFactory, rangedInstanceFunctionGroupNodeFactory)
+        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
+        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
+        : base (
+            name, 
+            userDefinedElements, 
+            checkTypeProperties, 
+            referenceGenerator, 
+            createFunctionNodeFactory, 
+            rangedInstanceFunctionGroupNodeFactory,
+            disposalHandlingNodeFactory)
     {
         _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
         ParentContainer = parentContainer;
@@ -59,7 +67,7 @@ internal class ScopeNode : RangeNode, IScopeNode
             type,
             callingFunction);
 
-    public IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IFunctionNode callingFunction)
+    public IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction)
     {
         // todo smarter overloads handling
         var createFunction = _createScopeFunctionNodeFactory(
@@ -72,10 +80,11 @@ internal class ScopeNode : RangeNode, IScopeNode
             ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
         _createFunctions.Add(createFunction);
         
-        return createFunction.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingFunction, this);
+        return createFunction.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this);
     }
 
     public override string FullName { get; }
+    public override DisposalType DisposalType => ParentContainer.DisposalType;
     public string ContainerFullName { get; }
     public string ContainerReference { get; }
     public string ContainerParameterReference { get; }

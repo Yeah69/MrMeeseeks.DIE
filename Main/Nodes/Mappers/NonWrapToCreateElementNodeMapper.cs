@@ -34,7 +34,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> collectionNodeFactory, 
         Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
-        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
+        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,

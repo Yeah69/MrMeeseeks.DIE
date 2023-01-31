@@ -32,8 +32,8 @@ internal class Root : ITransientScopeRoot
 
 [ImplementationChoice(typeof(IInterface), typeof(SyncDependency))]
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container
+internal partial class Container
 {
     [ImplementationChoice(typeof(IInterface), typeof(Dependency))]
-    private sealed partial class DIE_DefaultTransientScope {}
+    private partial class DIE_DefaultTransientScope {}
 }

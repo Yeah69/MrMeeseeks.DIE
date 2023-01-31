@@ -2,6 +2,7 @@ using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.ResolutionBuilding.Function;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
@@ -16,7 +17,8 @@ internal interface IImplementationNode : IElementNode, IPotentiallyAwaitedNode
     ImplementationNode.UserDefinedInjection? UserDefinedInjectionProperties { get; }
     IReadOnlyList<(string Name, IElementNode Element)> Properties { get; }
     ImplementationNode.Initialization? Initializer { get; }
-    
+    string? SyncDisposalCollectionReference { get; }
+    string? AsyncDisposalCollectionReference { get; }
 }
 
 internal class ImplementationNode : IImplementationNode
@@ -34,6 +36,7 @@ internal class ImplementationNode : IImplementationNode
     private readonly INamedTypeSymbol _implementationType;
     private readonly IMethodSymbol _constructor;
     private readonly IFunctionNode _parentFunction;
+    private readonly IRangeNode _parentRange;
     private readonly IElementNodeMapperBase _elementNodeMapper;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElements _userDefinedElements;
@@ -47,6 +50,7 @@ internal class ImplementationNode : IImplementationNode
         INamedTypeSymbol implementationType,
         IMethodSymbol constructor,
         IFunctionNode parentFunction,
+        IRangeNode parentRange,
         IElementNodeMapperBase elementNodeMapper,
         ICheckTypeProperties checkTypeProperties,
         IUserDefinedElements userDefinedElements,
@@ -56,6 +60,7 @@ internal class ImplementationNode : IImplementationNode
         _implementationType = implementationType;
         _constructor = constructor;
         _parentFunction = parentFunction;
+        _parentRange = parentRange;
         _elementNodeMapper = elementNodeMapper;
         _checkTypeProperties = checkTypeProperties;
         _userDefinedElements = userDefinedElements;
@@ -114,6 +119,13 @@ internal class ImplementationNode : IImplementationNode
             }
         }
 
+        var disposalType = _checkTypeProperties.ShouldDisposalBeManaged(_implementationType);
+        if (disposalType.HasFlag(DisposalType.Sync))
+            SyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterSyncDisposal();
+        if (disposalType.HasFlag(DisposalType.Async))
+            AsyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterAsyncDisposal();
+            
+
         (UserDefinedInjection? UserdefinedInjection, IReadOnlyDictionary<(TypeKey TypeKey, string Name), IElementNode>) GetUserDefinedInjection(IMethodSymbol? method)
         {
             if (method is not { }) return (null, new Dictionary<(TypeKey TypeKey, string Name), IElementNode>());
@@ -156,6 +168,9 @@ internal class ImplementationNode : IImplementationNode
         get;
         private set;
     }
+
+    public string? SyncDisposalCollectionReference { get; private set; }
+    public string? AsyncDisposalCollectionReference { get; private set; }
 
     public bool Awaited { get; set; }
     public string? AsyncReference { get; private set; }

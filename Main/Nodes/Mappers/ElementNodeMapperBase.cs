@@ -50,7 +50,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> _funcNodeFactory;
     private readonly Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> _collectionNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
+    private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
@@ -81,7 +81,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> collectionNodeFactory,
         Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory,
-        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
+        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
@@ -305,6 +305,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 implementationType, 
                 constructor,
                 ParentFunction,
+                ParentRange,
                 NextForWraps, // Use the wrap variant, because "MapToImplementation" is entry point
                 _checkTypeProperties,
                 _userDefinedElements,
@@ -354,7 +355,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IElementNode SwitchClass(INamedTypeSymbol impType)
         {
             if (_checkTypeProperties.GetConstructorChoiceFor(impType) is { } constructor)
-                return _implementationNodeFactory(impType, constructor, ParentFunction, Next, _checkTypeProperties, _userDefinedElements, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+                return _implementationNodeFactory(
+                    impType, 
+                    constructor, 
+                    ParentFunction, 
+                    ParentRange,
+                    Next, 
+                    _checkTypeProperties, 
+                    _userDefinedElements,
+                    _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
             
             if (impType.NullableAnnotation != NullableAnnotation.Annotated)
                 return _errorNodeFactory(impType.InstanceConstructors.Length switch

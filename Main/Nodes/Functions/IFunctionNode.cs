@@ -20,8 +20,10 @@ internal interface IFunctionNode : INode
     void CheckSynchronicity();
     void ForceToAsync();
     string? AsyncTypeFullName { get; }
+    string RangeFullName { get; }
+    string DisposedPropertyReference { get; }
 
     IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction);
-    IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IFunctionNode callingFunction, IScopeNode scopeNode);
+    IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scopeNode);
     ITransientScopeCallNode CreateTransientScopeCall(string containerParameter, IFunctionNode callingFunction, ITransientScopeNode scopeNode);
 }

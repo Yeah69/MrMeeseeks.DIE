@@ -11,6 +11,11 @@ internal interface IRangeNode : INode
 {
     string FullName { get; }
     string Name { get; }
+    DisposalType DisposalType { get; }
+    IDisposalHandlingNode DisposalHandling { get; }
+    bool AddForDisposal { get; }
+    bool AddForDisposalAsync { get; }
+
     IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction);
     ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IFunctionCallNode BuildContainerInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction);
@@ -35,6 +40,10 @@ internal abstract class RangeNode : IRangeNode
 
     public abstract string FullName { get; }
     public string Name { get; }
+    public abstract DisposalType DisposalType { get; }
+    public IDisposalHandlingNode DisposalHandling { get; }
+    public bool AddForDisposal { get; }
+    public bool AddForDisposalAsync { get; }
 
     public IReadOnlyList<ICreateFunctionNode> CreateFunctions => _createFunctions;
 
@@ -47,7 +56,8 @@ internal abstract class RangeNode : IRangeNode
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
-        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory)
+        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
+        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
     {
         UserDefinedElements = userDefinedElements;
         CheckTypeProperties = checkTypeProperties;
@@ -55,6 +65,20 @@ internal abstract class RangeNode : IRangeNode
         CreateFunctionNodeFactory = createFunctionNodeFactory;
         _rangedInstanceFunctionGroupNodeFactory = rangedInstanceFunctionGroupNodeFactory;
         Name = name;
+
+        DisposalHandling = disposalHandlingNodeFactory(referenceGenerator);
+
+        if (userDefinedElements.AddForDisposal is { })
+        {
+            AddForDisposal = true;
+            DisposalHandling.RegisterSyncDisposal();
+        }
+
+        if (userDefinedElements.AddForDisposalAsync is { })
+        {
+            AddForDisposalAsync = true;
+            DisposalHandling.RegisterAsyncDisposal();
+        }
     }
     
     protected abstract IScopeManager ScopeManager { get; }
@@ -88,7 +112,7 @@ internal abstract class RangeNode : IRangeNode
         ScopeManager.GetTransientScope(type).BuildTransientScopeCallFunction(ContainerParameterForScope, type, callingFunction);
 
     public IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 
-        ScopeManager.GetScope(type).BuildScopeCallFunction(ContainerParameterForScope, TransientScopeInterfaceParameterForScope, type, callingFunction);
+        ScopeManager.GetScope(type).BuildScopeCallFunction(ContainerParameterForScope, TransientScopeInterfaceParameterForScope, type, this, callingFunction);
 
     protected IFunctionCallNode BuildRangedInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction, ScopeLevel level)
     {

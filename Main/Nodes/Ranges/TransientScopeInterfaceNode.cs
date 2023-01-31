@@ -21,13 +21,13 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Dictionary<TypeKey, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new();
     private readonly Collection<IRangeNode> _ranges = new();
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNode> _rangedInstanceInterfaceFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNode> _rangedInstanceInterfaceFunctionNodeFactory;
 
     internal TransientScopeInterfaceNode(
         IContainerNode container,
         IReferenceGenerator referenceGenerator,
         
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNode> rangedInstanceInterfaceFunctionNodeFactory)
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNode> rangedInstanceInterfaceFunctionNodeFactory)
     {
         _container = container;
         
@@ -56,6 +56,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
         var interfaceFunction = _rangedInstanceInterfaceFunctionNodeFactory(
             type,
             callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+            _container,
             _container,
             _referenceGenerator).EnqueueTo(_container.BuildQueue);
         interfaceFunctionList.Add(interfaceFunction);

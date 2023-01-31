@@ -15,8 +15,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly IContainerNode _parentContainer;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<string? , IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode> _plainFunctionCallNodeFactory;
-    private readonly Func<string, string, IScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> _scopeCallNodeFactory;
-    private readonly Func<string, ITransientScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> _transientScopeCallNodeFactory;
+    private readonly Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> _scopeCallNodeFactory;
+    private readonly Func<string, ITransientScopeNode, IContainerNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> _transientScopeCallNodeFactory;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly List<IPotentiallyAwaitedNode> _potentiallyAwaitingNodes = new();
     private readonly Dictionary<IPotentiallyAwaitedNode, ITaskNodeBase> _asyncWrappingMap = new();
@@ -31,13 +31,14 @@ internal abstract class FunctionNodeBase : IFunctionNode
         IReadOnlyList<ITypeSymbol> parameters,
         ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> closureParameters,
         IContainerNode parentContainer,
+        IRangeNode parentRange,
         IReferenceGenerator referenceGenerator,
         
         // dependencies
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IContainerNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         WellKnownTypes wellKnownTypes)
     {
         _typeSymbol = typeSymbol;
@@ -80,6 +81,9 @@ internal abstract class FunctionNodeBase : IFunctionNode
         }
 
         Overrides = currentOverrides;
+
+        RangeFullName = parentRange.FullName;
+        DisposedPropertyReference = parentRange.DisposalHandling.DisposedPropertyReference;
     }
 
     public abstract void Build();
@@ -125,6 +129,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
     }
 
     public string? AsyncTypeFullName { get; private set; }
+    public string RangeFullName { get; }
+    public string DisposedPropertyReference { get; }
 
     public IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction)
     {
@@ -140,12 +146,13 @@ internal abstract class FunctionNodeBase : IFunctionNode
         return call;
     }
 
-    public IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IFunctionNode callingFunction, IScopeNode scope)
+    public IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scope)
     {
         var call = _scopeCallNodeFactory(
                 containerParameter,
                 transientScopeInterfaceParameter,
                 scope,
+                callingRange,
                 this,
                 Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
                 _referenceGenerator)
@@ -162,6 +169,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         var call = _transientScopeCallNodeFactory(
                 containerParameter,
                 transientScopeNode,
+                _parentContainer,
                 this,
                 Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
                 _referenceGenerator)

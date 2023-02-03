@@ -261,7 +261,7 @@ public class SourceGenerator : ISourceGenerator
                 checkTypeProperties,
                 referenceGenerator,
                 CreateFunctionNode,
-                CreateScopeFunctionNode,
+                CreateTransientScopeFunctionNode,
                 CreateRangedInstanceFunctionGroupNode,
                 CreateDisposalHandlingNode);
 
@@ -321,6 +321,65 @@ public class SourceGenerator : ISourceGenerator
                 CreateTransientScopeCallNode,
                 CreateParameterNode,
                 wellKnownTypes);
+
+        ICreateTransientScopeFunctionNode CreateTransientScopeFunctionNode(
+            INamedTypeSymbol typeSymbol,
+            IReadOnlyList<ITypeSymbol> parameters,
+            IRangeNode parentRange,
+            IContainerNode parentContainer,
+            IUserDefinedElements userDefinedElements,
+            ICheckTypeProperties checkTypeProperties,
+            IReferenceGenerator referenceGenerator) =>
+            new CreateTransientScopeFunctionNode(
+                typeSymbol, 
+                parameters,
+                parentRange,
+                parentContainer,
+                userDefinedElements,
+                checkTypeProperties,
+                referenceGenerator,
+                CreateElementNodeMapper,
+                CreateTransientScopeDisposalElementNodeMapper,
+                CreatePlainFunctionCallNode, 
+                CreateScopeCallNode,
+                CreateTransientScopeCallNode,
+                CreateParameterNode,
+                wellKnownTypes);
+
+        ITransientScopeDisposalElementNodeMapper CreateTransientScopeDisposalElementNodeMapper(
+            IElementNodeMapperBase parentMapper,
+            ElementNodeMapperBase.PassedDependencies passedDependencies) =>
+            new TransientScopeDisposalElementNodeMapper(
+                parentMapper,
+                passedDependencies,
+                diagLogger,
+                wellKnownTypes,
+                CreateFactoryFieldNode,
+                CreateFactoryPropertyNode,
+                CreateFactoryFunctionNode,
+                CreateValueTaskNode,
+                CreateTaskNode,
+                CreateValueTupleNode,
+                CreateValueTupleSyntaxNode,
+                CreateTupleNode,
+                CreateLazyNode,
+                CreateFuncNode,
+                CreateCollectionNode,
+                CreateAbstractionNode,
+                CreateImplementationNode,
+                CreateOutParameterNode,
+                CreateErrorNode,
+                CreateNullNode,
+                CreateLocalFunctionNode,
+                CreateOverridingElementNodeMapper,
+                CreateOverridingElementNodeMapperComposite,
+                CreateNonWrapToCreateElementNodeMapper,
+                CreateTransientScopeDisposalTriggerNode);
+
+        ITransientScopeDisposalTriggerNode CreateTransientScopeDisposalTriggerNode(
+            INamedTypeSymbol disposalType,
+            IReferenceGenerator referenceGenerator) =>
+            new TransientScopeDisposalTriggerNode(disposalType, referenceGenerator);
 
         ILocalFunctionNode CreateLocalFunctionNode(
             ITypeSymbol typeSymbol,
@@ -437,6 +496,7 @@ public class SourceGenerator : ISourceGenerator
             string containerParameter, 
             ITransientScopeNode transientScope,
             IContainerNode parentContainer,
+            IRangeNode callingRange,
             IFunctionNode calledFunction,
             IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
             IReferenceGenerator referenceGenerator) =>
@@ -444,6 +504,7 @@ public class SourceGenerator : ISourceGenerator
                 containerParameter,
                 transientScope,
                 parentContainer,
+                callingRange,
                 calledFunction,
                 parameters,
                 referenceGenerator);

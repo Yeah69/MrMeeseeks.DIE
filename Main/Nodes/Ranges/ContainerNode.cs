@@ -19,6 +19,7 @@ internal interface IContainerNode : IRangeNode
     IEnumerable<ITransientScopeNode> TransientScopes { get; }
     ITransientScopeInterfaceNode TransientScopeInterface { get; }
     string TransientScopeDisposalReference { get; }
+    string TransientScopeDisposalElement { get; }
     NoOpDisposable NoOpSyncDisposable { get; }
     NoOpDisposable NoOpAsyncDisposable { get; }
     SyncToAsyncDisposable SyncToAsyncDisposable { get; }
@@ -44,6 +45,7 @@ internal class ContainerNode : RangeNode, IContainerNode
     public IEnumerable<ITransientScopeNode> TransientScopes => ScopeManager.TransientScopes;
     public ITransientScopeInterfaceNode TransientScopeInterface { get; }
     public string TransientScopeDisposalReference { get; }
+    public string TransientScopeDisposalElement { get; }
 
     public NoOpDisposable NoOpSyncDisposable { get; }
     public NoOpDisposable NoOpAsyncDisposable { get; }
@@ -107,6 +109,7 @@ internal class ContainerNode : RangeNode, IContainerNode
             referenceGenerator.Generate("disposable"),
             referenceGenerator.Generate("_disposable"));
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
+        TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");
     }
 
     protected override IScopeManager ScopeManager => _lazyScopeManager.Value;
@@ -140,6 +143,8 @@ internal class ContainerNode : RangeNode, IContainerNode
     }
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitContainerNode(this);
+
+    public override string? ContainerReference => null;
 
     public override IFunctionCallNode BuildContainerInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 
         BuildContainerInstanceCall(null, type, callingFunction);

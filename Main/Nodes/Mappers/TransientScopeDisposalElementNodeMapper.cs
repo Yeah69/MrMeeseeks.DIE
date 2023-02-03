@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -11,18 +10,19 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
-internal interface IOverridingElementNodeMapper : IElementNodeMapperBase
+internal interface ITransientScopeDisposalElementNodeMapper : IElementNodeMapperBase
 {
 }
 
-internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingElementNodeMapper
+internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper
 {
-    private readonly (TypeKey Key, IElementNode Node) _override;
+    private readonly PassedDependencies _passedDependencies;
+    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly Func<INamedTypeSymbol, IReferenceGenerator, ITransientScopeDisposalTriggerNode> _transientScopeDisposalTriggerNodeFactory;
 
-    public OverridingElementNodeMapper(
+    public TransientScopeDisposalElementNodeMapper(
         IElementNodeMapperBase parentElementNodeMapper,
         PassedDependencies passedDependencies,
-        (TypeKey, IElementNode) @override,
         
         IDiagLogger diagLogger, 
         WellKnownTypes wellKnownTypes, 
@@ -45,7 +45,8 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IElementNode), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<IElementNode>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
+        Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
+        Func<INamedTypeSymbol, IReferenceGenerator, ITransientScopeDisposalTriggerNode> transientScopeDisposalTriggerNodeFactory) 
         : base(passedDependencies.ParentFunction, 
             passedDependencies.ParentRange, 
             passedDependencies.ParentContainer, 
@@ -75,16 +76,23 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             overridingElementNodeMapperCompositeFactory,
             nonWrapToCreateElementNodeMapperFactory)
     {
+        _passedDependencies = passedDependencies;
+        _wellKnownTypes = wellKnownTypes;
+        _transientScopeDisposalTriggerNodeFactory = transientScopeDisposalTriggerNodeFactory;
         Next = parentElementNodeMapper;
-        _override = @override;
     }
 
     protected override IElementNodeMapperBase NextForWraps => this;
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type) =>
-        Equals(_override.Key, type.ToTypeKey()) 
-            ? _override.Node 
-            : base.Map(type);
+    public override IElementNode Map(ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol namedType
+            && (SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.Disposable)
+                || SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.AsyncDisposable)))
+            return _transientScopeDisposalTriggerNodeFactory(namedType, _passedDependencies.ReferenceGenerator);
+
+        return base.Map(type);
+    }
 }

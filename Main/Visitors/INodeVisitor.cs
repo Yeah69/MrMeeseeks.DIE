@@ -39,4 +39,5 @@ internal interface INodeVisitor
     void VisitParameterNode(IParameterNode parameterNode);
     void VisitOutParameterNode(IOutParameterNode outParameterNode);
     void VisitAbstractionNode(IAbstractionNode abstractionNode);
+    void VisitTransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode);
 }

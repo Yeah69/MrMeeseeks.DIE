@@ -297,7 +297,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     /// <summary>
     /// Meant as entry point for mappings where concrete implementation type is already chosen.
     /// </summary>
-    /// <returns></returns>
     public IElementNode MapToImplementation(INamedTypeSymbol implementationType)
     {
         if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is { } constructor)
@@ -334,7 +333,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ParentFunction = parentFunction;
     }
 
-    protected IElementNode SwitchImplementation(INamedTypeSymbol implementationType)
+    private IElementNode SwitchImplementation(INamedTypeSymbol implementationType)
     {
         var scopeLevel = _checkTypeProperties.GetScopeLevelFor(implementationType);
 

@@ -9,12 +9,13 @@ namespace MrMeeseeks.DIE.Nodes.Ranges;
 internal interface ITransientScopeNode : IScopeNodeBase
 {
     string TransientScopeInterfaceName { get; }
-    ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IFunctionNode callingFunction);
+    string TransientScopeDisposalReference { get; }
+    ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction);
 }
 
 internal class TransientScopeNode : RangeNode, ITransientScopeNode
 {
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNode> _createScopeFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateTransientScopeFunctionNode> _createTransientScopeFunctionNodeFactory;
 
     internal TransientScopeNode(
         string name,
@@ -24,7 +25,7 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNode> createScopeFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateTransientScopeFunctionNode> createTransientScopeFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
@@ -36,7 +37,7 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
             rangedInstanceFunctionGroupNodeFactory,
             disposalHandlingNodeFactory)
     {
-        _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
+        _createTransientScopeFunctionNodeFactory = createTransientScopeFunctionNodeFactory;
         ParentContainer = parentContainer;
         ScopeManager = scopeManager;
         FullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{name}";
@@ -44,6 +45,7 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
         ContainerReference = referenceGenerator.Generate("_container");
         ContainerParameterReference = referenceGenerator.Generate("container");
         TransientScopeInterfaceName = parentContainer.TransientScopeInterface.Name;
+        TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
     }
 
     protected override IScopeManager ScopeManager { get; }
@@ -61,11 +63,12 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
         ParentContainer.TransientScopeInterface.BuildTransientScopeInstanceCall($"({Constants.ThisKeyword} as {ParentContainer.TransientScopeInterface.FullName})", type, callingFunction);
 
     public string TransientScopeInterfaceName { get; }
+    public string TransientScopeDisposalReference { get; }
 
-    public ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IFunctionNode callingFunction)
+    public ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction)
     {
         // todo smarter overloads handling
-        var createFunction = _createScopeFunctionNodeFactory(
+        var createFunction = _createTransientScopeFunctionNodeFactory(
             type,
             callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
             this,
@@ -75,12 +78,12 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
             ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
         _createFunctions.Add(createFunction);
         
-        return createFunction.CreateTransientScopeCall(containerParameter, callingFunction, this);
+        return createFunction.CreateTransientScopeCall(containerParameter, callingRange, callingFunction, this);
     }
 
     public override string FullName { get; }
     public override DisposalType DisposalType => ParentContainer.DisposalType;
     public string ContainerFullName { get; }
-    public string ContainerReference { get; }
+    public override string ContainerReference { get; }
     public string ContainerParameterReference { get; }
 }

@@ -6,11 +6,15 @@ namespace MrMeeseeks.DIE.Sample;
 
 internal interface IInterface {}
 
-internal class Dependency : ITransientScopeInstance, IValueTaskInitializer, IInterface
+internal class Dependency : ITransientScopeInstance, IInitializer, IInterface, IDisposable
 {
-    async ValueTask IValueTaskInitializer.InitializeAsync()
+    void IInitializer.Initialize()
     {
-        await Task.Yield();
+    }
+
+    public void Dispose()
+    {
+        Console.WriteLine("sync");
     }
 }
 
@@ -25,9 +29,18 @@ internal class OuterDependency : ITransientScopeInstance
 
 internal class Root : ITransientScopeRoot
 {
-    internal Root(ValueTask<OuterDependency> ___, Func<Dependency, ValueTask<OuterDependency>> __, Func<ValueTask<OuterDependency>> _)
+    private readonly IAsyncDisposable _disposable;
+
+    internal Root(
+        ValueTask<OuterDependency> ___, 
+        Func<Dependency, ValueTask<OuterDependency>> __,
+        Func<ValueTask<OuterDependency>> _,
+        IAsyncDisposable disposable)
     {
+        _disposable = disposable;
     }
+
+    public void Clean() => _disposable.DisposeAsync();
 }
 
 [ImplementationChoice(typeof(IInterface), typeof(SyncDependency))]

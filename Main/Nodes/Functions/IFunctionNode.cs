@@ -25,5 +25,5 @@ internal interface IFunctionNode : INode
 
     IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction);
     IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scopeNode);
-    ITransientScopeCallNode CreateTransientScopeCall(string containerParameter, IFunctionNode callingFunction, ITransientScopeNode scopeNode);
+    ITransientScopeCallNode CreateTransientScopeCall(string containerParameter, IRangeNode callingRange, IFunctionNode callingFunction, ITransientScopeNode scopeNode);
 }

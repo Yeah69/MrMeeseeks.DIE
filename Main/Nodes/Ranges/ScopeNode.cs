@@ -86,7 +86,7 @@ internal class ScopeNode : RangeNode, IScopeNode
     public override string FullName { get; }
     public override DisposalType DisposalType => ParentContainer.DisposalType;
     public string ContainerFullName { get; }
-    public string ContainerReference { get; }
+    public override string ContainerReference { get; }
     public string ContainerParameterReference { get; }
     public string TransientScopeInterfaceFullName { get; }
     public string TransientScopeInterfaceReference { get; }

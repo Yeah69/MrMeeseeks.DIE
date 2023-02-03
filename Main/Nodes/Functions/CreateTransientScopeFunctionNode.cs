@@ -8,27 +8,19 @@ using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IRangedInstanceFunctionNode : ISingleFunctionNode
+internal interface ICreateTransientScopeFunctionNode : ICreateFunctionNode
 {
 }
 
-internal interface IRangedInstanceFunctionNodeInitializer
+internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreateTransientScopeFunctionNode
 {
-    /// <summary>
-    /// Only intended for transient scope instance function, cause they need to synchronize identifier with their interface function
-    /// </summary>
-    void Initialize(string name, string explicitInterfaceFullName);
-}
-
-internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer
-{
-    private readonly INamedTypeSymbol _type;
+    private readonly INamedTypeSymbol _typeSymbol;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapperBase> _typeToElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, ITransientScopeDisposalElementNodeMapper> _transientScopeDisposalElementNodeMapperFactory;
 
-    public RangedInstanceFunctionNode(
-        ScopeLevel level,
-        INamedTypeSymbol type, 
+    public CreateTransientScopeFunctionNode(
+        INamedTypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
@@ -36,14 +28,15 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator, 
         Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapperBase> typeToElementNodeMapperFactory,
+        Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, ITransientScopeDisposalElementNodeMapper> transientScopeDisposalElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         WellKnownTypes wellKnownTypes) 
         : base(
-            Microsoft.CodeAnalysis.Accessibility.Private,
-            type, 
+            Microsoft.CodeAnalysis.Accessibility.Internal,
+            typeSymbol, 
             parameters,
             ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty, 
             parentNode, 
@@ -57,28 +50,24 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
             transientScopeCallNodeFactory,
             wellKnownTypes)
     {
-        _type = type;
+        _typeSymbol = typeSymbol;
         _referenceGenerator = referenceGenerator;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
-        Name = referenceGenerator.Generate($"Get{level.ToString()}Instance", _type);
+        _transientScopeDisposalElementNodeMapperFactory = transientScopeDisposalElementNodeMapperFactory;
+        Name = referenceGenerator.Generate("Create", typeSymbol);
     }
-
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
-        IUserDefinedElements userDefinedElements, ICheckTypeProperties checkTypeProperties) =>
-        _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer, userDefinedElements, checkTypeProperties, _referenceGenerator);
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
-        // "MapToImplementation" instead of "Map", because latter would cause an infinite recursion ever trying to create a new ranged instance function
-        mapper.MapToImplementation(_type); 
+        mapper.MapToImplementation(_typeSymbol);
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitRangedInstanceFunctionNode(this);
-    public override string Name { get; protected set; }
-
-    void IRangedInstanceFunctionNodeInitializer.Initialize(
-        string name, 
-        string explicitInterfaceFullName)
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
+        IUserDefinedElements userDefinedElements, ICheckTypeProperties checkTypeProperties)
     {
-        Name = name;
-        ExplicitInterfaceFullName = explicitInterfaceFullName;
+        var parentMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer, userDefinedElements,
+            checkTypeProperties, _referenceGenerator);
+        return _transientScopeDisposalElementNodeMapperFactory(parentMapper, parentMapper.MapperDependencies);
     }
+
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
+    public override string Name { get; protected set; }
 }

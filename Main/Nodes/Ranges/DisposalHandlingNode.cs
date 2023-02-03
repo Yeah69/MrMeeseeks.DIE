@@ -6,8 +6,8 @@ internal interface IDisposalHandlingNode
     string DisposedLocalReference { get; }
     string DisposedPropertyReference { get; }
     string DisposableLocalReference { get; }
-    string? SyncCollectionReference { get; }
-    string? AsyncCollectionReference { get; }
+    string SyncCollectionReference { get; }
+    string AsyncCollectionReference { get; }
     bool HasSyncDisposables { get; }
     bool HasAsyncDisposables { get; }
     string RegisterSyncDisposal();
@@ -38,8 +38,8 @@ internal class DisposalHandlingNode : IDisposalHandlingNode
     public string DisposedLocalReference { get; }
     public string DisposedPropertyReference { get; }
     public string DisposableLocalReference { get; }
-    public string? SyncCollectionReference => _syncCollectionUsed ? _syncCollection : null;
-    public string? AsyncCollectionReference => _asyncCollectionUsed ? _asyncCollection : null;
+    public string SyncCollectionReference => _syncCollection;
+    public string AsyncCollectionReference => _asyncCollection;
     public bool HasSyncDisposables => _syncCollectionUsed;
     public bool HasAsyncDisposables => _asyncCollectionUsed;
 

@@ -15,6 +15,7 @@ internal interface IRangeNode : INode
     IDisposalHandlingNode DisposalHandling { get; }
     bool AddForDisposal { get; }
     bool AddForDisposalAsync { get; }
+    string? ContainerReference { get; }
 
     IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction);
     ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
@@ -44,6 +45,7 @@ internal abstract class RangeNode : IRangeNode
     public IDisposalHandlingNode DisposalHandling { get; }
     public bool AddForDisposal { get; }
     public bool AddForDisposalAsync { get; }
+    public abstract string? ContainerReference { get; }
 
     public IReadOnlyList<ICreateFunctionNode> CreateFunctions => _createFunctions;
 
@@ -109,7 +111,7 @@ internal abstract class RangeNode : IRangeNode
     }
 
     public ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction)=> 
-        ScopeManager.GetTransientScope(type).BuildTransientScopeCallFunction(ContainerParameterForScope, type, callingFunction);
+        ScopeManager.GetTransientScope(type).BuildTransientScopeCallFunction(ContainerParameterForScope, type, this, callingFunction);
 
     public IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 
         ScopeManager.GetScope(type).BuildScopeCallFunction(ContainerParameterForScope, TransientScopeInterfaceParameterForScope, type, this, callingFunction);

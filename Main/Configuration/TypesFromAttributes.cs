@@ -796,9 +796,9 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
-        FilterImplementationChoices = GetImplementationTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
+        FilterImplementationChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
         
-        FilterImplementationCollectionChoices = GetImplementationTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
+        FilterImplementationCollectionChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }

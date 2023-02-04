@@ -20,10 +20,7 @@ internal class NullNode : INullNode
     {
     }
 
-    public void Accept(INodeVisitor nodeVisitor)
-    {
-        throw new NotImplementedException();
-    }
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitNullNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

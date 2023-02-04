@@ -604,44 +604,69 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
 
     private void VisitElementNode(IElementNode elementNode)
     {
-        if (elementNode is IPlainFunctionCallNode createCallNode)
-            VisitPlainFunctionCallNode(createCallNode);
-        if (elementNode is IScopeCallNode scopeCallNode)
-            VisitScopeCallNode(scopeCallNode);
-        if (elementNode is ITransientScopeCallNode transientScopeCallNode)
-            VisitTransientScopeCallNode(transientScopeCallNode);
-        if (elementNode is IParameterNode parameterNode)
-            VisitParameterNode(parameterNode);
-        if (elementNode is IOutParameterNode outParameterNode)
-            VisitOutParameterNode(outParameterNode);
-        if (elementNode is IFactoryFieldNode factoryFieldNode)
-            VisitFactoryFieldNode(factoryFieldNode);
-        if (elementNode is IFactoryFunctionNode factoryFunctionNode)
-            VisitFactoryFunctionNode(factoryFunctionNode);
-        if (elementNode is IFactoryPropertyNode factoryPropertyNode)
-            VisitFactoryPropertyNode(factoryPropertyNode);
-        if (elementNode is IFuncNode funcNode)
-            VisitFuncNode(funcNode);
-        if (elementNode is ILazyNode lazyNode)
-            VisitLazyNode(lazyNode);
-        if (elementNode is IValueTaskNode valueTaskNode)
-            VisitValueTaskNode(valueTaskNode);
-        if (elementNode is ITaskNode taskNode)
-            VisitTaskNode(taskNode);
-        if (elementNode is ITupleNode tupleNode)
-            VisitTupleNode(tupleNode);
-        if (elementNode is IValueTupleNode valueTupleNode)
-            VisitValueTupleNode(valueTupleNode);
-        if (elementNode is IValueTupleSyntaxNode valueTupleSyntaxNode)
-            VisitValueTupleSyntaxNode(valueTupleSyntaxNode);
-        if (elementNode is ICollectionNode collectionNode)
-            VisitCollectionNode(collectionNode);
-        if (elementNode is IAbstractionNode abstractionNode)
-            VisitAbstractionNode(abstractionNode);
-        if (elementNode is IImplementationNode implementationNode)
-            VisitImplementationNode(implementationNode);
-        if (elementNode is ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode)
-            VisitTransientScopeDisposalTriggerNode(transientScopeDisposalTriggerNode);
+        switch (elementNode)
+        {
+            case IPlainFunctionCallNode createCallNode:
+                VisitPlainFunctionCallNode(createCallNode);
+                break;
+            case IScopeCallNode scopeCallNode:
+                VisitScopeCallNode(scopeCallNode);
+                break;
+            case ITransientScopeCallNode transientScopeCallNode:
+                VisitTransientScopeCallNode(transientScopeCallNode);
+                break;
+            case IParameterNode parameterNode:
+                VisitParameterNode(parameterNode);
+                break;
+            case IOutParameterNode outParameterNode:
+                VisitOutParameterNode(outParameterNode);
+                break;
+            case IFactoryFieldNode factoryFieldNode:
+                VisitFactoryFieldNode(factoryFieldNode);
+                break;
+            case IFactoryFunctionNode factoryFunctionNode:
+                VisitFactoryFunctionNode(factoryFunctionNode);
+                break;
+            case IFactoryPropertyNode factoryPropertyNode:
+                VisitFactoryPropertyNode(factoryPropertyNode);
+                break;
+            case IFuncNode funcNode:
+                VisitFuncNode(funcNode);
+                break;
+            case ILazyNode lazyNode:
+                VisitLazyNode(lazyNode);
+                break;
+            case IValueTaskNode valueTaskNode:
+                VisitValueTaskNode(valueTaskNode);
+                break;
+            case ITaskNode taskNode:
+                VisitTaskNode(taskNode);
+                break;
+            case ITupleNode tupleNode:
+                VisitTupleNode(tupleNode);
+                break;
+            case IValueTupleNode valueTupleNode:
+                VisitValueTupleNode(valueTupleNode);
+                break;
+            case IValueTupleSyntaxNode valueTupleSyntaxNode:
+                VisitValueTupleSyntaxNode(valueTupleSyntaxNode);
+                break;
+            case ICollectionNode collectionNode:
+                VisitCollectionNode(collectionNode);
+                break;
+            case IAbstractionNode abstractionNode:
+                VisitAbstractionNode(abstractionNode);
+                break;
+            case IImplementationNode implementationNode:
+                VisitImplementationNode(implementationNode);
+                break;
+            case ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode:
+                VisitTransientScopeDisposalTriggerNode(transientScopeDisposalTriggerNode);
+                break;
+            case INullNode nullNode:
+                VisitNullNode(nullNode);
+                break;
+        }
     }
 
     public void VisitCollectionNode(ICollectionNode collectionNode)
@@ -724,6 +749,9 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
 
     public void VisitTransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode) => _code.AppendLine(
         $"{transientScopeDisposalTriggerNode.TypeFullName} {transientScopeDisposalTriggerNode.Reference} = {Constants.ThisKeyword} as {transientScopeDisposalTriggerNode.TypeFullName};");
+
+    public void VisitNullNode(INullNode nullNode) => _code.AppendLine(
+        $"{nullNode.TypeFullName} {nullNode.Reference} = ({nullNode.TypeFullName}) null;");
 
     public string GenerateContainerFile() => _code.ToString();
 

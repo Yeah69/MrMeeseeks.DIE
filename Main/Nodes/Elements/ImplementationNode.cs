@@ -88,7 +88,7 @@ internal class ImplementationNode : IImplementationNode
                 .GetMembers()
                 .OfType<IPropertySymbol>()
                 .Where(_ => !_implementationType.IsRecord)
-                .Where(p => p.SetMethod?.IsInitOnly ?? false))
+                .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false)))
             .Select(p => (p.Name, MapToInjection((p.Type.ToTypeKey(), p.Name), p.Type, outParamsProperties))));
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })

@@ -8,13 +8,13 @@ internal class Dependency : IInterface { }
 
 internal class Root
 {
-
-    internal Root(Dependency? _)
+    public required IInterface Dependency { private get; init; }
+    
+    internal Root()
     {
     }
 }
 
-[FilterImplementationAggregation(typeof(Dependency))]
 [CreateFunction(typeof(Root), "Create")]
 internal partial class Container
 {

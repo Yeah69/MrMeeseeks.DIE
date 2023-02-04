@@ -21,6 +21,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode
     public EntryFunctionNode(
         ITypeSymbol typeSymbol, 
         string prefix, 
+        IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
         IUserDefinedElements userDefinedElements, 
@@ -36,7 +37,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
             typeSymbol, 
-            Array.Empty<ITypeSymbol>(),
+            parameters,
             ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty, 
             parentNode, 
             parentContainer, 

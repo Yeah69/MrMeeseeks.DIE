@@ -98,7 +98,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         foreach (var createFunctionAttribute in createFunctionAttributes)
         {
             var location = createFunctionAttribute.GetLocation();
-            if (createFunctionAttribute.ConstructorArguments.Length == 2
+            if (createFunctionAttribute.ConstructorArguments.Length == 3
                 && createFunctionAttribute.ConstructorArguments[1].Value is string functionName)
             {
                 if (functionName == nameof(IDisposable.Dispose))

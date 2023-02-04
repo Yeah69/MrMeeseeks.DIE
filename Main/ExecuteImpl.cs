@@ -2,11 +2,9 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.CodeBuilding;
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.ResolutionBuilding;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Visitors;
 

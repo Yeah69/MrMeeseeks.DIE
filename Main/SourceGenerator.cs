@@ -454,6 +454,7 @@ public class SourceGenerator : ISourceGenerator
         IEntryFunctionNode CreateEntryFunctionNode(
             ITypeSymbol typeSymbol,
             string prefix,
+            IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
             IContainerNode parentContainer,
             IUserDefinedElements userDefinedElements,
@@ -462,6 +463,7 @@ public class SourceGenerator : ISourceGenerator
             new EntryFunctionNode(
                 typeSymbol,
                 prefix,
+                parameters,
                 parentRange,
                 parentContainer,
                 userDefinedElements,

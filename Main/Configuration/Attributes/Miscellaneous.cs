@@ -80,7 +80,7 @@ public class FilterInitializerAttribute : Attribute
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class CreateFunctionAttribute : Attribute
 {
-    public CreateFunctionAttribute(Type type, string methodNamePrefix)
+    public CreateFunctionAttribute(Type type, string methodNamePrefix, params Type[] parameterTypes)
     {
     }
 }

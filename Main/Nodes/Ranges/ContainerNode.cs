@@ -5,10 +5,6 @@ using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
-
-internal record NoOpDisposable(string ClassName, string InstanceReference);
-internal record SyncToAsyncDisposable(string ClassName, string DisposableParameterReference, string DisposableFieldReference);
-
 internal interface IContainerNode : IRangeNode
 {
     string Namespace { get; }
@@ -20,9 +16,6 @@ internal interface IContainerNode : IRangeNode
     ITransientScopeInterfaceNode TransientScopeInterface { get; }
     string TransientScopeDisposalReference { get; }
     string TransientScopeDisposalElement { get; }
-    NoOpDisposable NoOpSyncDisposable { get; }
-    NoOpDisposable NoOpAsyncDisposable { get; }
-    SyncToAsyncDisposable SyncToAsyncDisposable { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
 }
 
@@ -30,7 +23,7 @@ internal class ContainerNode : RangeNode, IContainerNode
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IReferenceGenerator _referenceGenerator;
-    private readonly Func<ITypeSymbol, string, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> _entryFunctionNodeFactory;
+    private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> _entryFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
     private readonly Lazy<DisposalType> _lazyDisposalType;
@@ -47,10 +40,6 @@ internal class ContainerNode : RangeNode, IContainerNode
     public string TransientScopeDisposalReference { get; }
     public string TransientScopeDisposalElement { get; }
 
-    public NoOpDisposable NoOpSyncDisposable { get; }
-    public NoOpDisposable NoOpAsyncDisposable { get; }
-    public SyncToAsyncDisposable SyncToAsyncDisposable { get; }
-
     public IFunctionCallNode BuildContainerInstanceCall(
         string? ownerReference, 
         INamedTypeSymbol type,
@@ -65,7 +54,7 @@ internal class ContainerNode : RangeNode, IContainerNode
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
-        Func<ITypeSymbol, string, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> entryFunctionNodeFactory,
+        Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> entryFunctionNodeFactory,
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<IContainerInfo, IContainerNode, ITransientScopeInterfaceNode, ImmutableList<ITypesFromAttributes>, IReferenceGenerator, IScopeManager> scopeManagerFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
@@ -98,16 +87,6 @@ internal class ContainerNode : RangeNode, IContainerNode
                 return agg;
             }));
         
-        NoOpSyncDisposable = new NoOpDisposable(
-            referenceGenerator.Generate("NoOpSyncDisposable"),
-            referenceGenerator.Generate("Instance"));
-        NoOpAsyncDisposable = new NoOpDisposable(
-            referenceGenerator.Generate("NoOpAsyncDisposable"),
-            referenceGenerator.Generate("Instance"));
-        SyncToAsyncDisposable = new SyncToAsyncDisposable(
-            referenceGenerator.Generate("SyncToAsyncDisposable"),
-            referenceGenerator.Generate("disposable"),
-            referenceGenerator.Generate("_disposable"));
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
         TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");
     }
@@ -121,11 +100,12 @@ internal class ContainerNode : RangeNode, IContainerNode
     {
         TransientScopeInterface.RegisterRange(this);
         base.Build();
-        foreach (var (typeSymbol, methodNamePrefix) in _containerInfo.CreateFunctionData)
+        foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)
         {
             var functionNode = _entryFunctionNodeFactory(
                 typeSymbol,
                 methodNamePrefix,
+                parameterTypes,
                 this,
                 this,
                 UserDefinedElements,

@@ -35,13 +35,14 @@ public class SourceGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
-        var wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
+        WellKnownTypesCollections wellKnownTypesCollections = WellKnownTypesCollections.Create(context.Compilation);
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
         var errorDescriptionInsteadOfBuildFailure = context.Compilation.Assembly.GetAttributes()
             .Any(ad => SymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.ErrorDescriptionInsteadOfBuildFailureAttribute, ad.AttributeClass));
 
         WellKnownTypes wellKnownTypes = WellKnownTypes.Create(context.Compilation);
-        var wellKnownTypesAggregation = WellKnownTypesAggregation.Create(context.Compilation);
-        var wellKnownTypesChoice = WellKnownTypesChoice.Create(context.Compilation);
+        WellKnownTypesAggregation wellKnownTypesAggregation = WellKnownTypesAggregation.Create(context.Compilation);
+        WellKnownTypesChoice wellKnownTypesChoice = WellKnownTypesChoice.Create(context.Compilation);
         DiagLogger diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
         var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(wellKnownTypes);
         var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);
@@ -121,7 +122,7 @@ public class SourceGenerator : ISourceGenerator
             referenceGeneratorFactory,
             diagLogger).Execute();
 
-        ICodeGenerationVisitor CreateCodeGenerationVisitor() => new CodeGenerationVisitor(wellKnownTypes);
+        ICodeGenerationVisitor CreateCodeGenerationVisitor() => new CodeGenerationVisitor(wellKnownTypes, wellKnownTypesCollections);
 
         IContainerNode ContainerNodeFactory(
             IContainerInfo ci)
@@ -153,6 +154,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateCheckTypeProperties(containerTypesFromAttributesList),
                 referenceGeneratorFactory.Create(),
                 CreateFunctionNode,
+                CreateMultiFunctionNode,
                 CreateRangedInstanceFunctionGroupNode,
                 CreateEntryFunctionNode,
                 CreateTransientScopeInterfaceNode,
@@ -242,6 +244,7 @@ public class SourceGenerator : ISourceGenerator
                 checkTypeProperties,
                 referenceGenerator,
                 CreateFunctionNode,
+                CreateMultiFunctionNode,
                 CreateScopeFunctionNode,
                 CreateRangedInstanceFunctionGroupNode,
                 CreateDisposalHandlingNode);
@@ -261,9 +264,35 @@ public class SourceGenerator : ISourceGenerator
                 checkTypeProperties,
                 referenceGenerator,
                 CreateFunctionNode,
+                CreateMultiFunctionNode,
                 CreateTransientScopeFunctionNode,
                 CreateRangedInstanceFunctionGroupNode,
                 CreateDisposalHandlingNode);
+
+        IMultiFunctionNode CreateMultiFunctionNode(
+            INamedTypeSymbol enumerableType,
+            IReadOnlyList<ITypeSymbol> parameters,
+            IRangeNode parentNode,
+            IContainerNode parentContainer,
+            IUserDefinedElements userDefinedElements,
+            ICheckTypeProperties checkTypeProperties,
+            IReferenceGenerator referenceGenerator) =>
+            new MultiFunctionNodeBase(
+                enumerableType,
+                parameters,
+                parentNode,
+                parentContainer,
+                userDefinedElements,
+                checkTypeProperties,
+                referenceGenerator,
+                CreateParameterNode,
+                CreatePlainFunctionCallNode,
+                CreateScopeCallNode,
+                CreateTransientScopeCallNode,
+                CreateElementNodeMapper,
+                CreateOverridingElementNodeMapper,
+                wellKnownTypes,
+                wellKnownTypesCollections);
 
         IPlainFunctionCallNode CreatePlainFunctionCallNode(
             string? ownerReference,
@@ -354,6 +383,7 @@ public class SourceGenerator : ISourceGenerator
                 passedDependencies,
                 diagLogger,
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -364,7 +394,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateTupleNode,
                 CreateLazyNode,
                 CreateFuncNode,
-                CreateCollectionNode,
+                CreateEnumerableBasedNode,
                 CreateAbstractionNode,
                 CreateImplementationNode,
                 CreateOutParameterNode,
@@ -514,13 +544,14 @@ public class SourceGenerator : ISourceGenerator
         IOverridingElementNodeMapper CreateOverridingElementNodeMapper(
             IElementNodeMapperBase parentElementNodeMapper,
             ElementNodeMapperBase.PassedDependencies passedDependencies,
-            (TypeKey, IElementNode) @override) =>
+            (TypeKey, INamedTypeSymbol) @override) =>
             new OverridingElementNodeMapper(
                 parentElementNodeMapper,
                 passedDependencies,
                 @override,
                 diagLogger,
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -531,7 +562,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateTupleNode,
                 CreateLazyNode,
                 CreateFuncNode,
-                CreateCollectionNode,
+                CreateEnumerableBasedNode,
                 CreateAbstractionNode,
                 CreateImplementationNode,
                 CreateOutParameterNode,
@@ -550,6 +581,7 @@ public class SourceGenerator : ISourceGenerator
                 passedDependencies,
                 diagLogger,
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -560,7 +592,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateTupleNode,
                 CreateLazyNode,
                 CreateFuncNode,
-                CreateCollectionNode,
+                CreateEnumerableBasedNode,
                 CreateAbstractionNode,
                 CreateImplementationNode,
                 CreateOutParameterNode,
@@ -574,13 +606,14 @@ public class SourceGenerator : ISourceGenerator
         IOverridingElementNodeMapperComposite CreateOverridingElementNodeMapperComposite(
             IElementNodeMapperBase parentElementNodeMapper,
             ElementNodeMapperBase.PassedDependencies passedDependencies,
-            (TypeKey, IReadOnlyList<IElementNode>) @override) =>
+            (TypeKey, IReadOnlyList<INamedTypeSymbol>) @override) =>
             new OverridingElementNodeMapperComposite(
                 parentElementNodeMapper,
                 passedDependencies,
                 @override,
                 diagLogger,
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -592,6 +625,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateLazyNode,
                 CreateFuncNode,
                 CreateCollectionNode,
+                CreateEnumerableBasedNode,
                 CreateAbstractionNode,
                 CreateImplementationNode,
                 CreateOutParameterNode,
@@ -602,8 +636,8 @@ public class SourceGenerator : ISourceGenerator
                 CreateOverridingElementNodeMapperComposite,
                 CreateNonWrapToCreateElementNodeMapper);
 
-        IElementNodeMapperBase CreateElementNodeMapper(
-            ISingleFunctionNode parentFunction,
+        IElementNodeMapper CreateElementNodeMapper(
+            IFunctionNode parentFunction,
             IRangeNode parentRange,
             IContainerNode parentContainer,
             IUserDefinedElements userDefinedElements,
@@ -618,6 +652,7 @@ public class SourceGenerator : ISourceGenerator
                 referenceGenerator,
                 diagLogger,
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -628,7 +663,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateTupleNode,
                 CreateLazyNode,
                 CreateFuncNode,
-                CreateCollectionNode,
+                CreateEnumerableBasedNode,
                 CreateAbstractionNode,
                 CreateImplementationNode,
                 CreateOutParameterNode,
@@ -638,6 +673,19 @@ public class SourceGenerator : ISourceGenerator
                 CreateOverridingElementNodeMapper,
                 CreateOverridingElementNodeMapperComposite,
                 CreateNonWrapToCreateElementNodeMapper);
+
+        IEnumerableBasedNode CreateEnumerableBasedNode(
+            ITypeSymbol collectionType,
+            IRangeNode parentRange,
+            IFunctionNode parentFunction,
+            IReferenceGenerator referenceGenerator) =>
+            new EnumerableBasedNode(
+                collectionType,
+                parentRange,
+                parentFunction,
+                referenceGenerator,
+                wellKnownTypes,
+                wellKnownTypesCollections);
 
         INullNode CreateNullNode(ITypeSymbol nullableType, IReferenceGenerator referenceGenerator) => new NullNode(nullableType, referenceGenerator);
 
@@ -841,6 +889,7 @@ public class SourceGenerator : ISourceGenerator
                 accessModifier,
 
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 referenceGeneratorFactory,
                 functionCycleTracker,
                 diagLogger);
@@ -853,6 +902,7 @@ public class SourceGenerator : ISourceGenerator
                 FunctionResolutionSynchronicityDecisionMakerFactory(),
 
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 referenceGeneratorFactory,
                 functionCycleTracker,
                 diagLogger);
@@ -870,6 +920,7 @@ public class SourceGenerator : ISourceGenerator
                 handleIdentity,
 
                 wellKnownTypes,
+                wellKnownTypesCollections,
                 referenceGeneratorFactory,
                 functionCycleTracker,
                 diagLogger);

@@ -16,6 +16,7 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
+        WellKnownTypesCollections wellKnownTypesCollections, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
         IFunctionCycleTracker functionCycleTracker,
         IDiagLogger diagLogger)
@@ -27,6 +28,7 @@ internal class ScopeRootCreateFunctionResolutionBuilder : FunctionResolutionBuil
             new object(),
             
             wellKnownTypes, 
+            wellKnownTypesCollections,
             referenceGeneratorFactory, 
             functionCycleTracker,
             diagLogger)

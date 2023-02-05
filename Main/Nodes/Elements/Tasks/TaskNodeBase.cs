@@ -16,6 +16,8 @@ internal enum AsyncWrappingStrategy
     CallFromTask,
     FactoryFromValueTask,
     FactoryFromTask,
+    CollectionFromValueTask,
+    CollectionFromTask
 }
 
 internal interface ITaskNodeBase : IElementNode
@@ -76,6 +78,10 @@ internal abstract class TaskNodeBase : ITaskNodeBase
                 AsyncWrappingStrategy.FactoryFromValueTask,
             IFactoryNodeBase { SynchronicityDecision: SynchronicityDecision.AsyncTask } => 
                 AsyncWrappingStrategy.FactoryFromTask,
+            IEnumerableBasedNode { SynchronicityDecision: SynchronicityDecision.AsyncValueTask } =>
+                AsyncWrappingStrategy.CollectionFromValueTask,
+            IEnumerableBasedNode { SynchronicityDecision: SynchronicityDecision.AsyncTask } =>
+                AsyncWrappingStrategy.CollectionFromTask,
             _ => AsyncWrappingStrategy.VanillaFromResult
         };
 

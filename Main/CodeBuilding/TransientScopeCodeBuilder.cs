@@ -21,8 +21,8 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
             return stringBuilder;
 
         var disposalType = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
-            ? WellKnownTypes.AsyncDisposable.FullName() 
-            : WellKnownTypes.Disposable.FullName();
+            ? WellKnownTypes.IAsyncDisposable.FullName() 
+            : WellKnownTypes.IDisposable.FullName();
 
         stringBuilder
             .AppendLine($"{_transientScopeResolution.ContainerReference}.{_containerResolution.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
@@ -35,8 +35,8 @@ internal class TransientScopeCodeBuilder : RangeCodeBaseBuilder, ITransientScope
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
-            ? $", {WellKnownTypes.AsyncDisposable.FullName()}" 
-            : $", {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}";
+            ? $", {WellKnownTypes.IAsyncDisposable.FullName()}" 
+            : $", {WellKnownTypes.IAsyncDisposable.FullName()}, {WellKnownTypes.IDisposable.FullName()}";
         
         stringBuilder = stringBuilder
             .AppendLine($"private partial class {_transientScopeResolution.Name} : {_containerResolution.TransientScopeInterface.Name}{disposableImplementation}")

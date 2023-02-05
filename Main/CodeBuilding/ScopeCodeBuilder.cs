@@ -23,8 +23,8 @@ internal class ScopeCodeBuilder : RangeCodeBaseBuilder, IScopeCodeBuilder
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
-                ? $" : {WellKnownTypes.AsyncDisposable.FullName()}" 
-                : $" : {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}";
+                ? $" : {WellKnownTypes.IAsyncDisposable.FullName()}" 
+                : $" : {WellKnownTypes.IAsyncDisposable.FullName()}, {WellKnownTypes.IDisposable.FullName()}";
         
         stringBuilder = stringBuilder
             .AppendLine(

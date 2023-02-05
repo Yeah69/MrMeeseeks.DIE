@@ -12,7 +12,7 @@ internal class ValidateUserDefinedAddForDisposalSync : ValidateUserDefinedAddFor
 {
 
     public ValidateUserDefinedAddForDisposalSync(WellKnownTypes wellKnownTypes) => 
-        DisposableType = wellKnownTypes.Disposable;
+        DisposableType = wellKnownTypes.IDisposable;
 
     protected override INamedTypeSymbol DisposableType { get; }
 }
@@ -27,7 +27,7 @@ internal class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefinedAddFo
 {
 
     public ValidateUserDefinedAddForDisposalAsync(WellKnownTypes wellKnownTypes) => 
-        DisposableType = wellKnownTypes.AsyncDisposable;
+        DisposableType = wellKnownTypes.IAsyncDisposable;
 
     protected override INamedTypeSymbol DisposableType { get; }
 }

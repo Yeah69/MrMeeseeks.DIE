@@ -61,6 +61,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     private readonly IRangeResolutionBaseBuilder _rangeResolutionBaseBuilder;
     private readonly IFunctionResolutionSynchronicityDecisionMaker _synchronicityDecisionMaker;
     private readonly WellKnownTypes _wellKnownTypes;
+    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
     private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly IDiagLogger _diagLogger;
     private readonly ICheckTypeProperties _checkTypeProperties;
@@ -96,6 +97,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
 
         // dependencies
         WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections,
         IReferenceGeneratorFactory referenceGeneratorFactory,
         IFunctionCycleTracker functionCycleTracker,
         IDiagLogger diagLogger)
@@ -104,6 +106,7 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
         _rangeResolutionBaseBuilder = rangeResolutionBaseBuilder;
         _synchronicityDecisionMaker = synchronicityDecisionMaker;
         _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
         _functionCycleTracker = functionCycleTracker;
         _diagLogger = diagLogger;
         _checkTypeProperties = rangeResolutionBaseBuilder.CheckTypeProperties;
@@ -1169,16 +1172,16 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
             }
 
             if (isTransientScopeRoot
-                && SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.Disposable))
+                && SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.IDisposable))
                 return (parameterName, new TransientScopeAsSyncDisposableResolution(
-                    RootReferenceGenerator.Generate(_wellKnownTypes.Disposable),
-                    _wellKnownTypes.Disposable.FullName()));
+                    RootReferenceGenerator.Generate(_wellKnownTypes.IDisposable),
+                    _wellKnownTypes.IDisposable.FullName()));
 
             if (isTransientScopeRoot
-                && SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.AsyncDisposable))
+                && SymbolEqualityComparer.Default.Equals(typeSymbol, _wellKnownTypes.IAsyncDisposable))
                 return (parameterName, new TransientScopeAsAsyncDisposableResolution(
-                    RootReferenceGenerator.Generate(_wellKnownTypes.AsyncDisposable),
-                    _wellKnownTypes.AsyncDisposable.FullName()));
+                    RootReferenceGenerator.Generate(_wellKnownTypes.IAsyncDisposable),
+                    _wellKnownTypes.IAsyncDisposable.FullName()));
             
             if (typeSymbol is not INamedTypeSymbol && typeSymbol is not IArrayTypeSymbol)
                 return ("",
@@ -1290,15 +1293,15 @@ internal abstract partial class FunctionResolutionBuilder : IFunctionResolutionB
     }
 
     private bool IsCollectionType(ITypeSymbol type) =>
-        SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.Enumerable1)
-        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.ReadOnlyCollection1)
-        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypes.ReadOnlyList1)
+        SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
+        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
+        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
         || type is IArrayTypeSymbol;
 
     private bool IsConstructedCollectionType(ITypeSymbol type, INamedTypeSymbol interfaceType) =>
-        SymbolEqualityComparer.Default.Equals(type, _wellKnownTypes.Enumerable1.Construct(interfaceType))
-        || SymbolEqualityComparer.Default.Equals(type, _wellKnownTypes.ReadOnlyCollection1.Construct(interfaceType))
-        || SymbolEqualityComparer.Default.Equals(type, _wellKnownTypes.ReadOnlyList1.Construct(interfaceType))
+        SymbolEqualityComparer.Default.Equals(type, _wellKnownTypesCollections.IEnumerable1.Construct(interfaceType))
+        || SymbolEqualityComparer.Default.Equals(type, _wellKnownTypesCollections.IReadOnlyCollection1.Construct(interfaceType))
+        || SymbolEqualityComparer.Default.Equals(type, _wellKnownTypesCollections.IReadOnlyList1.Construct(interfaceType))
         || type is IArrayTypeSymbol { ElementType: {} elementType } && SymbolEqualityComparer.Default.Equals(elementType, interfaceType);
 
     public bool HasWorkToDo => !Resolvable.IsValueCreated;

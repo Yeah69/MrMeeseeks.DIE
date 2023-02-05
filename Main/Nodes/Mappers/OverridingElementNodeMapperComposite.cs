@@ -17,21 +17,22 @@ internal interface IOverridingElementNodeMapperComposite : IElementNodeMapperBas
 
 internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOverridingElementNodeMapperComposite
 {
-    private readonly (TypeKey Key, IReadOnlyList<IElementNode> Nodes) _override;
+    private readonly (TypeKey Key, IReadOnlyList<INamedTypeSymbol> ImplementationTypes) _override;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly IContainerNode _parentContainer;
     private readonly IReferenceGenerator _referenceGenerator;
     
     private readonly Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> _collectionNodeFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IElementNode), IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
 
     public OverridingElementNodeMapperComposite(
         IElementNodeMapperBase parentElementNodeMapper,
         PassedDependencies passedDependencies,
-        (TypeKey, IReadOnlyList<IElementNode>) @override,
+        (TypeKey, IReadOnlyList<INamedTypeSymbol>) @override,
         
         IDiagLogger diagLogger, 
         WellKnownTypes wellKnownTypes, 
+        WellKnownTypesCollections wellKnownTypesCollections, 
         Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory, 
@@ -43,14 +44,15 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> collectionNodeFactory, 
+        Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
         Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IElementNode), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<IElementNode>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
         : base(passedDependencies.ParentFunction, 
             passedDependencies.ParentRange, 
@@ -59,7 +61,8 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
             passedDependencies.CheckTypeProperties,
             passedDependencies.ReferenceGenerator,
             diagLogger, 
-            wellKnownTypes, 
+            wellKnownTypes,
+            wellKnownTypesCollections,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 
@@ -70,7 +73,7 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
             tupleNodeFactory, 
             lazyNodeFactory, 
             funcNodeFactory, 
-            collectionNodeFactory, 
+            enumerableBasedNodeFactory,
             abstractionNodeFactory,
             implementationNodeFactory, 
             outParameterNodeFactory,
@@ -117,7 +120,7 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
             if (IsLegitCompositeCollectionInnerType(itemType, _override.Item1))
             {
                 var itemNodes = _override
-                    .Nodes
+                    .ImplementationTypes
                     .Select(n => _overridingElementNodeMapperFactory(this, MapperDependencies, (_override.Key, n)).Map(itemType))
                     .ToList();
                 return _collectionNodeFactory(type, itemNodes, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);

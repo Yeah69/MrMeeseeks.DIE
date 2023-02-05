@@ -7,7 +7,12 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IFunctionNode : INode
+internal interface IOnAwait
+{
+    void OnAwait(IPotentiallyAwaitedNode potentiallyAwaitedNode);
+}
+
+internal interface IFunctionNode : INode, IOnAwait
 {
     Accessibility? Accessibility { get; }
     SynchronicityDecision SynchronicityDecision { get; }
@@ -16,14 +21,16 @@ internal interface IFunctionNode : INode
     ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> Overrides { get; }
     string ReturnedTypeFullName { get; }
     void RegisterAsyncWrapping(IPotentiallyAwaitedNode potentiallyAwaitedNode, ITaskNodeBase taskNodeBase);
-    void OnAwait(IPotentiallyAwaitedNode potentiallyAwaitedNode);
     void CheckSynchronicity();
     void ForceToAsync();
     string? AsyncTypeFullName { get; }
     string RangeFullName { get; }
     string DisposedPropertyReference { get; }
+    IReadOnlyList<ILocalFunctionNode> LocalFunctions { get; }
+    void AddLocalFunction(ILocalFunctionNode function);
+    string? ExplicitInterfaceFullName { get; }
 
-    IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction);
+    IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction, IOnAwait onAwait);
     IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scopeNode);
     ITransientScopeCallNode CreateTransientScopeCall(string containerParameter, IRangeNode callingRange, IFunctionNode callingFunction, ITransientScopeNode scopeNode);
 }

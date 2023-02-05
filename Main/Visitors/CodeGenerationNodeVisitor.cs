@@ -21,17 +21,21 @@ internal class CodeGenerationVisitor : ICodeGenerationVisitor
 {
     private readonly StringBuilder _code = new();
     private readonly WellKnownTypes _wellKnownTypes;
+    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
-    public CodeGenerationVisitor(WellKnownTypes wellKnownTypes)
+    public CodeGenerationVisitor(
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections)
     {
         _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
     }
 
     public void VisitContainerNode(IContainerNode container)
     {
         var disposableImplementation = container.DisposalType.HasFlag(DisposalType.Async)
-            ? $" , {_wellKnownTypes.AsyncDisposable.FullName()}"
-            : $" , {_wellKnownTypes.AsyncDisposable.FullName()}, {_wellKnownTypes.Disposable.FullName()}";
+            ? $" , {_wellKnownTypes.IAsyncDisposable.FullName()}"
+            : $" , {_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}";
 
         _code.AppendLine($$"""
 #nullable enable
@@ -83,8 +87,8 @@ private interface {{transientScopeInterface.Name}}
     public void VisitScopeNode(IScopeNode scope)
     {
         var disposableImplementation = scope.DisposalType.HasFlag(DisposalType.Async) 
-            ? $" : {_wellKnownTypes.AsyncDisposable.FullName()}" 
-            : $" : {_wellKnownTypes.AsyncDisposable.FullName()}, {_wellKnownTypes.Disposable.FullName()}";
+            ? $" : {_wellKnownTypes.IAsyncDisposable.FullName()}" 
+            : $" : {_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}";
         
         _code.AppendLine($$"""
 private sealed partial class {{scope.Name}}{{disposableImplementation}}
@@ -106,8 +110,8 @@ internal {{scope.Name}}({{scope.ContainerFullName}} {{scope.ContainerParameterRe
     public void VisitTransientScopeNode(ITransientScopeNode transientScope)
     {
         var disposableImplementation = transientScope.DisposalType.HasFlag(DisposalType.Async) 
-            ? $", {_wellKnownTypes.AsyncDisposable.FullName()}" 
-            : $", {_wellKnownTypes.AsyncDisposable.FullName()}, {_wellKnownTypes.Disposable.FullName()}";
+            ? $", {_wellKnownTypes.IAsyncDisposable.FullName()}" 
+            : $", {_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}";
         
         _code.AppendLine($$"""
 private sealed partial class {{transientScope.Name}} : {{transientScope.TransientScopeInterfaceName}}{{disposableImplementation}}
@@ -129,9 +133,9 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         _code.AppendLine(
             $"{scopeCall.ScopeFullName} {scopeCall.ScopeReference} = new {scopeCall.ScopeFullName}({scopeCall.ContainerParameter}, {scopeCall.TransientScopeInterfaceParameter});");
         if (scopeCall.DisposalType.HasFlag(DisposalType.Async))
-            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.AsyncDisposable.FullName()}) {scopeCall.ScopeReference});");
+            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {scopeCall.ScopeReference});");
         else if (scopeCall.DisposalType.HasFlag(DisposalType.Sync))
-            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.Disposable.FullName()}) {scopeCall.ScopeReference});");
+            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {scopeCall.ScopeReference});");
         VisitFunctionCallNode(scopeCall);
     }
 
@@ -142,8 +146,8 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         if (transientScopeCall.DisposalType is not DisposalType.None)
         {
             var disposalType = transientScopeCall.DisposalType.HasFlag(DisposalType.Async) 
-                ? _wellKnownTypes.AsyncDisposable.FullName()
-                : _wellKnownTypes.Disposable.FullName();
+                ? _wellKnownTypes.IAsyncDisposable.FullName()
+                : _wellKnownTypes.IDisposable.FullName();
             var owner = transientScopeCall.ContainerReference is { } containerReference
                 ? $"{containerReference}."
                 : "";
@@ -160,17 +164,20 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
 
         foreach (var rangedInstanceFunctionGroup in rangeNode.RangedInstanceFunctionGroups)
             VisitRangedInstanceFunctionGroupNode(rangedInstanceFunctionGroup);
+
+        foreach (var multiFunctionNode in rangeNode.MultiFunctions)
+            VisitMultiFunctionNode(multiFunctionNode);
         
         if (rangeNode is { AddForDisposal: true, DisposalHandling.SyncCollectionReference: { } syncCollectionReference })
             _code.AppendLine($$"""
-private partial void {{Constants.UserDefinedAddForDisposal}}({{_wellKnownTypes.Disposable.FullName()}} disposable) =>
-{{syncCollectionReference}}.Add(({{_wellKnownTypes.Disposable.FullName()}}) disposable);
+private partial void {{Constants.UserDefinedAddForDisposal}}({{_wellKnownTypes.IDisposable.FullName()}} disposable) =>
+{{syncCollectionReference}}.Add(({{_wellKnownTypes.IDisposable.FullName()}}) disposable);
 """);
 
         if (rangeNode is { AddForDisposalAsync: true, DisposalHandling.AsyncCollectionReference: { } asyncCollectionReference })
             _code.AppendLine($$"""
-private partial void {{Constants.UserDefinedAddForDisposal}}({{_wellKnownTypes.AsyncDisposable.FullName()}} asyncDisposable) =>
-{{asyncCollectionReference}}.Add(({{_wellKnownTypes.AsyncDisposable.FullName()}}) asyncDisposable);
+private partial void {{Constants.UserDefinedAddForDisposal}}({{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable) =>
+{{asyncCollectionReference}}.Add(({{_wellKnownTypes.IAsyncDisposable.FullName()}}) asyncDisposable);
 """);
         GenerateDisposalFunction(rangeNode);
     }
@@ -270,7 +277,7 @@ foreach(var {{disposalHandling.DisposableLocalReference}} in {{disposalHandling.
 {
 try
 {
-({{disposalHandling.DisposableLocalReference}} as {{_wellKnownTypes.Disposable.FullName()}})?.Dispose();
+({{disposalHandling.DisposableLocalReference}} as {{_wellKnownTypes.IDisposable.FullName()}})?.Dispose();
 }
 catch({{_wellKnownTypes.Exception.FullName()}})
 {
@@ -315,7 +322,7 @@ finally
                     _code.AppendLine($$"""
 while ({{container.TransientScopeDisposalReference}}.Count > 0)
 {
-var {{elementName}} = global::System.Linq.Enumerable.FirstOrDefault({{container.TransientScopeDisposalReference}}.Keys);
+var {{elementName}} = {{_wellKnownTypesCollections.Enumerable}}.FirstOrDefault({{container.TransientScopeDisposalReference}}.Keys);
 if ({{elementName}} is not null && {{container.TransientScopeDisposalReference}}.TryRemove({{elementName}}, out _))
 {
 {{awaitPrefix}}{{elementName}}.Dispose{{asyncSuffix}}();
@@ -326,8 +333,8 @@ if ({{elementName}} is not null && {{container.TransientScopeDisposalReference}}
                     break;
                 case ITransientScopeNode transientScope:
                     var disposalType = transientScope.DisposalType.HasFlag(DisposalType.Async) 
-                        ? _wellKnownTypes.AsyncDisposable.FullName() 
-                        : _wellKnownTypes.Disposable.FullName();
+                        ? _wellKnownTypes.IAsyncDisposable.FullName() 
+                        : _wellKnownTypes.IDisposable.FullName();
 
                     _code.AppendLine(
                         $"{transientScope.ContainerReference}.{transientScope.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
@@ -520,10 +527,12 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
 }));
 """); // todo mark last exception as from DIE and give it unique GUID
                 break;
+            case AsyncWrappingStrategy.CollectionFromValueTask:
             case AsyncWrappingStrategy.FactoryFromValueTask:
             case AsyncWrappingStrategy.CallFromValueTask:
                 _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.WrappedElement.Reference};");
                 break;
+            case AsyncWrappingStrategy.CollectionFromTask:
             case AsyncWrappingStrategy.FactoryFromTask:
             case AsyncWrappingStrategy.CallFromTask:
                 _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = new {valueTaskNode.TypeFullName}({valueTaskNode.WrappedElement.Reference});");
@@ -564,10 +573,12 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
 });
 """); // todo mark last exception as from DIE and give it unique GUID
                 break;
+            case AsyncWrappingStrategy.CollectionFromValueTask:
             case AsyncWrappingStrategy.FactoryFromValueTask:
             case AsyncWrappingStrategy.CallFromValueTask:
                 _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.WrappedElement.Reference}.AsTask();");
                 break;
+            case AsyncWrappingStrategy.CollectionFromTask:
             case AsyncWrappingStrategy.FactoryFromTask:
             case AsyncWrappingStrategy.CallFromTask:
                 _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.WrappedElement.Reference};");
@@ -666,6 +677,9 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
             case INullNode nullNode:
                 VisitNullNode(nullNode);
                 break;
+            case IEnumerableBasedNode enumerableBasedNode:
+                VisitEnumerableBasedNode(enumerableBasedNode);
+                break;
         }
     }
 
@@ -699,10 +713,10 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
         
         if (implementationNode.SyncDisposalCollectionReference is {} syncDisposalCollectionReference)
             _code.AppendLine(
-                $"{syncDisposalCollectionReference}.Add(({_wellKnownTypes.Disposable.FullName()}) {implementationNode.Reference});");
+                $"{syncDisposalCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {implementationNode.Reference});");
         if (implementationNode.AsyncDisposalCollectionReference is {} asyncDisposalCollectionReference)
             _code.AppendLine(
-                $"{asyncDisposalCollectionReference}.Add(({_wellKnownTypes.AsyncDisposable.FullName()}) {implementationNode.Reference});");
+                $"{asyncDisposalCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {implementationNode.Reference});");
 
         if (implementationNode.Initializer is {} init)
         {
@@ -752,6 +766,156 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
 
     public void VisitNullNode(INullNode nullNode) => _code.AppendLine(
         $"{nullNode.TypeFullName} {nullNode.Reference} = ({nullNode.TypeFullName}) null;");
+
+    public void VisitMultiFunctionNode(IMultiFunctionNode multiFunctionNode)
+    {
+        var accessibility = multiFunctionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
+            ? $"{SyntaxFacts.GetText(acc)} "  
+            : "";
+        var asyncModifier = multiFunctionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
+            || multiFunctionNode.IsAsyncEnumerable
+            ? "async "
+            : "";
+        var explicitInterfaceFullName = multiFunctionNode.ExplicitInterfaceFullName is { } interfaceName
+            ? $"{interfaceName}."
+            : "";
+        var parameter = string.Join(",", multiFunctionNode.Parameters.Select(r => $"{r.Item3.TypeFullName} {r.Item3.Reference}"));
+        _code.AppendLine($$"""
+{{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{multiFunctionNode.ReturnedTypeFullName}} {{multiFunctionNode.Name}}({{parameter}})
+{
+""");
+        ObjectDisposedCheck(
+            multiFunctionNode.DisposedPropertyReference, 
+            multiFunctionNode.RangeFullName, 
+            multiFunctionNode.ReturnedTypeFullName);
+        foreach (var returnedElement in multiFunctionNode.ReturnedElements)
+        {
+            VisitElementNode(returnedElement);
+            ObjectDisposedCheck(
+                multiFunctionNode.DisposedPropertyReference, 
+                multiFunctionNode.RangeFullName, 
+                multiFunctionNode.ReturnedTypeFullName);
+            if (multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync)
+                _code.AppendLine($"yield return {returnedElement.Reference};");
+        }
+            
+        foreach (var localFunction in multiFunctionNode.LocalFunctions)
+            VisitSingleFunctionNode(localFunction);
+        
+        _code.AppendLine(multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync
+            ? "yield break;"
+            : $"return new {multiFunctionNode.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNode.ReturnedElements.Select(re => re.Reference))} }};");
+        
+        _code.AppendLine("}");
+    }
+
+    public void VisitEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode)
+    {
+        VisitElementNode(enumerableBasedNode.EnumerableCall);
+        if (enumerableBasedNode is { Type: EnumerableBasedType.IEnumerable or EnumerableBasedType.IAsyncEnumerable, }
+            || enumerableBasedNode.CollectionData is not
+            {
+                CollectionReference: { } collectionReference, CollectionTypeFullName: { } collectionTypeFullName
+            }) 
+            return;
+        if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.Sync || enumerableBasedNode.Awaited)
+            CollectionHandling(collectionTypeFullName, collectionReference, enumerableBasedNode.EnumerableCall.Reference);
+        else if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.AsyncValueTask && !enumerableBasedNode.Awaited)
+        {
+            _code.AppendLine($$"""
+{{enumerableBasedNode.AsyncTypeFullName}} {{enumerableBasedNode.Reference}} = new {{enumerableBasedNode.AsyncTypeFullName}}({{enumerableBasedNode.EnumerableCall.Reference}}.AsTask().ContinueWith(t =>
+{
+if (t.IsCompletedSuccessfully) 
+{
+""");
+            CollectionHandling(collectionTypeFullName, enumerableBasedNode.AsyncReference ?? "result", "t.Result");
+            _code.AppendLine($$"""
+return {{enumerableBasedNode.AsyncReference ?? "result"}};
+}
+if (t.IsFaulted && t.Exception is { }) throw t.Exception;
+if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
+throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
+}));
+"""); // todo mark last exception as from DIE and give it unique GUID
+        }
+        else if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.AsyncTask && !enumerableBasedNode.Awaited)
+        {
+            _code.AppendLine($$"""
+{{enumerableBasedNode.AsyncTypeFullName}} {{enumerableBasedNode.Reference}} = new {{enumerableBasedNode.AsyncTypeFullName}}({{enumerableBasedNode.EnumerableCall.Reference}}.ContinueWith(t =>
+{
+if (t.IsCompletedSuccessfully) 
+{
+""");
+            CollectionHandling(collectionTypeFullName, enumerableBasedNode.AsyncReference ?? "result", "t.Result");
+            _code.AppendLine($$"""
+return {{enumerableBasedNode.AsyncReference ?? "result"}};
+}
+if (t.IsFaulted && t.Exception is { }) throw t.Exception;
+if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
+throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
+}));
+"""); // todo mark last exception as from DIE and give it unique GUID
+        }
+        else if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.AsyncValueTask && enumerableBasedNode.Awaited)
+        {
+            
+        }
+
+        void CollectionHandling(string typeFullName, string reference, string enumerableReference)
+        {
+            switch (enumerableBasedNode.Type)
+            {
+                case EnumerableBasedType.Array:
+                    _code.AppendLine(
+                        $"{typeFullName} {reference} = {_wellKnownTypesCollections.Enumerable}.ToArray({enumerableReference});");
+                    break;
+                case EnumerableBasedType.IList
+                    or EnumerableBasedType.ICollection:
+                    _code.AppendLine(
+                        $"{typeFullName} {reference} = {_wellKnownTypesCollections.Enumerable}.ToList({enumerableReference});");
+                    break;
+                case EnumerableBasedType.ArraySegment:
+                    _code.AppendLine(
+                        $"{typeFullName} {reference} = new {typeFullName}({_wellKnownTypesCollections.Enumerable}.ToArray({enumerableReference}));");
+                    break;
+                case EnumerableBasedType.ReadOnlyCollection
+                    or EnumerableBasedType.IReadOnlyCollection
+                    or EnumerableBasedType.IReadOnlyList
+                    when enumerableBasedNode.CollectionData is ReadOnlyCollectionData
+                    {
+                        ConcreteReadOnlyCollectionTypeFullName: { } concreteReadOnlyCollectionTypeFullName
+                    }:
+                    _code.AppendLine(
+                        $"{typeFullName} {reference} = new {concreteReadOnlyCollectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToList({enumerableReference}));");
+                    break;
+                case EnumerableBasedType.ConcurrentBag
+                    or EnumerableBasedType.ConcurrentQueue
+                    or EnumerableBasedType.ConcurrentStack
+                    or EnumerableBasedType.HashSet
+                    or EnumerableBasedType.LinkedList
+                    or EnumerableBasedType.List
+                    or EnumerableBasedType.Queue
+                    or EnumerableBasedType.SortedSet
+                    or EnumerableBasedType.Stack:
+                    _code.AppendLine(
+                        $"{typeFullName} {reference} = new {typeFullName}({enumerableReference});");
+                    break;
+                case EnumerableBasedType.ImmutableArray
+                    or EnumerableBasedType.ImmutableHashSet
+                    or EnumerableBasedType.ImmutableList
+                    or EnumerableBasedType.ImmutableQueue
+                    or EnumerableBasedType.ImmutableSortedSet
+                    or EnumerableBasedType.ImmutableStack
+                    when enumerableBasedNode.CollectionData is ImmutableCollectionData
+                    {
+                        ImmutableUngenericTypeFullName: { } immutableUngenericTypeFullName
+                    }:
+                    _code.AppendLine(
+                        $"{typeFullName} {reference} = {immutableUngenericTypeFullName}.CreateRange({enumerableReference});");
+                    break;
+            }
+        }
+    }
 
     public string GenerateContainerFile() => _code.ToString();
 

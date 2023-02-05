@@ -18,6 +18,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
         
         // dependencies
         WellKnownTypes wellKnownTypes, 
+        WellKnownTypesCollections wellKnownTypesCollections, 
         IReferenceGeneratorFactory referenceGeneratorFactory, 
         IFunctionCycleTracker functionCycleTracker,
         IDiagLogger diagLogger)
@@ -29,6 +30,7 @@ internal class RangedFunctionResolutionBuilder : FunctionResolutionBuilder, IRan
             handleIdentity,
             
             wellKnownTypes, 
+            wellKnownTypesCollections,
             referenceGeneratorFactory, 
             functionCycleTracker,
             diagLogger)

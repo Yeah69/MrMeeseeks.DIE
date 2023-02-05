@@ -26,6 +26,7 @@ internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, 
         
         IDiagLogger diagLogger, 
         WellKnownTypes wellKnownTypes, 
+        WellKnownTypesCollections wellKnownTypesCollections, 
         Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory, 
@@ -36,15 +37,15 @@ internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, 
         Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> tupleNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory, 
-        Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> collectionNodeFactory, 
+        Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
         Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IElementNode), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<IElementNode>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<INamedTypeSymbol, IReferenceGenerator, ITransientScopeDisposalTriggerNode> transientScopeDisposalTriggerNodeFactory) 
         : base(passedDependencies.ParentFunction, 
@@ -55,6 +56,7 @@ internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, 
             passedDependencies.ReferenceGenerator,
             diagLogger, 
             wellKnownTypes, 
+            wellKnownTypesCollections,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 
@@ -65,7 +67,7 @@ internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, 
             tupleNodeFactory, 
             lazyNodeFactory, 
             funcNodeFactory, 
-            collectionNodeFactory, 
+            enumerableBasedNodeFactory,
             abstractionNodeFactory,
             implementationNodeFactory, 
             outParameterNodeFactory,
@@ -89,8 +91,8 @@ internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, 
     public override IElementNode Map(ITypeSymbol type)
     {
         if (type is INamedTypeSymbol namedType
-            && (SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.Disposable)
-                || SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.AsyncDisposable)))
+            && (SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IDisposable)
+                || SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IAsyncDisposable)))
             return _transientScopeDisposalTriggerNodeFactory(namedType, _passedDependencies.ReferenceGenerator);
 
         return base.Map(type);

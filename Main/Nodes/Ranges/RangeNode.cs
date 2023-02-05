@@ -23,8 +23,10 @@ internal interface IRangeNode : INode
     IFunctionCallNode BuildTransientScopeInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IRangedInstanceFunctionNode BuildTransientScopeFunction(INamedTypeSymbol type, IFunctionNode callingFunction);
     IFunctionCallNode BuildScopeInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction);
+    IFunctionCallNode BuildEnumerableCall(INamedTypeSymbol type, IFunctionNode callingFunction, IOnAwait onAwait);
     IReadOnlyList<ICreateFunctionNode> CreateFunctions { get; }
     IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups { get; }
+    IReadOnlyList<IMultiFunctionNode> MultiFunctions { get; }
     IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
 }
 
@@ -34,8 +36,10 @@ internal abstract class RangeNode : IRangeNode
     protected readonly ICheckTypeProperties CheckTypeProperties;
     protected readonly IReferenceGenerator ReferenceGenerator;
     protected readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> CreateFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> _multiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
     protected readonly List<ICreateFunctionNode> _createFunctions = new();
+    private readonly List<IMultiFunctionNode> _multiFunctions = new();
 
     private readonly Dictionary<TypeKey, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new();
 
@@ -47,10 +51,28 @@ internal abstract class RangeNode : IRangeNode
     public bool AddForDisposalAsync { get; }
     public abstract string? ContainerReference { get; }
 
+    public IFunctionCallNode BuildEnumerableCall(INamedTypeSymbol type, IFunctionNode callingFunction, IOnAwait onAwait)
+    {
+        // todo smarter overloads handling
+        var multiFunction = _multiFunctionNodeFactory(
+            type,
+            callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+            this,
+            ParentContainer,
+            UserDefinedElements,
+            CheckTypeProperties,
+            ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
+        _multiFunctions.Add(multiFunction);
+        
+        return multiFunction.CreateCall(null, callingFunction, onAwait);
+    }
+
     public IReadOnlyList<ICreateFunctionNode> CreateFunctions => _createFunctions;
 
     public IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups =>
         _rangedInstanceFunctionGroupNodes.Values;
+
+    public IReadOnlyList<IMultiFunctionNode> MultiFunctions => _multiFunctions;
 
     internal RangeNode(
         string name,
@@ -58,6 +80,7 @@ internal abstract class RangeNode : IRangeNode
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
     {
@@ -65,6 +88,7 @@ internal abstract class RangeNode : IRangeNode
         CheckTypeProperties = checkTypeProperties;
         ReferenceGenerator = referenceGenerator;
         CreateFunctionNodeFactory = createFunctionNodeFactory;
+        _multiFunctionNodeFactory = multiFunctionNodeFactory;
         _rangedInstanceFunctionGroupNodeFactory = rangedInstanceFunctionGroupNodeFactory;
         Name = name;
 
@@ -107,7 +131,7 @@ internal abstract class RangeNode : IRangeNode
             ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
         _createFunctions.Add(createFunction);
         
-        return createFunction.CreateCall(null, callingFunction);
+        return createFunction.CreateCall(null, callingFunction, callingFunction);
     }
 
     public ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction)=> 
@@ -132,7 +156,7 @@ internal abstract class RangeNode : IRangeNode
             _rangedInstanceFunctionGroupNodes[typeKey] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
-        return function.CreateCall(ownerReference, callingFunction);
+        return function.CreateCall(ownerReference, callingFunction, callingFunction);
     }
 
     public abstract IFunctionCallNode BuildContainerInstanceCall(
@@ -161,7 +185,7 @@ internal abstract class RangeNode : IRangeNode
             _rangedInstanceFunctionGroupNodes[typeKey] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
-        function.CreateCall(null, callingFunction);
+        function.CreateCall(null, callingFunction, callingFunction);
         return function;
     }
 

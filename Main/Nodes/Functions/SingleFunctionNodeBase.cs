@@ -10,9 +10,6 @@ namespace MrMeeseeks.DIE.Nodes.Functions;
 internal interface ISingleFunctionNode : IFunctionNode
 {
     IElementNode ReturnedElement { get; }
-    IReadOnlyList<ILocalFunctionNode> LocalFunctions { get; }
-    void AddLocalFunction(ILocalFunctionNode function);
-    string? ExplicitInterfaceFullName { get; }
 }
 
 internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFunctionNode
@@ -22,7 +19,6 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
     private readonly IContainerNode _parentContainer;
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly List<ILocalFunctionNode> _localFunctions = new();
 
     public SingleFunctionNodeBase(
         // parameters
@@ -73,16 +69,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
         mapper.Map(_typeSymbol);
     
-    public override void Build()
-    {
-        ReturnedElement = MapToReturnedElement(
-            GetMapper(this, _parentNode, _parentContainer, _userDefinedElements, _checkTypeProperties));
-    }
-
-    public void AddLocalFunction(ILocalFunctionNode function) =>
-        _localFunctions.Add(function);
-
-    public string? ExplicitInterfaceFullName { get; protected set; }
+    public override void Build() => ReturnedElement = MapToReturnedElement(
+        GetMapper(this, _parentNode, _parentContainer, _userDefinedElements, _checkTypeProperties));
     public IElementNode ReturnedElement { get; private set; } = null!;
-    public IReadOnlyList<ILocalFunctionNode> LocalFunctions => _localFunctions;
 }

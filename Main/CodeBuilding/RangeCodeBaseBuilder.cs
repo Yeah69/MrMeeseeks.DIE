@@ -35,15 +35,15 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
         if (_rangeResolution.AddForDisposal is { } addForDisposalMethod)
         {
             stringBuilder = stringBuilder
-                .AppendLine($"private partial void {addForDisposalMethod.Name}({WellKnownTypes.Disposable.FullName()} disposable) =>")
-                .AppendLine($"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) disposable);");
+                .AppendLine($"private partial void {addForDisposalMethod.Name}({WellKnownTypes.IDisposable.FullName()} disposable) =>")
+                .AppendLine($"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.IDisposable.FullName()}) disposable);");
         }
 
         if (_rangeResolution.AddForDisposalAsync is { } addForDisposalAsyncMethod)
         {
             stringBuilder = stringBuilder
-                .AppendLine($"private partial void {addForDisposalAsyncMethod.Name}({WellKnownTypes.AsyncDisposable.FullName()} asyncDisposable) =>")
-                .AppendLine($"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.AsyncDisposable.FullName()}) asyncDisposable);");
+                .AppendLine($"private partial void {addForDisposalAsyncMethod.Name}({WellKnownTypes.IAsyncDisposable.FullName()} asyncDisposable) =>")
+                .AppendLine($"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.IAsyncDisposable.FullName()}) asyncDisposable);");
         }
         
         return GenerateDisposalFunction(
@@ -340,8 +340,8 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 if (_containerResolution.DisposalType is not DisposalType.None)
                 {
                     var disposalType = _containerResolution.DisposalType.HasFlag(DisposalType.Async) 
-                        ? WellKnownTypes.AsyncDisposable.FullName()
-                        : WellKnownTypes.Disposable.FullName();
+                        ? WellKnownTypes.IAsyncDisposable.FullName()
+                        : WellKnownTypes.IDisposable.FullName();
                     stringBuilder = stringBuilder
                         .AppendLine($"{_rangeResolution.ContainerReference}.{_containerResolution.TransientScopeDisposalReference}[{transientScopeReference}] = ({disposalType}) {transientScopeReference};");
                 }
@@ -352,9 +352,9 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 stringBuilder = stringBuilder
                     .AppendLine($"{scopeTypeFullName} {scopeReference} = new {scopeTypeFullName}({containerInstanceScopeReference}, {transientInstanceScopeReference});");
                 if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
-                    stringBuilder = stringBuilder.AppendLine($"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.AsyncDisposable.FullName()}) {scopeReference});");
+                    stringBuilder = stringBuilder.AppendLine($"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.IAsyncDisposable.FullName()}) {scopeReference});");
                 else if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync))
-                    stringBuilder = stringBuilder.AppendLine($"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {scopeReference});");
+                    stringBuilder = stringBuilder.AppendLine($"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.IDisposable.FullName()}) {scopeReference});");
                 stringBuilder = GenerateResolutions(stringBuilder, createFunctionCall);
                 break;
             case InterfaceResolution(var reference, var typeFullName, Resolvable resolutionBase):
@@ -376,7 +376,7 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 if (_containerResolution.DisposalType.HasFlag(DisposalType.Async))
                     stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) this;");
                 else if (_containerResolution.DisposalType.HasFlag(DisposalType.Sync))
-                    stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable.ClassName}(({WellKnownTypes.Disposable.FullName()}) this);");
+                    stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) new {_containerResolution.SyncToAsyncDisposable.ClassName}(({WellKnownTypes.IDisposable.FullName()}) this);");
                 else
                     stringBuilder.AppendLine($"{typeFullName} {reference} = ({typeFullName}) {_containerResolution.NopAsyncDisposable.ClassName}.{_containerResolution.NopAsyncDisposable.InstanceReference};");
                 break;
@@ -415,10 +415,10 @@ internal abstract class RangeCodeBaseBuilder : IRangeCodeBaseBuilder
                 
                 if (disposalType.HasFlag(DisposalType.Async))
                     stringBuilder = stringBuilder.AppendLine(
-                        $"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.AsyncDisposable.FullName()}) {reference});");
+                        $"{_rangeResolution.DisposalHandling.AsyncDisposableCollection.Reference}.Add(({WellKnownTypes.IAsyncDisposable.FullName()}) {reference});");
                 if (disposalType.HasFlag(DisposalType.Sync))
                     stringBuilder = stringBuilder.AppendLine(
-                        $"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.Disposable.FullName()}) {reference});");
+                        $"{_rangeResolution.DisposalHandling.SyncDisposableCollection.Reference}.Add(({WellKnownTypes.IDisposable.FullName()}) {reference});");
 
                 if (initialization is { Parameters: {} initParameters })
                 {

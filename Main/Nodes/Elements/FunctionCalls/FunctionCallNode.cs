@@ -9,7 +9,7 @@ internal interface IFunctionCallNode : IElementNode, IPotentiallyAwaitedNode
     string? OwnerReference { get; }
     string FunctionName { get; }
     IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
-    void MakeAsync(IFunctionNode callingFunction);
+    void MakeAsync(IOnAwait callingFunction);
 }
 
 internal abstract class FunctionCallNode : IFunctionCallNode
@@ -40,7 +40,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
     public string FunctionName { get; }
     public virtual string? OwnerReference { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
-    public void MakeAsync(IFunctionNode callingFunction)
+    public void MakeAsync(IOnAwait callingFunction)
     {
         Awaited = true;
         AsyncReference = Reference;

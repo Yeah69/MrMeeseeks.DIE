@@ -23,14 +23,14 @@ internal interface IElementNodeMapperBase
 internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 {
     internal record PassedDependencies(
-        ISingleFunctionNode ParentFunction,
+        IFunctionNode ParentFunction,
         IRangeNode ParentRange,
         IContainerNode ParentContainer,
         IUserDefinedElements UserDefinedElements,
         ICheckTypeProperties CheckTypeProperties,
         IReferenceGenerator ReferenceGenerator);
     
-    protected ISingleFunctionNode ParentFunction; // todo make readonly again
+    protected IFunctionNode ParentFunction; // todo make readonly again
     protected readonly IRangeNode ParentRange;
     private readonly IContainerNode _parentContainer;
     private readonly IUserDefinedElements _userDefinedElements;
@@ -38,6 +38,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly IDiagLogger _diagLogger;
     protected readonly WellKnownTypes WellKnownTypes;
+    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
     private readonly Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> _factoryFieldNodeFactory;
     private readonly Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> _factoryPropertyNodeFactory;
     private readonly Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> _factoryFunctionNodeFactory;
@@ -48,19 +49,19 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> _tupleNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> _lazyNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> _funcNodeFactory;
-    private readonly Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> _collectionNodeFactory;
+    private readonly Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> _enumerableBasedNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
     private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
     private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> _localFunctionNodeFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IElementNode), IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<IElementNode>), IOverridingElementNodeMapperComposite> _overridingElementNodeMapperCompositeFactory;
+    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> _overridingElementNodeMapperCompositeFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     internal ElementNodeMapperBase(
-        ISingleFunctionNode parentFunction,
+        IFunctionNode parentFunction,
         IRangeNode parentRange,
         IContainerNode parentContainer,
         IUserDefinedElements userDefinedElements,
@@ -69,6 +70,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         
         IDiagLogger diagLogger,
         WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections,
         Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory,
         Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory,
@@ -79,15 +81,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> tupleNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory,
-        Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> collectionNodeFactory,
+        Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
         Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory,
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IElementNode), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<IElementNode>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory)
     {
         ParentFunction = parentFunction;
@@ -98,6 +100,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _referenceGenerator = referenceGenerator;
         _diagLogger = diagLogger;
         WellKnownTypes = wellKnownTypes;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
         _factoryFieldNodeFactory = factoryFieldNodeFactory;
         _factoryPropertyNodeFactory = factoryPropertyNodeFactory;
         _factoryFunctionNodeFactory = factoryFunctionNodeFactory;
@@ -108,7 +111,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _tupleNodeFactory = tupleNodeFactory;
         _lazyNodeFactory = lazyNodeFactory;
         _funcNodeFactory = funcNodeFactory;
-        _collectionNodeFactory = collectionNodeFactory;
+        _enumerableBasedNodeFactory = enumerableBasedNodeFactory;
         _abstractionNodeFactory = abstractionNodeFactory;
         _implementationNodeFactory = implementationNodeFactory;
         _outParameterNodeFactory = outParameterNodeFactory;
@@ -133,9 +136,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     protected abstract IElementNodeMapperBase Next { get; }
     
     protected bool IsCollectionType(ITypeSymbol potentialCollectionType) =>
-        SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, WellKnownTypes.Enumerable1)
-        || SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, WellKnownTypes.ReadOnlyCollection1)
-        || SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, WellKnownTypes.ReadOnlyList1)
+        SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
+        || SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
+        || SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
         || potentialCollectionType is IArrayTypeSymbol;
 
     public virtual IElementNode Map(ITypeSymbol type)
@@ -237,9 +240,32 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             
             return _funcNodeFactory(funcType, function, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
         }
-
-        if (IsCollectionType(type))
-            return MapToCollection(type);
+        
+        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1)
+            || type is IArrayTypeSymbol
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IList1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ICollection1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyCollection1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentBag1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentQueue1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentStack1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.HashSet1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.LinkedList1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.List1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Queue1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.SortedSet1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Stack1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1)
+            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
+            return _enumerableBasedNodeFactory(type, ParentRange, ParentFunction, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
 
         if (type is ({ TypeKind: TypeKind.Interface } or { TypeKind: TypeKind.Class, IsAbstract: true })
             and INamedTypeSymbol interfaceOrAbstractType)
@@ -279,20 +305,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         : type is INamedTypeSymbol { TypeArguments.Length: 1 } collectionType
             ? collectionType.TypeArguments.First()
             : throw new ArgumentException("Given type is not supported collection type");
-
-    private IElementNode MapToCollection(ITypeSymbol collectionType)
-    {
-        var outerItemType = GetCollectionsItemType(collectionType);
-        var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(outerItemType, WellKnownTypes);
-
-        if (unwrappedItemType is not INamedTypeSymbol innerItemType)
-            return _errorNodeFactory("Inner collection type has to be a named type.").EnqueueTo(_parentContainer.BuildQueue);
-
-        var elementNodes = _checkTypeProperties.MapToImplementations(innerItemType)
-            .Select(i => _overridingElementNodeMapperFactory(this, MapperDependencies, (innerItemType.ConstructTypeUniqueKey(), MapToImplementation(i))).Map(outerItemType))
-            .ToList();
-        return _collectionNodeFactory(collectionType, elementNodes, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
-    }
 
     /// <summary>
     /// Meant as entry point for mappings where concrete implementation type is already chosen.
@@ -389,8 +401,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             var implementations = _checkTypeProperties.MapToImplementations(interfaceType);
             var compositeImplementationType = _checkTypeProperties.GetCompositeFor(interfaceType)
                 ?? throw new ImpossibleDieException(new Guid("73D630AF-CAE0-4869-A55B-8F54193E6274"));
-            var abstractionNodes = implementations.Select(i => MapToInterfaceForImplementation(i, this)).ToList();
-            var compositeMapper = _overridingElementNodeMapperCompositeFactory(this, MapperDependencies, (interfaceType.ConstructTypeUniqueKey(), abstractionNodes));
+            var compositeMapper = _overridingElementNodeMapperCompositeFactory(this, MapperDependencies, (interfaceType.ConstructTypeUniqueKey(), implementations));
             return MapToInterfaceForImplementation(compositeImplementationType, compositeMapper);
         }
         if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType) is not { } impType)
@@ -419,7 +430,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             while (decoratorTypes.Any())
             {
                 var decoratorType = decoratorTypes.Dequeue();
-                var overridingElementNodeMapperFactory = _overridingElementNodeMapperFactory(this, MapperDependencies, (interfaceType.ConstructTypeUniqueKey(), currentAbstractionNode));
+                // todo Is overriding still needed if MapToImplementation is used anyway? 
+                var overridingElementNodeMapperFactory = _overridingElementNodeMapperFactory(this, MapperDependencies, (interfaceType.ConstructTypeUniqueKey(), decoratorType));
                 currentAbstractionNode = _abstractionNodeFactory(
                         interfaceType, 
                         overridingElementNodeMapperFactory.MapToImplementation(decoratorType),

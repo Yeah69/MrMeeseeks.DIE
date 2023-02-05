@@ -62,7 +62,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
         interfaceFunctionList.Add(interfaceFunction);
         foreach (var range in _ranges)
             interfaceFunction.AddConsideredRange(range);
-        return interfaceFunction.CreateCall(ownerReference, callingFunction);
+        return interfaceFunction.CreateCall(ownerReference, callingFunction, callingFunction);
     }
 
     public IEnumerable<IRangedInstanceInterfaceFunctionNode> Functions => _interfaceFunctions.Values.SelectMany(x => x);

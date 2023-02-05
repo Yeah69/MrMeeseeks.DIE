@@ -53,6 +53,7 @@ internal class ContainerNode : RangeNode, IContainerNode
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> entryFunctionNodeFactory,
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
@@ -63,7 +64,8 @@ internal class ContainerNode : RangeNode, IContainerNode
             userDefinedElementsFactory(containerInfo.ContainerType, containerInfo.ContainerType), 
             checkTypeProperties,
             referenceGenerator, 
-            createFunctionNodeFactory, 
+            createFunctionNodeFactory,  
+            multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
             disposalHandlingNodeFactory)
     {

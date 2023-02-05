@@ -20,7 +20,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly List<IPotentiallyAwaitedNode> _potentiallyAwaitingNodes = new();
     private readonly Dictionary<IPotentiallyAwaitedNode, ITaskNodeBase> _asyncWrappingMap = new();
-    private readonly List<(IFunctionNode, IFunctionCallNode)> _calls = new();
+    private readonly List<(IOnAwait, IFunctionCallNode)> _calls = new();
+    private readonly List<ILocalFunctionNode> _localFunctions = new();
 
     private bool _synchronicityCheckedAlready;
 
@@ -118,6 +119,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     public void ForceToAsync()
     {
+        if (SuppressAsync) return;
         _synchronicityCheckedAlready = true;
         if (SynchronicityDecision == SynchronicityDecision.AsyncValueTask) return; 
         SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
@@ -128,11 +130,13 @@ internal abstract class FunctionNodeBase : IFunctionNode
         OnBecameAsync();
     }
 
+    protected virtual bool SuppressAsync => false;
+
     public string? AsyncTypeFullName { get; private set; }
     public string RangeFullName { get; }
     public string DisposedPropertyReference { get; }
 
-    public IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction)
+    public IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction, IOnAwait onAwait)
     {
         var call = _plainFunctionCallNodeFactory(
                 ownerReference,
@@ -141,7 +145,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 _referenceGenerator)
             .EnqueueTo(_parentContainer.BuildQueue);
         
-        _calls.Add((callingFunction, call));
+        _calls.Add((onAwait, call));
 
         return call;
     }
@@ -183,6 +187,12 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
         return call;
     }
+
+    public void AddLocalFunction(ILocalFunctionNode function) =>
+        _localFunctions.Add(function);
+
+    public string? ExplicitInterfaceFullName { get; protected set; }
+    public IReadOnlyList<ILocalFunctionNode> LocalFunctions => _localFunctions;
 
     public Accessibility? Accessibility { get; }
     public SynchronicityDecision SynchronicityDecision { get; private set; } = SynchronicityDecision.Sync;

@@ -120,7 +120,7 @@ internal class UserDefinedElements : IUserDefinedElements
                 IsPartialDefinition: true,
                 Name: Constants.UserDefinedAddForDisposal,
                 Parameters.Length: 1
-            } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.Disposable))
+            } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IDisposable))
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
         
@@ -133,7 +133,7 @@ internal class UserDefinedElements : IUserDefinedElements
                 IsPartialDefinition: true,
                 Name: Constants.UserDefinedAddForDisposalAsync,
                 Parameters.Length: 1
-            } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.AsyncDisposable))
+            } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IAsyncDisposable))
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
 

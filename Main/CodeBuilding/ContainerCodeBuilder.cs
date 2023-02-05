@@ -59,8 +59,8 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
     public override StringBuilder Build(StringBuilder stringBuilder)
     {
         var disposableImplementation = _containerResolution.DisposalType.HasFlag(DisposalType.Async)
-            ? $" : {WellKnownTypes.AsyncDisposable.FullName()}"
-            : $" : {WellKnownTypes.AsyncDisposable.FullName()}, {WellKnownTypes.Disposable.FullName()}";
+            ? $" : {WellKnownTypes.IAsyncDisposable.FullName()}"
+            : $" : {WellKnownTypes.IAsyncDisposable.FullName()}, {WellKnownTypes.IDisposable.FullName()}";
         
         stringBuilder = stringBuilder
             .AppendLine($"#nullable enable")
@@ -106,8 +106,8 @@ internal class ContainerCodeBuilder : RangeCodeBaseBuilder, IContainerCodeBuilde
         
         stringBuilder = _scopeCodeBuilders.Aggregate(stringBuilder, (sb, cb) => cb.Build(sb));
 
-        var disposableTypeFullName = WellKnownTypes.Disposable.FullName();
-        var asyncDisposableTypeFullName = WellKnownTypes.AsyncDisposable.FullName();
+        var disposableTypeFullName = WellKnownTypes.IDisposable.FullName();
+        var asyncDisposableTypeFullName = WellKnownTypes.IAsyncDisposable.FullName();
         var valueTaskFullName = WellKnownTypes.ValueTask.FullName();
         stringBuilder = stringBuilder
             .AppendLine($"private class {_containerResolution.NopDisposable.ClassName} : {disposableTypeFullName}")

@@ -41,4 +41,6 @@ internal interface INodeVisitor
     void VisitAbstractionNode(IAbstractionNode abstractionNode);
     void VisitTransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode);
     void VisitNullNode(INullNode nullNode);
+    void VisitMultiFunctionNode(IMultiFunctionNode multiFunctionNode);
+    void VisitEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode);
 }

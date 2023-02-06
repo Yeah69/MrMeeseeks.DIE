@@ -2,6 +2,7 @@ using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
@@ -67,21 +68,20 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
     public string TransientScopeInterfaceName { get; }
     public string TransientScopeDisposalReference { get; }
 
-    public ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction)
-    {
-        // todo smarter overloads handling
-        var createFunction = _createTransientScopeFunctionNodeFactory(
+    public ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction) =>
+        FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
-            callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
-            this,
-            ParentContainer,
-            UserDefinedElements,
-            CheckTypeProperties,
-            ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
-        _createFunctions.Add(createFunction);
-        
-        return createFunction.CreateTransientScopeCall(containerParameter, callingRange, callingFunction, this);
-    }
+            callingFunction,
+            _createFunctions,
+            () => _createTransientScopeFunctionNodeFactory(
+                type,
+                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                this,
+                ParentContainer,
+                UserDefinedElements,
+                CheckTypeProperties,
+                ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue),
+            f => f.CreateTransientScopeCall(containerParameter, callingRange, callingFunction, this));
 
     public override string FullName { get; }
     public override DisposalType DisposalType => ParentContainer.DisposalType;

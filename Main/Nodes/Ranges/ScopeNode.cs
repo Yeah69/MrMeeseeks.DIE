@@ -2,6 +2,7 @@ using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
@@ -69,21 +70,20 @@ internal class ScopeNode : RangeNode, IScopeNode
             type,
             callingFunction);
 
-    public IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction)
-    {
-        // todo smarter overloads handling
-        var createFunction = _createScopeFunctionNodeFactory(
+    public IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction) =>
+        FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
-            callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
-            this,
-            ParentContainer,
-            UserDefinedElements,
-            CheckTypeProperties,
-            ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
-        _createFunctions.Add(createFunction);
-        
-        return createFunction.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this);
-    }
+            callingFunction,
+            _createFunctions,
+            () => _createScopeFunctionNodeFactory(
+                type,
+                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                this,
+                ParentContainer,
+                UserDefinedElements,
+                CheckTypeProperties,
+                ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue),
+            f => f.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this));
 
     public override string FullName { get; }
     public override DisposalType DisposalType => ParentContainer.DisposalType;

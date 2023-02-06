@@ -1,13 +1,14 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
 internal interface IRangedInstanceFunctionGroupNode : IRangedInstanceFunctionGroupNodeBase
 {
-    IReadOnlyList<IRangedInstanceFunctionNode> Overloads { get; }
+    IEnumerable<IRangedInstanceFunctionNode> Overloads { get; }
 }
 
 internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNodeBase, IRangedInstanceFunctionGroupNode
@@ -44,22 +45,19 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitRangedInstanceFunctionGroupNode(this);
     
-    public IReadOnlyList<IRangedInstanceFunctionNode> Overloads => _overloads;
+    public IEnumerable<IRangedInstanceFunctionNode> Overloads => _overloads;
     
-    public override IRangedInstanceFunctionNode BuildFunction(IFunctionNode callingFunction)
-    {
-        // todo smarter overloads handling
-        var rangedInstanceFunction = _rangedInstanceFunctionNodeFactory(
-            Level,
-            _type,
-            callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
-            _parentRange,
-            _parentContainer,
-            _userDefinedElements,
-            _checkTypeProperties,
-            _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
-        _overloads.Add(rangedInstanceFunction);
-
-        return rangedInstanceFunction;
-    }
+    public override IRangedInstanceFunctionNode BuildFunction(IFunctionNode callingFunction) =>
+        FunctionResolutionUtility.GetOrCreateFunction(
+            callingFunction,
+            _overloads,
+            () => _rangedInstanceFunctionNodeFactory(
+                Level,
+                _type,
+                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                _parentRange,
+                _parentContainer,
+                _userDefinedElements,
+                _checkTypeProperties,
+                _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue));
 }

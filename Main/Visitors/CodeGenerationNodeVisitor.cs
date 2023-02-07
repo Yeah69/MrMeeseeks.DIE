@@ -65,11 +65,33 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
         foreach (var transientScope in container.TransientScopes)
             VisitTransientScopeNode(transientScope);
         
+        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericValueTaskToGenericValueTask);
+        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericValueTaskToGenericTask);
+        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericTaskToGenericTask);
+        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericTaskToGenericValueTask);
+        
+        GenericToGenericTransformationFunction(container.TaskTransformationFunctions.GenericValueTaskToGenericTask);
+        GenericToGenericTransformationFunction(container.TaskTransformationFunctions.GenericTaskToGenericValueTask);
+        
         _code.AppendLine("""
 }
 }
 #nullable disable
 """);
+
+        void UngenericToGenericTransformationFunction(UngenericToGenericData data)
+        {
+            _code.AppendLine($$"""
+private static async {{data.ReturnTypeFullName}} {{data.FunctionName}}<T>({{data.UngenericParameterTypeFullName}} {{data.UngenericParameterName}}, T {{data.ResultParameterName}})
+{
+await {{data.UngenericParameterName}};
+return {{data.ResultParameterName}};
+}
+""");
+        }
+
+        void GenericToGenericTransformationFunction(GenericToGenericData data) => _code.AppendLine(
+            $"private static async {data.ReturnTypeFullName} {data.FunctionName}<T>({data.ParameterTypeFullName} {data.ParameterName}) => await {data.ParameterName};");
     }
 
     public void VisitTransientScopeInterfaceNode(ITransientScopeInterfaceNode transientScopeInterface)
@@ -505,27 +527,10 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                 _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = new {valueTaskNode.TypeFullName}({valueTaskNode.WrappedElement.Reference});");    
                 break;
             case AsyncWrappingStrategy.ImplementationFromValueTask:
-                _code.AppendLine($$"""
-{{valueTaskNode.TypeFullName}} {{valueTaskNode.Reference}} = new {{valueTaskNode.TypeFullName}}({{valueTaskNode.AsyncReference}}.AsTask().ContinueWith(t =>
-{
-if (t.IsCompletedSuccessfully) return {{valueTaskNode.WrappedElement.Reference}};
-if (t.IsFaulted && t.Exception is { }) throw t.Exception;
-if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
-throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
-}));
-"""); // todo mark last exception as from DIE and give it unique GUID
+                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.ContainerTypeFullName}.{valueTaskNode.TaskTransformationFunctions.UngenericValueTaskToGenericValueTask.FunctionName}({valueTaskNode.AsyncReference}, {valueTaskNode.WrappedElement.Reference});");
                 break;
             case AsyncWrappingStrategy.ImplementationFromTask:
-                _code
-                    .AppendLine($$"""
-{{valueTaskNode.TypeFullName}} {{valueTaskNode.Reference}} = new {{valueTaskNode.TypeFullName}}({{valueTaskNode.AsyncReference}}.ContinueWith(t =>
-{
-if (t.IsCompletedSuccessfully) return {{valueTaskNode.WrappedElement.Reference}};
-if (t.IsFaulted && t.Exception is { }) throw t.Exception;
-if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
-throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
-}));
-"""); // todo mark last exception as from DIE and give it unique GUID
+                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.ContainerTypeFullName}.{valueTaskNode.TaskTransformationFunctions.UngenericTaskToGenericValueTask.FunctionName}({valueTaskNode.AsyncReference}, {valueTaskNode.WrappedElement.Reference});");
                 break;
             case AsyncWrappingStrategy.CollectionFromValueTask:
             case AsyncWrappingStrategy.FactoryFromValueTask:
@@ -535,7 +540,7 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
             case AsyncWrappingStrategy.CollectionFromTask:
             case AsyncWrappingStrategy.FactoryFromTask:
             case AsyncWrappingStrategy.CallFromTask:
-                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = new {valueTaskNode.TypeFullName}({valueTaskNode.WrappedElement.Reference});");
+                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.ContainerTypeFullName}.{valueTaskNode.TaskTransformationFunctions.GenericTaskToGenericValueTask.FunctionName}({valueTaskNode.WrappedElement.Reference});");
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -551,32 +556,15 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
                 _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {_wellKnownTypes.Task.FullName()}.FromResult({taskNode.WrappedElement.Reference});");   
                 break;
             case AsyncWrappingStrategy.ImplementationFromValueTask:
-                _code.AppendLine($$"""
-{{taskNode.TypeFullName}} {{taskNode.Reference}} = {{taskNode.AsyncReference}}.AsTask().ContinueWith(t =>
-{
-if (t.IsCompletedSuccessfully) return {{taskNode.WrappedElement.Reference}};
-if (t.IsFaulted && t.Exception is { }) throw t.Exception;
-if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
-throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
-});
-"""); // todo mark last exception as from DIE and give it unique GUID
+                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.ContainerTypeFullName}.{taskNode.TaskTransformationFunctions.UngenericValueTaskToGenericTask.FunctionName}({taskNode.AsyncReference}, {taskNode.WrappedElement.Reference});");
                 break;
             case AsyncWrappingStrategy.ImplementationFromTask:
-                _code
-                    .AppendLine($$"""
-{{taskNode.TypeFullName}} {{taskNode.Reference}} = {{taskNode.AsyncReference}}.ContinueWith(t =>
-{
-if (t.IsCompletedSuccessfully) return {{taskNode.WrappedElement.Reference}};
-if (t.IsFaulted && t.Exception is { }) throw t.Exception;
-if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
-throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
-});
-"""); // todo mark last exception as from DIE and give it unique GUID
+                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.ContainerTypeFullName}.{taskNode.TaskTransformationFunctions.UngenericTaskToGenericTask.FunctionName}({taskNode.AsyncReference}, {taskNode.WrappedElement.Reference});");
                 break;
             case AsyncWrappingStrategy.CollectionFromValueTask:
             case AsyncWrappingStrategy.FactoryFromValueTask:
             case AsyncWrappingStrategy.CallFromValueTask:
-                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.WrappedElement.Reference}.AsTask();");
+                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.ContainerTypeFullName}.{taskNode.TaskTransformationFunctions.GenericValueTaskToGenericTask.FunctionName}({taskNode.WrappedElement.Reference});");
                 break;
             case AsyncWrappingStrategy.CollectionFromTask:
             case AsyncWrappingStrategy.FactoryFromTask:

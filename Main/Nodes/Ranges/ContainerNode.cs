@@ -14,6 +14,7 @@ internal interface IContainerNode : IRangeNode
     IEnumerable<IScopeNode> Scopes { get; }
     IEnumerable<ITransientScopeNode> TransientScopes { get; }
     ITransientScopeInterfaceNode TransientScopeInterface { get; }
+    ITaskTransformationFunctions TaskTransformationFunctions { get; }
     string TransientScopeDisposalReference { get; }
     string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
@@ -37,6 +38,7 @@ internal class ContainerNode : RangeNode, IContainerNode
     public IEnumerable<IScopeNode> Scopes => ScopeManager.Scopes;
     public IEnumerable<ITransientScopeNode> TransientScopes => ScopeManager.TransientScopes;
     public ITransientScopeInterfaceNode TransientScopeInterface { get; }
+    public ITaskTransformationFunctions TaskTransformationFunctions { get; }
     public string TransientScopeDisposalReference { get; }
     public string TransientScopeDisposalElement { get; }
 
@@ -57,6 +59,7 @@ internal class ContainerNode : RangeNode, IContainerNode
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> entryFunctionNodeFactory,
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
+        Func<IReferenceGenerator, ITaskTransformationFunctions> taskTransformationFunctions,
         Func<IContainerInfo, IContainerNode, ITransientScopeInterfaceNode, ImmutableList<ITypesFromAttributes>, IReferenceGenerator, IScopeManager> scopeManagerFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
@@ -88,6 +91,8 @@ internal class ContainerNode : RangeNode, IContainerNode
                 if (next.HasAsyncDisposables) agg |= DisposalType.Async;
                 return agg;
             }));
+
+        TaskTransformationFunctions = taskTransformationFunctions(referenceGenerator);
         
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
         TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");

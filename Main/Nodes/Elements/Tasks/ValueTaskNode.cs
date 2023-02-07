@@ -1,6 +1,6 @@
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
-using MrMeeseeks.DIE.ResolutionBuilding.Function;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Tasks;
@@ -14,10 +14,11 @@ internal class ValueTaskNode : TaskNodeBase, IValueTaskNode
 {
     internal ValueTaskNode(
         INamedTypeSymbol valueTaskType,
+        IContainerNode parentContainer,
         IFunctionNode parentFunction,
         IElementNodeMapperBase elementNodeMapperBase,
         IReferenceGenerator referenceGenerator)
-        : base(valueTaskType, parentFunction, elementNodeMapperBase, referenceGenerator)
+        : base(valueTaskType, parentContainer, parentFunction, elementNodeMapperBase, referenceGenerator)
     {
     }
 

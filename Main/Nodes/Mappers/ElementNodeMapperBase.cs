@@ -42,8 +42,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> _factoryFieldNodeFactory;
     private readonly Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> _factoryPropertyNodeFactory;
     private readonly Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> _factoryFunctionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IValueTaskNode> _valueTaskNodeFactory;
-    private readonly Func<INamedTypeSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, ITaskNode> _taskNodeFactory;
+    private readonly Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IValueTaskNode> _valueTaskNodeFactory;
+    private readonly Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, ITaskNode> _taskNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleNode> _valueTupleNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleSyntaxNode> _valueTupleSyntaxNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> _tupleNodeFactory;
@@ -74,8 +74,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory,
         Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory,
-        Func<INamedTypeSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IValueTaskNode> valueTaskNodeFactory,
-        Func<INamedTypeSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, ITaskNode> taskNodeFactory,
+        Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IValueTaskNode> valueTaskNodeFactory,
+        Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, ITaskNode> taskNodeFactory,
         Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleNode> valueTupleNodeFactory,
         Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory,
         Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> tupleNodeFactory,
@@ -157,11 +157,11 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
         if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
             && type is INamedTypeSymbol valueTask)
-            return _valueTaskNodeFactory(valueTask, ParentFunction, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _valueTaskNodeFactory(valueTask, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
 
         if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Task1)
             && type is INamedTypeSymbol task)
-            return _taskNodeFactory(task, ParentFunction, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _taskNodeFactory(task, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
 
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
             return _valueTupleNodeFactory(valueTupleType, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);

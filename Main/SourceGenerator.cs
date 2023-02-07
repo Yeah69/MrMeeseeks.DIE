@@ -158,9 +158,13 @@ public class SourceGenerator : ISourceGenerator
                 CreateRangedInstanceFunctionGroupNode,
                 CreateEntryFunctionNode,
                 CreateTransientScopeInterfaceNode,
+                CreateTaskTransformationFunctions,
                 CreateScopeManager,
                 CreateDisposalHandlingNode);
         }
+
+        ITaskTransformationFunctions CreateTaskTransformationFunctions(IReferenceGenerator referenceGenerator) =>
+            new TaskTransformationFunctions(referenceGenerator, wellKnownTypes);
 
         IDisposalHandlingNode CreateDisposalHandlingNode(IReferenceGenerator referenceGenerator) =>
             new DisposalHandlingNode(referenceGenerator, wellKnownTypes);
@@ -736,11 +740,21 @@ public class SourceGenerator : ISourceGenerator
             IElementNodeMapperBase typeToElementNodeMapper, IReferenceGenerator referenceGenerator) =>
             new ValueTupleNode(valueTupleType, typeToElementNodeMapper, referenceGenerator);
 
-        ITaskNode CreateTaskNode(INamedTypeSymbol taskType, IFunctionNode parentFunction, IElementNodeMapperBase typeToElementNodeMapper, IReferenceGenerator referenceGenerator) =>
-            new TaskNode(taskType, parentFunction, typeToElementNodeMapper, referenceGenerator);
+        ITaskNode CreateTaskNode(
+            INamedTypeSymbol taskType,
+            IContainerNode parentContainer, 
+            IFunctionNode parentFunction, 
+            IElementNodeMapperBase typeToElementNodeMapper, 
+            IReferenceGenerator referenceGenerator) =>
+            new TaskNode(taskType, parentContainer, parentFunction, typeToElementNodeMapper, referenceGenerator);
 
-        IValueTaskNode CreateValueTaskNode(INamedTypeSymbol valueTaskType, IFunctionNode parentFunction, IElementNodeMapperBase typeToElementNodeMapper, IReferenceGenerator referenceGenerator) =>
-            new ValueTaskNode(valueTaskType, parentFunction, typeToElementNodeMapper, referenceGenerator);
+        IValueTaskNode CreateValueTaskNode(
+            INamedTypeSymbol valueTaskType, 
+            IContainerNode parentContainer, 
+            IFunctionNode parentFunction,
+            IElementNodeMapperBase typeToElementNodeMapper, 
+            IReferenceGenerator referenceGenerator) =>
+            new ValueTaskNode(valueTaskType, parentContainer, parentFunction, typeToElementNodeMapper, referenceGenerator);
 
         IFactoryFunctionNode CreateFactoryFunctionNode(
             IMethodSymbol methodSymbol, 

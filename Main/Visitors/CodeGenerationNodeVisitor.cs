@@ -829,7 +829,7 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
         else if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.AsyncTask && !enumerableBasedNode.Awaited)
         {
             _code.AppendLine($$"""
-{{enumerableBasedNode.AsyncTypeFullName}} {{enumerableBasedNode.Reference}} = new {{enumerableBasedNode.AsyncTypeFullName}}({{enumerableBasedNode.EnumerableCall.Reference}}.ContinueWith(t =>
+{{enumerableBasedNode.AsyncTypeFullName}} {{enumerableBasedNode.Reference}} = {{enumerableBasedNode.EnumerableCall.Reference}}.ContinueWith(t =>
 {
 if (t.IsCompletedSuccessfully) 
 {
@@ -841,7 +841,7 @@ return {{enumerableBasedNode.AsyncReference ?? "result"}};
 if (t.IsFaulted && t.Exception is { }) throw t.Exception;
 if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
 throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
-}));
+});
 """); // todo mark last exception as from DIE and give it unique GUID
         }
 

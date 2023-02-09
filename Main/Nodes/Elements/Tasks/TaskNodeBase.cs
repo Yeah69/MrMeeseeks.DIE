@@ -34,7 +34,6 @@ internal interface ITaskNodeBase : IElementNode
 internal abstract class TaskNodeBase : ITaskNodeBase
 {
     private readonly INamedTypeSymbol _taskType;
-    private readonly IContainerNode _parentContainer;
     private readonly IFunctionNode _parentFunction;
     private readonly IElementNodeMapperBase _elementNodeMapperBase;
     internal TaskNodeBase(
@@ -45,7 +44,6 @@ internal abstract class TaskNodeBase : ITaskNodeBase
         IReferenceGenerator referenceGenerator)
     {
         _taskType = taskType;
-        _parentContainer = parentContainer;
         _parentFunction = parentFunction;
         _elementNodeMapperBase = elementNodeMapperBase;
         TypeFullName = taskType.FullName();

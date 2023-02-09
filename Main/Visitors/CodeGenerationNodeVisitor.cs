@@ -844,10 +844,6 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
 }));
 """); // todo mark last exception as from DIE and give it unique GUID
         }
-        else if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.AsyncValueTask && enumerableBasedNode.Awaited)
-        {
-            
-        }
 
         void CollectionHandling(string typeFullName, string reference, string enumerableReference)
         {

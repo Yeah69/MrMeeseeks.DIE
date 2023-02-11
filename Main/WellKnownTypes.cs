@@ -17,6 +17,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,
     INamedTypeSymbol Exception,
     INamedTypeSymbol TaskCanceledException,
+    INamedTypeSymbol AggregateException,
     INamedTypeSymbol SemaphoreSlim,
     INamedTypeSymbol InternalsVisibleToAttribute)
 {
@@ -42,6 +43,7 @@ internal record WellKnownTypes(
             ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2.Construct(iAsyncDisposable, iAsyncDisposable),
             Exception: compilation.GetTypeByMetadataNameOrThrow("System.Exception"),
             TaskCanceledException: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.TaskCanceledException"),
+            AggregateException: compilation.GetTypeByMetadataNameOrThrow("System.AggregateException"),
             SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
             InternalsVisibleToAttribute: compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.InternalsVisibleToAttribute"));
     }

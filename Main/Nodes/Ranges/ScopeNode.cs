@@ -82,7 +82,8 @@ internal class ScopeNode : RangeNode, IScopeNode
                 ParentContainer,
                 UserDefinedElements,
                 CheckTypeProperties,
-                ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue),
+                ReferenceGenerator)
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this));
 
     public override string FullName { get; }

@@ -103,7 +103,8 @@ internal class ScopeManager : IScopeManager
                         ? userProvidedScopeElementsFactory(defaultScopeType, containerInfo.ContainerType) 
                         : emptyUserDefinedElements,
                     checkTypePropertiesFactory(containerTypesFromAttributesList.Add(defaultScopeTypesFromAttributes)),
-                    referenceGenerator).EnqueueTo(container.BuildQueue);
+                    referenceGenerator)
+                    .EnqueueBuildJobTo(container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
             },
             LazyThreadSafetyMode.ExecutionAndPublication);
         _defaultTransientScope = new Lazy<ITransientScopeNode>(
@@ -121,7 +122,8 @@ internal class ScopeManager : IScopeManager
                         ? userProvidedScopeElementsFactory(defaultTransientScopeType, containerInfo.ContainerType) 
                         : emptyUserDefinedElements,
                     checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(defaultTransientScopeTypesFromAttributes)),
-                    referenceGenerator);
+                    referenceGenerator)
+                    .EnqueueBuildJobTo(container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
                 _transientScopeInterface.RegisterRange(ret);
                 return ret;
             },
@@ -198,7 +200,8 @@ internal class ScopeManager : IScopeManager
             this,
             _userProvidedScopeElementsFactory(scopeType, _containerInfo.ContainerType),
             _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(scopeTypesFromAttributes)),
-            _referenceGenerator).EnqueueTo(_container.BuildQueue);
+            _referenceGenerator)
+            .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         _customScopes[scopeRootType] = ret;
         return ret;
     }
@@ -218,7 +221,8 @@ internal class ScopeManager : IScopeManager
             this,
             _userProvidedScopeElementsFactory(transientScopeType, _containerInfo.ContainerType),
             _checkTypePropertiesFactory(_containerTypesFromAttributesList.Add(scopeTypesFromAttributes)),
-            _referenceGenerator);
+            _referenceGenerator)
+            .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         _customTransientScopes[transientScopeRootType] = ret;
          _transientScopeInterface.RegisterRange(ret);
         return ret;

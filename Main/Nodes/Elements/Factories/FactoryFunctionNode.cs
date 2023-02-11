@@ -28,12 +28,12 @@ internal class FactoryFunctionNode : FactoryNodeBase, IFactoryFunctionNode
         _elementNodeMapperBase = elementNodeMapperBase;
     }
 
-    public override void Build()
+    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         _parameters.AddRange(_methodSymbol
             .Parameters
-            .Select(p => (p.Name, _elementNodeMapperBase.Map(p.Type))));
-        base.Build();
+            .Select(p => (p.Name, _elementNodeMapperBase.Map(p.Type, implementationStack))));
+        base.Build(implementationStack);
     }
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitFactoryFunctionNode(this);

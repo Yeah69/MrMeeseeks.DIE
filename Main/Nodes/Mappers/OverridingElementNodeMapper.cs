@@ -85,8 +85,8 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type) =>
+    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) =>
         Equals(_override.Key, type.ToTypeKey()) 
-            ? MapToImplementation(_override.ImplementationType)
-            : base.Map(type);
+            ? MapToImplementation(_override.ImplementationType, implementationStack)
+            : base.Map(type, implementationStack);
 }

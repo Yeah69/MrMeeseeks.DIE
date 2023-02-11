@@ -16,7 +16,7 @@ internal class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTrigge
         Reference = referenceGenerator.Generate(disposableType);
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 

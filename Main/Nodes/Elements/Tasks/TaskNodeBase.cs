@@ -52,9 +52,9 @@ internal abstract class TaskNodeBase : ITaskNodeBase
         TaskTransformationFunctions = parentContainer.TaskTransformationFunctions;
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        WrappedElement = _elementNodeMapperBase.Map(_taskType.TypeArguments.First());
+        WrappedElement = _elementNodeMapperBase.Map(_taskType.TypeArguments.First(), implementationStack);
         if (WrappedElement is IPotentiallyAwaitedNode potentiallyAwaitingNode)
             _parentFunction.RegisterAsyncWrapping(potentiallyAwaitingNode, this);
     }

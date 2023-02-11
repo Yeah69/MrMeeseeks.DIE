@@ -67,9 +67,9 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         ICheckTypeProperties checkTypeProperties);
 
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
-        mapper.Map(_typeSymbol);
+        mapper.Map(_typeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
     
-    public override void Build() => ReturnedElement = MapToReturnedElement(
+    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => ReturnedElement = MapToReturnedElement(
         GetMapper(this, _parentNode, _parentContainer, _userDefinedElements, _checkTypeProperties));
     public IElementNode ReturnedElement { get; private set; } = null!;
 }

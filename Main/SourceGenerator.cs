@@ -1,5 +1,4 @@
-﻿using MrMeeseeks.DIE.CodeBuilding;
-using MrMeeseeks.DIE.Configuration;
+﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -104,7 +103,6 @@ public class SourceGenerator : ISourceGenerator
         if (assemblyTypesFromAttributes.Errors.Any())
             return;
         
-        var containerGenerator = new ContainerGenerator(context, ContainerCodeBuilderFactory, TransientScopeCodeBuilderFactory, ScopeCodeBuilderFactory);
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
         var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypesMiscellaneous);
         var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
@@ -112,14 +110,12 @@ public class SourceGenerator : ISourceGenerator
             errorDescriptionInsteadOfBuildFailure,
             context,
             wellKnownTypesMiscellaneous,
-            containerGenerator, 
             containerDieExceptionGenerator,
             validateContainer,
             ResolutionTreeFactory,
             ContainerInfoFactory, 
             ContainerNodeFactory,
             CreateCodeGenerationVisitor,
-            referenceGeneratorFactory,
             diagLogger).Execute();
 
         ICodeGenerationVisitor CreateCodeGenerationVisitor() => new CodeGenerationVisitor(wellKnownTypes, wellKnownTypesCollections);
@@ -961,37 +957,6 @@ public class SourceGenerator : ISourceGenerator
         }
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypesMiscellaneous);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j, diagLogger);
-
-        IContainerCodeBuilder ContainerCodeBuilderFactory(
-            IContainerInfo containerInfo,
-            ContainerResolution containerResolution,
-            IReadOnlyList<ITransientScopeCodeBuilder> transientScopeCodeBuilders,
-            IReadOnlyList<IScopeCodeBuilder> scopeCodeBuilders) => new ContainerCodeBuilder(
-            containerInfo,
-            containerResolution,
-            transientScopeCodeBuilders,
-            scopeCodeBuilders,
-            wellKnownTypes);
-
-        ITransientScopeCodeBuilder TransientScopeCodeBuilderFactory(
-            IContainerInfo containerInfo,
-            TransientScopeResolution transientScopeResolution,
-            ContainerResolution containerResolution) => new TransientScopeCodeBuilder(
-            containerInfo,
-            transientScopeResolution,
-            containerResolution,
-            wellKnownTypes);
-
-        IScopeCodeBuilder ScopeCodeBuilderFactory(
-            IContainerInfo containerInfo,
-            ScopeResolution scopeResolution,
-            TransientScopeInterfaceResolution transientScopeInterfaceResolution,
-            ContainerResolution containerResolution) => new ScopeCodeBuilder(
-            containerInfo,
-            scopeResolution,
-            transientScopeInterfaceResolution,
-            containerResolution,
-            wellKnownTypes);
         
         ICheckTypeProperties CreateCheckTypeProperties(IReadOnlyList<ITypesFromAttributes> typesFromAttributes) =>
             new CheckTypeProperties(

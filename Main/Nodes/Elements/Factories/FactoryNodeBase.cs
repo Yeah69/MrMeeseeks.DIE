@@ -30,7 +30,7 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         TypeFullName = referenceType.FullName();
     }
     
-    public virtual void Build()
+    public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         if ((SymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.ValueTask1, _referenceType.OriginalDefinition)
              || SymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.Task1, _referenceType.OriginalDefinition))

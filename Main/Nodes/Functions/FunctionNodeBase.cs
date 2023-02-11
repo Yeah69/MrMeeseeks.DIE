@@ -49,7 +49,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _scopeCallNodeFactory = scopeCallNodeFactory;
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
         _wellKnownTypes = wellKnownTypes;
-        Parameters = parameters.Select(p=> (p.FullName(), p.ToTypeKey(), parameterNodeFactory(p, referenceGenerator).EnqueueTo(parentContainer.BuildQueue))).ToList();
+        Parameters = parameters.Select(p=> (p.FullName(), p.ToTypeKey(), parameterNodeFactory(p, referenceGenerator)
+            .EnqueueBuildJobTo(parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty))).ToList();
         Accessibility = accessibility;
         ReturnedTypeFullName = typeSymbol.FullName();
 
@@ -87,7 +88,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         DisposedPropertyReference = parentRange.DisposalHandling.DisposedPropertyReference;
     }
 
-    public abstract void Build();
+    public abstract void Build(ImmutableStack<INamedTypeSymbol> implementationStack);
 
     public abstract void Accept(INodeVisitor nodeVisitor);
 
@@ -143,7 +144,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 this,
                 Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
                 _referenceGenerator)
-            .EnqueueTo(_parentContainer.BuildQueue);
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((onAwait, call));
 
@@ -160,7 +161,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 this,
                 Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
                 _referenceGenerator)
-            .EnqueueTo(_parentContainer.BuildQueue);
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((callingFunction, call));
 
@@ -181,7 +182,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 this,
                 Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
                 _referenceGenerator)
-            .EnqueueTo(_parentContainer.BuildQueue);
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((callingFunction, call));
 

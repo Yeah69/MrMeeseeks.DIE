@@ -15,7 +15,7 @@ internal class ErrorNode : IErrorNode
         Message = message;
     }
     
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         throw new NotImplementedException();
     }

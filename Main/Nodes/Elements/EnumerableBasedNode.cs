@@ -93,7 +93,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
         AsyncReference = referenceGenerator.Generate("result");
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         var collectionsInnerType = CollectionUtility.GetCollectionsInnerType(_collectionType);
         if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1))

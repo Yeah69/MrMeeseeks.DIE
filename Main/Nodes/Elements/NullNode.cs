@@ -16,7 +16,7 @@ internal class NullNode : INullNode
         TypeFullName = nullableType.FullName();
         Reference = referenceGenerator.Generate(nullableType);
     }
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 

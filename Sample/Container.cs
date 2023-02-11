@@ -1,16 +1,18 @@
-﻿using System.Threading.Tasks;
+﻿using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Dependency : IValueTaskInitializer, IScopeInstance
+internal class Dependency
 {
-    public async ValueTask InitializeAsync() => await Task.Yield();
+    internal Dependency(Lazy<Root> _)
+    {
+    }
 }
 
 internal class Root
 {
-    internal Root(ValueTask<Dependency> _) {}
+    internal Root(Dependency _) {}
 }
 
 [CreateFunction(typeof(Root), "Create")]

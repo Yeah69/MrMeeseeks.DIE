@@ -37,7 +37,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
         FullName = $"{container.FullName}.{Name}";
     }
     
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 
@@ -58,7 +58,8 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
             callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
             _container,
             _container,
-            _referenceGenerator).EnqueueTo(_container.BuildQueue);
+            _referenceGenerator)
+            .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         interfaceFunctionList.Add(interfaceFunction);
         foreach (var range in _ranges)
             interfaceFunction.AddConsideredRange(range);

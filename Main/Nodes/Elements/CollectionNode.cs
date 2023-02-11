@@ -22,7 +22,7 @@ internal class CollectionNode : ICollectionNode
         Reference = referenceGenerator.Generate(collectionType);
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 

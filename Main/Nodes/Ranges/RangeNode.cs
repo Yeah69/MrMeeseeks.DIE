@@ -63,7 +63,8 @@ internal abstract class RangeNode : IRangeNode
                 ParentContainer,
                 UserDefinedElements,
                 CheckTypeProperties,
-                ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue),
+                ReferenceGenerator)
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateCall(null, callingFunction, onAwait));
 
     public IEnumerable<ICreateFunctionNode> CreateFunctions => _createFunctions.Values.SelectMany(l => l);
@@ -114,7 +115,7 @@ internal abstract class RangeNode : IRangeNode
 
     protected virtual string TransientScopeInterfaceParameterForScope => Constants.ThisKeyword;
 
-    public virtual void Build() {}
+    public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack) {}
 
     public abstract void Accept(INodeVisitor nodeVisitor);
     public IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction) =>
@@ -129,7 +130,8 @@ internal abstract class RangeNode : IRangeNode
                 ParentContainer,
                 UserDefinedElements,
                 CheckTypeProperties,
-                ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue),
+                ReferenceGenerator)
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateCall(null, callingFunction, callingFunction));
 
     public ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 
@@ -150,7 +152,8 @@ internal abstract class RangeNode : IRangeNode
                 ParentContainer,
                 UserDefinedElements,
                 CheckTypeProperties,
-                ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
+                ReferenceGenerator)
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
             _rangedInstanceFunctionGroupNodes[typeKey] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
@@ -179,7 +182,8 @@ internal abstract class RangeNode : IRangeNode
                 ParentContainer,
                 UserDefinedElements,
                 CheckTypeProperties,
-                ReferenceGenerator).EnqueueTo(ParentContainer.BuildQueue);
+                ReferenceGenerator)
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
             _rangedInstanceFunctionGroupNodes[typeKey] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);

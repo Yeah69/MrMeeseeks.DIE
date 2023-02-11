@@ -47,7 +47,7 @@ internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedIn
         Name = referenceGenerator.Generate("GetTransientScopeInstance", _type);
     }
 
-    public override void Build()
+    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         
     }

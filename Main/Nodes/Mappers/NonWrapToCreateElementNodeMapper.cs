@@ -80,8 +80,8 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type) => 
+    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) => 
         TypeSymbolUtility.IsWrapType(type, WellKnownTypes) 
-            ? base.Map(type) 
+            ? base.Map(type, implementationStack) 
             : ParentRange.BuildCreateCall(type, ParentFunction);
 }

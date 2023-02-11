@@ -4,6 +4,6 @@ namespace MrMeeseeks.DIE.Nodes;
 
 internal interface INode
 {
-    void Build();
+    void Build(ImmutableStack<INamedTypeSymbol> implementationStack);
     void Accept(INodeVisitor nodeVisitor);
 }

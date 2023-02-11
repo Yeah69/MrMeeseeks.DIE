@@ -112,7 +112,7 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
         } while (true);
     }
 
-    public override IElementNode Map(ITypeSymbol type)
+    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         if (IsCollectionType(type))
         {
@@ -121,11 +121,12 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
             {
                 var itemNodes = _override
                     .ImplementationTypes
-                    .Select(n => _overridingElementNodeMapperFactory(this, MapperDependencies, (_override.Key, n)).Map(itemType))
+                    .Select(n => _overridingElementNodeMapperFactory(this, MapperDependencies, (_override.Key, n)).Map(itemType, implementationStack))
                     .ToList();
-                return _collectionNodeFactory(type, itemNodes, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+                return _collectionNodeFactory(type, itemNodes, _referenceGenerator)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
         }
-        return base.Map(type);
+        return base.Map(type, implementationStack);
     }
 }

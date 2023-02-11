@@ -29,7 +29,7 @@ internal abstract class RangedInstanceFunctionGroupNodeBase : IRangedInstanceFun
         IsCreatedForStructs = type.IsValueType ? referenceGenerator.Generate("isCreated") : null;
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 

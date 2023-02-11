@@ -16,7 +16,7 @@ internal class ParameterNode : IParameterNode
         Reference = referenceGenerator.Generate(Type);
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 

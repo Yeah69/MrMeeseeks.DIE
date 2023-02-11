@@ -72,9 +72,27 @@ internal class ImplementationNode : IImplementationNode
         Reference = referenceGenerator.Generate(implementationType);
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
+        var implementationCycle = implementationStack.Contains(_implementationType, SymbolEqualityComparer.Default);
 
+        if (implementationCycle)
+        {
+            var cycleStack = ImmutableStack.Create(_implementationType);
+            var stack = implementationStack;
+            var i = _implementationType;
+            do
+            {
+                stack = stack.Pop(out var popped);
+                cycleStack = cycleStack.Push(popped);
+                i = popped;
+            } while (!SymbolEqualityComparer.Default.Equals(_implementationType, i));
+            
+            throw new ImplementationCycleDieException(cycleStack);
+        }
+
+        implementationStack = implementationStack.Push(_implementationType);
+        
         var (userDefinedInjectionConstructor, outParamsConstructor) = GetUserDefinedInjection(_userDefinedElements.GetConstructorParametersInjectionFor(_implementationType));
         var (userDefinedInjectionProperties, outParamsProperties) = GetUserDefinedInjection(_userDefinedElements.GetPropertiesInjectionFor(_implementationType));
 
@@ -135,8 +153,8 @@ internal class ImplementationNode : IImplementationNode
                 {
                     var isOut = p.RefKind == RefKind.Out;
                     var element = isOut
-                        ? _elementNodeMapper.MapToOutParameter(p.Type)
-                        : _elementNodeMapper.Map(p.Type);
+                        ? _elementNodeMapper.MapToOutParameter(p.Type, implementationStack)
+                        : _elementNodeMapper.Map(p.Type, implementationStack);
                     return (p.Type, p.Name, Element: element, IsOut: isOut);
                 })
                 .ToArray();
@@ -151,7 +169,7 @@ internal class ImplementationNode : IImplementationNode
             IReadOnlyDictionary<(TypeKey TypeKey, string Name), IElementNode> outElementsCache) =>
             outElementsCache.TryGetValue(key, value: out var element)
                 ? element
-                : _elementNodeMapper.Map(typeParam);
+                : _elementNodeMapper.Map(typeParam, implementationStack);
     }
 
     public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitImplementationNode(this);

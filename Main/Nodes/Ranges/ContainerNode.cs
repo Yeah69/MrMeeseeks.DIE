@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE.Nodes.Ranges;
 internal interface IContainerNode : IRangeNode
 {
     string Namespace { get; }
-    Queue<INode> BuildQueue { get; }
+    Queue<BuildJob> BuildQueue { get; }
     Queue<IFunctionNode> AsyncCheckQueue { get; }
     IReadOnlyList<IEntryFunctionNode> RootFunctions { get; }
     IEnumerable<IScopeNode> Scopes { get; }
@@ -19,6 +19,8 @@ internal interface IContainerNode : IRangeNode
     string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
 }
+
+internal record BuildJob(INode Node, ImmutableStack<INamedTypeSymbol> PreviousImplementations);
 
 internal class ContainerNode : RangeNode, IContainerNode
 {
@@ -32,7 +34,7 @@ internal class ContainerNode : RangeNode, IContainerNode
     public override string FullName { get; }
     public override DisposalType DisposalType => _lazyDisposalType.Value;
     public string Namespace { get; }
-    public Queue<INode> BuildQueue { get; } = new();
+    public Queue<BuildJob> BuildQueue { get; } = new();
     public Queue<IFunctionNode> AsyncCheckQueue { get; } = new();
     public IReadOnlyList<IEntryFunctionNode> RootFunctions => _rootFunctions;
     public IEnumerable<IScopeNode> Scopes => ScopeManager.Scopes;
@@ -103,10 +105,10 @@ internal class ContainerNode : RangeNode, IContainerNode
     protected override string ContainerParameterForScope =>
         Constants.ThisKeyword;
 
-    public override void Build()
+    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         TransientScopeInterface.RegisterRange(this);
-        base.Build();
+        base.Build(implementationStack);
         foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)
         {
             var functionNode = _entryFunctionNodeFactory(
@@ -119,11 +121,11 @@ internal class ContainerNode : RangeNode, IContainerNode
                 CheckTypeProperties,
                 _referenceGenerator);
             _rootFunctions.Add(functionNode);
-            BuildQueue.Enqueue(functionNode);
+            BuildQueue.Enqueue(new(functionNode, implementationStack));
         }
 
-        while (BuildQueue.Any() && BuildQueue.Dequeue() is { } node) 
-            node.Build();
+        while (BuildQueue.Any() && BuildQueue.Dequeue() is { } buildJob) 
+            buildJob.Node.Build(buildJob.PreviousImplementations);
         
         while (AsyncCheckQueue.Any() && AsyncCheckQueue.Dequeue() is { } function)
             function.CheckSynchronicity();

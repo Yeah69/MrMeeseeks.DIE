@@ -13,9 +13,10 @@ namespace MrMeeseeks.DIE.Nodes.Mappers;
 
 internal interface IElementNodeMapperBase
 {
-    IElementNode Map(ITypeSymbol type);
-    IElementNode MapToImplementation(INamedTypeSymbol implementationType);
-    IElementNode MapToOutParameter(ITypeSymbol type);
+    IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
+    IElementNode MapToImplementation(INamedTypeSymbol implementationType,
+        ImmutableStack<INamedTypeSymbol> implementationStack);
+    IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
     ElementNodeMapperBase.PassedDependencies MapperDependencies { get; }
     void ResetFunction(ISingleFunctionNode parentFunction); // todo replace this workaround
 }
@@ -141,36 +142,44 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         || SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
         || potentialCollectionType is IArrayTypeSymbol;
 
-    public virtual IElementNode Map(ITypeSymbol type)
+    public virtual IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         if (ParentFunction.Overrides.TryGetValue(type.ToTypeKey(), out var tuple))
             return tuple.Item2;
 
         if (_userDefinedElements.GetFactoryFieldFor(type) is { } instance)
-            return _factoryFieldNodeFactory(instance, ParentFunction, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _factoryFieldNodeFactory(instance, ParentFunction, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (_userDefinedElements.GetFactoryPropertyFor(type) is { } property)
-            return _factoryPropertyNodeFactory(property, ParentFunction, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _factoryPropertyNodeFactory(property, ParentFunction, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (_userDefinedElements.GetFactoryMethodFor(type) is { } method)
-            return _factoryFunctionNodeFactory(method, ParentFunction, Next, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _factoryFunctionNodeFactory(method, ParentFunction, Next, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
             && type is INamedTypeSymbol valueTask)
-            return _valueTaskNodeFactory(valueTask, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _valueTaskNodeFactory(valueTask, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Task1)
             && type is INamedTypeSymbol task)
-            return _taskNodeFactory(task, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _taskNodeFactory(task, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
-            return _valueTupleNodeFactory(valueTupleType, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _valueTupleNodeFactory(valueTupleType, NextForWraps, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type.FullName().StartsWith("(") && type.FullName().EndsWith(")") && type is INamedTypeSymbol syntaxValueTupleType)
-            return _valueTupleSyntaxNodeFactory(syntaxValueTupleType, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _valueTupleSyntaxNodeFactory(syntaxValueTupleType, NextForWraps, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type.FullName().StartsWith("global::System.Tuple<") && type is INamedTypeSymbol tupleType)
-            return _tupleNodeFactory(tupleType, NextForWraps, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _tupleNodeFactory(tupleType, NextForWraps, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Lazy1)
             && type is INamedTypeSymbol lazyType)
@@ -196,12 +205,14 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _userDefinedElements,
                 _checkTypeProperties,
                 mapper, 
-                _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+                _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             ParentFunction.AddLocalFunction(function);
             
             mapper.ResetFunction(function);
             
-            return _lazyNodeFactory(lazyType, function, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _lazyNodeFactory(lazyType, function, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
 
         if (type.TypeKind == TypeKind.Delegate 
@@ -233,12 +244,14 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _userDefinedElements,
                 _checkTypeProperties,
                 mapper,
-                _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+                _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             ParentFunction.AddLocalFunction(function);
             
             mapper.ResetFunction(function);
             
-            return _funcNodeFactory(funcType, function, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _funcNodeFactory(funcType, function, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
         
         if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
@@ -265,12 +278,13 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1)
             || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1)
             || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
-            return _enumerableBasedNodeFactory(type, ParentRange, ParentFunction, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _enumerableBasedNodeFactory(type, ParentRange, ParentFunction, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type is ({ TypeKind: TypeKind.Interface } or { TypeKind: TypeKind.Class, IsAbstract: true })
             and INamedTypeSymbol interfaceOrAbstractType)
         {
-            return SwitchInterface(interfaceOrAbstractType);
+            return SwitchInterface(interfaceOrAbstractType, implementationStack);
         }
 
         if (type is INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } classOrStructType)
@@ -282,22 +296,25 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     _diagLogger.Log(Diagnostics.NullResolutionWarning(
                         $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\", but injecting null instead.",
                         ExecutionPhase.Resolution));
-                    return _nullNodeFactory(classOrStructType, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+                    return _nullNodeFactory(classOrStructType, _referenceGenerator)
+                        .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
                 }
-                return _errorNodeFactory($"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",").EnqueueTo(_parentContainer.BuildQueue);
+                return _errorNodeFactory($"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",")
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
             
             var ret = _checkTypeProperties.ShouldBeScopeRoot(chosenImplementationType) switch
             {
                 ScopeLevel.TransientScope => ParentRange.BuildTransientScopeCall(chosenImplementationType, ParentFunction),
                 ScopeLevel.Scope => ParentRange.BuildScopeCall(chosenImplementationType, ParentFunction),
-                _ => SwitchImplementation(chosenImplementationType)
+                _ => SwitchImplementation(chosenImplementationType, implementationStack)
             };
 
             return ret;
         }
 
-        return _errorNodeFactory("Couldn't process in resolution tree creation.").EnqueueTo(_parentContainer.BuildQueue);
+        return _errorNodeFactory("Couldn't process in resolution tree creation.")
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
     }
     
     protected static ITypeSymbol GetCollectionsItemType(ITypeSymbol type) => type is IArrayTypeSymbol arrayTypeSymbol
@@ -309,7 +326,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     /// <summary>
     /// Meant as entry point for mappings where concrete implementation type is already chosen.
     /// </summary>
-    public IElementNode MapToImplementation(INamedTypeSymbol implementationType)
+    public IElementNode MapToImplementation(INamedTypeSymbol implementationType,
+        ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is { } constructor)
             return _implementationNodeFactory(
@@ -321,7 +339,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _checkTypeProperties,
                 _userDefinedElements,
                 _referenceGenerator)
-                .EnqueueTo(_parentContainer.BuildQueue);
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             
         if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
             return _errorNodeFactory(implementationType.InstanceConstructors.Length switch
@@ -330,22 +348,25 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 > 1 =>
                     $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
                 _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
-            }).EnqueueTo(_parentContainer.BuildQueue);
+            }).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             
         _diagLogger.Log(Diagnostics.NullResolutionWarning(
             $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
             ExecutionPhase.Resolution));
-        return _nullNodeFactory(implementationType, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+        return _nullNodeFactory(implementationType, _referenceGenerator)
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
     }
 
-    public IElementNode MapToOutParameter(ITypeSymbol type) => _outParameterNodeFactory(type, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+    public IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) => 
+        _outParameterNodeFactory(type, _referenceGenerator)
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
     public PassedDependencies MapperDependencies { get; }
     public void ResetFunction(ISingleFunctionNode parentFunction)
     {
         ParentFunction = parentFunction;
     }
 
-    private IElementNode SwitchImplementation(INamedTypeSymbol implementationType)
+    private IElementNode SwitchImplementation(INamedTypeSymbol implementationType, ImmutableStack<INamedTypeSymbol> implementationSet)
     {
         var scopeLevel = _checkTypeProperties.GetScopeLevelFor(implementationType);
 
@@ -374,7 +395,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     Next, 
                     _checkTypeProperties, 
                     _userDefinedElements,
-                    _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+                    _referenceGenerator)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
             if (impType.NullableAnnotation != NullableAnnotation.Annotated)
                 return _errorNodeFactory(impType.InstanceConstructors.Length switch
@@ -383,18 +405,19 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     > 1 =>
                         $"Class.Constructor: More than one constructor found for implementation {impType.FullName()}",
                     _ => $"Class.Constructor: {impType.InstanceConstructors[0].Name} is not a method symbol"
-                }).EnqueueTo(_parentContainer.BuildQueue);
+                }).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
             _diagLogger.Log(Diagnostics.NullResolutionWarning(
                 $"Interface: Multiple or no implementations where a single is required for \"{impType.FullName()}\", but injecting null instead.",
                 ExecutionPhase.Resolution));
-            return _nullNodeFactory(impType, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            return _nullNodeFactory(impType, _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
         }
     }
     
     
 
-    private IElementNode SwitchInterface(INamedTypeSymbol interfaceType)
+    private IElementNode SwitchInterface(INamedTypeSymbol interfaceType, ImmutableStack<INamedTypeSymbol> implementationSet)
     {
         if (_checkTypeProperties.ShouldBeComposite(interfaceType))
         {
@@ -411,9 +434,11 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _diagLogger.Log(Diagnostics.NullResolutionWarning(
                     $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\", but injecting null instead.",
                     ExecutionPhase.Resolution));
-                return _nullNodeFactory(interfaceType, _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+                return _nullNodeFactory(interfaceType, _referenceGenerator)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             }
-            return _errorNodeFactory($"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\".").EnqueueTo(_parentContainer.BuildQueue);
+            return _errorNodeFactory($"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\".")
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
         }
 
         return MapToInterfaceForImplementation(impType, this);
@@ -422,7 +447,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         {
             var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
         
-            var currentAbstractionNode = _abstractionNodeFactory(interfaceType, mapper.MapToImplementation(implementationType), _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue);
+            var currentAbstractionNode = _abstractionNodeFactory(interfaceType, mapper.MapToImplementation(implementationType, implementationSet), _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
 
             if (!shouldBeDecorated) return currentAbstractionNode;
             
@@ -434,9 +460,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 var overridingElementNodeMapperFactory = _overridingElementNodeMapperFactory(this, MapperDependencies, (interfaceType.ConstructTypeUniqueKey(), decoratorType));
                 currentAbstractionNode = _abstractionNodeFactory(
                         interfaceType, 
-                        overridingElementNodeMapperFactory.MapToImplementation(decoratorType),
+                        overridingElementNodeMapperFactory.MapToImplementation(decoratorType, implementationSet),
                         _referenceGenerator)
-                    .EnqueueTo(_parentContainer.BuildQueue);
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             }
 
             return currentAbstractionNode;

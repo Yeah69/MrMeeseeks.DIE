@@ -25,7 +25,7 @@ internal class TupleNode : ITupleNode
         Reference = referenceGenerator.Generate(_tupleType);
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         var constructor = _tupleType
             .InstanceConstructors
@@ -33,7 +33,7 @@ internal class TupleNode : ITupleNode
             .First();
         _parameters.AddRange(constructor
             .Parameters
-            .Select(p => (p.Name, _elementNodeMapper.Map(p.Type))));
+            .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, implementationStack))));
     }
 
     public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitTupleNode(this);

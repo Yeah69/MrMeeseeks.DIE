@@ -20,7 +20,7 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
         TypeFullName = delegateType.FullName();
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 

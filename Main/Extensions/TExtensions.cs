@@ -1,10 +1,15 @@
+using MrMeeseeks.DIE.Nodes;
+using MrMeeseeks.DIE.Nodes.Ranges;
+
 namespace MrMeeseeks.DIE.Extensions;
 
 internal static class TExtensions
 {
-    internal static T EnqueueTo<T, TQueue>(this T item, Queue<TQueue> queue) where T : TQueue
+    internal static T EnqueueBuildJobTo<T>(this T item, Queue<BuildJob> queue, ImmutableStack<INamedTypeSymbol> implementationSet) 
+        where T : INode
     {
-        queue.Enqueue(item);
+        var buildJob = new BuildJob(item, implementationSet);
+        queue.Enqueue(buildJob);
         return item;
     }
 }

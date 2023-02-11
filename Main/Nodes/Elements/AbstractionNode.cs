@@ -19,7 +19,7 @@ internal class AbstractionNode : IAbstractionNode
         Reference = referenceGenerator.Generate(abstractionType);
     }
 
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
 

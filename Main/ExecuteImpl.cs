@@ -1,8 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using MrMeeseeks.DIE.CodeBuilding;
-using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.ResolutionBuilding;
 using MrMeeseeks.DIE.Validation.Range;
@@ -20,41 +18,35 @@ internal class ExecuteImpl : IExecute
     private readonly bool _errorDescriptionInsteadOfBuildFailure;
     private readonly GeneratorExecutionContext _context;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
-    private readonly IContainerGenerator _containerGenerator;
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly IValidateContainer _validateContainer;
     private readonly Func<IContainerInfo, IContainerResolutionBuilder> _containerResolutionBuilderFactory;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
     private readonly Func<IContainerInfo, IContainerNode> _containerNodeFactory;
     private readonly Func<ICodeGenerationVisitor> _codeGeneratorVisitorFactory;
-    private readonly IReferenceGeneratorFactory _referenceGeneratorFactory;
     private readonly IDiagLogger _diagLogger;
 
     internal ExecuteImpl(
         bool errorDescriptionInsteadOfBuildFailure,
         GeneratorExecutionContext context,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        IContainerGenerator containerGenerator,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
         IValidateContainer validateContainer,
         Func<IContainerInfo, IContainerResolutionBuilder> containerResolutionBuilderFactory,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
         Func<IContainerInfo, IContainerNode> containerNodeFactory,
         Func<ICodeGenerationVisitor> codeGeneratorVisitorFactory,
-        IReferenceGeneratorFactory referenceGeneratorFactory,
         IDiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = errorDescriptionInsteadOfBuildFailure;
         _context = context;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
-        _containerGenerator = containerGenerator;
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
         _validateContainer = validateContainer;
         _containerResolutionBuilderFactory = containerResolutionBuilderFactory;
         _containerInfoFactory = containerInfoFactory;
         _containerNodeFactory = containerNodeFactory;
         _codeGeneratorVisitorFactory = codeGeneratorVisitorFactory;
-        _referenceGeneratorFactory = referenceGeneratorFactory;
         _diagLogger = diagLogger;
     }
 
@@ -101,12 +93,8 @@ internal class ExecuteImpl : IExecute
                         
                         // todo complete visitor way
                         var containerNode = _containerNodeFactory(containerInfo);
-                        var buildStack = new Stack<INode>();
-                        buildStack.Push(containerNode);
-                        while (buildStack.Any() && buildStack.Pop() is {} node)
-                        {
-                            node.Build();
-                        }
+                        containerNode.Build(ImmutableStack.Create<INamedTypeSymbol>());
+                        
                         var visitor = _codeGeneratorVisitorFactory();
                         visitor.VisitContainerNode(containerNode);
                         

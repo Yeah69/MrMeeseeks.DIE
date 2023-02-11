@@ -102,9 +102,9 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
     protected override bool SuppressAsync { get; }
 
     private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
-        mapper.Map(itemType);
+        mapper.Map(itemType, ImmutableStack.Create<INamedTypeSymbol>());
     
-    public override void Build()
+    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         var itemType = CollectionUtility.GetCollectionsInnerType(_enumerableType);
         var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes);

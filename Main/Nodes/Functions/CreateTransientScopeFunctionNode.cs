@@ -58,7 +58,7 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
-        mapper.MapToImplementation(_typeSymbol);
+        mapper.MapToImplementation(_typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
 
     protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
         IUserDefinedElements userDefinedElements, ICheckTypeProperties checkTypeProperties)

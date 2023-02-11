@@ -25,9 +25,9 @@ internal class ValueTupleSyntaxNode : IValueTupleSyntaxNode
         Reference = referenceGenerator.Generate(_valueTupleType);
     }
     
-    public void Build()
+    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        _items = GetTypeArguments(_valueTupleType).Select(_elementNodeMapper.Map).ToList();
+        _items = GetTypeArguments(_valueTupleType).Select(type => _elementNodeMapper.Map(type, implementationStack)).ToList();
 
         static IEnumerable<ITypeSymbol> GetTypeArguments(INamedTypeSymbol valueTupleType)
         {

@@ -59,5 +59,6 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
                 _parentContainer,
                 _userDefinedElements,
                 _checkTypeProperties,
-                _referenceGenerator).EnqueueTo(_parentContainer.BuildQueue));
+                _referenceGenerator)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty));
 }

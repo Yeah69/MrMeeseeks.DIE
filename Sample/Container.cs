@@ -1,29 +1,16 @@
 ﻿using System;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Dependency : IDisposable
+internal class Dependency : IScopeInstance
 {
-    internal Dependency(Lazy<Root> _)
-    {
-    }
-
-    public void Dispose()
-    {
-        throw new NotImplementedException();
-    }
+    internal Dependency(Lazy<Root> _) {}
 }
 
-internal class Root : IDisposable
+internal class Root : IScopeInstance
 {
     internal Root(Dependency _) {}
-
-    public void Dispose()
-    {
-        throw new NotSupportedException();
-    }
 }
 
 [CreateFunction(typeof(Root), "Create")]

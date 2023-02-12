@@ -26,6 +26,7 @@ internal class ContainerNode : RangeNode, IContainerNode
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IReferenceGenerator _referenceGenerator;
+    private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> _entryFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
@@ -56,6 +57,7 @@ internal class ContainerNode : RangeNode, IContainerNode
         Func<INamedTypeSymbol, INamedTypeSymbol, IUserDefinedElements> userDefinedElementsFactory,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
+        IFunctionCycleTracker functionCycleTracker,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
@@ -76,6 +78,7 @@ internal class ContainerNode : RangeNode, IContainerNode
     {
         _containerInfo = containerInfo;
         _referenceGenerator = referenceGenerator;
+        _functionCycleTracker = functionCycleTracker;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
         Namespace = containerInfo.Namespace;
         FullName = _containerInfo.FullName;
@@ -129,6 +132,8 @@ internal class ContainerNode : RangeNode, IContainerNode
         
         while (AsyncCheckQueue.Any() && AsyncCheckQueue.Dequeue() is { } function)
             function.CheckSynchronicity();
+        
+        _functionCycleTracker.DetectCycle(this);
     }
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitContainerNode(this);

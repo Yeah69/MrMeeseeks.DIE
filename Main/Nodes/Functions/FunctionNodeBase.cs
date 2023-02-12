@@ -99,6 +99,16 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _asyncWrappingMap[potentiallyAwaitedNode] = taskNodeBase;
     }
 
+    public string Description => 
+        $"{ReturnedTypeFullName} {RangeFullName}.{Name}({string.Join(", ", Parameters.Select(p => $"{p.Item3.TypeFullName} {p.Item3.Reference}"))})";
+
+    public HashSet<IFunctionNode> CalledFunctions { get; } = new ();
+
+    public void RegisterCalledFunction(IFunctionNode calledFunction)
+    {
+        CalledFunctions.Add(calledFunction);
+    }
+
     public void OnAwait(IPotentiallyAwaitedNode potentiallyAwaitedNode)
     {
         if (_asyncWrappingMap.TryGetValue(potentiallyAwaitedNode, out var taskNodeBase))
@@ -147,6 +157,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((onAwait, call));
+        callingFunction.RegisterCalledFunction(this);
 
         return call;
     }
@@ -164,6 +175,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((callingFunction, call));
+        callingFunction.RegisterCalledFunction(this);
 
         return call;
     }
@@ -185,6 +197,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((callingFunction, call));
+        callingFunction.RegisterCalledFunction(this);
 
         return call;
     }

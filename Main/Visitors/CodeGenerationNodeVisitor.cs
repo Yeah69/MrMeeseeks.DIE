@@ -442,11 +442,13 @@ finally
             ObjectDisposedCheck(
                 overload.DisposedPropertyReference, 
                 overload.RangeFullName, 
-                overload.ReturnedTypeFullName); 
+                overload.ReturnedTypeFullName);
             _code.AppendLine($$"""
 return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReference}};
-}
 """);
+            foreach (var localFunction in overload.LocalFunctions)
+                VisitSingleFunctionNode(localFunction);
+            _code.AppendLine("}");
         }
     }
 

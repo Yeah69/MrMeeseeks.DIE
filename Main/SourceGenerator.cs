@@ -149,6 +149,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateUserDefinedElements,
                 CreateCheckTypeProperties(containerTypesFromAttributesList),
                 referenceGeneratorFactory.Create(),
+                new Nodes.FunctionCycleTracker(),
                 CreateFunctionNode,
                 CreateMultiFunctionNode,
                 CreateRangedInstanceFunctionGroupNode,

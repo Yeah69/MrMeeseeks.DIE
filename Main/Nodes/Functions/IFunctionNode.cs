@@ -21,6 +21,9 @@ internal interface IFunctionNode : INode, IOnAwait
     ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> Overrides { get; }
     string ReturnedTypeFullName { get; }
     void RegisterAsyncWrapping(IPotentiallyAwaitedNode potentiallyAwaitedNode, ITaskNodeBase taskNodeBase);
+    string Description { get; }
+    HashSet<IFunctionNode> CalledFunctions { get; }
+    void RegisterCalledFunction(IFunctionNode calledFunction);
     void CheckSynchronicity();
     void ForceToAsync();
     string? AsyncTypeFullName { get; }

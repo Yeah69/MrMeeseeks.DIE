@@ -14,14 +14,18 @@ namespace MrMeeseeks.DIE.Nodes.Mappers;
 internal interface IElementNodeMapperBase
 {
     IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
-    IElementNode MapToImplementation(INamedTypeSymbol implementationType,
-        ImmutableStack<INamedTypeSymbol> implementationStack);
-    IElementNode MapToImplementationWithoutRanged(INamedTypeSymbol implementationType,
+    IElementNode MapToImplementation(
+        ImplementationMappingConfiguration config,
+        INamedTypeSymbol implementationType,
         ImmutableStack<INamedTypeSymbol> implementationStack);
     IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
     ElementNodeMapperBase.PassedDependencies MapperDependencies { get; }
     void ResetFunction(ISingleFunctionNode parentFunction); // todo replace this workaround
 }
+
+internal record ImplementationMappingConfiguration(
+    bool CheckForScopeRoot,
+    bool CheckForRangedInstance);
 
 internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 {
@@ -301,15 +305,12 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 return _errorNodeFactory($"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",")
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
-            
-            var ret = _checkTypeProperties.ShouldBeScopeRoot(chosenImplementationType) switch
-            {
-                ScopeLevel.TransientScope => ParentRange.BuildTransientScopeCall(chosenImplementationType, ParentFunction),
-                ScopeLevel.Scope => ParentRange.BuildScopeCall(chosenImplementationType, ParentFunction),
-                _ => SwitchImplementation(chosenImplementationType, implementationStack, Next)
-            };
 
-            return ret;
+            return SwitchImplementation(
+                new(true, true),
+                chosenImplementationType,
+                implementationStack,
+                Next);
         }
 
         return _errorNodeFactory("Couldn't process in resolution tree creation.")
@@ -325,19 +326,12 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     /// <summary>
     /// Meant as entry point for mappings where concrete implementation type is already chosen.
     /// </summary>
-    public IElementNode MapToImplementation(INamedTypeSymbol implementationType,
+    public IElementNode MapToImplementation(
+        ImplementationMappingConfiguration config,
+        INamedTypeSymbol implementationType,
         ImmutableStack<INamedTypeSymbol> implementationStack) =>
         SwitchImplementation(
-            implementationType, 
-            implementationStack, 
-            NextForWraps); // Use NextForWraps, cause MapToImplementation is entry point
-
-    /// <summary>
-    /// Meant as entry point for mappings where concrete implementation type is already chosen.
-    /// </summary>
-    public IElementNode MapToImplementationWithoutRanged(INamedTypeSymbol implementationType,
-        ImmutableStack<INamedTypeSymbol> implementationStack) =>
-        SwitchImplementationWithoutRanged(
+            config,
             implementationType, 
             implementationStack, 
             NextForWraps); // Use NextForWraps, cause MapToImplementation is entry point
@@ -352,35 +346,45 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     }
 
     private IElementNode SwitchImplementation(
+        ImplementationMappingConfiguration config,
         INamedTypeSymbol implementationType, 
         ImmutableStack<INamedTypeSymbol> implementationSet,
         IElementNodeMapperBase nextMapper)
     {
-        var scopeLevel = _checkTypeProperties.GetScopeLevelFor(implementationType);
-
-        /* todo replace? if (scopeLevel != ScopeLevel.None 
-            && _scopedInstancesReferenceCache.TryGetValue(implementationType, out var scopedReference))
-            return (scopedReference, null);*/
-
-        var ret = scopeLevel switch
+        if (config.CheckForScopeRoot)
         {
-            ScopeLevel.Container => ParentRange.BuildContainerInstanceCall(implementationType, ParentFunction),
-            ScopeLevel.TransientScope => ParentRange.BuildTransientScopeInstanceCall(implementationType, ParentFunction),
-            ScopeLevel.Scope => ParentRange.BuildScopeInstanceCall(implementationType, ParentFunction),
-            _ => SwitchImplementationWithoutRanged(implementationType, implementationSet, nextMapper)
-        };
+            var ret = _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
+            {
+                ScopeLevel.TransientScope => ParentRange.BuildTransientScopeCall(implementationType, ParentFunction),
+                ScopeLevel.Scope => ParentRange.BuildScopeCall(implementationType, ParentFunction),
+                _ => (IElementNode?) null
+            };
+            if (ret is not null)
+                return ret;
+        }
+        
+        if (config.CheckForRangedInstance)
+        {
+            var scopeLevel = _checkTypeProperties.GetScopeLevelFor(implementationType);
 
-        return ret;
-    }
+            /* todo replace? if (scopeLevel != ScopeLevel.None 
+                && _scopedInstancesReferenceCache.TryGetValue(implementationType, out var scopedReference))
+                return (scopedReference, null);*/
 
-    private IElementNode SwitchImplementationWithoutRanged(
-        INamedTypeSymbol impType, 
-        ImmutableStack<INamedTypeSymbol> implementationSet,
-        IElementNodeMapperBase nextMapper)
-    {
-        if (_checkTypeProperties.GetConstructorChoiceFor(impType) is { } constructor)
+            var ret = scopeLevel switch
+            {
+                ScopeLevel.Container => ParentRange.BuildContainerInstanceCall(implementationType, ParentFunction),
+                ScopeLevel.TransientScope => ParentRange.BuildTransientScopeInstanceCall(implementationType, ParentFunction),
+                ScopeLevel.Scope => ParentRange.BuildScopeInstanceCall(implementationType, ParentFunction),
+                _ => null
+            };
+            if (ret is not null)
+                return ret;
+        }
+
+        if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is { } constructor)
             return _implementationNodeFactory(
-                    impType, 
+                    implementationType, 
                     constructor, 
                     ParentFunction, 
                     ParentRange,
@@ -390,24 +394,22 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
-        if (impType.NullableAnnotation != NullableAnnotation.Annotated)
-            return _errorNodeFactory(impType.InstanceConstructors.Length switch
+        if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
+            return _errorNodeFactory(implementationType.InstanceConstructors.Length switch
             {
-                0 => $"Class.Constructor: No constructor found for implementation {impType.FullName()}",
+                0 => $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
                 > 1 =>
-                    $"Class.Constructor: More than one constructor found for implementation {impType.FullName()}",
-                _ => $"Class.Constructor: {impType.InstanceConstructors[0].Name} is not a method symbol"
+                    $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
             }).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
         _diagLogger.Log(Diagnostics.NullResolutionWarning(
-            $"Interface: Multiple or no implementations where a single is required for \"{impType.FullName()}\", but injecting null instead.",
+            $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
             ExecutionPhase.Resolution));
-        return _nullNodeFactory(impType, _referenceGenerator)
+        return _nullNodeFactory(implementationType, _referenceGenerator)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
     }
     
-    
-
     private IElementNode SwitchInterface(INamedTypeSymbol interfaceType, ImmutableStack<INamedTypeSymbol> implementationSet)
     {
         if (_checkTypeProperties.ShouldBeComposite(interfaceType)

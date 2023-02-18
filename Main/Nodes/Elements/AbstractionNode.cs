@@ -27,7 +27,7 @@ internal class AbstractionNode : IAbstractionNode
 
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        Implementation = _mapper.MapToImplementation(_implementationType, implementationStack);
+        Implementation = _mapper.MapToImplementation(new(true, true), _implementationType, implementationStack);
     }
 
     public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitAbstractionNode(this);

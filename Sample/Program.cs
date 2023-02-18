@@ -12,9 +12,9 @@ internal class Program
             var asdf = container.CreateDep();
             Console.WriteLine("Hello, World!");
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            
+            // ignored
         }
     }
 }

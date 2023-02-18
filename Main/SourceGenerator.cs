@@ -716,9 +716,6 @@ public class SourceGenerator : ISourceGenerator
             IReferenceGenerator referenceGenerator) =>
             new AbstractionNode(abstractionType, implementationType, mapper, referenceGenerator);
 
-        ICollectionNode CreateCollectionNode(ITypeSymbol collectionType, IReadOnlyList<IElementNode> itemNodes, IReferenceGenerator referenceGenerator) =>
-            new CollectionNode(collectionType, itemNodes, referenceGenerator);
-
         IFuncNode CreateFuncNode(INamedTypeSymbol funcType, ILocalFunctionNode function, IReferenceGenerator referenceGenerator) =>
             new FuncNode(funcType, function, referenceGenerator);
 

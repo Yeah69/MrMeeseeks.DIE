@@ -69,7 +69,7 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
         // "MapToImplementation" instead of "Map", because latter would cause an infinite recursion ever trying to create a new ranged instance function
-        mapper.MapToImplementationWithoutRanged(_type, ImmutableStack<INamedTypeSymbol>.Empty); 
+        mapper.MapToImplementation(new(true, false), _type, ImmutableStack<INamedTypeSymbol>.Empty); 
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitRangedInstanceFunctionNode(this);
     public override string Name { get; protected set; }

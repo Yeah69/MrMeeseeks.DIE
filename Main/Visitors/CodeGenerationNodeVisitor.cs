@@ -629,9 +629,6 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             case IValueTupleSyntaxNode valueTupleSyntaxNode:
                 VisitValueTupleSyntaxNode(valueTupleSyntaxNode);
                 break;
-            case ICollectionNode collectionNode:
-                VisitCollectionNode(collectionNode);
-                break;
             case IAbstractionNode abstractionNode:
                 VisitAbstractionNode(abstractionNode);
                 break;
@@ -648,16 +645,6 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                 VisitEnumerableBasedNode(enumerableBasedNode);
                 break;
         }
-    }
-
-    public void VisitCollectionNode(ICollectionNode collectionNode)
-    {
-        foreach (var collectionNodeItem in collectionNode.Items)
-        {
-            VisitElementNode(collectionNodeItem);
-        }
-        _code.AppendLine(
-            $"{collectionNode.TypeFullName} {collectionNode.Reference} = new {collectionNode.ItemTypeFullName}[]{{{string.Join(", ", collectionNode.Items.Select(i => $"({collectionNode.ItemTypeFullName}) {i.Reference}"))}}};");
     }
 
     public void VisitImplementationNode(IImplementationNode implementationNode)

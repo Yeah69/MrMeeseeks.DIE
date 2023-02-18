@@ -34,7 +34,6 @@ internal interface INodeVisitor
     void VisitTupleNode(ITupleNode tupleNode);
     void VisitValueTupleNode(IValueTupleNode valueTupleNode);
     void VisitValueTupleSyntaxNode(IValueTupleSyntaxNode valueTupleSyntaxNode);
-    void VisitCollectionNode(ICollectionNode collectionNode);
     void VisitImplementationNode(IImplementationNode implementationNode);
     void VisitParameterNode(IParameterNode parameterNode);
     void VisitOutParameterNode(IOutParameterNode outParameterNode);

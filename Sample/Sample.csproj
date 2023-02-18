@@ -9,6 +9,7 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     <LangVersion>11</LangVersion>
+    <RestoreAdditionalProjectSources>./_SupportPackages</RestoreAdditionalProjectSources>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,13 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Main\Main.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </ProjectReference>
+    <PackageReference Include="MrMeeseeks.DIE" Version="2.0.0-alpha.0.16" />
   </ItemGroup>
 
 </Project>

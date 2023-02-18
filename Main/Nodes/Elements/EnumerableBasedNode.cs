@@ -1,7 +1,6 @@
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.ResolutionBuilding.Function;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 

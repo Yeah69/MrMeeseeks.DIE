@@ -1,5 +1,3 @@
-using MrMeeseeks.DIE.ResolutionBuilding.Function;
-
 namespace MrMeeseeks.DIE;
 
 public enum DieExceptionKind
@@ -36,10 +34,10 @@ public class ImplementationCycleDieException : DieException
 
 public class FunctionCycleDieException : DieException
 {
-    public FunctionCycleDieException(IImmutableStack<FunctionResolutionBuilderHandle> cycle) => Cycle = cycle;
+    public FunctionCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
 
     public override DieExceptionKind Kind => DieExceptionKind.FunctionCycle;
-    public IImmutableStack<FunctionResolutionBuilderHandle> Cycle { get; }
+    public IImmutableStack<string> Cycle { get; }
 }
 
 public class ValidationDieException : DieException

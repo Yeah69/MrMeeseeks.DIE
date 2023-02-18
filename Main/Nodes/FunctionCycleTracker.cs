@@ -1,6 +1,5 @@
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.ResolutionBuilding.Function;
 
 namespace MrMeeseeks.DIE.Nodes;
 
@@ -35,12 +34,12 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
                 return; // one of the previous roots checked this node already
             if (visited.Contains(current))
             {
-                var cycleStack = ImmutableStack.Create(new FunctionResolutionBuilderHandle(current, current.Description));
+                var cycleStack = ImmutableStack.Create(current.Description);
                 IFunctionNode i;
                 do
                 {
                     i = stack.Pop();
-                    cycleStack = cycleStack.Push(new FunctionResolutionBuilderHandle(i, current.Description));
+                    cycleStack = cycleStack.Push(current.Description);
                 } while (i != current && stack.Any());
                 throw new FunctionCycleDieException(cycleStack);
             }

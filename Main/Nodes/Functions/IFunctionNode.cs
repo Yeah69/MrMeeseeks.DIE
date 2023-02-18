@@ -2,7 +2,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.ResolutionBuilding.Function;
 using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;

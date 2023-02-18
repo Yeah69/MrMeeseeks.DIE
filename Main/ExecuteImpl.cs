@@ -2,7 +2,6 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.ResolutionBuilding;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Visitors;
 
@@ -20,7 +19,6 @@ internal class ExecuteImpl : IExecute
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly IValidateContainer _validateContainer;
-    private readonly Func<IContainerInfo, IContainerResolutionBuilder> _containerResolutionBuilderFactory;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
     private readonly Func<IContainerInfo, IContainerNode> _containerNodeFactory;
     private readonly Func<ICodeGenerationVisitor> _codeGeneratorVisitorFactory;
@@ -32,7 +30,6 @@ internal class ExecuteImpl : IExecute
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
         IValidateContainer validateContainer,
-        Func<IContainerInfo, IContainerResolutionBuilder> containerResolutionBuilderFactory,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
         Func<IContainerInfo, IContainerNode> containerNodeFactory,
         Func<ICodeGenerationVisitor> codeGeneratorVisitorFactory,
@@ -43,7 +40,6 @@ internal class ExecuteImpl : IExecute
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
         _validateContainer = validateContainer;
-        _containerResolutionBuilderFactory = containerResolutionBuilderFactory;
         _containerInfoFactory = containerInfoFactory;
         _containerNodeFactory = containerNodeFactory;
         _codeGeneratorVisitorFactory = codeGeneratorVisitorFactory;
@@ -74,24 +70,12 @@ internal class ExecuteImpl : IExecute
                         .ToImmutableArray();
                     if (!validationDiagnostics.Any())
                     {
+                        // todo fix phases
                         currentPhase = ExecutionPhase.Resolution;
-                        var containerResolutionBuilder = _containerResolutionBuilderFactory(containerInfo);
-                        containerResolutionBuilder.AddCreateResolveFunctions(containerInfo.CreateFunctionData);
-
-                        /* todo replace while (containerResolutionBuilder.HasWorkToDo)
-                        {
-                            containerResolutionBuilder.DoWork();
-                        }*/
                         currentPhase = ExecutionPhase.CycleDetection;
-                        // todo replace containerResolutionBuilder.FunctionCycleTracker.DetectCycle();
-                        
                         currentPhase = ExecutionPhase.ResolutionBuilding;
-                        // todo replace var containerResolution = containerResolutionBuilder.Build();
-                        
                         currentPhase = ExecutionPhase.CodeGeneration;
-                        // todo replace_containerGenerator.Generate(containerInfo, containerResolution);
                         
-                        // todo complete visitor way
                         var containerNode = _containerNodeFactory(containerInfo);
                         containerNode.Build(ImmutableStack.Create<INamedTypeSymbol>());
                         

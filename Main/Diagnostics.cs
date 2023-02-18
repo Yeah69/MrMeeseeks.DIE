@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Extensions;
-using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;
 
@@ -24,7 +23,7 @@ internal static class Diagnostics
     
     internal static Diagnostic CircularReferenceAmongFactories(FunctionCycleDieException exception, ExecutionPhase phase)
     {
-        var cycleText = string.Join(" --> ", exception.Cycle.Select(f => f.Description));
+        var cycleText = string.Join(" --> ", exception.Cycle);
         
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_01",
                 "Circular Reference Exception (among factories)",

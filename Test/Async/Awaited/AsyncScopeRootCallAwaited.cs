@@ -36,7 +36,7 @@ public class Tests
     public async Task Test()
     {
         await using var container = new Container();
-        var root = await container.CreateValueAsync().ConfigureAwait(false);
+        var root = await container.Create().ConfigureAwait(false);
         Assert.True(root.Dep.IsInitialized);
     }
 }

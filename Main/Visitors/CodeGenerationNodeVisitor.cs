@@ -198,7 +198,7 @@ private partial void {{Constants.UserDefinedAddForDisposal}}({{_wellKnownTypes.I
 
         if (rangeNode is { AddForDisposalAsync: true, DisposalHandling.AsyncCollectionReference: { } asyncCollectionReference })
             _code.AppendLine($$"""
-private partial void {{Constants.UserDefinedAddForDisposal}}({{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable) =>
+private partial void {{Constants.UserDefinedAddForDisposalAsync}}({{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable) =>
 {{asyncCollectionReference}}.Add(({{_wellKnownTypes.IAsyncDisposable.FullName()}}) asyncDisposable);
 """);
         GenerateDisposalFunction(rangeNode);

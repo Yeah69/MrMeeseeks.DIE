@@ -45,26 +45,25 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
 
     public string FullName { get; }
     public string Name { get; }
-    public IFunctionCallNode BuildTransientScopeInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction)
-    {
-        var typeKey = type.ToTypeKey();
-        if (!_interfaceFunctions.TryGetValue(typeKey, out var interfaceFunctionList))
-        {
-            interfaceFunctionList = new List<IRangedInstanceInterfaceFunctionNode>();
-            _interfaceFunctions[typeKey] = interfaceFunctionList;
-        }
-        var interfaceFunction = _rangedInstanceInterfaceFunctionNodeFactory(
+    public IFunctionCallNode BuildTransientScopeInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction) =>
+        FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
-            callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
-            _container,
-            _container,
-            _referenceGenerator)
-            .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
-        interfaceFunctionList.Add(interfaceFunction);
-        foreach (var range in _ranges)
-            interfaceFunction.AddConsideredRange(range);
-        return interfaceFunction.CreateCall(ownerReference, callingFunction, callingFunction);
-    }
+            callingFunction,
+            _interfaceFunctions,
+            () =>
+            {
+                var interfaceFunction = _rangedInstanceInterfaceFunctionNodeFactory(
+                        type,
+                        callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                        _container,
+                        _container,
+                        _referenceGenerator)
+                    .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
+                foreach (var range in _ranges)
+                    interfaceFunction.AddConsideredRange(range);
+                return interfaceFunction;
+            },
+            f => f.CreateCall(ownerReference, callingFunction, callingFunction));
 
     public IEnumerable<IRangedInstanceInterfaceFunctionNode> Functions => _interfaceFunctions.Values.SelectMany(x => x);
 

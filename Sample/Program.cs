@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Sample;
+using MrMeeseeks.DIE.Test.Composite.ScopeRoot;
 
 internal class Program
 {
@@ -9,7 +9,7 @@ internal class Program
         try
         {
             await using var container = new Container();
-            var asdf = container.Create();
+            var asdf = container.CreateDep();
             Console.WriteLine("Hello, World!");
         }
         catch (Exception e)

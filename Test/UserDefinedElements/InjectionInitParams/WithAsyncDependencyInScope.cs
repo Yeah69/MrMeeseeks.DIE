@@ -42,7 +42,7 @@ public class Tests
     public async Task Test()
     {
         await using var container = new Container();
-        var instance = await container.CreateAsync().ConfigureAwait(false);
+        var instance = await container.Create().ConfigureAwait(false);
         Assert.Equal(69, instance.Dependency.Number);
     }
 }

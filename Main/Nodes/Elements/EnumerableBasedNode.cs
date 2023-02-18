@@ -96,6 +96,12 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         var collectionsInnerType = CollectionUtility.GetCollectionsInnerType(_collectionType);
+
+        var enumerableType = Type == EnumerableBasedType.IAsyncEnumerable 
+            ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(collectionsInnerType)
+            : _wellKnownTypesCollections.IEnumerable1.Construct(collectionsInnerType);
+        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction, this);
+        
         if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1))
             Type = EnumerableBasedType.IEnumerable;
         if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1))
@@ -284,11 +290,6 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableStack.FullName());
         }
-
-        var enumerableType = Type == EnumerableBasedType.IAsyncEnumerable 
-            ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(collectionsInnerType)
-            : _wellKnownTypesCollections.IEnumerable1.Construct(collectionsInnerType);
-        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction, this);
     }
 
     public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitEnumerableBasedNode(this);

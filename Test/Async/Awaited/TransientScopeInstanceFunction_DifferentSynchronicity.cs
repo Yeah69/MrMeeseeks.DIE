@@ -75,8 +75,8 @@ public class Tests
     public async Task Test()
     {
         await using var container = new Container();
-        var instance0 = container.Create0ValueAsync();
-        var _ = container.Create1ValueAsync();
+        var instance0 = container.Create0();
+        var _ = container.Create1();
         Assert.True((((await instance0.ConfigureAwait(false)).Dependency).Inner as DependencyA)?.IsInitialized);
     }
 }

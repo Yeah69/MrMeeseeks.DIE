@@ -54,7 +54,7 @@ internal class ScopeCallNode : FunctionCallNode, IScopeCallNode
 
     public string? DisposableCollectionReference => DisposalType switch
     {
-        DisposalType.Async => _callingRange.DisposalHandling.AsyncCollectionReference,
+        DisposalType.Async | DisposalType.Sync or DisposalType.Async => _callingRange.DisposalHandling.AsyncCollectionReference,
         DisposalType.Sync => _callingRange.DisposalHandling.SyncCollectionReference,
         _ => null
     };

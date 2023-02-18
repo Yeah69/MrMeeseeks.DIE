@@ -291,7 +291,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateScopeCallNode,
                 CreateTransientScopeCallNode,
                 CreateElementNodeMapper,
-                CreateOverridingElementNodeMapper,
+                CreateOverridingElementNodeWithDecorationMapper,
                 wellKnownTypes,
                 wellKnownTypesCollections);
 
@@ -403,7 +403,6 @@ public class SourceGenerator : ISourceGenerator
                 CreateNullNode,
                 CreateLocalFunctionNode,
                 CreateOverridingElementNodeMapper,
-                CreateOverridingElementNodeMapperComposite,
                 CreateNonWrapToCreateElementNodeMapper,
                 CreateTransientScopeDisposalTriggerNode);
 
@@ -545,7 +544,7 @@ public class SourceGenerator : ISourceGenerator
         IOverridingElementNodeMapper CreateOverridingElementNodeMapper(
             IElementNodeMapperBase parentElementNodeMapper,
             ElementNodeMapperBase.PassedDependencies passedDependencies,
-            (TypeKey, INamedTypeSymbol) @override) =>
+            ImmutableQueue<(TypeKey, INamedTypeSymbol)> @override) =>
             new OverridingElementNodeMapper(
                 parentElementNodeMapper,
                 passedDependencies,
@@ -571,7 +570,37 @@ public class SourceGenerator : ISourceGenerator
                 CreateNullNode,
                 CreateLocalFunctionNode,
                 CreateOverridingElementNodeMapper,
-                CreateOverridingElementNodeMapperComposite,
+                CreateNonWrapToCreateElementNodeMapper);
+
+        IOverridingElementNodeWithDecorationMapper CreateOverridingElementNodeWithDecorationMapper(
+            IElementNodeMapperBase parentElementNodeMapper,
+            ElementNodeMapperBase.PassedDependencies passedDependencies,
+            (TypeKey, INamedTypeSymbol) @override) =>
+            new OverridingElementNodeWithDecorationMapper(
+                parentElementNodeMapper,
+                passedDependencies,
+                @override,
+                diagLogger,
+                wellKnownTypes,
+                wellKnownTypesCollections,
+                CreateFactoryFieldNode,
+                CreateFactoryPropertyNode,
+                CreateFactoryFunctionNode,
+                CreateValueTaskNode,
+                CreateTaskNode,
+                CreateValueTupleNode,
+                CreateValueTupleSyntaxNode,
+                CreateTupleNode,
+                CreateLazyNode,
+                CreateFuncNode,
+                CreateEnumerableBasedNode,
+                CreateAbstractionNode,
+                CreateImplementationNode,
+                CreateOutParameterNode,
+                CreateErrorNode,
+                CreateNullNode,
+                CreateLocalFunctionNode,
+                CreateOverridingElementNodeMapper,
                 CreateNonWrapToCreateElementNodeMapper);
 
         INonWrapToCreateElementNodeMapper CreateNonWrapToCreateElementNodeMapper(
@@ -601,40 +630,6 @@ public class SourceGenerator : ISourceGenerator
                 CreateNullNode,
                 CreateLocalFunctionNode,
                 CreateOverridingElementNodeMapper,
-                CreateOverridingElementNodeMapperComposite,
-                CreateNonWrapToCreateElementNodeMapper);
-
-        IOverridingElementNodeMapperComposite CreateOverridingElementNodeMapperComposite(
-            IElementNodeMapperBase parentElementNodeMapper,
-            ElementNodeMapperBase.PassedDependencies passedDependencies,
-            (TypeKey, IReadOnlyList<INamedTypeSymbol>) @override) =>
-            new OverridingElementNodeMapperComposite(
-                parentElementNodeMapper,
-                passedDependencies,
-                @override,
-                diagLogger,
-                wellKnownTypes,
-                wellKnownTypesCollections,
-                CreateFactoryFieldNode,
-                CreateFactoryPropertyNode,
-                CreateFactoryFunctionNode,
-                CreateValueTaskNode,
-                CreateTaskNode,
-                CreateValueTupleNode,
-                CreateValueTupleSyntaxNode,
-                CreateTupleNode,
-                CreateLazyNode,
-                CreateFuncNode,
-                CreateCollectionNode,
-                CreateEnumerableBasedNode,
-                CreateAbstractionNode,
-                CreateImplementationNode,
-                CreateOutParameterNode,
-                CreateErrorNode,
-                CreateNullNode,
-                CreateLocalFunctionNode,
-                CreateOverridingElementNodeMapper,
-                CreateOverridingElementNodeMapperComposite,
                 CreateNonWrapToCreateElementNodeMapper);
 
         IElementNodeMapper CreateElementNodeMapper(
@@ -672,7 +667,6 @@ public class SourceGenerator : ISourceGenerator
                 CreateNullNode,
                 CreateLocalFunctionNode,
                 CreateOverridingElementNodeMapper,
-                CreateOverridingElementNodeMapperComposite,
                 CreateNonWrapToCreateElementNodeMapper);
 
         IEnumerableBasedNode CreateEnumerableBasedNode(
@@ -715,8 +709,12 @@ public class SourceGenerator : ISourceGenerator
         IOutParameterNode CreateOutParameterNode(ITypeSymbol type, IReferenceGenerator referenceGenerator) =>
             new OutParameterNode(type, referenceGenerator);
 
-        IAbstractionNode CreateAbstractionNode(INamedTypeSymbol abstractionType, IElementNode elementNode, IReferenceGenerator referenceGenerator) =>
-            new AbstractionNode(abstractionType, elementNode, referenceGenerator);
+        IAbstractionNode CreateAbstractionNode(
+            INamedTypeSymbol abstractionType, 
+            INamedTypeSymbol implementationType,
+            IElementNodeMapperBase mapper,
+            IReferenceGenerator referenceGenerator) =>
+            new AbstractionNode(abstractionType, implementationType, mapper, referenceGenerator);
 
         ICollectionNode CreateCollectionNode(ITypeSymbol collectionType, IReadOnlyList<IElementNode> itemNodes, IReferenceGenerator referenceGenerator) =>
             new CollectionNode(collectionType, itemNodes, referenceGenerator);

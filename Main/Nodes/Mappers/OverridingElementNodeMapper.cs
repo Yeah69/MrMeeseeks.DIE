@@ -17,12 +17,14 @@ internal interface IOverridingElementNodeMapper : IElementNodeMapperBase
 
 internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingElementNodeMapper
 {
-    private readonly (TypeKey Key, INamedTypeSymbol ImplementationType) _override;
+    private readonly ImmutableQueue<(TypeKey Key, INamedTypeSymbol ImplementationType)> _override;
+    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
+    private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
 
     public OverridingElementNodeMapper(
         IElementNodeMapperBase parentElementNodeMapper,
         PassedDependencies passedDependencies,
-        (TypeKey, INamedTypeSymbol) @override,
+        ImmutableQueue<(TypeKey, INamedTypeSymbol)> @override,
         
         IDiagLogger diagLogger, 
         WellKnownTypes wellKnownTypes, 
@@ -38,14 +40,13 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
+        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
         : base(passedDependencies.ParentFunction, 
             passedDependencies.ParentRange, 
@@ -74,19 +75,27 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             nullNodeFactory,
             localFunctionNodeFactory,
             overridingElementNodeMapperFactory,
-            overridingElementNodeMapperCompositeFactory,
             nonWrapToCreateElementNodeMapperFactory)
     {
         Next = parentElementNodeMapper;
         _override = @override;
+        _abstractionNodeFactory = abstractionNodeFactory;
+        _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
     }
 
     protected override IElementNodeMapperBase NextForWraps => this;
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) =>
-        Equals(_override.Key, type.ToTypeKey()) 
-            ? MapToImplementation(_override.ImplementationType, implementationStack)
-            : base.Map(type, implementationStack);
+    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
+    {
+        if (_override.Any() && type is INamedTypeSymbol abstraction && Equals(_override.Peek().Key, type.ToTypeKey()))
+        {
+            var nextOverride = _override.Dequeue(out var currentOverride);
+            var mapper = _overridingElementNodeMapperFactory(this, MapperDependencies, nextOverride);
+            return _abstractionNodeFactory(abstraction, currentOverride.ImplementationType, mapper, MapperDependencies.ReferenceGenerator)
+                .EnqueueBuildJobTo(MapperDependencies.ParentContainer.BuildQueue, implementationStack);
+        }
+        return base.Map(type, implementationStack);
+    }
 }

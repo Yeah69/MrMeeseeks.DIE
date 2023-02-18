@@ -55,7 +55,7 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
-        mapper.MapToImplementation(_typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
+        mapper.MapToImplementationWithoutRanged(_typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
 
     protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
         IUserDefinedElements userDefinedElements, ICheckTypeProperties checkTypeProperties) =>

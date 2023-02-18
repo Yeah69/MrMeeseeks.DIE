@@ -16,6 +16,8 @@ internal interface IElementNodeMapperBase
     IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
     IElementNode MapToImplementation(INamedTypeSymbol implementationType,
         ImmutableStack<INamedTypeSymbol> implementationStack);
+    IElementNode MapToImplementationWithoutRanged(INamedTypeSymbol implementationType,
+        ImmutableStack<INamedTypeSymbol> implementationStack);
     IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
     ElementNodeMapperBase.PassedDependencies MapperDependencies { get; }
     void ResetFunction(ISingleFunctionNode parentFunction); // todo replace this workaround
@@ -51,14 +53,13 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> _lazyNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> _funcNodeFactory;
     private readonly Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> _enumerableBasedNodeFactory;
-    private readonly Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
+    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
     private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
     private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> _localFunctionNodeFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> _overridingElementNodeMapperCompositeFactory;
+    private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     internal ElementNodeMapperBase(
@@ -83,14 +84,13 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory,
         Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory,
+        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory,
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory)
     {
         ParentFunction = parentFunction;
@@ -120,7 +120,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _nullNodeFactory = nullNodeFactory;
         _localFunctionNodeFactory = localFunctionNodeFactory;
         _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
-        _overridingElementNodeMapperCompositeFactory = overridingElementNodeMapperCompositeFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
 
         MapperDependencies = new PassedDependencies(
@@ -307,7 +306,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             {
                 ScopeLevel.TransientScope => ParentRange.BuildTransientScopeCall(chosenImplementationType, ParentFunction),
                 ScopeLevel.Scope => ParentRange.BuildScopeCall(chosenImplementationType, ParentFunction),
-                _ => SwitchImplementation(chosenImplementationType, implementationStack)
+                _ => SwitchImplementation(chosenImplementationType, implementationStack, Next)
             };
 
             return ret;
@@ -327,35 +326,21 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     /// Meant as entry point for mappings where concrete implementation type is already chosen.
     /// </summary>
     public IElementNode MapToImplementation(INamedTypeSymbol implementationType,
-        ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-        if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is { } constructor)
-            return _implementationNodeFactory(
-                implementationType, 
-                constructor,
-                ParentFunction,
-                ParentRange,
-                NextForWraps, // Use the wrap variant, because "MapToImplementation" is entry point
-                _checkTypeProperties,
-                _userDefinedElements,
-                _referenceGenerator)
-                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
-            
-        if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
-            return _errorNodeFactory(implementationType.InstanceConstructors.Length switch
-            {
-                0 => $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                > 1 =>
-                    $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
-            }).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
-            
-        _diagLogger.Log(Diagnostics.NullResolutionWarning(
-            $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
-            ExecutionPhase.Resolution));
-        return _nullNodeFactory(implementationType, _referenceGenerator)
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
-    }
+        ImmutableStack<INamedTypeSymbol> implementationStack) =>
+        SwitchImplementation(
+            implementationType, 
+            implementationStack, 
+            NextForWraps); // Use NextForWraps, cause MapToImplementation is entry point
+
+    /// <summary>
+    /// Meant as entry point for mappings where concrete implementation type is already chosen.
+    /// </summary>
+    public IElementNode MapToImplementationWithoutRanged(INamedTypeSymbol implementationType,
+        ImmutableStack<INamedTypeSymbol> implementationStack) =>
+        SwitchImplementationWithoutRanged(
+            implementationType, 
+            implementationStack, 
+            NextForWraps); // Use NextForWraps, cause MapToImplementation is entry point
 
     public IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) => 
         _outParameterNodeFactory(type, _referenceGenerator)
@@ -366,7 +351,10 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ParentFunction = parentFunction;
     }
 
-    private IElementNode SwitchImplementation(INamedTypeSymbol implementationType, ImmutableStack<INamedTypeSymbol> implementationSet)
+    private IElementNode SwitchImplementation(
+        INamedTypeSymbol implementationType, 
+        ImmutableStack<INamedTypeSymbol> implementationSet,
+        IElementNodeMapperBase nextMapper)
     {
         var scopeLevel = _checkTypeProperties.GetScopeLevelFor(implementationType);
 
@@ -379,54 +367,52 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             ScopeLevel.Container => ParentRange.BuildContainerInstanceCall(implementationType, ParentFunction),
             ScopeLevel.TransientScope => ParentRange.BuildTransientScopeInstanceCall(implementationType, ParentFunction),
             ScopeLevel.Scope => ParentRange.BuildScopeInstanceCall(implementationType, ParentFunction),
-            _ => SwitchClass(implementationType)
+            _ => SwitchImplementationWithoutRanged(implementationType, implementationSet, nextMapper)
         };
 
         return ret;
+    }
 
-        IElementNode SwitchClass(INamedTypeSymbol impType)
-        {
-            if (_checkTypeProperties.GetConstructorChoiceFor(impType) is { } constructor)
-                return _implementationNodeFactory(
+    private IElementNode SwitchImplementationWithoutRanged(
+        INamedTypeSymbol impType, 
+        ImmutableStack<INamedTypeSymbol> implementationSet,
+        IElementNodeMapperBase nextMapper)
+    {
+        if (_checkTypeProperties.GetConstructorChoiceFor(impType) is { } constructor)
+            return _implementationNodeFactory(
                     impType, 
                     constructor, 
                     ParentFunction, 
                     ParentRange,
-                    Next, 
+                    nextMapper, 
                     _checkTypeProperties, 
                     _userDefinedElements,
                     _referenceGenerator)
-                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
-            
-            if (impType.NullableAnnotation != NullableAnnotation.Annotated)
-                return _errorNodeFactory(impType.InstanceConstructors.Length switch
-                {
-                    0 => $"Class.Constructor: No constructor found for implementation {impType.FullName()}",
-                    > 1 =>
-                        $"Class.Constructor: More than one constructor found for implementation {impType.FullName()}",
-                    _ => $"Class.Constructor: {impType.InstanceConstructors[0].Name} is not a method symbol"
-                }).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
-            
-            _diagLogger.Log(Diagnostics.NullResolutionWarning(
-                $"Interface: Multiple or no implementations where a single is required for \"{impType.FullName()}\", but injecting null instead.",
-                ExecutionPhase.Resolution));
-            return _nullNodeFactory(impType, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
-        }
+            
+        if (impType.NullableAnnotation != NullableAnnotation.Annotated)
+            return _errorNodeFactory(impType.InstanceConstructors.Length switch
+            {
+                0 => $"Class.Constructor: No constructor found for implementation {impType.FullName()}",
+                > 1 =>
+                    $"Class.Constructor: More than one constructor found for implementation {impType.FullName()}",
+                _ => $"Class.Constructor: {impType.InstanceConstructors[0].Name} is not a method symbol"
+            }).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
+            
+        _diagLogger.Log(Diagnostics.NullResolutionWarning(
+            $"Interface: Multiple or no implementations where a single is required for \"{impType.FullName()}\", but injecting null instead.",
+            ExecutionPhase.Resolution));
+        return _nullNodeFactory(impType, _referenceGenerator)
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
     }
     
     
 
     private IElementNode SwitchInterface(INamedTypeSymbol interfaceType, ImmutableStack<INamedTypeSymbol> implementationSet)
     {
-        if (_checkTypeProperties.ShouldBeComposite(interfaceType))
-        {
-            var implementations = _checkTypeProperties.MapToImplementations(interfaceType);
-            var compositeImplementationType = _checkTypeProperties.GetCompositeFor(interfaceType)
-                ?? throw new ImpossibleDieException(new Guid("73D630AF-CAE0-4869-A55B-8F54193E6274"));
-            var compositeMapper = _overridingElementNodeMapperCompositeFactory(this, MapperDependencies, (interfaceType.ConstructTypeUniqueKey(), implementations));
-            return MapToInterfaceForImplementation(compositeImplementationType, compositeMapper);
-        }
+        if (_checkTypeProperties.ShouldBeComposite(interfaceType)
+            && _checkTypeProperties.GetCompositeFor(interfaceType) is {} compositeImplementationType)
+            return SwitchInterfaceWithPotentialDecoration(interfaceType, compositeImplementationType, implementationSet, Next);
         if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType) is not { } impType)
         {
             if (interfaceType.NullableAnnotation == NullableAnnotation.Annotated)
@@ -441,31 +427,35 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
         }
 
-        return MapToInterfaceForImplementation(impType, this);
+        return SwitchInterfaceWithPotentialDecoration(interfaceType, impType, implementationSet, this);
+    }
 
-        IElementNode MapToInterfaceForImplementation(INamedTypeSymbol implementationType, IElementNodeMapperBase mapper)
-        {
-            var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
-        
-            var currentAbstractionNode = _abstractionNodeFactory(interfaceType, mapper.MapToImplementation(implementationType, implementationSet), _referenceGenerator)
+    protected IElementNode SwitchInterfaceWithPotentialDecoration(
+        INamedTypeSymbol interfaceType,
+        INamedTypeSymbol implementationType, 
+        ImmutableStack<INamedTypeSymbol> implementationSet,
+        IElementNodeMapperBase mapper) // todo mapper parameter needed?
+    {
+        var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
+        if (!shouldBeDecorated)
+            return _abstractionNodeFactory(interfaceType, implementationType, mapper, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
 
-            if (!shouldBeDecorated) return currentAbstractionNode;
+        var interfaceTypeKey = interfaceType.ConstructTypeUniqueKey();
+        var decoratorSequence = _checkTypeProperties.GetSequenceFor(interfaceType, implementationType)
+            .Reverse()
+            .Append(implementationType)
+            .ToList();
+        var outerDecorator = decoratorSequence[0];
+        var decoratorTypes = ImmutableQueue.CreateRange(
+            (decoratorSequence.Count > 1 
+                ? decoratorSequence.Skip(1) // skip the outer decorator
+                : decoratorSequence) 
+            .Select(t => (interfaceTypeKey, t))
+            .Append((interfaceTypeKey, implementationType)));
             
-            var decoratorTypes = new Queue<INamedTypeSymbol>(_checkTypeProperties.GetSequenceFor(interfaceType, implementationType));
-            while (decoratorTypes.Any())
-            {
-                var decoratorType = decoratorTypes.Dequeue();
-                // todo Is overriding still needed if MapToImplementation is used anyway? 
-                var overridingElementNodeMapperFactory = _overridingElementNodeMapperFactory(this, MapperDependencies, (interfaceType.ConstructTypeUniqueKey(), decoratorType));
-                currentAbstractionNode = _abstractionNodeFactory(
-                        interfaceType, 
-                        overridingElementNodeMapperFactory.MapToImplementation(decoratorType, implementationSet),
-                        _referenceGenerator)
-                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
-            }
-
-            return currentAbstractionNode;
-        }
+        var overridingMapper = _overridingElementNodeMapperFactory(this, MapperDependencies, decoratorTypes);
+        return _abstractionNodeFactory(interfaceType, outerDecorator, overridingMapper, _referenceGenerator)
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
     }
 }

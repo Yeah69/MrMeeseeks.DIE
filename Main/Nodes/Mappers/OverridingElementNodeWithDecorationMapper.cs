@@ -11,24 +11,18 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
-internal interface IOverridingElementNodeMapperComposite : IElementNodeMapperBase
+internal interface IOverridingElementNodeWithDecorationMapper : IElementNodeMapperBase
 {
 }
 
-internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOverridingElementNodeMapperComposite
+internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase, IOverridingElementNodeWithDecorationMapper
 {
-    private readonly (TypeKey Key, IReadOnlyList<INamedTypeSymbol> ImplementationTypes) _override;
-    private readonly WellKnownTypes _wellKnownTypes;
-    private readonly IContainerNode _parentContainer;
-    private readonly IReferenceGenerator _referenceGenerator;
-    
-    private readonly Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> _collectionNodeFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    private readonly (TypeKey Key, INamedTypeSymbol ImplementationType) _override;
 
-    public OverridingElementNodeMapperComposite(
+    public OverridingElementNodeWithDecorationMapper(
         IElementNodeMapperBase parentElementNodeMapper,
         PassedDependencies passedDependencies,
-        (TypeKey, IReadOnlyList<INamedTypeSymbol>) @override,
+        (TypeKey, INamedTypeSymbol) @override,
         
         IDiagLogger diagLogger, 
         WellKnownTypes wellKnownTypes, 
@@ -43,16 +37,14 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
         Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> tupleNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory, 
-        Func<ITypeSymbol, IReadOnlyList<IElementNode>, IReferenceGenerator, ICollectionNode> collectionNodeFactory, 
         Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, IElementNode, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
+        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, (TypeKey, IReadOnlyList<INamedTypeSymbol>), IOverridingElementNodeMapperComposite> overridingElementNodeMapperCompositeFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
         : base(passedDependencies.ParentFunction, 
             passedDependencies.ParentRange, 
@@ -61,7 +53,7 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
             passedDependencies.CheckTypeProperties,
             passedDependencies.ReferenceGenerator,
             diagLogger, 
-            wellKnownTypes,
+            wellKnownTypes, 
             wellKnownTypesCollections,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
@@ -81,52 +73,20 @@ internal class OverridingElementNodeMapperComposite : ElementNodeMapperBase, IOv
             nullNodeFactory,
             localFunctionNodeFactory,
             overridingElementNodeMapperFactory,
-            overridingElementNodeMapperCompositeFactory,
             nonWrapToCreateElementNodeMapperFactory)
     {
         Next = parentElementNodeMapper;
         _override = @override;
-        _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
-        _wellKnownTypes = wellKnownTypes;
-        _collectionNodeFactory = collectionNodeFactory;
-        _parentContainer = passedDependencies.ParentContainer;
-        _referenceGenerator = passedDependencies.ReferenceGenerator;
     }
 
     protected override IElementNodeMapperBase NextForWraps => this;
 
     protected override IElementNodeMapperBase Next { get; }
 
-    private bool IsLegitCompositeCollectionInnerType(ITypeSymbol innerCollectionType, TypeKey seekedType)
-    {
-        var currentInnerType = innerCollectionType;
-        do
-        {
-            if (currentInnerType.ToTypeKey().Equals(seekedType))
-                return true;
-            if (currentInnerType is not INamedTypeSymbol temp
-                || SymbolEqualityComparer.Default.Equals(_wellKnownTypes.Task1, temp.OriginalDefinition)
-                || SymbolEqualityComparer.Default.Equals(_wellKnownTypes.ValueTask1, temp.OriginalDefinition))
-                return false;
-            currentInnerType = temp;
-        } while (true);
-    }
-
     public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        if (IsCollectionType(type))
-        {
-            var itemType = GetCollectionsItemType(type);
-            if (IsLegitCompositeCollectionInnerType(itemType, _override.Item1))
-            {
-                var itemNodes = _override
-                    .ImplementationTypes
-                    .Select(n => _overridingElementNodeMapperFactory(this, MapperDependencies, (_override.Key, n)).Map(itemType, implementationStack))
-                    .ToList();
-                return _collectionNodeFactory(type, itemNodes, _referenceGenerator)
-                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
-            }
-        }
+        if (Equals(_override.Key, type.ToTypeKey()) && type is INamedTypeSymbol abstractionType)
+            return SwitchInterfaceWithPotentialDecoration(abstractionType, _override.ImplementationType, implementationStack, Next);
         return base.Map(type, implementationStack);
     }
 }

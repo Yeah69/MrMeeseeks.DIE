@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Collection.Injection.IAsyncEnumerable;
 
@@ -21,3 +21,13 @@ internal class ClassC : IInterface {}
 
 [CreateFunction(typeof(IAsyncEnumerable<IInterface>), "Create")]
 internal sealed partial class Container {}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        using var container = new Container();
+        var _ = container.Create();
+    }
+}

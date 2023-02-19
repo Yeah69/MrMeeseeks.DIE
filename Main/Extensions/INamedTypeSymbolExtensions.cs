@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Extensions;
 
@@ -36,7 +37,7 @@ internal static class INamedTypeSymbolExtensions
     }
     
     internal static INamedTypeSymbol UnboundIfGeneric(this INamedTypeSymbol type) =>
-        type.IsGenericType && !type.IsUnboundGenericType
+        type is { IsGenericType: true, IsUnboundGenericType: false }
             ? type.ConstructUnboundGenericType()
             : type;
     

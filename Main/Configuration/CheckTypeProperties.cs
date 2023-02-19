@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Extensions;
-using MrMeeseeks.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
@@ -58,11 +57,11 @@ internal class CheckTypeProperties : ICheckTypeProperties
         var ret = DisposalType.None;
         
         if (implementationType.AllInterfaces.Contains(_wellKnownTypes.IAsyncDisposable)
-            && _currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType.UnboundIfGeneric()).Not())
+            && !_currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
             ret |= DisposalType.Async;
         
         if (implementationType.AllInterfaces.Contains(_wellKnownTypes.IDisposable)
-            && _currentlyConsideredTypes.SyncTransientTypes.Contains(implementationType.UnboundIfGeneric()).Not())
+            && !_currentlyConsideredTypes.SyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
             ret |= DisposalType.Sync;
         
         return ret;

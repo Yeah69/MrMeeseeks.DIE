@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Delegates;
 

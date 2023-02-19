@@ -4,11 +4,12 @@
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <Version>$(MinVerVersion)</Version>
     <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
-    <LangVersion>10</LangVersion>
+    <LangVersion>11</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <Authors>Yeah69</Authors>
     <PackageIcon>Yeah69Logo_256.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,7 @@
       <Pack>true</Pack>
       <PackagePath/>
     </None>
+    <None Include="..\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <!-- General Package -->

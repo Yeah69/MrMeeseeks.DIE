@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         
         <RootNamespace>MrMeeseeks.DIE.Test</RootNamespace>
         <AssemblyName>MrMeeseeks.DIE.Test</AssemblyName>
@@ -26,17 +26,13 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="MrMeeseeks.DIE" Version="2.0.0-alpha.0.16" />
+        <PackageReference Include="MrMeeseeks.DIE" Version="2.0.0-alpha.0.17" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\TestChild\TestChild.csproj" />
         <ProjectReference Include="..\TestInternalsVisibleToChild\TestInternalsVisibleToChild.csproj" />
         <ProjectReference Include="..\TestNotInternalsVisibleToChild\TestNotInternalsVisibleToChild.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Async" />
     </ItemGroup>
 
 </Project>

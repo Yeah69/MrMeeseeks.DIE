@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 

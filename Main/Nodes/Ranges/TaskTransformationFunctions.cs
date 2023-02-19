@@ -1,3 +1,5 @@
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
+
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
 internal record UngenericToGenericData(

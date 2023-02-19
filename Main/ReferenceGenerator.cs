@@ -1,4 +1,5 @@
 using System.Threading;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 

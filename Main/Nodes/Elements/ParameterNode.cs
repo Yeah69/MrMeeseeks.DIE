@@ -1,19 +1,18 @@
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
 internal interface IParameterNode : IElementNode
 {
-    ITypeSymbol Type { get; }
 }
 
 internal class ParameterNode : IParameterNode
 {
     internal ParameterNode(ITypeSymbol type, IReferenceGenerator referenceGenerator)
     {
-        Type = type;
         TypeFullName = type.FullName();
-        Reference = referenceGenerator.Generate(Type);
+        Reference = referenceGenerator.Generate(type);
     }
 
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
@@ -23,6 +22,5 @@ internal class ParameterNode : IParameterNode
     public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitParameterNode(this);
 
     public string TypeFullName { get; }
-    public string Reference { get; private set; } = "";
-    public ITypeSymbol Type { get; }
+    public string Reference { get; }
 }

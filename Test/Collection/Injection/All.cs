@@ -1,53 +1,46 @@
-﻿/*using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test.Collection.Injection.All;
 
 internal interface IInterface
 {
-    string Parameter { get; }
 }
 
 internal class DependencyA : IInterface
 {
-    public required string Parameter { get; init; }
 }
 
 internal class DependencyB : IInterface
 {
-    public required string Parameter { get; init; }
 }
 
 internal class DependencyC : IInterface
 {
-    public required string Parameter { get; init; }
 }
 
 internal interface IAsyncInterface
 {
-    string Parameter { get; }
 }
 
 internal class AsyncDependencyA : IAsyncInterface, ITaskInitializer
 {
-    public required string Parameter { get; init; }
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
 internal class AsyncDependencyB : IAsyncInterface, IValueTaskInitializer
 {
-    public required string Parameter { get; init; }
     public async ValueTask InitializeAsync() => await Task.Yield();
 }
 
 internal class AsyncDependencyC : IAsyncInterface, ITaskInitializer
 {
-    public required string Parameter { get; init; }
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
@@ -148,7 +141,16 @@ internal class Root
     public required ImmutableStack<IAsyncInterface> DependencyAsyncImmutableStack { get; init; }
 }
 
-[CreateFunction(typeof(Root), "Create", typeof(string))]
+[CreateFunction(typeof(Root), "Create")]
 internal partial class Container
 {
-}*/
+}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        using var container = new Container();
+    }
+}

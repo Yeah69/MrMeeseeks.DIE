@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
@@ -59,7 +60,7 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache
                 .ReferencedAssemblySymbols
                 .Prepend(_context.Compilation.Assembly)
                 .SelectMany(ForAssembly)
-                .ToImmutableHashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
+                .ToImmutableHashSet<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default));
     }
 
     public IImmutableSet<INamedTypeSymbol> All => _all.Value;
@@ -75,11 +76,11 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache
     private IImmutableSet<INamedTypeSymbol> GetImplementationsFrom(IAssemblySymbol assemblySymbol)
     {
         var internalsAreVisible = 
-            SymbolEqualityComparer.Default.Equals(_context.Compilation.Assembly, assemblySymbol) 
+            CustomSymbolEqualityComparer.Default.Equals(_context.Compilation.Assembly, assemblySymbol) 
             ||assemblySymbol
                 .GetAttributes()
                 .Any(ad =>
-                    SymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypes.InternalsVisibleToAttribute)
+                    CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypes.InternalsVisibleToAttribute)
                     && ad.ConstructorArguments.Length == 1
                     && ad.ConstructorArguments[0].Value is string assemblyName
                     && Equals(assemblyName, _currentAssemblyName));
@@ -100,7 +101,7 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache
                 !nts.Name.StartsWith("<") 
                 && (nts.IsAccessiblePublicly() 
                     || internalsAreVisible && nts.IsAccessibleInternally()))
-            .ToImmutableHashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            .ToImmutableHashSet<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default);
     }
 
     private static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
@@ -148,7 +149,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         }
 
         AllConsideredImplementations = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             allImplementations.Select(t => t.UnboundIfGeneric()));
         
         ImplementationMap = allImplementations
@@ -156,11 +157,11 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             .GroupBy<(INamedTypeSymbol, INamedTypeSymbol), INamedTypeSymbol, INamedTypeSymbol>(
                 t => t.Item1.UnboundIfGeneric(), 
                 t => t.Item2, 
-                SymbolEqualityComparer.Default)
+                CustomSymbolEqualityComparer.Default)
             .ToDictionary<IGrouping<INamedTypeSymbol, INamedTypeSymbol>, INamedTypeSymbol, IImmutableSet<INamedTypeSymbol>>(
                 g => g.Key, 
-                g => ImmutableHashSet.CreateRange<INamedTypeSymbol>(SymbolEqualityComparer.Default, g),
-                SymbolEqualityComparer.Default);
+                g => ImmutableHashSet.CreateRange<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, g),
+                CustomSymbolEqualityComparer.Default);
         
         var transientTypes = GetSetOfTypesWithProperties(
             t => t.TransientAbstraction,
@@ -240,15 +241,15 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             .GroupBy(nts =>
             {
                 var namedTypeSymbol = nts.OriginalDefinition.AllInterfaces
-                    .Single(t => compositeInterfaces.Contains(t.UnboundIfGeneric(), SymbolEqualityComparer.Default));
+                    .Single(t => compositeInterfaces.Contains(t.UnboundIfGeneric(), CustomSymbolEqualityComparer.Default));
                 return namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol
                     ? interfaceTypeSymbol.UnboundIfGeneric()
                     : throw new ValidationDieException(ImmutableList.Create(Diagnostics.ValidationGeneral("Composite should implement composite interface")));
-            }, SymbolEqualityComparer.Default)
+            }, CustomSymbolEqualityComparer.Default)
             .Where(g => g.Count() == 1)
-            .ToDictionary(g => g.Key, g => g.Single(), SymbolEqualityComparer.Default);
+            .ToDictionary(g => g.Key, g => g.Single(), CustomSymbolEqualityComparer.Default);
 
-        var constructorChoices = new Dictionary<INamedTypeSymbol, IMethodSymbol>(SymbolEqualityComparer.Default);
+        var constructorChoices = new Dictionary<INamedTypeSymbol, IMethodSymbol>(CustomSymbolEqualityComparer.Default);
         
         foreach (var types in typesFromAttributes)
         {
@@ -261,7 +262,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         
         ImplementationToConstructorChoice = constructorChoices;
 
-        var propertyChoices = new Dictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>>(SymbolEqualityComparer.Default);
+        var propertyChoices = new Dictionary<INamedTypeSymbol, IReadOnlyList<IPropertySymbol>>(CustomSymbolEqualityComparer.Default);
         
         foreach (var types in typesFromAttributes)
         {
@@ -292,14 +293,14 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             .GroupBy(nts =>
             {
                 var namedTypeSymbol = nts.OriginalDefinition.AllInterfaces
-                    .Single(t => decoratorInterfaces.Contains(t.UnboundIfGeneric(), SymbolEqualityComparer.Default));
+                    .Single(t => decoratorInterfaces.Contains(t.UnboundIfGeneric(), CustomSymbolEqualityComparer.Default));
                 return namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol
                     ? interfaceTypeSymbol.UnboundIfGeneric()
                     : throw new ValidationDieException(ImmutableList.Create(Diagnostics.ValidationGeneral("Decorator should implement decorator interface")));
-            }, SymbolEqualityComparer.Default)
-            .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.ToList(), SymbolEqualityComparer.Default);
+            }, CustomSymbolEqualityComparer.Default)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.ToList(), CustomSymbolEqualityComparer.Default);
         
-        var decoratorSequenceChoices = new Dictionary<INamedTypeSymbol, DecoratorSequenceMap>(SymbolEqualityComparer.Default);
+        var decoratorSequenceChoices = new Dictionary<INamedTypeSymbol, DecoratorSequenceMap>(CustomSymbolEqualityComparer.Default);
         
         foreach (var types in typesFromAttributes)
         {
@@ -323,9 +324,9 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             .ToDictionary<KeyValuePair<INamedTypeSymbol, DecoratorSequenceMap>, INamedTypeSymbol, IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>>(
                 kvp => kvp.Key, 
                 kvp => kvp.Value.ToReadOnlyDictionary(),
-                SymbolEqualityComparer.Default);
+                CustomSymbolEqualityComparer.Default);
 
-        var initializers = new Dictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)>(SymbolEqualityComparer.Default);
+        var initializers = new Dictionary<INamedTypeSymbol, (INamedTypeSymbol, IMethodSymbol)>(CustomSymbolEqualityComparer.Default);
         
         foreach (var types in typesFromAttributes)
         {
@@ -402,7 +403,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
 
 
         var implementationChoices =
-            new Dictionary<INamedTypeSymbol, INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            new Dictionary<INamedTypeSymbol, INamedTypeSymbol>(CustomSymbolEqualityComparer.Default);
         
         foreach (var typesFromAttribute in typesFromAttributes)
         {
@@ -416,7 +417,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
         ImplementationChoices = implementationChoices;
 
         var implementationCollectionChoices =
-            new Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
+            new Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>(CustomSymbolEqualityComparer.Default);
         
         foreach (var typesFromAttribute in typesFromAttributes)
         {
@@ -441,7 +442,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
             foreach (var types in typesFromAttributes)
             {
                 var filteredTypes = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-                    SymbolEqualityComparer.Default,
+                    CustomSymbolEqualityComparer.Default,
                     filteredPropertyGivingImplementationTypesGetter(types).Select(t => t.UnboundIfGeneric()));
                 foreach (var type in filteredPropertyGivingAbstractTypesGetter(types))
                     if (implementationMap.TryGetValue(type.UnboundIfGeneric(), out var set)) 
@@ -450,7 +451,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
                 ret = ret.Except(filteredTypes);
                 
                 var addedTypes = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-                    SymbolEqualityComparer.Default,
+                    CustomSymbolEqualityComparer.Default,
                     propertyGivingImplementationTypesGetter(types).Select(t => t.UnboundIfGeneric()));
                 foreach (var type in propertyGivingAbstractTypesGetter(types))
                     if (implementationMap.TryGetValue(type.UnboundIfGeneric(), out var set)) 
@@ -487,7 +488,7 @@ internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes
 
     private class DecoratorSequenceMap
     {
-        private readonly Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> _map = new(SymbolEqualityComparer.Default);
+        private readonly Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> _map = new(CustomSymbolEqualityComparer.Default);
 
         public void Add(INamedTypeSymbol decoratedType, IReadOnlyList<INamedTypeSymbol> decoratorSequence) => 
             _map[decoratedType] = decoratorSequence;

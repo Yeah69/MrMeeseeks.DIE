@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -32,13 +33,13 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
     
     public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        if ((SymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.ValueTask1, _referenceType.OriginalDefinition)
-             || SymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.Task1, _referenceType.OriginalDefinition))
+        if ((CustomSymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.ValueTask1, _referenceType.OriginalDefinition)
+             || CustomSymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.Task1, _referenceType.OriginalDefinition))
             && _referenceType is INamedTypeSymbol namedReferenceType)
         {
             Awaited = true;
             AsyncReference = Reference;
-            SynchronicityDecision = SymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.ValueTask1, _referenceType.OriginalDefinition)
+            SynchronicityDecision = CustomSymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.ValueTask1, _referenceType.OriginalDefinition)
                 ? SynchronicityDecision.AsyncValueTask
                 : SynchronicityDecision.AsyncTask;
             AsyncTypeFullName = namedReferenceType.TypeArguments.First().FullName();

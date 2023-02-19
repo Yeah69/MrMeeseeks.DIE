@@ -7,6 +7,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
@@ -89,8 +90,8 @@ internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, 
     public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         if (type is INamedTypeSymbol namedType
-            && (SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IDisposable)
-                || SymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IAsyncDisposable)))
+            && (CustomSymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IDisposable)
+                || CustomSymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IAsyncDisposable)))
             return _transientScopeDisposalTriggerNodeFactory(namedType, _passedDependencies.ReferenceGenerator);
 
         return base.Map(type, implementationStack);

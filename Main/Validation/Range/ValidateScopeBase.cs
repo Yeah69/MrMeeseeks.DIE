@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range;
@@ -36,7 +37,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
 
         _notAllowedAttributeTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute,
             wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute,
             wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute,
@@ -75,9 +76,9 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         foreach (var notAllowedAttributeType in rangeType
                      .GetAttributes()
                      .Select(ad => ad.AttributeClass)
-                     .Distinct(SymbolEqualityComparer.Default)
+                     .Distinct(CustomSymbolEqualityComparer.Default)
                      .OfType<INamedTypeSymbol>()
-                     .Where(nts => _notAllowedAttributeTypes.Contains(nts, SymbolEqualityComparer.Default)))
+                     .Where(nts => _notAllowedAttributeTypes.Contains(nts, CustomSymbolEqualityComparer.Default)))
             yield return ValidationErrorDiagnostic(rangeType, containerType, $"{ScopeName}s aren't allowed to have attributes of type \"{notAllowedAttributeType.FullName()}\".");
 
         var isDefault = rangeType.Name == DefaultScopeName;
@@ -87,7 +88,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         {
             if (rangeType
                 .GetAttributes()
-                .Any(ad => SymbolEqualityComparer.Default.Equals(
+                .Any(ad => CustomSymbolEqualityComparer.Default.Equals(
                     ad.AttributeClass,
                     _wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute)))
                 yield return ValidationErrorDiagnostic(rangeType, containerType, $"A default (Transient)Scope isn't allowed to have the attribute of type \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\".");
@@ -97,7 +98,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         {
             if (rangeType
                 .GetAttributes()
-                .Count(ad => SymbolEqualityComparer.Default.Equals(
+                .Count(ad => CustomSymbolEqualityComparer.Default.Equals(
                     ad.AttributeClass,
                     _wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute)) != 1)
                 yield return ValidationErrorDiagnostic(rangeType, containerType, $"A custom (Transient)Scope has to have exactly one attribute of type \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\".");

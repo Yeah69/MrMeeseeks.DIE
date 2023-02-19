@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Validation.Attributes;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
@@ -134,8 +135,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         _containerType = containerType;
         _validateAttributes = validateAttributes;
         AttributeDictionary = attributeData
-            .GroupBy(ad => ad.AttributeClass, SymbolEqualityComparer.Default)
-            .ToDictionary(g => g.Key, g => g, SymbolEqualityComparer.Default);
+            .GroupBy(ad => ad.AttributeClass, CustomSymbolEqualityComparer.Default)
+            .ToDictionary(g => g.Key, g => g, CustomSymbolEqualityComparer.Default);
 
         Implementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
         TransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
@@ -205,7 +206,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .OriginalDefinition
                         .AllDerivedTypesAndSelf()
                         .Select(t => t.UnboundIfGeneric())
-                        .Contains(interfaceType, SymbolEqualityComparer.Default))
+                        .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                 {
                     _errors.Add(Diagnostics.ValidationConfigurationAttribute(
                         ad,
@@ -231,7 +232,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                                 .OriginalDefinition
                                 .AllDerivedTypesAndSelf()
                                 .Select(t => t.UnboundIfGeneric())
-                                .Contains(interfaceType, SymbolEqualityComparer.Default))
+                                .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                         {
                             _errors.Add(Diagnostics.ValidationConfigurationAttribute(
                                 ad,
@@ -271,7 +272,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .OriginalDefinition
                         .AllDerivedTypesAndSelf()
                         .Select(t => t.UnboundIfGeneric())
-                        .Contains(interfaceType, SymbolEqualityComparer.Default))
+                        .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                 {
                     _errors.Add(Diagnostics.ValidationConfigurationAttribute(
                         ad,
@@ -315,7 +316,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .Where(c => c.Parameters.Length == parameterTypes.Count)
                         .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
                             .Zip(parameterTypes,
-                                (pLeft, pRight) => SymbolEqualityComparer.Default.Equals(pLeft, pRight))
+                                (pLeft, pRight) => CustomSymbolEqualityComparer.Default.Equals(pLeft, pRight))
                             .All(b => b));
 
                     if (constructorChoice is { })
@@ -350,7 +351,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         }
 
         FilterConstructorChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterConstructorChoiceAttribute, out var filterConstructorChoiceAttributes) 
                 ? filterConstructorChoiceAttributes
                 : Enumerable.Empty<AttributeData>())
@@ -410,7 +411,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .OfType<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)>());
 
         FilterPropertyChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterPropertyChoiceAttribute, out var filterPropertyChoicesGroup)
                 ? filterPropertyChoicesGroup
                 : Enumerable.Empty<AttributeData>())
@@ -440,8 +441,8 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 if (initializationMethod is { })
                 {
                     if (!initializationMethod.ReturnsVoid
-                        && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
-                        && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
+                        && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
+                        && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
                     {
                         _errors.Add(Diagnostics.ValidationConfigurationAttribute(
                             ad,
@@ -466,7 +467,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
         
         FilterInitializers = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterInitializerAttribute, out var filterInitializerAttributes) 
                 ? filterInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
@@ -664,7 +665,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
         IImmutableSet<IAssemblySymbol> GetAssemblies(INamedTypeSymbol attributeType) =>
             ImmutableHashSet.CreateRange<IAssemblySymbol>(
-                SymbolEqualityComparer.Default,
+                CustomSymbolEqualityComparer.Default,
                 (AttributeDictionary.TryGetValue(attributeType, out var assemblyImplementationsAttributes)
                     ? assemblyImplementationsAttributes
                     : Enumerable.Empty<AttributeData>())
@@ -696,7 +697,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                             return t.ContainingAssembly;
                         })
                         .OfType<IAssemblySymbol>())
-                .Distinct(SymbolEqualityComparer.Default)
+                .Distinct(CustomSymbolEqualityComparer.Default)
                 .OfType<IAssemblySymbol>());
 
         AssemblyImplementations = GetAssemblies(wellKnownTypesAggregation.AssemblyImplementationsAggregationAttribute);
@@ -733,7 +734,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .OriginalDefinitionIfUnbound()
                         .AllDerivedTypesAndSelf()
                         .Select(t => t.UnboundIfGeneric())
-                        .Contains(unboundType, SymbolEqualityComparer.Default))
+                        .Contains(unboundType, CustomSymbolEqualityComparer.Default))
                 {
                     _errors.Add(Diagnostics.ValidationConfigurationAttribute(
                         ad,
@@ -777,7 +778,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                                 .OriginalDefinitionIfUnbound()
                                 .AllDerivedTypesAndSelf()
                                 .Select(t => t.UnboundIfGeneric())
-                                .Contains(unboundType, SymbolEqualityComparer.Default))
+                                .Contains(unboundType, CustomSymbolEqualityComparer.Default))
                         {
                             _errors.Add(Diagnostics.ValidationConfigurationAttribute(
                                 ad,
@@ -808,7 +809,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         INamedTypeSymbol attribute)
     {
         return ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             GetTypesFromAttribute(attribute)
                 .Where(t =>
                 {
@@ -831,7 +832,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         INamedTypeSymbol attribute)
     {
         return ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             GetTypesFromAttribute(attribute)
             .Where(t =>
             {

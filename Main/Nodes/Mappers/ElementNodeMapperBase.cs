@@ -8,6 +8,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
@@ -141,9 +142,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     protected abstract IElementNodeMapperBase Next { get; }
     
     protected bool IsCollectionType(ITypeSymbol potentialCollectionType) =>
-        SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
-        || SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
-        || SymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
+        CustomSymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
+        || CustomSymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
+        || CustomSymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
         || potentialCollectionType is IArrayTypeSymbol;
 
     public virtual IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
@@ -163,12 +164,12 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             return _factoryFunctionNodeFactory(method, ParentFunction, Next, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
+        if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
             && type is INamedTypeSymbol valueTask)
             return _valueTaskNodeFactory(valueTask, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Task1)
+        if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Task1)
             && type is INamedTypeSymbol task)
             return _taskNodeFactory(task, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
@@ -185,7 +186,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             return _tupleNodeFactory(tupleType, NextForWraps, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Lazy1)
+        if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Lazy1)
             && type is INamedTypeSymbol lazyType)
         {
             if (lazyType.TypeArguments.SingleOrDefault() is not { } valueType)
@@ -258,30 +259,30 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
         
-        if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1)
+        if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1)
             || type is IArrayTypeSymbol
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IList1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ICollection1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyCollection1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentBag1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentQueue1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentStack1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.HashSet1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.LinkedList1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.List1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Queue1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.SortedSet1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Stack1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1)
-            || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IList1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ICollection1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyCollection1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentBag1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentQueue1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentStack1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.HashSet1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.LinkedList1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.List1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Queue1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.SortedSet1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Stack1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
             return _enumerableBasedNodeFactory(type, ParentRange, ParentFunction, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 

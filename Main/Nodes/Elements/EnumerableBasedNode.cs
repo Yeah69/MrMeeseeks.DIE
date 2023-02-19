@@ -3,6 +3,7 @@ using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
@@ -97,9 +98,9 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
     {
         var collectionsInnerType = CollectionUtility.GetCollectionsInnerType(_collectionType);
         
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1))
             Type = EnumerableBasedType.IEnumerable;
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1))
             Type = EnumerableBasedType.IAsyncEnumerable;
         if (_collectionType is IArrayTypeSymbol)
         {
@@ -108,7 +109,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 $"{collectionsInnerType}[]", 
                 _referenceGenerator.Generate("array"));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IList1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IList1))
         {
             var collectionType = _wellKnownTypesCollections.IList1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.IList;
@@ -116,7 +117,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ICollection1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ICollection1))
         {
             var collectionType = _wellKnownTypesCollections.ICollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ICollection;
@@ -124,7 +125,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyCollection1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyCollection1))
         {
             var collectionType = _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ReadOnlyCollection;
@@ -133,7 +134,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType).FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1))
         {
             var collectionType = _wellKnownTypesCollections.IReadOnlyCollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.IReadOnlyCollection;
@@ -142,7 +143,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType).FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1))
         {
             var collectionType = _wellKnownTypesCollections.IReadOnlyList1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.IReadOnlyList;
@@ -151,7 +152,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType).FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1))
         {
             var collectionType = _wellKnownTypesCollections.ArraySegment1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ArraySegment;
@@ -159,7 +160,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ConcurrentBag1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ConcurrentBag1))
         {
             var collectionType = _wellKnownTypesCollections.ConcurrentBag1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ConcurrentBag;
@@ -167,7 +168,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ConcurrentQueue1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ConcurrentQueue1))
         {
             var collectionType = _wellKnownTypesCollections.ConcurrentQueue1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ConcurrentQueue;
@@ -175,7 +176,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ConcurrentStack1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ConcurrentStack1))
         {
             var collectionType = _wellKnownTypesCollections.ConcurrentStack1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ConcurrentStack;
@@ -183,7 +184,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.HashSet1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.HashSet1))
         {
             var collectionType = _wellKnownTypesCollections.HashSet1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.HashSet;
@@ -191,7 +192,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.LinkedList1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.LinkedList1))
         {
             var collectionType = _wellKnownTypesCollections.LinkedList1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.LinkedList;
@@ -199,7 +200,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.List1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.List1))
         {
             var collectionType = _wellKnownTypesCollections.List1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.List;
@@ -207,7 +208,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.Queue1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.Queue1))
         {
             var collectionType = _wellKnownTypesCollections.Queue1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.Queue;
@@ -215,7 +216,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.SortedSet1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.SortedSet1))
         {
             var collectionType = _wellKnownTypesCollections.SortedSet1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.SortedSet;
@@ -223,7 +224,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.Stack1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.Stack1))
         {
             var collectionType = _wellKnownTypesCollections.Stack1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.Stack;
@@ -231,7 +232,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableArray1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableArray;
@@ -240,7 +241,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableArray.FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableHashSet1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableHashSet;
@@ -249,7 +250,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableHashSet.FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableList1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableList;
@@ -258,7 +259,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableList.FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableQueue1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableQueue;
@@ -267,7 +268,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableQueue.FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableSortedSet1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableSortedSet;
@@ -276,7 +277,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableSortedSet.FullName());
         }
-        if (SymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
+        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableStack1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableStack;

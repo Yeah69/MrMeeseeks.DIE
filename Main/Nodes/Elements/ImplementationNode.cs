@@ -5,6 +5,7 @@ using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
@@ -74,7 +75,7 @@ internal class ImplementationNode : IImplementationNode
 
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        var implementationCycle = implementationStack.Contains(_implementationType, SymbolEqualityComparer.Default);
+        var implementationCycle = implementationStack.Contains(_implementationType, CustomSymbolEqualityComparer.Default);
 
         if (implementationCycle)
         {
@@ -86,7 +87,7 @@ internal class ImplementationNode : IImplementationNode
                 stack = stack.Pop(out var popped);
                 cycleStack = cycleStack.Push(popped);
                 i = popped;
-            } while (!SymbolEqualityComparer.Default.Equals(_implementationType, i));
+            } while (!CustomSymbolEqualityComparer.Default.Equals(_implementationType, i));
             
             throw new ImplementationCycleDieException(cycleStack);
         }
@@ -130,7 +131,7 @@ internal class ImplementationNode : IImplementationNode
                 AsyncReference = _referenceGenerator.Generate("task");
                 AsyncTypeFullName = initializerMethod.ReturnType.FullName(); // ReturnType can only be either ValueTask or Task at this point
                 SynchronicityDecision =
-                    SymbolEqualityComparer.Default.Equals(initializerMethod.ReturnType, _wellKnownTypes.ValueTask)
+                    CustomSymbolEqualityComparer.Default.Equals(initializerMethod.ReturnType, _wellKnownTypes.ValueTask)
                         ? SynchronicityDecision.AsyncValueTask
                         : SynchronicityDecision.AsyncTask;
                 _parentFunction.OnAwait(this);

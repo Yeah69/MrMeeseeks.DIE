@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
@@ -59,7 +60,7 @@ internal class ExecuteImpl : IExecute
                 .Select(x => ModelExtensions.GetDeclaredSymbol(semanticModel, x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x.GetAttributes().Any(ad => SymbolEqualityComparer.Default.Equals(_wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass)))
+                .Where(x => x.GetAttributes().Any(ad => CustomSymbolEqualityComparer.Default.Equals(_wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass)))
                 .ToList();
             foreach (var containerSymbol in containerClasses)
             {

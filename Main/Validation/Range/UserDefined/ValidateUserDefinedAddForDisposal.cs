@@ -1,3 +1,4 @@
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
@@ -63,7 +64,7 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
                 RefKind: RefKind.None,
                 HasExplicitDefaultValue: false
             }
-            && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
+            && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
         {
         }
 
@@ -73,7 +74,7 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
         if (!method.IsPartialDefinition)
             yield return ValidationErrorDiagnostic(method, rangeType, containerType, "User-defined part has to have the partial definition only.");
         
-        if (method.Parameters.Length != 1 || !SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type.OriginalDefinition, DisposableType.OriginalDefinition))
+        if (method.Parameters.Length != 1 || !CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type.OriginalDefinition, DisposableType.OriginalDefinition))
             yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have a single parameter which is of type \"{DisposableType.FullName()}\".");
         
         if (method.MethodKind != MethodKind.Ordinary)

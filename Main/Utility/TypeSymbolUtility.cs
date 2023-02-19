@@ -1,3 +1,4 @@
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
@@ -6,9 +7,9 @@ internal static class TypeSymbolUtility
 {
     internal static ITypeSymbol GetUnwrappedType(ITypeSymbol type, WellKnownTypes wellKnownTypes)
     {
-        if ((SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
-             || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
-             || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1))
+        if ((CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
+             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
+             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1))
             && type is INamedTypeSymbol namedType)
             return GetUnwrappedType(namedType.TypeArguments.First(), wellKnownTypes);
 
@@ -21,10 +22,10 @@ internal static class TypeSymbolUtility
     }
     internal static bool IsWrapType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
         IsAsyncWrapType(type, wellKnownTypes)
-        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)
+        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)
         || type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<");
 
     internal static bool IsAsyncWrapType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
-        SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
-        || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1);
+        CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
+        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1);
 }

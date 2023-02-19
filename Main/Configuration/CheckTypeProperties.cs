@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Configuration;
 
@@ -94,7 +95,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
         var compositeImplementation = _currentlyConsideredTypes.InterfaceToComposite[interfaceType.UnboundIfGeneric()];
         var implementations = GetClosedImplementations(
             interfaceType, 
-            ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, compositeImplementation), 
+            ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, compositeImplementation), 
             true,
             true,
             false);
@@ -119,7 +120,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                 when typeToChoseFrom
                     .InstanceConstructors.SingleOrDefault(c =>
                         c.Parameters.Length != 1 ||
-                        !SymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
+                        !CustomSymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
                 is { } constructor => constructor,
             
             // If value type and two constructors, decide for the constructor which isn't the parameterless constructor
@@ -165,7 +166,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
             {
                 var implementations = GetClosedImplementations(
                     interfaceType,
-                    ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, imp),
+                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, imp),
                     true,
                     false,
                     true);
@@ -192,7 +193,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
         {
             var possibleChoices = GetClosedImplementations(
                 type, 
-                ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, choice), 
+                ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, choice), 
                 true, 
                 false, 
                 false);
@@ -209,7 +210,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                 return type;
             var possibleConcreteTypeImplementations = GetClosedImplementations(
                 type,
-                ImmutableHashSet.Create<INamedTypeSymbol>(SymbolEqualityComparer.Default, type),
+                ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, type),
                 true,
                 false,
                 false);
@@ -242,7 +243,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
         if (isChoice || isCollectionChoice)
         {
             var set = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-                SymbolEqualityComparer.Default,
+                CustomSymbolEqualityComparer.Default,
                 isCollectionChoice && choiceCollection is { }
                     ? choiceCollection
                     : Enumerable.Empty<INamedTypeSymbol>());
@@ -283,14 +284,14 @@ internal class CheckTypeProperties : ICheckTypeProperties
             {
                 if (originalImplementation.AllDerivedTypesAndSelf()
                     .FirstOrDefault(t =>
-                        SymbolEqualityComparer.Default.Equals(t, targetType)) is { })
+                        CustomSymbolEqualityComparer.Default.Equals(t, targetType)) is { })
                     AddImplementation(ret, implementation);
                 continue;
             }
 
             if (originalImplementation.AllDerivedTypesAndSelf()
                     .FirstOrDefault(t =>
-                        SymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), unboundTargetType)) is { } implementationsTarget)
+                        CustomSymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), unboundTargetType)) is { } implementationsTarget)
             {
                 var newTypeArguments = originalImplementation.TypeArguments
                     .Select(ta => ta switch
@@ -305,7 +306,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                 {
                     if (implementationsTarget
                             .TypeArguments
-                            .IndexOf(tps, SymbolEqualityComparer.Default) is var index and >= 0)
+                            .IndexOf(tps, CustomSymbolEqualityComparer.Default) is var index and >= 0)
                         return targetClosedGenericParameters[index];
 
                     if (preferChoicesForOpenGenericParameters)
@@ -329,7 +330,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                     var closedImplementation = originalImplementation.Construct(newTypeArguments);
                     if (closedImplementation
                         .AllDerivedTypesAndSelf()
-                        .Any(t => SymbolEqualityComparer.Default.Equals(targetType, t)))
+                        .Any(t => CustomSymbolEqualityComparer.Default.Equals(targetType, t)))
                     {
                         AddImplementation(ret, closedImplementation);
                     }
@@ -342,7 +343,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                         .Select(tp =>
                         {
                             IImmutableSet<INamedTypeSymbol> substitutes = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-                                SymbolEqualityComparer.Default,
+                                CustomSymbolEqualityComparer.Default,
                                 _currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
                                     (unboundImplementation, tp), out var subs)
                                     ? subs
@@ -370,7 +371,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
                                 var closedImplementation = originalImplementation.Construct(veryNewTypeArguments);
                                 if (closedImplementation
                                     .AllDerivedTypesAndSelf()
-                                    .Any(t => SymbolEqualityComparer.Default.Equals(targetType, t)))
+                                    .Any(t => CustomSymbolEqualityComparer.Default.Equals(targetType, t)))
                                 {
                                     AddImplementation(ret, closedImplementation);
                                 }
@@ -427,7 +428,7 @@ internal class CheckTypeProperties : ICheckTypeProperties
     {
         if (_currentlyConsideredTypes.ImplementationToInitializer.TryGetValue(implementationType.UnboundIfGeneric(), out var tuple))
         {
-            return SymbolEqualityComparer.Default.Equals(
+            return CustomSymbolEqualityComparer.Default.Equals(
                 tuple.Item1.UnboundIfGeneric(), 
                 implementationType.UnboundIfGeneric()) 
                 ? (implementationType, tuple.Item2) 

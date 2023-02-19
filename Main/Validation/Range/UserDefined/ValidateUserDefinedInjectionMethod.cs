@@ -1,3 +1,4 @@
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
@@ -72,7 +73,7 @@ internal abstract class ValidateUserDefinedInjectionMethod : ValidateUserDefined
         
         if (method
                 .GetAttributes()
-                .Count(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, InjectionAttribute))
+                .Count(ad => CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, InjectionAttribute))
                 != 1)
             yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have exactly one attribute of type \"{InjectionAttribute.FullName()}\".");
     }

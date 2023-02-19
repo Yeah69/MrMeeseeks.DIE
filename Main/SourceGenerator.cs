@@ -13,6 +13,7 @@ using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
 
@@ -35,7 +36,7 @@ public class SourceGenerator : ISourceGenerator
         WellKnownTypesCollections wellKnownTypesCollections = WellKnownTypesCollections.Create(context.Compilation);
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
         var errorDescriptionInsteadOfBuildFailure = context.Compilation.Assembly.GetAttributes()
-            .Any(ad => SymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.ErrorDescriptionInsteadOfBuildFailureAttribute, ad.AttributeClass));
+            .Any(ad => CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.ErrorDescriptionInsteadOfBuildFailureAttribute, ad.AttributeClass));
 
         WellKnownTypes wellKnownTypes = WellKnownTypes.Create(context.Compilation);
         WellKnownTypesAggregation wellKnownTypesAggregation = WellKnownTypesAggregation.Create(context.Compilation);

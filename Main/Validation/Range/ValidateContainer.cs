@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range;
@@ -52,7 +53,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             foreach (var diagnostic in _validateTransientScopeFactory.Validate(defaultTransientScope, rangeType))
                 yield return diagnostic;
 
-        var customTransientScopeTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        var customTransientScopeTypes = new HashSet<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default);
         foreach (var customTransientScope in rangeType
                      .GetTypeMembers()
                      .Where(nts => nts.Name.StartsWith(Constants.CustomTransientScopeName)))
@@ -69,7 +70,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             foreach (var diagnostic in _validateScopeFactory.Validate(defaultScope, rangeType))
                 yield return diagnostic;
 
-        var customScopeTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        var customScopeTypes = new HashSet<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default);
         foreach (var customScope in rangeType
                      .GetTypeMembers()
                      .Where(nts => nts.Name.StartsWith(Constants.CustomScopeName)))
@@ -84,7 +85,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         var createFunctionAttributes = rangeType
             .GetAttributes()
             .Where(ad =>
-                SymbolEqualityComparer.Default.Equals(
+                CustomSymbolEqualityComparer.Default.Equals(
                     ad.AttributeClass, 
                     _wellKnownTypesMiscellaneous.CreateFunctionAttribute))
             .ToImmutableArray();
@@ -121,7 +122,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         {
             var customScopeAttributes = customScope
                 .GetAttributes()
-                .Where(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
+                .Where(ad => CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
                     _wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .ToArray();
 
@@ -136,7 +137,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
                 .OfType<INamedTypeSymbol>()
                 .ToList();
             foreach (var scopeRootType in scopeRootTypes
-                         .Where(scopeRootType => customScopeTypesSet.Contains(scopeRootType, SymbolEqualityComparer.Default)))
+                         .Where(scopeRootType => customScopeTypesSet.Contains(scopeRootType, CustomSymbolEqualityComparer.Default)))
             {
                 yield return ValidationErrorDiagnostic(rangeType, containerType, $"Custom scope \"{customScope.Name}\" gets the type \"{scopeRootType.FullName()}\" passed into one of its \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\"-attributes, but it is already in use in another custom scope.");
             }

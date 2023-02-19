@@ -2,6 +2,7 @@ using System.Threading;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes;
 
@@ -128,8 +129,8 @@ internal class ScopeManager : IScopeManager
                 return ret;
             },
             LazyThreadSafetyMode.ExecutionAndPublication);
-        _customScopes = new Dictionary<INamedTypeSymbol, IScopeNode>(SymbolEqualityComparer.Default);
-        _customTransientScopes = new Dictionary<INamedTypeSymbol, ITransientScopeNode>(SymbolEqualityComparer.Default);
+        _customScopes = new Dictionary<INamedTypeSymbol, IScopeNode>(CustomSymbolEqualityComparer.Default);
+        _customTransientScopes = new Dictionary<INamedTypeSymbol, ITransientScopeNode>(CustomSymbolEqualityComparer.Default);
 
         _transientScopeRootTypeToScopeType = containerInfo
             .ContainerType
@@ -137,7 +138,7 @@ internal class ScopeManager : IScopeManager
             .Where(nts => nts.Name.StartsWith(Constants.CustomTransientScopeName))
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
-                    SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
+                    CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
                         wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
@@ -155,7 +156,7 @@ internal class ScopeManager : IScopeManager
             .ToDictionary<(INamedTypeSymbol rootType, INamedTypeSymbol nts), INamedTypeSymbol, INamedTypeSymbol>(
                 t => t.rootType, 
                 t => t.nts,
-                SymbolEqualityComparer.Default);
+                CustomSymbolEqualityComparer.Default);
         
         _scopeRootTypeToScopeType = containerInfo
             .ContainerType
@@ -163,7 +164,7 @@ internal class ScopeManager : IScopeManager
             .Where(nts => nts.Name.StartsWith(Constants.CustomScopeName))
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
-                    SymbolEqualityComparer.Default.Equals(ad.AttributeClass,
+                    CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
                         wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
@@ -181,7 +182,7 @@ internal class ScopeManager : IScopeManager
             .ToDictionary<(INamedTypeSymbol rootType, INamedTypeSymbol nts), INamedTypeSymbol, INamedTypeSymbol>(
                 t => t.rootType, 
                 t => t.nts,
-                SymbolEqualityComparer.Default);
+                CustomSymbolEqualityComparer.Default);
     }
 
     public IScopeNode GetScope(INamedTypeSymbol scopeRootType)

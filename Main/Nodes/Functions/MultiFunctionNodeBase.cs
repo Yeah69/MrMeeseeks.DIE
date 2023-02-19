@@ -6,6 +6,7 @@ using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -75,9 +76,9 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
         ItemTypeFullName = CollectionUtility.GetCollectionsInnerType(enumerableType).FullName();
 
         SuppressAsync =
-            SymbolEqualityComparer.Default.Equals(wellKnownTypesCollections.IAsyncEnumerable1, enumerableType.OriginalDefinition);
+            CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesCollections.IAsyncEnumerable1, enumerableType.OriginalDefinition);
         IsAsyncEnumerable =
-            SymbolEqualityComparer.Default.Equals(wellKnownTypesCollections.IAsyncEnumerable1, enumerableType.OriginalDefinition);
+            CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesCollections.IAsyncEnumerable1, enumerableType.OriginalDefinition);
 
         Name = referenceGenerator.Generate("CreateMulti", enumerableType);
     }

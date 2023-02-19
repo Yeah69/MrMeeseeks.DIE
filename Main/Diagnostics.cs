@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
@@ -73,7 +74,7 @@ internal static class Diagnostics
     
     internal static Diagnostic ValidationUserDefinedElement(ISymbol userDefinedElement, INamedTypeSymbol parentRange, INamedTypeSymbol parentContainer, string specification, ExecutionPhase phase)
     {
-        var rangeDescription = SymbolEqualityComparer.Default.Equals(parentRange, parentContainer)
+        var rangeDescription = CustomSymbolEqualityComparer.Default.Equals(parentRange, parentContainer)
             ? $"parent-Container \"{parentContainer.Name}\""
             : $"Range \"{parentRange.Name}\" in parent-Container \"{parentContainer.Name}\"";
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_03",
@@ -91,7 +92,7 @@ internal static class Diagnostics
             ? "assembly level"
             : parentRange is null || parentContainer is null 
                 ? "default Range"
-                : SymbolEqualityComparer.Default.Equals(parentRange, parentContainer)
+                : CustomSymbolEqualityComparer.Default.Equals(parentRange, parentContainer)
                     ? $"parent-Container \"{parentContainer.Name}\""
                     : $"Range \"{parentRange.Name}\" in parent-Container \"{parentContainer.Name}\"";
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_03",

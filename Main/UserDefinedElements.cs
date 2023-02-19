@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
 
@@ -63,7 +64,7 @@ internal class UserDefinedElements : IUserDefinedElements
                     _ => throw new ImpossibleDieException(new Guid("B75E24B2-61A3-4C37-B5A5-C7E6D390279D"))
                 };
                 return GetAsyncUnwrappedType(outerType, wellKnownTypes);
-            }, SymbolEqualityComparer.Default)
+            }, CustomSymbolEqualityComparer.Default)
             .Where(g => g.Count() > 1)
             .ToImmutableArray();
 
@@ -120,7 +121,7 @@ internal class UserDefinedElements : IUserDefinedElements
                 IsPartialDefinition: true,
                 Name: Constants.UserDefinedAddForDisposal,
                 Parameters.Length: 1
-            } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IDisposable))
+            } method && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IDisposable))
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
         
@@ -133,7 +134,7 @@ internal class UserDefinedElements : IUserDefinedElements
                 IsPartialDefinition: true,
                 Name: Constants.UserDefinedAddForDisposalAsync,
                 Parameters.Length: 1
-            } method && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IAsyncDisposable))
+            } method && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IAsyncDisposable))
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
 
@@ -156,7 +157,7 @@ internal class UserDefinedElements : IUserDefinedElements
             .Select(m =>
             {
                 var type = m.GetAttributes()
-                    .Where(ad => SymbolEqualityComparer.Default.Equals(ad.AttributeClass, attributeType))
+                    .Where(ad => CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, attributeType))
                     .Select(ad =>
                     {
                         if (ad.ConstructorArguments.Length != 1)
@@ -172,7 +173,7 @@ internal class UserDefinedElements : IUserDefinedElements
             .ToImmutableArray();
 
             var injectionMethodGroupings = injectionMethodCandidates
-                .GroupBy(t => t.Item1, SymbolEqualityComparer.Default)
+                .GroupBy(t => t.Item1, CustomSymbolEqualityComparer.Default)
                 .Where(g => g.Count() > 1)
                 .ToImmutableArray();
             
@@ -198,8 +199,8 @@ internal class UserDefinedElements : IUserDefinedElements
         
         static ITypeSymbol GetAsyncUnwrappedType(ITypeSymbol type, WellKnownTypes wellKnownTypes)
         {
-            if ((SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
-                 || SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1))
+            if ((CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
+                 || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1))
                 && type is INamedTypeSymbol namedType)
                 return namedType.TypeArguments.First();
 

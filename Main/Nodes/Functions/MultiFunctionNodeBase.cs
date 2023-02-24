@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -27,7 +26,7 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapperBase> _typeToElementNodeMapperFactory;
-    private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
+    private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
     private readonly WellKnownTypes _wellKnownTypes;
 
     internal MultiFunctionNodeBase(
@@ -46,7 +45,7 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (TypeKey, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
+        Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
@@ -93,11 +92,11 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
         ICheckTypeProperties checkTypeProperties)
     {
         var baseMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer, userDefinedElements, checkTypeProperties, _referenceGenerator);
-        return concreteImplementationType is INamedTypeSymbol namedTypeSymbol
+        return concreteImplementationType is INamedTypeSymbol namedTypeSymbol && unwrappedType is INamedTypeSymbol namedUnwrappedType
             ? _overridingElementNodeWithDecorationMapperFactory(
                 baseMapper,
                 baseMapper.MapperDependencies,
-                (unwrappedType.ToTypeKey(), namedTypeSymbol))
+                (namedUnwrappedType, namedTypeSymbol))
             : baseMapper;
     }
 

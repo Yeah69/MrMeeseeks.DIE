@@ -573,7 +573,7 @@ public class SourceGenerator : ISourceGenerator
         IOverridingElementNodeWithDecorationMapper CreateOverridingElementNodeWithDecorationMapper(
             IElementNodeMapperBase parentElementNodeMapper,
             ElementNodeMapperBase.PassedDependencies passedDependencies,
-            (TypeKey, INamedTypeSymbol) @override) =>
+            (INamedTypeSymbol, INamedTypeSymbol) @override) =>
             new OverridingElementNodeWithDecorationMapper(
                 parentElementNodeMapper,
                 passedDependencies,

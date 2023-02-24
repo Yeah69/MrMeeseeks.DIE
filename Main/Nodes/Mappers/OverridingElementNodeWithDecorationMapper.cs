@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -8,6 +7,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
@@ -17,12 +17,12 @@ internal interface IOverridingElementNodeWithDecorationMapper : IElementNodeMapp
 
 internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase, IOverridingElementNodeWithDecorationMapper
 {
-    private readonly (TypeKey Key, INamedTypeSymbol ImplementationType) _override;
+    private readonly (INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType) _override;
 
     public OverridingElementNodeWithDecorationMapper(
         IElementNodeMapperBase parentElementNodeMapper,
         PassedDependencies passedDependencies,
-        (TypeKey, INamedTypeSymbol) @override,
+        (INamedTypeSymbol, INamedTypeSymbol) @override,
         
         IDiagLogger diagLogger, 
         WellKnownTypes wellKnownTypes, 
@@ -83,10 +83,13 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-        if (Equals(_override.Key, type.ToTypeKey()) && type is INamedTypeSymbol abstractionType)
-            return SwitchInterfaceWithPotentialDecoration(abstractionType, _override.ImplementationType, implementationStack, Next);
-        return base.Map(type, implementationStack);
-    }
+    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) =>
+        CustomSymbolEqualityComparer.Default.Equals(_override.InterfaceType, type) 
+        && type is INamedTypeSymbol abstractionType
+            ? SwitchInterfaceWithPotentialDecoration(
+                abstractionType, 
+                _override.ImplementationType, 
+                implementationStack,
+                Next)
+            : base.Map(type, implementationStack);
 }

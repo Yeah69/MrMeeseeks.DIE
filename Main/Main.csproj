@@ -36,7 +36,7 @@
     
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     
-    <PackageReference Include="MrMeeseeks.SourceGeneratorUtility" Version="1.0.3" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="MrMeeseeks.SourceGeneratorUtility" Version="1.0.4" PrivateAssets="all" GeneratePathProperty="true" />
     <None Include="$(PkgMrMeeseeks_SourceGeneratorUtility)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 

@@ -353,7 +353,7 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
         var explicitInterfaceFullName = singleFunction.ExplicitInterfaceFullName is { } interfaceName
             ? $"{interfaceName}."
             : "";
-        var parameter = string.Join(",", singleFunction.Parameters.Select(r => $"{r.Item3.TypeFullName} {r.Item3.Reference}"));
+        var parameter = string.Join(",", singleFunction.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($$"""
 {{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{singleFunction.ReturnedTypeFullName}} {{singleFunction.Name}}({{parameter}})
 {
@@ -385,7 +385,7 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
 
     public void VisitRangedInstanceInterfaceFunctionNode(IRangedInstanceInterfaceFunctionNode rangedInstanceInterfaceFunctionNode)
     {
-        var parameter = string.Join(",", rangedInstanceInterfaceFunctionNode.Parameters.Select(r => $"{r.Item3.TypeFullName} {r.Item3.Reference}"));
+        var parameter = string.Join(",", rangedInstanceInterfaceFunctionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($"{rangedInstanceInterfaceFunctionNode.ReturnedTypeFullName} {rangedInstanceInterfaceFunctionNode.Name}({parameter});");
     }
 
@@ -404,7 +404,7 @@ private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGro
             var isAsync =
                 overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
             var parameters = string.Join(", ",
-                overload.Parameters.Select(p => $"{p.Item1} {p.Item3.Reference}"));
+                overload.Parameters.Select(p => $"{p.Node.TypeFullName} {p.Node.Reference}"));
             _code.AppendLine(rangedInstanceFunctionGroupNode.Level == ScopeLevel.TransientScope && overload.ExplicitInterfaceFullName is {} explicitInterfaceFullName
                 ? $"{(isAsync ? "async " : "")}{overload.ReturnedTypeFullName} {explicitInterfaceFullName}.{overload.Name}({parameters})"
                 : $"{Constants.PrivateKeyword} {(isAsync ? "async " : "")}{overload.ReturnedTypeFullName} {overload.Name}({parameters})");
@@ -733,7 +733,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         var explicitInterfaceFullName = multiFunctionNode.ExplicitInterfaceFullName is { } interfaceName
             ? $"{interfaceName}."
             : "";
-        var parameter = string.Join(",", multiFunctionNode.Parameters.Select(r => $"{r.Item3.TypeFullName} {r.Item3.Reference}"));
+        var parameter = string.Join(",", multiFunctionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($$"""
 {{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{multiFunctionNode.ReturnedTypeFullName}} {{multiFunctionNode.Name}}({{parameter}})
 {

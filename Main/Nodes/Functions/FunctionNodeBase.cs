@@ -49,7 +49,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _scopeCallNodeFactory = scopeCallNodeFactory;
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
         _wellKnownTypes = wellKnownTypes;
-        Parameters = parameters.Select(p=> (p.FullName(), p.ToTypeKey(), parameterNodeFactory(p, referenceGenerator)
+        Parameters = parameters.Select(p=> (p, parameterNodeFactory(p, referenceGenerator)
             .EnqueueBuildJobTo(parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty))).ToList();
         Accessibility = accessibility;
         ReturnedTypeFullName = typeSymbol.FullName();
@@ -58,15 +58,16 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
         var currentOverrides = ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty;
             
-        foreach (var (type, typeKey, parameter) in parameters.Zip(Parameters, (t, tuple) => (t, tuple.Item2, tuple.Item3)))
+        foreach (var (type, node) in parameters.Zip(Parameters, (t, tuple) => (t, tuple.Node)))
         {
+            var typeKey = type.ToTypeKey();
             if (setOfProcessedTypes.Contains(typeKey)
                 || type is not INamedTypeSymbol && type is not IArrayTypeSymbol)
                 continue;
 
             setOfProcessedTypes.Add(typeKey);
 
-            currentOverrides = currentOverrides.SetItem(typeKey, (type, parameter));
+            currentOverrides = currentOverrides.SetItem(typeKey, (type, node));
         }
             
         foreach (var kvp in closureParameters)
@@ -92,7 +93,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     public abstract void Accept(INodeVisitor nodeVisitor);
 
-    public ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> Overrides { get; protected set; }
+    public ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> Overrides { get; }
 
     public void RegisterAsyncWrapping(IPotentiallyAwaitedNode potentiallyAwaitedNode, ITaskNodeBase taskNodeBase)
     {
@@ -100,7 +101,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
     }
 
     public string Description => 
-        $"{ReturnedTypeFullName} {RangeFullName}.{Name}({string.Join(", ", Parameters.Select(p => $"{p.Item3.TypeFullName} {p.Item3.Reference}"))})";
+        $"{ReturnedTypeFullName} {RangeFullName}.{Name}({string.Join(", ", Parameters.Select(p => $"{p.Node.TypeFullName} {p.Node.Reference}"))})";
 
     public HashSet<IFunctionNode> CalledFunctions { get; } = new ();
 
@@ -152,7 +153,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         var call = _plainFunctionCallNodeFactory(
                 ownerReference,
                 this,
-                Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
+                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type.ToTypeKey()].Item2)).ToList(),
                 _referenceGenerator)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
@@ -170,7 +171,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 scope,
                 callingRange,
                 this,
-                Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
+                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type.ToTypeKey()].Item2)).ToList(),
                 _referenceGenerator)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
@@ -192,7 +193,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 _parentContainer,
                 callingRange,
                 this,
-                Parameters.Select(t => (t.Item3, callingFunction.Overrides[t.Item2].Item2)).ToList(),
+                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type.ToTypeKey()].Item2)).ToList(),
                 _referenceGenerator)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
@@ -213,5 +214,5 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public abstract string Name { get; protected set; }
     public string ReturnedTypeFullName { get; private set; }
 
-    public IReadOnlyList<(string, TypeKey, IParameterNode)> Parameters { get; protected set; }
+    public IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
 }

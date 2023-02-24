@@ -16,7 +16,7 @@ internal interface IFunctionNode : INode, IOnAwait
     Accessibility? Accessibility { get; }
     SynchronicityDecision SynchronicityDecision { get; }
     string Name { get; }
-    IReadOnlyList<(string, TypeKey, IParameterNode)> Parameters { get; }
+    IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
     ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> Overrides { get; }
     string ReturnedTypeFullName { get; }
     void RegisterAsyncWrapping(IPotentiallyAwaitedNode potentiallyAwaitedNode, ITaskNodeBase taskNodeBase);

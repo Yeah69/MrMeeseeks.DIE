@@ -1,23 +1,28 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Sample;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.Collection.Injection.IAsyncEnumerable;
+namespace MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
 
 internal interface IInterface {}
 
-internal class ClassA : IInterface, IValueTaskInitializer
+internal class Dependency : IInterface {}
+
+internal class DependencyHolder
 {
-    public ValueTask InitializeAsync() => new();
+    public IInterface Dependency { get; }
+    internal DependencyHolder(IInterface dependency)
+    {
+        Dependency = dependency;
+    }
 }
 
-internal class ClassB : IInterface, ITaskInitializer
+[CreateFunction(typeof(DependencyHolder), "CreateHolder")]
+[CreateFunction(typeof(IInterface), "CreateInterface")]
+internal sealed partial class Container
 {
-    public Task InitializeAsync() => Task.CompletedTask;
+    private readonly IInterface DIE_Factory_dependency;
+
+    internal Container(IInterface dependency)
+    {
+        DIE_Factory_dependency = dependency;
+    }
 }
-
-internal class ClassC : IInterface {}
-
-[CreateFunction(typeof(IAsyncEnumerable<IInterface>), "Create")]
-internal sealed partial class Container {}

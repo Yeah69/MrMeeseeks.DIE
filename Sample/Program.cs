@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Test.Collection.Injection.IAsyncEnumerable;
+using MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
 
 internal class Program
 {
@@ -8,8 +8,8 @@ internal class Program
     {
         try
         {
-            await using var container = new Container();
-            var asdf = container.Create();
+            await using var container = new Container(new Dependency());
+            var asdf = container.CreateHolder();
             Console.WriteLine("Hello, World!");
         }
         catch (Exception)

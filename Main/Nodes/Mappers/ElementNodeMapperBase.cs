@@ -65,7 +65,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<string, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
     private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> _localFunctionNodeFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     internal ElementNodeMapperBase(
@@ -96,7 +96,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<string, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory)
     {
         ParentFunction = parentFunction;
@@ -445,7 +445,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             return _abstractionNodeFactory(interfaceType, implementationType, mapper, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
 
-        var interfaceTypeKey = interfaceType.ConstructTypeUniqueKey();
         var decoratorSequence = _checkTypeProperties.GetSequenceFor(interfaceType, implementationType)
             .Reverse()
             .Append(implementationType)
@@ -455,8 +454,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             (decoratorSequence.Count > 1 
                 ? decoratorSequence.Skip(1) // skip the outer decorator
                 : decoratorSequence) 
-            .Select(t => (interfaceTypeKey, t))
-            .Append((interfaceTypeKey, implementationType)));
+            .Select(t => (interfaceType, t))
+            .Append((interfaceType, implementationType)));
             
         var overridingMapper = _overridingElementNodeMapperFactory(this, MapperDependencies, decoratorTypes);
         return _abstractionNodeFactory(interfaceType, outerDecorator, overridingMapper, _referenceGenerator)

@@ -43,7 +43,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
         Func<string, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(TypeKey, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
+        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
         : base(parentFunction, 
             parentRange, 

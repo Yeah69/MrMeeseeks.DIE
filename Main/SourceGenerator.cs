@@ -542,7 +542,7 @@ public class SourceGenerator : ISourceGenerator
         IOverridingElementNodeMapper CreateOverridingElementNodeMapper(
             IElementNodeMapperBase parentElementNodeMapper,
             ElementNodeMapperBase.PassedDependencies passedDependencies,
-            ImmutableQueue<(TypeKey, INamedTypeSymbol)> @override) =>
+            ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> @override) =>
             new OverridingElementNodeMapper(
                 parentElementNodeMapper,
                 passedDependencies,

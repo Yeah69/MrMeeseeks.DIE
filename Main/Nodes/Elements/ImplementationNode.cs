@@ -1,9 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -101,21 +99,21 @@ internal class ImplementationNode : IImplementationNode
         UserDefinedInjectionProperties = userDefinedInjectionProperties;
         
         _constructorParameters.AddRange(_constructor.Parameters
-            .Select(p => (p.Name, MapToInjection((p.Type.ToTypeKey(), p.Name), p.Type, outParamsConstructor))));
+            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsConstructor))));
 
         _properties.AddRange((_checkTypeProperties.GetPropertyChoicesFor(_implementationType) ?? _implementationType
                 .GetMembers()
                 .OfType<IPropertySymbol>()
                 .Where(_ => !_implementationType.IsRecord)
                 .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false)))
-            .Select(p => (p.Name, MapToInjection((p.Type.ToTypeKey(), p.Name), p.Type, outParamsProperties))));
+            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsProperties))));
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })
         {
             var (userDefinedInjectionInitializer, outParamsInitializer) = GetUserDefinedInjection(_userDefinedElements.GetInitializerParametersInjectionFor(_implementationType));
 
             var initializerParameters = initializerMethod.Parameters
-                .Select(p => (p.Name, MapToInjection((p.Type.ToTypeKey(), p.Name), p.Type, outParamsInitializer)))
+                .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsInitializer)))
                 .ToList();
 
             Initializer = new Initialization(
@@ -145,9 +143,9 @@ internal class ImplementationNode : IImplementationNode
             AsyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterAsyncDisposal();
             
 
-        (UserDefinedInjection? UserdefinedInjection, IReadOnlyDictionary<(TypeKey TypeKey, string Name), IElementNode>) GetUserDefinedInjection(IMethodSymbol? method)
+        (UserDefinedInjection? UserdefinedInjection, IReadOnlyDictionary<string, IElementNode>) GetUserDefinedInjection(IMethodSymbol? method)
         {
-            if (method is not { }) return (null, new Dictionary<(TypeKey TypeKey, string Name), IElementNode>());
+            if (method is not { }) return (null, new Dictionary<string, IElementNode>());
             var injectionParameters = method
                 .Parameters
                 .Select(p =>
@@ -161,13 +159,13 @@ internal class ImplementationNode : IImplementationNode
                 .ToArray();
             return (
                 new UserDefinedInjection(method.Name, injectionParameters.Select(ip => (ip.Name, ip.Element, ip.IsOut)).ToArray()),
-                injectionParameters.Where(ip => ip.IsOut).ToDictionary(ip => (ip.Type.ToTypeKey(), ip.Name), ip => ip.Element));
+                injectionParameters.Where(ip => ip.IsOut).ToDictionary(ip => ip.Name, ip => ip.Element));
         }
 
         IElementNode MapToInjection(
-            (TypeKey TypeKey, string Name) key,
+            string key,
             ITypeSymbol typeParam,
-            IReadOnlyDictionary<(TypeKey TypeKey, string Name), IElementNode> outElementsCache) =>
+            IReadOnlyDictionary<string, IElementNode> outElementsCache) =>
             outElementsCache.TryGetValue(key, value: out var element)
                 ? element
                 : _elementNodeMapper.Map(typeParam, implementationStack);

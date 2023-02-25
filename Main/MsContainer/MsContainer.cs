@@ -8,11 +8,15 @@ internal sealed partial class MsContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
     private readonly Compilation DIE_Factory_Compilation;
+    private readonly IContainerInfo DIE_Factory_ContainerInfo;
 
-    public MsContainer(GeneratorExecutionContext context)
+    public MsContainer(
+        GeneratorExecutionContext context, 
+        IContainerInfo dieFactoryContainerInfo)
     {
-        DIE_Factory_GeneratorExecutionContext = context;
+        DIE_Factory_ContainerInfo = dieFactoryContainerInfo;
         DIE_Factory_Compilation = context.Compilation;
+        DIE_Factory_GeneratorExecutionContext = context;
     }
 
     private WellKnownTypes DIE_Factory_WellKnownTypes() => 

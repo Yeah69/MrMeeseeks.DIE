@@ -43,7 +43,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
-        Func<string, IErrorNode> errorNodeFactory, 
+        Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,

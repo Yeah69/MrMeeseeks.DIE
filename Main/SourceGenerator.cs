@@ -681,7 +681,11 @@ public class SourceGenerator : ISourceGenerator
 
         INullNode CreateNullNode(ITypeSymbol nullableType, IReferenceGenerator referenceGenerator) => new NullNode(nullableType, referenceGenerator);
 
-        IErrorNode CreateErrorNode(string message) => new ErrorNode(message, diagLogger);
+        IErrorNode CreateErrorNode(
+            string message,
+            ITypeSymbol currentType,
+            IRangeNode parentRange) => 
+            new ErrorNode(message, currentType, parentRange, diagLogger);
 
         IImplementationNode CreateImplementationNode(
             INamedTypeSymbol implementationType, 

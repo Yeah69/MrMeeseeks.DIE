@@ -1,4 +1,6 @@
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
@@ -9,19 +11,30 @@ internal interface IErrorNode : IElementNode
 
 internal class ErrorNode : IErrorNode
 {
+    private readonly ITypeSymbol _currentType;
+    private readonly IRangeNode _parentRange;
     private readonly IDiagLogger _diagLogger;
 
     internal ErrorNode(
         string message,
+        ITypeSymbol currentType,
+        IRangeNode parentRange,
         IDiagLogger diagLogger)
     {
+        _currentType = currentType;
+        _parentRange = parentRange;
         _diagLogger = diagLogger;
         Message = message;
     }
     
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        _diagLogger.Error(new ResolutionDieException(Message), ExecutionPhase.ResolutionBuilding);
+        var enhancedMessage = 
+            $"[R:{_parentRange.Name
+            }][TS:{(implementationStack.IsEmpty ? "empty" : implementationStack.Peek().FullName())
+            }][CT:{_currentType.FullName()}] {Message} [S:{
+                (implementationStack.IsEmpty ? "empty" : string.Join("<==", implementationStack.Select(t => t.FullName())))}]";
+        _diagLogger.Error(new ResolutionDieException(enhancedMessage), ExecutionPhase.ResolutionBuilding);
     }
 
     public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitErrorNode(this);

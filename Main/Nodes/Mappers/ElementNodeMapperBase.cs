@@ -61,7 +61,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
     private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> _outParameterNodeFactory;
-    private readonly Func<string, IErrorNode> _errorNodeFactory;
+    private readonly Func<string, ITypeSymbol, IRangeNode, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
     private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> _localFunctionNodeFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
@@ -92,7 +92,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory,
         Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
-        Func<string, IErrorNode> errorNodeFactory,
+        Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
@@ -185,11 +185,13 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             if (lazyType.TypeArguments.SingleOrDefault() is not { } valueType)
             {
                 return _errorNodeFactory(lazyType.TypeArguments.Length switch 
-                {
-                    0 => "Lazy: No type argument",
-                    > 1 => "Lazy: more than one type argument",
-                    _ => $"Lazy: {lazyType.TypeArguments.First().FullName()} is not a type symbol",
-                });
+                    {
+                        0 => "Lazy: No type argument",
+                        > 1 => "Lazy: more than one type argument",
+                        _ => $"Lazy: {lazyType.TypeArguments.First().FullName()} is not a type symbol", 
+                    },
+                    type,
+                    ParentRange);
             }
 
             var mapper = _nonWrapToCreateElementNodeMapperFactory(this, MapperDependencies);
@@ -219,11 +221,13 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         {
             if (funcType.TypeArguments.LastOrDefault() is not { } returnType)
             {
-                return _errorNodeFactory(funcType.TypeArguments.Length switch 
-                {
-                    0 => "Func: No type argument",
-                    _ => $"Func: {funcType.TypeArguments.Last().FullName()} is not a type symbol",
-                });
+                return _errorNodeFactory(funcType.TypeArguments.Length switch
+                    {
+                        0 => "Func: No type argument",
+                        _ => $"Func: {funcType.TypeArguments.Last().FullName()} is not a type symbol",
+                    },
+                    type,
+                    ParentRange);
             }
             
             var lambdaParameters = funcType
@@ -297,7 +301,10 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     return _nullNodeFactory(classOrStructType, _referenceGenerator)
                         .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
                 }
-                return _errorNodeFactory($"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",")
+                return _errorNodeFactory(
+                        $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",",
+                        type,
+                        ParentRange)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
 
@@ -308,7 +315,10 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 Next);
         }
 
-        return _errorNodeFactory("Couldn't process in resolution tree creation.")
+        return _errorNodeFactory(
+                "Couldn't process in resolution tree creation.",
+                type,
+                ParentRange)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
     }
     
@@ -388,15 +398,17 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     _userDefinedElements,
                     _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
-            
+
         if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
             return _errorNodeFactory(implementationType.InstanceConstructors.Length switch
-            {
-                0 => $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                > 1 =>
-                    $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
-            }).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
+                {
+                    0 => $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                    > 1 =>
+                        $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                    _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
+                },
+                implementationType,
+                ParentRange).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
         _diagLogger.Log(Diagnostics.NullResolutionWarning(
             $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
@@ -420,7 +432,10 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 return _nullNodeFactory(interfaceType, _referenceGenerator)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             }
-            return _errorNodeFactory($"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\".")
+            return _errorNodeFactory(
+                    $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\".",
+                    interfaceType,
+                    ParentRange)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
         }
 

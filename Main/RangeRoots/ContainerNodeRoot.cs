@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.RangeRoots;
@@ -10,8 +11,12 @@ internal interface IContainerNodeRoot
 
 internal class ContainerNodeRoot : IContainerNodeRoot
 {
-    public ContainerNodeRoot(ICodeGenerationVisitor codeGenerationVisitor)
+    public ContainerNodeRoot(
+        //IContainerNode container,
+        ICodeGenerationVisitor codeGenerationVisitor
+        )
     {
+        //Container = container;
         CodeGenerationVisitor = codeGenerationVisitor;
     }
 

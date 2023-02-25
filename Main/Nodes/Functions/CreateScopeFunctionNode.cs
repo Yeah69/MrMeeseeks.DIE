@@ -3,8 +3,8 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -36,7 +36,7 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
             Microsoft.CodeAnalysis.Accessibility.Internal,
             typeSymbol, 
             parameters,
-            ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty, 
+            ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentNode, 
             parentContainer, 
             userDefinedElements, 

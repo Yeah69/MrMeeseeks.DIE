@@ -54,7 +54,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
             {
                 var interfaceFunction = _rangedInstanceInterfaceFunctionNodeFactory(
                         type,
-                        callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                        callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
                         _container,
                         _container,
                         _referenceGenerator)

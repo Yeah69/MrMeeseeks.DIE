@@ -1,8 +1,8 @@
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -32,7 +32,7 @@ internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedIn
             Microsoft.CodeAnalysis.Accessibility.Private,
             type, 
             parameters,
-            ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty, 
+            ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
             parentRange,
             referenceGenerator, 

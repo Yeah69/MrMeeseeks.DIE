@@ -8,7 +8,6 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
@@ -412,7 +411,7 @@ public class SourceGenerator : ISourceGenerator
         ILocalFunctionNode CreateLocalFunctionNode(
             ITypeSymbol typeSymbol,
             IReadOnlyList<ITypeSymbol> parameters,
-            ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> closureParameters, 
+            ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters, 
             IRangeNode parentRange,
             IContainerNode parentContainer,
             IUserDefinedElements userDefinedElements,

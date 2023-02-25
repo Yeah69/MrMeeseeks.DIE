@@ -2,7 +2,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -17,7 +16,7 @@ internal interface IFunctionNode : INode, IOnAwait
     SynchronicityDecision SynchronicityDecision { get; }
     string Name { get; }
     IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
-    ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> Overrides { get; }
+    ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }
     string ReturnedTypeFullName { get; }
     void RegisterAsyncWrapping(IPotentiallyAwaitedNode potentiallyAwaitedNode, ITaskNodeBase taskNodeBase);
     string Description { get; }

@@ -52,7 +52,7 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
             Microsoft.CodeAnalysis.Accessibility.Private, 
             enumerableType, 
             parameters, 
-            ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty, 
+            ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
             parentNode,
             referenceGenerator,

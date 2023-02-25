@@ -54,7 +54,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
             () => _rangedInstanceFunctionNodeFactory(
                 Level,
                 _type,
-                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
                 _parentRange,
                 _parentContainer,
                 _userDefinedElements,

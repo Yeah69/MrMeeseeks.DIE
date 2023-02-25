@@ -77,7 +77,7 @@ internal class ScopeNode : RangeNode, IScopeNode
             _createFunctions,
             () => _createScopeFunctionNodeFactory(
                 type,
-                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
                 this,
                 ParentContainer,
                 UserDefinedElements,

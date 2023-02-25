@@ -37,7 +37,7 @@ internal static class FunctionResolutionUtility
         Func<TFunctionNode> functionNodeFactory)
         where TFunctionNode : IFunctionNode
     {
-        if (cache.Where(f => f.Parameters.All(k => callingFunction.Overrides.ContainsKey(k.Type.ToTypeKey())))
+        if (cache.Where(f => f.Parameters.All(k => callingFunction.Overrides.ContainsKey(k.Type)))
                 .OrderByDescending(f => f.Parameters)
                 .FirstOrDefault()
             is {} match)

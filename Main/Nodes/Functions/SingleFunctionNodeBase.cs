@@ -3,7 +3,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -25,7 +24,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         Accessibility? accessibility,
         ITypeSymbol typeSymbol,
         IReadOnlyList<ITypeSymbol> parameters,
-        ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> closureParameters,
+        ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IRangeNode parentNode,
         IContainerNode parentContainer,
         IUserDefinedElements userDefinedElements,

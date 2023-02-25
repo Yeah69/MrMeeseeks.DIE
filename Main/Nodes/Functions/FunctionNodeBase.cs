@@ -3,8 +3,8 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -30,7 +30,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Accessibility? accessibility,
         ITypeSymbol typeSymbol,
         IReadOnlyList<ITypeSymbol> parameters,
-        ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> closureParameters,
+        ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IContainerNode parentContainer,
         IRangeNode parentRange,
         IReferenceGenerator referenceGenerator,
@@ -54,33 +54,30 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Accessibility = accessibility;
         ReturnedTypeFullName = typeSymbol.FullName();
 
-        var setOfProcessedTypes = new HashSet<TypeKey>();
+        var setOfProcessedTypes = new HashSet<ITypeSymbol>(CustomSymbolEqualityComparer.IncludeNullability);
 
-        var currentOverrides = ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)>.Empty;
+        var currentOverrides = ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability);
             
         foreach (var (type, node) in parameters.Zip(Parameters, (t, tuple) => (t, tuple.Node)))
         {
-            var typeKey = type.ToTypeKey();
-            if (setOfProcessedTypes.Contains(typeKey)
+            if (setOfProcessedTypes.Contains(type)
                 || type is not INamedTypeSymbol && type is not IArrayTypeSymbol)
                 continue;
 
-            setOfProcessedTypes.Add(typeKey);
+            setOfProcessedTypes.Add(type);
 
-            currentOverrides = currentOverrides.SetItem(typeKey, (type, node));
+            currentOverrides = currentOverrides.SetItem(type, node);
         }
             
         foreach (var kvp in closureParameters)
         {
-            var typeKey = kvp.Key;
-                
-            if (setOfProcessedTypes.Contains(typeKey)
-                || kvp.Value.Item1 is not INamedTypeSymbol && kvp.Value.Item1 is not IArrayTypeSymbol)
+            if (setOfProcessedTypes.Contains(kvp.Key)
+                || kvp.Key is not INamedTypeSymbol && kvp.Key is not IArrayTypeSymbol)
                 continue;
 
-            setOfProcessedTypes.Add(typeKey);
+            setOfProcessedTypes.Add(kvp.Key);
 
-            currentOverrides = currentOverrides.SetItem(typeKey, kvp.Value);
+            currentOverrides = currentOverrides.SetItem(kvp.Key, kvp.Value);
         }
 
         Overrides = currentOverrides;
@@ -93,7 +90,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     public abstract void Accept(INodeVisitor nodeVisitor);
 
-    public ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> Overrides { get; }
+    public ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }
 
     public void RegisterAsyncWrapping(IPotentiallyAwaitedNode potentiallyAwaitedNode, ITaskNodeBase taskNodeBase)
     {
@@ -153,7 +150,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         var call = _plainFunctionCallNodeFactory(
                 ownerReference,
                 this,
-                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type.ToTypeKey()].Item2)).ToList(),
+                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 _referenceGenerator)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
@@ -171,7 +168,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 scope,
                 callingRange,
                 this,
-                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type.ToTypeKey()].Item2)).ToList(),
+                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 _referenceGenerator)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
@@ -193,7 +190,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 _parentContainer,
                 callingRange,
                 this,
-                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type.ToTypeKey()].Item2)).ToList(),
+                Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 _referenceGenerator)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         

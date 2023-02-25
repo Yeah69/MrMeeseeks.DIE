@@ -58,7 +58,7 @@ internal abstract class RangeNode : IRangeNode
             _multiFunctions,
             () => _multiFunctionNodeFactory(
                 type,
-                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
                 this,
                 ParentContainer,
                 UserDefinedElements,
@@ -125,7 +125,7 @@ internal abstract class RangeNode : IRangeNode
             _createFunctions,
             () => CreateFunctionNodeFactory(
                 type,
-                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
                 this,
                 ParentContainer,
                 UserDefinedElements,

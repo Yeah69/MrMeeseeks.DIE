@@ -75,7 +75,7 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode
             _createFunctions,
             () => _createTransientScopeFunctionNodeFactory(
                 type,
-                callingFunction.Overrides.Select(kvp => kvp.Value.Item1).ToList(),
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
                 this,
                 ParentContainer,
                 UserDefinedElements,

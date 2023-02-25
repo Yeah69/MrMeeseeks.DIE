@@ -1,5 +1,3 @@
-using MrMeeseeks.DIE.Extensions;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;

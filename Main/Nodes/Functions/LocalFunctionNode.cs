@@ -3,7 +3,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -19,7 +18,7 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode
     public LocalFunctionNode(
         ITypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
-        ImmutableSortedDictionary<TypeKey, (ITypeSymbol, IParameterNode)> closureParameters, 
+        ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters, 
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
         IUserDefinedElements userDefinedElements, 

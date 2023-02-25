@@ -17,6 +17,7 @@ internal class TaskNode : TaskNodeBase, ITaskNode
         IContainerNode parentContainer,
         IFunctionNode parentFunction,
         IElementNodeMapperBase elementNodeMapperBase,
+        
         IReferenceGenerator referenceGenerator)
         : base(taskType, parentContainer, parentFunction, elementNodeMapperBase, referenceGenerator)
     {

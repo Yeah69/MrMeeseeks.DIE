@@ -32,6 +32,7 @@ internal class ScopeCallNode : FunctionCallNode, IScopeCallNode
         IRangeNode callingRange,
         IFunctionNode calledFunction, 
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters, 
+        
         IReferenceGenerator referenceGenerator) 
         : base(null, calledFunction, parameters, referenceGenerator)
     {

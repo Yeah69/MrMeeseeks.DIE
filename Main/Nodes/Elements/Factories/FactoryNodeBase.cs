@@ -19,6 +19,7 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
     internal FactoryNodeBase(
         ITypeSymbol referenceType,
         ISymbol symbol,
+        
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)

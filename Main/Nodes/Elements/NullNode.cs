@@ -12,6 +12,7 @@ internal class NullNode : INullNode
 {
     internal NullNode(
         ITypeSymbol nullableType,
+        
         IReferenceGenerator referenceGenerator)
     {
         TypeFullName = nullableType.FullName();

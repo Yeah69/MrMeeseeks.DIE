@@ -1,4 +1,6 @@
-﻿namespace MrMeeseeks.DIE;
+﻿using MrMeeseeks.DIE.MsContainer;
+
+namespace MrMeeseeks.DIE;
 
 internal interface IDiagLogger
 {
@@ -7,7 +9,7 @@ internal interface IDiagLogger
     void Log(Diagnostic diagnostic);
 }
 
-internal class DiagLogger : IDiagLogger
+internal class DiagLogger : IDiagLogger, IContainerInstance
 {
     private readonly bool _ignoreErrors;
     private readonly GeneratorExecutionContext _context;
@@ -33,6 +35,9 @@ internal class DiagLogger : IDiagLogger
             case ValidationDieException validationDieException:
                 foreach (var error in validationDieException.Diagnostics)
                     Log(error);
+                break;
+            case ResolutionDieException resolutionDieException:
+                Log(Diagnostics.ResolutionException(resolutionDieException));
                 break;
             case CompilationDieException slippedResolution:
                 Log(slippedResolution.Diagnostic);

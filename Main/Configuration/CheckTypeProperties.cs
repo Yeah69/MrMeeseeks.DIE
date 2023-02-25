@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Configuration;
@@ -37,7 +38,7 @@ internal interface ICheckTypeProperties
     IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType);
 }
 
-internal class CheckTypeProperties : ICheckTypeProperties
+internal class CheckTypeProperties : ICheckTypeProperties, ITransientScopeInstance
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
     private readonly WellKnownTypes _wellKnownTypes;

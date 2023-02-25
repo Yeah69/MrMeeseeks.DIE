@@ -18,6 +18,7 @@ internal class ValueTupleNode : IValueTupleNode
     internal ValueTupleNode(
         INamedTypeSymbol valueTupleType,
         IElementNodeMapperBase elementNodeMapper,
+        
         IReferenceGenerator referenceGenerator)
     {
         _valueTupleType = valueTupleType;

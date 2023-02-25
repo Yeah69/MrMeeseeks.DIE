@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Visitors;
@@ -22,7 +23,7 @@ internal interface IContainerNode : IRangeNode
 
 internal record BuildJob(INode Node, ImmutableStack<INamedTypeSymbol> PreviousImplementations);
 
-internal class ContainerNode : RangeNode, IContainerNode
+internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IReferenceGenerator _referenceGenerator;
@@ -53,7 +54,7 @@ internal class ContainerNode : RangeNode, IContainerNode
 
     internal ContainerNode(
         IContainerInfo containerInfo,
-        ImmutableList<ITypesFromAttributes> typesFromAttributesList,
+        ImmutableList<ITypesFromAttributesBase> typesFromAttributesList,
         Func<INamedTypeSymbol, INamedTypeSymbol, IUserDefinedElements> userDefinedElementsFactory,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
@@ -64,7 +65,7 @@ internal class ContainerNode : RangeNode, IContainerNode
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> entryFunctionNodeFactory,
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<IReferenceGenerator, ITaskTransformationFunctions> taskTransformationFunctions,
-        Func<IContainerInfo, IContainerNode, ITransientScopeInterfaceNode, ImmutableList<ITypesFromAttributes>, IReferenceGenerator, IScopeManager> scopeManagerFactory,
+        Func<IContainerInfo, IContainerNode, ITransientScopeInterfaceNode, ImmutableList<ITypesFromAttributesBase>, IReferenceGenerator, IScopeManager> scopeManagerFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
             containerInfo.Name, 

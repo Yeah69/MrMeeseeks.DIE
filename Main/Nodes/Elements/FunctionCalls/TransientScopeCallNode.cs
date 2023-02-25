@@ -31,6 +31,7 @@ internal class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNod
         IRangeNode callingRange,
         IFunctionNode calledFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters, 
+        
         IReferenceGenerator referenceGenerator) 
         : base(null, calledFunction, parameters, referenceGenerator)
     {

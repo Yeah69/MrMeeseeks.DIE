@@ -18,6 +18,7 @@ internal class TupleNode : ITupleNode
     internal TupleNode(
         INamedTypeSymbol tupleType,
         IElementNodeMapperBase elementNodeMapper,
+        
         IReferenceGenerator referenceGenerator)
     {
         _tupleType = tupleType;

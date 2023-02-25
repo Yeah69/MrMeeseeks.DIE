@@ -1,4 +1,5 @@
 using System.Threading;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
@@ -11,7 +12,7 @@ internal interface IReferenceGenerator
     string Generate(string hardcodedName);
 }
 
-internal class ReferenceGenerator : IReferenceGenerator
+internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
 {
     private int _i = -1;
     private readonly int _j;
@@ -68,7 +69,7 @@ internal interface IReferenceGeneratorFactory
     IReferenceGenerator Create();
 }
 
-internal class ReferenceGeneratorFactory : IReferenceGeneratorFactory
+internal class ReferenceGeneratorFactory : IReferenceGeneratorFactory, IContainerInstance
 {
     private readonly Func<int, IReferenceGenerator> _referenceGeneratorFactory;
     private int _j = -1;

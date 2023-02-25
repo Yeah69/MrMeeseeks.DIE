@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
@@ -26,7 +27,7 @@ internal class EmptyUserDefinedElements : IUserDefinedElements
     public IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type) => null;
 }
 
-internal class UserDefinedElements : IUserDefinedElements
+internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstance
 {
     private readonly IReadOnlyDictionary<ITypeSymbol, IFieldSymbol> _typeToField;
     private readonly IReadOnlyDictionary<ITypeSymbol, IPropertySymbol> _typeToProperty;

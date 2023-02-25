@@ -867,6 +867,11 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
         }
     }
 
+    public void VisitErrorNode(IErrorNode errorNode)
+    {
+        // Nothing to do here
+    }
+
     public string GenerateContainerFile() => _code.ToString();
 
     private void ObjectDisposedCheck(

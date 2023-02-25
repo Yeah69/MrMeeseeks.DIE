@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Utility;
@@ -16,7 +17,7 @@ internal interface ITransientScopeInterfaceNode : INode
     void RegisterRange(IRangeNode range);
 }
 
-internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
+internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
 {
     private readonly IContainerNode _container;
     private readonly IReferenceGenerator _referenceGenerator;

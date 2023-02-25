@@ -1,11 +1,12 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
-internal interface ITypesFromAttributes
+internal interface ITypesFromAttributesBase
 {
     IImmutableSet<INamedTypeSymbol> Implementation { get; }
     IImmutableSet<INamedTypeSymbol> TransientAbstraction { get; }
@@ -67,9 +68,11 @@ internal interface ITypesFromAttributes
     IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
 }
 
-internal class TypesFromAttributes : ScopeTypesFromAttributes
+internal interface ITypesFromAttributes : ITypesFromAttributesBase {}
+
+internal class TypesFromAttributesBase : ScopeTypesFromAttributesBase, ITypesFromAttributes, IContainerInstance
 {
-    internal TypesFromAttributes(
+    internal TypesFromAttributesBase(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
         INamedTypeSymbol? rangeType,
@@ -110,7 +113,9 @@ internal class TypesFromAttributes : ScopeTypesFromAttributes
     }
 }
 
-internal class ScopeTypesFromAttributes : ITypesFromAttributes
+internal interface IScopeTypesFromAttributes : ITypesFromAttributesBase {}
+
+internal class ScopeTypesFromAttributesBase : IScopeTypesFromAttributes, ITransientScopeInstance
 {
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;
@@ -118,7 +123,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     protected readonly List<Diagnostic> _warnings = new(); 
     protected readonly List<Diagnostic> _errors = new();
 
-    internal ScopeTypesFromAttributes(
+    internal ScopeTypesFromAttributesBase(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
         INamedTypeSymbol? rangeType,

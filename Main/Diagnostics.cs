@@ -177,7 +177,7 @@ internal static class Diagnostics
                 DiagnosticSeverity.Error, 
                 true),
             Location.None);
-    }
+    } // todo use that for sync disposable injection in async container
     
     internal static Diagnostic IncompleteCompilationProcessingError(string message, ExecutionPhase phase)
     {
@@ -185,6 +185,17 @@ internal static class Diagnostics
                 "Incomplete Compilation Processing Error",
                 $"[DIE] {PhaseToString(phase)} {message}", 
                 "Error",
+                DiagnosticSeverity.Error, 
+                true),
+            Location.None);
+    }
+    
+    internal static Diagnostic ResolutionException(ResolutionDieException exception)
+    {
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_64_00", 
+                "Impossible Exception",
+                $"[DIE] {PhaseToString(ExecutionPhase.ResolutionBuilding)} {exception.Message}", 
+                "Error", 
                 DiagnosticSeverity.Error, 
                 true),
             Location.None);

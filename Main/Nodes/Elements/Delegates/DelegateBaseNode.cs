@@ -14,6 +14,7 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
     internal DelegateBaseNode(
         INamedTypeSymbol delegateType,
         ILocalFunctionNode function,
+        
         IReferenceGenerator referenceGenerator)
     {
         MethodGroup = function.Name;

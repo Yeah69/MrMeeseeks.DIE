@@ -41,6 +41,7 @@ internal abstract class TaskNodeBase : ITaskNodeBase
         IContainerNode parentContainer,
         IFunctionNode parentFunction,
         IElementNodeMapperBase elementNodeMapperBase,
+        
         IReferenceGenerator referenceGenerator)
     {
         _taskType = taskType;

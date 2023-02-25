@@ -1,6 +1,7 @@
 using System.Threading;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.SourceGeneratorUtility;
 
@@ -14,12 +15,12 @@ internal interface IScopeManager
     IEnumerable<ITransientScopeNode> TransientScopes { get; }
 }
 
-internal class ScopeManager : IScopeManager
+internal class ScopeManager : IScopeManager, IContainerInstance
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IContainerNode _container;
     private readonly ITransientScopeInterfaceNode _transientScopeInterface;
-    private readonly ImmutableList<ITypesFromAttributes> _containerTypesFromAttributesList;
+    private readonly ImmutableList<ITypesFromAttributesBase> _containerTypesFromAttributesList;
     private readonly IReferenceGenerator _referenceGenerator;
 
     private readonly Func<
@@ -39,8 +40,8 @@ internal class ScopeManager : IScopeManager
         ICheckTypeProperties,
         IReferenceGenerator,
         ITransientScopeNode> _transientScopeFactory;
-    private readonly Func<INamedTypeSymbol?, ImmutableArray<AttributeData>, ScopeTypesFromAttributes> _scopeTypesFromAttributesFactory;
-    private readonly Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> _checkTypePropertiesFactory;
+    private readonly Func<INamedTypeSymbol?, ImmutableArray<AttributeData>, ScopeTypesFromAttributesBase> _scopeTypesFromAttributesFactory;
+    private readonly Func<IReadOnlyList<ITypesFromAttributesBase>, ICheckTypeProperties> _checkTypePropertiesFactory;
     private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IUserDefinedElements> _userProvidedScopeElementsFactory;
     private readonly Lazy<IScopeNode> _defaultScope;
     private readonly Lazy<ITransientScopeNode> _defaultTransientScope;
@@ -53,7 +54,7 @@ internal class ScopeManager : IScopeManager
         IContainerInfo containerInfo,
         IContainerNode container,
         ITransientScopeInterfaceNode transientScopeInterface,
-        ImmutableList<ITypesFromAttributes> containerTypesFromAttributesList,
+        ImmutableList<ITypesFromAttributesBase> containerTypesFromAttributesList,
         IReferenceGenerator referenceGenerator,
         Func<
             string,
@@ -72,8 +73,8 @@ internal class ScopeManager : IScopeManager
             ICheckTypeProperties,
             IReferenceGenerator,
             ITransientScopeNode> transientScopeFactory,
-        Func<INamedTypeSymbol?, ImmutableArray<AttributeData>, ScopeTypesFromAttributes> scopeTypesFromAttributesFactory,
-        Func<IReadOnlyList<ITypesFromAttributes>, ICheckTypeProperties> checkTypePropertiesFactory,
+        Func<INamedTypeSymbol?, ImmutableArray<AttributeData>, ScopeTypesFromAttributesBase> scopeTypesFromAttributesFactory,
+        Func<IReadOnlyList<ITypesFromAttributesBase>, ICheckTypeProperties> checkTypePropertiesFactory,
         Func<INamedTypeSymbol, INamedTypeSymbol, IUserDefinedElements> userProvidedScopeElementsFactory,
         IUserDefinedElements emptyUserDefinedElements,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)

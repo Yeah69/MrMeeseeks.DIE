@@ -11,6 +11,7 @@ internal class OutParameterNode : IOutParameterNode
 {
     internal OutParameterNode(
         ITypeSymbol type,
+        
         IReferenceGenerator referenceGenerator)
     {
         TypeFullName = type.FullName();

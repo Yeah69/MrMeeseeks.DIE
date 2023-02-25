@@ -48,6 +48,7 @@ internal class ImplementationNode : IImplementationNode
     internal ImplementationNode(
         INamedTypeSymbol implementationType,
         IMethodSymbol constructor,
+        
         IFunctionNode parentFunction,
         IRangeNode parentRange,
         IElementNodeMapperBase elementNodeMapper,

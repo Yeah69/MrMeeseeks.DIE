@@ -83,7 +83,7 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedFactoryField,
             wellKnownTypes,
             wellKnownTypesMiscellaneous);
-        var assemblyTypesFromAttributes = new TypesFromAttributes(
+        var assemblyTypesFromAttributes = new TypesFromAttributesBase(
             context.Compilation.Assembly.GetAttributes(), 
             null,
             null,
@@ -120,7 +120,7 @@ public class SourceGenerator : ISourceGenerator
         IContainerNode ContainerNodeFactory(
             IContainerInfo ci)
         {
-            var containerTypesFromAttributes = new TypesFromAttributes(
+            var containerTypesFromAttributes = new TypesFromAttributesBase(
                 ci.ContainerType.GetAttributes(),
                 ci.ContainerType,
                 ci.ContainerType,
@@ -137,7 +137,7 @@ public class SourceGenerator : ISourceGenerator
                 throw new ValidationDieException(containerTypesFromAttributes.Errors.ToImmutableArray());
 
             var containerTypesFromAttributesList = ImmutableList.Create(
-                (ITypesFromAttributes)assemblyTypesFromAttributes,
+                (ITypesFromAttributesBase)assemblyTypesFromAttributes,
                 containerTypesFromAttributes);
 
             return new ContainerNode(
@@ -190,7 +190,7 @@ public class SourceGenerator : ISourceGenerator
             IContainerInfo containerInfo,
             IContainerNode container,
             ITransientScopeInterfaceNode transientScopeInterface,
-            ImmutableList<ITypesFromAttributes> typesFromAttributesList,
+            ImmutableList<ITypesFromAttributesBase> typesFromAttributesList,
             IReferenceGenerator referenceGenerator) =>
             new Nodes.ScopeManager(
                 containerInfo,
@@ -202,7 +202,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateTransientScopeNode,
                 (rangeType, ad) =>
                 {
-                    var scopeTypesFromAttributes = new ScopeTypesFromAttributes(
+                    var scopeTypesFromAttributes = new ScopeTypesFromAttributesBase(
                         ad,
                         rangeType,
                         containerInfo.ContainerType,
@@ -681,7 +681,7 @@ public class SourceGenerator : ISourceGenerator
 
         INullNode CreateNullNode(ITypeSymbol nullableType, IReferenceGenerator referenceGenerator) => new NullNode(nullableType, referenceGenerator);
 
-        IErrorNode CreateErrorNode(string message) => new ErrorNode(message);
+        IErrorNode CreateErrorNode(string message) => new ErrorNode(message, diagLogger);
 
         IImplementationNode CreateImplementationNode(
             INamedTypeSymbol implementationType, 
@@ -766,7 +766,7 @@ public class SourceGenerator : ISourceGenerator
         IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypesMiscellaneous);
         IReferenceGenerator ReferenceGeneratorFactory(int j) => new ReferenceGenerator(j, diagLogger);
         
-        ICheckTypeProperties CreateCheckTypeProperties(IReadOnlyList<ITypesFromAttributes> typesFromAttributes) =>
+        ICheckTypeProperties CreateCheckTypeProperties(IReadOnlyList<ITypesFromAttributesBase> typesFromAttributes) =>
             new CheckTypeProperties(
                 new CurrentlyConsideredTypes(typesFromAttributes, implementationTypeSetCache), 
                 wellKnownTypes);

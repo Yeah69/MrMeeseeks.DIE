@@ -18,6 +18,7 @@ internal class AbstractionNode : IAbstractionNode
         INamedTypeSymbol abstractionType, 
         INamedTypeSymbol implementationType,
         IElementNodeMapperBase mapper,
+        
         IReferenceGenerator referenceGenerator)
     {
         _implementationType = implementationType;

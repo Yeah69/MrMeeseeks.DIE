@@ -13,6 +13,7 @@ internal class PlainFunctionCallNode : FunctionCallNode, IPlainFunctionCallNode
         string? ownerReference,
         IFunctionNode calledFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
+        
         IReferenceGenerator referenceGenerator)
         : base(ownerReference, calledFunction, parameters, referenceGenerator)
     {

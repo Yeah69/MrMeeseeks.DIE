@@ -6,6 +6,7 @@ public enum DieExceptionKind
     ImplementationCycle,
     FunctionCycle,
     Validation,
+    Resolution,
     Compilation,
     Impossible
 }
@@ -47,6 +48,17 @@ public class ValidationDieException : DieException
     public ValidationDieException(IImmutableList<Diagnostic> diagnostics) => Diagnostics = diagnostics;
 
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
+}
+
+public class ResolutionDieException : DieException
+{
+    public string Message { get; }
+    public ResolutionDieException(string message)
+    {
+        Message = message;
+    }
+
+    public override DieExceptionKind Kind => DieExceptionKind.Resolution;
 }
 
 public class CompilationDieException : DieException

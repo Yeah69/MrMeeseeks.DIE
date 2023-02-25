@@ -18,6 +18,7 @@ internal class ValueTupleSyntaxNode : IValueTupleSyntaxNode
     internal ValueTupleSyntaxNode(
         INamedTypeSymbol valueTupleType,
         IElementNodeMapperBase elementNodeMapper,
+        
         IReferenceGenerator referenceGenerator)
     {
         _valueTupleType = valueTupleType;

@@ -13,6 +13,7 @@ internal class FuncNode : DelegateBaseNode, IFuncNode
     internal FuncNode(
         INamedTypeSymbol funcType,
         ILocalFunctionNode function,
+        
         IReferenceGenerator referenceGenerator) 
         : base(funcType, function, referenceGenerator)
     {

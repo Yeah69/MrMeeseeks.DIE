@@ -9,7 +9,10 @@ internal interface IParameterNode : IElementNode
 
 internal class ParameterNode : IParameterNode
 {
-    internal ParameterNode(ITypeSymbol type, IReferenceGenerator referenceGenerator)
+    internal ParameterNode(
+        ITypeSymbol type, 
+        
+        IReferenceGenerator referenceGenerator)
     {
         TypeFullName = type.FullName();
         Reference = referenceGenerator.Generate(type);

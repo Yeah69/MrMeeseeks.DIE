@@ -11,6 +11,7 @@ internal class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTrigge
 {
     public TransientScopeDisposalTriggerNode(
         INamedTypeSymbol disposableType,
+        
         IReferenceGenerator referenceGenerator)
     {
         TypeFullName = disposableType.FullName();

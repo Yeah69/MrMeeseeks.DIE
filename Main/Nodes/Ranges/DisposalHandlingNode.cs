@@ -25,7 +25,6 @@ internal class DisposalHandlingNode : IDisposalHandlingNode
     
     public DisposalHandlingNode(
         IReferenceGenerator referenceGenerator,
-        
         WellKnownTypes wellKnownTypes)
     {
         DisposedFieldReference = referenceGenerator.Generate("_disposed");

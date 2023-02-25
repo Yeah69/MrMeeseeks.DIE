@@ -12,6 +12,7 @@ internal class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
     internal FactoryFieldNode(
         IFieldSymbol fieldSymbol, 
         IFunctionNode parentFunction,
+        
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes) 
         : base(fieldSymbol.Type, fieldSymbol, parentFunction, referenceGenerator, wellKnownTypes)

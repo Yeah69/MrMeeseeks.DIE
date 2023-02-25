@@ -12,6 +12,7 @@ internal class LazyNode : DelegateBaseNode, ILazyNode
     internal LazyNode(
         INamedTypeSymbol lazyType,
         ILocalFunctionNode function,
+        
         IReferenceGenerator referenceGenerator) 
         : base(lazyType, function, referenceGenerator)
     {

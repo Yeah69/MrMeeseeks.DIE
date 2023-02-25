@@ -19,6 +19,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         string? ownerReference,
         IFunctionNode calledFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
+        
         IReferenceGenerator referenceGenerator)
     {
         _calledFunction = calledFunction;

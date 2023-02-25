@@ -78,10 +78,10 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
 
     public EnumerableBasedNode(
         ITypeSymbol collectionType,
+        
         IRangeNode parentRange,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
     {

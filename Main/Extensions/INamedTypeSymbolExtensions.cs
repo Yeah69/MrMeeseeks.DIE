@@ -1,7 +1,4 @@
-﻿using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
-
-namespace MrMeeseeks.DIE.Extensions;
+﻿namespace MrMeeseeks.DIE.Extensions;
 
 internal static class INamedTypeSymbolExtensions
 {

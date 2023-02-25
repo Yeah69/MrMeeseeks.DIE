@@ -42,4 +42,5 @@ internal interface INodeVisitor
     void VisitNullNode(INullNode nullNode);
     void VisitMultiFunctionNode(IMultiFunctionNode multiFunctionNode);
     void VisitEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode);
+    void VisitErrorNode(IErrorNode errorNode);
 }

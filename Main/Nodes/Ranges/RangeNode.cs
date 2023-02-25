@@ -4,6 +4,7 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -38,10 +39,10 @@ internal abstract class RangeNode : IRangeNode
     protected readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNode> CreateFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> _multiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
-    protected readonly Dictionary<TypeKey, List<ICreateFunctionNode>> _createFunctions = new();
-    private readonly Dictionary<TypeKey, List<IMultiFunctionNode>> _multiFunctions = new();
+    protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNode>> _createFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
+    private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNode>> _multiFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
 
-    private readonly Dictionary<TypeKey, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new();
+    private readonly Dictionary<ITypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new(CustomSymbolEqualityComparer.IncludeNullability);
 
     public abstract string FullName { get; }
     public string Name { get; }
@@ -142,8 +143,7 @@ internal abstract class RangeNode : IRangeNode
 
     protected IFunctionCallNode BuildRangedInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction, ScopeLevel level)
     {
-        var typeKey = type.ToTypeKey();
-        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(typeKey, out var rangedInstanceFunctionGroupNode))
+        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(type, out var rangedInstanceFunctionGroupNode))
         {
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 level,
@@ -154,7 +154,7 @@ internal abstract class RangeNode : IRangeNode
                 CheckTypeProperties,
                 ReferenceGenerator)
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
-            _rangedInstanceFunctionGroupNodes[typeKey] = rangedInstanceFunctionGroupNode;
+            _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
         return function.CreateCall(ownerReference, callingFunction, callingFunction);
@@ -172,8 +172,7 @@ internal abstract class RangeNode : IRangeNode
         INamedTypeSymbol type, 
         IFunctionNode callingFunction)
     {
-        var typeKey = type.ToTypeKey();
-        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(typeKey, out var rangedInstanceFunctionGroupNode))
+        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(type, out var rangedInstanceFunctionGroupNode))
         {
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 ScopeLevel.TransientScope,
@@ -184,7 +183,7 @@ internal abstract class RangeNode : IRangeNode
                 CheckTypeProperties,
                 ReferenceGenerator)
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
-            _rangedInstanceFunctionGroupNodes[typeKey] = rangedInstanceFunctionGroupNode;
+            _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
         function.CreateCall(null, callingFunction, callingFunction);

@@ -3,6 +3,7 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -19,7 +20,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode
 {
     private readonly IContainerNode _container;
     private readonly IReferenceGenerator _referenceGenerator;
-    private readonly Dictionary<TypeKey, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new();
+    private readonly Dictionary<ITypeSymbol, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Collection<IRangeNode> _ranges = new();
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNode> _rangedInstanceInterfaceFunctionNodeFactory;
 

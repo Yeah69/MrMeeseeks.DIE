@@ -45,7 +45,4 @@ internal static class INamedTypeSymbolExtensions
         type.IsUnboundGenericType
             ? type.OriginalDefinition
             : type;
-
-    internal static TypeKey ConstructTypeUniqueKey(this INamedTypeSymbol type) => 
-        new ($"{type.FullName(SymbolDisplayMiscellaneousOptions.None)};{type.Arity};{string.Join(";", type.TypeArguments.Select(ta => ta.FullName()))}");
 }

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 
@@ -9,18 +8,16 @@ internal static class FunctionResolutionUtility
     internal static TFunctionCallNode GetOrCreateFunctionCall<TFunctionNode, TFunctionCallNode>(
         ITypeSymbol type, 
         IFunctionNode callingFunction,
-        IDictionary<TypeKey, List<TFunctionNode>> cache,
+        IDictionary<ITypeSymbol, List<TFunctionNode>> cache,
         Func<TFunctionNode> functionNodeFactory,
         Func<TFunctionNode, TFunctionCallNode> functionCallNodeFactory)
         where TFunctionNode : IFunctionNode
         where TFunctionCallNode : IFunctionCallNode
     {
-        var typeKey = type.ToTypeKey();
-
-        if (!cache.TryGetValue(typeKey, out var list))
+        if (!cache.TryGetValue(type, out var list))
         {
             list = new List<TFunctionNode>();
-            cache[typeKey] = list;
+            cache[type] = list;
         }
 
         var function = GetOrCreateFunction(

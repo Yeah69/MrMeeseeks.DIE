@@ -33,13 +33,13 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
     
     public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        if ((CustomSymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.ValueTask1, _referenceType.OriginalDefinition)
-             || CustomSymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.Task1, _referenceType.OriginalDefinition))
+        if ((CustomSymbolEqualityComparer.IncludeNullability.Equals(_referenceType.OriginalDefinition, _wellKnownTypes.ValueTask1)
+             || CustomSymbolEqualityComparer.IncludeNullability.Equals(_referenceType.OriginalDefinition, _wellKnownTypes.Task1))
             && _referenceType is INamedTypeSymbol namedReferenceType)
         {
             Awaited = true;
             AsyncReference = Reference;
-            SynchronicityDecision = CustomSymbolEqualityComparer.IncludeNullability.Equals(_wellKnownTypes.ValueTask1, _referenceType.OriginalDefinition)
+            SynchronicityDecision = CustomSymbolEqualityComparer.IncludeNullability.Equals(_referenceType.OriginalDefinition, _wellKnownTypes.ValueTask1)
                 ? SynchronicityDecision.AsyncValueTask
                 : SynchronicityDecision.AsyncTask;
             AsyncTypeFullName = namedReferenceType.TypeArguments.First().FullName();

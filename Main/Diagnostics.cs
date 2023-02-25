@@ -139,7 +139,7 @@ internal static class Diagnostics
     {
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_66_02", 
                 "Impossible Exception",
-                $"[DIE] {PhaseToString(phase)} You've run into an impossible exception. Please make a issue at https://github.com/Yeah69/MrMeeseeks.DIE/issues/new with code hint \"{exception.Code.ToString()}\".", 
+                $"[DIE] {PhaseToString(phase)} You've run into an exception which should be impossible. Please make a issue at https://github.com/Yeah69/MrMeeseeks.DIE/issues/new with code hint \"{exception.Code.ToString()}\".", 
                 "Error", 
                 DiagnosticSeverity.Error, 
                 true),

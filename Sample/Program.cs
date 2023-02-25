@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
+using MrMeeseeks.DIE.Test.Generics.Configuration.Composite;
 
 internal class Program
 {
@@ -8,8 +8,8 @@ internal class Program
     {
         try
         {
-            await using var container = new Container(new Dependency());
-            var asdf = container.CreateHolder();
+            await using var container = new Container();
+            var asdf = container.Create();
             Console.WriteLine("Hello, World!");
         }
         catch (Exception)

@@ -75,9 +75,9 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
         ItemTypeFullName = CollectionUtility.GetCollectionsInnerType(enumerableType).FullName();
 
         SuppressAsync =
-            CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesCollections.IAsyncEnumerable1, enumerableType.OriginalDefinition);
+            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
         IsAsyncEnumerable =
-            CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesCollections.IAsyncEnumerable1, enumerableType.OriginalDefinition);
+            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
 
         Name = referenceGenerator.Generate("CreateMulti", enumerableType);
     }

@@ -31,7 +31,7 @@ internal interface ITypesFromAttributes
     IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; } 
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
-    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<string>)> PropertyChoices { get; }
     bool AllImplementations { get; }
     IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
     IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
@@ -367,7 +367,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 if (ad.ConstructorArguments.Length < 1)
                 {
                     NotParsableAttribute(ad);
-                    return ((INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)?) null;
+                    return ((INamedTypeSymbol, IReadOnlyList<string>)?) null;
                 }
 
                 if (ad.ConstructorArguments[0].Value is not INamedTypeSymbol implementationType)
@@ -397,18 +397,9 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\".",
                         ExecutionPhase.Validation));
 
-                var pickedProperties = propertyNames.Intersect(parameterTypes);
-                
-                var properties = implementationType
-                    .OriginalDefinitionIfUnbound()
-                    .GetMembers()
-                    .OfType<IPropertySymbol>()
-                    .Where(ps => pickedProperties.Contains(ps.Name))
-                    .ToList();
-
-                return (implementationType, properties);
+                return (implementationType, propertyNames.Intersect(parameterTypes).ToList());
             })
-            .OfType<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)>());
+            .OfType<(INamedTypeSymbol, IReadOnlyList<string>)>());
 
         FilterPropertyChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
             CustomSymbolEqualityComparer.Default,
@@ -889,7 +880,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }
-    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<string>)> PropertyChoices { get; }
     public bool AllImplementations { get; }
     public IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }

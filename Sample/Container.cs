@@ -1,28 +1,18 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
+namespace MrMeeseeks.DIE.Test.Generics.Configuration.Composite;
 
-internal interface IInterface {}
+internal record struct Dependency<T0>(T0 Param);
 
-internal class Dependency : IInterface {}
-
-internal class DependencyHolder
+internal class DependencyHolder<T0>
 {
-    public IInterface Dependency { get; }
-    internal DependencyHolder(IInterface dependency)
-    {
-        Dependency = dependency;
-    }
+    public Dependency<T0> Dependency { get; set; }
+    internal DependencyHolder(Dependency<T0> param) {}
 }
 
-[CreateFunction(typeof(DependencyHolder), "CreateHolder")]
-[CreateFunction(typeof(IInterface), "CreateInterface")]
+[PropertyChoice(typeof(DependencyHolder<>), nameof(DependencyHolder<int>.Dependency))]
+[CreateFunction(typeof(DependencyHolder<int>), "Create")]
 internal sealed partial class Container
 {
-    private readonly IInterface DIE_Factory_dependency;
-
-    internal Container(IInterface dependency)
-    {
-        DIE_Factory_dependency = dependency;
-    }
+    
 }

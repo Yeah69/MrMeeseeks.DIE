@@ -74,7 +74,7 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
         if (!method.IsPartialDefinition)
             yield return ValidationErrorDiagnostic(method, rangeType, containerType, "User-defined part has to have the partial definition only.");
         
-        if (method.Parameters.Length != 1 || !CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type.OriginalDefinition, DisposableType.OriginalDefinition))
+        if (method.Parameters.Length != 1 || !CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
             yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have a single parameter which is of type \"{DisposableType.FullName()}\".");
         
         if (method.MethodKind != MethodKind.Ordinary)

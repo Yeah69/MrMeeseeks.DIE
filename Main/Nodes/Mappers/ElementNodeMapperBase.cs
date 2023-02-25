@@ -139,12 +139,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     protected abstract IElementNodeMapperBase NextForWraps { get; }
 
     protected abstract IElementNodeMapperBase Next { get; }
-    
-    protected bool IsCollectionType(ITypeSymbol potentialCollectionType) =>
-        CustomSymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
-        || CustomSymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
-        || CustomSymbolEqualityComparer.Default.Equals(potentialCollectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
-        || potentialCollectionType is IArrayTypeSymbol;
 
     public virtual IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
     {

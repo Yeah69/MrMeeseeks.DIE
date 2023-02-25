@@ -110,14 +110,12 @@ internal class CheckTypeProperties : ICheckTypeProperties
         if (_currentlyConsideredTypes.ImplementationToConstructorChoice.TryGetValue(
                 implementationType.UnboundIfGeneric(), out var constr))
             return constr;
-        
-        var typeToChoseFrom = implementationType.OriginalDefinitionIfUnbound();
 
-        return typeToChoseFrom switch
+        return implementationType switch
         {
             // If reference record and two constructors, decide for the constructor which isn't the copy-constructor
             { IsRecord: true, IsReferenceType: true, IsValueType: false, InstanceConstructors.Length: 2 } 
-                when typeToChoseFrom
+                when implementationType
                     .InstanceConstructors.SingleOrDefault(c =>
                         c.Parameters.Length != 1 ||
                         !CustomSymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
@@ -125,11 +123,11 @@ internal class CheckTypeProperties : ICheckTypeProperties
             
             // If value type and two constructors, decide for the constructor which isn't the parameterless constructor
             { IsRecord: true or false, IsReferenceType: false, IsValueType: true, InstanceConstructors.Length: 2 } 
-                when typeToChoseFrom.InstanceConstructors.SingleOrDefault(c => c.Parameters.Length > 0) 
+                when implementationType.InstanceConstructors.SingleOrDefault(c => c.Parameters.Length > 0) 
                     is { } constructor => constructor,
 
             // If only one constructor, just choose it
-            { InstanceConstructors.Length: 1 } when typeToChoseFrom.InstanceConstructors.SingleOrDefault()
+            { InstanceConstructors.Length: 1 } when implementationType.InstanceConstructors.SingleOrDefault()
                 is { } constructor => constructor,
 
             _ => null
@@ -437,10 +435,20 @@ internal class CheckTypeProperties : ICheckTypeProperties
         return null;
     }
 
-    public IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType) =>
-        _currentlyConsideredTypes.PropertyChoices.TryGetValue(
+    public IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType)
+    {
+        var propertyChoicesNames = _currentlyConsideredTypes.PropertyChoices.TryGetValue(
             implementationType.UnboundIfGeneric(),
-            out var properties) 
-            ? properties 
+            out var properties)
+            ? properties
             : null;
+
+        if (propertyChoicesNames is null)
+            return null;
+
+        return implementationType.GetMembers()
+            .OfType<IPropertySymbol>()
+            .Where(p => propertyChoicesNames.Contains(p.Name))
+            .ToList();
+    }
 }

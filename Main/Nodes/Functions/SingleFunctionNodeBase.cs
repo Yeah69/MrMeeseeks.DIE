@@ -16,7 +16,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
     private readonly ITypeSymbol _typeSymbol;
     private readonly IRangeNode _parentNode;
     private readonly IContainerNode _parentContainer;
-    private readonly IUserDefinedElements _userDefinedElements;
+    private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
     public SingleFunctionNodeBase(
@@ -27,7 +27,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IRangeNode parentNode,
         IContainerNode parentContainer,
-        IUserDefinedElements userDefinedElements,
+        IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         
@@ -54,7 +54,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         _typeSymbol = typeSymbol;
         _parentNode = parentNode;
         _parentContainer = parentContainer;
-        _userDefinedElements = userDefinedElements;
+        _userDefinedElementsBase = userDefinedElements;
         _checkTypeProperties = checkTypeProperties;
     }
 
@@ -62,13 +62,13 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         ISingleFunctionNode parentFunction,
         IRangeNode parentNode,
         IContainerNode parentContainer,
-        IUserDefinedElements userDefinedElements,
+        IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties);
 
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
         mapper.Map(_typeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
     
     public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => ReturnedElement = MapToReturnedElement(
-        GetMapper(this, _parentNode, _parentContainer, _userDefinedElements, _checkTypeProperties));
+        GetMapper(this, _parentNode, _parentContainer, _userDefinedElementsBase, _checkTypeProperties));
     public IElementNode ReturnedElement { get; private set; } = null!;
 }

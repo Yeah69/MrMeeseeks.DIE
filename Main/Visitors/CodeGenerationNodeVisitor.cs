@@ -375,7 +375,7 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
         _code.AppendLine("}");
     }
 
-    public void VisitCreateFunctionNode(ICreateFunctionNode createFunction) => VisitSingleFunctionNode(createFunction);
+    public void VisitCreateFunctionNode(ICreateFunctionNodeBase createFunction) => VisitSingleFunctionNode(createFunction);
     public void VisitEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitSingleFunctionNode(entryFunction);
     public void VisitLocalFunctionNode(ILocalFunctionNode localFunction) => VisitSingleFunctionNode(localFunction);
     public void VisitRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode)

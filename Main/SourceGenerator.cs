@@ -8,6 +8,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.RangeRoots;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
@@ -83,7 +84,7 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedFactoryField,
             wellKnownTypes,
             wellKnownTypesMiscellaneous);
-        var assemblyTypesFromAttributes = new TypesFromAttributesBase(
+        var assemblyTypesFromAttributes = new TypesFromAttributes(
             context.Compilation.Assembly.GetAttributes(), 
             null,
             null,
@@ -120,7 +121,7 @@ public class SourceGenerator : ISourceGenerator
         IContainerNode ContainerNodeFactory(
             IContainerInfo ci)
         {
-            var containerTypesFromAttributes = new TypesFromAttributesBase(
+            var containerTypesFromAttributes = new TypesFromAttributes(
                 ci.ContainerType.GetAttributes(),
                 ci.ContainerType,
                 ci.ContainerType,
@@ -202,7 +203,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateTransientScopeNode,
                 (rangeType, ad) =>
                 {
-                    var scopeTypesFromAttributes = new ScopeTypesFromAttributesBase(
+                    var scopeTypesFromAttributes = new ScopeTypesFromAttributes(
                         ad,
                         rangeType,
                         containerInfo.ContainerType,
@@ -230,7 +231,7 @@ public class SourceGenerator : ISourceGenerator
             IContainerNode container,
             ITransientScopeInterfaceNode transientScopeInterface,
             Nodes.IScopeManager scopeManager,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new ScopeNode(
@@ -251,7 +252,7 @@ public class SourceGenerator : ISourceGenerator
             string name,
             IContainerNode container,
             Nodes.IScopeManager scopeManager,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new TransientScopeNode(
@@ -272,7 +273,7 @@ public class SourceGenerator : ISourceGenerator
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentNode,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new MultiFunctionNodeBase(
@@ -303,35 +304,36 @@ public class SourceGenerator : ISourceGenerator
                 parameters,
                 referenceGenerator);
 
-        ICreateFunctionNode CreateFunctionNode(
+        ICreateFunctionNodeRoot CreateFunctionNode(
             ITypeSymbol typeSymbol,
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
-            new CreateFunctionNode(
-                typeSymbol, 
-                parameters,
-                parentRange,
-                parentContainer,
-                userDefinedElements,
-                checkTypeProperties,
-                referenceGenerator,
-                CreateElementNodeMapper,
-                CreatePlainFunctionCallNode, 
-                CreateScopeCallNode,
-                CreateTransientScopeCallNode,
-                CreateParameterNode,
-                wellKnownTypes);
+            new CreateFunctionNodeRoot(
+                new CreateFunctionNode(
+                    typeSymbol,
+                    parameters,
+                    parentRange,
+                    parentContainer,
+                    userDefinedElements,
+                    checkTypeProperties,
+                    referenceGenerator,
+                    CreateElementNodeMapper,
+                    CreatePlainFunctionCallNode,
+                    CreateScopeCallNode,
+                    CreateTransientScopeCallNode,
+                    CreateParameterNode,
+                    wellKnownTypes));
 
         ICreateScopeFunctionNode CreateScopeFunctionNode(
             INamedTypeSymbol typeSymbol,
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new CreateScopeFunctionNode(
@@ -354,7 +356,7 @@ public class SourceGenerator : ISourceGenerator
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new CreateTransientScopeFunctionNode(
@@ -414,7 +416,7 @@ public class SourceGenerator : ISourceGenerator
             ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters, 
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IElementNodeMapperBase mapper,
             IReferenceGenerator referenceGenerator) =>
@@ -440,7 +442,7 @@ public class SourceGenerator : ISourceGenerator
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new RangedInstanceFunctionNode(
@@ -465,7 +467,7 @@ public class SourceGenerator : ISourceGenerator
             INamedTypeSymbol type,
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new RangedInstanceFunctionGroupNode(
@@ -484,7 +486,7 @@ public class SourceGenerator : ISourceGenerator
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new EntryFunctionNode(
@@ -633,7 +635,7 @@ public class SourceGenerator : ISourceGenerator
             IFunctionNode parentFunction,
             IRangeNode parentRange,
             IContainerNode parentContainer,
-            IUserDefinedElements userDefinedElements,
+            IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
             new ElementNodeMapper(
@@ -694,7 +696,7 @@ public class SourceGenerator : ISourceGenerator
             IRangeNode parentRange,
             IElementNodeMapperBase typeToElementNodeMapper,
             ICheckTypeProperties checkTypeProperties,
-            IUserDefinedElements userDefinedElements, 
+            IUserDefinedElementsBase userDefinedElements, 
             IReferenceGenerator referenceGenerator) =>
             new ImplementationNode(
                 implementationType, 
@@ -776,9 +778,8 @@ public class SourceGenerator : ISourceGenerator
                 wellKnownTypes);
 
         IUserDefinedElements CreateUserDefinedElements(
-            INamedTypeSymbol rangeType,
-            INamedTypeSymbol containerType) =>
-            new UserDefinedElements(rangeType, containerType, wellKnownTypes, wellKnownTypesMiscellaneous);
+            (INamedTypeSymbol Range, INamedTypeSymbol Container) types) =>
+            new UserDefinedElements(types, wellKnownTypes, wellKnownTypesMiscellaneous);
 
     }
 }

@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.MsContainer;
 using MsMeeseeks.DIE.Configuration.Attributes;
 
-//[assembly:ErrorDescriptionInsteadOfBuildFailure]
+[assembly:ErrorDescriptionInsteadOfBuildFailure]
 
 [assembly:ContainerInstanceAbstractionAggregation(typeof(IContainerInstance))]
 [assembly:TransientScopeInstanceAbstractionAggregation(typeof(ITransientScopeInstance))]

@@ -34,14 +34,14 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IFunctionNode ParentFunction,
         IRangeNode ParentRange,
         IContainerNode ParentContainer,
-        IUserDefinedElements UserDefinedElements,
+        IUserDefinedElementsBase UserDefinedElements,
         ICheckTypeProperties CheckTypeProperties,
         IReferenceGenerator ReferenceGenerator);
     
     protected IFunctionNode ParentFunction; // todo make readonly again
     protected readonly IRangeNode ParentRange;
     private readonly IContainerNode _parentContainer;
-    private readonly IUserDefinedElements _userDefinedElements;
+    private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly IDiagLogger _diagLogger;
@@ -59,11 +59,11 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> _funcNodeFactory;
     private readonly Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> _enumerableBasedNodeFactory;
     private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
+    private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElementsBase, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, ITypeSymbol, IRangeNode, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
-    private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> _localFunctionNodeFactory;
+    private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> _localFunctionNodeFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
@@ -71,7 +71,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IFunctionNode parentFunction,
         IRangeNode parentRange,
         IContainerNode parentContainer,
-        IUserDefinedElements userDefinedElements,
+        IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         
@@ -90,18 +90,18 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory,
         Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
         Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory,
-        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElements, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
+        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElementsBase, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElements, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory)
     {
         ParentFunction = parentFunction;
         ParentRange = parentRange;
         _parentContainer = parentContainer;
-        _userDefinedElements = userDefinedElements;
+        _userDefinedElementsBase = userDefinedElements;
         _checkTypeProperties = checkTypeProperties;
         _referenceGenerator = referenceGenerator;
         _diagLogger = diagLogger;
@@ -145,15 +145,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         if (ParentFunction.Overrides.TryGetValue(type, out var tuple))
             return tuple;
 
-        if (_userDefinedElements.GetFactoryFieldFor(type) is { } instance)
+        if (_userDefinedElementsBase.GetFactoryFieldFor(type) is { } instance)
             return _factoryFieldNodeFactory(instance, ParentFunction, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-        if (_userDefinedElements.GetFactoryPropertyFor(type) is { } property)
+        if (_userDefinedElementsBase.GetFactoryPropertyFor(type) is { } property)
             return _factoryPropertyNodeFactory(property, ParentFunction, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-        if (_userDefinedElements.GetFactoryMethodFor(type) is { } method)
+        if (_userDefinedElementsBase.GetFactoryMethodFor(type) is { } method)
             return _factoryFunctionNodeFactory(method, ParentFunction, Next, _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
@@ -202,7 +202,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 ParentFunction.Overrides,
                 ParentRange,
                 _parentContainer,
-                _userDefinedElements,
+                _userDefinedElementsBase,
                 _checkTypeProperties,
                 mapper, 
                 _referenceGenerator)
@@ -243,7 +243,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 ParentFunction.Overrides,
                 ParentRange,
                 _parentContainer,
-                _userDefinedElements,
+                _userDefinedElementsBase,
                 _checkTypeProperties,
                 mapper,
                 _referenceGenerator)
@@ -395,7 +395,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     ParentRange,
                     nextMapper, 
                     _checkTypeProperties, 
-                    _userDefinedElements,
+                    _userDefinedElementsBase,
                     _referenceGenerator)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
 

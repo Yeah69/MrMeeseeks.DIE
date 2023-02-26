@@ -3,7 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
 
-internal interface IUserDefinedElements
+internal interface IUserDefinedElementsBase
 {
     IFieldSymbol? GetFactoryFieldFor(ITypeSymbol type);
     IPropertySymbol? GetFactoryPropertyFor(ITypeSymbol type);
@@ -15,7 +15,9 @@ internal interface IUserDefinedElements
     IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type);
 }
 
-internal class EmptyUserDefinedElements : IUserDefinedElements
+internal interface IEmptyUserDefinedElements : IUserDefinedElementsBase {}
+
+internal class EmptyUserDefinedElements : IEmptyUserDefinedElements, IContainerInstance
 {
     public IFieldSymbol? GetFactoryFieldFor(ITypeSymbol type) => null;
     public IPropertySymbol? GetFactoryPropertyFor(ITypeSymbol type) => null;
@@ -26,6 +28,8 @@ internal class EmptyUserDefinedElements : IUserDefinedElements
     public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) => null;
     public IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type) => null;
 }
+
+internal interface IUserDefinedElements : IUserDefinedElementsBase {}
 
 internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstance
 {
@@ -38,15 +42,14 @@ internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstan
 
     public UserDefinedElements(
         // parameter
-        INamedTypeSymbol scopeType,
-        INamedTypeSymbol containerType,
+        (INamedTypeSymbol Range, INamedTypeSymbol Container) types,
 
         // dependencies
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         var validationErrors = new List<Diagnostic>();
-        var dieMembers = scopeType.GetMembers()
+        var dieMembers = types.Range.GetMembers()
             .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_"))
             .ToList();
 
@@ -74,8 +77,8 @@ internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstan
                     validationErrors.Add(
                         Diagnostics.ValidationUserDefinedElement(
                             symbol, 
-                            scopeType, 
-                            containerType,
+                            types.Range, 
+                            types.Container,
                             "Multiple user-defined factories aren't allowed to have the same type.",
                             ExecutionPhase.Validation));
 
@@ -186,8 +189,8 @@ internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstan
                         validationErrors.Add(
                             Diagnostics.ValidationUserDefinedElement(
                                 t.Item2, 
-                                scopeType, 
-                                containerType,
+                                types.Range, 
+                                types.Container,
                                 "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on.",
                                 ExecutionPhase.Validation));
 

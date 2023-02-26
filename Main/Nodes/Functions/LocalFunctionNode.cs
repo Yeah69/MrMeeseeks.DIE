@@ -21,7 +21,7 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters, 
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
-        IUserDefinedElements userDefinedElements, 
+        IUserDefinedElementsBase userDefinedElements, 
         ICheckTypeProperties checkTypeProperties, 
         IElementNodeMapperBase mapper,
         IReferenceGenerator referenceGenerator, 
@@ -51,7 +51,7 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode
     }
 
     protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
-        IUserDefinedElements userDefinedElements, ICheckTypeProperties checkTypeProperties) =>
+        IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties) =>
         _mapper;
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitLocalFunctionNode(this);

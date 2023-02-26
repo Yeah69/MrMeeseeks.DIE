@@ -17,7 +17,7 @@ internal interface INodeVisitor
     void VisitTransientScopeNode(ITransientScopeNode transientScope);
     void VisitScopeCallNode(IScopeCallNode scopeCall);
     void VisitTransientScopeCallNode(ITransientScopeCallNode transientScopeCall);
-    void VisitCreateFunctionNode(ICreateFunctionNode createFunction);
+    void VisitCreateFunctionNode(ICreateFunctionNodeBase createFunction);
     void VisitEntryFunctionNode(IEntryFunctionNode entryFunction);
     void VisitLocalFunctionNode(ILocalFunctionNode localFunction);
     void VisitRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode);

@@ -38,7 +38,7 @@ internal class ImplementationNode : IImplementationNode
     private readonly IRangeNode _parentRange;
     private readonly IElementNodeMapperBase _elementNodeMapper;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IUserDefinedElements _userDefinedElements;
+    private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypes _wellKnownTypes;
 
@@ -53,7 +53,7 @@ internal class ImplementationNode : IImplementationNode
         IRangeNode parentRange,
         IElementNodeMapperBase elementNodeMapper,
         ICheckTypeProperties checkTypeProperties,
-        IUserDefinedElements userDefinedElements,
+        IUserDefinedElementsBase userDefinedElements,
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
@@ -63,7 +63,7 @@ internal class ImplementationNode : IImplementationNode
         _parentRange = parentRange;
         _elementNodeMapper = elementNodeMapper;
         _checkTypeProperties = checkTypeProperties;
-        _userDefinedElements = userDefinedElements;
+        _userDefinedElementsBase = userDefinedElements;
         _referenceGenerator = referenceGenerator;
         _wellKnownTypes = wellKnownTypes;
         TypeFullName = implementationType.FullName();
@@ -93,8 +93,8 @@ internal class ImplementationNode : IImplementationNode
 
         implementationStack = implementationStack.Push(_implementationType);
         
-        var (userDefinedInjectionConstructor, outParamsConstructor) = GetUserDefinedInjection(_userDefinedElements.GetConstructorParametersInjectionFor(_implementationType));
-        var (userDefinedInjectionProperties, outParamsProperties) = GetUserDefinedInjection(_userDefinedElements.GetPropertiesInjectionFor(_implementationType));
+        var (userDefinedInjectionConstructor, outParamsConstructor) = GetUserDefinedInjection(_userDefinedElementsBase.GetConstructorParametersInjectionFor(_implementationType));
+        var (userDefinedInjectionProperties, outParamsProperties) = GetUserDefinedInjection(_userDefinedElementsBase.GetPropertiesInjectionFor(_implementationType));
 
         UserDefinedInjectionConstructor = userDefinedInjectionConstructor;
         UserDefinedInjectionProperties = userDefinedInjectionProperties;
@@ -111,7 +111,7 @@ internal class ImplementationNode : IImplementationNode
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })
         {
-            var (userDefinedInjectionInitializer, outParamsInitializer) = GetUserDefinedInjection(_userDefinedElements.GetInitializerParametersInjectionFor(_implementationType));
+            var (userDefinedInjectionInitializer, outParamsInitializer) = GetUserDefinedInjection(_userDefinedElementsBase.GetInitializerParametersInjectionFor(_implementationType));
 
             var initializerParameters = initializerMethod.Parameters
                 .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsInitializer)))

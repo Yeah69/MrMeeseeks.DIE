@@ -70,9 +70,9 @@ internal interface ITypesFromAttributesBase
 
 internal interface ITypesFromAttributes : ITypesFromAttributesBase {}
 
-internal class TypesFromAttributesBase : ScopeTypesFromAttributesBase, ITypesFromAttributes, IContainerInstance
+internal class TypesFromAttributes : ScopeTypesFromAttributes, ITypesFromAttributes, IContainerInstance
 {
-    internal TypesFromAttributesBase(
+    internal TypesFromAttributes(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
         INamedTypeSymbol? rangeType,
@@ -115,7 +115,7 @@ internal class TypesFromAttributesBase : ScopeTypesFromAttributesBase, ITypesFro
 
 internal interface IScopeTypesFromAttributes : ITypesFromAttributesBase {}
 
-internal class ScopeTypesFromAttributesBase : IScopeTypesFromAttributes, ITransientScopeInstance
+internal class ScopeTypesFromAttributes : IScopeTypesFromAttributes, ITransientScopeInstance
 {
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;
@@ -123,7 +123,7 @@ internal class ScopeTypesFromAttributesBase : IScopeTypesFromAttributes, ITransi
     protected readonly List<Diagnostic> _warnings = new(); 
     protected readonly List<Diagnostic> _errors = new();
 
-    internal ScopeTypesFromAttributesBase(
+    internal ScopeTypesFromAttributes(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
         INamedTypeSymbol? rangeType,
@@ -865,21 +865,21 @@ internal class ScopeTypesFromAttributesBase : IScopeTypesFromAttributes, ITransi
     public IImmutableSet<INamedTypeSymbol> TransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> SyncTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> AsyncTransientAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> ContainerInstanceAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ContainerInstanceAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> ScopeInstanceAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeRootAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> ScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeRootAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> ScopeRootAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> DecoratorAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> CompositeAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> TransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> SyncTransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> AsyncTransientImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> ContainerInstanceImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ContainerInstanceImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceImplementation { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> ScopeInstanceImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected set; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
@@ -894,21 +894,21 @@ internal class ScopeTypesFromAttributesBase : IScopeTypesFromAttributes, ITransi
     public IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterAsyncTransientAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> FilterScopeInstanceAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeRootAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> FilterDecoratorAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterCompositeAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterTransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> FilterSyncTransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> FilterAsyncTransientImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; protected set; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> FilterDecoratorSequenceChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterInitializers { get; }

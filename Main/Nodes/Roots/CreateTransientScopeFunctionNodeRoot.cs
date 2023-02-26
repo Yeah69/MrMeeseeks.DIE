@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Functions;
 
-namespace MrMeeseeks.DIE.RangeRoots;
+namespace MrMeeseeks.DIE.Nodes.Roots;
 
 internal interface ICreateTransientScopeFunctionNodeRoot
 {

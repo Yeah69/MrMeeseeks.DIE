@@ -52,10 +52,10 @@ public class ValidationDieException : DieException
 
 public class ResolutionDieException : DieException
 {
-    public string Message { get; }
-    public ResolutionDieException(string message)
+    public string ErrorMessage { get; }
+    public ResolutionDieException(string errorMessage)
     {
-        Message = message;
+        ErrorMessage = errorMessage;
     }
 
     public override DieExceptionKind Kind => DieExceptionKind.Resolution;

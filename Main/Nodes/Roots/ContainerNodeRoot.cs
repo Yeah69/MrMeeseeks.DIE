@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 
-namespace MrMeeseeks.DIE.RangeRoots;
+namespace MrMeeseeks.DIE.Nodes.Roots;
 
 internal interface IContainerNodeRoot
 {

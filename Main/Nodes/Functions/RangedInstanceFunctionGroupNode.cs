@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.RangeRoots;
+using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 

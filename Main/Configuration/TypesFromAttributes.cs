@@ -68,23 +68,57 @@ internal interface ITypesFromAttributesBase
     IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
 }
 
-internal interface ITypesFromAttributes : ITypesFromAttributesBase {}
+internal interface IAssemblyTypesFromAttributes : ITypesFromAttributesBase {}
 
-internal class TypesFromAttributes : ScopeTypesFromAttributes, ITypesFromAttributes, IContainerInstance
+internal class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAssemblyTypesFromAttributes, IContainerInstance
 {
-    internal TypesFromAttributes(
-        // parameter
-        IReadOnlyList<AttributeData> attributeData,
-        INamedTypeSymbol? rangeType,
-        INamedTypeSymbol? containerType,
-
-        // dependencies
+    internal AssemblyTypesFromAttributes(
+        Compilation compilation,
+        IDiagLogger diagLogger,
         IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext) 
         : base(
-            attributeData, 
-            rangeType, 
-            containerType, 
+            compilation.Assembly.GetAttributes(), 
+            null,
+            null,
+            diagLogger,
+            validateAttributes, 
+            containerWideContext)
+    {
+        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
+        ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
+        TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
+        TransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
+        ScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ScopeRootAbstractionAggregationAttribute);
+        ContainerInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute);
+        TransientScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceImplementationAggregationAttribute);
+        TransientScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootImplementationAggregationAttribute);
+        ScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ScopeRootImplementationAggregationAttribute);
+        FilterContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootAbstractionAggregationAttribute);
+        FilterScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootAbstractionAggregationAttribute);
+        FilterContainerInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceImplementationAggregationAttribute);
+        FilterTransientScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceImplementationAggregationAttribute);
+        FilterTransientScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootImplementationAggregationAttribute);
+        FilterScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootImplementationAggregationAttribute);
+    }
+}
+
+internal interface IContainerTypesFromAttributes : ITypesFromAttributesBase {}
+
+internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContainerTypesFromAttributes, IContainerInstance
+{
+    internal ContainerTypesFromAttributes(
+        IDiagLogger diagLogger,
+        IValidateAttributes validateAttributes,
+        IContainerInfoContext containerInfoContext,
+        IContainerWideContext containerWideContext) 
+        : base(
+            containerInfoContext.ContainerInfo.ContainerType.GetAttributes(), 
+            containerInfoContext.ContainerInfo.ContainerType,
+            containerInfoContext.ContainerInfo.ContainerType, 
+            diagLogger,
             validateAttributes, 
             containerWideContext)
     {
@@ -110,7 +144,29 @@ internal class TypesFromAttributes : ScopeTypesFromAttributes, ITypesFromAttribu
 
 internal interface IScopeTypesFromAttributes : ITypesFromAttributesBase {}
 
-internal class ScopeTypesFromAttributes : IScopeTypesFromAttributes, ITransientScopeInstance
+internal class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFromAttributes, ITransientScopeInstance
+{
+    internal ScopeTypesFromAttributes(
+        // parameter
+        IScopeInfo scopeInfo,
+
+        // dependencies
+        IDiagLogger diagLogger,
+        IValidateAttributes validateAttributes,
+        IContainerInfoContext containerInfoContext,
+        IContainerWideContext containerWideContext)
+        : base(
+            scopeInfo.ScopeType?.GetAttributes() as IReadOnlyList<AttributeData> ?? Array.Empty<AttributeData>(),
+            scopeInfo.ScopeType,
+            containerInfoContext.ContainerInfo.ContainerType,
+            diagLogger,
+            validateAttributes,
+            containerWideContext)
+    {
+    }
+}
+
+internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 {
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;
@@ -118,13 +174,14 @@ internal class ScopeTypesFromAttributes : IScopeTypesFromAttributes, ITransientS
     protected readonly List<Diagnostic> _warnings = new(); 
     protected readonly List<Diagnostic> _errors = new();
 
-    internal ScopeTypesFromAttributes(
+    internal TypesFromAttributesBase(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
         INamedTypeSymbol? rangeType,
         INamedTypeSymbol? containerType,
 
         // dependencies
+        IDiagLogger diagLogger,
         IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext)
     {
@@ -794,6 +851,13 @@ internal class ScopeTypesFromAttributes : IScopeTypesFromAttributes, ITransientS
         FilterImplementationChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
         
         FilterImplementationCollectionChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
+        
+                    
+        foreach (var diagnostic in Warnings)
+            diagLogger.Log(diagnostic);
+
+        if (Errors.Any())
+            throw new ValidationDieException(Errors.ToImmutableArray());
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }

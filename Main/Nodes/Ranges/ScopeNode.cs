@@ -3,7 +3,7 @@ using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
-using MrMeeseeks.DIE.RangeRoots;
+using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 
@@ -22,12 +22,12 @@ internal class ScopeNode : RangeNode, IScopeNode, ITransientScopeInstance
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNodeRoot> _createScopeFunctionNodeFactory;
 
     internal ScopeNode(
-        string name,
+        IScopeInfo scopeInfo,
         IContainerNode parentContainer,
         ITransientScopeInterfaceNode transientScopeInterfaceNode,
         IScopeManager scopeManager,
         IUserDefinedElementsBase userDefinedElements,
-        ICheckTypeProperties checkTypeProperties,
+        IScopeCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
@@ -35,7 +35,7 @@ internal class ScopeNode : RangeNode, IScopeNode, ITransientScopeInstance
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
-            name, 
+            scopeInfo.Name, 
             userDefinedElements, 
             checkTypeProperties, 
             referenceGenerator, 
@@ -47,7 +47,7 @@ internal class ScopeNode : RangeNode, IScopeNode, ITransientScopeInstance
         _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
         ParentContainer = parentContainer;
         ScopeManager = scopeManager;
-        FullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{name}";
+        FullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{scopeInfo.Name}";
         ContainerFullName = parentContainer.FullName;
         TransientScopeInterfaceFullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{transientScopeInterfaceNode.Name}";
         ContainerReference = referenceGenerator.Generate("_container");

@@ -194,7 +194,7 @@ internal static class Diagnostics
     {
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_64_00", 
                 "Impossible Exception",
-                $"[DIE] {PhaseToString(ExecutionPhase.ResolutionBuilding)} {exception.Message}", 
+                $"[DIE] {PhaseToString(ExecutionPhase.ResolutionBuilding)} {exception.ErrorMessage}", 
                 "Error", 
                 DiagnosticSeverity.Error, 
                 true),

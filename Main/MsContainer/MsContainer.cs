@@ -1,6 +1,6 @@
 ﻿using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.RangeRoots;
+using MrMeeseeks.DIE.Nodes.Roots;
 using MsMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.MsContainer;
@@ -40,6 +40,20 @@ internal sealed partial class MsContainer
 
     private WellKnownTypesMiscellaneous DIE_Factory_WellKnownTypesMiscellaneous() => 
         WellKnownTypesMiscellaneous.Create(DIE_Factory_Compilation);
+
+    [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
+    [CustomScopeForRootTypes(typeof(ScopeNodeRoot))]
+    private sealed partial class DIE_TransientScope_ScopeNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
+    [CustomScopeForRootTypes(typeof(TransientScopeNodeRoot))]
+    private sealed partial class DIE_TransientScope_TransientScopeNodeRoot
+    {
+        
+    }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]
     [CustomScopeForRootTypes(typeof(CreateFunctionNodeRoot))]

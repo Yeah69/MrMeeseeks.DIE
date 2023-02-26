@@ -2,7 +2,7 @@ using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
-using MrMeeseeks.DIE.RangeRoots;
+using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
@@ -54,10 +54,10 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         BuildRangedInstanceCall(ownerReference, type, callingFunction, ScopeLevel.Container);
 
     internal ContainerNode(
-        IContainerInfo containerInfo,
-        ImmutableList<ITypesFromAttributesBase> typesFromAttributesList,
+        IContainerInfoContext containerInfoContext,
+        IContainerTypesFromAttributes containerTypesFromAttributes,
         Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
-        ICheckTypeProperties checkTypeProperties,
+        IContainerCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
@@ -66,11 +66,11 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<IReferenceGenerator, ITaskTransformationFunctions> taskTransformationFunctions,
-        Func<IContainerInfo, IContainerNode, ITransientScopeInterfaceNode, ImmutableList<ITypesFromAttributesBase>, IReferenceGenerator, IScopeManager> scopeManagerFactory,
+        Func<IContainerInfoContext, IContainerNode, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IReferenceGenerator, IScopeManager> scopeManagerFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
-            containerInfo.Name, 
-            userDefinedElementsFactory((containerInfo.ContainerType, containerInfo.ContainerType)), 
+            containerInfoContext.ContainerInfo.Name, 
+            userDefinedElementsFactory((containerInfoContext.ContainerInfo.ContainerType, containerInfoContext.ContainerInfo.ContainerType)), 
             checkTypeProperties,
             referenceGenerator, 
             createFunctionNodeFactory,  
@@ -78,16 +78,20 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             rangedInstanceFunctionGroupNodeFactory,
             disposalHandlingNodeFactory)
     {
-        _containerInfo = containerInfo;
+        _containerInfo = containerInfoContext.ContainerInfo;
         _referenceGenerator = referenceGenerator;
         _functionCycleTracker = functionCycleTracker;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
-        Namespace = containerInfo.Namespace;
+        Namespace = _containerInfo.Namespace;
         FullName = _containerInfo.FullName;
         
         TransientScopeInterface = transientScopeInterfaceNodeFactory(this, referenceGenerator);
         _lazyScopeManager = new(() => scopeManagerFactory(
-            containerInfo, this, TransientScopeInterface, typesFromAttributesList, referenceGenerator));
+            containerInfoContext,
+            this, 
+            containerTypesFromAttributes,
+            TransientScopeInterface, 
+            referenceGenerator));
         _lazyDisposalType = new(() => _lazyScopeManager.Value
             .Scopes.Select(s => s.DisposalHandling)
             .Concat(_lazyScopeManager.Value.TransientScopes.Select(ts => ts.DisposalHandling))

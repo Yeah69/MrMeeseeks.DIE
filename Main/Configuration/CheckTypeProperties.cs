@@ -20,6 +20,34 @@ internal enum DisposalType
     Async = 2
 }
 
+internal interface IContainerCheckTypeProperties : ICheckTypeProperties
+{
+}
+
+internal class ContainerCheckTypeProperties : CheckTypeProperties, IContainerCheckTypeProperties, IContainerInstance
+{
+    internal ContainerCheckTypeProperties(
+        IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
+        IContainerWideContext containerWideContext) 
+        : base(currentlyConsideredTypes, containerWideContext)
+    {
+    }
+}
+
+internal interface IScopeCheckTypeProperties : ICheckTypeProperties
+{
+}
+
+internal class ScopeCheckTypeProperties : CheckTypeProperties, IScopeCheckTypeProperties, ITransientScopeInstance
+{
+    internal ScopeCheckTypeProperties(
+        IScopeCurrentlyConsideredTypes currentlyConsideredTypes, 
+        IContainerWideContext containerWideContext) 
+        : base(currentlyConsideredTypes, containerWideContext)
+    {
+    }
+}
+
 internal interface ICheckTypeProperties
 {
     DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType);
@@ -38,7 +66,7 @@ internal interface ICheckTypeProperties
     IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType);
 }
 
-internal class CheckTypeProperties : ICheckTypeProperties, ITransientScopeInstance
+internal abstract class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
     private readonly WellKnownTypes _wellKnownTypes;

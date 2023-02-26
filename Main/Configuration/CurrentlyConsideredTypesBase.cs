@@ -4,6 +4,41 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Configuration;
 
+internal interface IContainerCurrentlyConsideredTypes : ICurrentlyConsideredTypes
+{
+}
+
+internal class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IContainerCurrentlyConsideredTypes, IContainerInstance
+{
+    internal ContainerCurrentlyConsideredTypes(
+        IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
+        IContainerTypesFromAttributes containerTypesFromAttributes,
+        IImplementationTypeSetCache implementationTypeSetCache)
+    : base(
+        new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes },
+        implementationTypeSetCache)
+    {
+    }
+}
+
+internal interface IScopeCurrentlyConsideredTypes : ICurrentlyConsideredTypes
+{
+}
+
+internal class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IScopeCurrentlyConsideredTypes, ITransientScopeInstance
+{
+    internal ScopeCurrentlyConsideredTypes(
+        IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
+        IContainerTypesFromAttributes containerTypesFromAttributes,
+        IScopeTypesFromAttributes scopeTypesFromAttributes,
+        IImplementationTypeSetCache implementationTypeSetCache)
+        : base(
+            new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes, scopeTypesFromAttributes },
+            implementationTypeSetCache)
+    {
+    }
+}
+
 internal interface ICurrentlyConsideredTypes
 {
     IImmutableSet<INamedTypeSymbol> AllConsideredImplementations { get; }
@@ -29,9 +64,9 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
 }
 
-internal class CurrentlyConsideredTypes : ICurrentlyConsideredTypes, ITransientScopeInstance
+internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
 {
-    public CurrentlyConsideredTypes(
+    public CurrentlyConsideredTypesBase(
         IReadOnlyList<ITypesFromAttributesBase> typesFromAttributes,
         IImplementationTypeSetCache implementationTypeSetCache)
     {

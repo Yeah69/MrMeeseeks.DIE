@@ -24,10 +24,10 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache, IContai
 
     internal ImplementationTypeSetCache(
         GeneratorExecutionContext context,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
         _context = context;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
         _currentAssemblyName = context.Compilation.AssemblyName ?? "";
         _all = new Lazy<IImmutableSet<INamedTypeSymbol>>(
             () => context

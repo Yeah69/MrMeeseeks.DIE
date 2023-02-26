@@ -16,10 +16,10 @@ internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
 
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
+        IContainerWideContext containerWideContext)
     {
         _context = context;
-        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
     }
 
     public void Generate(string namespaceName, string containerClassName, Exception exception)

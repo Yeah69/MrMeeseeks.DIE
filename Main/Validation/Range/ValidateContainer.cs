@@ -26,8 +26,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
+        IContainerWideContext containerWideContext) 
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
@@ -36,11 +35,11 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes)
+            containerWideContext)
     {
         _validateTransientScopeFactory = validateTransientScopeFactory;
         _validateScopeFactory = validateScopeFactory;
-        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
     }
 
     public override IEnumerable<Diagnostic> Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)

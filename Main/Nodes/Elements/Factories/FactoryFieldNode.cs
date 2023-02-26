@@ -14,8 +14,8 @@ internal class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
         IFunctionNode parentFunction,
         
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes) 
-        : base(fieldSymbol.Type, fieldSymbol, parentFunction, referenceGenerator, wellKnownTypes)
+        IContainerWideContext containerWideContext) 
+        : base(fieldSymbol.Type, fieldSymbol, parentFunction, referenceGenerator, containerWideContext)
     {
     }
 

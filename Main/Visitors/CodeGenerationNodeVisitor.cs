@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -24,11 +25,10 @@ internal class CodeGenerationVisitor : ICodeGenerationVisitor
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     public CodeGenerationVisitor(
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesCollections wellKnownTypesCollections)
+        IContainerWideContext containerWideContext)
     {
-        _wellKnownTypes = wellKnownTypes;
-        _wellKnownTypesCollections = wellKnownTypesCollections;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
     }
 
     public void VisitContainerNode(IContainerNode container)
@@ -458,7 +458,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         var typeFullName = functionCallNode.Awaited
             ? functionCallNode.AsyncTypeFullName
             : functionCallNode.TypeFullName;
-        var call = $"{owner}{functionCallNode.FunctionName}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference}: {p.Item2.Reference}"))})";
+        var call = $"{owner}{functionCallNode.FunctionName}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
         call = functionCallNode.Awaited ? $"(await {call})" : call;
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
     }
@@ -488,7 +488,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     {
         foreach (var (_, element) in factoryFunctionNode.Parameters)
             VisitElementNode(element);
-        VisitFactoryNodeBase(factoryFunctionNode, $"({string.Join(", ", factoryFunctionNode.Parameters.Select(t => $"{t.Name}: {t.Element.Reference}"))})");
+        VisitFactoryNodeBase(factoryFunctionNode, $"({string.Join(", ", factoryFunctionNode.Parameters.Select(t => $"{t.Name.PrefixAtIfKeyword()}: {t.Element.Reference}"))})");
     }
 
     public void VisitFuncNode(IFuncNode funcNode) =>
@@ -560,7 +560,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         foreach (var parameter in tupleNode.Parameters)
             VisitElementNode(parameter.Node);
         _code.AppendLine(
-            $"{tupleNode.TypeFullName} {tupleNode.Reference} = new {tupleNode.TypeFullName}({string.Join(", ", tupleNode.Parameters.Select(p => $"{p.Name}: {p.Node.Reference}"))});");
+            $"{tupleNode.TypeFullName} {tupleNode.Reference} = new {tupleNode.TypeFullName}({string.Join(", ", tupleNode.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {p.Node.Reference}"))});");
     }
 
     public void VisitValueTupleNode(IValueTupleNode valueTupleNode)
@@ -568,7 +568,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         foreach (var parameter in valueTupleNode.Parameters)
             VisitElementNode(parameter.Node);
         _code.AppendLine(
-            $"{valueTupleNode.TypeFullName} {valueTupleNode.Reference} = new {valueTupleNode.TypeFullName}({string.Join(", ", valueTupleNode.Parameters.Select(p => $"{p.Name}: {p.Node.Reference}"))});");
+            $"{valueTupleNode.TypeFullName} {valueTupleNode.Reference} = new {valueTupleNode.TypeFullName}({string.Join(", ", valueTupleNode.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {p.Node.Reference}"))});");
     }
 
     public void VisitValueTupleSyntaxNode(IValueTupleSyntaxNode valueTupleSyntaxNode)
@@ -658,10 +658,10 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         foreach (var (_, element)  in implementationNode.Properties)
             VisitElementNode(element);
         var objectInitializerParameter = implementationNode.Properties.Any()
-            ? $" {{ {string.Join(", ", implementationNode.Properties.Select(p => $"{p.Name} = {p.Element.Reference}"))} }}"
+            ? $" {{ {string.Join(", ", implementationNode.Properties.Select(p => $"{p.Name.PrefixAtIfKeyword()} = {p.Element.Reference}"))} }}"
             : "";
         var constructorParameters =
-            string.Join(", ", implementationNode.ConstructorParameters.Select(d => $"{d.Name}: {d.Element.Reference}"));
+            string.Join(", ", implementationNode.ConstructorParameters.Select(d => $"{d.Name.PrefixAtIfKeyword()}: {d.Element.Reference}"));
         _code.AppendLine(
             $"{implementationNode.TypeFullName} {implementationNode.Reference} = new {implementationNode.ConstructorCallName}({constructorParameters}){objectInitializerParameter};");
         
@@ -679,7 +679,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             foreach (var (_, element) in init.Parameters)
                 VisitElementNode(element);
             var initializerParameters =
-                string.Join(", ", init.Parameters.Select(d => $"{d.Name}: {d.Element.Reference}"));
+                string.Join(", ", init.Parameters.Select(d => $"{d.Name.PrefixAtIfKeyword()}: {d.Element.Reference}"));
 
             var prefix = implementationNode.Awaited
                 ? "await "
@@ -695,7 +695,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             foreach (var (_, element, _) in userDefinedInjection.Parameters)
                 VisitElementNode(element);
             _code.AppendLine(
-                $"{userDefinedInjection.Name}({string.Join(", ", userDefinedInjection.Parameters.Select(p => $"{p.Name}: {(p.IsOut ? "out var " : "")} {p.Element.Reference}"))});");
+                $"{userDefinedInjection.Name}({string.Join(", ", userDefinedInjection.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {(p.IsOut ? "out var " : "")} {p.Element.Reference}"))});");
         }
     }
 

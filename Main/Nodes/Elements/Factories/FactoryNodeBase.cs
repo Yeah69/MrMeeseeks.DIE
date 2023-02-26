@@ -22,11 +22,11 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
         _referenceType = referenceType;
         _parentFunction = parentFunction;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
         Name = symbol.Name;
         Reference = referenceGenerator.Generate(referenceType);
         TypeFullName = referenceType.FullName();

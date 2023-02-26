@@ -7,8 +7,8 @@ internal interface IValidateUserDefinedInitializerParametersInjectionMethod : IV
 
 internal class ValidateUserDefinedInitializerParametersInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedInitializerParametersInjectionMethod
 {
-    internal ValidateUserDefinedInitializerParametersInjectionMethod(WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) => 
-        InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute;
+    internal ValidateUserDefinedInitializerParametersInjectionMethod(IContainerWideContext containerWideContext) => 
+        InjectionAttribute = containerWideContext.WellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute;
 
     protected override INamedTypeSymbol InjectionAttribute { get; }
 }

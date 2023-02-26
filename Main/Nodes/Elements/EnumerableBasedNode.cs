@@ -82,15 +82,14 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
         IRangeNode parentRange,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesCollections wellKnownTypesCollections)
+        IContainerWideContext containerWideContext)
     {
         _collectionType = collectionType;
         _parentRange = parentRange;
         _parentFunction = parentFunction;
         _referenceGenerator = referenceGenerator;
-        _wellKnownTypes = wellKnownTypes;
-        _wellKnownTypesCollections = wellKnownTypesCollections;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
         AsyncReference = referenceGenerator.Generate("result");
     }
 

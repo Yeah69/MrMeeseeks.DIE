@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -20,7 +21,7 @@ internal interface IRangedInstanceFunctionNodeInitializer
     void Initialize(string name, string explicitInterfaceFullName);
 }
 
-internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer
+internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer, IScopeInstance
 {
     private readonly INamedTypeSymbol _type;
     private readonly IReferenceGenerator _referenceGenerator;
@@ -40,7 +41,7 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
-        WellKnownTypes wellKnownTypes) 
+        IContainerWideContext containerWideContext) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             type, 
@@ -55,7 +56,7 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _type = type;
         _referenceGenerator = referenceGenerator;

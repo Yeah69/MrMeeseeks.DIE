@@ -30,7 +30,7 @@ internal abstract class ValidateRange : IValidateRange
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
         _validateUserDefinedAddForDisposalSync = validateUserDefinedAddForDisposalSync;
         _validateUserDefinedAddForDisposalAsync = validateUserDefinedAddForDisposalAsync;
@@ -39,7 +39,7 @@ internal abstract class ValidateRange : IValidateRange
         _validateUserDefinedInitializerParametersInjectionMethod = validateUserDefinedInitializerParametersInjectionMethod;
         _validateUserDefinedFactoryMethod = validateUserDefinedFactoryMethod;
         _validateUserDefinedFactoryField = validateUserDefinedFactoryField;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
     }
 
     protected abstract Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification);

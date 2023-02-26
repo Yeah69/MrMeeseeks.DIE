@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.Nodes.Ranges;
+﻿using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.RangeRoots;
 using MsMeeseeks.DIE.Configuration.Attributes;
 
@@ -40,8 +41,58 @@ internal sealed partial class MsContainer
     private WellKnownTypesMiscellaneous DIE_Factory_WellKnownTypesMiscellaneous() => 
         WellKnownTypesMiscellaneous.Create(DIE_Factory_Compilation);
 
+    [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]
     [CustomScopeForRootTypes(typeof(CreateFunctionNodeRoot))]
     private sealed partial class DIE_Scope_CreateFunctionNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(CreateScopeFunctionNode))]
+    [CustomScopeForRootTypes(typeof(CreateScopeFunctionNodeRoot))]
+    private sealed partial class DIE_Scope_CreateScopeFunctionNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(CreateTransientScopeFunctionNode))]
+    [CustomScopeForRootTypes(typeof(CreateTransientScopeFunctionNodeRoot))]
+    private sealed partial class DIE_Scope_CreateTransientScopeFunctionNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(EntryFunctionNode))]
+    [CustomScopeForRootTypes(typeof(EntryFunctionNodeRoot))]
+    private sealed partial class DIE_Scope_EntryFunctionNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(LocalFunctionNode))]
+    [CustomScopeForRootTypes(typeof(LocalFunctionNodeRoot))]
+    private sealed partial class DIE_Scope_LocalFunctionNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceFunctionNode))]
+    [CustomScopeForRootTypes(typeof(RangedInstanceFunctionNodeRoot))]
+    private sealed partial class DIE_Scope_RangedInstanceFunctionNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceInterfaceFunctionNode))]
+    [CustomScopeForRootTypes(typeof(RangedInstanceInterfaceFunctionNodeRoot))]
+    private sealed partial class DIE_Scope_RangedInstanceInterfaceFunctionNodeRoot
+    {
+        
+    }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(MultiFunctionNode))]
+    [CustomScopeForRootTypes(typeof(MultiFunctionNodeRoot))]
+    private sealed partial class DIE_Scope_MultiFunctionNodeRoot
     {
         
     }

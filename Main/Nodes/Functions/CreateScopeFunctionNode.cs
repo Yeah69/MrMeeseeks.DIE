@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -12,7 +13,7 @@ internal interface ICreateScopeFunctionNode : ICreateFunctionNodeBase
 {
 }
 
-internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFunctionNode
+internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _typeSymbol;
     private readonly IReferenceGenerator _referenceGenerator;
@@ -31,7 +32,7 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
-        WellKnownTypes wellKnownTypes) 
+        IContainerWideContext containerWideContext) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
             typeSymbol, 
@@ -46,7 +47,7 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _typeSymbol = typeSymbol;
         _referenceGenerator = referenceGenerator;

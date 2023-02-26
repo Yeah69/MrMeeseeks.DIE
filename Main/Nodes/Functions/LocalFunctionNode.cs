@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -11,7 +12,7 @@ internal interface ILocalFunctionNode : ISingleFunctionNode
 {
 }
 
-internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode
+internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, IScopeInstance
 {
     private readonly IElementNodeMapperBase _mapper;
 
@@ -29,7 +30,7 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        WellKnownTypes wellKnownTypes) 
+        IContainerWideContext containerWideContext) 
         : base(
             null,
             typeSymbol, 
@@ -44,7 +45,7 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _mapper = mapper;
         Name = referenceGenerator.Generate("Local", typeSymbol);

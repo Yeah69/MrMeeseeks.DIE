@@ -16,9 +16,7 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
+        IContainerWideContext containerWideContext) 
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync,
@@ -27,9 +25,7 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes,
-            wellKnownTypesAggregation, 
-            wellKnownTypesMiscellaneous)
+            containerWideContext)
     {
         
     }

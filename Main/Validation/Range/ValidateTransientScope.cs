@@ -16,9 +16,7 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
+        IContainerWideContext containerWideContext) 
         : base(
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
@@ -27,9 +25,7 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes, 
-            wellKnownTypesAggregation, 
-            wellKnownTypesMiscellaneous)
+            containerWideContext)
     {
         
     }

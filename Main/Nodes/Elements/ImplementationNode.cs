@@ -55,7 +55,7 @@ internal class ImplementationNode : IImplementationNode
         ICheckTypeProperties checkTypeProperties,
         IUserDefinedElementsBase userDefinedElements,
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
         _implementationType = implementationType;
         _constructor = constructor;
@@ -65,7 +65,7 @@ internal class ImplementationNode : IImplementationNode
         _checkTypeProperties = checkTypeProperties;
         _userDefinedElementsBase = userDefinedElements;
         _referenceGenerator = referenceGenerator;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
         TypeFullName = implementationType.FullName();
         // The constructor call shouldn't contain nullable annotations
         ConstructorCallName = implementationType.FullName(SymbolDisplayMiscellaneousOptions.None);

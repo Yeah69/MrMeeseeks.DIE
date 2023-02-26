@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -17,7 +18,7 @@ internal interface IMultiFunctionNode : IFunctionNode
     string ItemTypeFullName { get; }
 }
 
-internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
+internal class MultiFunctionNode : FunctionNodeBase, IMultiFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
     private readonly IRangeNode _parentNode;
@@ -29,7 +30,7 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
     private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
     private readonly WellKnownTypes _wellKnownTypes;
 
-    internal MultiFunctionNodeBase(
+    internal MultiFunctionNode(
         // parameters
         INamedTypeSymbol enumerableType,
         IReadOnlyList<ITypeSymbol> parameters,
@@ -46,8 +47,7 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesCollections wellKnownTypesCollections)
+        IContainerWideContext containerWideContext)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private, 
             enumerableType, 
@@ -60,7 +60,7 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _enumerableType = enumerableType;
         _parentNode = parentNode;
@@ -70,14 +70,14 @@ internal class MultiFunctionNodeBase : FunctionNodeBase, IMultiFunctionNode
         _referenceGenerator = referenceGenerator;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
 
         ItemTypeFullName = CollectionUtility.GetCollectionsInnerType(enumerableType).FullName();
 
         SuppressAsync =
-            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
+            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
         IsAsyncEnumerable =
-            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
+            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
 
         Name = referenceGenerator.Generate("CreateMulti", enumerableType);
     }

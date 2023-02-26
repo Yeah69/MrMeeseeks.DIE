@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -16,7 +17,7 @@ internal interface ICreateFunctionNode : ICreateFunctionNodeBase
 {
 }
 
-internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode
+internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode, IScopeInstance
 {
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> _typeToElementNodeMapperFactory;
@@ -34,7 +35,7 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
-        WellKnownTypes wellKnownTypes) 
+        IContainerWideContext containerWideContext) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             typeSymbol, 
@@ -49,7 +50,7 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _referenceGenerator = referenceGenerator;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;

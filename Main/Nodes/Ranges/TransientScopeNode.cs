@@ -18,7 +18,7 @@ internal interface ITransientScopeNode : IScopeNodeBase
 
 internal class TransientScopeNode : RangeNode, ITransientScopeNode, ITransientScopeInstance
 {
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateTransientScopeFunctionNode> _createTransientScopeFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateTransientScopeFunctionNodeRoot> _createTransientScopeFunctionNodeFactory;
 
     internal TransientScopeNode(
         string name,
@@ -28,8 +28,8 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode, ITransientSc
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> multiFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateTransientScopeFunctionNode> createTransientScopeFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateTransientScopeFunctionNodeRoot> createTransientScopeFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
@@ -83,6 +83,7 @@ internal class TransientScopeNode : RangeNode, ITransientScopeNode, ITransientSc
                 UserDefinedElements,
                 CheckTypeProperties,
                 ReferenceGenerator)
+                .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateTransientScopeCall(containerParameter, callingRange, callingFunction, this));
 

@@ -6,6 +6,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.RangeRoots;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
@@ -23,8 +24,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
         ICheckTypeProperties checkTypeProperties, 
         IReferenceGenerator referenceGenerator, 
         IDiagLogger diagLogger, 
-        WellKnownTypes wellKnownTypes, 
-        WellKnownTypesCollections wellKnownTypesCollections, 
+        IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory, 
@@ -41,7 +41,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNodeRoot> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
         : base(parentFunction, 
@@ -51,8 +51,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
             checkTypeProperties,
             referenceGenerator,
             diagLogger, 
-            wellKnownTypes, 
-            wellKnownTypesCollections, 
+            containerWideContext,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 

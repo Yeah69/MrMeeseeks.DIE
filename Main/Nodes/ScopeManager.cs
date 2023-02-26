@@ -77,7 +77,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         Func<IReadOnlyList<ITypesFromAttributesBase>, ICheckTypeProperties> checkTypePropertiesFactory,
         Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory,
         IEmptyUserDefinedElements emptyUserDefinedElementsBase,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
+        IContainerWideContext containerWideContext)
     {
         _containerInfo = containerInfo;
         _container = container;
@@ -140,7 +140,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
+                        containerWideContext.WellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch
@@ -166,7 +166,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
+                        containerWideContext.WellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch

@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -12,7 +13,7 @@ internal interface IEntryFunctionNode : ISingleFunctionNode
 {
 }
 
-internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode
+internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, IScopeInstance
 {
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> _typeToElementNodeMapperFactory;
@@ -27,7 +28,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode
         IUserDefinedElementsBase userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes,
+        IContainerWideContext containerWideContext,
         Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -48,7 +49,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _referenceGenerator = referenceGenerator;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;

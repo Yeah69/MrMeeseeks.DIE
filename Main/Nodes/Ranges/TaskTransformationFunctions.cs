@@ -29,8 +29,9 @@ internal class TaskTransformationFunctions : ITaskTransformationFunctions
 {
     public TaskTransformationFunctions(
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
+        var wellKnownTypes = containerWideContext.WellKnownTypes;
         var genericValueTaskFullName = $"{wellKnownTypes.ValueTask.FullName()}<T>";
         var ungenericValueTaskFullName = wellKnownTypes.ValueTask.FullName();
         var genericTaskFullName = $"{wellKnownTypes.Task.FullName()}<T>";

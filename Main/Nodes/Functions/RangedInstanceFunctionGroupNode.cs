@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.RangeRoots;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 
@@ -19,7 +20,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly IReferenceGenerator _referenceGenerator;
-    private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionNode> _rangedInstanceFunctionNodeFactory;
+    private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionNodeRoot> _rangedInstanceFunctionNodeFactory;
     private readonly List<IRangedInstanceFunctionNode> _overloads = new();
 
     internal RangedInstanceFunctionGroupNode(
@@ -31,7 +32,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
         IUserDefinedElementsBase userDefinedElements,
         IReferenceGenerator referenceGenerator,
         
-        Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionNode> rangedInstanceFunctionNodeFactory)
+        Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
         : base(level, type, referenceGenerator)
     {
         _type = type;
@@ -60,5 +61,6 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
                 _userDefinedElementsBase,
                 _checkTypeProperties,
                 _referenceGenerator)
+                .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty));
 }

@@ -40,7 +40,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
         _typeSymbol = typeSymbol;
         _parentContainer = parentContainer;
@@ -48,7 +48,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _plainFunctionCallNodeFactory = plainFunctionCallNodeFactory;
         _scopeCallNodeFactory = scopeCallNodeFactory;
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
         Parameters = parameters.Select(p=> (p, parameterNodeFactory(p, referenceGenerator)
             .EnqueueBuildJobTo(parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty))).ToList();
         Accessibility = accessibility;

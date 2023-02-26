@@ -29,7 +29,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     private readonly IContainerInfo _containerInfo;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly IFunctionCycleTracker _functionCycleTracker;
-    private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> _entryFunctionNodeFactory;
+    private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
     private readonly Lazy<DisposalType> _lazyDisposalType;
@@ -61,9 +61,9 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> multiFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
-        Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNode> entryFunctionNodeFactory,
+        Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<IReferenceGenerator, ITaskTransformationFunctions> taskTransformationFunctions,
         Func<IContainerInfo, IContainerNode, ITransientScopeInterfaceNode, ImmutableList<ITypesFromAttributesBase>, IReferenceGenerator, IScopeManager> scopeManagerFactory,
@@ -124,7 +124,8 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
                 this,
                 UserDefinedElements,
                 CheckTypeProperties,
-                _referenceGenerator);
+                _referenceGenerator)
+                .Function;
             _rootFunctions.Add(functionNode);
             BuildQueue.Enqueue(new(functionNode, implementationStack));
         }

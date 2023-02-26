@@ -2,6 +2,7 @@ using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.RangeRoots;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -23,13 +24,13 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, ICont
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Dictionary<ITypeSymbol, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Collection<IRangeNode> _ranges = new();
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNode> _rangedInstanceInterfaceFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNodeRoot> _rangedInstanceInterfaceFunctionNodeFactory;
 
     internal TransientScopeInterfaceNode(
         IContainerNode container,
         IReferenceGenerator referenceGenerator,
         
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNode> rangedInstanceInterfaceFunctionNodeFactory)
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNodeRoot> rangedInstanceInterfaceFunctionNodeFactory)
     {
         _container = container;
         
@@ -60,6 +61,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, ICont
                         _container,
                         _container,
                         _referenceGenerator)
+                    .Function
                     .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
                 foreach (var range in _ranges)
                     interfaceFunction.AddConsideredRange(range);

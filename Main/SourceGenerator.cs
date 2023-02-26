@@ -41,12 +41,18 @@ public class SourceGenerator : ISourceGenerator
         WellKnownTypes wellKnownTypes = WellKnownTypes.Create(context.Compilation);
         WellKnownTypesAggregation wellKnownTypesAggregation = WellKnownTypesAggregation.Create(context.Compilation);
         WellKnownTypesChoice wellKnownTypesChoice = WellKnownTypesChoice.Create(context.Compilation);
+        IContainerWideContext containerWideContext = new ContainerWideContext(
+            wellKnownTypes,
+            wellKnownTypesAggregation,
+            wellKnownTypesChoice,
+            wellKnownTypesCollections,
+            wellKnownTypesMiscellaneous);
         DiagLogger diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
-        var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(wellKnownTypes);
-        var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(wellKnownTypes);
-        var validateUserDefinedConstructorParametersInjectionMethod = new ValidateUserDefinedConstructorParametersInjectionMethod(wellKnownTypesMiscellaneous);
-        var validateUserDefinedPropertiesInjectionMethod = new ValidateUserDefinedPropertiesInjectionMethod(wellKnownTypesMiscellaneous);
-        var validateUserDefinedInitializerParametersInjectionMethod = new ValidateUserDefinedInitializerParametersInjectionMethod(wellKnownTypesMiscellaneous);
+        var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(containerWideContext);
+        var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(containerWideContext);
+        var validateUserDefinedConstructorParametersInjectionMethod = new ValidateUserDefinedConstructorParametersInjectionMethod(containerWideContext);
+        var validateUserDefinedPropertiesInjectionMethod = new ValidateUserDefinedPropertiesInjectionMethod(containerWideContext);
+        var validateUserDefinedInitializerParametersInjectionMethod = new ValidateUserDefinedInitializerParametersInjectionMethod(containerWideContext);
         var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
         var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
         var validateAttributes = new ValidateAttributes();
@@ -58,9 +64,7 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes, 
-            wellKnownTypesAggregation,
-            wellKnownTypesMiscellaneous);
+            containerWideContext);
         var validateScope = new ValidateScope(
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
@@ -69,9 +73,7 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes,
-            wellKnownTypesAggregation,
-            wellKnownTypesMiscellaneous);
+            containerWideContext);
         var validateContainer = new ValidateContainer(
             validateTransientScope, 
             validateScope, 
@@ -82,17 +84,13 @@ public class SourceGenerator : ISourceGenerator
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes,
-            wellKnownTypesMiscellaneous);
+            containerWideContext);
         var assemblyTypesFromAttributes = new TypesFromAttributes(
             context.Compilation.Assembly.GetAttributes(), 
             null,
             null,
             validateAttributes,
-            wellKnownTypesAggregation,
-            wellKnownTypesChoice,
-            wellKnownTypesMiscellaneous,
-            wellKnownTypes);
+            containerWideContext);
         
         foreach (var diagnostic in assemblyTypesFromAttributes
                      .Warnings
@@ -103,8 +101,8 @@ public class SourceGenerator : ISourceGenerator
             return;
         
         var referenceGeneratorFactory = new ReferenceGeneratorFactory(ReferenceGeneratorFactory);
-        var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, wellKnownTypesMiscellaneous);
-        var implementationTypeSetCache = new ImplementationTypeSetCache(context, wellKnownTypes);
+        var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, containerWideContext);
+        var implementationTypeSetCache = new ImplementationTypeSetCache(context, containerWideContext);
         new ExecuteImpl(
             errorDescriptionInsteadOfBuildFailure,
             context,
@@ -116,7 +114,7 @@ public class SourceGenerator : ISourceGenerator
             CreateCodeGenerationVisitor,
             diagLogger).Execute();
 
-        ICodeGenerationVisitor CreateCodeGenerationVisitor() => new CodeGenerationVisitor(wellKnownTypes, wellKnownTypesCollections);
+        ICodeGenerationVisitor CreateCodeGenerationVisitor() => new CodeGenerationVisitor(containerWideContext);
 
         IContainerNode ContainerNodeFactory(
             IContainerInfo ci)
@@ -126,10 +124,7 @@ public class SourceGenerator : ISourceGenerator
                 ci.ContainerType,
                 ci.ContainerType,
                 validateAttributes,
-                wellKnownTypesAggregation,
-                wellKnownTypesChoice,
-                wellKnownTypesMiscellaneous,
-                wellKnownTypes);
+                containerWideContext);
 
             foreach (var diagnostic in containerTypesFromAttributes.Warnings)
                 diagLogger.Log(diagnostic);
@@ -159,22 +154,23 @@ public class SourceGenerator : ISourceGenerator
         }
 
         ITaskTransformationFunctions CreateTaskTransformationFunctions(IReferenceGenerator referenceGenerator) =>
-            new TaskTransformationFunctions(referenceGenerator, wellKnownTypes);
+            new TaskTransformationFunctions(referenceGenerator, containerWideContext);
 
         IDisposalHandlingNode CreateDisposalHandlingNode(IReferenceGenerator referenceGenerator) =>
-            new DisposalHandlingNode(referenceGenerator, wellKnownTypes);
+            new DisposalHandlingNode(referenceGenerator, containerWideContext);
 
         ITransientScopeInterfaceNode CreateTransientScopeInterfaceNode(
             IContainerNode container,
             IReferenceGenerator referenceGenerator) =>
             new TransientScopeInterfaceNode(container, referenceGenerator, CreateRangedInstanceInterfaceFunctionNode);
 
-        IRangedInstanceInterfaceFunctionNode CreateRangedInstanceInterfaceFunctionNode(
+        IRangedInstanceInterfaceFunctionNodeRoot CreateRangedInstanceInterfaceFunctionNode(
             INamedTypeSymbol type, 
             IReadOnlyList<ITypeSymbol> parameters,
             IContainerNode parentContainer, 
             IRangeNode parentRange,
             IReferenceGenerator referenceGenerator) =>
+            new RangedInstanceInterfaceFunctionNodeRoot(
             new RangedInstanceInterfaceFunctionNode(
                 type,
                 parameters,
@@ -185,7 +181,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateScopeCallNode,
                 CreateTransientScopeCallNode,
                 CreateParameterNode,
-                wellKnownTypes);
+                containerWideContext));
 
         Nodes.IScopeManager CreateScopeManager(
             IContainerInfo containerInfo,
@@ -208,10 +204,7 @@ public class SourceGenerator : ISourceGenerator
                         rangeType,
                         containerInfo.ContainerType,
                         validateAttributes,
-                        wellKnownTypesAggregation,
-                        wellKnownTypesChoice,
-                        wellKnownTypesMiscellaneous,
-                        wellKnownTypes);
+                        containerWideContext);
                     
                     foreach (var diagnostic in scopeTypesFromAttributes.Warnings)
                         diagLogger.Log(diagnostic);
@@ -224,7 +217,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateCheckTypeProperties,
                 CreateUserDefinedElements,
                 new EmptyUserDefinedElements(),
-                wellKnownTypesMiscellaneous);
+                containerWideContext);
 
         IScopeNode CreateScopeNode(
             string name,
@@ -268,7 +261,7 @@ public class SourceGenerator : ISourceGenerator
                 CreateRangedInstanceFunctionGroupNode,
                 CreateDisposalHandlingNode);
 
-        IMultiFunctionNode CreateMultiFunctionNode(
+        IMultiFunctionNodeRoot CreateMultiFunctionNode(
             INamedTypeSymbol enumerableType,
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentNode,
@@ -276,22 +269,22 @@ public class SourceGenerator : ISourceGenerator
             IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
-            new MultiFunctionNodeBase(
-                enumerableType,
-                parameters,
-                parentNode,
-                parentContainer,
-                userDefinedElements,
-                checkTypeProperties,
-                referenceGenerator,
-                CreateParameterNode,
-                CreatePlainFunctionCallNode,
-                CreateScopeCallNode,
-                CreateTransientScopeCallNode,
-                CreateElementNodeMapper,
-                CreateOverridingElementNodeWithDecorationMapper,
-                wellKnownTypes,
-                wellKnownTypesCollections);
+            new MultiFunctionNodeRoot(
+                new MultiFunctionNode(
+                    enumerableType,
+                    parameters,
+                    parentNode,
+                    parentContainer,
+                    userDefinedElements,
+                    checkTypeProperties,
+                    referenceGenerator,
+                    CreateParameterNode,
+                    CreatePlainFunctionCallNode,
+                    CreateScopeCallNode,
+                    CreateTransientScopeCallNode,
+                    CreateElementNodeMapper,
+                    CreateOverridingElementNodeWithDecorationMapper,
+                    containerWideContext));
 
         IPlainFunctionCallNode CreatePlainFunctionCallNode(
             string? ownerReference,
@@ -326,9 +319,9 @@ public class SourceGenerator : ISourceGenerator
                     CreateScopeCallNode,
                     CreateTransientScopeCallNode,
                     CreateParameterNode,
-                    wellKnownTypes));
+                    containerWideContext));
 
-        ICreateScopeFunctionNode CreateScopeFunctionNode(
+        ICreateScopeFunctionNodeRoot CreateScopeFunctionNode(
             INamedTypeSymbol typeSymbol,
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
@@ -336,22 +329,23 @@ public class SourceGenerator : ISourceGenerator
             IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
-            new CreateScopeFunctionNode(
-                typeSymbol, 
-                parameters,
-                parentRange,
-                parentContainer,
-                userDefinedElements,
-                checkTypeProperties,
-                referenceGenerator,
-                CreateElementNodeMapper,
-                CreatePlainFunctionCallNode, 
-                CreateScopeCallNode,
-                CreateTransientScopeCallNode,
-                CreateParameterNode,
-                wellKnownTypes);
+            new CreateScopeFunctionNodeRoot(
+                new CreateScopeFunctionNode(
+                    typeSymbol,
+                    parameters,
+                    parentRange,
+                    parentContainer,
+                    userDefinedElements,
+                    checkTypeProperties,
+                    referenceGenerator,
+                    CreateElementNodeMapper,
+                    CreatePlainFunctionCallNode,
+                    CreateScopeCallNode,
+                    CreateTransientScopeCallNode,
+                    CreateParameterNode,
+                    containerWideContext));
 
-        ICreateTransientScopeFunctionNode CreateTransientScopeFunctionNode(
+        ICreateTransientScopeFunctionNodeRoot CreateTransientScopeFunctionNode(
             INamedTypeSymbol typeSymbol,
             IReadOnlyList<ITypeSymbol> parameters,
             IRangeNode parentRange,
@@ -359,21 +353,22 @@ public class SourceGenerator : ISourceGenerator
             IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
-            new CreateTransientScopeFunctionNode(
-                typeSymbol, 
-                parameters,
-                parentRange,
-                parentContainer,
-                userDefinedElements,
-                checkTypeProperties,
-                referenceGenerator,
-                CreateElementNodeMapper,
-                CreateTransientScopeDisposalElementNodeMapper,
-                CreatePlainFunctionCallNode, 
-                CreateScopeCallNode,
-                CreateTransientScopeCallNode,
-                CreateParameterNode,
-                wellKnownTypes);
+            new CreateTransientScopeFunctionNodeRoot(
+                new CreateTransientScopeFunctionNode(
+                    typeSymbol,
+                    parameters,
+                    parentRange,
+                    parentContainer,
+                    userDefinedElements,
+                    checkTypeProperties,
+                    referenceGenerator,
+                    CreateElementNodeMapper,
+                    CreateTransientScopeDisposalElementNodeMapper,
+                    CreatePlainFunctionCallNode,
+                    CreateScopeCallNode,
+                    CreateTransientScopeCallNode,
+                    CreateParameterNode,
+                    containerWideContext));
 
         ITransientScopeDisposalElementNodeMapper CreateTransientScopeDisposalElementNodeMapper(
             IElementNodeMapperBase parentMapper,
@@ -382,8 +377,7 @@ public class SourceGenerator : ISourceGenerator
                 parentMapper,
                 passedDependencies,
                 diagLogger,
-                wellKnownTypes,
-                wellKnownTypesCollections,
+                containerWideContext,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -410,33 +404,34 @@ public class SourceGenerator : ISourceGenerator
             IReferenceGenerator referenceGenerator) =>
             new TransientScopeDisposalTriggerNode(disposalType, referenceGenerator);
 
-        ILocalFunctionNode CreateLocalFunctionNode(
+        ILocalFunctionNodeRoot CreateLocalFunctionNode(
             ITypeSymbol typeSymbol,
             IReadOnlyList<ITypeSymbol> parameters,
-            ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters, 
+            ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
             IRangeNode parentRange,
             IContainerNode parentContainer,
             IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IElementNodeMapperBase mapper,
             IReferenceGenerator referenceGenerator) =>
-            new LocalFunctionNode(
-                typeSymbol, 
-                parameters,
-                closureParameters,
-                parentRange,
-                parentContainer,
-                userDefinedElements,
-                checkTypeProperties,
-                mapper,
-                referenceGenerator,
-                CreateParameterNode,
-                CreatePlainFunctionCallNode,
-                CreateScopeCallNode,
-                CreateTransientScopeCallNode,
-                wellKnownTypes);
-        
-        IRangedInstanceFunctionNode CreateRangedInstanceFunctionNode(
+            new LocalFunctionNodeRoot(
+                new LocalFunctionNode(
+                    typeSymbol,
+                    parameters,
+                    closureParameters,
+                    parentRange,
+                    parentContainer,
+                    userDefinedElements,
+                    checkTypeProperties,
+                    mapper,
+                    referenceGenerator,
+                    CreateParameterNode,
+                    CreatePlainFunctionCallNode,
+                    CreateScopeCallNode,
+                    CreateTransientScopeCallNode,
+                    containerWideContext));
+
+        IRangedInstanceFunctionNodeRoot CreateRangedInstanceFunctionNode(
             ScopeLevel level,
             INamedTypeSymbol type,
             IReadOnlyList<ITypeSymbol> parameters,
@@ -445,21 +440,22 @@ public class SourceGenerator : ISourceGenerator
             IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
-            new RangedInstanceFunctionNode(
-                level,
-                type,
-                parameters,
-                parentRange,
-                parentContainer,
-                userDefinedElements,
-                checkTypeProperties,
-                referenceGenerator,
-                CreateElementNodeMapper, 
-                CreatePlainFunctionCallNode,
-                CreateScopeCallNode,
-                CreateTransientScopeCallNode,
-                CreateParameterNode,
-                wellKnownTypes);
+            new RangedInstanceFunctionNodeRoot(
+                new RangedInstanceFunctionNode(
+                    level,
+                    type,
+                    parameters,
+                    parentRange,
+                    parentContainer,
+                    userDefinedElements,
+                    checkTypeProperties,
+                    referenceGenerator,
+                    CreateElementNodeMapper,
+                    CreatePlainFunctionCallNode,
+                    CreateScopeCallNode,
+                    CreateTransientScopeCallNode,
+                    CreateParameterNode,
+                    containerWideContext));
 
         
         IRangedInstanceFunctionGroupNode CreateRangedInstanceFunctionGroupNode(
@@ -479,8 +475,8 @@ public class SourceGenerator : ISourceGenerator
                 userDefinedElements,
                 referenceGenerator,
                 CreateRangedInstanceFunctionNode);
-        
-        IEntryFunctionNode CreateEntryFunctionNode(
+
+        IEntryFunctionNodeRoot CreateEntryFunctionNode(
             ITypeSymbol typeSymbol,
             string prefix,
             IReadOnlyList<ITypeSymbol> parameters,
@@ -489,22 +485,23 @@ public class SourceGenerator : ISourceGenerator
             IUserDefinedElementsBase userDefinedElements,
             ICheckTypeProperties checkTypeProperties,
             IReferenceGenerator referenceGenerator) =>
-            new EntryFunctionNode(
-                typeSymbol,
-                prefix,
-                parameters,
-                parentRange,
-                parentContainer,
-                userDefinedElements,
-                checkTypeProperties,
-                referenceGenerator,
-                wellKnownTypes, 
-                CreateElementNodeMapper, 
-                CreateNonWrapToCreateElementNodeMapper,
-                CreatePlainFunctionCallNode,
-                CreateScopeCallNode,
-                CreateTransientScopeCallNode,
-                CreateParameterNode);
+            new EntryFunctionNodeRoot(
+                new EntryFunctionNode(
+                    typeSymbol,
+                    prefix,
+                    parameters,
+                    parentRange,
+                    parentContainer,
+                    userDefinedElements,
+                    checkTypeProperties,
+                    referenceGenerator,
+                    containerWideContext,
+                    CreateElementNodeMapper,
+                    CreateNonWrapToCreateElementNodeMapper,
+                    CreatePlainFunctionCallNode,
+                    CreateScopeCallNode,
+                    CreateTransientScopeCallNode,
+                    CreateParameterNode));
 
         IScopeCallNode CreateScopeCallNode(
             string containerParameter, 
@@ -543,14 +540,13 @@ public class SourceGenerator : ISourceGenerator
         IOverridingElementNodeMapper CreateOverridingElementNodeMapper(
             IElementNodeMapperBase parentElementNodeMapper,
             ElementNodeMapperBase.PassedDependencies passedDependencies,
-            ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> @override) =>
+            ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> overrideParam) =>
             new OverridingElementNodeMapper(
                 parentElementNodeMapper,
                 passedDependencies,
-                @override,
+                overrideParam,
                 diagLogger,
-                wellKnownTypes,
-                wellKnownTypesCollections,
+                containerWideContext,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -574,14 +570,13 @@ public class SourceGenerator : ISourceGenerator
         IOverridingElementNodeWithDecorationMapper CreateOverridingElementNodeWithDecorationMapper(
             IElementNodeMapperBase parentElementNodeMapper,
             ElementNodeMapperBase.PassedDependencies passedDependencies,
-            (INamedTypeSymbol, INamedTypeSymbol) @override) =>
+            (INamedTypeSymbol, INamedTypeSymbol) overrideParam) =>
             new OverridingElementNodeWithDecorationMapper(
                 parentElementNodeMapper,
                 passedDependencies,
-                @override,
+                overrideParam,
                 diagLogger,
-                wellKnownTypes,
-                wellKnownTypesCollections,
+                containerWideContext,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -609,8 +604,7 @@ public class SourceGenerator : ISourceGenerator
                 parentElementNodeMapper,
                 passedDependencies,
                 diagLogger,
-                wellKnownTypes,
-                wellKnownTypesCollections,
+                containerWideContext,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -646,8 +640,7 @@ public class SourceGenerator : ISourceGenerator
                 checkTypeProperties,
                 referenceGenerator,
                 diagLogger,
-                wellKnownTypes,
-                wellKnownTypesCollections,
+                containerWideContext,
                 CreateFactoryFieldNode,
                 CreateFactoryPropertyNode,
                 CreateFactoryFunctionNode,
@@ -678,8 +671,7 @@ public class SourceGenerator : ISourceGenerator
                 parentRange,
                 parentFunction,
                 referenceGenerator,
-                wellKnownTypes,
-                wellKnownTypesCollections);
+                containerWideContext);
 
         INullNode CreateNullNode(ITypeSymbol nullableType, IReferenceGenerator referenceGenerator) => new NullNode(nullableType, referenceGenerator);
 
@@ -707,7 +699,7 @@ public class SourceGenerator : ISourceGenerator
                 checkTypeProperties,
                 userDefinedElements, 
                 referenceGenerator,
-                wellKnownTypes);
+                containerWideContext);
 
         IOutParameterNode CreateOutParameterNode(ITypeSymbol type, IReferenceGenerator referenceGenerator) =>
             new OutParameterNode(type, referenceGenerator);
@@ -756,16 +748,16 @@ public class SourceGenerator : ISourceGenerator
             IFunctionNode parentFunction,
             IElementNodeMapperBase typeToElementNodeMapper, 
             IReferenceGenerator referenceGenerator) =>
-            new FactoryFunctionNode(methodSymbol, parentFunction, typeToElementNodeMapper, referenceGenerator, wellKnownTypes);
+            new FactoryFunctionNode(methodSymbol, parentFunction, typeToElementNodeMapper, referenceGenerator, containerWideContext);
 
         IFactoryPropertyNode CreateFactoryPropertyNode(
             IPropertySymbol property,
             IFunctionNode parentFunction, 
             IReferenceGenerator referenceGenerator) =>
-            new FactoryPropertyNode(property, parentFunction, referenceGenerator, wellKnownTypes);
+            new FactoryPropertyNode(property, parentFunction, referenceGenerator, containerWideContext);
 
         IFactoryFieldNode CreateFactoryFieldNode(IFieldSymbol field, IFunctionNode parentFunction, IReferenceGenerator referenceGenerator) =>
-            new FactoryFieldNode(field, parentFunction, referenceGenerator, wellKnownTypes);
+            new FactoryFieldNode(field, parentFunction, referenceGenerator, containerWideContext);
 
         IParameterNode CreateParameterNode(ITypeSymbol type, IReferenceGenerator referenceGenerator) => new ParameterNode(type, referenceGenerator);
             
@@ -775,11 +767,11 @@ public class SourceGenerator : ISourceGenerator
         ICheckTypeProperties CreateCheckTypeProperties(IReadOnlyList<ITypesFromAttributesBase> typesFromAttributes) =>
             new CheckTypeProperties(
                 new CurrentlyConsideredTypes(typesFromAttributes, implementationTypeSetCache), 
-                wellKnownTypes);
+                containerWideContext);
 
         IUserDefinedElements CreateUserDefinedElements(
             (INamedTypeSymbol Range, INamedTypeSymbol Container) types) =>
-            new UserDefinedElements(types, wellKnownTypes, wellKnownTypesMiscellaneous);
+            new UserDefinedElements(types, containerWideContext);
 
     }
 }

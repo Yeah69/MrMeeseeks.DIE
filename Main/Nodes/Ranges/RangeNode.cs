@@ -38,7 +38,7 @@ internal abstract class RangeNode : IRangeNode
     protected readonly ICheckTypeProperties CheckTypeProperties;
     protected readonly IReferenceGenerator ReferenceGenerator;
     protected readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> CreateFunctionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> _multiFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
     protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNode>> _multiFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
@@ -66,6 +66,7 @@ internal abstract class RangeNode : IRangeNode
                 UserDefinedElements,
                 CheckTypeProperties,
                 ReferenceGenerator)
+                .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateCall(null, callingFunction, onAwait));
 
@@ -82,7 +83,7 @@ internal abstract class RangeNode : IRangeNode
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNode> multiFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
     {

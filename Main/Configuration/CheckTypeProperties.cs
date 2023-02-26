@@ -45,10 +45,11 @@ internal class CheckTypeProperties : ICheckTypeProperties, ITransientScopeInstan
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
-        WellKnownTypes wellKnownTypes)
+        
+        IContainerWideContext containerWideContext)
     {
         _currentlyConsideredTypes = currentlyConsideredTypes;
-        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
     }
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)

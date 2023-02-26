@@ -45,14 +45,14 @@ internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstan
         (INamedTypeSymbol Range, INamedTypeSymbol Container) types,
 
         // dependencies
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
+        IContainerWideContext containerWideContext)
     {
         var validationErrors = new List<Diagnostic>();
         var dieMembers = types.Range.GetMembers()
             .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_"))
             .ToList();
 
+        var wellKnownTypes = containerWideContext.WellKnownTypes;
         var nonValidFactoryMembers = dieMembers
             .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory)
                         && s is IFieldSymbol or IPropertySymbol or IMethodSymbol)
@@ -143,6 +143,7 @@ internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstan
             .OfType<IMethodSymbol>()
             .FirstOrDefault();
 
+        var wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
         _constructorParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedConstrParams, wellKnownTypesMiscellaneous.UserDefinedConstructorParametersInjectionAttribute);
         
         _propertiesInjectionMethods = GetInjectionMethods(Constants.UserDefinedProps, wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute);

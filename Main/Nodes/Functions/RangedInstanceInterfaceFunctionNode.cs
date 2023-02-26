@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -11,7 +12,7 @@ internal interface IRangedInstanceInterfaceFunctionNode : IFunctionNode
     void AddConsideredRange(IRangeNode range);
 }
 
-internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedInstanceInterfaceFunctionNode
+internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedInstanceInterfaceFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _type;
     private readonly IContainerNode _parentContainer;
@@ -27,7 +28,7 @@ internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedIn
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
-        WellKnownTypes wellKnownTypes) 
+        IContainerWideContext containerWideContext) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             type, 
@@ -40,7 +41,7 @@ internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedIn
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _type = type;
         _parentContainer = parentContainer;

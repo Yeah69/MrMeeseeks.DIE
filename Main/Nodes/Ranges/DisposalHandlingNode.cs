@@ -25,8 +25,9 @@ internal class DisposalHandlingNode : IDisposalHandlingNode
     
     public DisposalHandlingNode(
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
+        var wellKnownTypes = containerWideContext.WellKnownTypes;
         DisposedFieldReference = referenceGenerator.Generate("_disposed");
         DisposedLocalReference = referenceGenerator.Generate("disposed");
         DisposedPropertyReference = referenceGenerator.Generate("Disposed");

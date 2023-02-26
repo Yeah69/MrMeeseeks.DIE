@@ -80,20 +80,15 @@ internal class TypesFromAttributes : ScopeTypesFromAttributes, ITypesFromAttribu
 
         // dependencies
         IValidateAttributes validateAttributes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
-        WellKnownTypesChoice wellKnownTypesChoice,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        WellKnownTypes wellKnownTypes) 
+        IContainerWideContext containerWideContext) 
         : base(
             attributeData, 
             rangeType, 
             containerType, 
             validateAttributes, 
-            wellKnownTypesAggregation, 
-            wellKnownTypesChoice, 
-            wellKnownTypesMiscellaneous, 
-            wellKnownTypes)
+            containerWideContext)
     {
+        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
         ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
         TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
         TransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
@@ -131,10 +126,7 @@ internal class ScopeTypesFromAttributes : IScopeTypesFromAttributes, ITransientS
 
         // dependencies
         IValidateAttributes validateAttributes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
-        WellKnownTypesChoice wellKnownTypesChoice,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
         _rangeType = rangeType;
         _containerType = containerType;
@@ -143,6 +135,11 @@ internal class ScopeTypesFromAttributes : IScopeTypesFromAttributes, ITransientS
             .GroupBy(ad => ad.AttributeClass, CustomSymbolEqualityComparer.Default)
             .ToDictionary(g => g.Key, g => g, CustomSymbolEqualityComparer.Default);
 
+        var wellKnownTypes = containerWideContext.WellKnownTypes;
+        var wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
+        var wellKnownTypesChoice = containerWideContext.WellKnownTypesChoice;
+        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
+        
         Implementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
         TransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
         SyncTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.SyncTransientAbstractionAggregationAttribute);

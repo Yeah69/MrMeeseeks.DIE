@@ -12,8 +12,8 @@ internal class ValidateUserDefinedAddForDisposalSync : ValidateUserDefinedAddFor
     IValidateUserDefinedAddForDisposalSync
 {
 
-    public ValidateUserDefinedAddForDisposalSync(WellKnownTypes wellKnownTypes) => 
-        DisposableType = wellKnownTypes.IDisposable;
+    public ValidateUserDefinedAddForDisposalSync(IContainerWideContext containerWideContext) => 
+        DisposableType = containerWideContext.WellKnownTypes.IDisposable;
 
     protected override INamedTypeSymbol DisposableType { get; }
 }
@@ -27,8 +27,8 @@ internal class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefinedAddFo
     IValidateUserDefinedAddForDisposalAsync
 {
 
-    public ValidateUserDefinedAddForDisposalAsync(WellKnownTypes wellKnownTypes) => 
-        DisposableType = wellKnownTypes.IAsyncDisposable;
+    public ValidateUserDefinedAddForDisposalAsync(IContainerWideContext containerWideContext) => 
+        DisposableType = containerWideContext.WellKnownTypes.IAsyncDisposable;
 
     protected override INamedTypeSymbol DisposableType { get; }
 }

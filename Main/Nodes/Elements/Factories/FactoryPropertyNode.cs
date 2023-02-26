@@ -14,8 +14,8 @@ internal class FactoryPropertyNode : FactoryNodeBase, IFactoryPropertyNode
         IFunctionNode parentFunction,
         
         IReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes) 
-        : base(propertySymbol.Type, propertySymbol, parentFunction, referenceGenerator, wellKnownTypes)
+        IContainerWideContext containerWideContext) 
+        : base(propertySymbol.Type, propertySymbol, parentFunction, referenceGenerator, containerWideContext)
     {
     }
     

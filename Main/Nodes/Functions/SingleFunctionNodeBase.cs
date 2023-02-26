@@ -36,7 +36,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
         : base(
             accessibility, 
             typeSymbol, 
@@ -49,7 +49,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            wellKnownTypes)
+            containerWideContext)
     {
         _typeSymbol = typeSymbol;
         _parentNode = parentNode;

@@ -6,6 +6,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.RangeRoots;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
@@ -16,16 +17,15 @@ internal interface IOverridingElementNodeWithDecorationMapper : IElementNodeMapp
 
 internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase, IOverridingElementNodeWithDecorationMapper
 {
-    private readonly (INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType) _override;
+    private readonly (INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType) _overrideParam;
 
     public OverridingElementNodeWithDecorationMapper(
         IElementNodeMapperBase parentElementNodeMapper,
         PassedDependencies passedDependencies,
-        (INamedTypeSymbol, INamedTypeSymbol) @override,
+        (INamedTypeSymbol, INamedTypeSymbol) overrideParam,
         
         IDiagLogger diagLogger, 
-        WellKnownTypes wellKnownTypes, 
-        WellKnownTypesCollections wellKnownTypesCollections, 
+        IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory, 
@@ -42,7 +42,7 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNodeRoot> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
         : base(passedDependencies.ParentFunction, 
@@ -52,8 +52,7 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
             passedDependencies.CheckTypeProperties,
             passedDependencies.ReferenceGenerator,
             diagLogger, 
-            wellKnownTypes, 
-            wellKnownTypesCollections,
+            containerWideContext,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 
@@ -75,7 +74,7 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
             nonWrapToCreateElementNodeMapperFactory)
     {
         Next = parentElementNodeMapper;
-        _override = @override;
+        _overrideParam = overrideParam;
     }
 
     protected override IElementNodeMapperBase NextForWraps => this;
@@ -83,11 +82,11 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
     protected override IElementNodeMapperBase Next { get; }
 
     public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) =>
-        CustomSymbolEqualityComparer.Default.Equals(_override.InterfaceType, type) 
+        CustomSymbolEqualityComparer.Default.Equals(_overrideParam.InterfaceType, type) 
         && type is INamedTypeSymbol abstractionType
             ? SwitchInterfaceWithPotentialDecoration(
                 abstractionType, 
-                _override.ImplementationType, 
+                _overrideParam.ImplementationType, 
                 implementationStack,
                 Next)
             : base.Map(type, implementationStack);

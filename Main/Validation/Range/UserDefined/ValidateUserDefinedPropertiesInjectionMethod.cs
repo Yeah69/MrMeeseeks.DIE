@@ -7,8 +7,8 @@ internal interface IValidateUserDefinedPropertiesMethod: IValidateUserDefinedInj
 
 internal class ValidateUserDefinedPropertiesInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedPropertiesMethod
 {
-    internal ValidateUserDefinedPropertiesInjectionMethod(WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) => 
-        InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute;
+    internal ValidateUserDefinedPropertiesInjectionMethod(IContainerWideContext containerWideContext) => 
+        InjectionAttribute = containerWideContext.WellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute;
 
     protected override INamedTypeSymbol InjectionAttribute { get; }
 }

@@ -7,6 +7,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.RangeRoots;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -63,7 +64,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, ITypeSymbol, IRangeNode, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
-    private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> _localFunctionNodeFactory;
+    private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNodeRoot> _localFunctionNodeFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
@@ -76,8 +77,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IReferenceGenerator referenceGenerator,
         
         IDiagLogger diagLogger,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesCollections wellKnownTypesCollections,
+        IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory,
         Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory,
@@ -94,7 +94,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNode> localFunctionNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNodeRoot> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
         Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory)
     {
@@ -105,8 +105,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _checkTypeProperties = checkTypeProperties;
         _referenceGenerator = referenceGenerator;
         _diagLogger = diagLogger;
-        WellKnownTypes = wellKnownTypes;
-        _wellKnownTypesCollections = wellKnownTypesCollections;
+        WellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
         _factoryFieldNodeFactory = factoryFieldNodeFactory;
         _factoryPropertyNodeFactory = factoryPropertyNodeFactory;
         _factoryFunctionNodeFactory = factoryFunctionNodeFactory;
@@ -206,6 +206,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _checkTypeProperties,
                 mapper, 
                 _referenceGenerator)
+                .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             ParentFunction.AddLocalFunction(function);
             
@@ -247,6 +248,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _checkTypeProperties,
                 mapper,
                 _referenceGenerator)
+                .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             ParentFunction.AddLocalFunction(function);
             

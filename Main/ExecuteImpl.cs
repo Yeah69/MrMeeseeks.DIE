@@ -1,9 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Validation.Range;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -22,8 +20,6 @@ internal class ExecuteImpl : IExecute
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly IValidateContainer _validateContainer;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
-    private readonly Func<IContainerInfo, IContainerNode> _containerNodeFactory;
-    private readonly Func<ICodeGenerationVisitor> _codeGeneratorVisitorFactory;
     private readonly IDiagLogger _diagLogger;
 
     internal ExecuteImpl(
@@ -33,8 +29,6 @@ internal class ExecuteImpl : IExecute
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
         IValidateContainer validateContainer,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
-        Func<IContainerInfo, IContainerNode> containerNodeFactory,
-        Func<ICodeGenerationVisitor> codeGeneratorVisitorFactory,
         IDiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = errorDescriptionInsteadOfBuildFailure;
@@ -43,8 +37,6 @@ internal class ExecuteImpl : IExecute
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
         _validateContainer = validateContainer;
         _containerInfoFactory = containerInfoFactory;
-        _containerNodeFactory = containerNodeFactory;
-        _codeGeneratorVisitorFactory = codeGeneratorVisitorFactory;
         _diagLogger = diagLogger;
     }
 
@@ -73,19 +65,21 @@ internal class ExecuteImpl : IExecute
                         .ToImmutableArray();
                     if (!validationDiagnostics.Any())
                     {
+                        using var msContainer = new MsContainer.MsContainer(_context, containerInfo);
+                        var containerNodeRoot = msContainer.Create();
                         // todo fix phases
                         currentPhase = ExecutionPhase.Resolution;
                         currentPhase = ExecutionPhase.CycleDetection;
                         currentPhase = ExecutionPhase.ResolutionBuilding;
                         currentPhase = ExecutionPhase.CodeGeneration;
 
-                        var containerNode = _containerNodeFactory(containerInfo);
+                        var containerNode = containerNodeRoot.Container;
                         containerNode.Build(ImmutableStack.Create<INamedTypeSymbol>());
 
                         if (_diagLogger.ErrorsIssued)
                             continue;
 
-                        var visitor = _codeGeneratorVisitorFactory();
+                        var visitor = _containerNodeRoot.CodeGenerationVisitor;
                         visitor.VisitContainerNode(containerNode);
 
                         var containerSource = CSharpSyntaxTree

@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -27,7 +28,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> _typeToElementNodeMapperFactory;
-    private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
+    private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
     private readonly WellKnownTypes _wellKnownTypes;
 
     internal MultiFunctionNode(
@@ -46,7 +47,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
+        Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         IContainerWideContext containerWideContext)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private, 
@@ -95,7 +96,6 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         return concreteImplementationType is INamedTypeSymbol namedTypeSymbol && unwrappedType is INamedTypeSymbol namedUnwrappedType
             ? _overridingElementNodeWithDecorationMapperFactory(
                 baseMapper,
-                baseMapper.MapperDependencies,
                 (namedUnwrappedType, namedTypeSymbol))
             : baseMapper;
     }

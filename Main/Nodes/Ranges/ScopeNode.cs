@@ -20,7 +20,7 @@ internal interface IScopeNode : IScopeNodeBase
 
 internal class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeInstance
 {
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNodeRoot> _createScopeFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateScopeFunctionNodeRoot> _createScopeFunctionNodeFactory;
 
     internal ScopeNode(
         IScopeInfo scopeInfo,
@@ -30,11 +30,10 @@ internal class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeInstance
         IUserDefinedElementsBase userDefinedElements,
         IScopeCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNodeRoot> createScopeFunctionNodeFactory,
-        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateScopeFunctionNodeRoot> createScopeFunctionNodeFactory,
+        Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory,
         Func<INamedTypeSymbol, IReferenceGenerator, IInitializedInstanceNode> initializedInstanceNodeFactory)
@@ -79,12 +78,7 @@ internal class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeInstance
             _createFunctions,
             () => _createScopeFunctionNodeFactory(
                 type,
-                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
-                this,
-                ParentContainer,
-                UserDefinedElements,
-                CheckTypeProperties,
-                ReferenceGenerator)
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this));

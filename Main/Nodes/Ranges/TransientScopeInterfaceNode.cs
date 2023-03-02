@@ -21,20 +21,18 @@ internal interface ITransientScopeInterfaceNode : INode
 internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
 {
     private readonly IContainerNode _container;
-    private readonly IReferenceGenerator _referenceGenerator;
     private readonly Dictionary<ITypeSymbol, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Collection<IRangeNode> _ranges = new();
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNodeRoot> _rangedInstanceInterfaceFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceInterfaceFunctionNodeRoot> _rangedInstanceInterfaceFunctionNodeFactory;
 
     internal TransientScopeInterfaceNode(
         IContainerNode container,
         IReferenceGenerator referenceGenerator,
         
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IContainerNode, IRangeNode, IReferenceGenerator, IRangedInstanceInterfaceFunctionNodeRoot> rangedInstanceInterfaceFunctionNodeFactory)
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceInterfaceFunctionNodeRoot> rangedInstanceInterfaceFunctionNodeFactory)
     {
         _container = container;
         
-        _referenceGenerator = referenceGenerator;
         _rangedInstanceInterfaceFunctionNodeFactory = rangedInstanceInterfaceFunctionNodeFactory;
         Name = referenceGenerator.Generate("ITransientScope");
         FullName = $"{container.FullName}.{Name}";
@@ -57,10 +55,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, ICont
             {
                 var interfaceFunction = _rangedInstanceInterfaceFunctionNodeFactory(
                         type,
-                        callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
-                        _container,
-                        _container,
-                        _referenceGenerator)
+                        callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                     .Function
                     .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
                 foreach (var range in _ranges)

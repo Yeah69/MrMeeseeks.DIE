@@ -2,7 +2,7 @@
 
 using MrMeeseeks.DIE.MsContainer;
 
-namespace MrMeeseeks.DIE;
+namespace MrMeeseeks.DIE.Contexts;
 
 internal interface IContainerWideContext
 {

@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
@@ -31,7 +32,7 @@ internal class EmptyUserDefinedElements : IEmptyUserDefinedElements, IContainerI
 
 internal interface IUserDefinedElements : IUserDefinedElementsBase {}
 
-internal class UserDefinedElements : IUserDefinedElements, ITransientScopeInstance
+internal class UserDefinedElements : IUserDefinedElements
 {
     private readonly IReadOnlyDictionary<ITypeSymbol, IFieldSymbol> _typeToField;
     private readonly IReadOnlyDictionary<ITypeSymbol, IPropertySymbol> _typeToProperty;

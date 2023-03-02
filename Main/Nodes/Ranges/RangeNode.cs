@@ -42,9 +42,9 @@ internal abstract class RangeNode : IRangeNode
     protected readonly IUserDefinedElementsBase UserDefinedElements;
     protected readonly ICheckTypeProperties CheckTypeProperties;
     protected readonly IReferenceGenerator ReferenceGenerator;
-    protected readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> CreateFunctionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
-    private readonly Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
+    protected readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> CreateFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
+    private readonly Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
     private readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> _voidFunctionNodeFactory;
     protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNode>> _multiFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
@@ -72,12 +72,7 @@ internal abstract class RangeNode : IRangeNode
             _multiFunctions,
             () => _multiFunctionNodeFactory(
                 type,
-                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
-                this,
-                ParentContainer,
-                UserDefinedElements,
-                CheckTypeProperties,
-                ReferenceGenerator)
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateCall(null, callingFunction, onAwait));
@@ -95,9 +90,9 @@ internal abstract class RangeNode : IRangeNode
         IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
-        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
+        Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
     {
@@ -143,12 +138,7 @@ internal abstract class RangeNode : IRangeNode
             _createFunctions,
             () => CreateFunctionNodeFactory(
                 type,
-                callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
-                this,
-                ParentContainer,
-                UserDefinedElements,
-                CheckTypeProperties,
-                ReferenceGenerator)
+                callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateCall(null, callingFunction, callingFunction));
@@ -187,12 +177,7 @@ internal abstract class RangeNode : IRangeNode
         {
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 level,
-                type,
-                this,
-                ParentContainer,
-                UserDefinedElements,
-                CheckTypeProperties,
-                ReferenceGenerator)
+                type)
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
             _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
         }
@@ -216,12 +201,7 @@ internal abstract class RangeNode : IRangeNode
         {
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 ScopeLevel.TransientScope,
-                type,
-                this,
-                ParentContainer,
-                UserDefinedElements,
-                CheckTypeProperties,
-                ReferenceGenerator)
+                type)
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
             _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
         }

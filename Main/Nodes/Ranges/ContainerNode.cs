@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -28,9 +29,8 @@ internal record BuildJob(INode Node, ImmutableStack<INamedTypeSymbol> PreviousIm
 internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
     private readonly IContainerInfo _containerInfo;
-    private readonly IReferenceGenerator _referenceGenerator;
     private readonly IFunctionCycleTracker _functionCycleTracker;
-    private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
+    private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
     private readonly Lazy<DisposalType> _lazyDisposalType;
@@ -57,14 +57,14 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     internal ContainerNode(
         IContainerInfoContext containerInfoContext,
         IContainerTypesFromAttributes containerTypesFromAttributes,
-        Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
+        Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElementsBase> userDefinedElementsFactory,
         IContainerCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
-        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
-        Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
+        Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
+        Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<IReferenceGenerator, ITaskTransformationFunctions> taskTransformationFunctions,
@@ -82,7 +82,6 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             disposalHandlingNodeFactory)
     {
         _containerInfo = containerInfoContext.ContainerInfo;
-        _referenceGenerator = referenceGenerator;
         _functionCycleTracker = functionCycleTracker;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
         Namespace = _containerInfo.Namespace;
@@ -126,12 +125,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             var functionNode = _entryFunctionNodeFactory(
                 typeSymbol,
                 methodNamePrefix,
-                parameterTypes,
-                this,
-                this,
-                UserDefinedElements,
-                CheckTypeProperties,
-                _referenceGenerator)
+                parameterTypes)
                 .Function;
             _rootFunctions.Add(functionNode);
             BuildQueue.Enqueue(new(functionNode, implementationStack));

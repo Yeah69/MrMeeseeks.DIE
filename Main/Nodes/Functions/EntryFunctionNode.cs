@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -16,7 +17,7 @@ internal interface IEntryFunctionNode : ISingleFunctionNode
 internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, IScopeInstance
 {
     private readonly Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> _typeToElementNodeMapperFactory;
-    private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     public EntryFunctionNode(
         ITypeSymbol typeSymbol, 
@@ -29,7 +30,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext,
         Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory, 
-        Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
+        Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
@@ -61,7 +62,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         var dummyMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer,
             userDefinedElements, checkTypeProperties, ReferenceGenerator);
 
-        return _nonWrapToCreateElementNodeMapperFactory(dummyMapper, dummyMapper.MapperDependencies);
+        return _nonWrapToCreateElementNodeMapperFactory(dummyMapper);
     }
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitEntryFunctionNode(this);

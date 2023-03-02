@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -21,8 +22,6 @@ internal interface IElementNodeMapperBase
         INamedTypeSymbol implementationType,
         ImmutableStack<INamedTypeSymbol> implementationStack);
     IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
-    ElementNodeMapperBase.PassedDependencies MapperDependencies { get; }
-    void ResetFunction(ISingleFunctionNode parentFunction); // todo replace this workaround
 }
 
 internal record ImplementationMappingConfiguration(
@@ -32,43 +31,33 @@ internal record ImplementationMappingConfiguration(
 
 internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 {
-    internal record PassedDependencies(
-        IFunctionNode ParentFunction,
-        IRangeNode ParentRange,
-        IContainerNode ParentContainer,
-        IUserDefinedElementsBase UserDefinedElements,
-        ICheckTypeProperties CheckTypeProperties,
-        IReferenceGenerator ReferenceGenerator);
-    
-    protected IFunctionNode ParentFunction; // todo make readonly again
+    protected readonly IFunctionNode ParentFunction;
     protected readonly IRangeNode ParentRange;
     private readonly IContainerNode _parentContainer;
     private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IReferenceGenerator _referenceGenerator;
     private readonly IDiagLogger _diagLogger;
     protected readonly WellKnownTypes WellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
-    private readonly Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> _factoryFieldNodeFactory;
-    private readonly Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> _factoryPropertyNodeFactory;
-    private readonly Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> _factoryFunctionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IValueTaskNode> _valueTaskNodeFactory;
-    private readonly Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, ITaskNode> _taskNodeFactory;
-    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleNode> _valueTupleNodeFactory;
-    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleSyntaxNode> _valueTupleSyntaxNodeFactory;
-    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> _tupleNodeFactory;
-    private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> _lazyNodeFactory;
-    private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> _funcNodeFactory;
-    private readonly Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> _enumerableBasedNodeFactory;
-    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElementsBase, IReferenceGenerator, IImplementationNode> _implementationNodeFactory;
-    private readonly Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> _outParameterNodeFactory;
-    private readonly Func<string, ITypeSymbol, IRangeNode, IErrorNode> _errorNodeFactory;
-    private readonly Func<ITypeSymbol, IReferenceGenerator, INullNode> _nullNodeFactory;
-    private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNodeRoot> _localFunctionNodeFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
-
+    private readonly Func<IFieldSymbol, IFactoryFieldNode> _factoryFieldNodeFactory;
+    private readonly Func<IPropertySymbol, IFactoryPropertyNode> _factoryPropertyNodeFactory;
+    private readonly Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> _factoryFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTaskNode> _valueTaskNodeFactory;
+    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, ITaskNode> _taskNodeFactory;
+    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleNode> _valueTupleNodeFactory;
+    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> _valueTupleSyntaxNodeFactory;
+    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> _tupleNodeFactory;
+    private readonly Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> _lazyNodeFactory;
+    private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> _funcNodeFactory;
+    private readonly Func<ITypeSymbol, IEnumerableBasedNode> _enumerableBasedNodeFactory;
+    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
+    private readonly Func<ITypeSymbol, IOutParameterNode> _outParameterNodeFactory;
+    private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
+    private readonly Func<ITypeSymbol, INullNode> _nullNodeFactory;
+    private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> _localFunctionNodeFactory;
+    private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    
     internal ElementNodeMapperBase(
         IFunctionNode parentFunction,
         IRangeNode parentRange,
@@ -76,35 +65,32 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
-        
         IDiagLogger diagLogger,
         IContainerWideContext containerWideContext,
-        Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory,
-        Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory,
-        Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory,
-        Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IValueTaskNode> valueTaskNodeFactory,
-        Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, ITaskNode> taskNodeFactory,
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleNode> valueTupleNodeFactory,
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory,
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> tupleNodeFactory,
-        Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory,
-        Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory,
-        Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory,
-        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElementsBase, IReferenceGenerator, IImplementationNode> implementationNodeFactory,
-        Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
-        Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory,
-        Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNodeRoot> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory)
+        Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
+        Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory,
+        Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory,
+        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTaskNode> valueTaskNodeFactory,
+        Func<INamedTypeSymbol, IElementNodeMapperBase, ITaskNode> taskNodeFactory,
+        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleNode> valueTupleNodeFactory,
+        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory,
+        Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> tupleNodeFactory,
+        Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory,
+        Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory,
+        Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
+        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory,
+        Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
+        Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
+        Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
+        Func<ITypeSymbol, INullNode> nullNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> localFunctionNodeFactory,
+        Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory)
     {
         ParentFunction = parentFunction;
         ParentRange = parentRange;
         _parentContainer = parentContainer;
         _userDefinedElementsBase = userDefinedElements;
         _checkTypeProperties = checkTypeProperties;
-        _referenceGenerator = referenceGenerator;
         _diagLogger = diagLogger;
         WellKnownTypes = containerWideContext.WellKnownTypes;
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
@@ -126,15 +112,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _nullNodeFactory = nullNodeFactory;
         _localFunctionNodeFactory = localFunctionNodeFactory;
         _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
-        _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
-
-        MapperDependencies = new PassedDependencies(
-            parentFunction, 
-            parentRange, 
-            parentContainer, 
-            userDefinedElements,
-            checkTypeProperties,
-            referenceGenerator);
     }
     
     protected abstract IElementNodeMapperBase NextForWraps { get; }
@@ -147,37 +124,37 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             return tuple;
 
         if (_userDefinedElementsBase.GetFactoryFieldFor(type) is { } instance)
-            return _factoryFieldNodeFactory(instance, ParentFunction, _referenceGenerator)
+            return _factoryFieldNodeFactory(instance)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (_userDefinedElementsBase.GetFactoryPropertyFor(type) is { } property)
-            return _factoryPropertyNodeFactory(property, ParentFunction, _referenceGenerator)
+            return _factoryPropertyNodeFactory(property)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (_userDefinedElementsBase.GetFactoryMethodFor(type) is { } method)
-            return _factoryFunctionNodeFactory(method, ParentFunction, Next, _referenceGenerator)
+            return _factoryFunctionNodeFactory(method, Next)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
             && type is INamedTypeSymbol valueTask)
-            return _valueTaskNodeFactory(valueTask, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator)
+            return _valueTaskNodeFactory(valueTask, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Task1)
             && type is INamedTypeSymbol task)
-            return _taskNodeFactory(task, _parentContainer, ParentFunction, NextForWraps, _referenceGenerator)
+            return _taskNodeFactory(task, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
-            return _valueTupleNodeFactory(valueTupleType, NextForWraps, _referenceGenerator)
+            return _valueTupleNodeFactory(valueTupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type.FullName().StartsWith("(") && type.FullName().EndsWith(")") && type is INamedTypeSymbol syntaxValueTupleType)
-            return _valueTupleSyntaxNodeFactory(syntaxValueTupleType, NextForWraps, _referenceGenerator)
+            return _valueTupleSyntaxNodeFactory(syntaxValueTupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type.FullName().StartsWith("global::System.Tuple<") && type is INamedTypeSymbol tupleType)
-            return _tupleNodeFactory(tupleType, NextForWraps, _referenceGenerator)
+            return _tupleNodeFactory(tupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Lazy1)
@@ -196,25 +173,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
 
-            var mapper = _nonWrapToCreateElementNodeMapperFactory(this, MapperDependencies);
-
             var function = _localFunctionNodeFactory(
                 valueType,
                 Array.Empty<ITypeSymbol>(),
-                ParentFunction.Overrides,
-                ParentRange,
-                _parentContainer,
-                _userDefinedElementsBase,
-                _checkTypeProperties,
-                mapper, 
-                _referenceGenerator)
+                ParentFunction.Overrides)
                 .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             ParentFunction.AddLocalFunction(function);
             
-            mapper.ResetFunction(function);
-            
-            return _lazyNodeFactory(lazyType, function, _referenceGenerator)
+            return _lazyNodeFactory(lazyType, function)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
 
@@ -239,25 +206,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 .Take(funcType.TypeArguments.Length - 1)
                 .ToArray();
 
-            var mapper = _nonWrapToCreateElementNodeMapperFactory(this, MapperDependencies);
-
             var function = _localFunctionNodeFactory(
                 returnType,
                 lambdaParameters,
-                ParentFunction.Overrides,
-                ParentRange,
-                _parentContainer,
-                _userDefinedElementsBase,
-                _checkTypeProperties,
-                mapper,
-                _referenceGenerator)
+                ParentFunction.Overrides)
                 .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             ParentFunction.AddLocalFunction(function);
             
-            mapper.ResetFunction(function);
-            
-            return _funcNodeFactory(funcType, function, _referenceGenerator)
+            return _funcNodeFactory(funcType, function)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
         
@@ -285,7 +242,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1)
             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1)
             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
-            return _enumerableBasedNodeFactory(type, ParentRange, ParentFunction, _referenceGenerator)
+            return _enumerableBasedNodeFactory(type)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
         if (type is ({ TypeKind: TypeKind.Interface } or { TypeKind: TypeKind.Class, IsAbstract: true })
@@ -303,13 +260,12 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                     _diagLogger.Log(Diagnostics.NullResolutionWarning(
                         $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\", but injecting null instead.",
                         ExecutionPhase.Resolution));
-                    return _nullNodeFactory(classOrStructType, _referenceGenerator)
+                    return _nullNodeFactory(classOrStructType)
                         .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
                 }
                 return _errorNodeFactory(
                         $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",",
-                        type,
-                        ParentRange)
+                        type)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
 
@@ -322,16 +278,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
         return _errorNodeFactory(
                 "Couldn't process in resolution tree creation.",
-                type,
-                ParentRange)
+                type)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
     }
-    
-    protected static ITypeSymbol GetCollectionsItemType(ITypeSymbol type) => type is IArrayTypeSymbol arrayTypeSymbol
-        ? arrayTypeSymbol.ElementType
-        : type is INamedTypeSymbol { TypeArguments.Length: 1 } collectionType
-            ? collectionType.TypeArguments.First()
-            : throw new ArgumentException("Given type is not supported collection type");
 
     /// <summary>
     /// Meant as entry point for mappings where concrete implementation type is already chosen.
@@ -347,13 +296,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             NextForWraps); // Use NextForWraps, cause MapToImplementation is entry point
 
     public IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) => 
-        _outParameterNodeFactory(type, _referenceGenerator)
+        _outParameterNodeFactory(type)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
-    public PassedDependencies MapperDependencies { get; }
-    public void ResetFunction(ISingleFunctionNode parentFunction)
-    {
-        ParentFunction = parentFunction;
-    }
 
     private IElementNode SwitchImplementation(
         ImplementationMappingConfiguration config,
@@ -401,32 +345,23 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             return _implementationNodeFactory(
                     implementationType, 
                     constructor, 
-                    ParentFunction, 
-                    ParentRange,
-                    nextMapper, 
-                    _checkTypeProperties, 
-                    _userDefinedElementsBase,
-                    _referenceGenerator)
+                    nextMapper)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
 
         if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
             return _errorNodeFactory(implementationType.InstanceConstructors.Length switch
-                    {
-                        0 =>
-                            $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                        > 1 =>
-                            $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                        _ =>
-                            $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
-                    },
-                    implementationType,
-                    ParentRange)
-                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
+                {
+                    0 => $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                    > 1 =>
+                        $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                    _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
+                },
+                implementationType).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
         _diagLogger.Log(Diagnostics.NullResolutionWarning(
             $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
             ExecutionPhase.Resolution));
-        return _nullNodeFactory(implementationType, _referenceGenerator)
+        return _nullNodeFactory(implementationType)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
     }
     
@@ -442,13 +377,12 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _diagLogger.Log(Diagnostics.NullResolutionWarning(
                     $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\", but injecting null instead.",
                     ExecutionPhase.Resolution));
-                return _nullNodeFactory(interfaceType, _referenceGenerator)
+                return _nullNodeFactory(interfaceType)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             }
             return _errorNodeFactory(
                     $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\".",
-                    interfaceType,
-                    ParentRange)
+                    interfaceType)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
         }
 
@@ -463,7 +397,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     {
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
         if (!shouldBeDecorated)
-            return _abstractionNodeFactory(interfaceType, implementationType, mapper, _referenceGenerator)
+            return _abstractionNodeFactory(interfaceType, implementationType, mapper)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
 
         var decoratorSequence = _checkTypeProperties.GetSequenceFor(interfaceType, implementationType)
@@ -478,8 +412,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             .Select(t => (interfaceType, t))
             .Append((interfaceType, implementationType)));
             
-        var overridingMapper = _overridingElementNodeMapperFactory(this, MapperDependencies, decoratorTypes);
-        return _abstractionNodeFactory(interfaceType, outerDecorator, overridingMapper, _referenceGenerator)
+        var overridingMapper = _overridingElementNodeMapperFactory(this, decoratorTypes);
+        return _abstractionNodeFactory(interfaceType, outerDecorator, overridingMapper)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
     }
 }

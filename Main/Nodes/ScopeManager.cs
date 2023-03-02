@@ -1,5 +1,5 @@
 using System.Threading;
-using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -18,33 +18,11 @@ internal interface IScopeManager
 
 internal class ScopeManager : IScopeManager, IContainerInstance
 {
-    private readonly IContainerInfo _containerInfo;
-    private readonly IContainerInfoContext _containerInfoContext;
     private readonly IContainerNode _container;
-    private readonly IContainerTypesFromAttributes _containerTypesFromAttributes;
     private readonly ITransientScopeInterfaceNode _transientScopeInterface;
-    private readonly IReferenceGenerator _referenceGenerator;
 
-    private readonly Func<
-        IScopeInfo,
-        IContainerNode,
-        ITransientScopeInterfaceNode,
-        IScopeManager,
-        IUserDefinedElementsBase,
-        IScopeCheckTypeProperties,
-        IReferenceGenerator,
-        IScopeNodeRoot> _scopeFactory;
-    private readonly Func<
-        IScopeInfo,
-        IContainerNode,
-        IScopeManager,
-        IUserDefinedElementsBase,
-        IScopeCheckTypeProperties,
-        IReferenceGenerator,
-        ITransientScopeNodeRoot> _transientScopeFactory;
-    private readonly Func<IScopeInfo, IContainerInfoContext, IScopeTypesFromAttributes> _scopeTypesFromAttributesFactory;
-    private readonly Func<IScopeInfo, IContainerInfoContext, IContainerTypesFromAttributes, IScopeCheckTypeProperties> _checkTypePropertiesFactory;
-    private readonly Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElementsBase> _userProvidedScopeElementsFactory;
+    private readonly Func<IScopeInfo, IScopeNodeRoot> _scopeFactory;
+    private readonly Func<IScopeInfo, ITransientScopeNodeRoot> _transientScopeFactory;
     private readonly Func<string, INamedTypeSymbol?, IScopeInfo> _scopeInfoFactory;
     private readonly Lazy<IScopeNode> _defaultScope;
     private readonly Lazy<ITransientScopeNode> _defaultTransientScope;
@@ -56,60 +34,24 @@ internal class ScopeManager : IScopeManager, IContainerInstance
     public ScopeManager(
         IContainerInfoContext containerInfoContext,
         IContainerNode container,
-        IContainerTypesFromAttributes containerTypesFromAttributes,
         ITransientScopeInterfaceNode transientScopeInterface,
-        IReferenceGenerator referenceGenerator,
-        Func<
-            IScopeInfo,
-            IContainerNode,
-            ITransientScopeInterfaceNode,
-            IScopeManager,
-            IUserDefinedElementsBase,
-            IScopeCheckTypeProperties,
-            IReferenceGenerator,
-            IScopeNodeRoot> scopeFactory,
-        Func<
-            IScopeInfo,
-            IContainerNode,
-            IScopeManager,
-            IUserDefinedElementsBase,
-            IScopeCheckTypeProperties,
-            IReferenceGenerator,
-            ITransientScopeNodeRoot> transientScopeFactory,
-        Func<IScopeInfo, IContainerInfoContext, IScopeTypesFromAttributes> scopeTypesFromAttributesFactory,
-        Func<IScopeInfo, IContainerInfoContext, IContainerTypesFromAttributes, IScopeCheckTypeProperties> checkTypePropertiesFactory,
-        Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory,
+        Func<IScopeInfo, IScopeNodeRoot> scopeFactory,
+        Func<IScopeInfo, ITransientScopeNodeRoot> transientScopeFactory,
         Func<string, INamedTypeSymbol?, IScopeInfo> scopeInfoFactory,
-        IEmptyUserDefinedElements emptyUserDefinedElementsBase,
         IContainerWideContext containerWideContext)
     {
-        _containerInfo = containerInfoContext.ContainerInfo;
-        _containerInfoContext = containerInfoContext;
+        var containerInfo = containerInfoContext.ContainerInfo;
         _container = container;
-        _containerTypesFromAttributes = containerTypesFromAttributes;
         _transientScopeInterface = transientScopeInterface;
-        _referenceGenerator = referenceGenerator;
         _scopeFactory = scopeFactory;
         _transientScopeFactory = transientScopeFactory;
-        _scopeTypesFromAttributesFactory = scopeTypesFromAttributesFactory;
-        _checkTypePropertiesFactory = checkTypePropertiesFactory;
-        _userProvidedScopeElementsFactory = userProvidedScopeElementsFactory;
         _scopeInfoFactory = scopeInfoFactory;
         _defaultScope = new Lazy<IScopeNode>(
             () =>
             {
-                var defaultScopeType = _containerInfo.ContainerType.GetTypeMembers(Constants.DefaultScopeName).FirstOrDefault();
+                var defaultScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultScopeName).FirstOrDefault();
                 var scopeInfo = scopeInfoFactory(Constants.DefaultScopeName, defaultScopeType);
-                return scopeFactory(
-                        scopeInfo,
-                        container,
-                        _transientScopeInterface,
-                        this,
-                        defaultScopeType is {} 
-                            ? userProvidedScopeElementsFactory((defaultScopeType, _containerInfo.ContainerType)) 
-                            : emptyUserDefinedElementsBase,
-                        checkTypePropertiesFactory(scopeInfo, containerInfoContext, containerTypesFromAttributes),
-                        referenceGenerator)
+                return scopeFactory(scopeInfo)
                     .Scope
                     .EnqueueBuildJobTo(container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
             },
@@ -117,17 +59,9 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         _defaultTransientScope = new Lazy<ITransientScopeNode>(
             () =>
             {
-                var defaultTransientScopeType = _containerInfo.ContainerType.GetTypeMembers(Constants.DefaultTransientScopeName).FirstOrDefault();
+                var defaultTransientScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultTransientScopeName).FirstOrDefault();
                 var scopeInfo = scopeInfoFactory(Constants.DefaultTransientScopeName, defaultTransientScopeType);
-                var ret = transientScopeFactory(
-                        scopeInfo,
-                        container, 
-                        this,
-                        defaultTransientScopeType is {} 
-                            ? userProvidedScopeElementsFactory((defaultTransientScopeType, _containerInfo.ContainerType)) 
-                            : emptyUserDefinedElementsBase,
-                        checkTypePropertiesFactory(scopeInfo, containerInfoContext, containerTypesFromAttributes),
-                        referenceGenerator)
+                var ret = transientScopeFactory(scopeInfo)
                     .TransientScope
                     .EnqueueBuildJobTo(container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
                 _transientScopeInterface.RegisterRange(ret);
@@ -137,7 +71,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         _customScopes = new Dictionary<INamedTypeSymbol, IScopeNode>(CustomSymbolEqualityComparer.Default);
         _customTransientScopes = new Dictionary<INamedTypeSymbol, ITransientScopeNode>(CustomSymbolEqualityComparer.Default);
 
-        _transientScopeRootTypeToScopeType = _containerInfo
+        _transientScopeRootTypeToScopeType = containerInfo
             .ContainerType
             .GetTypeMembers()
             .Where(nts => nts.Name.StartsWith(Constants.CustomTransientScopeName))
@@ -163,7 +97,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
                 t => t.nts,
                 CustomSymbolEqualityComparer.Default);
         
-        _scopeRootTypeToScopeType = _containerInfo
+        _scopeRootTypeToScopeType = containerInfo
             .ContainerType
             .GetTypeMembers()
             .Where(nts => nts.Name.StartsWith(Constants.CustomScopeName))
@@ -200,14 +134,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         
         var scopeInfo = _scopeInfoFactory(scopeType.Name, scopeType);
         
-        var ret = _scopeFactory(
-                scopeInfo,
-                _container,
-                _transientScopeInterface,
-                this,
-                _userProvidedScopeElementsFactory((scopeType, _containerInfo.ContainerType)),
-                _checkTypePropertiesFactory(scopeInfo, _containerInfoContext, _containerTypesFromAttributes),
-                _referenceGenerator)
+        var ret = _scopeFactory(scopeInfo)
             .Scope
             .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         _customScopes[scopeRootType] = ret;
@@ -224,13 +151,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         
         var scopeInfo = _scopeInfoFactory(transientScopeType.Name, transientScopeType);
         
-        var ret = _transientScopeFactory(
-                scopeInfo,
-                _container,
-                this,
-                _userProvidedScopeElementsFactory((transientScopeType, _containerInfo.ContainerType)),
-                _checkTypePropertiesFactory(scopeInfo, _containerInfoContext, _containerTypesFromAttributes),
-                _referenceGenerator)
+        var ret = _transientScopeFactory(scopeInfo)
             .TransientScope
             .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         _customTransientScopes[transientScopeRootType] = ret;

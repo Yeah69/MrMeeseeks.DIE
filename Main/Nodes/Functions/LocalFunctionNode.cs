@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -14,7 +15,8 @@ internal interface ILocalFunctionNode : ISingleFunctionNode
 
 internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, IScopeInstance
 {
-    private readonly IElementNodeMapperBase _mapper;
+    private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     public LocalFunctionNode(
         ITypeSymbol typeSymbol, 
@@ -24,12 +26,13 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
         IContainerNode parentContainer, 
         IUserDefinedElementsBase userDefinedElements, 
         ICheckTypeProperties checkTypeProperties, 
-        IElementNodeMapperBase mapper,
         IReferenceGenerator referenceGenerator, 
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
+        Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         IContainerWideContext containerWideContext) 
         : base(
             null,
@@ -47,13 +50,17 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
             transientScopeCallNodeFactory,
             containerWideContext)
     {
-        _mapper = mapper;
+        _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
+        _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
         Name = referenceGenerator.Generate("Local", typeSymbol);
     }
 
     protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
-        IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties) =>
-        _mapper;
+        IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties)
+    {
+        var baseMapper = _typeToElementNodeMapperFactory();
+        return _nonWrapToCreateElementNodeMapperFactory(baseMapper);
+    }
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitLocalFunctionNode(this);
     public override string Name { get; protected set; }

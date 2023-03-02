@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -19,41 +20,46 @@ internal interface IOverridingElementNodeMapper : IElementNodeMapperBase
 internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingElementNodeMapper
 {
     private readonly ImmutableQueue<(INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType)> _overrideParam;
-    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> _abstractionNodeFactory;
-    private readonly Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    private readonly IContainerNode _parentContainer;
+    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
+    private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
 
     public OverridingElementNodeMapper(
         IElementNodeMapperBase parentElementNodeMapper,
-        PassedDependencies passedDependencies,
         ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> overrideParam,
         
+        IFunctionNode parentFunction,
+        IRangeNode parentRange,
+        IContainerNode parentContainer,
+        IUserDefinedElementsBase userDefinedElements,
+        ICheckTypeProperties checkTypeProperties,
+        IReferenceGenerator referenceGenerator,
         IDiagLogger diagLogger, 
         IContainerWideContext containerWideContext,
-        Func<IFieldSymbol, IFunctionNode, IReferenceGenerator, IFactoryFieldNode> factoryFieldNodeFactory, 
-        Func<IPropertySymbol, IFunctionNode, IReferenceGenerator, IFactoryPropertyNode> factoryPropertyNodeFactory, 
-        Func<IMethodSymbol, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IFactoryFunctionNode> factoryFunctionNodeFactory, 
-        Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, IValueTaskNode> valueTaskNodeFactory, 
-        Func<INamedTypeSymbol, IContainerNode, IFunctionNode, IElementNodeMapperBase, IReferenceGenerator, ITaskNode> taskNodeFactory, 
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleNode> valueTupleNodeFactory, 
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory, 
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, ITupleNode> tupleNodeFactory, 
-        Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, ILazyNode> lazyNodeFactory, 
-        Func<INamedTypeSymbol, ILocalFunctionNode, IReferenceGenerator, IFuncNode> funcNodeFactory, 
-        Func<ITypeSymbol, IRangeNode, IFunctionNode, IReferenceGenerator, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IReferenceGenerator, IAbstractionNode> abstractionNodeFactory, 
-        Func<INamedTypeSymbol, IMethodSymbol, IFunctionNode, IRangeNode, IElementNodeMapperBase, ICheckTypeProperties, IUserDefinedElementsBase, IReferenceGenerator, IImplementationNode> implementationNodeFactory, 
-        Func<ITypeSymbol, IReferenceGenerator, IOutParameterNode> outParameterNodeFactory,
-        Func<string, ITypeSymbol, IRangeNode, IErrorNode> errorNodeFactory, 
-        Func<ITypeSymbol, IReferenceGenerator, INullNode> nullNodeFactory,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapperBase, IReferenceGenerator, ILocalFunctionNodeRoot> localFunctionNodeFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory,
-        Func<IElementNodeMapperBase, PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory) 
-        : base(passedDependencies.ParentFunction, 
-            passedDependencies.ParentRange, 
-            passedDependencies.ParentContainer, 
-            passedDependencies.UserDefinedElements, 
-            passedDependencies.CheckTypeProperties,
-            passedDependencies.ReferenceGenerator,
+        Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
+        Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory, 
+        Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory, 
+        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTaskNode> valueTaskNodeFactory, 
+        Func<INamedTypeSymbol, IElementNodeMapperBase, ITaskNode> taskNodeFactory, 
+        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleNode> valueTupleNodeFactory, 
+        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory, 
+        Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> tupleNodeFactory, 
+        Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory, 
+        Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory, 
+        Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
+        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory, 
+        Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory, 
+        Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
+        Func<string, ITypeSymbol, IErrorNode> errorNodeFactory, 
+        Func<ITypeSymbol, INullNode> nullNodeFactory,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> localFunctionNodeFactory,
+        Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory) 
+        : base(parentFunction, 
+            parentRange, 
+            parentContainer, 
+            userDefinedElements, 
+            checkTypeProperties,
+            referenceGenerator,
             diagLogger, 
             containerWideContext,
             factoryFieldNodeFactory, 
@@ -73,11 +79,11 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             errorNodeFactory, 
             nullNodeFactory,
             localFunctionNodeFactory,
-            overridingElementNodeMapperFactory,
-            nonWrapToCreateElementNodeMapperFactory)
+            overridingElementNodeMapperFactory)
     {
         Next = parentElementNodeMapper;
         _overrideParam = overrideParam;
+        _parentContainer = parentContainer;
         _abstractionNodeFactory = abstractionNodeFactory;
         _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
     }
@@ -93,9 +99,9 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             && CustomSymbolEqualityComparer.Default.Equals(_overrideParam.Peek().InterfaceType, type))
         {
             var nextOverride = _overrideParam.Dequeue(out var currentOverride);
-            var mapper = _overridingElementNodeMapperFactory(this, MapperDependencies, nextOverride);
-            return _abstractionNodeFactory(abstraction, currentOverride.ImplementationType, mapper, MapperDependencies.ReferenceGenerator)
-                .EnqueueBuildJobTo(MapperDependencies.ParentContainer.BuildQueue, implementationStack);
+            var mapper = _overridingElementNodeMapperFactory(this, nextOverride);
+            return _abstractionNodeFactory(abstraction, currentOverride.ImplementationType, mapper)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
         return base.Map(type, implementationStack);
     }

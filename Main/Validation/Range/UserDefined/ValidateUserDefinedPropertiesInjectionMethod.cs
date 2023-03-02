@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Contexts;
+
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 internal interface IValidateUserDefinedPropertiesMethod: IValidateUserDefinedInjectionMethod

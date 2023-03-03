@@ -779,9 +779,9 @@ public class SourceGenerator : ISourceGenerator
                 (INamedTypeSymbol Range, INamedTypeSymbol Container) types) =>
                 new UserDefinedElements(types, containerWideContext);
         }
-        catch (ValidationDieException e)
+        catch (ValidationDieException)
         {
-            return;
+            // nothing to do here
         }
     }
 }

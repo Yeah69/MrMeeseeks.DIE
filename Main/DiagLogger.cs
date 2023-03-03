@@ -4,6 +4,8 @@ namespace MrMeeseeks.DIE;
 
 internal interface IDiagLogger
 {
+    bool ErrorsIssued { get; }
+    void Reset();
     void Error(DieException exception, ExecutionPhase phase);
 
     void Log(Diagnostic diagnostic);
@@ -21,7 +23,11 @@ internal class DiagLogger : IDiagLogger, IContainerInstance
         _ignoreErrors = ignoreErrors;
         _context = context;
     }
-    
+
+    public bool ErrorsIssued { get; private set; }
+
+    public void Reset() => ErrorsIssued = false;
+
     public void Error(DieException exception, ExecutionPhase phase)
     {
         switch (exception)
@@ -49,6 +55,8 @@ internal class DiagLogger : IDiagLogger, IContainerInstance
                 Log(Diagnostics.UnexpectedDieException(exception, phase));
                 break;
         }
+
+        ErrorsIssued = true;
     }
 
     public void Log(Diagnostic diagnostic)

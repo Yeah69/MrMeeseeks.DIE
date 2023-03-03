@@ -184,14 +184,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         {
             if (lazyType.TypeArguments.SingleOrDefault() is not { } valueType)
             {
-                return _errorNodeFactory(lazyType.TypeArguments.Length switch 
-                    {
-                        0 => "Lazy: No type argument",
-                        > 1 => "Lazy: more than one type argument",
-                        _ => $"Lazy: {lazyType.TypeArguments.First().FullName()} is not a type symbol", 
-                    },
-                    type,
-                    ParentRange);
+                return _errorNodeFactory(lazyType.TypeArguments.Length switch
+                        {
+                            0 => "Lazy: No type argument",
+                            > 1 => "Lazy: more than one type argument",
+                            _ => $"Lazy: {lazyType.TypeArguments.First().FullName()} is not a type symbol",
+                        },
+                        type,
+                        ParentRange)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
 
             var mapper = _nonWrapToCreateElementNodeMapperFactory(this, MapperDependencies);
@@ -223,12 +224,13 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             if (funcType.TypeArguments.LastOrDefault() is not { } returnType)
             {
                 return _errorNodeFactory(funcType.TypeArguments.Length switch
-                    {
-                        0 => "Func: No type argument",
-                        _ => $"Func: {funcType.TypeArguments.Last().FullName()} is not a type symbol",
-                    },
-                    type,
-                    ParentRange);
+                        {
+                            0 => "Func: No type argument",
+                            _ => $"Func: {funcType.TypeArguments.Last().FullName()} is not a type symbol",
+                        },
+                        type,
+                        ParentRange)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
             
             var lambdaParameters = funcType
@@ -403,14 +405,17 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
         if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
             return _errorNodeFactory(implementationType.InstanceConstructors.Length switch
-                {
-                    0 => $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                    > 1 =>
-                        $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                    _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
-                },
-                implementationType,
-                ParentRange).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
+                    {
+                        0 =>
+                            $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
+                        > 1 =>
+                            $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
+                        _ =>
+                            $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
+                    },
+                    implementationType,
+                    ParentRange)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
         _diagLogger.Log(Diagnostics.NullResolutionWarning(
             $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",

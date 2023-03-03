@@ -68,7 +68,8 @@ internal class ExecuteImpl : IExecute
                 try
                 {
                     var containerInfo = _containerInfoFactory(containerSymbol);
-                    var validationDiagnostics = _validateContainer.Validate(containerInfo.ContainerType, containerInfo.ContainerType)
+                    var validationDiagnostics = _validateContainer
+                        .Validate(containerInfo.ContainerType, containerInfo.ContainerType)
                         .ToImmutableArray();
                     if (!validationDiagnostics.Any())
                     {
@@ -77,20 +78,23 @@ internal class ExecuteImpl : IExecute
                         currentPhase = ExecutionPhase.CycleDetection;
                         currentPhase = ExecutionPhase.ResolutionBuilding;
                         currentPhase = ExecutionPhase.CodeGeneration;
-                        
+
                         var containerNode = _containerNodeFactory(containerInfo);
                         containerNode.Build(ImmutableStack.Create<INamedTypeSymbol>());
-                        
+
+                        if (_diagLogger.ErrorsIssued)
+                            continue;
+
                         var visitor = _codeGeneratorVisitorFactory();
                         visitor.VisitContainerNode(containerNode);
-                        
+
                         var containerSource = CSharpSyntaxTree
                             .ParseText(SourceText.From(visitor.GenerateContainerFile(), Encoding.UTF8))
                             .GetRoot()
                             .NormalizeWhitespace()
                             .SyntaxTree
                             .GetText();
-        
+
                         _context.AddSource($"{containerInfo.Namespace}.{containerInfo.Name}.g.cs", containerSource);
                     }
                     else
@@ -102,8 +106,8 @@ internal class ExecuteImpl : IExecute
                 {
                     if (_errorDescriptionInsteadOfBuildFailure)
                         _containerDieExceptionGenerator.Generate(
-                            containerSymbol.ContainingNamespace.FullName(), 
-                            containerSymbol.Name, 
+                            containerSymbol.ContainingNamespace.FullName(),
+                            containerSymbol.Name,
                             dieException);
                     else
                         _diagLogger.Error(dieException, currentPhase);
@@ -112,11 +116,15 @@ internal class ExecuteImpl : IExecute
                 {
                     if (_errorDescriptionInsteadOfBuildFailure)
                         _containerDieExceptionGenerator.Generate(
-                            containerSymbol.ContainingNamespace.FullName(), 
-                            containerSymbol.Name, 
+                            containerSymbol.ContainingNamespace.FullName(),
+                            containerSymbol.Name,
                             exception);
                     else
                         _diagLogger.Log(Diagnostics.UnexpectedException(exception, currentPhase));
+                }
+                finally
+                {
+                    _diagLogger.Reset();
                 }
             }
         }

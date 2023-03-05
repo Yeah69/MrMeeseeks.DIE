@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -28,6 +29,7 @@ internal class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransie
         IUserDefinedElementsBase userDefinedElements,
         IScopeCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
+        IContainerWideContext containerWideContext,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateTransientScopeFunctionNodeRoot> createTransientScopeFunctionNodeFactory,
@@ -42,7 +44,7 @@ internal class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransie
             userDefinedElements, 
             checkTypeProperties, 
             referenceGenerator, 
-            wellKnownTypesMiscellaneous,
+            containerWideContext,
             createFunctionNodeFactory, 
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,

@@ -14,10 +14,10 @@ internal interface IInitializedInstanceNode : IElementNode
 
 internal class InitializedInstanceNode : IInitializedInstanceNode
 {
-    private readonly ITypeSymbol _type;
+    private readonly INamedTypeSymbol _type;
 
     internal InitializedInstanceNode(
-        ITypeSymbol type,
+        INamedTypeSymbol type,
         
         IReferenceGenerator referenceGenerator)
     {

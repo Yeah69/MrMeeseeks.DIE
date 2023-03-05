@@ -21,9 +21,9 @@ internal class ScopeManager : IScopeManager, IContainerInstance
     private readonly IContainerNode _container;
     private readonly ITransientScopeInterfaceNode _transientScopeInterface;
 
-    private readonly Func<IScopeInfo, IScopeNodeRoot> _scopeFactory;
-    private readonly Func<IScopeInfo, ITransientScopeNodeRoot> _transientScopeFactory;
-    private readonly Func<string, INamedTypeSymbol?, IScopeInfo> _scopeInfoFactory;
+    private readonly Func<ScopeInfo, IScopeNodeRoot> _scopeFactory;
+    private readonly Func<ScopeInfo, ITransientScopeNodeRoot> _transientScopeFactory;
+    private readonly Func<string, INamedTypeSymbol?, ScopeInfo> _scopeInfoFactory;
     private readonly Lazy<IScopeNode> _defaultScope;
     private readonly Lazy<ITransientScopeNode> _defaultTransientScope;
     private readonly IDictionary<INamedTypeSymbol, IScopeNode> _customScopes;
@@ -35,9 +35,9 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         IContainerInfoContext containerInfoContext,
         IContainerNode container,
         ITransientScopeInterfaceNode transientScopeInterface,
-        Func<IScopeInfo, IScopeNodeRoot> scopeFactory,
-        Func<IScopeInfo, ITransientScopeNodeRoot> transientScopeFactory,
-        Func<string, INamedTypeSymbol?, IScopeInfo> scopeInfoFactory,
+        Func<ScopeInfo, IScopeNodeRoot> scopeFactory,
+        Func<ScopeInfo, ITransientScopeNodeRoot> transientScopeFactory,
+        Func<string, INamedTypeSymbol?, ScopeInfo> scopeInfoFactory,
         IContainerWideContext containerWideContext)
     {
         var containerInfo = containerInfoContext.ContainerInfo;

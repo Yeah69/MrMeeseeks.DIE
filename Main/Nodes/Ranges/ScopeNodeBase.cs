@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
@@ -23,10 +24,10 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         IUserDefinedElementsBase userDefinedElements,
         IScopeCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
-        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
-        Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
+        IContainerWideContext containerWideContext,
+        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
+        Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory,
         Func<INamedTypeSymbol, IReferenceGenerator, IInitializedInstanceNode> initializedInstanceNodeFactory)
@@ -53,7 +54,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
                     .GetAttributes()
                     .FirstOrDefault(ad =>
                         CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                            wellKnownTypesMiscellaneous.InitializedInstancesForScopesAttribute))
+                            containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesForScopesAttribute))
                 is { ConstructorArguments.Length: 1 } initializedInstancesAttribute
             && initializedInstancesAttribute.ConstructorArguments[0].Kind == TypedConstantKind.Array)
         {

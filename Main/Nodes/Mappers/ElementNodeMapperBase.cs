@@ -64,7 +64,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IContainerNode parentContainer,
         IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
-        IReferenceGenerator referenceGenerator,
         IDiagLogger diagLogger,
         IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
@@ -168,8 +167,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                             > 1 => "Lazy: more than one type argument",
                             _ => $"Lazy: {lazyType.TypeArguments.First().FullName()} is not a type symbol",
                         },
-                        type,
-                        ParentRange)
+                        type)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
 
@@ -196,8 +194,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                             0 => "Func: No type argument",
                             _ => $"Func: {funcType.TypeArguments.Last().FullName()} is not a type symbol",
                         },
-                        type,
-                        ParentRange)
+                        type)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
             

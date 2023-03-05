@@ -85,7 +85,7 @@ public class SourceGenerator : ISourceGenerator
                 ContainerInfoFactory, 
                 diagLogger).Execute();
                 
-            IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, wellKnownTypesMiscellaneous);
+            IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => new ContainerInfo(type, containerWideContext);
         }
         catch (ValidationDieException)
         {

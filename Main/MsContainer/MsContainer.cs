@@ -30,6 +30,10 @@ internal sealed partial class MsContainer
     private void DIE_ConstrParams_UserDefinedElements(out (INamedTypeSymbol Range, INamedTypeSymbol Container) types) => 
         types = (DIE_Factory_ContainerInfo.ContainerType, DIE_Factory_ContainerInfo.ContainerType);
 
+    [UserDefinedConstructorParametersInjection(typeof(ScopeInfo))]
+    private void DIE_ConstrParams_ScopeInfo(out string name) => 
+        name = "";
+
     private WellKnownTypes DIE_Factory_WellKnownTypes() => 
         WellKnownTypes.Create(DIE_Factory_Compilation);
 
@@ -48,6 +52,7 @@ internal sealed partial class MsContainer
     [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ScopeCheckTypeProperties))]
     [CustomScopeForRootTypes(typeof(ScopeNodeRoot))]
+    [InitializedInstancesForScopes(typeof(ScopeInfo))]
     private sealed partial class DIE_TransientScope_ScopeNodeRoot
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
@@ -56,6 +61,12 @@ internal sealed partial class MsContainer
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol Range, INamedTypeSymbol Container) types) => 
             types = (scopeInfo.ScopeType!, containerInfoContext.ContainerInfo.ContainerType);
+        
+        [UserDefinedConstructorParametersInjection(typeof(ContainerInfo))]
+        private void DIE_ConstrParams_ContainerInfo(
+            IContainerInfoContext containerInfoContext,
+            out INamedTypeSymbol containerClass) => 
+            containerClass = containerInfoContext.ContainerInfo.ContainerType;
         
         private IUserDefinedElementsBase DIE_Factory_IUserDefinedElementsBase(
             IScopeInfo scopeInfo,
@@ -70,6 +81,7 @@ internal sealed partial class MsContainer
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
     [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ScopeCheckTypeProperties))]
     [CustomScopeForRootTypes(typeof(TransientScopeNodeRoot))]
+    [InitializedInstancesForScopes(typeof(ScopeInfo))]
     private sealed partial class DIE_TransientScope_TransientScopeNodeRoot
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
@@ -78,6 +90,12 @@ internal sealed partial class MsContainer
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol Range, INamedTypeSymbol Container) types) => 
             types = (scopeInfo.ScopeType!, containerInfoContext.ContainerInfo.ContainerType);
+        
+        [UserDefinedConstructorParametersInjection(typeof(ContainerInfo))]
+        private void DIE_ConstrParams_ContainerInfo(
+            IContainerInfoContext containerInfoContext,
+            out INamedTypeSymbol containerClass) => 
+            containerClass = containerInfoContext.ContainerInfo.ContainerType;
         
         private IUserDefinedElementsBase DIE_Factory_IUserDefinedElementsBase(
             IScopeInfo scopeInfo,

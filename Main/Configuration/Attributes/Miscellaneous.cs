@@ -14,6 +14,18 @@ public class CustomScopeForRootTypesAttribute : Attribute
 }
 
 /// <summary>
+/// Enhances (transient) scopes by definitions for initialized instances.
+/// See https://die.mrmeeseeks.dev/scoping/
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class InitializedInstancesForScopesAttribute : Attribute
+{
+    public InitializedInstancesForScopesAttribute(params Type[] types)
+    {
+    }
+}
+
+/// <summary>
 /// Marks an user-defined constructor parameters injection method.
 /// See https://die.mrmeeseeks.dev/user-defined-elements/
 /// </summary>

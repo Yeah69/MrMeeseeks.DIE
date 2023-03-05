@@ -16,7 +16,6 @@ internal interface ICreateTransientScopeFunctionNode : ICreateFunctionNodeBase
 internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreateTransientScopeFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _typeSymbol;
-    private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, ITransientScopeDisposalElementNodeMapper> _transientScopeDisposalElementNodeMapperFactory;
 
@@ -31,8 +30,8 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
         Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, ITransientScopeDisposalElementNodeMapper> transientScopeDisposalElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
-        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory, 
+        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         IContainerWideContext containerWideContext) 
         : base(
@@ -52,20 +51,19 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
             containerWideContext)
     {
         _typeSymbol = typeSymbol;
-        _referenceGenerator = referenceGenerator;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _transientScopeDisposalElementNodeMapperFactory = transientScopeDisposalElementNodeMapperFactory;
         Name = referenceGenerator.Generate("Create", typeSymbol);
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
-        mapper.MapToImplementation(new(false, false), _typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
+        mapper.MapToImplementation(new(false, false, false), _typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
 
     protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
         IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties)
     {
         var parentMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer, userDefinedElements,
-            checkTypeProperties, _referenceGenerator);
+            checkTypeProperties, ReferenceGenerator);
         return _transientScopeDisposalElementNodeMapperFactory(parentMapper, parentMapper.MapperDependencies);
     }
 

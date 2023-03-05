@@ -158,6 +158,7 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
             _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {scopeCall.ScopeReference});");
         else if (scopeCall.DisposalType.HasFlag(DisposalType.Sync))
             _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {scopeCall.ScopeReference});");
+        GenerateInitialization(scopeCall.Initialization, scopeCall.ScopeReference);
         VisitFunctionCallNode(scopeCall);
     }
 
@@ -176,11 +177,31 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
             _code
                 .AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference}[{transientScopeCall.TransientScopeReference}] = ({disposalType}) {transientScopeCall.TransientScopeReference};");
         }
+        GenerateInitialization(transientScopeCall.Initialization, transientScopeCall.TransientScopeReference);
         VisitFunctionCallNode(transientScopeCall);
+    }
+
+    private void GenerateInitialization(IFunctionCallNode? maybeInitialization, string ownerReference)
+    {
+        if (maybeInitialization is { } initialization)
+        {
+            var asyncPrefix = initialization.SynchronicityDecision != SynchronicityDecision.Sync
+                ? "async "
+                : "";
+
+            _code.AppendLine(
+                $"{asyncPrefix}{ownerReference}.{initialization.FunctionName}({ string.Join(", ", initialization.Parameters.Select(p =>$"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))});");
+        }
     }
 
     private void GenerateRangeNodeContent(IRangeNode rangeNode)
     {
+        foreach (var initializedInstance in rangeNode.InitializedInstances)
+            VisitInitializedInstanceNode(initializedInstance);
+        
+        foreach (var initializationFunction in rangeNode.InitializationFunctions)
+            VisitVoidFunctionNode(initializationFunction);
+        
         foreach (var createFunctionNode in rangeNode.CreateFunctions)
             VisitCreateFunctionNode(createFunctionNode);
 
@@ -870,6 +891,42 @@ throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected."
     public void VisitErrorNode(IErrorNode errorNode)
     {
         // Nothing to do here
+    }
+
+    public void VisitInitializedInstanceNode(IInitializedInstanceNode initializedInstanceNode)
+    {
+        var initialValue = initializedInstanceNode.IsReferenceType
+            ? "null!"
+            : $"new {initializedInstanceNode.TypeFullName}()";
+        _code.AppendLine($"private {initializedInstanceNode.TypeFullName} {initializedInstanceNode.Reference} = {initialValue};");
+    }
+
+    public void VisitVoidFunctionNode(IVoidFunctionNode voidFunctionNode)
+    {
+        var accessibility = voidFunctionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
+            ? $"{SyntaxFacts.GetText(acc)} "  
+            : "";
+        var asyncModifier = voidFunctionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
+            ? "async "
+            : "";
+        var explicitInterfaceFullName = voidFunctionNode.ExplicitInterfaceFullName is { } interfaceName
+            ? $"{interfaceName}."
+            : "";
+        var parameter = string.Join(",", voidFunctionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
+        _code.AppendLine($$"""
+{{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{voidFunctionNode.ReturnedTypeFullName}} {{voidFunctionNode.Name}}({{parameter}})
+{
+""");
+        foreach (var (functionCallNode, initializedInstanceNode) in voidFunctionNode.Initializations)
+        {
+            VisitElementNode(functionCallNode);
+            _code.AppendLine($"{initializedInstanceNode.Reference} = {functionCallNode.Reference};");
+        }
+            
+        foreach (var localFunction in voidFunctionNode.LocalFunctions)
+            VisitSingleFunctionNode(localFunction);
+        
+        _code.AppendLine("}");
     }
 
     public string GenerateContainerFile() => _code.ToString();

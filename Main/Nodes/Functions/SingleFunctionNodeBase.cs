@@ -11,12 +11,10 @@ internal interface ISingleFunctionNode : IFunctionNode
     IElementNode ReturnedElement { get; }
 }
 
-internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFunctionNode
+internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISingleFunctionNode
 {
-    private readonly ITypeSymbol _typeSymbol;
-    private readonly IRangeNode _parentNode;
-    private readonly IContainerNode _parentContainer;
-    private readonly IUserDefinedElementsBase _userDefinedElementsBase;
+    private readonly IRangeNode _parentRange;
+    private readonly IUserDefinedElementsBase _userDefinedElements;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
     public SingleFunctionNodeBase(
@@ -25,7 +23,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         ITypeSymbol typeSymbol,
         IReadOnlyList<ITypeSymbol> parameters,
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
-        IRangeNode parentNode,
+        IRangeNode parentRange,
         IContainerNode parentContainer,
         IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
@@ -34,8 +32,8 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         // dependencies
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         IContainerWideContext containerWideContext)
         : base(
             accessibility, 
@@ -43,7 +41,7 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
             parameters, 
             closureParameters, 
             parentContainer, 
-            parentNode,
+            parentRange,
             referenceGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
@@ -51,10 +49,8 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
             transientScopeCallNodeFactory,
             containerWideContext)
     {
-        _typeSymbol = typeSymbol;
-        _parentNode = parentNode;
-        _parentContainer = parentContainer;
-        _userDefinedElementsBase = userDefinedElements;
+        _parentRange = parentRange;
+        _userDefinedElements = userDefinedElements;
         _checkTypeProperties = checkTypeProperties;
     }
 
@@ -66,9 +62,9 @@ internal abstract class SingleFunctionNodeBase : FunctionNodeBase, ISingleFuncti
         ICheckTypeProperties checkTypeProperties);
 
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
-        mapper.Map(_typeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
+        mapper.Map(TypeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
     
     public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => ReturnedElement = MapToReturnedElement(
-        GetMapper(this, _parentNode, _parentContainer, _userDefinedElementsBase, _checkTypeProperties));
+        GetMapper(this, _parentRange, ParentContainer, _userDefinedElements, _checkTypeProperties));
     public IElementNode ReturnedElement { get; private set; } = null!;
 }

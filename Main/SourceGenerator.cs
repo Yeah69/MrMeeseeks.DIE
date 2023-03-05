@@ -132,6 +132,7 @@ public class SourceGenerator : ISourceGenerator
                     CreateMultiFunctionNode,
                     CreateRangedInstanceFunctionGroupNode,
                     CreateEntryFunctionNode,
+                    CreateVoidFunctionNode,
                     CreateTransientScopeInterfaceNode,
                     CreateTaskTransformationFunctions,
                     CreateScopeManager,
@@ -222,11 +223,14 @@ public class SourceGenerator : ISourceGenerator
                         userDefinedElements,
                         checkTypeProperties,
                         referenceGenerator,
+                        wellKnownTypesMiscellaneous,
                         CreateFunctionNode,
                         CreateMultiFunctionNode,
                         CreateScopeFunctionNode,
                         CreateRangedInstanceFunctionGroupNode,
-                        CreateDisposalHandlingNode));
+                        CreateVoidFunctionNode,
+                        CreateDisposalHandlingNode,
+                        CreateInitializedInstanceNode));
 
             ITransientScopeNodeRoot CreateTransientScopeNode(
                 IScopeInfo scopeInfo,
@@ -244,11 +248,21 @@ public class SourceGenerator : ISourceGenerator
                         userDefinedElements,
                         checkTypeProperties,
                         referenceGenerator,
+                        wellKnownTypesMiscellaneous,
                         CreateFunctionNode,
                         CreateMultiFunctionNode,
                         CreateTransientScopeFunctionNode,
                         CreateRangedInstanceFunctionGroupNode,
-                        CreateDisposalHandlingNode));
+                        CreateVoidFunctionNode,
+                        CreateDisposalHandlingNode,
+                        CreateInitializedInstanceNode));
+
+            IInitializedInstanceNode CreateInitializedInstanceNode(
+                INamedTypeSymbol type,
+                IReferenceGenerator referenceGenerator) =>
+                new InitializedInstanceNode(
+                    type,
+                    referenceGenerator);
 
             IMultiFunctionNodeRoot CreateMultiFunctionNode(
                 INamedTypeSymbol enumerableType,
@@ -308,6 +322,25 @@ public class SourceGenerator : ISourceGenerator
                         CreateScopeCallNode,
                         CreateTransientScopeCallNode,
                         CreateParameterNode,
+                        containerWideContext));
+
+            IVoidFunctionNodeRoot CreateVoidFunctionNode(
+                IReadOnlyList<IInitializedInstanceNode> initializedInstanceNodes,
+                IReadOnlyList<ITypeSymbol> parameters,
+                IRangeNode parentRange,
+                IContainerNode parentContainer,
+                IReferenceGenerator referenceGenerator) =>
+                new VoidFunctionNodeRoot(
+                    new VoidFunctionNode(
+                        initializedInstanceNodes,
+                        parameters,
+                        parentRange,
+                        parentContainer,
+                        referenceGenerator,
+                        CreateParameterNode,
+                        CreatePlainFunctionCallNode,
+                        CreateScopeCallNode,
+                        CreateTransientScopeCallNode,
                         containerWideContext));
 
             ICreateScopeFunctionNodeRoot CreateScopeFunctionNode(
@@ -499,7 +532,8 @@ public class SourceGenerator : ISourceGenerator
                 IRangeNode callingRange,
                 IFunctionNode calledFunction,
                 IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
-                IReferenceGenerator referenceGenerator) =>
+                IReferenceGenerator referenceGenerator,
+                IFunctionCallNode? initialization) =>
                 new ScopeCallNode(
                     containerParameter,
                     transientScopeInterfaceParameter,
@@ -507,6 +541,7 @@ public class SourceGenerator : ISourceGenerator
                     callingRange,
                     calledFunction,
                     parameters,
+                    initialization,
                     referenceGenerator);
 
             ITransientScopeCallNode CreateTransientScopeCallNode(
@@ -516,7 +551,8 @@ public class SourceGenerator : ISourceGenerator
                 IRangeNode callingRange,
                 IFunctionNode calledFunction,
                 IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
-                IReferenceGenerator referenceGenerator) =>
+                IReferenceGenerator referenceGenerator,
+                IFunctionCallNode? initialization) =>
                 new TransientScopeCallNode(
                     containerParameter,
                     transientScope,
@@ -524,6 +560,7 @@ public class SourceGenerator : ISourceGenerator
                     callingRange,
                     calledFunction,
                     parameters,
+                    initialization,
                     referenceGenerator);
 
             IOverridingElementNodeMapper CreateOverridingElementNodeMapper(

@@ -15,7 +15,6 @@ internal interface IEntryFunctionNode : ISingleFunctionNode
 
 internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, IScopeInstance
 {
-    private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
@@ -32,8 +31,8 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, ElementNodeMapperBase.PassedDependencies, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
@@ -51,7 +50,6 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
             transientScopeCallNodeFactory,
             containerWideContext)
     {
-        _referenceGenerator = referenceGenerator;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
         Name = prefix;
@@ -61,7 +59,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties)
     {
         var dummyMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer,
-            userDefinedElements, checkTypeProperties, _referenceGenerator);
+            userDefinedElements, checkTypeProperties, ReferenceGenerator);
 
         return _nonWrapToCreateElementNodeMapperFactory(dummyMapper, dummyMapper.MapperDependencies);
     }

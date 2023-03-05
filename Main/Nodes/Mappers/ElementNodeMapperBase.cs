@@ -27,7 +27,8 @@ internal interface IElementNodeMapperBase
 
 internal record ImplementationMappingConfiguration(
     bool CheckForScopeRoot,
-    bool CheckForRangedInstance);
+    bool CheckForRangedInstance,
+    bool CheckForInitializedInstance);
 
 internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 {
@@ -313,7 +314,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             }
 
             return SwitchImplementation(
-                new(true, true),
+                new(true, true, true),
                 chosenImplementationType,
                 implementationStack,
                 Next);
@@ -360,6 +361,11 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ImmutableStack<INamedTypeSymbol> implementationSet,
         IElementNodeMapperBase nextMapper)
     {
+        if (config.CheckForInitializedInstance && !ParentFunction.CheckIfReturnedType(implementationType))
+        {
+            if (ParentRange.GetInitializedNode(implementationType) is { } initializedInstanceNode)
+                return initializedInstanceNode;
+        }
         if (config.CheckForScopeRoot)
         {
             var ret = _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch

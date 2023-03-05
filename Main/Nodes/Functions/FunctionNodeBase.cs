@@ -5,19 +5,17 @@ using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
 internal abstract class FunctionNodeBase : IFunctionNode
 {
-    private readonly ITypeSymbol _typeSymbol;
-    private readonly IContainerNode _parentContainer;
-    private readonly IReferenceGenerator _referenceGenerator;
+    protected readonly IContainerNode ParentContainer;
+    protected readonly IReferenceGenerator ReferenceGenerator;
     private readonly Func<string? , IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode> _plainFunctionCallNodeFactory;
-    private readonly Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> _scopeCallNodeFactory;
-    private readonly Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> _transientScopeCallNodeFactory;
-    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> _scopeCallNodeFactory;
+    private readonly Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> _transientScopeCallNodeFactory;
+    protected readonly WellKnownTypes WellKnownTypes;
     private readonly List<IPotentiallyAwaitedNode> _potentiallyAwaitingNodes = new();
     private readonly Dictionary<IPotentiallyAwaitedNode, ITaskNodeBase> _asyncWrappingMap = new();
     private readonly List<(IOnAwait, IFunctionCallNode)> _calls = new();
@@ -28,7 +26,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public FunctionNodeBase(
         // parameters
         Accessibility? accessibility,
-        ITypeSymbol typeSymbol,
         IReadOnlyList<ITypeSymbol> parameters,
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IContainerNode parentContainer,
@@ -38,21 +35,19 @@ internal abstract class FunctionNodeBase : IFunctionNode
         // dependencies
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         IContainerWideContext containerWideContext)
     {
-        _typeSymbol = typeSymbol;
-        _parentContainer = parentContainer;
-        _referenceGenerator = referenceGenerator;
+        ParentContainer = parentContainer;
+        ReferenceGenerator = referenceGenerator;
         _plainFunctionCallNodeFactory = plainFunctionCallNodeFactory;
         _scopeCallNodeFactory = scopeCallNodeFactory;
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        WellKnownTypes = containerWideContext.WellKnownTypes;
         Parameters = parameters.Select(p=> (p, parameterNodeFactory(p, referenceGenerator)
             .EnqueueBuildJobTo(parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty))).ToList();
         Accessibility = accessibility;
-        ReturnedTypeFullName = typeSymbol.FullName();
 
         var setOfProcessedTypes = new HashSet<ITypeSymbol>(CustomSymbolEqualityComparer.IncludeNullability);
 
@@ -113,7 +108,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
             taskNodeBase.OnAwait(potentiallyAwaitedNode);
         _potentiallyAwaitingNodes.Add(potentiallyAwaitedNode);
         _synchronicityCheckedAlready = false;
-        _parentContainer.AsyncCheckQueue.Enqueue(this);
+        ParentContainer.AsyncCheckQueue.Enqueue(this);
     }
 
     protected virtual void OnBecameAsync() {}
@@ -126,14 +121,18 @@ internal abstract class FunctionNodeBase : IFunctionNode
             ForceToAsync();
     }
 
+    protected abstract string GetAsyncTypeFullName();
+
+    protected abstract string GetReturnedTypeFullName();
+
     public void ForceToAsync()
     {
         if (SuppressAsync) return;
         _synchronicityCheckedAlready = true;
         if (SynchronicityDecision == SynchronicityDecision.AsyncValueTask) return; 
         SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-        AsyncTypeFullName = _typeSymbol.FullName();
-        ReturnedTypeFullName = _wellKnownTypes.ValueTask1.Construct(_typeSymbol).FullName();
+        AsyncTypeFullName = GetAsyncTypeFullName();
+        ReturnedTypeFullName = GetReturnedTypeFullName();
         foreach (var (callingFunction, call) in _calls)
             call.MakeAsync(callingFunction);
         OnBecameAsync();
@@ -151,8 +150,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 ownerReference,
                 this,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
-                _referenceGenerator)
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
+                ReferenceGenerator)
+            .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((onAwait, call));
         callingFunction.RegisterCalledFunction(this);
@@ -169,8 +168,9 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 callingRange,
                 this,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
-                _referenceGenerator)
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
+                ReferenceGenerator,
+                scope.InitializedInstances.Any() ? scope.BuildInitializationCall(callingFunction) : null)
+            .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((callingFunction, call));
         callingFunction.RegisterCalledFunction(this);
@@ -187,18 +187,21 @@ internal abstract class FunctionNodeBase : IFunctionNode
         var call = _transientScopeCallNodeFactory(
                 containerParameter,
                 transientScopeNode,
-                _parentContainer,
+                ParentContainer,
                 callingRange,
                 this,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
-                _referenceGenerator)
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
+                ReferenceGenerator,
+                transientScopeNode.InitializedInstances.Any() ? transientScopeNode.BuildInitializationCall(callingFunction) : null)
+            .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         
         _calls.Add((callingFunction, call));
         callingFunction.RegisterCalledFunction(this);
 
         return call;
     }
+
+    public abstract bool CheckIfReturnedType(ITypeSymbol type);
 
     public void AddLocalFunction(ILocalFunctionNode function) =>
         _localFunctions.Add(function);
@@ -209,7 +212,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public Accessibility? Accessibility { get; }
     public SynchronicityDecision SynchronicityDecision { get; private set; } = SynchronicityDecision.Sync;
     public abstract string Name { get; protected set; }
-    public string ReturnedTypeFullName { get; private set; }
+    public string ReturnedTypeFullName { get; protected set; } = "";
 
     public IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
 }

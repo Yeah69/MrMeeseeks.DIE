@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Roots;
@@ -17,7 +18,7 @@ internal interface IScopeNode : IScopeNodeBase
     IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction);
 }
 
-internal class ScopeNode : RangeNode, IScopeNode, ITransientScopeInstance
+internal class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeInstance
 {
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNodeRoot> _createScopeFunctionNodeFactory;
 
@@ -29,35 +30,34 @@ internal class ScopeNode : RangeNode, IScopeNode, ITransientScopeInstance
         IUserDefinedElementsBase userDefinedElements,
         IScopeCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, ICreateScopeFunctionNodeRoot> createScopeFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
-        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
-        : base (
-            scopeInfo.Name, 
+        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
+        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory,
+        Func<INamedTypeSymbol, IReferenceGenerator, IInitializedInstanceNode> initializedInstanceNodeFactory)
+        : base(
+            scopeInfo, 
+            parentContainer,
+            scopeManager,
             userDefinedElements, 
             checkTypeProperties, 
             referenceGenerator, 
+            wellKnownTypesMiscellaneous,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
-            disposalHandlingNodeFactory)
+            voidFunctionNodeFactory,
+            disposalHandlingNodeFactory,
+            initializedInstanceNodeFactory)
     {
         _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
-        ParentContainer = parentContainer;
-        ScopeManager = scopeManager;
-        FullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{scopeInfo.Name}";
-        ContainerFullName = parentContainer.FullName;
         TransientScopeInterfaceFullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{transientScopeInterfaceNode.Name}";
-        ContainerReference = referenceGenerator.Generate("_container");
-        ContainerParameterReference = referenceGenerator.Generate("container");
         TransientScopeInterfaceReference = referenceGenerator.Generate("_transientScope");
         TransientScopeInterfaceParameterReference = referenceGenerator.Generate("transientScope");
     }
-
-    protected override IScopeManager ScopeManager { get; }
-    protected override IContainerNode ParentContainer { get; }
     protected override string ContainerParameterForScope => ContainerReference;
     protected override string TransientScopeInterfaceParameterForScope => TransientScopeInterfaceReference;
 
@@ -89,11 +89,6 @@ internal class ScopeNode : RangeNode, IScopeNode, ITransientScopeInstance
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
             f => f.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this));
 
-    public override string FullName { get; }
-    public override DisposalType DisposalType => ParentContainer.DisposalType;
-    public string ContainerFullName { get; }
-    public override string ContainerReference { get; }
-    public string ContainerParameterReference { get; }
     public string TransientScopeInterfaceFullName { get; }
     public string TransientScopeInterfaceReference { get; }
     public string TransientScopeInterfaceParameterReference { get; }

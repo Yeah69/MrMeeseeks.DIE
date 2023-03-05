@@ -12,7 +12,7 @@ internal interface IRangedInstanceInterfaceFunctionNode : IFunctionNode
     void AddConsideredRange(IRangeNode range);
 }
 
-internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedInstanceInterfaceFunctionNode, IScopeInstance
+internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, IRangedInstanceInterfaceFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _type;
     private readonly IContainerNode _parentContainer;
@@ -25,8 +25,8 @@ internal class RangedInstanceInterfaceFunctionNode : FunctionNodeBase, IRangedIn
         IRangeNode parentRange,
         IReferenceGenerator referenceGenerator, 
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IScopeCallNode> scopeCallNodeFactory, 
-        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory, 
+        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
         IContainerWideContext containerWideContext) 
         : base(

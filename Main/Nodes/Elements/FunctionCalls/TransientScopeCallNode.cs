@@ -13,6 +13,7 @@ internal interface ITransientScopeCallNode : IFunctionCallNode
     string TransientScopeReference { get; }
     DisposalType DisposalType { get; }
     string TransientScopeDisposalReference { get; }
+    IFunctionCallNode? Initialization { get; }
 }
 
 internal class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNode
@@ -30,13 +31,15 @@ internal class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNod
         IContainerNode parentContainer,
         IRangeNode callingRange,
         IFunctionNode calledFunction,
-        IReadOnlyList<(IParameterNode, IParameterNode)> parameters, 
+        IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
+        IFunctionCallNode? initialization,
         
         IReferenceGenerator referenceGenerator) 
         : base(null, calledFunction, parameters, referenceGenerator)
     {
         _scope = scope;
         ContainerParameter = containerParameter;
+        Initialization = initialization;
         TransientScopeFullName = scope.FullName;
         TransientScopeReference = referenceGenerator.Generate("transientScopeRoot");
         ContainerReference = callingRange.ContainerReference;
@@ -51,4 +54,5 @@ internal class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNod
     public string TransientScopeReference { get; }
     public DisposalType DisposalType => _scope.DisposalType;
     public string TransientScopeDisposalReference { get; }
+    public IFunctionCallNode? Initialization { get; }
 }

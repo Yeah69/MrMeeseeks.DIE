@@ -43,4 +43,6 @@ internal interface INodeVisitor
     void VisitMultiFunctionNode(IMultiFunctionNode multiFunctionNode);
     void VisitEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode);
     void VisitErrorNode(IErrorNode errorNode);
+    void VisitInitializedInstanceNode(IInitializedInstanceNode initializedInstanceNode);
+    void VisitVoidFunctionNode(IVoidFunctionNode voidFunctionNode);
 }

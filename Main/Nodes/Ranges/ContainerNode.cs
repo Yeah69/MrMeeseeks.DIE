@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Roots;
@@ -64,6 +65,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
+        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<IReferenceGenerator, ITaskTransformationFunctions> taskTransformationFunctions,
         Func<IContainerInfoContext, IContainerNode, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IReferenceGenerator, IScopeManager> scopeManagerFactory,
@@ -76,6 +78,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
+            voidFunctionNodeFactory,
             disposalHandlingNodeFactory)
     {
         _containerInfo = containerInfoContext.ContainerInfo;

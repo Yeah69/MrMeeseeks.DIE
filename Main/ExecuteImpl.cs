@@ -79,7 +79,7 @@ internal class ExecuteImpl : IExecute
                         if (_diagLogger.ErrorsIssued)
                             continue;
 
-                        var visitor = _containerNodeRoot.CodeGenerationVisitor;
+                        var visitor = containerNode.CodeGenerationVisitor;
                         visitor.VisitContainerNode(containerNode);
 
                         var containerSource = CSharpSyntaxTree

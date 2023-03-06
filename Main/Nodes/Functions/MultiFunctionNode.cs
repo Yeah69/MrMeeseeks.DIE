@@ -23,7 +23,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
 {
     private readonly INamedTypeSymbol _enumerableType;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly Func<IFunctionNode, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
     private readonly WellKnownTypes _wellKnownTypes;
 
@@ -41,7 +41,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        Func<IFunctionNode, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         IContainerWideContext containerWideContext)
         : base(
@@ -75,10 +75,9 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
 
     private IElementNodeMapperBase GetMapper(
         ITypeSymbol unwrappedType,
-        ITypeSymbol concreteImplementationType,
-        IMultiFunctionNode parentFunction)
+        ITypeSymbol concreteImplementationType)
     {
-        var baseMapper = _typeToElementNodeMapperFactory(parentFunction);
+        var baseMapper = _typeToElementNodeMapperFactory();
         return concreteImplementationType is INamedTypeSymbol namedTypeSymbol && unwrappedType is INamedTypeSymbol namedUnwrappedType
             ? _overridingElementNodeWithDecorationMapperFactory(
                 baseMapper,
@@ -102,7 +101,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
 
         ReturnedElements = concreteItemTypes
             .Select(cit => MapToReturnedElement(
-                GetMapper(unwrappedItemType, cit, this),
+                GetMapper(unwrappedItemType, cit),
                 itemType))
             .ToList();
     }

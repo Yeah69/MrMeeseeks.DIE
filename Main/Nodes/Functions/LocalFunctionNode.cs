@@ -49,7 +49,7 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
         Name = referenceGenerator.Generate("Local", typeSymbol);
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction)
+    protected override IElementNodeMapperBase GetMapper()
     {
         var baseMapper = _typeToElementNodeMapperFactory();
         return _nonWrapToCreateElementNodeMapperFactory(baseMapper);

@@ -16,7 +16,7 @@ internal interface ICreateScopeFunctionNode : ICreateFunctionNodeBase
 internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _typeSymbol;
-    private readonly Func<ISingleFunctionNode, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
 
     public CreateScopeFunctionNode(
         INamedTypeSymbol typeSymbol, 
@@ -24,7 +24,7 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 
-        Func<ISingleFunctionNode, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
@@ -51,8 +51,8 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
         mapper.MapToImplementation(new(false, false, false), _typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction) =>
-        _typeToElementNodeMapperFactory(parentFunction);
+    protected override IElementNodeMapperBase GetMapper() =>
+        _typeToElementNodeMapperFactory();
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
     public override string Name { get; protected set; }

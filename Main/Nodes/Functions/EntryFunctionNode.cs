@@ -15,7 +15,7 @@ internal interface IEntryFunctionNode : ISingleFunctionNode
 
 internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, IScopeInstance
 {
-    private readonly Func<ISingleFunctionNode, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     public EntryFunctionNode(
@@ -25,7 +25,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
         IContainerWideContext containerWideContext,
-        Func<ISingleFunctionNode, IElementNodeMapper> typeToElementNodeMapperFactory, 
+        Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
@@ -49,9 +49,9 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         Name = prefix;
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction)
+    protected override IElementNodeMapperBase GetMapper()
     {
-        var dummyMapper = _typeToElementNodeMapperFactory(parentFunction);
+        var dummyMapper = _typeToElementNodeMapperFactory();
 
         return _nonWrapToCreateElementNodeMapperFactory(dummyMapper);
     }

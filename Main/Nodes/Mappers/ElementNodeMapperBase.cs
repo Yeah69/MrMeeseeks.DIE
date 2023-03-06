@@ -50,7 +50,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> _lazyNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> _funcNodeFactory;
     private readonly Func<ITypeSymbol, IEnumerableBasedNode> _enumerableBasedNodeFactory;
-    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
+    private readonly Func<(INamedTypeSymbol, INamedTypeSymbol), IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
     private readonly Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
@@ -76,7 +76,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory,
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory,
+        Func<(INamedTypeSymbol, INamedTypeSymbol), IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory,
         Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
@@ -393,7 +393,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     {
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
         if (!shouldBeDecorated)
-            return _abstractionNodeFactory(interfaceType, implementationType, mapper)
+            return _abstractionNodeFactory((interfaceType, implementationType), mapper)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
 
         var decoratorSequence = _checkTypeProperties.GetSequenceFor(interfaceType, implementationType)
@@ -409,7 +409,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             .Append((interfaceType, implementationType)));
             
         var overridingMapper = _overridingElementNodeMapperFactory(this, decoratorTypes);
-        return _abstractionNodeFactory(interfaceType, outerDecorator, overridingMapper)
+        return _abstractionNodeFactory((interfaceType, outerDecorator), overridingMapper)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
     }
 }

@@ -20,7 +20,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
 {
     private readonly ImmutableQueue<(INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType)> _override;
     private readonly IContainerNode _parentContainer;
-    private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
+    private readonly Func<(INamedTypeSymbol, INamedTypeSymbol), IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
     private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
 
     public OverridingElementNodeMapper(
@@ -44,7 +44,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory, 
+        Func<(INamedTypeSymbol, INamedTypeSymbol), IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory, 
         Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory, 
@@ -95,7 +95,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         {
             var nextOverride = _override.Dequeue(out var currentOverride);
             var mapper = _overridingElementNodeMapperFactory(this, nextOverride);
-            return _abstractionNodeFactory(abstraction, currentOverride.ImplementationType, mapper)
+            return _abstractionNodeFactory((abstraction, currentOverride.ImplementationType), mapper)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
         return base.Map(type, implementationStack);

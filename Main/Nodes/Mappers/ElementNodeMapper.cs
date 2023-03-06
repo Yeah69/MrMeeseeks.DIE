@@ -34,7 +34,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
         Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory, 
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory, 
+        Func<(INamedTypeSymbol, INamedTypeSymbol), IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory, 
         Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory, 

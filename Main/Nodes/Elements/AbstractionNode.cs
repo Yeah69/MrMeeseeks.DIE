@@ -15,16 +15,15 @@ internal class AbstractionNode : IAbstractionNode
     private readonly IElementNodeMapperBase _mapper;
 
     internal AbstractionNode(
-        INamedTypeSymbol abstractionType, 
-        INamedTypeSymbol implementationType,
+        (INamedTypeSymbol Abstraction, INamedTypeSymbol Implementation) types, 
         IElementNodeMapperBase mapper,
         
         IReferenceGenerator referenceGenerator)
     {
-        _implementationType = implementationType;
+        _implementationType = types.Implementation;
         _mapper = mapper;
-        TypeFullName = abstractionType.FullName();
-        Reference = referenceGenerator.Generate(abstractionType);
+        TypeFullName = types.Abstraction.FullName();
+        Reference = referenceGenerator.Generate(types.Abstraction);
     }
 
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)

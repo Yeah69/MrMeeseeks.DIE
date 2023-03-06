@@ -13,7 +13,6 @@ internal class ScopeNodeRoot : IScopeNodeRoot, ITransientScopeRoot
     public IScopeNode Scope { get; }
 
     public ScopeNodeRoot(
-        IScopeInfo scopeInfo,
         IScopeNode scope)
     {
         Scope = scope;

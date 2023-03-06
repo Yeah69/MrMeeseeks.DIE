@@ -25,7 +25,7 @@ internal interface IRangedInstanceFunctionNodeInitializer
 internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer, IScopeInstance
 {
     private readonly INamedTypeSymbol _type;
-    private readonly Func<ISingleFunctionNode, IRangeNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<ISingleFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
 
     public RangedInstanceFunctionNode(
         ScopeLevel level,
@@ -36,7 +36,7 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
         IUserDefinedElementsBase userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator, 
-        Func<ISingleFunctionNode, IRangeNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<ISingleFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
@@ -62,9 +62,9 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
         Name = referenceGenerator.Generate($"Get{level.ToString()}Instance", _type);
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode,
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction,
         IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties) =>
-        _typeToElementNodeMapperFactory(parentFunction, parentNode, userDefinedElements, checkTypeProperties);
+        _typeToElementNodeMapperFactory(parentFunction, userDefinedElements, checkTypeProperties);
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
         // "MapToImplementation" instead of "Map", because latter would cause an infinite recursion ever trying to create a new ranged instance function

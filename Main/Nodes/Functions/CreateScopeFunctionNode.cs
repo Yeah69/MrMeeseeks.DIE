@@ -17,7 +17,7 @@ internal interface ICreateScopeFunctionNode : ICreateFunctionNodeBase
 internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _typeSymbol;
-    private readonly Func<ISingleFunctionNode, IRangeNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<ISingleFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
 
     public CreateScopeFunctionNode(
         INamedTypeSymbol typeSymbol, 
@@ -27,7 +27,7 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
         IUserDefinedElementsBase userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator, 
-        Func<ISingleFunctionNode, IRangeNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<ISingleFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
@@ -56,9 +56,9 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
         mapper.MapToImplementation(new(false, false, false), _typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode,
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction,
         IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties) =>
-        _typeToElementNodeMapperFactory(parentFunction, parentNode, userDefinedElements, checkTypeProperties);
+        _typeToElementNodeMapperFactory(parentFunction, userDefinedElements, checkTypeProperties);
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
     public override string Name { get; protected set; }

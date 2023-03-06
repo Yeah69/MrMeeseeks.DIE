@@ -55,7 +55,6 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
 
     protected abstract IElementNodeMapperBase GetMapper(
         ISingleFunctionNode parentFunction,
-        IRangeNode parentNode,
         IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties);
 
@@ -63,6 +62,6 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         mapper.Map(TypeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
     
     public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => ReturnedElement = MapToReturnedElement(
-        GetMapper(this, _parentRange, _userDefinedElements, _checkTypeProperties));
+        GetMapper(this, _userDefinedElements, _checkTypeProperties));
     public IElementNode ReturnedElement { get; private set; } = null!;
 }

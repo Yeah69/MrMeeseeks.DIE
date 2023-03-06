@@ -64,7 +64,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
-        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
+        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IContainerNode, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<ITaskTransformationFunctions> taskTransformationFunctions,
         Func<IContainerInfoContext, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IScopeManager> scopeManagerFactory,

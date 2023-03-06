@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -14,8 +13,6 @@ internal interface ISingleFunctionNode : IFunctionNode
 
 internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISingleFunctionNode
 {
-    private readonly ICheckTypeProperties _checkTypeProperties;
-
     public SingleFunctionNodeBase(
         // parameters
         Accessibility? accessibility,
@@ -24,7 +21,6 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IRangeNode parentRange,
         IContainerNode parentContainer,
-        ICheckTypeProperties checkTypeProperties,
         
         // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
@@ -45,17 +41,14 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             transientScopeCallNodeFactory,
             containerWideContext)
     {
-        _checkTypeProperties = checkTypeProperties;
     }
 
-    protected abstract IElementNodeMapperBase GetMapper(
-        ISingleFunctionNode parentFunction,
-        ICheckTypeProperties checkTypeProperties);
+    protected abstract IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction);
 
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
         mapper.Map(TypeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
     
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => ReturnedElement = MapToReturnedElement(
-        GetMapper(this, _checkTypeProperties));
+    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => 
+        ReturnedElement = MapToReturnedElement(GetMapper(this));
     public IElementNode ReturnedElement { get; private set; } = null!;
 }

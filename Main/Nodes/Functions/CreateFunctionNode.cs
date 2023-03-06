@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -20,16 +19,15 @@ internal interface ICreateFunctionNode : ICreateFunctionNodeBase
 
 internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode, IScopeInstance
 {
-    private readonly Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<ISingleFunctionNode, IElementNodeMapper> _typeToElementNodeMapperFactory;
 
     public CreateFunctionNode(
         ITypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode, 
-        IContainerNode parentContainer, 
-        ICheckTypeProperties checkTypeProperties,
+        IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator, 
-        Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<ISingleFunctionNode, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
@@ -42,7 +40,6 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode,
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentNode, 
             parentContainer, 
-            checkTypeProperties,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
@@ -53,8 +50,8 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode,
         Name = referenceGenerator.Generate("Create", typeSymbol);
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, ICheckTypeProperties checkTypeProperties) =>
-        _typeToElementNodeMapperFactory(parentFunction, checkTypeProperties);
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction) =>
+        _typeToElementNodeMapperFactory(parentFunction);
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
     public override string Name { get; protected set; }

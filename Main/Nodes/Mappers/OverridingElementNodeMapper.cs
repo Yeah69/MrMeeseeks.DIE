@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -32,7 +31,6 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         IRangeNode parentRange,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
-        ICheckTypeProperties checkTypeProperties,
         IDiagLogger diagLogger, 
         IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
@@ -57,7 +55,6 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             parentRange, 
             parentContainer, 
             transientScopeWideContext, 
-            checkTypeProperties,
             diagLogger, 
             containerWideContext,
             factoryFieldNodeFactory, 

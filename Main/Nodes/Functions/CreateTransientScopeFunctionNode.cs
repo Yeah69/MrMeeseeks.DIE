@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -17,7 +16,7 @@ internal interface ICreateTransientScopeFunctionNode : ICreateFunctionNodeBase
 internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreateTransientScopeFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _typeSymbol;
-    private readonly Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<ISingleFunctionNode, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper> _transientScopeDisposalElementNodeMapperFactory;
 
     public CreateTransientScopeFunctionNode(
@@ -25,9 +24,8 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
-        ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator, 
-        Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<ISingleFunctionNode, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper> transientScopeDisposalElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
@@ -41,7 +39,6 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentNode, 
             parentContainer, 
-            checkTypeProperties,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
@@ -57,10 +54,9 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
         mapper.MapToImplementation(new(false, false, false), _typeSymbol, ImmutableStack<INamedTypeSymbol>.Empty);
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, ICheckTypeProperties checkTypeProperties)
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction)
     {
-        var parentMapper = _typeToElementNodeMapperFactory(parentFunction,
-            checkTypeProperties);
+        var parentMapper = _typeToElementNodeMapperFactory(parentFunction);
         return _transientScopeDisposalElementNodeMapperFactory(parentMapper);
     }
 

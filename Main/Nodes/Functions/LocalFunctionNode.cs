@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -24,7 +23,6 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters, 
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
-        ICheckTypeProperties checkTypeProperties, 
         IReferenceGenerator referenceGenerator, 
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -40,7 +38,6 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
             closureParameters,
             parentNode, 
             parentContainer, 
-            checkTypeProperties,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
@@ -52,7 +49,7 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
         Name = referenceGenerator.Generate("Local", typeSymbol);
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, ICheckTypeProperties checkTypeProperties)
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction)
     {
         var baseMapper = _typeToElementNodeMapperFactory();
         return _nonWrapToCreateElementNodeMapperFactory(baseMapper);

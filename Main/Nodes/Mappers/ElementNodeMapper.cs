@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -22,7 +21,6 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
         IRangeNode parentRange, 
         IContainerNode parentContainer,  
         ITransientScopeWideContext transientScopeWideContext,
-        ICheckTypeProperties checkTypeProperties, 
         IDiagLogger diagLogger, 
         IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
@@ -47,7 +45,6 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
             parentRange, 
             parentContainer, 
             transientScopeWideContext, 
-            checkTypeProperties,
             diagLogger, 
             containerWideContext,
             factoryFieldNodeFactory, 

@@ -23,7 +23,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
 {
     private readonly INamedTypeSymbol _enumerableType;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly Func<IFunctionNode, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<IFunctionNode, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
     private readonly WellKnownTypes _wellKnownTypes;
 
@@ -33,7 +33,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode,
         IContainerNode parentContainer,
-        ICheckTypeProperties checkTypeProperties,
+        ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
         
         // dependencies
@@ -41,7 +41,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        Func<IFunctionNode, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<IFunctionNode, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         IContainerWideContext containerWideContext)
         : base(
@@ -58,7 +58,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
             containerWideContext)
     {
         _enumerableType = enumerableType;
-        _checkTypeProperties = checkTypeProperties;
+        _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
@@ -76,10 +76,9 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
     private IElementNodeMapperBase GetMapper(
         ITypeSymbol unwrappedType,
         ITypeSymbol concreteImplementationType,
-        IMultiFunctionNode parentFunction,
-        ICheckTypeProperties checkTypeProperties)
+        IMultiFunctionNode parentFunction)
     {
-        var baseMapper = _typeToElementNodeMapperFactory(parentFunction, checkTypeProperties);
+        var baseMapper = _typeToElementNodeMapperFactory(parentFunction);
         return concreteImplementationType is INamedTypeSymbol namedTypeSymbol && unwrappedType is INamedTypeSymbol namedUnwrappedType
             ? _overridingElementNodeWithDecorationMapperFactory(
                 baseMapper,
@@ -103,7 +102,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
 
         ReturnedElements = concreteItemTypes
             .Select(cit => MapToReturnedElement(
-                GetMapper(unwrappedItemType, cit, this, _checkTypeProperties),
+                GetMapper(unwrappedItemType, cit, this),
                 itemType))
             .ToList();
     }

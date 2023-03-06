@@ -25,7 +25,7 @@ internal interface IRangedInstanceFunctionNodeInitializer
 internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer, IScopeInstance
 {
     private readonly INamedTypeSymbol _type;
-    private readonly Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<ISingleFunctionNode, IElementNodeMapper> _typeToElementNodeMapperFactory;
 
     public RangedInstanceFunctionNode(
         ScopeLevel level,
@@ -33,9 +33,8 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
-        ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator, 
-        Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<ISingleFunctionNode, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
@@ -48,7 +47,6 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentNode, 
             parentContainer, 
-            checkTypeProperties,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
@@ -60,8 +58,8 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
         Name = referenceGenerator.Generate($"Get{level.ToString()}Instance", _type);
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, ICheckTypeProperties checkTypeProperties) =>
-        _typeToElementNodeMapperFactory(parentFunction, checkTypeProperties);
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction) =>
+        _typeToElementNodeMapperFactory(parentFunction);
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
         // "MapToImplementation" instead of "Map", because latter would cause an infinite recursion ever trying to create a new ranged instance function

@@ -63,7 +63,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IRangeNode parentRange,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
-        ICheckTypeProperties checkTypeProperties,
         IDiagLogger diagLogger,
         IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
@@ -89,7 +88,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ParentRange = parentRange;
         _parentContainer = parentContainer;
         _userDefinedElementsBase = transientScopeWideContext.UserDefinedElementsBase;
-        _checkTypeProperties = checkTypeProperties;
+        _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _diagLogger = diagLogger;
         WellKnownTypes = containerWideContext.WellKnownTypes;
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;

@@ -30,6 +30,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IFunctionCycleTracker _functionCycleTracker;
+    private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
@@ -43,7 +44,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     public IReadOnlyList<IEntryFunctionNode> RootFunctions => _rootFunctions;
     public IEnumerable<IScopeNode> Scopes => ScopeManager.Scopes;
     public IEnumerable<ITransientScopeNode> TransientScopes => ScopeManager.TransientScopes;
-    public ITransientScopeInterfaceNode TransientScopeInterface { get; }
+    public ITransientScopeInterfaceNode TransientScopeInterface => _lazyTransientScopeInterfaceNode.Value;
     public ITaskTransformationFunctions TaskTransformationFunctions { get; }
     public string TransientScopeDisposalReference { get; }
     public string TransientScopeDisposalElement { get; }
@@ -56,18 +57,17 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 
     internal ContainerNode(
         IContainerInfoContext containerInfoContext,
-        IContainerTypesFromAttributes containerTypesFromAttributes,
         Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElementsBase> userDefinedElementsFactory,
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
+        ITaskTransformationFunctions taskTransformationFunctions,
+        Lazy<ITransientScopeInterfaceNode> lazyTransientScopeInterfaceNode,
+        Lazy<IScopeManager> lazyScopeManager,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
-        Func<IContainerNode, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
-        Func<ITaskTransformationFunctions> taskTransformationFunctions,
-        Func<IContainerInfoContext, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IScopeManager> scopeManagerFactory,
         Func<IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
             containerInfoContext.ContainerInfo.Name, 
@@ -80,15 +80,12 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     {
         _containerInfo = containerInfoContext.ContainerInfo;
         _functionCycleTracker = functionCycleTracker;
+        _lazyTransientScopeInterfaceNode = lazyTransientScopeInterfaceNode;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
         Namespace = _containerInfo.Namespace;
         FullName = _containerInfo.FullName;
         
-        TransientScopeInterface = transientScopeInterfaceNodeFactory(this);
-        _lazyScopeManager = new(() => scopeManagerFactory(
-            containerInfoContext,
-            containerTypesFromAttributes,
-            TransientScopeInterface));
+        _lazyScopeManager = lazyScopeManager;
         _lazyDisposalType = new(() => _lazyScopeManager.Value
             .Scopes.Select(s => s.DisposalHandling)
             .Concat(_lazyScopeManager.Value.TransientScopes.Select(ts => ts.DisposalHandling))
@@ -100,7 +97,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
                 return agg;
             }));
 
-        TaskTransformationFunctions = taskTransformationFunctions();
+        TaskTransformationFunctions = taskTransformationFunctions;
         
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
         TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");

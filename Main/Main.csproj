@@ -13,6 +13,7 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     <RestoreAdditionalProjectSources>./_SupportPackages</RestoreAdditionalProjectSources>
+    <NoWarn>$(NoWarn);RS1024</NoWarn> <!-- RS1024 is about the SymbolEqualityComparer which is replaced by the custom alternative -->
   </PropertyGroup>
 
   <PropertyGroup>

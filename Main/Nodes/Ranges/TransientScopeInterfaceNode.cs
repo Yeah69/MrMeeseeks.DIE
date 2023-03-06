@@ -27,8 +27,8 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, ICont
 
     internal TransientScopeInterfaceNode(
         IContainerNode container,
-        IReferenceGenerator referenceGenerator,
         
+        IReferenceGenerator referenceGenerator,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceInterfaceFunctionNodeRoot> rangedInstanceInterfaceFunctionNodeFactory)
     {
         _container = container;

@@ -111,63 +111,47 @@ internal sealed partial class MsContainer
     [CustomScopeForRootTypes(typeof(CreateFunctionNodeRoot))]
     private sealed partial class DIE_Scope_CreateFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateScopeFunctionNode))]
     [CustomScopeForRootTypes(typeof(CreateScopeFunctionNodeRoot))]
     private sealed partial class DIE_Scope_CreateScopeFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateTransientScopeFunctionNode))]
     [CustomScopeForRootTypes(typeof(CreateTransientScopeFunctionNodeRoot))]
     private sealed partial class DIE_Scope_CreateTransientScopeFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(EntryFunctionNode))]
     [CustomScopeForRootTypes(typeof(EntryFunctionNodeRoot))]
     private sealed partial class DIE_Scope_EntryFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(LocalFunctionNode))]
     [CustomScopeForRootTypes(typeof(LocalFunctionNodeRoot))]
     private sealed partial class DIE_Scope_LocalFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceFunctionNode))]
     [CustomScopeForRootTypes(typeof(RangedInstanceFunctionNodeRoot))]
     private sealed partial class DIE_Scope_RangedInstanceFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceInterfaceFunctionNode))]
     [CustomScopeForRootTypes(typeof(RangedInstanceInterfaceFunctionNodeRoot))]
     private sealed partial class DIE_Scope_RangedInstanceInterfaceFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(MultiFunctionNode))]
     [CustomScopeForRootTypes(typeof(MultiFunctionNodeRoot))]
     private sealed partial class DIE_Scope_MultiFunctionNodeRoot
     {
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedTypesBase(ITransientScopeWideContext context) => 
-            context.UserDefinedElementsBase;
     }
 }

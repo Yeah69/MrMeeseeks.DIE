@@ -16,7 +16,7 @@ internal interface IEntryFunctionNode : ISingleFunctionNode
 
 internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, IScopeInstance
 {
-    private readonly Func<ISingleFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     public EntryFunctionNode(
@@ -25,10 +25,9 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
-        IUserDefinedElementsBase userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
         IContainerWideContext containerWideContext,
-        Func<ISingleFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory, 
+        Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
@@ -41,7 +40,6 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentNode, 
             parentContainer, 
-            userDefinedElements, 
             checkTypeProperties,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
@@ -54,11 +52,9 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         Name = prefix;
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction,
-        IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties)
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, ICheckTypeProperties checkTypeProperties)
     {
-        var dummyMapper = _typeToElementNodeMapperFactory(parentFunction,
-            userDefinedElements, checkTypeProperties);
+        var dummyMapper = _typeToElementNodeMapperFactory(parentFunction, checkTypeProperties);
 
         return _nonWrapToCreateElementNodeMapperFactory(dummyMapper);
     }

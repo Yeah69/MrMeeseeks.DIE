@@ -14,8 +14,6 @@ internal interface ISingleFunctionNode : IFunctionNode
 
 internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISingleFunctionNode
 {
-    private readonly IRangeNode _parentRange;
-    private readonly IUserDefinedElementsBase _userDefinedElements;
     private readonly ICheckTypeProperties _checkTypeProperties;
 
     public SingleFunctionNodeBase(
@@ -26,7 +24,6 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IRangeNode parentRange,
         IContainerNode parentContainer,
-        IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
         
         // dependencies
@@ -48,20 +45,17 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             transientScopeCallNodeFactory,
             containerWideContext)
     {
-        _parentRange = parentRange;
-        _userDefinedElements = userDefinedElements;
         _checkTypeProperties = checkTypeProperties;
     }
 
     protected abstract IElementNodeMapperBase GetMapper(
         ISingleFunctionNode parentFunction,
-        IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties);
 
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
         mapper.Map(TypeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
     
     public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => ReturnedElement = MapToReturnedElement(
-        GetMapper(this, _userDefinedElements, _checkTypeProperties));
+        GetMapper(this, _checkTypeProperties));
     public IElementNode ReturnedElement { get; private set; } = null!;
 }

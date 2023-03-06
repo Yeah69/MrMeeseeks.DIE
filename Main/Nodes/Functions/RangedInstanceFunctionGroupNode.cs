@@ -19,7 +19,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
     private readonly IRangeNode _parentRange;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElementsBase _userDefinedElementsBase;
-    private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IUserDefinedElementsBase, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> _rangedInstanceFunctionNodeFactory;
+    private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> _rangedInstanceFunctionNodeFactory;
     private readonly List<IRangedInstanceFunctionNode> _overloads = new();
 
     internal RangedInstanceFunctionGroupNode(
@@ -31,7 +31,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
         IUserDefinedElementsBase userDefinedElements,
         IReferenceGenerator referenceGenerator,
         
-        Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IUserDefinedElementsBase, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
+        Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
         : base(level, type, referenceGenerator)
     {
         _type = type;
@@ -54,7 +54,6 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
                 Level,
                 _type,
                 callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
-                _userDefinedElementsBase,
                 _checkTypeProperties)
                 .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty));

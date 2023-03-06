@@ -54,7 +54,7 @@ internal class ImplementationNode : IImplementationNode
         IRangeNode parentRange,
         IElementNodeMapperBase elementNodeMapper,
         ICheckTypeProperties checkTypeProperties,
-        IUserDefinedElementsBase userDefinedElements,
+        ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext)
     {
@@ -64,7 +64,7 @@ internal class ImplementationNode : IImplementationNode
         _parentRange = parentRange;
         _elementNodeMapper = elementNodeMapper;
         _checkTypeProperties = checkTypeProperties;
-        _userDefinedElementsBase = userDefinedElements;
+        _userDefinedElementsBase = transientScopeWideContext.UserDefinedElementsBase;
         _referenceGenerator = referenceGenerator;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
         TypeFullName = implementationType.FullName();

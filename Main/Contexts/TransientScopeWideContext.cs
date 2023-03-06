@@ -11,7 +11,8 @@ internal class TransientScopeWideContext : ITransientScopeWideContext, ITransien
 {
     public IUserDefinedElementsBase UserDefinedElementsBase { get; }
 
-    internal TransientScopeWideContext(IUserDefinedElementsBase userDefinedElementsBase)
+    internal TransientScopeWideContext(
+        IUserDefinedElementsBase userDefinedElementsBase)
     {
         UserDefinedElementsBase = userDefinedElementsBase;
     }

@@ -22,11 +22,9 @@ internal interface IMultiFunctionNode : IFunctionNode
 internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
-    private readonly IRangeNode _parentNode;
-    private readonly IContainerNode _parentContainer;
     private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly Func<IFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<IFunctionNode, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
     private readonly WellKnownTypes _wellKnownTypes;
 
@@ -36,7 +34,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode,
         IContainerNode parentContainer,
-        IUserDefinedElementsBase userDefinedElements,
+        ITransientScopeWideContext transientScopeWideContext,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         
@@ -45,7 +43,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        Func<IFunctionNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<IFunctionNode, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         IContainerWideContext containerWideContext)
         : base(
@@ -62,9 +60,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
             containerWideContext)
     {
         _enumerableType = enumerableType;
-        _parentNode = parentNode;
-        _parentContainer = parentContainer;
-        _userDefinedElementsBase = userDefinedElements;
+        _userDefinedElementsBase = transientScopeWideContext.UserDefinedElementsBase;
         _checkTypeProperties = checkTypeProperties;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;
@@ -84,12 +80,10 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         ITypeSymbol unwrappedType,
         ITypeSymbol concreteImplementationType,
         IMultiFunctionNode parentFunction,
-        IRangeNode parentNode,
-        IContainerNode parentContainer,
         IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties)
     {
-        var baseMapper = _typeToElementNodeMapperFactory(parentFunction, userDefinedElements, checkTypeProperties);
+        var baseMapper = _typeToElementNodeMapperFactory(parentFunction, checkTypeProperties);
         return concreteImplementationType is INamedTypeSymbol namedTypeSymbol && unwrappedType is INamedTypeSymbol namedUnwrappedType
             ? _overridingElementNodeWithDecorationMapperFactory(
                 baseMapper,
@@ -113,7 +107,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
 
         ReturnedElements = concreteItemTypes
             .Select(cit => MapToReturnedElement(
-                GetMapper(unwrappedItemType, cit, this, _parentNode, _parentContainer, _userDefinedElementsBase, _checkTypeProperties),
+                GetMapper(unwrappedItemType, cit, this, _userDefinedElementsBase, _checkTypeProperties),
                 itemType))
             .ToList();
     }

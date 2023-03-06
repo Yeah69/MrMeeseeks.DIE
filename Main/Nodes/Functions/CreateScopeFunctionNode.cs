@@ -24,7 +24,6 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
         IReadOnlyList<ITypeSymbol> parameters,
         IRangeNode parentNode, 
         IContainerNode parentContainer, 
-        ITransientScopeWideContext transientScopeWideContext,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator, 
         Func<ISingleFunctionNode, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,

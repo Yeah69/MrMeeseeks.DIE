@@ -2,7 +2,7 @@ namespace MrMeeseeks.DIE.Extensions;
 
 internal static class StringExtensions
 {
-    private static ImmutableHashSet<string> CsharpKeywords = ImmutableHashSet.Create<string>(
+    private static readonly ImmutableHashSet<string> CsharpKeywords = ImmutableHashSet.Create<string>(
         "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked",
         "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else", "enum",
         "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto",

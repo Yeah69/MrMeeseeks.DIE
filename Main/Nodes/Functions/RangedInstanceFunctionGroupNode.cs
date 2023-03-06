@@ -16,9 +16,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
 {
     private readonly INamedTypeSymbol _type;
     private readonly IContainerNode _parentContainer;
-    private readonly IRangeNode _parentRange;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> _rangedInstanceFunctionNodeFactory;
     private readonly List<IRangedInstanceFunctionNode> _overloads = new();
 
@@ -26,9 +24,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
         ScopeLevel level,
         INamedTypeSymbol type,
         IContainerNode parentContainer,
-        IRangeNode parentRange,
         ICheckTypeProperties checkTypeProperties,
-        IUserDefinedElementsBase userDefinedElements,
         IReferenceGenerator referenceGenerator,
         
         Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
@@ -36,9 +32,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
     {
         _type = type;
         _parentContainer = parentContainer;
-        _parentRange = parentRange;
         _checkTypeProperties = checkTypeProperties;
-        _userDefinedElementsBase = userDefinedElements;
         _rangedInstanceFunctionNodeFactory = rangedInstanceFunctionNodeFactory;
     }
 

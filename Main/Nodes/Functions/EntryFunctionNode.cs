@@ -16,7 +16,7 @@ internal interface IEntryFunctionNode : ISingleFunctionNode
 
 internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, IScopeInstance
 {
-    private readonly Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<ISingleFunctionNode, IRangeNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     public EntryFunctionNode(
@@ -28,7 +28,7 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         IUserDefinedElementsBase userDefinedElements, 
         ICheckTypeProperties checkTypeProperties,
         IContainerWideContext containerWideContext,
-        Func<ISingleFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory, 
+        Func<ISingleFunctionNode, IRangeNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
@@ -54,10 +54,10 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         Name = prefix;
     }
 
-    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode, IContainerNode parentContainer,
+    protected override IElementNodeMapperBase GetMapper(ISingleFunctionNode parentFunction, IRangeNode parentNode,
         IUserDefinedElementsBase userDefinedElements, ICheckTypeProperties checkTypeProperties)
     {
-        var dummyMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer,
+        var dummyMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode,
             userDefinedElements, checkTypeProperties);
 
         return _nonWrapToCreateElementNodeMapperFactory(dummyMapper);

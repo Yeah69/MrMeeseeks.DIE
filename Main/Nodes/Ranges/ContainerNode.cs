@@ -64,10 +64,10 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
-        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
+        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IContainerNode, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
         Func<ITaskTransformationFunctions> taskTransformationFunctions,
-        Func<IContainerInfoContext, IContainerNode, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IScopeManager> scopeManagerFactory,
+        Func<IContainerInfoContext, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IScopeManager> scopeManagerFactory,
         Func<IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
             containerInfoContext.ContainerInfo.Name, 
@@ -87,7 +87,6 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         TransientScopeInterface = transientScopeInterfaceNodeFactory(this);
         _lazyScopeManager = new(() => scopeManagerFactory(
             containerInfoContext,
-            this, 
             containerTypesFromAttributes,
             TransientScopeInterface));
         _lazyDisposalType = new(() => _lazyScopeManager.Value

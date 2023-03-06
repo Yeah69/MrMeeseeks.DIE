@@ -19,14 +19,14 @@ internal interface IOverridingElementNodeMapper : IElementNodeMapperBase
 
 internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingElementNodeMapper
 {
-    private readonly ImmutableQueue<(INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType)> _overrideParam;
+    private readonly ImmutableQueue<(INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType)> _override;
     private readonly IContainerNode _parentContainer;
     private readonly Func<INamedTypeSymbol, INamedTypeSymbol, IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
     private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
 
     public OverridingElementNodeMapper(
         IElementNodeMapperBase parentElementNodeMapper,
-        ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> overrideParam,
+        ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> @override,
         
         IFunctionNode parentFunction,
         IRangeNode parentRange,
@@ -80,7 +80,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             overridingElementNodeMapperFactory)
     {
         Next = parentElementNodeMapper;
-        _overrideParam = overrideParam;
+        _override = @override;
         _parentContainer = parentContainer;
         _abstractionNodeFactory = abstractionNodeFactory;
         _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
@@ -92,11 +92,11 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
 
     public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        if (_overrideParam.Any() 
+        if (_override.Any() 
             && type is INamedTypeSymbol abstraction 
-            && CustomSymbolEqualityComparer.Default.Equals(_overrideParam.Peek().InterfaceType, type))
+            && CustomSymbolEqualityComparer.Default.Equals(_override.Peek().InterfaceType, type))
         {
-            var nextOverride = _overrideParam.Dequeue(out var currentOverride);
+            var nextOverride = _override.Dequeue(out var currentOverride);
             var mapper = _overridingElementNodeMapperFactory(this, nextOverride);
             return _abstractionNodeFactory(abstraction, currentOverride.ImplementationType, mapper)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);

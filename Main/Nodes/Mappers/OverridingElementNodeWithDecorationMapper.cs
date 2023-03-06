@@ -18,11 +18,11 @@ internal interface IOverridingElementNodeWithDecorationMapper : IElementNodeMapp
 
 internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase, IOverridingElementNodeWithDecorationMapper
 {
-    private readonly (INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType) _overrideParam;
+    private readonly (INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType) _override;
 
     public OverridingElementNodeWithDecorationMapper(
         IElementNodeMapperBase parentElementNodeMapper,
-        (INamedTypeSymbol, INamedTypeSymbol) overrideParam,
+        (INamedTypeSymbol, INamedTypeSymbol) @override,
         
         IFunctionNode parentFunction,
         IRangeNode parentRange,
@@ -76,7 +76,7 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
             overridingElementNodeMapperFactory)
     {
         Next = parentElementNodeMapper;
-        _overrideParam = overrideParam;
+        _override = @override;
     }
 
     protected override IElementNodeMapperBase NextForWraps => this;
@@ -84,11 +84,11 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
     protected override IElementNodeMapperBase Next { get; }
 
     public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) =>
-        CustomSymbolEqualityComparer.Default.Equals(_overrideParam.InterfaceType, type) 
+        CustomSymbolEqualityComparer.Default.Equals(_override.InterfaceType, type) 
         && type is INamedTypeSymbol abstractionType
             ? SwitchInterfaceWithPotentialDecoration(
                 abstractionType, 
-                _overrideParam.ImplementationType, 
+                _override.ImplementationType, 
                 implementationStack,
                 Next)
             : base.Map(type, implementationStack);

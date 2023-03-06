@@ -27,8 +27,7 @@ internal class ScopeCallNode : FunctionCallNode, IScopeCallNode
     }
 
     public ScopeCallNode(
-        string containerParameter, 
-        string transientScopeInterfaceParameter,
+        (string ContainerParamter, string TransientScopeInterfaceParameter) stringParams,
         IScopeNode scope,
         IRangeNode callingRange,
         IFunctionNode calledFunction, 
@@ -40,8 +39,8 @@ internal class ScopeCallNode : FunctionCallNode, IScopeCallNode
     {
         _scope = scope;
         _callingRange = callingRange;
-        ContainerParameter = containerParameter;
-        TransientScopeInterfaceParameter = transientScopeInterfaceParameter;
+        ContainerParameter = stringParams.ContainerParamter;
+        TransientScopeInterfaceParameter = stringParams.TransientScopeInterfaceParameter;
         Initialization = initialization;
         ScopeFullName = scope.FullName;
         ScopeReference = referenceGenerator.Generate("scopeRoot");

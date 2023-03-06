@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Test.Generics.Configuration.Composite;
+using MrMeeseeks.DIE.Test.Abstraction.ArrayType;
+
 
 internal class Program
 {

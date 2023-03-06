@@ -26,8 +26,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
     private readonly IContainerNode _parentContainer;
     private readonly IUserDefinedElementsBase _userDefinedElementsBase;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IReferenceGenerator _referenceGenerator;
-    private readonly Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
     private readonly WellKnownTypes _wellKnownTypes;
 
@@ -42,11 +41,11 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         IReferenceGenerator referenceGenerator,
         
         // dependencies
-        Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
-        Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IElementNodeMapper> typeToElementNodeMapperFactory,
+        Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
+        Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<IFunctionNode, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         IContainerWideContext containerWideContext)
         : base(
@@ -56,7 +55,6 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
             parentNode,
-            referenceGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
@@ -68,7 +66,6 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         _parentContainer = parentContainer;
         _userDefinedElementsBase = userDefinedElements;
         _checkTypeProperties = checkTypeProperties;
-        _referenceGenerator = referenceGenerator;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
@@ -92,7 +89,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         IUserDefinedElementsBase userDefinedElements,
         ICheckTypeProperties checkTypeProperties)
     {
-        var baseMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer, userDefinedElements, checkTypeProperties, _referenceGenerator);
+        var baseMapper = _typeToElementNodeMapperFactory(parentFunction, parentNode, parentContainer, userDefinedElements, checkTypeProperties);
         return concreteImplementationType is INamedTypeSymbol namedTypeSymbol && unwrappedType is INamedTypeSymbol namedUnwrappedType
             ? _overridingElementNodeWithDecorationMapperFactory(
                 baseMapper,

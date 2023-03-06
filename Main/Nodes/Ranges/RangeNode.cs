@@ -39,13 +39,10 @@ internal interface IRangeNode : INode
 
 internal abstract class RangeNode : IRangeNode
 {
-    protected readonly IUserDefinedElementsBase UserDefinedElements;
-    protected readonly ICheckTypeProperties CheckTypeProperties;
-    protected readonly IReferenceGenerator ReferenceGenerator;
     protected readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> CreateFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
-    private readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> _voidFunctionNodeFactory;
+    private readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IVoidFunctionNodeRoot> _voidFunctionNodeFactory;
     protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNode>> _multiFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
 
@@ -88,24 +85,19 @@ internal abstract class RangeNode : IRangeNode
     internal RangeNode(
         string name,
         IUserDefinedElementsBase userDefinedElements,
-        ICheckTypeProperties checkTypeProperties,
-        IReferenceGenerator referenceGenerator,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
-        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
-        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
+        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
+        Func<IDisposalHandlingNode> disposalHandlingNodeFactory)
     {
-        UserDefinedElements = userDefinedElements;
-        CheckTypeProperties = checkTypeProperties;
-        ReferenceGenerator = referenceGenerator;
         CreateFunctionNodeFactory = createFunctionNodeFactory;
         _multiFunctionNodeFactory = multiFunctionNodeFactory;
         _rangedInstanceFunctionGroupNodeFactory = rangedInstanceFunctionGroupNodeFactory;
         _voidFunctionNodeFactory = voidFunctionNodeFactory;
         Name = name;
 
-        DisposalHandling = disposalHandlingNodeFactory(referenceGenerator);
+        DisposalHandling = disposalHandlingNodeFactory();
 
         if (userDefinedElements.AddForDisposal is { })
         {
@@ -152,8 +144,7 @@ internal abstract class RangeNode : IRangeNode
                     InitializedInstances.ToList(),
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
                     this,
-                    ParentContainer,
-                    ReferenceGenerator)
+                    ParentContainer)
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty));
 

@@ -1,12 +1,14 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.Generics.Configuration.Composite;
+namespace MrMeeseeks.DIE.Test.Abstraction.ArrayType;
 
-internal class DependencyHolder
-{
-}
+internal interface IInterface {}
 
-[CreateFunction(typeof(DependencyHolder), "Create")]
-internal sealed partial class Container
-{
-}
+internal class DependencyA : IInterface {}
+
+internal class DependencyB : IInterface {}
+
+internal class DependencyC : IInterface {}
+
+[CreateFunction(typeof(IInterface[]), "Create")]
+internal sealed partial class Container {}

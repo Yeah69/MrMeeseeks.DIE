@@ -17,7 +17,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MrMeeseeks.DIE" Version="2.0.0-alpha.40" />
+    <PackageReference Include="MrMeeseeks.DIE" Version="2.0.0-alpha.43" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Configuration.Attributes\Configuration.Attributes.csproj" />
   </ItemGroup>
 
 </Project>

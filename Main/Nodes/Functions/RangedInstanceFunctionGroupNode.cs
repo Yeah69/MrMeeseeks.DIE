@@ -19,8 +19,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
     private readonly IRangeNode _parentRange;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElementsBase _userDefinedElementsBase;
-    private readonly IReferenceGenerator _referenceGenerator;
-    private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionNodeRoot> _rangedInstanceFunctionNodeFactory;
+    private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> _rangedInstanceFunctionNodeFactory;
     private readonly List<IRangedInstanceFunctionNode> _overloads = new();
 
     internal RangedInstanceFunctionGroupNode(
@@ -32,7 +31,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
         IUserDefinedElementsBase userDefinedElements,
         IReferenceGenerator referenceGenerator,
         
-        Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IReferenceGenerator, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
+        Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IUserDefinedElementsBase, ICheckTypeProperties, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
         : base(level, type, referenceGenerator)
     {
         _type = type;
@@ -40,7 +39,6 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
         _parentRange = parentRange;
         _checkTypeProperties = checkTypeProperties;
         _userDefinedElementsBase = userDefinedElements;
-        _referenceGenerator = referenceGenerator;
         _rangedInstanceFunctionNodeFactory = rangedInstanceFunctionNodeFactory;
     }
 
@@ -59,8 +57,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
                 _parentRange,
                 _parentContainer,
                 _userDefinedElementsBase,
-                _checkTypeProperties,
-                _referenceGenerator)
+                _checkTypeProperties)
                 .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty));
 }

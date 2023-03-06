@@ -58,23 +58,20 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         IContainerInfoContext containerInfoContext,
         IContainerTypesFromAttributes containerTypesFromAttributes,
         Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElementsBase> userDefinedElementsFactory,
-        IContainerCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
-        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
-        Func<IContainerNode, IReferenceGenerator, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
-        Func<IReferenceGenerator, ITaskTransformationFunctions> taskTransformationFunctions,
-        Func<IContainerInfoContext, IContainerNode, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IReferenceGenerator, IScopeManager> scopeManagerFactory,
-        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory)
+        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
+        Func<IContainerNode, ITransientScopeInterfaceNode> transientScopeInterfaceNodeFactory,
+        Func<ITaskTransformationFunctions> taskTransformationFunctions,
+        Func<IContainerInfoContext, IContainerNode, IContainerTypesFromAttributes, ITransientScopeInterfaceNode, IScopeManager> scopeManagerFactory,
+        Func<IDisposalHandlingNode> disposalHandlingNodeFactory)
         : base (
             containerInfoContext.ContainerInfo.Name, 
             userDefinedElementsFactory((containerInfoContext.ContainerInfo.ContainerType, containerInfoContext.ContainerInfo.ContainerType)), 
-            checkTypeProperties,
-            referenceGenerator, 
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
@@ -87,13 +84,12 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         Namespace = _containerInfo.Namespace;
         FullName = _containerInfo.FullName;
         
-        TransientScopeInterface = transientScopeInterfaceNodeFactory(this, referenceGenerator);
+        TransientScopeInterface = transientScopeInterfaceNodeFactory(this);
         _lazyScopeManager = new(() => scopeManagerFactory(
             containerInfoContext,
             this, 
             containerTypesFromAttributes,
-            TransientScopeInterface, 
-            referenceGenerator));
+            TransientScopeInterface));
         _lazyDisposalType = new(() => _lazyScopeManager.Value
             .Scopes.Select(s => s.DisposalHandling)
             .Concat(_lazyScopeManager.Value.TransientScopes.Select(ts => ts.DisposalHandling))
@@ -105,7 +101,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
                 return agg;
             }));
 
-        TaskTransformationFunctions = taskTransformationFunctions(referenceGenerator);
+        TaskTransformationFunctions = taskTransformationFunctions();
         
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
         TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");

@@ -19,13 +19,12 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IContainerNode parentContainer,
         IRangeNode parentRange,
-        IReferenceGenerator referenceGenerator,
         
         // dependencies
-        Func<ITypeSymbol, IReferenceGenerator, IParameterNode> parameterNodeFactory,
-        Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<string, string, IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IContainerNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReferenceGenerator, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
+        Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         IContainerWideContext containerWideContext)
         : base(
             accessibility,
@@ -33,7 +32,6 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase
             closureParameters,
             parentContainer,
             parentRange,
-            referenceGenerator,
             
             parameterNodeFactory,
             plainFunctionCallNodeFactory,

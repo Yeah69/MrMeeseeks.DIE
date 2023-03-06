@@ -22,20 +22,17 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         IContainerNode parentContainer,
         IScopeManager scopeManager,
         IUserDefinedElementsBase userDefinedElements,
-        IScopeCheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
-        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IReferenceGenerator, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
-        Func<IReferenceGenerator, IDisposalHandlingNode> disposalHandlingNodeFactory,
-        Func<INamedTypeSymbol, IReferenceGenerator, IInitializedInstanceNode> initializedInstanceNodeFactory)
+        Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IRangeNode, IContainerNode, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
+        Func<IDisposalHandlingNode> disposalHandlingNodeFactory,
+        Func<INamedTypeSymbol, IInitializedInstanceNode> initializedInstanceNodeFactory)
         : base(
             scopeInfo.Name, 
             userDefinedElements, 
-            checkTypeProperties, 
-            referenceGenerator, 
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
@@ -64,7 +61,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
                  .Select(tc => tc.Value)
                  .OfType<INamedTypeSymbol>();
             foreach (var type in types)
-                InitializedInstanceNodesMap[type] = initializedInstanceNodeFactory(type, ReferenceGenerator);
+                InitializedInstanceNodesMap[type] = initializedInstanceNodeFactory(type);
         }
     }
 

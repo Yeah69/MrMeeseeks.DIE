@@ -28,7 +28,6 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> @override,
         
         IFunctionNode parentFunction,
-        IRangeNode parentRange,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         IDiagLogger diagLogger, 
@@ -52,7 +51,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory) 
         : base(parentFunction, 
-            parentRange, 
+            transientScopeWideContext.Range, 
             parentContainer, 
             transientScopeWideContext, 
             diagLogger, 

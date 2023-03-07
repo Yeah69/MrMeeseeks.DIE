@@ -1,14 +1,20 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Sample;
 
-namespace MrMeeseeks.DIE.Test.Abstraction.ArrayType;
+namespace MrMeeseeks.DIE.Test.UserDefinedElements.FactoryField.InScope;
 
-internal interface IInterface {}
+internal class ScopeRoot : IScopeRoot
+{
+    public string Property { get; }
 
-internal class DependencyA : IInterface {}
+    internal ScopeRoot(string property) => Property = property;
+}
 
-internal class DependencyB : IInterface {}
-
-internal class DependencyC : IInterface {}
-
-[CreateFunction(typeof(IInterface[]), "Create")]
-internal sealed partial class Container {}
+[CreateFunction(typeof(ScopeRoot), "Create")]
+internal sealed partial class Container
+{
+    private sealed partial class DIE_DefaultScope
+    {
+        private readonly string DIE_Factory_Yeah = "Yeah";
+    }
+}

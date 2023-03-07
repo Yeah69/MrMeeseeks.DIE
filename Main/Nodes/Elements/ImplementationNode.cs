@@ -51,7 +51,6 @@ internal class ImplementationNode : IImplementationNode
         IMethodSymbol constructor,
         
         IFunctionNode parentFunction,
-        IRangeNode parentRange,
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
@@ -60,7 +59,7 @@ internal class ImplementationNode : IImplementationNode
         _implementationType = implementationType;
         _constructor = constructor;
         _parentFunction = parentFunction;
-        _parentRange = parentRange;
+        _parentRange = transientScopeWideContext.Range;
         _elementNodeMapper = elementNodeMapper;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _userDefinedElementsBase = transientScopeWideContext.UserDefinedElementsBase;

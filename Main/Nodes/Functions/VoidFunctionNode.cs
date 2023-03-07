@@ -23,7 +23,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
         // parameters
         IReadOnlyList<IInitializedInstanceNode> initializedInstanceNodes,
         IReadOnlyList<ITypeSymbol> parameters,
-        IRangeNode parentRange,
+        ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator,
         
@@ -38,7 +38,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
             parameters, 
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
-            parentRange,
+            transientScopeWideContext.Range,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,
@@ -46,7 +46,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
             containerWideContext)
     {
         _initializedInstanceNodes = initializedInstanceNodes;
-        _parentRange = parentRange;
+        _parentRange = transientScopeWideContext.Range;
         ReturnedTypeFullName = "void";
         Name = referenceGenerator.Generate("Initialize");
     }

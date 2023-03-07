@@ -80,13 +80,13 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
     public EnumerableBasedNode(
         ITypeSymbol collectionType,
         
-        IRangeNode parentRange,
+        ITransientScopeWideContext transientScopeWideContext,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext)
     {
         _collectionType = collectionType;
-        _parentRange = parentRange;
+        _parentRange = transientScopeWideContext.Range;
         _parentFunction = parentFunction;
         _referenceGenerator = referenceGenerator;
         _wellKnownTypes = containerWideContext.WellKnownTypes;

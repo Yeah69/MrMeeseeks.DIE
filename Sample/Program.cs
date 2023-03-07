@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Test.Abstraction.ArrayType;
+using MrMeeseeks.DIE.Test.UserDefinedElements.FactoryField.InScope;
 
 
 internal class Program

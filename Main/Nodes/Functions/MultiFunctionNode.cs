@@ -31,7 +31,6 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         // parameters
         INamedTypeSymbol enumerableType,
         IReadOnlyList<ITypeSymbol> parameters,
-        IRangeNode parentNode,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
@@ -50,7 +49,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
             parameters, 
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
-            parentNode,
+            transientScopeWideContext.Range,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             scopeCallNodeFactory,

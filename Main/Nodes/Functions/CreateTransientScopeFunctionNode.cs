@@ -22,7 +22,7 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
     public CreateTransientScopeFunctionNode(
         INamedTypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
-        IRangeNode parentNode, 
+        ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
@@ -37,7 +37,7 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
             typeSymbol, 
             parameters,
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
-            parentNode, 
+            transientScopeWideContext.Range, 
             parentContainer, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,

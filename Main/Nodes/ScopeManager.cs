@@ -21,9 +21,8 @@ internal class ScopeManager : IScopeManager, IContainerInstance
     private readonly IContainerNode _container;
     private readonly ITransientScopeInterfaceNode _transientScopeInterface;
 
-    private readonly Func<ScopeInfo, IScopeNodeRoot> _scopeFactory;
-    private readonly Func<ScopeInfo, ITransientScopeNodeRoot> _transientScopeFactory;
-    private readonly Func<string, INamedTypeSymbol?, ScopeInfo> _scopeInfoFactory;
+    private readonly Func<string, INamedTypeSymbol?, IScopeNodeRoot> _scopeFactory;
+    private readonly Func<string, INamedTypeSymbol?, ITransientScopeNodeRoot> _transientScopeFactory;
     private readonly Lazy<IScopeNode> _defaultScope;
     private readonly Lazy<ITransientScopeNode> _defaultTransientScope;
     private readonly IDictionary<INamedTypeSymbol, IScopeNode> _customScopes;
@@ -35,9 +34,8 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         IContainerInfoContext containerInfoContext,
         IContainerNode container,
         ITransientScopeInterfaceNode transientScopeInterface,
-        Func<ScopeInfo, IScopeNodeRoot> scopeFactory,
-        Func<ScopeInfo, ITransientScopeNodeRoot> transientScopeFactory,
-        Func<string, INamedTypeSymbol?, ScopeInfo> scopeInfoFactory,
+        Func<string, INamedTypeSymbol?, IScopeNodeRoot> scopeFactory,
+        Func<string, INamedTypeSymbol?, ITransientScopeNodeRoot> transientScopeFactory,
         IContainerWideContext containerWideContext)
     {
         var containerInfo = containerInfoContext.ContainerInfo;
@@ -45,13 +43,11 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         _transientScopeInterface = transientScopeInterface;
         _scopeFactory = scopeFactory;
         _transientScopeFactory = transientScopeFactory;
-        _scopeInfoFactory = scopeInfoFactory;
         _defaultScope = new Lazy<IScopeNode>(
             () =>
             {
                 var defaultScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultScopeName).FirstOrDefault();
-                var scopeInfo = scopeInfoFactory(Constants.DefaultScopeName, defaultScopeType);
-                return scopeFactory(scopeInfo)
+                return scopeFactory(Constants.DefaultScopeName, defaultScopeType)
                     .Scope
                     .EnqueueBuildJobTo(container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
             },
@@ -60,8 +56,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
             () =>
             {
                 var defaultTransientScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultTransientScopeName).FirstOrDefault();
-                var scopeInfo = scopeInfoFactory(Constants.DefaultTransientScopeName, defaultTransientScopeType);
-                var ret = transientScopeFactory(scopeInfo)
+                var ret = transientScopeFactory(Constants.DefaultTransientScopeName, defaultTransientScopeType)
                     .TransientScope
                     .EnqueueBuildJobTo(container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
                 _transientScopeInterface.RegisterRange(ret);
@@ -132,9 +127,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         if (!_scopeRootTypeToScopeType.TryGetValue(scopeRootType, out var scopeType)) 
             return _defaultScope.Value;
         
-        var scopeInfo = _scopeInfoFactory(scopeType.Name, scopeType);
-        
-        var ret = _scopeFactory(scopeInfo)
+        var ret = _scopeFactory(scopeType.Name, scopeType)
             .Scope
             .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         _customScopes[scopeRootType] = ret;
@@ -149,9 +142,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         if (!_transientScopeRootTypeToScopeType.TryGetValue(transientScopeRootType, out var transientScopeType)) 
             return _defaultTransientScope.Value;
         
-        var scopeInfo = _scopeInfoFactory(transientScopeType.Name, transientScopeType);
-        
-        var ret = _transientScopeFactory(scopeInfo)
+        var ret = _transientScopeFactory(transientScopeType.Name, transientScopeType)
             .TransientScope
             .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
         _customTransientScopes[transientScopeRootType] = ret;

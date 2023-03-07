@@ -21,7 +21,6 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         IElementNodeMapperBase parentElementNodeMapper,
         
         IFunctionNode parentFunction,
-        IRangeNode parentRange,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         IDiagLogger diagLogger, 
@@ -45,7 +44,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory) 
         : base(parentFunction, 
-            parentRange, 
+            transientScopeWideContext.Range, 
             parentContainer, 
             transientScopeWideContext, 
             diagLogger, 

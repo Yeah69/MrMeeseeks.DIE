@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -18,11 +19,11 @@ internal class ErrorNode : IErrorNode
     internal ErrorNode(
         string message,
         ITypeSymbol currentType,
-        IRangeNode parentRange,
+        ITransientScopeWideContext transientScopeWideContext,
         IDiagLogger diagLogger)
     {
         _currentType = currentType;
-        _parentRange = parentRange;
+        _parentRange = transientScopeWideContext.Range;
         _diagLogger = diagLogger;
         Message = message;
     }

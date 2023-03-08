@@ -34,7 +34,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     protected readonly IFunctionNode ParentFunction;
     protected readonly IRangeNode ParentRange;
     private readonly IContainerNode _parentContainer;
-    private readonly IUserDefinedElementsBase _userDefinedElementsBase;
+    private readonly IUserDefinedElements _userDefinedElements;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IDiagLogger _diagLogger;
     protected readonly WellKnownTypes WellKnownTypes;
@@ -87,7 +87,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ParentFunction = parentFunction;
         ParentRange = parentRange;
         _parentContainer = parentContainer;
-        _userDefinedElementsBase = transientScopeWideContext.UserDefinedElementsBase;
+        _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _diagLogger = diagLogger;
         WellKnownTypes = containerWideContext.WellKnownTypes;
@@ -121,15 +121,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         if (ParentFunction.Overrides.TryGetValue(type, out var tuple))
             return tuple;
 
-        if (_userDefinedElementsBase.GetFactoryFieldFor(type) is { } instance)
+        if (_userDefinedElements.GetFactoryFieldFor(type) is { } instance)
             return _factoryFieldNodeFactory(instance)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-        if (_userDefinedElementsBase.GetFactoryPropertyFor(type) is { } property)
+        if (_userDefinedElements.GetFactoryPropertyFor(type) is { } property)
             return _factoryPropertyNodeFactory(property)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-        if (_userDefinedElementsBase.GetFactoryMethodFor(type) is { } method)
+        if (_userDefinedElements.GetFactoryMethodFor(type) is { } method)
             return _factoryFunctionNodeFactory(method, Next)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 

@@ -21,7 +21,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         IScopeInfo scopeInfo,
         IContainerNode parentContainer,
         IScopeManager scopeManager,
-        IUserDefinedElementsBase userDefinedElements,
+        IUserDefinedElements userDefinedElements,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,

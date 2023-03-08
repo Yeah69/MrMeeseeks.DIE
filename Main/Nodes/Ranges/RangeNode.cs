@@ -84,7 +84,7 @@ internal abstract class RangeNode : IRangeNode
 
     internal RangeNode(
         string name,
-        IUserDefinedElementsBase userDefinedElements,
+        IUserDefinedElements userDefinedElements,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,

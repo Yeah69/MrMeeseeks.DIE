@@ -28,7 +28,7 @@ internal class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeInstance
         IContainerNode parentContainer,
         ITransientScopeInterfaceNode transientScopeInterfaceNode,
         IScopeManager scopeManager,
-        IUserDefinedElementsBase userDefinedElements,
+        IUserDefinedElements userDefinedElements,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,

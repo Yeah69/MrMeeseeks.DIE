@@ -57,7 +57,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 
     internal ContainerNode(
         IContainerInfoContext containerInfoContext,
-        Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElementsBase> userDefinedElementsFactory,
+        Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         ITaskTransformationFunctions taskTransformationFunctions,

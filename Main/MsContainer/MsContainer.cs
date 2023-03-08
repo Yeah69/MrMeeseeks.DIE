@@ -9,7 +9,6 @@ using MrMeeseeks.DIE.Nodes.Roots;
 namespace MrMeeseeks.DIE.MsContainer;
 
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
-[ImplementationChoice(typeof(IUserDefinedElementsBase), typeof(UserDefinedElements))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
 [CreateFunction(typeof(IContainerNodeRoot), "Create")]
 internal sealed partial class MsContainer
@@ -28,7 +27,7 @@ internal sealed partial class MsContainer
     }
 
     [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
-    private void DIE_ConstrParams_UserDefinedElements(out (INamedTypeSymbol Range, INamedTypeSymbol Container) types) => 
+    private void DIE_ConstrParams_UserDefinedElements(out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
         types = (DIE_Factory_ContainerInfo.ContainerType, DIE_Factory_ContainerInfo.ContainerType);
 
     [UserDefinedConstructorParametersInjection(typeof(ScopeInfo))]
@@ -65,8 +64,8 @@ internal sealed partial class MsContainer
         private void DIE_ConstrParams_UserDefinedElements(
             IContainerInfoContext containerInfoContext,
             IScopeInfo scopeInfo,
-            out (INamedTypeSymbol Range, INamedTypeSymbol Container) types) => 
-            types = (scopeInfo.ScopeType!, containerInfoContext.ContainerInfo.ContainerType);
+            out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
+            types = (scopeInfo.ScopeType, containerInfoContext.ContainerInfo.ContainerType);
         
         [UserDefinedConstructorParametersInjection(typeof(ContainerInfo))]
         private void DIE_ConstrParams_ContainerInfo(
@@ -74,14 +73,11 @@ internal sealed partial class MsContainer
             out INamedTypeSymbol containerClass) => 
             containerClass = containerInfoContext.ContainerInfo.ContainerType;
         
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedElementsBase(
+        private IUserDefinedElements DIE_Factory_IUserDefinedElements(
             IScopeInfo scopeInfo,
             IContainerInfo containerInfo,
-            IEmptyUserDefinedElements emptyUserDefinedElements,
-            Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory) =>
-            scopeInfo.ScopeType is { }
-                ? userProvidedScopeElementsFactory((scopeInfo.ScopeType, containerInfo.ContainerType))
-                : emptyUserDefinedElements;
+            Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory) =>
+                userProvidedScopeElementsFactory((scopeInfo.ScopeType, containerInfo.ContainerType));
     }
 
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
@@ -94,8 +90,8 @@ internal sealed partial class MsContainer
         private void DIE_ConstrParams_UserDefinedElements(
             IContainerInfoContext containerInfoContext,
             IScopeInfo scopeInfo,
-            out (INamedTypeSymbol Range, INamedTypeSymbol Container) types) => 
-            types = (scopeInfo.ScopeType!, containerInfoContext.ContainerInfo.ContainerType);
+            out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
+            types = (scopeInfo.ScopeType, containerInfoContext.ContainerInfo.ContainerType);
         
         [UserDefinedConstructorParametersInjection(typeof(ContainerInfo))]
         private void DIE_ConstrParams_ContainerInfo(
@@ -103,14 +99,11 @@ internal sealed partial class MsContainer
             out INamedTypeSymbol containerClass) => 
             containerClass = containerInfoContext.ContainerInfo.ContainerType;
         
-        private IUserDefinedElementsBase DIE_Factory_IUserDefinedElementsBase(
+        private IUserDefinedElements DIE_Factory_IUserDefinedElements(
             IScopeInfo scopeInfo,
             IContainerInfo containerInfo,
-            IEmptyUserDefinedElements emptyUserDefinedElements,
-            Func<(INamedTypeSymbol, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory) =>
-            scopeInfo.ScopeType is { }
-                ? userProvidedScopeElementsFactory((scopeInfo.ScopeType, containerInfo.ContainerType))
-                : emptyUserDefinedElements;
+            Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory) =>
+                userProvidedScopeElementsFactory((scopeInfo.ScopeType, containerInfo.ContainerType));
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]
@@ -118,8 +111,6 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateScopeFunctionNode))]
@@ -127,8 +118,6 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateScopeFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateTransientScopeFunctionNode))]
@@ -136,8 +125,6 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateTransientScopeFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(EntryFunctionNode))]
@@ -145,8 +132,6 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_EntryFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(LocalFunctionNode))]
@@ -154,8 +139,6 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_LocalFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceFunctionNode))]
@@ -163,8 +146,6 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_RangedInstanceFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceInterfaceFunctionNode))]
@@ -172,8 +153,6 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_RangedInstanceInterfaceFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(MultiFunctionNode))]
@@ -181,7 +160,5 @@ internal sealed partial class MsContainer
     [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_MultiFunctionNodeRoot
     {
-        private ReferenceGenerator DIE_Factory_ReferenceGenerator(IReferenceGeneratorFactory factory) =>
-            (ReferenceGenerator) factory.Create();
     }
 }

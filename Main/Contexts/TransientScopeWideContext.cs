@@ -7,23 +7,23 @@ namespace MrMeeseeks.DIE.Contexts;
 internal interface ITransientScopeWideContext
 {
     IRangeNode Range { get; }
-    IUserDefinedElementsBase UserDefinedElementsBase { get; }
+    IUserDefinedElements UserDefinedElements { get; }
     ICheckTypeProperties CheckTypeProperties { get; }
 }
 
 internal class TransientScopeWideContext : ITransientScopeWideContext, ITransientScopeInstance
 {
     public IRangeNode Range { get; }
-    public IUserDefinedElementsBase UserDefinedElementsBase { get; }
+    public IUserDefinedElements UserDefinedElements { get; }
     public ICheckTypeProperties CheckTypeProperties { get; }
 
     internal TransientScopeWideContext(
         IRangeNode range,
-        IUserDefinedElementsBase userDefinedElementsBase,
+        IUserDefinedElements userDefinedElements,
         ICheckTypeProperties checkTypeProperties)
     {
         Range = range;
-        UserDefinedElementsBase = userDefinedElementsBase;
+        UserDefinedElements = userDefinedElements;
         CheckTypeProperties = checkTypeProperties;
     }
 }

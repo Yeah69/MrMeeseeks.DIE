@@ -19,13 +19,10 @@ internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
     private readonly IDiagLogger _diagLogger;
 
     internal ReferenceGenerator(
-        // parameters
-        int j,
-        
-        // dependencies
+        IReferenceGeneratorCounter referenceGeneratorCounter,
         IDiagLogger diagLogger)
     {
-        _j = j;
+        _j = referenceGeneratorCounter.GetCount();
         _diagLogger = diagLogger;
     }
 
@@ -61,20 +58,17 @@ internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
         GenerateInner(string.Empty, hardcodedName, string.Empty);
     
     private string GenerateInner(string prefix, string inner, string suffix) => 
-        $"{prefix}{inner}{suffix}_{_j.ToString()}_{Interlocked.Increment(ref _i).ToString()}";
+        $"{prefix}{inner}{suffix}_{_j.ToString()}_{(Interlocked.Increment(ref _i)).ToString()}";
 }
     
-internal interface IReferenceGeneratorFactory
+internal interface IReferenceGeneratorCounter
 {
-    IReferenceGenerator Create();
+    int GetCount();
 }
 
-internal class ReferenceGeneratorFactory : IReferenceGeneratorFactory, IContainerInstance
+internal class ReferenceGeneratorCounter : IReferenceGeneratorCounter, IContainerInstance
 {
-    private readonly Func<int, IReferenceGenerator> _referenceGeneratorFactory;
     private int _j = -1;
-        
-    public ReferenceGeneratorFactory(Func<int, IReferenceGenerator> referenceGeneratorFactory) => _referenceGeneratorFactory = referenceGeneratorFactory;
 
-    public IReferenceGenerator Create() => _referenceGeneratorFactory(Interlocked.Increment(ref _j));
+    public int GetCount() => Interlocked.Increment(ref _j);
 }

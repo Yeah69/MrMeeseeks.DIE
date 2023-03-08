@@ -72,12 +72,6 @@ internal sealed partial class MsContainer
             IContainerInfoContext containerInfoContext,
             out INamedTypeSymbol containerClass) => 
             containerClass = containerInfoContext.ContainerInfo.ContainerType;
-        
-        private IUserDefinedElements DIE_Factory_IUserDefinedElements(
-            IScopeInfo scopeInfo,
-            IContainerInfo containerInfo,
-            Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory) =>
-                userProvidedScopeElementsFactory((scopeInfo.ScopeType, containerInfo.ContainerType));
     }
 
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
@@ -98,12 +92,6 @@ internal sealed partial class MsContainer
             IContainerInfoContext containerInfoContext,
             out INamedTypeSymbol containerClass) => 
             containerClass = containerInfoContext.ContainerInfo.ContainerType;
-        
-        private IUserDefinedElements DIE_Factory_IUserDefinedElements(
-            IScopeInfo scopeInfo,
-            IContainerInfo containerInfo,
-            Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userProvidedScopeElementsFactory) =>
-                userProvidedScopeElementsFactory((scopeInfo.ScopeType, containerInfo.ContainerType));
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]

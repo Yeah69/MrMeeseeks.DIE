@@ -3,6 +3,7 @@ using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -41,6 +42,7 @@ internal class ImplementationNode : IImplementationNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ICheckInternalsVisible _checkInternalsVisible;
     private readonly WellKnownTypes _wellKnownTypes;
 
     private readonly List<(string Name, IElementNode Element)> _constructorParameters = new ();
@@ -54,6 +56,7 @@ internal class ImplementationNode : IImplementationNode
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
+        ICheckInternalsVisible checkInternalsVisible,
         IContainerWideContext containerWideContext)
     {
         _implementationType = implementationType;
@@ -64,6 +67,7 @@ internal class ImplementationNode : IImplementationNode
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _referenceGenerator = referenceGenerator;
+        _checkInternalsVisible = checkInternalsVisible;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
         TypeFullName = implementationType.FullName();
         // The constructor call shouldn't contain nullable annotations
@@ -79,7 +83,7 @@ internal class ImplementationNode : IImplementationNode
         {
             var cycleStack = ImmutableStack.Create(_implementationType);
             var stack = implementationStack;
-            var i = _implementationType;
+            INamedTypeSymbol i;
             do
             {
                 stack = stack.Pop(out var popped);
@@ -104,8 +108,13 @@ internal class ImplementationNode : IImplementationNode
         _properties.AddRange((_checkTypeProperties.GetPropertyChoicesFor(_implementationType) ?? _implementationType
                 .GetMembers()
                 .OfType<IPropertySymbol>()
+                // Automatic property injection is disabled for record types, but property choices are still allowed
                 .Where(_ => !_implementationType.IsRecord)
-                .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false)))
+                // Check whether property is settable
+                .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false))
+                // Check whether property is accessible
+                .Where(p => p.SetMethod is { DeclaredAccessibility: Accessibility.Public} 
+                            || p.SetMethod is { DeclaredAccessibility: Accessibility.Internal } && _checkInternalsVisible.Check(p.SetMethod)))
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsProperties))));
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })

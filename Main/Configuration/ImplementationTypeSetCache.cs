@@ -1,6 +1,6 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -15,27 +15,22 @@ internal interface IImplementationTypeSetCache
 
 internal class ImplementationTypeSetCache : IImplementationTypeSetCache, IContainerInstance
 {
-    private readonly GeneratorExecutionContext _context;
-    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly ICheckInternalsVisible _checkInternalsVisible;
     private readonly Lazy<IImmutableSet<INamedTypeSymbol>> _all;
     private IImmutableDictionary<IAssemblySymbol, IImmutableSet<INamedTypeSymbol>> _assemblyCache =
         ImmutableDictionary<IAssemblySymbol, IImmutableSet<INamedTypeSymbol>>.Empty;
 
-    private readonly string _currentAssemblyName;
-
     internal ImplementationTypeSetCache(
         GeneratorExecutionContext context,
-        IContainerWideContext containerWideContext)
+        ICheckInternalsVisible checkInternalsVisible)
     {
-        _context = context;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
-        _currentAssemblyName = context.Compilation.AssemblyName ?? "";
+        _checkInternalsVisible = checkInternalsVisible;
         _all = new Lazy<IImmutableSet<INamedTypeSymbol>>(
             () => context
                 .Compilation
                 .SourceModule
                 .ReferencedAssemblySymbols
-                .Prepend(_context.Compilation.Assembly)
+                .Prepend(context.Compilation.Assembly)
                 .SelectMany(ForAssembly)
                 .ToImmutableHashSet<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default));
     }
@@ -52,15 +47,7 @@ internal class ImplementationTypeSetCache : IImplementationTypeSetCache, IContai
 
     private IImmutableSet<INamedTypeSymbol> GetImplementationsFrom(IAssemblySymbol assemblySymbol)
     {
-        var internalsAreVisible = 
-            CustomSymbolEqualityComparer.Default.Equals(_context.Compilation.Assembly, assemblySymbol) 
-            ||assemblySymbol
-                .GetAttributes()
-                .Any(ad =>
-                    CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypes.InternalsVisibleToAttribute)
-                    && ad.ConstructorArguments.Length == 1
-                    && ad.ConstructorArguments[0].Value is string assemblyName
-                    && Equals(assemblyName, _currentAssemblyName));
+        var internalsAreVisible = _checkInternalsVisible.Check(assemblySymbol);
                 
         return GetAllNamespaces(assemblySymbol.GlobalNamespace)
             .SelectMany(ns => ns.GetTypeMembers())

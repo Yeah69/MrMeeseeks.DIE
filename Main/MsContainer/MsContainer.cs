@@ -66,12 +66,6 @@ internal sealed partial class MsContainer
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
             types = (scopeInfo.ScopeType, containerInfoContext.ContainerInfo.ContainerType);
-        
-        [UserDefinedConstructorParametersInjection(typeof(ContainerInfo))]
-        private void DIE_ConstrParams_ContainerInfo(
-            IContainerInfoContext containerInfoContext,
-            out INamedTypeSymbol containerClass) => 
-            containerClass = containerInfoContext.ContainerInfo.ContainerType;
     }
 
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
@@ -86,12 +80,6 @@ internal sealed partial class MsContainer
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
             types = (scopeInfo.ScopeType, containerInfoContext.ContainerInfo.ContainerType);
-        
-        [UserDefinedConstructorParametersInjection(typeof(ContainerInfo))]
-        private void DIE_ConstrParams_ContainerInfo(
-            IContainerInfoContext containerInfoContext,
-            out INamedTypeSymbol containerClass) => 
-            containerClass = containerInfoContext.ContainerInfo.ContainerType;
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]

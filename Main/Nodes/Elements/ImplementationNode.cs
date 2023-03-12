@@ -42,7 +42,7 @@ internal class ImplementationNode : IImplementationNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly IReferenceGenerator _referenceGenerator;
-    private readonly ICheckInternalsVisible _checkInternalsVisible;
+    private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
     private readonly WellKnownTypes _wellKnownTypes;
 
     private readonly List<(string Name, IElementNode Element)> _constructorParameters = new ();
@@ -56,7 +56,7 @@ internal class ImplementationNode : IImplementationNode
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
-        ICheckInternalsVisible checkInternalsVisible,
+        IInjectablePropertyExtractor injectablePropertyExtractor,
         IContainerWideContext containerWideContext)
     {
         _implementationType = implementationType;
@@ -67,7 +67,7 @@ internal class ImplementationNode : IImplementationNode
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _referenceGenerator = referenceGenerator;
-        _checkInternalsVisible = checkInternalsVisible;
+        _injectablePropertyExtractor = injectablePropertyExtractor;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
         TypeFullName = implementationType.FullName();
         // The constructor call shouldn't contain nullable annotations
@@ -105,16 +105,21 @@ internal class ImplementationNode : IImplementationNode
         _constructorParameters.AddRange(_constructor.Parameters
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsConstructor))));
 
-        _properties.AddRange((_checkTypeProperties.GetPropertyChoicesFor(_implementationType) ?? _implementationType
-                .GetMembers()
-                .OfType<IPropertySymbol>()
+        IEnumerable<IPropertySymbol> properties;
+        if (_checkTypeProperties.GetPropertyChoicesFor(_implementationType) is { } propertyChoice)
+        {
+            properties = propertyChoice;
+        }
+        else
+        {
+            properties = _injectablePropertyExtractor
+                .GetInjectableProperties(_implementationType)
                 // Automatic property injection is disabled for record types, but property choices are still allowed
                 .Where(_ => !_implementationType.IsRecord)
                 // Check whether property is settable
-                .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false))
-                // Check whether property is accessible
-                .Where(p => p.SetMethod is { DeclaredAccessibility: Accessibility.Public} 
-                            || p.SetMethod is { DeclaredAccessibility: Accessibility.Internal } && _checkInternalsVisible.Check(p.SetMethod)))
+                .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false));
+        }
+        _properties.AddRange(properties
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsProperties))));
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })

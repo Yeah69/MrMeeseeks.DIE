@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 

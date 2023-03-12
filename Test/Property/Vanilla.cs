@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.InitProperty.Vanilla;
+namespace MrMeeseeks.DIE.Test.Property.Vanilla;
 
 internal class Dependency {}
 

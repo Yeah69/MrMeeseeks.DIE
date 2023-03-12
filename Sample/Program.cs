@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Test.UserDefinedElements.FactoryField.InScope;
+using MrMeeseeks.DIE.Sample;
 
 
 internal class Program

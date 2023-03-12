@@ -1,6 +1,7 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test.Property.PropertiesInBaseTypes;
 
 internal abstract class Base
 {
@@ -31,4 +32,14 @@ internal sealed partial class Container
 {
     private readonly string DIE_Factory_Yeah = "Yeah";
     private readonly string? DIE_Factory_YeahNullable = "YeahNullable";
+}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        using var container = new Container();
+        var _ = container.Create();
+    }
 }

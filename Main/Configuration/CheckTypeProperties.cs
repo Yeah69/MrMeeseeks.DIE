@@ -1,7 +1,8 @@
 using MrMeeseeks.DIE.Contexts;
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
@@ -29,8 +30,9 @@ internal class ContainerCheckTypeProperties : CheckTypeProperties, IContainerChe
 {
     internal ContainerCheckTypeProperties(
         IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
+        IInjectablePropertyExtractor injectablePropertyExtractor,
         IContainerWideContext containerWideContext) 
-        : base(currentlyConsideredTypes, containerWideContext)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext)
     {
     }
 }
@@ -43,8 +45,10 @@ internal class ScopeCheckTypeProperties : CheckTypeProperties, IScopeCheckTypePr
 {
     internal ScopeCheckTypeProperties(
         IScopeCurrentlyConsideredTypes currentlyConsideredTypes, 
+        
+        IInjectablePropertyExtractor injectablePropertyExtractor,
         IContainerWideContext containerWideContext) 
-        : base(currentlyConsideredTypes, containerWideContext)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext)
     {
     }
 }
@@ -70,14 +74,16 @@ internal interface ICheckTypeProperties
 internal abstract class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
+    private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
     private readonly WellKnownTypes _wellKnownTypes;
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
-        
+        IInjectablePropertyExtractor injectablePropertyExtractor,
         IContainerWideContext containerWideContext)
     {
         _currentlyConsideredTypes = currentlyConsideredTypes;
+        _injectablePropertyExtractor = injectablePropertyExtractor;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
     }
     
@@ -477,8 +483,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         if (propertyChoicesNames is null)
             return null;
 
-        return implementationType.GetMembers()
-            .OfType<IPropertySymbol>()
+        return _injectablePropertyExtractor
+            .GetInjectableProperties(implementationType)
             .Where(p => propertyChoicesNames.Contains(p.Name))
             .ToList();
     }

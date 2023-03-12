@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Contexts;
-using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.SourceGeneratorUtility;

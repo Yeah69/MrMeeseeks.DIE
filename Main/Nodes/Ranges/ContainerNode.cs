@@ -4,6 +4,7 @@ using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Visitors;
 
@@ -63,7 +64,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         ITaskTransformationFunctions taskTransformationFunctions,
         Lazy<ITransientScopeInterfaceNode> lazyTransientScopeInterfaceNode,
         Lazy<IScopeManager> lazyScopeManager,
-        Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
+        Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
@@ -123,11 +124,19 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             BuildQueue.Enqueue(new(functionNode, implementationStack));
         }
 
-        while (BuildQueue.Any() && BuildQueue.Dequeue() is { } buildJob) 
+        var asyncCallNodes = new List<IAsyncFunctionCallNode>();
+        while (BuildQueue.Any() && BuildQueue.Dequeue() is { } buildJob)
+        {
             buildJob.Node.Build(buildJob.PreviousImplementations);
+            if (buildJob.Node is IAsyncFunctionCallNode call)
+                asyncCallNodes.Add(call);
+        }
         
         while (AsyncCheckQueue.Any() && AsyncCheckQueue.Dequeue() is { } function)
             function.CheckSynchronicity();
+        
+        foreach (var call in asyncCallNodes)
+            call.AdjustToCurrentCalledFunctionSynchronicity();
         
         _functionCycleTracker.DetectCycle(this);
     }

@@ -26,6 +26,7 @@ internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, 
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator, 
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
@@ -39,6 +40,7 @@ internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, 
             transientScopeWideContext.Range,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
+            asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             containerWideContext)
@@ -48,11 +50,6 @@ internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, 
         Name = referenceGenerator.Generate("GetTransientScopeInstance", _type);
     }
 
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-        
-    }
-
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitRangedInstanceInterfaceFunctionNode(this);
     public override string Name { get; protected set; }
     
@@ -60,6 +57,7 @@ internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, 
     {
         var implementation = range.BuildTransientScopeFunction(_type, this);
         (implementation as IRangedInstanceFunctionNodeInitializer)?.Initialize(Name, _parentContainer.TransientScopeInterface.FullName);
+        implementation.RegisterCallingFunction(this);
         _implementations.Add(implementation);
     }
 

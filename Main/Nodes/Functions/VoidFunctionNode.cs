@@ -30,6 +30,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
         // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         IContainerWideContext containerWideContext)
@@ -41,6 +42,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
             transientScopeWideContext.Range,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
+            asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             containerWideContext)
@@ -53,6 +55,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
     
     public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
+        base.Build(implementationStack);
         Initializations = _initializedInstanceNodes
             .Select(i => (i.BuildCall(_parentRange, this), i))
             .ToList();

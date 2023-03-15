@@ -10,7 +10,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
-internal interface IImplementationNode : IElementNode, IPotentiallyAwaitedNode
+internal interface IImplementationNode : IElementNode, IAwaitableNode
 {
     string ConstructorCallName { get; }
     ImplementationNode.UserDefinedInjection? UserDefinedInjectionConstructor { get; }
@@ -20,6 +20,9 @@ internal interface IImplementationNode : IElementNode, IPotentiallyAwaitedNode
     ImplementationNode.Initialization? Initializer { get; }
     string? SyncDisposalCollectionReference { get; }
     string? AsyncDisposalCollectionReference { get; }
+    
+    string? AsyncReference { get; }
+    string? AsyncTypeFullName { get; }
 }
 
 internal class ImplementationNode : IImplementationNode
@@ -43,7 +46,6 @@ internal class ImplementationNode : IImplementationNode
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
-    private readonly WellKnownTypes _wellKnownTypes;
 
     private readonly List<(string Name, IElementNode Element)> _constructorParameters = new ();
     private readonly List<(string Name, IElementNode Element)> _properties = new ();
@@ -56,8 +58,7 @@ internal class ImplementationNode : IImplementationNode
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
-        IInjectablePropertyExtractor injectablePropertyExtractor,
-        IContainerWideContext containerWideContext)
+        IInjectablePropertyExtractor injectablePropertyExtractor)
     {
         _implementationType = implementationType;
         _constructor = constructor;
@@ -68,7 +69,6 @@ internal class ImplementationNode : IImplementationNode
         _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _referenceGenerator = referenceGenerator;
         _injectablePropertyExtractor = injectablePropertyExtractor;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
         TypeFullName = implementationType.FullName();
         // The constructor call shouldn't contain nullable annotations
         ConstructorCallName = implementationType.FullName(SymbolDisplayMiscellaneousOptions.None);
@@ -77,6 +77,7 @@ internal class ImplementationNode : IImplementationNode
 
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
+        _parentFunction.RegisterAwaitableNode(this);
         var implementationCycle = implementationStack.Contains(_implementationType, CustomSymbolEqualityComparer.Default);
 
         if (implementationCycle)
@@ -107,18 +108,15 @@ internal class ImplementationNode : IImplementationNode
 
         IEnumerable<IPropertySymbol> properties;
         if (_checkTypeProperties.GetPropertyChoicesFor(_implementationType) is { } propertyChoice)
-        {
             properties = propertyChoice;
-        }
-        else
-        {
+        // Automatic property injection is disabled for record types, but property choices are still allowed
+        else if (!_implementationType.IsRecord)
             properties = _injectablePropertyExtractor
                 .GetInjectableProperties(_implementationType)
-                // Automatic property injection is disabled for record types, but property choices are still allowed
-                .Where(_ => !_implementationType.IsRecord)
                 // Check whether property is settable
                 .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false));
-        }
+        else 
+            properties = Array.Empty<IPropertySymbol>();
         _properties.AddRange(properties
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsProperties))));
 
@@ -142,11 +140,6 @@ internal class ImplementationNode : IImplementationNode
                 Awaited = true;
                 AsyncReference = _referenceGenerator.Generate("task");
                 AsyncTypeFullName = initializerMethod.ReturnType.FullName(); // ReturnType can only be either ValueTask or Task at this point
-                SynchronicityDecision =
-                    CustomSymbolEqualityComparer.Default.Equals(initializerMethod.ReturnType, _wellKnownTypes.ValueTask)
-                        ? SynchronicityDecision.AsyncValueTask
-                        : SynchronicityDecision.AsyncTask;
-                _parentFunction.OnAwait(this);
             }
         }
 
@@ -203,8 +196,7 @@ internal class ImplementationNode : IImplementationNode
     public string? SyncDisposalCollectionReference { get; private set; }
     public string? AsyncDisposalCollectionReference { get; private set; }
 
-    public bool Awaited { get; set; }
+    public bool Awaited { get; private set; }
     public string? AsyncReference { get; private set; }
     public string? AsyncTypeFullName { get; private set; }
-    public SynchronicityDecision SynchronicityDecision { get; private set; } = SynchronicityDecision.Sync;
 }

@@ -11,6 +11,7 @@ namespace MrMeeseeks.DIE.Nodes.Elements;
 
 internal enum EnumerableBasedType
 {
+    // ReSharper disable InconsistentNaming
     IEnumerable,
     Array,
     IList,
@@ -36,6 +37,7 @@ internal enum EnumerableBasedType
     ImmutableStack,
     
     IAsyncEnumerable
+    // ReSharper restore InconsistentNaming
 }
 
 internal interface ICollectionData
@@ -61,7 +63,7 @@ internal record ReadOnlyCollectionData(
         string ConcreteReadOnlyCollectionTypeFullName) 
     : ICollectionData;
 
-internal interface IEnumerableBasedNode : IElementNode, IPotentiallyAwaitedNode, IOnAwait
+internal interface IEnumerableBasedNode : IElementNode
 {
     EnumerableBasedType Type { get; }
     ICollectionData? CollectionData { get; }
@@ -74,7 +76,6 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
     private readonly IRangeNode _parentRange;
     private readonly IFunctionNode _parentFunction;
     private readonly IReferenceGenerator _referenceGenerator;
-    private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     public EnumerableBasedNode(
@@ -89,9 +90,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
         _parentRange = transientScopeWideContext.Range;
         _parentFunction = parentFunction;
         _referenceGenerator = referenceGenerator;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
-        AsyncReference = referenceGenerator.Generate("result");
     }
 
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
@@ -290,7 +289,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
         var enumerableType = Type == EnumerableBasedType.IAsyncEnumerable 
             ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(collectionsInnerType)
             : _wellKnownTypesCollections.IEnumerable1.Construct(collectionsInnerType);
-        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction, this);
+        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction);
     }
 
     public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitEnumerableBasedNode(this);
@@ -304,20 +303,4 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
     public EnumerableBasedType Type { get; private set; }
     public ICollectionData? CollectionData { get; private set; }
     public IFunctionCallNode EnumerableCall { get; private set; } = null!;
-
-    public bool Awaited
-    {
-        get => EnumerableCall.Awaited; 
-        set => EnumerableCall.Awaited = value;
-    }
-    public string? AsyncReference { get; }
-
-    public string? AsyncTypeFullName => SynchronicityDecision switch
-    {
-        SynchronicityDecision.AsyncTask => _wellKnownTypes.Task1.Construct(_collectionType).FullName(),
-        SynchronicityDecision.AsyncValueTask => _wellKnownTypes.ValueTask1.Construct(_collectionType).FullName(),
-        _ => _collectionType.FullName()
-    };
-    public SynchronicityDecision SynchronicityDecision => EnumerableCall.SynchronicityDecision;
-    public void OnAwait(IPotentiallyAwaitedNode potentiallyAwaitedNode) => _parentFunction.OnAwait(this);
 }

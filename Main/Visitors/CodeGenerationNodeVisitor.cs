@@ -6,7 +6,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
-using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -186,7 +185,7 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
     {
         if (maybeInitialization is { } initialization)
         {
-            var asyncPrefix = initialization.SynchronicityDecision != SynchronicityDecision.Sync
+            var asyncPrefix = initialization.Awaited
                 ? "async "
                 : "";
 
@@ -474,12 +473,28 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         }
     }
 
+    public void VisitAsyncFunctionCallNode(IAsyncFunctionCallNode functionCallNode)
+    {
+        var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
+        var typeFullName = functionCallNode.TypeFullName;
+        var call = $"{owner}{functionCallNode.FunctionName}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
+        call = functionCallNode.Transformation switch
+        {
+            AsyncFunctionCallTransformation.ValueTaskFromValueTask => call,
+            AsyncFunctionCallTransformation.ValueTaskFromTask => $"new {_wellKnownTypes.ValueTask}({call})",
+            AsyncFunctionCallTransformation.ValueTaskFromSync => $"new {_wellKnownTypes.ValueTask}({call})",
+            AsyncFunctionCallTransformation.TaskFromValueTask => $"{call}.AsTask()",
+            AsyncFunctionCallTransformation.TaskFromTask => call,
+            AsyncFunctionCallTransformation.TaskFromSync => $"{_wellKnownTypes.Task}.FromResult({call})",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
+    }
+
     private void VisitFunctionCallNode(IFunctionCallNode functionCallNode)
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
-        var typeFullName = functionCallNode.Awaited
-            ? functionCallNode.AsyncTypeFullName
-            : functionCallNode.TypeFullName;
+        var typeFullName = functionCallNode.TypeFullName;
         var call = $"{owner}{functionCallNode.FunctionName}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
         call = functionCallNode.Awaited ? $"(await {call})" : call;
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
@@ -519,64 +534,6 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     public void VisitLazyNode(ILazyNode lazyNode) => 
         _code.AppendLine($"{lazyNode.TypeFullName} {lazyNode.Reference} = new {lazyNode.TypeFullName}({lazyNode.MethodGroup});");
 
-    public void VisitValueTaskNode(IValueTaskNode valueTaskNode)
-    {
-        VisitElementNode(valueTaskNode.WrappedElement);
-        switch (valueTaskNode.Strategy)
-        {
-            case AsyncWrappingStrategy.VanillaFromResult:
-                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = new {valueTaskNode.TypeFullName}({valueTaskNode.WrappedElement.Reference});");    
-                break;
-            case AsyncWrappingStrategy.ImplementationFromValueTask:
-                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.ContainerTypeFullName}.{valueTaskNode.TaskTransformationFunctions.UngenericValueTaskToGenericValueTask.FunctionName}({valueTaskNode.AsyncReference}, {valueTaskNode.WrappedElement.Reference});");
-                break;
-            case AsyncWrappingStrategy.ImplementationFromTask:
-                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.ContainerTypeFullName}.{valueTaskNode.TaskTransformationFunctions.UngenericTaskToGenericValueTask.FunctionName}({valueTaskNode.AsyncReference}, {valueTaskNode.WrappedElement.Reference});");
-                break;
-            case AsyncWrappingStrategy.CollectionFromValueTask:
-            case AsyncWrappingStrategy.FactoryFromValueTask:
-            case AsyncWrappingStrategy.CallFromValueTask:
-                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.WrappedElement.Reference};");
-                break;
-            case AsyncWrappingStrategy.CollectionFromTask:
-            case AsyncWrappingStrategy.FactoryFromTask:
-            case AsyncWrappingStrategy.CallFromTask:
-                _code.AppendLine($"{valueTaskNode.TypeFullName} {valueTaskNode.Reference} = {valueTaskNode.ContainerTypeFullName}.{valueTaskNode.TaskTransformationFunctions.GenericTaskToGenericValueTask.FunctionName}({valueTaskNode.WrappedElement.Reference});");
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    public void VisitTaskNode(ITaskNode taskNode)
-    {
-        VisitElementNode(taskNode.WrappedElement);
-        switch (taskNode.Strategy)
-        {
-            case AsyncWrappingStrategy.VanillaFromResult:
-                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {_wellKnownTypes.Task.FullName()}.FromResult({taskNode.WrappedElement.Reference});");   
-                break;
-            case AsyncWrappingStrategy.ImplementationFromValueTask:
-                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.ContainerTypeFullName}.{taskNode.TaskTransformationFunctions.UngenericValueTaskToGenericTask.FunctionName}({taskNode.AsyncReference}, {taskNode.WrappedElement.Reference});");
-                break;
-            case AsyncWrappingStrategy.ImplementationFromTask:
-                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.ContainerTypeFullName}.{taskNode.TaskTransformationFunctions.UngenericTaskToGenericTask.FunctionName}({taskNode.AsyncReference}, {taskNode.WrappedElement.Reference});");
-                break;
-            case AsyncWrappingStrategy.CollectionFromValueTask:
-            case AsyncWrappingStrategy.FactoryFromValueTask:
-            case AsyncWrappingStrategy.CallFromValueTask:
-                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.ContainerTypeFullName}.{taskNode.TaskTransformationFunctions.GenericValueTaskToGenericTask.FunctionName}({taskNode.WrappedElement.Reference});");
-                break;
-            case AsyncWrappingStrategy.CollectionFromTask:
-            case AsyncWrappingStrategy.FactoryFromTask:
-            case AsyncWrappingStrategy.CallFromTask:
-                _code.AppendLine($"{taskNode.TypeFullName} {taskNode.Reference} = {taskNode.WrappedElement.Reference};");
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
     public void VisitTupleNode(ITupleNode tupleNode)
     {
         foreach (var parameter in tupleNode.Parameters)
@@ -609,6 +566,9 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             case IPlainFunctionCallNode createCallNode:
                 VisitPlainFunctionCallNode(createCallNode);
                 break;
+            case IAsyncFunctionCallNode asyncFunctionCallNode:
+                VisitAsyncFunctionCallNode(asyncFunctionCallNode);
+                break;
             case IScopeCallNode scopeCallNode:
                 VisitScopeCallNode(scopeCallNode);
                 break;
@@ -635,12 +595,6 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                 break;
             case ILazyNode lazyNode:
                 VisitLazyNode(lazyNode);
-                break;
-            case IValueTaskNode valueTaskNode:
-                VisitValueTaskNode(valueTaskNode);
-                break;
-            case ITaskNode taskNode:
-                VisitTaskNode(taskNode);
                 break;
             case ITupleNode tupleNode:
                 VisitTupleNode(tupleNode);
@@ -788,104 +742,62 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     public void VisitEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode)
     {
         VisitElementNode(enumerableBasedNode.EnumerableCall);
-        if (enumerableBasedNode is { Type: EnumerableBasedType.IEnumerable or EnumerableBasedType.IAsyncEnumerable, }
+        if (enumerableBasedNode is { Type: EnumerableBasedType.IEnumerable or EnumerableBasedType.IAsyncEnumerable }
             || enumerableBasedNode.CollectionData is not
             {
                 CollectionReference: { } collectionReference, CollectionTypeFullName: { } collectionTypeFullName
             }) 
             return;
-        if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.Sync || enumerableBasedNode.Awaited)
-            CollectionHandling(collectionTypeFullName, collectionReference, enumerableBasedNode.EnumerableCall.Reference);
-        else if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.AsyncValueTask && !enumerableBasedNode.Awaited)
+        switch (enumerableBasedNode.Type)
         {
-            _code.AppendLine($$"""
-{{enumerableBasedNode.AsyncTypeFullName}} {{enumerableBasedNode.Reference}} = new {{enumerableBasedNode.AsyncTypeFullName}}({{enumerableBasedNode.EnumerableCall.Reference}}.AsTask().ContinueWith(t =>
-{
-if (t.IsCompletedSuccessfully) 
-{
-""");
-            CollectionHandling(collectionTypeFullName, enumerableBasedNode.AsyncReference ?? "result", "t.Result");
-            _code.AppendLine($$"""
-return {{enumerableBasedNode.AsyncReference ?? "result"}};
-}
-if (t.IsFaulted && t.Exception is { }) throw t.Exception;
-if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
-throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
-}));
-"""); // todo mark last exception as from DIE and give it unique GUID
-        }
-        else if (enumerableBasedNode.SynchronicityDecision == SynchronicityDecision.AsyncTask && !enumerableBasedNode.Awaited)
-        {
-            _code.AppendLine($$"""
-{{enumerableBasedNode.AsyncTypeFullName}} {{enumerableBasedNode.Reference}} = {{enumerableBasedNode.EnumerableCall.Reference}}.ContinueWith(t =>
-{
-if (t.IsCompletedSuccessfully) 
-{
-""");
-            CollectionHandling(collectionTypeFullName, enumerableBasedNode.AsyncReference ?? "result", "t.Result");
-            _code.AppendLine($$"""
-return {{enumerableBasedNode.AsyncReference ?? "result"}};
-}
-if (t.IsFaulted && t.Exception is { }) throw t.Exception;
-if (t.IsCanceled) throw new {{_wellKnownTypes.TaskCanceledException.FullName()}}(t);
-throw new {{_wellKnownTypes.Exception.FullName()}}("[DIE] Something unexpected.");
-});
-"""); // todo mark last exception as from DIE and give it unique GUID
-        }
-
-        void CollectionHandling(string typeFullName, string reference, string enumerableReference)
-        {
-            switch (enumerableBasedNode.Type)
-            {
-                case EnumerableBasedType.Array:
-                    _code.AppendLine(
-                        $"{typeFullName} {reference} = {_wellKnownTypesCollections.Enumerable}.ToArray({enumerableReference});");
-                    break;
-                case EnumerableBasedType.IList
-                    or EnumerableBasedType.ICollection:
-                    _code.AppendLine(
-                        $"{typeFullName} {reference} = {_wellKnownTypesCollections.Enumerable}.ToList({enumerableReference});");
-                    break;
-                case EnumerableBasedType.ArraySegment:
-                    _code.AppendLine(
-                        $"{typeFullName} {reference} = new {typeFullName}({_wellKnownTypesCollections.Enumerable}.ToArray({enumerableReference}));");
-                    break;
-                case EnumerableBasedType.ReadOnlyCollection
-                    or EnumerableBasedType.IReadOnlyCollection
-                    or EnumerableBasedType.IReadOnlyList
-                    when enumerableBasedNode.CollectionData is ReadOnlyCollectionData
-                    {
-                        ConcreteReadOnlyCollectionTypeFullName: { } concreteReadOnlyCollectionTypeFullName
-                    }:
-                    _code.AppendLine(
-                        $"{typeFullName} {reference} = new {concreteReadOnlyCollectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToList({enumerableReference}));");
-                    break;
-                case EnumerableBasedType.ConcurrentBag
-                    or EnumerableBasedType.ConcurrentQueue
-                    or EnumerableBasedType.ConcurrentStack
-                    or EnumerableBasedType.HashSet
-                    or EnumerableBasedType.LinkedList
-                    or EnumerableBasedType.List
-                    or EnumerableBasedType.Queue
-                    or EnumerableBasedType.SortedSet
-                    or EnumerableBasedType.Stack:
-                    _code.AppendLine(
-                        $"{typeFullName} {reference} = new {typeFullName}({enumerableReference});");
-                    break;
-                case EnumerableBasedType.ImmutableArray
-                    or EnumerableBasedType.ImmutableHashSet
-                    or EnumerableBasedType.ImmutableList
-                    or EnumerableBasedType.ImmutableQueue
-                    or EnumerableBasedType.ImmutableSortedSet
-                    or EnumerableBasedType.ImmutableStack
-                    when enumerableBasedNode.CollectionData is ImmutableCollectionData
-                    {
-                        ImmutableUngenericTypeFullName: { } immutableUngenericTypeFullName
-                    }:
-                    _code.AppendLine(
-                        $"{typeFullName} {reference} = {immutableUngenericTypeFullName}.CreateRange({enumerableReference});");
-                    break;
-            }
+            case EnumerableBasedType.Array:
+                _code.AppendLine(
+                    $"{collectionTypeFullName} {collectionReference} = {_wellKnownTypesCollections.Enumerable}.ToArray({enumerableBasedNode.EnumerableCall.Reference});");
+                break;
+            case EnumerableBasedType.IList
+                or EnumerableBasedType.ICollection:
+                _code.AppendLine(
+                    $"{collectionTypeFullName} {collectionReference} = {_wellKnownTypesCollections.Enumerable}.ToList({enumerableBasedNode.EnumerableCall.Reference});");
+                break;
+            case EnumerableBasedType.ArraySegment:
+                _code.AppendLine(
+                    $"{collectionTypeFullName} {collectionReference} = new {collectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToArray({enumerableBasedNode.EnumerableCall.Reference}));");
+                break;
+            case EnumerableBasedType.ReadOnlyCollection
+                or EnumerableBasedType.IReadOnlyCollection
+                or EnumerableBasedType.IReadOnlyList
+                when enumerableBasedNode.CollectionData is ReadOnlyCollectionData
+                {
+                    ConcreteReadOnlyCollectionTypeFullName: { } concreteReadOnlyCollectionTypeFullName
+                }:
+                _code.AppendLine(
+                    $"{collectionTypeFullName} {collectionReference} = new {concreteReadOnlyCollectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToList({enumerableBasedNode.EnumerableCall.Reference}));");
+                break;
+            case EnumerableBasedType.ConcurrentBag
+                or EnumerableBasedType.ConcurrentQueue
+                or EnumerableBasedType.ConcurrentStack
+                or EnumerableBasedType.HashSet
+                or EnumerableBasedType.LinkedList
+                or EnumerableBasedType.List
+                or EnumerableBasedType.Queue
+                or EnumerableBasedType.SortedSet
+                or EnumerableBasedType.Stack:
+                _code.AppendLine(
+                    $"{collectionTypeFullName} {collectionReference} = new {collectionTypeFullName}({enumerableBasedNode.EnumerableCall.Reference});");
+                break;
+            case EnumerableBasedType.ImmutableArray
+                or EnumerableBasedType.ImmutableHashSet
+                or EnumerableBasedType.ImmutableList
+                or EnumerableBasedType.ImmutableQueue
+                or EnumerableBasedType.ImmutableSortedSet
+                or EnumerableBasedType.ImmutableStack
+                when enumerableBasedNode.CollectionData is ImmutableCollectionData
+                {
+                    ImmutableUngenericTypeFullName: { } immutableUngenericTypeFullName
+                }:
+                _code.AppendLine(
+                    $"{collectionTypeFullName} {collectionReference} = {immutableUngenericTypeFullName}.CreateRange({enumerableBasedNode.EnumerableCall.Reference});");
+                break;
         }
     }
 

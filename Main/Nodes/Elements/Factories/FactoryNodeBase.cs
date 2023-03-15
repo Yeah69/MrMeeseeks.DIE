@@ -6,16 +6,15 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Factories;
 
-internal interface IFactoryNodeBase : IElementNode, IPotentiallyAwaitedNode
+internal interface IFactoryNodeBase : IElementNode, IAwaitableNode
 {
     string Name { get; }
+    string? AsyncTypeFullName { get; }
 }
 
 internal abstract class FactoryNodeBase : IFactoryNodeBase
 {
-    private readonly ITypeSymbol _referenceType;
     private readonly IFunctionNode _parentFunction;
-    private readonly WellKnownTypes _wellKnownTypes;
 
     internal FactoryNodeBase(
         ITypeSymbol referenceType,
@@ -25,28 +24,24 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext)
     {
-        _referenceType = referenceType;
         _parentFunction = parentFunction;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        var wellKnownTypes = containerWideContext.WellKnownTypes;
         Name = symbol.Name;
         Reference = referenceGenerator.Generate(referenceType);
         TypeFullName = referenceType.FullName();
+        
+        if ((CustomSymbolEqualityComparer.IncludeNullability.Equals(referenceType.OriginalDefinition, wellKnownTypes.ValueTask1)
+             || CustomSymbolEqualityComparer.IncludeNullability.Equals(referenceType.OriginalDefinition, wellKnownTypes.Task1))
+            && referenceType is INamedTypeSymbol namedReferenceType)
+        {
+            Awaited = true;
+            AsyncTypeFullName = namedReferenceType.TypeArguments.First().FullName();
+        }
     }
     
     public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
-        if ((CustomSymbolEqualityComparer.IncludeNullability.Equals(_referenceType.OriginalDefinition, _wellKnownTypes.ValueTask1)
-             || CustomSymbolEqualityComparer.IncludeNullability.Equals(_referenceType.OriginalDefinition, _wellKnownTypes.Task1))
-            && _referenceType is INamedTypeSymbol namedReferenceType)
-        {
-            Awaited = true;
-            AsyncReference = Reference;
-            SynchronicityDecision = CustomSymbolEqualityComparer.IncludeNullability.Equals(_referenceType.OriginalDefinition, _wellKnownTypes.ValueTask1)
-                ? SynchronicityDecision.AsyncValueTask
-                : SynchronicityDecision.AsyncTask;
-            AsyncTypeFullName = namedReferenceType.TypeArguments.First().FullName();
-            _parentFunction.OnAwait(this);
-        }
+        _parentFunction.RegisterAwaitableNode(this);
     }
 
     public abstract void Accept(INodeVisitor nodeVisitor);
@@ -54,8 +49,6 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
     public string TypeFullName { get; }
     public string Reference { get; }
     public string Name { get; }
-    public bool Awaited { get; set; }
-    public string? AsyncReference { get; private set; }
-    public string? AsyncTypeFullName { get; private set; }
-    public SynchronicityDecision SynchronicityDecision { get; private set; } = SynchronicityDecision.Sync;
+    public bool Awaited { get; }
+    public string? AsyncTypeFullName { get; }
 }

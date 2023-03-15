@@ -2,7 +2,6 @@ using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
-using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -28,8 +27,6 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory, 
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTaskNode> valueTaskNodeFactory, 
-        Func<INamedTypeSymbol, IElementNodeMapperBase, ITaskNode> taskNodeFactory, 
         Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleNode> valueTupleNodeFactory, 
         Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory, 
         Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> tupleNodeFactory, 
@@ -52,8 +49,6 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 
-            valueTaskNodeFactory, 
-            taskNodeFactory, 
             valueTupleNodeFactory, 
             valueTupleSyntaxNodeFactory, 
             tupleNodeFactory, 

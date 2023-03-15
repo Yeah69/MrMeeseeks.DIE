@@ -4,7 +4,6 @@ using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
-using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -42,8 +41,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<IFieldSymbol, IFactoryFieldNode> _factoryFieldNodeFactory;
     private readonly Func<IPropertySymbol, IFactoryPropertyNode> _factoryPropertyNodeFactory;
     private readonly Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> _factoryFunctionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTaskNode> _valueTaskNodeFactory;
-    private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, ITaskNode> _taskNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleNode> _valueTupleNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> _valueTupleSyntaxNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> _tupleNodeFactory;
@@ -68,8 +65,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory,
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory,
-        Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTaskNode> valueTaskNodeFactory,
-        Func<INamedTypeSymbol, IElementNodeMapperBase, ITaskNode> taskNodeFactory,
         Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleNode> valueTupleNodeFactory,
         Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory,
         Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> tupleNodeFactory,
@@ -95,8 +90,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _factoryFieldNodeFactory = factoryFieldNodeFactory;
         _factoryPropertyNodeFactory = factoryPropertyNodeFactory;
         _factoryFunctionNodeFactory = factoryFunctionNodeFactory;
-        _valueTaskNodeFactory = valueTaskNodeFactory;
-        _taskNodeFactory = taskNodeFactory;
         _valueTupleNodeFactory = valueTupleNodeFactory;
         _valueTupleSyntaxNodeFactory = valueTupleSyntaxNodeFactory;
         _tupleNodeFactory = tupleNodeFactory;
@@ -115,6 +108,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     protected abstract IElementNodeMapperBase NextForWraps { get; }
 
     protected abstract IElementNodeMapperBase Next { get; }
+
+    protected virtual MapperData GetMapperDataForAsyncWrapping() => 
+        new VanillaMapperData();
 
     public virtual IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
     {
@@ -135,13 +131,11 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
         if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
             && type is INamedTypeSymbol valueTask)
-            return _valueTaskNodeFactory(valueTask, NextForWraps)
-                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
+            return ParentRange.BuildAsyncCreateCall(GetMapperDataForAsyncWrapping(), valueTask.TypeArguments[0], SynchronicityDecision.AsyncValueTask, ParentFunction);
 
         if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.Task1)
             && type is INamedTypeSymbol task)
-            return _taskNodeFactory(task, NextForWraps)
-                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
+            return ParentRange.BuildAsyncCreateCall(GetMapperDataForAsyncWrapping(), task.TypeArguments[0], SynchronicityDecision.AsyncTask, ParentFunction);
 
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
             return _valueTupleNodeFactory(valueTupleType, NextForWraps)

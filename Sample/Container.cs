@@ -1,34 +1,20 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal abstract class Base
+internal class Dependency : ITaskInitializer, ITransientScopeInstance
 {
-    public int PropProtectedInit { get; protected init; }
-    public virtual required string PropVirtualOverriden { get; init; }
-    public virtual required string PropVirtualNotOverriden { get; init; }
-    public abstract required string PropAbstractOverriden { get; init; }
-    public string? PropNewed { get; init; }
-    public string? PropNewedRequired { get; init; }
-}
-
-internal abstract class IntermediateBase : Base
-{
-    public override required string PropVirtualOverriden { get; init; }
-    public new string? PropNewed { get; init; }
-    public new required string PropNewedRequired { get; init; }
-}
-
-internal class Dependency : IntermediateBase
-{
-    internal Dependency() => PropProtectedInit = 9;
-    public override required string PropAbstractOverriden { get; init; }
-    public required string PropString { get; init; }
+    public bool IsInitialized { get; private set; }
+    
+    async Task ITaskInitializer.InitializeAsync()
+    {
+        await Task.Delay(500).ConfigureAwait(false);
+        IsInitialized = true;
+    }
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    private readonly string DIE_Factory_Yeah = "Yeah";
-    private readonly string? DIE_Factory_YeahNullable = "YeahNullable";
 }

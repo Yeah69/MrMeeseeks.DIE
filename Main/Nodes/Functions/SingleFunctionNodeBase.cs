@@ -25,6 +25,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         IContainerWideContext containerWideContext)
@@ -37,6 +38,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             parentRange,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
+            asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             containerWideContext)
@@ -48,7 +50,11 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
         mapper.Map(TypeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
     
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => 
+    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    {
+        base.Build(implementationStack);
         ReturnedElement = MapToReturnedElement(GetMapper());
+    }
+
     public IElementNode ReturnedElement { get; private set; } = null!;
 }

@@ -19,16 +19,20 @@ internal interface ICreateFunctionNode : ICreateFunctionNodeBase
 
 internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode, IScopeInstance
 {
-    private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
+    private readonly MapperData _mapperData;
+    private readonly IMapperFactory _mapperFactory;
 
     public CreateFunctionNode(
+        MapperData mapperData,
         ITypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
+        
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator, 
-        Func<IElementNodeMapper> typeToElementNodeMapperFactory,
+        IMapperFactory mapperFactory,
         Func<string?, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<(string, string), IScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<string, ITransientScopeNode, IRangeNode, IFunctionNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
@@ -42,16 +46,17 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode,
             parentContainer, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
+            asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             containerWideContext)
     {
-        _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
+        _mapperData = mapperData;
+        _mapperFactory = mapperFactory;
         Name = referenceGenerator.Generate("Create", typeSymbol);
     }
 
-    protected override IElementNodeMapperBase GetMapper() =>
-        _typeToElementNodeMapperFactory();
+    protected override IElementNodeMapperBase GetMapper() => _mapperFactory.Create(_mapperData);
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
     public override string Name { get; protected set; }

@@ -1,16 +1,10 @@
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
-using MrMeeseeks.DIE.Nodes.Elements.Tasks;
 using MrMeeseeks.DIE.Nodes.Ranges;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IOnAwait
-{
-    void OnAwait(IPotentiallyAwaitedNode potentiallyAwaitedNode);
-}
-
-internal interface IFunctionNode : INode, IOnAwait
+internal interface IFunctionNode : INode
 {
     Accessibility? Accessibility { get; }
     SynchronicityDecision SynchronicityDecision { get; }
@@ -18,10 +12,11 @@ internal interface IFunctionNode : INode, IOnAwait
     IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
     ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }
     string ReturnedTypeFullName { get; }
-    void RegisterAsyncWrapping(IPotentiallyAwaitedNode potentiallyAwaitedNode, ITaskNodeBase taskNodeBase);
     string Description { get; }
     HashSet<IFunctionNode> CalledFunctions { get; }
+    void RegisterAwaitableNode(IAwaitableNode awaitableNode);
     void RegisterCalledFunction(IFunctionNode calledFunction);
+    void RegisterCallingFunction(IFunctionNode callingFunction);
     void CheckSynchronicity();
     void ForceToAsync();
     string? AsyncTypeFullName { get; }
@@ -31,7 +26,8 @@ internal interface IFunctionNode : INode, IOnAwait
     void AddLocalFunction(ILocalFunctionNode function);
     string? ExplicitInterfaceFullName { get; }
 
-    IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction, IOnAwait onAwait);
+    IFunctionCallNode CreateCall(string? ownerReference, IFunctionNode callingFunction);
+    IAsyncFunctionCallNode CreateAsyncCall(ITypeSymbol wrappedType, string? ownerReference, SynchronicityDecision synchronicity, IFunctionNode callingFunction);
     IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scopeNode);
     ITransientScopeCallNode CreateTransientScopeCall(string containerParameter, IRangeNode callingRange, IFunctionNode callingFunction, ITransientScopeNode scopeNode);
     bool CheckIfReturnedType(ITypeSymbol type);

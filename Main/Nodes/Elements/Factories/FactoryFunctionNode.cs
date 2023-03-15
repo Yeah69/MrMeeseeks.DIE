@@ -18,9 +18,9 @@ internal class FactoryFunctionNode : FactoryNodeBase, IFactoryFunctionNode
 
     internal FactoryFunctionNode(
         IMethodSymbol methodSymbol,
-        IFunctionNode parentFunction,
         IElementNodeMapperBase elementNodeMapperBase,
         
+        IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext) 
         : base(methodSymbol.ReturnType, methodSymbol, parentFunction, referenceGenerator, containerWideContext)

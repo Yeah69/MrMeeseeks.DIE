@@ -12,8 +12,8 @@ internal class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
 {
     internal FactoryFieldNode(
         IFieldSymbol fieldSymbol, 
-        IFunctionNode parentFunction,
         
+        IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext) 
         : base(fieldSymbol.Type, fieldSymbol, parentFunction, referenceGenerator, containerWideContext)

@@ -171,8 +171,8 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;
     private readonly IValidateAttributes _validateAttributes;
-    protected readonly List<Diagnostic> _warnings = new(); 
-    protected readonly List<Diagnostic> _errors = new();
+    private readonly List<Diagnostic> _warnings = new();
+    private readonly List<Diagnostic> _errors = new();
 
     internal TypesFromAttributesBase(
         // parameter
@@ -237,9 +237,9 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         
-        void NotParsableAttribute(AttributeData attributeData) =>
+        void NotParsableAttribute(AttributeData ad) =>
             _errors.Add(Diagnostics.ValidationConfigurationAttribute(
-                attributeData,
+                ad,
                 _rangeType,
                 _containerType,
                 "Not parsable attribute.",
@@ -398,15 +398,13 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
 
-        INamedTypeSymbol? SingleTypeArgument(AttributeData attributeData)
+        INamedTypeSymbol? SingleTypeArgument(AttributeData ad)
         {
-            if (attributeData.ConstructorArguments.Length != 1
-                || attributeData.ConstructorArguments[0].Value is not INamedTypeSymbol type)
-            {
-                NotParsableAttribute(attributeData);
-                return null;
-            }
-            return type;
+            if (ad.ConstructorArguments.Length == 1
+                && ad.ConstructorArguments[0].Value is INamedTypeSymbol type) 
+                return type;
+            NotParsableAttribute(ad);
+            return null;
         }
 
         FilterConstructorChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(

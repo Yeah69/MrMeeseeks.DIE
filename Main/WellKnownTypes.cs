@@ -3,8 +3,10 @@
 namespace MrMeeseeks.DIE;
 
 internal record WellKnownTypes(
+    // ReSharper disable InconsistentNaming
     INamedTypeSymbol IDisposable,
     INamedTypeSymbol IAsyncDisposable,
+    // ReSharper restore InconsistentNaming
     INamedTypeSymbol Lazy1,
     INamedTypeSymbol ValueTask,
     INamedTypeSymbol ValueTask1,
@@ -16,7 +18,6 @@ internal record WellKnownTypes(
     INamedTypeSymbol ConcurrentDictionaryOfSyncDisposable,
     INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,
     INamedTypeSymbol Exception,
-    INamedTypeSymbol TaskCanceledException,
     INamedTypeSymbol AggregateException,
     INamedTypeSymbol SemaphoreSlim,
     INamedTypeSymbol InternalsVisibleToAttribute)
@@ -42,7 +43,6 @@ internal record WellKnownTypes(
             ConcurrentDictionaryOfSyncDisposable: concurrentDictionary2.Construct(iDisposable, iDisposable),
             ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2.Construct(iAsyncDisposable, iAsyncDisposable),
             Exception: compilation.GetTypeByMetadataNameOrThrow("System.Exception"),
-            TaskCanceledException: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.TaskCanceledException"),
             AggregateException: compilation.GetTypeByMetadataNameOrThrow("System.AggregateException"),
             SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
             InternalsVisibleToAttribute: compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.InternalsVisibleToAttribute"));

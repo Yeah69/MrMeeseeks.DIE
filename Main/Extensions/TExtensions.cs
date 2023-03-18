@@ -3,6 +3,7 @@ using MrMeeseeks.DIE.Nodes.Ranges;
 
 namespace MrMeeseeks.DIE.Extensions;
 
+// ReSharper disable once InconsistentNaming
 internal static class TExtensions
 {
     internal static T EnqueueBuildJobTo<T>(this T item, Queue<BuildJob> queue, ImmutableStack<INamedTypeSymbol> implementationSet) 

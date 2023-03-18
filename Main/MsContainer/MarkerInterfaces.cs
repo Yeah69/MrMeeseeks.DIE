@@ -30,7 +30,9 @@ public interface IScopeRoot { }
 public interface ITransient { }
 public interface ISyncTransient { }
 public interface IAsyncTransient { }
+// ReSharper disable once UnusedTypeParameter
 public interface IDecorator<T> { }
+// ReSharper disable once UnusedTypeParameter
 public interface IComposite<T> { }
 public interface IInitializer
 {

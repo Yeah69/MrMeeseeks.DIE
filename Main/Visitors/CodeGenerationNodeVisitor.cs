@@ -65,33 +65,11 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
         foreach (var transientScope in container.TransientScopes)
             VisitTransientScopeNode(transientScope);
         
-        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericValueTaskToGenericValueTask);
-        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericValueTaskToGenericTask);
-        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericTaskToGenericTask);
-        UngenericToGenericTransformationFunction(container.TaskTransformationFunctions.UngenericTaskToGenericValueTask);
-        
-        GenericToGenericTransformationFunction(container.TaskTransformationFunctions.GenericValueTaskToGenericTask);
-        GenericToGenericTransformationFunction(container.TaskTransformationFunctions.GenericTaskToGenericValueTask);
-        
         _code.AppendLine("""
 }
 }
 #nullable disable
 """);
-
-        void UngenericToGenericTransformationFunction(UngenericToGenericData data)
-        {
-            _code.AppendLine($$"""
-private static async {{data.ReturnTypeFullName}} {{data.FunctionName}}<T>({{data.UngenericParameterTypeFullName}} {{data.UngenericParameterName}}, T {{data.ResultParameterName}})
-{
-await {{data.UngenericParameterName}};
-return {{data.ResultParameterName}};
-}
-""");
-        }
-
-        void GenericToGenericTransformationFunction(GenericToGenericData data) => _code.AppendLine(
-            $"private static async {data.ReturnTypeFullName} {data.FunctionName}<T>({data.ParameterTypeFullName} {data.ParameterName}) => await {data.ParameterName};");
     }
 
     public void VisitTransientScopeInterfaceNode(ITransientScopeInterfaceNode transientScopeInterface)

@@ -19,7 +19,6 @@ internal interface IContainerNode : IRangeNode
     IEnumerable<IScopeNode> Scopes { get; }
     IEnumerable<ITransientScopeNode> TransientScopes { get; }
     ITransientScopeInterfaceNode TransientScopeInterface { get; }
-    ITaskTransformationFunctions TaskTransformationFunctions { get; }
     string TransientScopeDisposalReference { get; }
     string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
@@ -46,7 +45,6 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     public IEnumerable<IScopeNode> Scopes => ScopeManager.Scopes;
     public IEnumerable<ITransientScopeNode> TransientScopes => ScopeManager.TransientScopes;
     public ITransientScopeInterfaceNode TransientScopeInterface => _lazyTransientScopeInterfaceNode.Value;
-    public ITaskTransformationFunctions TaskTransformationFunctions { get; }
     public string TransientScopeDisposalReference { get; }
     public string TransientScopeDisposalElement { get; }
 
@@ -61,7 +59,6 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
-        ITaskTransformationFunctions taskTransformationFunctions,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Lazy<ITransientScopeInterfaceNode> lazyTransientScopeInterfaceNode,
         Lazy<IScopeManager> lazyScopeManager,
@@ -99,8 +96,6 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
                 if (next.HasAsyncDisposables) agg |= DisposalType.Async;
                 return agg;
             }));
-
-        TaskTransformationFunctions = taskTransformationFunctions;
         
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
         TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");

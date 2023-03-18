@@ -3,14 +3,19 @@
 namespace MrMeeseeks.DIE;
 
 internal record WellKnownTypesCollections(
+    // ReSharper disable InconsistentNaming
     INamedTypeSymbol IEnumerable1,
     INamedTypeSymbol IAsyncEnumerable1,
+    // ReSharper restore InconsistentNaming
     INamedTypeSymbol ArraySegment1,
     INamedTypeSymbol Enumerable,
+    // ReSharper disable InconsistentNaming
     INamedTypeSymbol IList1,
     INamedTypeSymbol ICollection1,
     INamedTypeSymbol IReadOnlyCollection1,
+    // ReSharper restore InconsistentNaming
     INamedTypeSymbol ReadOnlyCollection1,
+    // ReSharper disable once InconsistentNaming
     INamedTypeSymbol IReadOnlyList1,
     INamedTypeSymbol ConcurrentBag1,
     INamedTypeSymbol ConcurrentQueue1,

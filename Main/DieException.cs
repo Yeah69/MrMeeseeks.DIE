@@ -2,6 +2,7 @@ namespace MrMeeseeks.DIE;
 
 public enum DieExceptionKind
 {
+    // ReSharper disable once InconsistentNaming
     NoneDIE,
     ImplementationCycle,
     FunctionCycle,

@@ -137,4 +137,11 @@ internal sealed partial class MsContainer
     private sealed partial class DIE_Scope_MultiFunctionNodeRoot
     {
     }
+
+    [ImplementationChoice(typeof(IFunctionNode), typeof(VoidFunctionNode))]
+    [CustomScopeForRootTypes(typeof(VoidFunctionNodeRoot))]
+    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    private sealed partial class DIE_Scope_VoidFunctionNodeRoot
+    {
+    }
 }

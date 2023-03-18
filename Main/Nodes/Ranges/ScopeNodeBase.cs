@@ -25,6 +25,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         IUserDefinedElements userDefinedElements,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext,
+        IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
@@ -34,6 +35,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         : base(
             scopeInfo.Name, 
             userDefinedElements, 
+            mapperDataToFunctionKeyTypeConverter,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,

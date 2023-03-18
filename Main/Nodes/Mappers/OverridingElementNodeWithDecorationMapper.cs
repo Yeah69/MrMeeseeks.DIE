@@ -84,5 +84,5 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
                 Next)
             : base.Map(type, implementationStack);
 
-    protected override MapperData GetMapperDataForAsyncWrapping() => new OverridingWithDecorationMapper(_override);
+    protected override MapperData GetMapperDataForAsyncWrapping() => new OverridingWithDecorationMapperData(_override);
 }

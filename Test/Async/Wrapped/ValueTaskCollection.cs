@@ -58,7 +58,7 @@ public class Tests
     public async Task Test()
     {
         await using var container = new Container();
-        var instance = await container.Create();
+        var instance = container.Create();
         Assert.Equal(4, instance.Count);
         foreach (var task in instance)
             Assert.True((await task.ConfigureAwait(false)).IsInitialized);

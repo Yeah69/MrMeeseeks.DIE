@@ -481,8 +481,8 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         call = functionCallNode.Transformation switch
         {
             AsyncFunctionCallTransformation.ValueTaskFromValueTask => call,
-            AsyncFunctionCallTransformation.ValueTaskFromTask => $"new {_wellKnownTypes.ValueTask}({call})",
-            AsyncFunctionCallTransformation.ValueTaskFromSync => $"new {_wellKnownTypes.ValueTask}({call})",
+            AsyncFunctionCallTransformation.ValueTaskFromTask => $"new {typeFullName}({call})",
+            AsyncFunctionCallTransformation.ValueTaskFromSync => $"new {typeFullName}({call})",
             AsyncFunctionCallTransformation.TaskFromValueTask => $"{call}.AsTask()",
             AsyncFunctionCallTransformation.TaskFromTask => call,
             AsyncFunctionCallTransformation.TaskFromSync => $"{_wellKnownTypes.Task}.FromResult({call})",

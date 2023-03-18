@@ -34,7 +34,9 @@ internal abstract class FunctionCallNode : IFunctionCallNode
 
     public abstract void Accept(INodeVisitor nodeVisitor);
 
-    public string TypeFullName => _calledFunction.ReturnedTypeFullName;
+    public string TypeFullName => 
+        _calledFunction.AsyncTypeFullName 
+        ?? _calledFunction.ReturnedTypeFullName;
     public string Reference { get; }
     public string FunctionName { get; }
     public virtual string? OwnerReference { get; }

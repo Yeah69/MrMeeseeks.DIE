@@ -62,6 +62,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         ITaskTransformationFunctions taskTransformationFunctions,
+        IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Lazy<ITransientScopeInterfaceNode> lazyTransientScopeInterfaceNode,
         Lazy<IScopeManager> lazyScopeManager,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
@@ -73,6 +74,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         : base (
             containerInfoContext.ContainerInfo.Name, 
             userDefinedElementsFactory((containerInfoContext.ContainerInfo.ContainerType, containerInfoContext.ContainerInfo.ContainerType)), 
+            mapperDataToFunctionKeyTypeConverter,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,

@@ -6,7 +6,7 @@ namespace MrMeeseeks.DIE.Utility;
 internal static class FunctionResolutionUtility
 {
     internal static TFunctionCallNode GetOrCreateFunctionCall<TFunctionNode, TFunctionCallNode>(
-        ITypeSymbol type, 
+        ITypeSymbol key,
         IFunctionNode callingFunction,
         IDictionary<ITypeSymbol, List<TFunctionNode>> cache,
         Func<TFunctionNode> functionNodeFactory,
@@ -14,10 +14,10 @@ internal static class FunctionResolutionUtility
         where TFunctionNode : IFunctionNode
         where TFunctionCallNode : IFunctionCallNode
     {
-        if (!cache.TryGetValue(type, out var list))
+        if (!cache.TryGetValue(key, out var list))
         {
             list = new List<TFunctionNode>();
-            cache[type] = list;
+            cache[key] = list;
         }
 
         var function = GetOrCreateFunction(

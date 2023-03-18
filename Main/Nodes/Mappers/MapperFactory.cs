@@ -1,11 +1,5 @@
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
-internal abstract record MapperData;
-
-internal record VanillaMapperData : MapperData;
-internal record OverridingMapperData(ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> Override) : MapperData;
-internal record OverridingWithDecorationMapper((INamedTypeSymbol, INamedTypeSymbol) Override) : MapperData;
-
 internal interface IMapperFactory
 {
     IElementNodeMapperBase Create(MapperData data);
@@ -34,7 +28,7 @@ internal class MapperFactory : IMapperFactory
             VanillaMapperData => _typeToElementNodeMapperFactory(),
             OverridingMapperData overriding =>
                 _overridingElementNodeMapperFactory(_typeToElementNodeMapperFactory(), overriding.Override),
-            OverridingWithDecorationMapper overridingWithDecoration =>
+            OverridingWithDecorationMapperData overridingWithDecoration =>
                 _overridingElementNodeWithDecorationMapperFactory(
                     _typeToElementNodeMapperFactory(),
                     overridingWithDecoration.Override),

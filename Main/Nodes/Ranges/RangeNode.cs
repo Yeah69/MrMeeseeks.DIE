@@ -45,7 +45,8 @@ internal interface IRangeNode : INode
 
 internal abstract class RangeNode : IRangeNode
 {
-    protected readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> CreateFunctionNodeFactory;
+    private readonly IMapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
+    private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
     private readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> _voidFunctionNodeFactory;
@@ -91,13 +92,15 @@ internal abstract class RangeNode : IRangeNode
     internal RangeNode(
         string name,
         IUserDefinedElements userDefinedElements,
+        IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IDisposalHandlingNode> disposalHandlingNodeFactory)
     {
-        CreateFunctionNodeFactory = createFunctionNodeFactory;
+        _mapperDataToFunctionKeyTypeConverter = mapperDataToFunctionKeyTypeConverter;
+        _createFunctionNodeFactory = createFunctionNodeFactory;
         _multiFunctionNodeFactory = multiFunctionNodeFactory;
         _rangedInstanceFunctionGroupNodeFactory = rangedInstanceFunctionGroupNodeFactory;
         _voidFunctionNodeFactory = voidFunctionNodeFactory;
@@ -134,7 +137,7 @@ internal abstract class RangeNode : IRangeNode
             type,
             callingFunction,
             _createFunctions,
-            () => CreateFunctionNodeFactory(
+            () => _createFunctionNodeFactory(
                     new VanillaMapperData(),
                     type,
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
@@ -148,10 +151,10 @@ internal abstract class RangeNode : IRangeNode
         SynchronicityDecision synchronicity,
         IFunctionNode callingFunction) =>
         FunctionResolutionUtility.GetOrCreateFunctionCall(
-            type,
+            _mapperDataToFunctionKeyTypeConverter.Convert(mapperData, type),
             callingFunction,
             _createFunctions,
-            () => CreateFunctionNodeFactory(
+            () => _createFunctionNodeFactory(
                     mapperData,
                     type,
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())

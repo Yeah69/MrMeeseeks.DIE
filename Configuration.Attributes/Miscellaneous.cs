@@ -14,19 +14,7 @@ public class CustomScopeForRootTypesAttribute : Attribute
 }
 
 /// <summary>
-/// Enhances (transient) scopes by definitions for initialized instances.
-/// See https://die.mrmeeseeks.dev/scoping/
-/// </summary>
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class InitializedInstancesForScopesAttribute : Attribute
-{
-    public InitializedInstancesForScopesAttribute(params Type[] types)
-    {
-    }
-}
-
-/// <summary>
-/// Enhances (transient) scopes by definitions for initialized instances.
+/// Enhances ranges (containers & scopes) by definitions for initialized instances.
 /// See https://die.mrmeeseeks.dev/scoping/
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]

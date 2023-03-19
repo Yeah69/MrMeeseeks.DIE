@@ -55,11 +55,6 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
                     .GetAttributes()
                     .FirstOrDefault(ad =>
                         CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                            containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesForScopesAttribute)) 
-                ?? scopeType
-                    .GetAttributes()
-                    .FirstOrDefault(ad =>
-                        CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
                             containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesAttribute)))
                 is { ConstructorArguments.Length: 1 } initializedInstancesAttribute
             && initializedInstancesAttribute.ConstructorArguments[0].Kind == TypedConstantKind.Array)

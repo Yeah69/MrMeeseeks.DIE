@@ -57,7 +57,7 @@ internal sealed partial class MsContainer
     [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ScopeCheckTypeProperties))]
     [CustomScopeForRootTypes(typeof(ScopeNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ScopeInfo), typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ScopeInfo), typeof(ReferenceGenerator))]
     private sealed partial class DIE_TransientScope_ScopeNodeRoot
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
@@ -71,7 +71,7 @@ internal sealed partial class MsContainer
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
     [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ScopeCheckTypeProperties))]
     [CustomScopeForRootTypes(typeof(TransientScopeNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ScopeInfo), typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ScopeInfo), typeof(ReferenceGenerator))]
     private sealed partial class DIE_TransientScope_TransientScopeNodeRoot
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
@@ -84,63 +84,63 @@ internal sealed partial class MsContainer
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]
     [CustomScopeForRootTypes(typeof(CreateFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateScopeFunctionNode))]
     [CustomScopeForRootTypes(typeof(CreateScopeFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateScopeFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateTransientScopeFunctionNode))]
     [CustomScopeForRootTypes(typeof(CreateTransientScopeFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateTransientScopeFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(EntryFunctionNode))]
     [CustomScopeForRootTypes(typeof(EntryFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_EntryFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(LocalFunctionNode))]
     [CustomScopeForRootTypes(typeof(LocalFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_LocalFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceFunctionNode))]
     [CustomScopeForRootTypes(typeof(RangedInstanceFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_RangedInstanceFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceInterfaceFunctionNode))]
     [CustomScopeForRootTypes(typeof(RangedInstanceInterfaceFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_RangedInstanceInterfaceFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(MultiFunctionNode))]
     [CustomScopeForRootTypes(typeof(MultiFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_MultiFunctionNodeRoot
     {
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(VoidFunctionNode))]
     [CustomScopeForRootTypes(typeof(VoidFunctionNodeRoot))]
-    [InitializedInstancesForScopes(typeof(ReferenceGenerator))]
+    [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_VoidFunctionNodeRoot
     {
     }

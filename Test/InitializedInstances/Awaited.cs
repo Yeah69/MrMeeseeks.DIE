@@ -31,7 +31,7 @@ internal class Root : IScopeRoot
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {
-    [InitializedInstancesForScopes(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
+    [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
     private sealed partial class DIE_DefaultScope
     {
         

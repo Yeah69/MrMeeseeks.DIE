@@ -18,9 +18,9 @@ public class CustomScopeForRootTypesAttribute : Attribute
 /// See https://die.mrmeeseeks.dev/scoping/
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class InitializedInstancesForScopesAttribute : Attribute
+public class InitializedInstancesAttribute : Attribute
 {
-    public InitializedInstancesForScopesAttribute(params Type[] types)
+    public InitializedInstancesAttribute(params Type[] types)
     {
     }
 }

@@ -49,12 +49,18 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         ContainerReference = referenceGenerator.Generate("_container");
         ContainerParameterReference = referenceGenerator.Generate("container");
 
+        // todo support multiple initialized instances attributes
         if (scopeInfo.ScopeType is { } scopeType
-            && scopeType
+            && (scopeType
                     .GetAttributes()
                     .FirstOrDefault(ad =>
                         CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                            containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesForScopesAttribute))
+                            containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesForScopesAttribute)) 
+                ?? scopeType
+                    .GetAttributes()
+                    .FirstOrDefault(ad =>
+                        CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
+                            containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesAttribute)))
                 is { ConstructorArguments.Length: 1 } initializedInstancesAttribute
             && initializedInstancesAttribute.ConstructorArguments[0].Kind == TypedConstantKind.Array)
         {

@@ -20,7 +20,6 @@ internal static class Diagnostics
                 true),
             Location.None);
     }
-        
     
     internal static Diagnostic CircularReferenceAmongFactories(FunctionCycleDieException exception, ExecutionPhase phase)
     {
@@ -29,6 +28,19 @@ internal static class Diagnostics
         return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_01",
                 "Circular Reference Exception (among factories)",
                 $"[DIE] {PhaseToString(phase)} This container and/or its configuration lead to a circular reference among factory functions, which need to be generated. The involved factory functions are: {cycleText}",
+                "Error",
+                DiagnosticSeverity.Error,
+                true),
+            Location.None);
+    }
+    
+    internal static Diagnostic CircularReferenceAmongInitializedInstances(InitializedInstanceCycleDieException exception, ExecutionPhase phase)
+    {
+        var cycleText = string.Join(" --> ", exception.Cycle);
+        
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_68_02",
+                "Circular Reference Exception (among initialized instances)",
+                $"[DIE] {PhaseToString(phase)} This container and/or its configuration lead to a circular resolution of initialized instances, which need to be generated. The involved initialized instances are: {cycleText}",
                 "Error",
                 DiagnosticSeverity.Error,
                 true),

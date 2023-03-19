@@ -14,9 +14,12 @@ internal interface IFunctionNode : INode
     string ReturnedTypeFullName { get; }
     string Description { get; }
     HashSet<IFunctionNode> CalledFunctions { get; }
+    IEnumerable<IFunctionNode> CalledFunctionsOfSameRange { get; }
+    IEnumerable<IInitializedInstanceNode> UsedInitializedInstance { get; }
     void RegisterAwaitableNode(IAwaitableNode awaitableNode);
     void RegisterCalledFunction(IFunctionNode calledFunction);
     void RegisterCallingFunction(IFunctionNode callingFunction);
+    void RegisterUsedInitializedInstance(IInitializedInstanceNode initializedInstance);
     void CheckSynchronicity();
     void ForceToAsync();
     string? AsyncTypeFullName { get; }

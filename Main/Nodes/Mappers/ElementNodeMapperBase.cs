@@ -154,7 +154,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         {
             if (lazyType.TypeArguments.SingleOrDefault() is not { } valueType)
             {
-                return _errorNodeFactory(lazyType.TypeArguments.Length switch
+                return _errorNodeFactory(lazyType.TypeArguments.Length switch 
                         {
                             0 => "Lazy: No type argument",
                             > 1 => "Lazy: more than one type argument",
@@ -298,7 +298,10 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         if (config.CheckForInitializedInstance && !ParentFunction.CheckIfReturnedType(implementationType))
         {
             if (ParentRange.GetInitializedNode(implementationType) is { } initializedInstanceNode)
+            {
+                ParentFunction.RegisterUsedInitializedInstance(initializedInstanceNode);
                 return initializedInstanceNode;
+            }
         }
         if (config.CheckForScopeRoot)
         {

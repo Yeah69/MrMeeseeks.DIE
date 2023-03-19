@@ -1,20 +1,20 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test.InitializedInstances.Reordering;
 
 internal class DependencyA
 {
-    internal DependencyA() {}
+    internal DependencyA(DependencyC c, DependencyB b) {}
 }
 
 internal class DependencyB
 {
-    internal DependencyB(DependencyA a) {}
+    internal DependencyB(DependencyC c) {}
 }
 
 internal class DependencyC
 {
-    internal DependencyC(DependencyB b) {}
 }
 
 internal class Root : IScopeRoot
@@ -29,5 +29,15 @@ internal sealed partial class Container
     private sealed partial class DIE_DefaultScope
     {
         
+    }
+}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        using var container = new Container();
+        var _ = container.Create();
     }
 }

@@ -41,6 +41,8 @@ internal interface IRangeNode : INode
     IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IInitializedInstanceNode? GetInitializedNode(INamedTypeSymbol type);
     IFunctionCallNode BuildInitializationCall(IFunctionNode callingFunction);
+
+    void CycleDetectionAndReorderingOfInitializedInstances();
 }
 
 internal abstract class RangeNode : IRangeNode
@@ -174,6 +176,12 @@ internal abstract class RangeNode : IRangeNode
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty));
 
         return voidFunction.CreateCall(null, callingFunction);
+    }
+
+    public void CycleDetectionAndReorderingOfInitializedInstances()
+    {
+        foreach (var initializationFunction in _initializationFunctions)
+            initializationFunction.ReorderOrDetectCycle();
     }
 
     public ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 

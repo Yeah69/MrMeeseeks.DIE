@@ -78,5 +78,6 @@ internal class AsyncFunctionCallNode : IAsyncFunctionCallNode
     public string? OwnerReference { get; }
     public string FunctionName { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
+    public IFunctionNode CalledFunction => _calledFunction;
     public bool Awaited { get; } = false;
 }

@@ -12,6 +12,7 @@ namespace MrMeeseeks.DIE.Nodes.Functions;
 internal interface IVoidFunctionNode : IFunctionNode
 {
     IReadOnlyList<(IFunctionCallNode, IInitializedInstanceNode)> Initializations { get; }
+    void ReorderOrDetectCycle();
 }
 
 internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeInstance
@@ -23,11 +24,11 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
         // parameters
         IReadOnlyList<IInitializedInstanceNode> initializedInstanceNodes,
         IReadOnlyList<ITypeSymbol> parameters,
+        
+        // dependencies
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator,
-        
-        // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -75,4 +76,88 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
 
     public IReadOnlyList<(IFunctionCallNode, IInitializedInstanceNode)> Initializations { get; private set; } =
         Array.Empty<(IFunctionCallNode, IInitializedInstanceNode)>();
+
+    public void ReorderOrDetectCycle()
+    {
+        var map = new Dictionary<IInitializedInstanceNode, IReadOnlyList<IInitializedInstanceNode>>();
+        foreach (var (initializationFunctionCall, initializedInstance) in Initializations)
+        {
+            var usedInitializedInstances = SelfAndCalledFunctions(initializationFunctionCall.CalledFunction)
+                .SelectMany(f => f.UsedInitializedInstance)
+                .ToList();
+            map[initializedInstance] = usedInitializedInstances;
+        }
+        DetectCycle();
+        
+        // From here on we can assume no cycles
+
+        var unorderedList = Initializations.ToList();
+        var doneNodes = new HashSet<IInitializedInstanceNode>();
+        var orderedList = new List<(IFunctionCallNode, IInitializedInstanceNode)>();
+        while (doneNodes.Count != Initializations.Count)
+        {
+            var nextBatch = unorderedList
+                .Where(i => map[i.Item2].All(x => doneNodes.Contains(x)))
+                .ToList();
+            orderedList.AddRange(nextBatch);
+            foreach (var tuple in nextBatch)
+            {
+                unorderedList.Remove(tuple);
+                doneNodes.Add(tuple.Item2);
+            }
+        }
+
+        Initializations = orderedList;
+
+        IEnumerable<IFunctionNode> SelfAndCalledFunctions(IFunctionNode self)
+        {
+            yield return self;
+            foreach (var calledFunction in self.CalledFunctionsOfSameRange)
+                foreach (var function in SelfAndCalledFunctions(calledFunction))
+                    yield return function;
+        }
+        
+        void DetectCycle()
+        {
+            Queue<IInitializedInstanceNode> roots = new(Initializations.Select(i => i.Item2));
+            HashSet<IInitializedInstanceNode> v = new();
+            HashSet<IInitializedInstanceNode> cf = new();
+            Stack<IInitializedInstanceNode> s = new();
+
+            while (roots.Any() && roots.Dequeue() is {} next)
+                DetectCycleInner(
+                    next, 
+                    v, 
+                    s,
+                    cf);
+
+            void DetectCycleInner(
+                IInitializedInstanceNode current, 
+                ISet<IInitializedInstanceNode> visited, 
+                Stack<IInitializedInstanceNode> stack,
+                ISet<IInitializedInstanceNode> cycleFree)
+            {
+                if (cycleFree.Contains(current))
+                    return; // one of the previous roots checked this node already
+                if (visited.Contains(current))
+                {
+                    var cycleStack = ImmutableStack.Create(current.TypeFullName);
+                    IInitializedInstanceNode i;
+                    do
+                    {
+                        i = stack.Pop();
+                        cycleStack = cycleStack.Push(i.TypeFullName);
+                    } while (i != current && stack.Any());
+                    throw new InitializedInstanceCycleDieException(cycleStack);
+                }
+                visited.Add(current);
+                stack.Push(current);
+                foreach (var neighbor in map[current])
+                    DetectCycleInner(neighbor, visited, stack, cycleFree);
+                cycleFree.Add(current);
+                stack.Pop();
+                visited.Remove(current);
+            }
+        }
+    }
 }

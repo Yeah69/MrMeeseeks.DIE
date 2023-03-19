@@ -19,6 +19,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly List<IAwaitableNode> _awaitableNodes = new();
     private readonly List<ILocalFunctionNode> _localFunctions = new();
     private readonly List<IFunctionNode> _callingFunctions = new();
+    private readonly List<IInitializedInstanceNode> _usedInitializedInstances = new();
 
     private bool _synchronicityCheckedAlready;
 
@@ -92,16 +93,22 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     public HashSet<IFunctionNode> CalledFunctions { get; } = new ();
 
+    public IEnumerable<IFunctionNode> CalledFunctionsOfSameRange =>
+        CalledFunctions.Where(cf => Equals(cf.RangeFullName, RangeFullName));
+
+    public IEnumerable<IInitializedInstanceNode> UsedInitializedInstance => _usedInitializedInstances;
+
     public void RegisterAwaitableNode(IAwaitableNode awaitableNode) => 
         _awaitableNodes.Add(awaitableNode);
 
     public void RegisterCalledFunction(IFunctionNode calledFunction) => 
         CalledFunctions.Add(calledFunction);
 
-    public void RegisterCallingFunction(IFunctionNode callingFunction)
-    {
+    public void RegisterCallingFunction(IFunctionNode callingFunction) => 
         _callingFunctions.Add(callingFunction);
-    }
+
+    public void RegisterUsedInitializedInstance(IInitializedInstanceNode initializedInstance) => 
+        _usedInitializedInstances.Add(initializedInstance);
 
     protected virtual void OnBecameAsync() {}
 

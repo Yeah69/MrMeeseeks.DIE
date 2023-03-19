@@ -8,6 +8,7 @@ internal interface IFunctionCallNode : IElementNode, IAwaitableNode
     string? OwnerReference { get; }
     string FunctionName { get; }
     IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
+    IFunctionNode CalledFunction { get; }
 }
 
 internal abstract class FunctionCallNode : IFunctionCallNode
@@ -41,7 +42,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
     public string FunctionName { get; }
     public virtual string? OwnerReference { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
+    public IFunctionNode CalledFunction => _calledFunction;
 
     public bool Awaited => _calledFunction.SynchronicityDecision is not SynchronicityDecision.Sync;
-    public SynchronicityDecision SynchronicityDecision => _calledFunction.SynchronicityDecision;
 }

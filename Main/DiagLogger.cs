@@ -38,6 +38,9 @@ internal class DiagLogger : IDiagLogger, IContainerInstance
             case FunctionCycleDieException functionCycleDieException:
                 Log(Diagnostics.CircularReferenceAmongFactories(functionCycleDieException, phase));
                 break;
+            case InitializedInstanceCycleDieException initializedInstanceCycleDieException:
+                Log(Diagnostics.CircularReferenceAmongInitializedInstances(initializedInstanceCycleDieException, phase));
+                break;
             case ValidationDieException validationDieException:
                 foreach (var error in validationDieException.Diagnostics)
                     Log(error);

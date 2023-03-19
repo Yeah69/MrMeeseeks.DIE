@@ -1,10 +1,11 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test.InitializedInstances.Cycle;
 
 internal class DependencyA
 {
-    internal DependencyA() {}
+    internal DependencyA(DependencyC c) {}
 }
 
 internal class DependencyB
@@ -29,5 +30,15 @@ internal sealed partial class Container
     private sealed partial class DIE_DefaultScope
     {
         
+    }
+}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        var container = new Container();
+        Assert.Equal(DieExceptionKind.InitializedInstanceCycle, container.ExceptionKind_0_0);
     }
 }

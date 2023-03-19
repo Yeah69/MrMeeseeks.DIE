@@ -136,6 +136,12 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             call.AdjustToCurrentCalledFunctionSynchronicity();
         
         _functionCycleTracker.DetectCycle(this);
+        
+        CycleDetectionAndReorderingOfInitializedInstances();
+        foreach (var scope in Scopes)
+            scope.CycleDetectionAndReorderingOfInitializedInstances();
+        foreach (var transientScope in TransientScopes)
+            transientScope.CycleDetectionAndReorderingOfInitializedInstances();
     }
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitContainerNode(this);

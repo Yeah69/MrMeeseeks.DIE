@@ -164,11 +164,11 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         if (maybeInitialization is { } initialization)
         {
             var asyncPrefix = initialization.Awaited
-                ? "async "
+                ? "await "
                 : "";
 
             _code.AppendLine(
-                $"{asyncPrefix}{ownerReference}.{initialization.FunctionName}({ string.Join(", ", initialization.Parameters.Select(p =>$"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))});");
+                $"{asyncPrefix}{ownerReference}.{initialization.FunctionName}({string.Join(", ", initialization.Parameters.Select(p =>$"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))});");
         }
     }
 

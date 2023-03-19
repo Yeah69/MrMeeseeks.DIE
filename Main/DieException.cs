@@ -6,6 +6,7 @@ public enum DieExceptionKind
     NoneDIE,
     ImplementationCycle,
     FunctionCycle,
+    InitializedInstanceCycle,
     Validation,
     Resolution,
     Compilation,
@@ -39,6 +40,14 @@ public class FunctionCycleDieException : DieException
     public FunctionCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
 
     public override DieExceptionKind Kind => DieExceptionKind.FunctionCycle;
+    public IImmutableStack<string> Cycle { get; }
+}
+
+public class InitializedInstanceCycleDieException : DieException
+{
+    public InitializedInstanceCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
+
+    public override DieExceptionKind Kind => DieExceptionKind.InitializedInstanceCycle;
     public IImmutableStack<string> Cycle { get; }
 }
 

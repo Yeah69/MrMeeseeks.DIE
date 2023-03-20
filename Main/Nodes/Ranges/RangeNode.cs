@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -51,13 +52,13 @@ internal abstract class RangeNode : IRangeNode
     private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
-    private readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> _voidFunctionNodeFactory;
+    protected readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> VoidFunctionNodeFactory;
     protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNode>> _multiFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
 
     private readonly Dictionary<ITypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new(CustomSymbolEqualityComparer.IncludeNullability);
-    
-    private readonly List<IVoidFunctionNode> _initializationFunctions = new();
+
+    protected readonly List<IVoidFunctionNode> _initializationFunctions = new();
 
     protected readonly Dictionary<INamedTypeSymbol, IInitializedInstanceNode> InitializedInstanceNodesMap = new(CustomSymbolEqualityComparer.IncludeNullability);
 
@@ -93,19 +94,22 @@ internal abstract class RangeNode : IRangeNode
 
     internal RangeNode(
         string name,
+        INamedTypeSymbol? rangeType,
         IUserDefinedElements userDefinedElements,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        IContainerWideContext containerWideContext,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
-        Func<IDisposalHandlingNode> disposalHandlingNodeFactory)
+        Func<IDisposalHandlingNode> disposalHandlingNodeFactory,
+        Func<INamedTypeSymbol, IInitializedInstanceNode> initializedInstanceNodeFactory)
     {
         _mapperDataToFunctionKeyTypeConverter = mapperDataToFunctionKeyTypeConverter;
         _createFunctionNodeFactory = createFunctionNodeFactory;
         _multiFunctionNodeFactory = multiFunctionNodeFactory;
         _rangedInstanceFunctionGroupNodeFactory = rangedInstanceFunctionGroupNodeFactory;
-        _voidFunctionNodeFactory = voidFunctionNodeFactory;
+        VoidFunctionNodeFactory = voidFunctionNodeFactory;
         Name = name;
 
         DisposalHandling = disposalHandlingNodeFactory();
@@ -120,6 +124,25 @@ internal abstract class RangeNode : IRangeNode
         {
             AddForDisposalAsync = true;
             DisposalHandling.RegisterAsyncDisposal();
+        }
+        
+        if (rangeType is { })
+        {
+            var types = rangeType
+                .GetAttributes()
+                .Where(ad =>
+                    CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
+                        containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesAttribute))
+                .Where(ad =>
+                    ad is { ConstructorArguments.Length: 1 } &&
+                    ad.ConstructorArguments[0].Kind == TypedConstantKind.Array)
+                .SelectMany(ad => ad
+                    .ConstructorArguments[0]
+                    .Values
+                    .Select(tc => tc.Value)
+                    .OfType<INamedTypeSymbol>());
+            foreach (var type in types)
+                InitializedInstanceNodesMap[type] = initializedInstanceNodeFactory(type);
         }
     }
     
@@ -169,7 +192,7 @@ internal abstract class RangeNode : IRangeNode
         var voidFunction = FunctionResolutionUtility.GetOrCreateFunction(
             callingFunction,
             _initializationFunctions,
-            () => _voidFunctionNodeFactory(
+            () => VoidFunctionNodeFactory(
                     InitializedInstances.ToList(),
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function

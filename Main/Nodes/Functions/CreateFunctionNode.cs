@@ -23,10 +23,12 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode,
     private readonly IMapperFactory _mapperFactory;
 
     public CreateFunctionNode(
+        // parameters
         MapperData mapperData,
         ITypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
         
+        // dependencies
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator, 

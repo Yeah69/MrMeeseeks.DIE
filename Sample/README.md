@@ -1,1 +1,0 @@
-**DIE** is a recursive acronym stands for **D**ependency **I**njection DI**E**

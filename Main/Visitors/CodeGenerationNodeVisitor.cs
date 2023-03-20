@@ -44,6 +44,8 @@ namespace {{container.Namespace}}
 sealed partial class {{container.Name}} : {{container.TransientScopeInterface.FullName}}{{disposableImplementation}}
 {
 """);
+        foreach (var containerCreateContainerFunction in container.CreateContainerFunctions)
+            VisitCreateContainerFunctionNode(containerCreateContainerFunction);
 
         foreach (var entryFunctionNode in container.RootFunctions)
             VisitEntryFunctionNode(entryFunctionNode);
@@ -69,6 +71,28 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
 }
 }
 #nullable disable
+""");
+    }
+
+    public void VisitCreateContainerFunctionNode(ICreateContainerFunctionNode createContainerFunction)
+    {
+        var asyncPrefix = createContainerFunction.InitializationAwaited
+            ? "async "
+            : "";
+        var awaitPrefix = createContainerFunction.InitializationAwaited
+            ? "await "
+            : "";
+        
+        _code.AppendLine($$"""
+public static {{asyncPrefix}}{{createContainerFunction.ReturnTypeFullName}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", createContainerFunction.Parameters.Select(p => $"{p.TypeFullName} {p.Reference.PrefixAtIfKeyword()}"))}})
+{
+{{createContainerFunction.ContainerTypeFullName}} {{createContainerFunction.ContainerReference}} = new {{createContainerFunction.ContainerTypeFullName}}({{string.Join(", ", createContainerFunction.Parameters.Select(p => $"{p.Reference.PrefixAtIfKeyword()}: {p.Reference.PrefixAtIfKeyword()}"))}});
+""");
+        if (createContainerFunction.InitializationFunctionName is { } initializationFunctionName)
+            _code.AppendLine($"{awaitPrefix}{createContainerFunction.ContainerReference}.{initializationFunctionName}();");
+        _code.AppendLine($$"""
+return {{createContainerFunction.ContainerReference}};
+}
 """);
     }
 

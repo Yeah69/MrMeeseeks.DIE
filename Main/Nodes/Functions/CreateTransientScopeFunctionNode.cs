@@ -20,8 +20,11 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
     private readonly Func<IElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper> _transientScopeDisposalElementNodeMapperFactory;
 
     public CreateTransientScopeFunctionNode(
+        // parameters
         INamedTypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
+        
+        // dependencies
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 

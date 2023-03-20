@@ -28,9 +28,12 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
 
     public RangedInstanceFunctionNode(
+        // parameters
         ScopeLevel level,
         INamedTypeSymbol type, 
         IReadOnlyList<ITypeSymbol> parameters,
+        
+        // dependencies
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 

@@ -20,8 +20,11 @@ internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, 
     private readonly List<IRangedInstanceFunctionNode> _implementations = new(); 
     
     public RangedInstanceInterfaceFunctionNode(
+        // parameters
         INamedTypeSymbol type, 
         IReadOnlyList<ITypeSymbol> parameters,
+        
+        // dependencies
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator, 

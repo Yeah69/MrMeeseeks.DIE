@@ -11,6 +11,7 @@ namespace MrMeeseeks.DIE.Visitors;
 internal interface INodeVisitor
 {
     void VisitContainerNode(IContainerNode container);
+    void VisitCreateContainerFunctionNode(ICreateContainerFunctionNode createContainerFunction);
     void VisitTransientScopeInterfaceNode(ITransientScopeInterfaceNode transientScopeInterface);
     void VisitScopeNode(IScopeNode scope);
     void VisitTransientScopeNode(ITransientScopeNode transientScope);

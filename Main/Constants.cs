@@ -16,6 +16,7 @@ internal static class Constants
     internal const string TransientScopeName = "TransientScope";
     internal const string DefaultTransientScopeName = $"{DieAbbreviation}_Default{TransientScopeName}";
     internal const string CustomTransientScopeName = $"{DieAbbreviation}_{TransientScopeName}";
+    internal const string CreateContainerFunctionName = $"{DieAbbreviation}_CreateContainer";
     
     // User-defined scope elements
     internal const string UserDefinedFactory = $"{DieAbbreviation}_Factory";

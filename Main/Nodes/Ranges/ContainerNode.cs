@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -22,6 +23,7 @@ internal interface IContainerNode : IRangeNode
     string TransientScopeDisposalReference { get; }
     string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
+    IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; }
 }
 
 internal record BuildJob(INode Node, ImmutableStack<INamedTypeSymbol> PreviousImplementations);
@@ -32,6 +34,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
+    private readonly Func<IMethodSymbol, IVoidFunctionNode?, ICreateContainerFunctionNode> _creatContainerFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
     private readonly Lazy<DisposalType> _lazyDisposalType;
@@ -54,12 +57,15 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         IFunctionNode callingFunction) =>
         BuildRangedInstanceCall(ownerReference, type, callingFunction, ScopeLevel.Container);
 
+    public IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; private set; } = null!;
+
     internal ContainerNode(
         IContainerInfoContext containerInfoContext,
         Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        IContainerWideContext containerWideContext,
         Lazy<ITransientScopeInterfaceNode> lazyTransientScopeInterfaceNode,
         Lazy<IScopeManager> lazyScopeManager,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
@@ -67,21 +73,27 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
-        Func<IDisposalHandlingNode> disposalHandlingNodeFactory)
+        Func<IDisposalHandlingNode> disposalHandlingNodeFactory,
+        Func<INamedTypeSymbol, IInitializedInstanceNode> initializedInstanceNodeFactory,
+        Func<IMethodSymbol, IVoidFunctionNode?, ICreateContainerFunctionNode> creatContainerFunctionNodeFactory)
         : base (
             containerInfoContext.ContainerInfo.Name, 
+            containerInfoContext.ContainerInfo.ContainerType,
             userDefinedElementsFactory((containerInfoContext.ContainerInfo.ContainerType, containerInfoContext.ContainerInfo.ContainerType)), 
             mapperDataToFunctionKeyTypeConverter,
+            containerWideContext,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
             voidFunctionNodeFactory,
-            disposalHandlingNodeFactory)
+            disposalHandlingNodeFactory,
+            initializedInstanceNodeFactory)
     {
         _containerInfo = containerInfoContext.ContainerInfo;
         _functionCycleTracker = functionCycleTracker;
         _lazyTransientScopeInterfaceNode = lazyTransientScopeInterfaceNode;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
+        _creatContainerFunctionNodeFactory = creatContainerFunctionNodeFactory;
         Namespace = _containerInfo.Namespace;
         FullName = _containerInfo.FullName;
         
@@ -108,6 +120,23 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 
     public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
+        var initializedInstancesFunction = InitializedInstances.Any()
+            ? VoidFunctionNodeFactory(
+                    InitializedInstances.ToList(),
+                    Array.Empty<ITypeSymbol>())
+                .Function
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty)
+            : null;
+        
+        if (initializedInstancesFunction is {})
+            _initializationFunctions.Add(initializedInstancesFunction);
+
+        CreateContainerFunctions = _containerInfo
+            .ContainerType
+            .InstanceConstructors
+            .Select(ic => _creatContainerFunctionNodeFactory(ic, initializedInstancesFunction))
+            .ToList();
+
         TransientScopeInterface.RegisterRange(this);
         base.Build(implementationStack);
         foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)

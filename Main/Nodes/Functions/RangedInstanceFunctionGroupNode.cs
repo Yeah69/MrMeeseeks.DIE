@@ -20,11 +20,13 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
     private readonly List<IRangedInstanceFunctionNode> _overloads = new();
 
     internal RangedInstanceFunctionGroupNode(
+        // parameters
         ScopeLevel level,
         INamedTypeSymbol type,
+        
+        // dependencies
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator,
-        
         Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
         : base(level, type, referenceGenerator)
     {

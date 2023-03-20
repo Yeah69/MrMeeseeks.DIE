@@ -19,9 +19,12 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
     private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     public EntryFunctionNode(
+        // parameters
         ITypeSymbol typeSymbol, 
         string prefix, 
         IReadOnlyList<ITypeSymbol> parameters,
+        
+        // dependencies
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer, 
         IContainerWideContext containerWideContext,

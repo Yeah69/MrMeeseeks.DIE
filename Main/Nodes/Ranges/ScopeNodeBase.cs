@@ -5,7 +5,6 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Roots;
-using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -34,13 +33,16 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         Func<INamedTypeSymbol, IInitializedInstanceNode> initializedInstanceNodeFactory)
         : base(
             scopeInfo.Name, 
+            scopeInfo.ScopeType,
             userDefinedElements, 
             mapperDataToFunctionKeyTypeConverter,
+            containerWideContext,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
             voidFunctionNodeFactory,
-            disposalHandlingNodeFactory)
+            disposalHandlingNodeFactory,
+            initializedInstanceNodeFactory)
     {
         ParentContainer = parentContainer;
         ScopeManager = scopeManager;
@@ -48,25 +50,6 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         ContainerFullName = parentContainer.FullName;
         ContainerReference = referenceGenerator.Generate("_container");
         ContainerParameterReference = referenceGenerator.Generate("container");
-
-        // todo support multiple initialized instances attributes
-        if (scopeInfo.ScopeType is { } scopeType
-            && (scopeType
-                    .GetAttributes()
-                    .FirstOrDefault(ad =>
-                        CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                            containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesAttribute)))
-                is { ConstructorArguments.Length: 1 } initializedInstancesAttribute
-            && initializedInstancesAttribute.ConstructorArguments[0].Kind == TypedConstantKind.Array)
-        {
-            var types = initializedInstancesAttribute
-                 .ConstructorArguments[0]
-                 .Values
-                 .Select(tc => tc.Value)
-                 .OfType<INamedTypeSymbol>();
-            foreach (var type in types)
-                InitializedInstanceNodesMap[type] = initializedInstanceNodeFactory(type);
-        }
     }
 
     protected override IScopeManager ScopeManager { get; }

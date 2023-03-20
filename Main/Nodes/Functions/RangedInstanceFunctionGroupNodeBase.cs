@@ -17,8 +17,11 @@ internal interface IRangedInstanceFunctionGroupNodeBase : INode
 internal abstract class RangedInstanceFunctionGroupNodeBase : IRangedInstanceFunctionGroupNodeBase
 {
     internal RangedInstanceFunctionGroupNodeBase(
+        // parameters
         ScopeLevel level,
         INamedTypeSymbol type,
+        
+        // dependencies
         IReferenceGenerator referenceGenerator)
     {
         Level = level;

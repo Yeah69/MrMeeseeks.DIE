@@ -18,9 +18,12 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
     private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
     public LocalFunctionNode(
+        // parameters
         ITypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters, 
+        
+        // dependencies
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 

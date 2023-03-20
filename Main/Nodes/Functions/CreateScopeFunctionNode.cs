@@ -19,8 +19,11 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
 
     public CreateScopeFunctionNode(
+        // parameters
         INamedTypeSymbol typeSymbol, 
         IReadOnlyList<ITypeSymbol> parameters,
+        
+        // dependencies
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 

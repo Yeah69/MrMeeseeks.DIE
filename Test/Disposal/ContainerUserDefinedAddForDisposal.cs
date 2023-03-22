@@ -15,6 +15,8 @@ internal class Dependency : IDisposable
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     private Dependency DIE_Factory_Dependency
     {
         get
@@ -33,7 +35,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         await container.DisposeAsync().ConfigureAwait(false);
         Assert.True(instance.IsDisposed);

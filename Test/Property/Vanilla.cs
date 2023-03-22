@@ -13,6 +13,7 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -20,7 +21,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var hasInitProperty = container.Create();
         Assert.NotNull(hasInitProperty);
         Assert.NotNull(hasInitProperty.Dependency);

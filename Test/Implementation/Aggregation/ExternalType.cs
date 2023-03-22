@@ -11,7 +11,7 @@ namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.ExternalType;
 [CreateFunction(typeof(Func<string, FileInfo>), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -19,7 +19,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var path = @"C:\HelloWorld.txt";
         var fileInfo = container.Create()(path);
         Assert.NotNull(fileInfo);

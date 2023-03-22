@@ -47,6 +47,8 @@ internal class ScopeRoot1 : IScopeRoot
 [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface))]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
     [CustomScopeForRootTypes(typeof(ScopeRoot0))]
     private sealed partial class DIE_Scope_0
@@ -67,7 +69,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container0Then1 = new Container();
+        using var container0Then1 = Container.DIE_CreateContainer();
 
         var _0Then1_0_2 = container0Then1.Create0().Decorated;
         var _0Then1_0_1 = _0Then1_0_2.Decorated;
@@ -91,7 +93,7 @@ public class Tests
         Assert.Same(_0Then1_1_0, _0Then1_SanityCheck);
         
 
-        using var container1Then0 = new Container();
+        using var container1Then0 = Container.DIE_CreateContainer();
 
         var _1Then0_1_1 = container1Then0.Create1().Decorated;
         var _1Then0_1_0 = _1Then0_1_1.Decorated;

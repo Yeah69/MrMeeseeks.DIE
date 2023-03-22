@@ -22,7 +22,7 @@ internal class ScopeWithTransientScopeInstanceAbove : IScopeRoot
 [CreateFunction(typeof(ScopeWithTransientScopeInstanceAbove), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -30,7 +30,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var scopeRoot = container.Create();
         Assert.IsType<Dependency>(scopeRoot.InnerScope.Dependency);
     }

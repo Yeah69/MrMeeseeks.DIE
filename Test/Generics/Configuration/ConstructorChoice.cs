@@ -20,14 +20,17 @@ internal class Implementation<T0>
 
 [ConstructorChoice(typeof(Implementation<>), typeof(DependencyB))]
 [CreateFunction(typeof(Implementation<int>), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.IsType<DependencyB>(instance.Dependency);
     }

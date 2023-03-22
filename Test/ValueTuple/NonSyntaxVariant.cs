@@ -27,6 +27,8 @@ internal sealed partial class Container
     private int _i;
 
     private int DIE_Factory_Counter() => _i++;
+    
+    private Container() {}
 }
 
 public class Tests
@@ -34,7 +36,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var nonSyntaxValueTupleBase = container.Create();
         Assert.Equal(25, nonSyntaxValueTupleBase.Dependency.Item26);
     }

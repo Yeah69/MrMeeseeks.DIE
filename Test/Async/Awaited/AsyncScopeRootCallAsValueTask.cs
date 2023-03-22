@@ -28,6 +28,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ValueTask<ScopeRoot>), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -35,7 +36,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var root = await container.Create().ConfigureAwait(false);
         Assert.True(root.Dep.IsInitialized);
     }

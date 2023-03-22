@@ -69,6 +69,7 @@ internal class Composite : ITaskInitializer, IInterface, IComposite<IInterface>
 [CreateFunction(typeof(Task<IInterface>), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -76,7 +77,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = await container.Create().ConfigureAwait(false);
         Assert.IsType<Composite>(instance);
         Assert.Equal(4, ((Composite) instance).Count);

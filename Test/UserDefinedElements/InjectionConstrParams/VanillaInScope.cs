@@ -21,6 +21,8 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     private sealed partial class DIE_DefaultScope
     {
         [UserDefinedConstructorParametersInjection(typeof(Dependency))]
@@ -33,7 +35,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create().Dependency;
         Assert.Equal(69, instance.Number);
     }

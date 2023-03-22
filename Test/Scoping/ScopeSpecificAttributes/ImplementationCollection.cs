@@ -31,6 +31,8 @@ internal class Scope : IScopeRoot
 [CreateFunction(typeof(Scope), "Create2")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyScope))]
     private sealed partial class DIE_DefaultTransientScope
@@ -51,7 +53,7 @@ public class Tests
     [Fact]
     public void Container()
     {
-        using var container = new Container();
+        using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create0();
         Assert.Equal(3, dependencies.Count);
         Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyContainer));
@@ -61,7 +63,7 @@ public class Tests
     [Fact]
     public void TransientScope()
     {
-        using var container = new Container();
+        using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create1();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyTransientScope));
@@ -69,7 +71,7 @@ public class Tests
     [Fact]
     public void Scope()
     {
-        using var container = new Container();
+        using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create2();
         Assert.Equal(1, dependencies.Dependencies.Count);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyScope));

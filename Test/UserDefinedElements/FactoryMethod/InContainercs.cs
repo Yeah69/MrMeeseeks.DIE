@@ -14,6 +14,8 @@ internal class Wrapper
 internal sealed partial class Container
 {
     private string DIE_Factory_Yeah() => "Yeah";
+    
+    private Container() {}
 }
 
 public class Tests
@@ -22,7 +24,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var wrapper = container.Create();
         Assert.Equal("Yeah", wrapper.Property);
     }

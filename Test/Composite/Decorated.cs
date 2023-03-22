@@ -57,7 +57,7 @@ internal class Composite : IInterface, IComposite<IInterface>
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "CreateCollection")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -65,7 +65,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var composite = container.CreateDep();
         Assert.IsType<DecoratorB>(composite);
         Assert.IsType<Composite>(composite.Decorated);
@@ -82,7 +82,7 @@ public class Tests
     [Fact]
     public void TestList()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {

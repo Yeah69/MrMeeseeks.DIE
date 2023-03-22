@@ -29,6 +29,8 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     private sealed partial class DIE_DefaultScope
     {
         private Dependency DIE_Factory_Dependency
@@ -50,7 +52,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         await container.DisposeAsync().ConfigureAwait(false);
         Assert.True(instance.Dependency.IsDisposed);

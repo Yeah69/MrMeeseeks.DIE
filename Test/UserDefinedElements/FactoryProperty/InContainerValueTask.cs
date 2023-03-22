@@ -15,6 +15,8 @@ internal class Wrapper
 internal sealed partial class Container
 {
     private ValueTask<string> DIE_Factory_Yeah => new ("Yeah");
+    
+    private Container() {}
 }
 
 public class Tests
@@ -23,7 +25,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var wrapper = await container.Create().ConfigureAwait(false);
         Assert.Equal("Yeah", wrapper.Property);
     }

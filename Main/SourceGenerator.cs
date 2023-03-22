@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -38,42 +39,6 @@ public class SourceGenerator : ISourceGenerator
                 wellKnownTypesCollections,
                 wellKnownTypesMiscellaneous);
             DiagLogger diagLogger = new DiagLogger(errorDescriptionInsteadOfBuildFailure, context);
-            var validateUserDefinedAddForDisposalSync = new ValidateUserDefinedAddForDisposalSync(containerWideContext);
-            var validateUserDefinedAddForDisposalAsync = new ValidateUserDefinedAddForDisposalAsync(containerWideContext);
-            var validateUserDefinedConstructorParametersInjectionMethod = new ValidateUserDefinedConstructorParametersInjectionMethod(containerWideContext);
-            var validateUserDefinedPropertiesInjectionMethod = new ValidateUserDefinedPropertiesInjectionMethod(containerWideContext);
-            var validateUserDefinedInitializerParametersInjectionMethod = new ValidateUserDefinedInitializerParametersInjectionMethod(containerWideContext);
-            var validateUserDefinedFactoryField = new ValidateUserDefinedFactoryField();
-            var validateUserDefinedFactoryMethod = new ValidateUserDefinedFactoryMethod();
-            var validateTransientScope = new ValidateTransientScope(
-                validateUserDefinedAddForDisposalSync, 
-                validateUserDefinedAddForDisposalAsync, 
-                validateUserDefinedConstructorParametersInjectionMethod, 
-                validateUserDefinedPropertiesInjectionMethod,
-                validateUserDefinedInitializerParametersInjectionMethod,
-                validateUserDefinedFactoryMethod,
-                validateUserDefinedFactoryField,
-                containerWideContext);
-            var validateScope = new ValidateScope(
-                validateUserDefinedAddForDisposalSync,
-                validateUserDefinedAddForDisposalAsync, 
-                validateUserDefinedConstructorParametersInjectionMethod, 
-                validateUserDefinedPropertiesInjectionMethod,
-                validateUserDefinedInitializerParametersInjectionMethod,
-                validateUserDefinedFactoryMethod,
-                validateUserDefinedFactoryField,
-                containerWideContext);
-            var validateContainer = new ValidateContainer(
-                validateTransientScope, 
-                validateScope, 
-                validateUserDefinedAddForDisposalSync,
-                validateUserDefinedAddForDisposalAsync, 
-                validateUserDefinedConstructorParametersInjectionMethod,
-                validateUserDefinedPropertiesInjectionMethod,
-                validateUserDefinedInitializerParametersInjectionMethod,
-                validateUserDefinedFactoryMethod,
-                validateUserDefinedFactoryField,
-                containerWideContext);
         
             var containerDieExceptionGenerator = new ContainerDieExceptionGenerator(context, containerWideContext);
             new ExecuteImpl(
@@ -81,7 +46,6 @@ public class SourceGenerator : ISourceGenerator
                 context,
                 wellKnownTypesMiscellaneous,
                 containerDieExceptionGenerator,
-                validateContainer,
                 ContainerInfoFactory, 
                 diagLogger).Execute();
                 

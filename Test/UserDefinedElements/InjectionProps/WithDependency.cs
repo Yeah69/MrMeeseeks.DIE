@@ -16,6 +16,8 @@ internal class OtherDependency
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [UserDefinedPropertiesInjection(typeof(Dependency))]
     private void DIE_Props_Dependency(OtherDependency otherDependency, out int Number) => Number = otherDependency.Number;
 }
@@ -25,7 +27,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.Equal(69, instance.Number);
     }

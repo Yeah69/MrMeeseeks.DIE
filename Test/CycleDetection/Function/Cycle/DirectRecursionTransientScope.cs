@@ -11,7 +11,7 @@ internal class Dependency : ITransientScopeInstance
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -19,7 +19,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         Assert.Equal(DieExceptionKind.FunctionCycle , container.ExceptionKind_0_0);
     }
 }

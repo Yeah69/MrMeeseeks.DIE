@@ -32,6 +32,8 @@ internal sealed partial class Container
 {
     private readonly string DIE_Factory_Yeah = "Yeah";
     private readonly string? DIE_Factory_YeahNullable = "YeahNullable";
+    
+    private Container() {}
 }
 
 public class Tests
@@ -39,7 +41,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var _ = container.Create();
     }
 }

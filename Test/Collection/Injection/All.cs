@@ -144,6 +144,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -151,6 +152,6 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
     }
 }

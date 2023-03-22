@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -20,7 +21,9 @@ internal abstract class ValidateRange : IValidateRange
     private readonly IValidateUserDefinedInitializerParametersInjectionMethod _validateUserDefinedInitializerParametersInjectionMethod;
     private readonly IValidateUserDefinedFactoryMethod _validateUserDefinedFactoryMethod;
     private readonly IValidateUserDefinedFactoryField _validateUserDefinedFactoryField;
+    private readonly IValidateAttributes _validateAttributes;
     private readonly WellKnownTypes _wellKnownTypes;
+    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly Regex _generatedMemberNames = new("(_[1-9][0-9]*){2}$");
 
     internal ValidateRange(
@@ -31,6 +34,7 @@ internal abstract class ValidateRange : IValidateRange
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext)
     {
         _validateUserDefinedAddForDisposalSync = validateUserDefinedAddForDisposalSync;
@@ -40,10 +44,14 @@ internal abstract class ValidateRange : IValidateRange
         _validateUserDefinedInitializerParametersInjectionMethod = validateUserDefinedInitializerParametersInjectionMethod;
         _validateUserDefinedFactoryMethod = validateUserDefinedFactoryMethod;
         _validateUserDefinedFactoryField = validateUserDefinedFactoryField;
+        _validateAttributes = validateAttributes;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
     }
 
     protected abstract Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification);
+
+    protected abstract Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification, Location location);
 
     public virtual IEnumerable<Diagnostic> Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
@@ -149,6 +157,26 @@ internal abstract class ValidateRange : IValidateRange
                              .OfType<IFieldSymbol>())
                     foreach (var diagnostic in _validateUserDefinedFactoryField.Validate(userDefinedFactoryField, rangeType, containerType))
                         yield return diagnostic;
+            }
+
+            foreach (var initializedInstancesAttribute in rangeType
+                         .GetAttributes()
+                         .Where(ad => CustomSymbolEqualityComparer.Default.Equals(
+                                          ad.AttributeClass, 
+                                          _wellKnownTypesMiscellaneous.InitializedInstancesAttribute) 
+                                      && ad.ConstructorArguments.Length == 1 
+                                      && ad.ConstructorArguments[0].Kind == TypedConstantKind.Array))
+            {
+                if (initializedInstancesAttribute
+                    .ConstructorArguments[0]
+                    .Values
+                    .Select(v => v.Value)
+                    .Any(o => o is not INamedTypeSymbol type || !_validateAttributes.ValidateImplementation(type)))
+                    yield return ValidationErrorDiagnostic(
+                        rangeType, 
+                        containerType, 
+                        "Initialized instance attribute is only allowed to have implementation types passed to.",
+                        initializedInstancesAttribute.GetLocation());
             }
 
             IEnumerable<Diagnostic> ValidateAddForDisposal(string addForDisposalName, bool isSync)

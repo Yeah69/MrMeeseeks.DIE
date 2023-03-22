@@ -19,14 +19,17 @@ internal class Class<T0> : ITransient, IDisposable
 }
 
 [CreateFunction(typeof(Class<int>), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         using var instance = container.Create();
         Assert.False(instance.IsDisposed);
         container.Dispose();

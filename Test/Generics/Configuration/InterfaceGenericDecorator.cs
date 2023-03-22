@@ -37,7 +37,7 @@ internal class DecoratorB<T0, T1> : IInterface<T1>, IDecorator<IInterface<T1>>
 [CreateFunction(typeof(IInterface<byte>), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -45,7 +45,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var decorator = container.Create();
         Assert.IsType<DecoratorB<string, byte>>(decorator);
         Assert.IsType<DecoratorA<int, byte>>(decorator.Decorated);

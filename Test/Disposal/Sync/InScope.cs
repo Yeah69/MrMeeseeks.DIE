@@ -21,7 +21,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -29,7 +29,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var dependency = container.Create();
         Assert.False(dependency.Dependency.IsDisposed);
         container.Dispose();

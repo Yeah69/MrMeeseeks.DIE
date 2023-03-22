@@ -22,14 +22,17 @@ internal class Class<T0> : ITransient, IAsyncDisposable
 }
 
 [CreateFunction(typeof(Class<int>), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         await using var instance = container.Create();
         Assert.False(instance.IsDisposed);
         await container.DisposeAsync().ConfigureAwait(false);

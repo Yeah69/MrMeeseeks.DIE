@@ -13,5 +13,5 @@ internal class ValidateAttributes : IValidateAttributes
 
     public bool ValidateImplementation(INamedTypeSymbol type) =>
         type.IsValueType
-        || type.IsReferenceType && !type.IsAbstract && type.TypeKind != TypeKind.Interface;
+        || type is { IsReferenceType: true, IsAbstract: false, TypeKind: not TypeKind.Interface };
 }

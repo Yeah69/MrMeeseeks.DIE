@@ -26,7 +26,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -34,7 +34,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var dependency = container.Create();
         Assert.False(dependency.Dependency.IsDisposed);
         await container.DisposeAsync().ConfigureAwait(false);

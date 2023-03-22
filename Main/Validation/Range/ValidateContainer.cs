@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -26,6 +27,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext) 
         : base(
             validateUserDefinedAddForDisposalSync, 
@@ -35,6 +37,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
+            validateAttributes,
             containerWideContext)
     {
         _validateTransientScopeFactory = validateTransientScopeFactory;
@@ -46,6 +49,21 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
     {
         foreach (var diagnostic in base.Validate(rangeType, containerType))
             yield return diagnostic;
+        
+        if (!rangeType.InstanceConstructors.Any())
+            yield return ValidationErrorDiagnostic(
+                rangeType, 
+                "The container class has to have at least one constructor.", 
+                rangeType.Locations.FirstOrDefault() ?? Location.None);
+            
+        
+        foreach (var instanceConstructor in rangeType
+                     .InstanceConstructors
+                     .Where(instanceConstructor => instanceConstructor.DeclaredAccessibility != Accessibility.Private))
+            yield return ValidationErrorDiagnostic(
+                rangeType, 
+                "The constructor of a container class has to be declared private.", 
+                instanceConstructor.Locations.FirstOrDefault() ?? Location.None);
 
         if (rangeType.GetTypeMembers(Constants.DefaultTransientScopeName, 0).FirstOrDefault() is
             { } defaultTransientScope)
@@ -145,7 +163,10 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
     }
 
     protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol _, string specification) => 
-        Diagnostics.ValidationContainer(rangeType, specification, ExecutionPhase.Validation);
+        ValidationErrorDiagnostic(rangeType, rangeType, specification, rangeType.Locations.FirstOrDefault() ?? Location.None);
+
+    protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol _, string specification, Location location) => 
+        Diagnostics.ValidationContainer(rangeType, specification, location, ExecutionPhase.Validation);
     
     private Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, string specification, Location location) => 
         Diagnostics.ValidationContainer(rangeType, specification, location, ExecutionPhase.Validation);

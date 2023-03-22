@@ -12,14 +12,17 @@ internal class DependencyB : IInterface {}
 internal class DependencyC : IInterface {}
 
 [CreateFunction(typeof(IInterface[]), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.Equal(3, instance.Length);
         Assert.IsAssignableFrom<IInterface>(instance[0]);

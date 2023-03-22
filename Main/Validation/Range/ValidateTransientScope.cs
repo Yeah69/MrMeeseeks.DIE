@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 namespace MrMeeseeks.DIE.Validation.Range;
@@ -17,6 +18,7 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext) 
         : base(
             validateUserDefinedAddForDisposalSync,
@@ -26,6 +28,7 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
+            validateAttributes,
             containerWideContext)
     {
         
@@ -36,5 +39,8 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
     protected override string ScopeName => Constants.TransientScopeName;
 
     protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) => 
-        Diagnostics.ValidationTransientScope(rangeType, containerType, specification, ExecutionPhase.Validation);
+        ValidationErrorDiagnostic(rangeType, containerType, specification, rangeType.Locations.FirstOrDefault() ?? Location.None);
+
+    protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification, Location location) => 
+        Diagnostics.ValidationTransientScope(rangeType, containerType, specification, location, ExecutionPhase.Validation);
 }

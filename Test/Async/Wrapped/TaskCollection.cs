@@ -50,6 +50,7 @@ internal class DependencyD : IInterface
 [CreateFunction(typeof(IReadOnlyList<Task<IInterface>>), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -57,7 +58,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.Equal(4, instance.Count);
         await Task.WhenAll(instance).ConfigureAwait(false);

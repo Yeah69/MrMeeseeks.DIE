@@ -25,6 +25,8 @@ internal class Root : IScopeRoot
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
     private sealed partial class DIE_DefaultScope
     {
@@ -37,7 +39,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var _ = container.Create();
     }
 }

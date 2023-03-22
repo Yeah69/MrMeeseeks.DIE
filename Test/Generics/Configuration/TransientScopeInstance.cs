@@ -20,14 +20,17 @@ internal class TransientScopeRoot : ITransientScopeRoot
 }
 
 [CreateFunction(typeof(TransientScopeRoot), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
         Assert.Same(transientScopeRoot.Dependency0, transientScopeRoot.Dependency1);
     }

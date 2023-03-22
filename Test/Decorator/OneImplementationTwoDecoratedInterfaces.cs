@@ -67,6 +67,7 @@ internal class Parent
 [DecoratorSequenceChoice(typeof(IInterfaceB), typeof(Dependency), typeof(DecoratorBA), typeof(DecoratorBB))]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -74,7 +75,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var parent = container.Create();
         Assert.IsType<DecoratorAB>(parent.DependencyA);
         Assert.IsType<DecoratorAA>(parent.DependencyA.DecoratedA);

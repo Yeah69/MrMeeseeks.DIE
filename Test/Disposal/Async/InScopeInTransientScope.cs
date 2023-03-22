@@ -42,7 +42,7 @@ internal class TransientScopeRoot : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeRoot), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -50,7 +50,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
         Assert.False(transientScopeRoot.ScopeRoot.Dependency.IsDisposed);
         await transientScopeRoot.Cleanup().ConfigureAwait(false);

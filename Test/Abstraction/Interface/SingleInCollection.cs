@@ -11,14 +11,17 @@ internal class SubClassB : IInterface {}
 
 [ImplementationCollectionChoice(typeof(IInterface), typeof(SubClassA))]
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.IsType<SubClassA>(instance);
     }

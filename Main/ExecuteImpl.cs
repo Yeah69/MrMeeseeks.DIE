@@ -1,9 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
@@ -18,7 +16,6 @@ internal class ExecuteImpl : IExecute
     private readonly GeneratorExecutionContext _context;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
-    private readonly IValidateContainer _validateContainer;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
     private readonly IDiagLogger _diagLogger;
 
@@ -27,7 +24,6 @@ internal class ExecuteImpl : IExecute
         GeneratorExecutionContext context,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
-        IValidateContainer validateContainer,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory,
         IDiagLogger diagLogger)
     {
@@ -35,7 +31,6 @@ internal class ExecuteImpl : IExecute
         _context = context;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
-        _validateContainer = validateContainer;
         _containerInfoFactory = containerInfoFactory;
         _diagLogger = diagLogger;
     }
@@ -60,13 +55,14 @@ internal class ExecuteImpl : IExecute
                 try
                 {
                     var containerInfo = _containerInfoFactory(containerSymbol);
-                    var validationDiagnostics = _validateContainer
+                    using var msContainer = new MsContainer.MsContainer(_context, containerInfo);
+                    var containerNodeRoot = msContainer.Create();
+                    var validationDiagnostics = containerNodeRoot
+                        .ValidateContainer
                         .Validate(containerInfo.ContainerType, containerInfo.ContainerType)
                         .ToImmutableArray();
                     if (!validationDiagnostics.Any())
                     {
-                        using var msContainer = new MsContainer.MsContainer(_context, containerInfo);
-                        var containerNodeRoot = msContainer.Create();
                         // todo fix phases
                         currentPhase = ExecutionPhase.Resolution;
                         currentPhase = ExecutionPhase.CycleDetection;
@@ -99,20 +95,14 @@ internal class ExecuteImpl : IExecute
                 catch (DieException dieException)
                 {
                     if (_errorDescriptionInsteadOfBuildFailure)
-                        _containerDieExceptionGenerator.Generate(
-                            containerSymbol.ContainingNamespace.FullName(),
-                            containerSymbol.Name,
-                            dieException);
+                        _containerDieExceptionGenerator.Generate(containerSymbol, dieException);
                     else
                         _diagLogger.Error(dieException, currentPhase);
                 }
                 catch (Exception exception)
                 {
                     if (_errorDescriptionInsteadOfBuildFailure)
-                        _containerDieExceptionGenerator.Generate(
-                            containerSymbol.ContainingNamespace.FullName(),
-                            containerSymbol.Name,
-                            exception);
+                        _containerDieExceptionGenerator.Generate(containerSymbol, exception);
                     else
                         _diagLogger.Log(Diagnostics.UnexpectedException(exception, currentPhase));
                 }

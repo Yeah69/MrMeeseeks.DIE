@@ -46,15 +46,6 @@ internal static class Diagnostics
                 true),
             Location.None);
     }
-
-    internal static Diagnostic ValidationContainer(INamedTypeSymbol container, string specification, ExecutionPhase phase) => 
-        Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_00", 
-                "Validation (Container)",
-                $"[DIE] {PhaseToString(phase)} The Container \"{container.Name}\" isn't validly defined: {specification}", 
-                "Error", 
-                DiagnosticSeverity.Error, 
-                true),
-            container.Locations.FirstOrDefault() ?? Location.None);
     
     internal static Diagnostic ValidationContainer(INamedTypeSymbol container, string specification, Location location, ExecutionPhase phase) => 
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_00", 
@@ -65,23 +56,23 @@ internal static class Diagnostics
                 true),
             location);
     
-    internal static Diagnostic ValidationTransientScope(INamedTypeSymbol transientScope, INamedTypeSymbol parentContainer, string specification, ExecutionPhase phase) => 
+    internal static Diagnostic ValidationTransientScope(INamedTypeSymbol transientScope, INamedTypeSymbol parentContainer, string specification, Location location, ExecutionPhase phase) => 
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_01", 
                 "Validation (TransientScope)",
                 $"[DIE] {PhaseToString(phase)} The TransientScope \"{transientScope.Name}\" (of parent-Container \"{parentContainer.Name}\") isn't validly defined: {specification}", 
                 "Error", 
                 DiagnosticSeverity.Error, 
                 true),
-            transientScope.Locations.FirstOrDefault() ?? Location.None);
+            location);
     
-    internal static Diagnostic ValidationScope(INamedTypeSymbol scope, INamedTypeSymbol parentContainer, string specification, ExecutionPhase phase) => 
+    internal static Diagnostic ValidationScope(INamedTypeSymbol scope, INamedTypeSymbol parentContainer, string specification, Location location, ExecutionPhase phase) => 
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_67_02", 
                 "Validation (Scope)",
                 $"[DIE] {PhaseToString(phase)} The Scope \"{scope.Name}\" (of parent-Container \"{parentContainer.Name}\") isn't validly defined: {specification}", 
                 "Error", 
                 DiagnosticSeverity.Error, 
                 true),
-            scope.Locations.FirstOrDefault() ?? Location.None);
+            location);
     
     internal static Diagnostic ValidationUserDefinedElement(ISymbol userDefinedElement, INamedTypeSymbol parentRange, INamedTypeSymbol parentContainer, string specification, ExecutionPhase phase)
     {

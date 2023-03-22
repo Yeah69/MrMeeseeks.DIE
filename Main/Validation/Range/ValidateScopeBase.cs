@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -22,6 +23,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext) 
         : base(
             validateUserDefinedAddForDisposalSync, 
@@ -31,6 +33,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
+            validateAttributes,
             containerWideContext)
     {
         _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;

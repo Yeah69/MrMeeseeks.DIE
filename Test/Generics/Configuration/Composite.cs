@@ -32,7 +32,7 @@ internal class Composite<T0> : IInterface, IComposite<IInterface>
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -40,7 +40,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var composite = container.Create();
         Assert.IsType<Composite<int>>(composite);
     }

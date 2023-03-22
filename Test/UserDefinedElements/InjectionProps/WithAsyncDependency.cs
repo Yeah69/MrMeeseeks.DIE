@@ -18,6 +18,8 @@ internal class OtherDependency : IValueTaskInitializer
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [UserDefinedPropertiesInjection(typeof(Dependency))]
     private void DIE_Props_Dependency(OtherDependency otherDependency, out int Number) => Number = otherDependency.Number;
 }
@@ -27,7 +29,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = await container.Create().ConfigureAwait(false);
         Assert.Equal(69, instance.Number);
     }

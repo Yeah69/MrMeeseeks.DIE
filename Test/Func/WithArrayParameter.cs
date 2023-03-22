@@ -15,6 +15,7 @@ internal class Dependency
 [CreateFunction(typeof(ParameterDependency), "CreateParameter")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -22,7 +23,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var _ = container.Create()(new []
         {
             container.CreateParameter(), 

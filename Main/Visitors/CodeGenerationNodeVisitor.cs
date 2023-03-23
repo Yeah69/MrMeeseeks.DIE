@@ -365,7 +365,7 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
         }
     }
 
-    private void VisitSingleFunctionNode(ISingleFunctionNode singleFunction)
+    private void VisitSingleFunctionNode(ISingleFunctionNode singleFunction, bool doDisposedChecks)
     {
         var accessibility = singleFunction is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
             ? $"{SyntaxFacts.GetText(acc)} "  
@@ -381,26 +381,30 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
 {{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{singleFunction.ReturnedTypeFullName}} {{singleFunction.Name}}({{parameter}})
 {
 """);
-        ObjectDisposedCheck(
-            singleFunction.DisposedPropertyReference, 
-            singleFunction.RangeFullName, 
-            singleFunction.ReturnedTypeFullName);
+        if (doDisposedChecks)
+            ObjectDisposedCheck(
+                singleFunction.DisposedPropertyReference, 
+                singleFunction.RangeFullName, 
+                singleFunction.ReturnedTypeFullName);
+        
         VisitElementNode(singleFunction.ReturnedElement);
-        ObjectDisposedCheck(
-            singleFunction.DisposedPropertyReference, 
-            singleFunction.RangeFullName, 
-            singleFunction.ReturnedTypeFullName);
+        
+        if (doDisposedChecks)
+            ObjectDisposedCheck(
+                singleFunction.DisposedPropertyReference, 
+                singleFunction.RangeFullName, 
+                singleFunction.ReturnedTypeFullName);
         _code.AppendLine($"return {singleFunction.ReturnedElement.Reference};");
             
         foreach (var localFunction in singleFunction.LocalFunctions)
-            VisitSingleFunctionNode(localFunction);
+            VisitSingleFunctionNode(localFunction, true);
         
         _code.AppendLine("}");
     }
 
-    public void VisitCreateFunctionNode(ICreateFunctionNodeBase createFunction) => VisitSingleFunctionNode(createFunction);
-    public void VisitEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitSingleFunctionNode(entryFunction);
-    public void VisitLocalFunctionNode(ILocalFunctionNode localFunction) => VisitSingleFunctionNode(localFunction);
+    public void VisitCreateFunctionNode(ICreateFunctionNodeBase createFunction) => VisitSingleFunctionNode(createFunction, false);
+    public void VisitEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitSingleFunctionNode(entryFunction, true);
+    public void VisitLocalFunctionNode(ILocalFunctionNode localFunction) => VisitSingleFunctionNode(localFunction, true);
     public void VisitRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode)
     {
         // Nothing to do here. It's generated in "VisitRangedInstanceFunctionGroupNode"
@@ -470,7 +474,7 @@ finally
 return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReference}};
 """);
             foreach (var localFunction in overload.LocalFunctions)
-                VisitSingleFunctionNode(localFunction);
+                VisitSingleFunctionNode(localFunction, true);
             _code.AppendLine("}");
         }
     }
@@ -732,7 +736,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         }
             
         foreach (var localFunction in multiFunctionNode.LocalFunctions)
-            VisitSingleFunctionNode(localFunction);
+            VisitSingleFunctionNode(localFunction, true);
         
         _code.AppendLine(multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync
             ? "yield break;"
@@ -839,7 +843,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         }
             
         foreach (var localFunction in voidFunctionNode.LocalFunctions)
-            VisitSingleFunctionNode(localFunction);
+            VisitSingleFunctionNode(localFunction, true);
         
         _code.AppendLine("}");
     }

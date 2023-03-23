@@ -20,7 +20,7 @@ internal class ContainerInfo : IContainerInfo
         INamedTypeSymbol containerClass,
             
         // dependencies
-        IContainerWideContext containerWideContext)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();
@@ -29,7 +29,7 @@ internal class ContainerInfo : IContainerInfo
             
         CreateFunctionData = containerClass
             .GetAttributes()
-            .Where(ad => CustomSymbolEqualityComparer.Default.Equals(containerWideContext.WellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass))
+            .Where(ad => CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass))
             .Select(ad => ad.ConstructorArguments.Length == 3 
                           && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type
                           && ad.ConstructorArguments[0].Value is ITypeSymbol type

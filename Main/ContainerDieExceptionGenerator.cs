@@ -7,7 +7,7 @@ namespace MrMeeseeks.DIE;
 
 internal interface IContainerDieExceptionGenerator 
 {
-    void Generate(INamedTypeSymbol containerType, Exception exception);
+    void Generate(Exception exception);
 }
 
 internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
@@ -15,32 +15,35 @@ internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
     private readonly GeneratorExecutionContext _context;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
+    private readonly INamedTypeSymbol _containerType;
 
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
+        IContainerInfoContext containerInfoContext,
         IContainerWideContext containerWideContext)
     {
         _context = context;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
         _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
+        _containerType = containerInfoContext.ContainerInfo.ContainerType;
     }
 
-    public void Generate(INamedTypeSymbol containerType, Exception exception)
+    public void Generate(Exception exception)
     {
         var generatedContainer = new StringBuilder()
             .AppendLine($$"""
 #nullable enable
-namespace {{containerType.ContainingNamespace.FullName()}}
+namespace {{_containerType.ContainingNamespace.FullName()}}
 {
-partial class {{containerType.Name}} : {{_wellKnownTypes.IAsyncDisposable.FullName()}}, {{_wellKnownTypes.IDisposable.FullName()}}
+partial class {{_containerType.Name}} : {{_wellKnownTypes.IAsyncDisposable.FullName()}}, {{_wellKnownTypes.IDisposable.FullName()}}
 {
 """);
         
-        foreach (var constructor in containerType.InstanceConstructors)
+        foreach (var constructor in _containerType.InstanceConstructors)
             generatedContainer.AppendLine($$"""
-public static {{containerType.FullName()}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Type.FullName()} {p.Name}"))}})
+public static {{_containerType.FullName()}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Type.FullName()} {p.Name}"))}})
 {
-return new {{containerType.FullName()}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Name}: {p.Name}"))}});
+return new {{_containerType.FullName()}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Name}: {p.Name}"))}});
 }
 """);
 
@@ -60,6 +63,6 @@ public {{_wellKnownTypes.ValueTask.FullName()}} DisposeAsync() => new {{_wellKno
             .NormalizeWhitespace()
             .SyntaxTree
             .GetText();
-        _context.AddSource($"{containerType.ContainingNamespace.FullName()}.{containerType.Name}.g.cs", containerSource);
+        _context.AddSource($"{_containerType.ContainingNamespace.FullName()}.{_containerType.Name}.g.cs", containerSource);
     }
 }

@@ -10,7 +10,7 @@ namespace MrMeeseeks.DIE.MsContainer;
 
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
-[CreateFunction(typeof(IContainerNodeRoot), "Create")]
+[CreateFunction(typeof(IExecuteContainer), "Create")]
 internal sealed partial class MsContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;

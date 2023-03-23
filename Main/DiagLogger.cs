@@ -17,10 +17,10 @@ internal class DiagLogger : IDiagLogger, IContainerInstance
     private readonly GeneratorExecutionContext _context;
 
     internal DiagLogger(
-        bool ignoreErrors,
+        IGeneratorConfiguration generatorConfiguration,
         GeneratorExecutionContext context)
     {
-        _ignoreErrors = ignoreErrors;
+        _ignoreErrors = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
         _context = context;
     }
 

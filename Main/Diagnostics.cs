@@ -179,11 +179,11 @@ internal static class Diagnostics
                 DiagnosticSeverity.Error, 
                 true),
             Location.None);
-    } // todo use that for sync disposable injection in async container
+    }
     
     internal static Diagnostic IncompleteCompilationProcessingError(string message, ExecutionPhase phase)
     {
-        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_65_02", 
+        return Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_65_03", 
                 "Incomplete Compilation Processing Error",
                 $"[DIE] {PhaseToString(phase)} {message}", 
                 "Error",

@@ -4,17 +4,28 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Dependency : IValueTaskInitializer
+internal class Dependency
 {
-    public ValueTask InitializeAsync() => new();
+    internal bool IsDisposed => true;
 }
 
-internal class Root : IScopeRoot
+internal class TransientScopeRoot : ITransientScopeRoot
 {
-    internal Root(Func<Dependency> _){}
+    internal Dependency Dependency { get; }
+    private readonly IDisposable _disposable;
+
+    internal TransientScopeRoot(
+        Dependency dependency,
+        IDisposable disposable)
+    {
+        Dependency = dependency;
+        _disposable = disposable;
+    }
+
+    internal void Cleanup() => _disposable.Dispose();
 }
 
-[CreateFunction(typeof(Root), "Create")]
+[CreateFunction(typeof(TransientScopeRoot), "Create")]
 internal sealed partial class Container
 {
     private Container() {}

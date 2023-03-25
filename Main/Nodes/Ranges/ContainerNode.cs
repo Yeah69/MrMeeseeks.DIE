@@ -3,6 +3,7 @@ using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
+using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
@@ -24,6 +25,8 @@ internal interface IContainerNode : IRangeNode
     string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
     IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; }
+
+    void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode);
 }
 
 internal record BuildJob(INode Node, ImmutableStack<INamedTypeSymbol> PreviousImplementations);
@@ -38,6 +41,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
     private readonly Lazy<DisposalType> _lazyDisposalType;
+    private readonly List<IDelegateBaseNode> _delegateBaseNodes = new();
 
     public override string FullName { get; }
     public override DisposalType DisposalType => _lazyDisposalType.Value;
@@ -58,6 +62,8 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         BuildRangedInstanceCall(ownerReference, type, callingFunction, ScopeLevel.Container);
 
     public IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; private set; } = null!;
+    public void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode) => 
+        _delegateBaseNodes.Add(delegateBaseNode);
 
     internal ContainerNode(
         IContainerInfoContext containerInfoContext,
@@ -171,6 +177,9 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             scope.CycleDetectionAndReorderingOfInitializedInstances();
         foreach (var transientScope in TransientScopes)
             transientScope.CycleDetectionAndReorderingOfInitializedInstances();
+        
+        foreach (var delegateBaseNode in _delegateBaseNodes)
+            delegateBaseNode.CheckSynchronicity();
     }
 
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitContainerNode(this);

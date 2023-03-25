@@ -7,6 +7,7 @@ internal interface IDiagLogger
     bool ErrorsIssued { get; }
     void Reset();
     void Error(DieException exception, ExecutionPhase phase);
+    void Error(Diagnostic diagnostic);
 
     void Log(Diagnostic diagnostic);
 }
@@ -59,6 +60,13 @@ internal class DiagLogger : IDiagLogger, IContainerInstance
                 break;
         }
 
+        ErrorsIssued = true;
+    }
+
+    public void Error(Diagnostic diagnostic)
+    {
+        Log(diagnostic);
+        
         ErrorsIssued = true;
     }
 

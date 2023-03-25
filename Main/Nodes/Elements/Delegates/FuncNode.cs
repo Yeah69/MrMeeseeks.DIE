@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -14,8 +15,10 @@ internal class FuncNode : DelegateBaseNode, IFuncNode
         INamedTypeSymbol funcType,
         ILocalFunctionNode function,
         
+        IDiagLogger diagLogger,
+        IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator) 
-        : base(funcType, function, referenceGenerator)
+        : base(funcType, function, diagLogger, parentContainer, referenceGenerator)
     {
     }
 

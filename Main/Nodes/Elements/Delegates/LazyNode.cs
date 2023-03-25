@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -13,8 +14,10 @@ internal class LazyNode : DelegateBaseNode, ILazyNode
         INamedTypeSymbol lazyType,
         ILocalFunctionNode function,
         
+        IDiagLogger diagLogger,
+        IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator) 
-        : base(lazyType, function, referenceGenerator)
+        : base(lazyType, function, diagLogger, parentContainer, referenceGenerator)
     {
     }
 

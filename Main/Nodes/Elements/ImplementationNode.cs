@@ -45,6 +45,7 @@ internal class ImplementationNode : IImplementationNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly IReferenceGenerator _referenceGenerator;
+    private readonly IDiagLogger _diagLogger;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
 
     private readonly List<(string Name, IElementNode Element)> _constructorParameters = new ();
@@ -58,6 +59,7 @@ internal class ImplementationNode : IImplementationNode
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
+        IDiagLogger diagLogger,
         IInjectablePropertyExtractor injectablePropertyExtractor)
     {
         _implementationType = implementationType;
@@ -68,6 +70,7 @@ internal class ImplementationNode : IImplementationNode
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _referenceGenerator = referenceGenerator;
+        _diagLogger = diagLogger;
         _injectablePropertyExtractor = injectablePropertyExtractor;
         TypeFullName = implementationType.FullName();
         // The constructor call shouldn't contain nullable annotations
@@ -106,7 +109,7 @@ internal class ImplementationNode : IImplementationNode
         _constructorParameters.AddRange(_constructor.Parameters
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsConstructor))));
 
-        IEnumerable<IPropertySymbol> properties;
+        IReadOnlyList<IPropertySymbol> properties;
         if (_checkTypeProperties.GetPropertyChoicesFor(_implementationType) is { } propertyChoice)
             properties = propertyChoice;
         // Automatic property injection is disabled for record types, but property choices are still allowed
@@ -114,11 +117,19 @@ internal class ImplementationNode : IImplementationNode
             properties = _injectablePropertyExtractor
                 .GetInjectableProperties(_implementationType)
                 // Check whether property is settable
-                .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false));
+                .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false))
+                .ToList();
         else 
             properties = Array.Empty<IPropertySymbol>();
         _properties.AddRange(properties
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsProperties))));
+
+        var injectionsAnalysisGathering = _constructor
+            .Parameters
+            .Select(ps => (ps.Type, $"\"{ps.Name}\" (constructor parameter)"))
+            .Concat(properties
+                .Select(ps => (ps.Type, $"\"{ps.Name}\" (property)")))
+            .ToList();
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })
         {
@@ -141,6 +152,10 @@ internal class ImplementationNode : IImplementationNode
                 AsyncReference = _referenceGenerator.Generate("task");
                 AsyncTypeFullName = initializerMethod.ReturnType.FullName(); // ReturnType can only be either ValueTask or Task at this point
             }
+            
+            injectionsAnalysisGathering.AddRange(initializerMethod
+                .Parameters
+                .Select(ps => (ps.Type, $"\"{ps.Name}\" (initialize method parameter)")));
         }
 
         var disposalType = _checkTypeProperties.ShouldDisposalBeManaged(_implementationType);
@@ -148,6 +163,15 @@ internal class ImplementationNode : IImplementationNode
             SyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterSyncDisposal();
         if (disposalType.HasFlag(DisposalType.Async))
             AsyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterAsyncDisposal();
+        
+        foreach (var sameTypeInjections in injectionsAnalysisGathering
+                     .GroupBy(t => t.Type, CustomSymbolEqualityComparer.IncludeNullability)
+                     .Where(g => g.Count() > 1))
+            if (sameTypeInjections.Key is ITypeSymbol type)
+                _diagLogger.Log(Diagnostics.ImplementationHasMultipleInjectionsOfSameTypeWarning(
+                    $"Implementation has multiple injections of same type \"{type.FullName()}\": {
+                        string.Join(", ", sameTypeInjections.Select(t => t.Item2))}",
+                    ExecutionPhase.Resolution));
             
 
         (UserDefinedInjection? UserdefinedInjection, IReadOnlyDictionary<string, IElementNode>) GetUserDefinedInjection(IMethodSymbol? method)

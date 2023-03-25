@@ -1,31 +1,23 @@
-﻿using System;
-using System.Threading.Tasks;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
 internal class Dependency
 {
-    internal bool IsDisposed => true;
+    internal int B { get; init; }    
+    internal int? F { get; init; }
+
+    internal Dependency(int a, int d, int? e) {}
+    public void Initialize(int c) { }
 }
 
-internal class TransientScopeRoot : ITransientScopeRoot
+internal class Root
 {
-    internal Dependency Dependency { get; }
-    private readonly IDisposable _disposable;
-
-    internal TransientScopeRoot(
-        Dependency dependency,
-        IDisposable disposable)
-    {
-        Dependency = dependency;
-        _disposable = disposable;
-    }
-
-    internal void Cleanup() => _disposable.Dispose();
+    internal Root(Dependency _) { }
 }
 
-[CreateFunction(typeof(TransientScopeRoot), "Create")]
+[Initializer(typeof(Dependency), nameof(Dependency.Initialize))]
+[CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {
     private Container() {}

@@ -220,6 +220,15 @@ internal static class Diagnostics
                 DiagnosticSeverity.Warning, 
                 true),
             Location.None);
+    
+    internal static Diagnostic ImplementationHasMultipleInjectionsOfSameTypeWarning(string message, ExecutionPhase phase) =>
+        Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_70_01", 
+                "Implementation Has Multiple Injections Of Same Type",
+                $"[DIE] {PhaseToString(phase)} {message}", 
+                "Warning",
+                DiagnosticSeverity.Warning, 
+                true),
+            Location.None);
 
     internal static Diagnostic Logging(string message, ExecutionPhase phase) =>
         Diagnostic.Create(new DiagnosticDescriptor($"{Constants.DieAbbreviation}_00_00", 

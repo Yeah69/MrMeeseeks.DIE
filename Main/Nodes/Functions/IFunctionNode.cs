@@ -12,6 +12,7 @@ internal interface IFunctionNode : INode
     IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
     ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }
     string ReturnedTypeFullName { get; }
+    string ReturnedTypeNameNotWrapped { get; }
     string Description { get; }
     HashSet<IFunctionNode> CalledFunctions { get; }
     IEnumerable<IFunctionNode> CalledFunctionsOfSameRange { get; }

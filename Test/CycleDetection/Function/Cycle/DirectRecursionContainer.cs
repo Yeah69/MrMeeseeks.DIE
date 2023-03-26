@@ -20,6 +20,6 @@ public class Tests
     public void Test()
     {
         using var container = Container.DIE_CreateContainer();
-        Assert.Equal(DieExceptionKind.FunctionCycle , container.ExceptionKind_0_0);
+        Assert.True(container.ExceptionKinds_0_0.Contains(DieExceptionKind.FunctionCycle));
     }
 }

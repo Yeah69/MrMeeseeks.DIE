@@ -43,6 +43,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             transientScopeCallNodeFactory,
             containerWideContext)
     {
+        ReturnedTypeNameNotWrapped = typeSymbol.Name;
     }
 
     protected abstract IElementNodeMapperBase GetMapper();
@@ -57,4 +58,5 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
     }
 
     public IElementNode ReturnedElement { get; private set; } = null!;
+    public override string ReturnedTypeNameNotWrapped { get; }
 }

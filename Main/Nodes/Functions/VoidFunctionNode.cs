@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -18,6 +19,7 @@ internal interface IVoidFunctionNode : IFunctionNode
 internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeInstance
 {
     private readonly IReadOnlyList<IInitializedInstanceNode> _initializedInstanceNodes;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IRangeNode _parentRange;
 
     internal VoidFunctionNode(
@@ -29,6 +31,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator,
+        ILocalDiagLogger localDiagLogger,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -49,6 +52,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
             containerWideContext)
     {
         _initializedInstanceNodes = initializedInstanceNodes;
+        _localDiagLogger = localDiagLogger;
         _parentRange = transientScopeWideContext.Range;
         ReturnedTypeFullName = "void";
         Name = referenceGenerator.Generate("Initialize");
@@ -73,6 +77,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
     public override bool CheckIfReturnedType(ITypeSymbol type) => false;
 
     public override string Name { get; protected set; }
+    public override string ReturnedTypeNameNotWrapped => "void";
 
     public IReadOnlyList<(IFunctionCallNode, IInitializedInstanceNode)> Initializations { get; private set; } =
         Array.Empty<(IFunctionCallNode, IInitializedInstanceNode)>();
@@ -148,6 +153,10 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
                         i = stack.Pop();
                         cycleStack = cycleStack.Push(i.TypeFullName);
                     } while (i != current && stack.Any());
+                    
+                    _localDiagLogger.Error(
+                        ErrorLogData.CircularReferenceAmongInitializedInstances(cycleStack),
+                        Location.None);
                     throw new InitializedInstanceCycleDieException(cycleStack);
                 }
                 visited.Add(current);

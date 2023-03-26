@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
@@ -14,7 +15,7 @@ internal interface IDelegateBaseNode : IElementNode
 internal abstract class DelegateBaseNode : IDelegateBaseNode
 {
     private readonly ILocalFunctionNode _function;
-    private readonly IDiagLogger _diagLogger;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IContainerNode _parentContainer;
     private readonly ITypeSymbol _innerType;
 
@@ -22,12 +23,12 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
         INamedTypeSymbol delegateType,
         ILocalFunctionNode function,
         
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator)
     {
         _function = function;
-        _diagLogger = diagLogger;
+        _localDiagLogger = localDiagLogger;
         _parentContainer = parentContainer;
         MethodGroup = function.Name;
         Reference = referenceGenerator.Generate(delegateType);
@@ -47,8 +48,8 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
     public void CheckSynchronicity()
     {
         if (!Equals(_function.ReturnedTypeFullName, _innerType.FullName()))
-            _diagLogger.Error(Diagnostics.SyncToAsyncCallCompilationError(
-                "Func/Lazy injections need to have a sync function generated or its return type should be wrapped by a ValueTask/Task.",
-                ExecutionPhase.Resolution));
+            _localDiagLogger.Error(ErrorLogData.SyncToAsyncCallCompilationError(
+                "Func/Lazy injections need to have a sync function generated or its return type should be wrapped by a ValueTask/Task."),
+                Location.None);
     }
 }

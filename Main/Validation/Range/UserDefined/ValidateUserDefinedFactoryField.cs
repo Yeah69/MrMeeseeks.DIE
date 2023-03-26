@@ -1,13 +1,21 @@
+using MrMeeseeks.DIE.Logging;
+
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 internal interface IValidateUserDefinedFactoryField
 {
-    IEnumerable<Diagnostic> Validate(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
+    void Validate(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
 }
 
 internal class ValidateUserDefinedFactoryField : IValidateUserDefinedFactoryField
 {
-    public IEnumerable<Diagnostic> Validate(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    private readonly ILocalDiagLogger _localDiagLogger;
+
+    internal ValidateUserDefinedFactoryField(
+        ILocalDiagLogger localDiagLogger) =>
+        _localDiagLogger = localDiagLogger;
+
+    public void Validate(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
         if (field is
             {
@@ -19,15 +27,21 @@ internal class ValidateUserDefinedFactoryField : IValidateUserDefinedFactoryFiel
         }
         
         if (field.DeclaredAccessibility != Accessibility.Private)
-            yield return ValidationErrorDiagnostic(field, rangeType, containerType, "Has to be private.");
+            _localDiagLogger.Error(
+                ValidationErrorDiagnostic(field, rangeType, containerType, "Has to be private."),
+                field.Locations.FirstOrDefault() ?? Location.None);
         
         if (field.IsStatic)
-            yield return ValidationErrorDiagnostic(field, rangeType, containerType, "Isn't allowed to be static.");
+            _localDiagLogger.Error(
+                ValidationErrorDiagnostic(field, rangeType, containerType, "Isn't allowed to be static."),
+                field.Locations.FirstOrDefault() ?? Location.None);
         
         if (field.IsImplicitlyDeclared)
-            yield return ValidationErrorDiagnostic(field, rangeType, containerType, "Isn't allowed to be implicitly declared.");
+            _localDiagLogger.Error(
+                ValidationErrorDiagnostic(field, rangeType, containerType, "Isn't allowed to be implicitly declared."),
+                field.Locations.FirstOrDefault() ?? Location.None);
     }
 
-    protected static Diagnostic ValidationErrorDiagnostic(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification) =>
-        Diagnostics.ValidationUserDefinedElement(field, rangeType, container, specification, ExecutionPhase.Validation);
+    private static DiagLogData ValidationErrorDiagnostic(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification) =>
+        ErrorLogData.ValidationUserDefinedElement(field, rangeType, container, specification);
 }

@@ -1,4 +1,5 @@
 using System.Threading;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -16,14 +17,14 @@ internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
 {
     private int _i = -1;
     private readonly int _j;
-    private readonly IDiagLogger _diagLogger;
+    private readonly ILocalDiagLogger _localDiagLogger;
 
     internal ReferenceGenerator(
         IReferenceGeneratorCounter referenceGeneratorCounter,
-        IDiagLogger diagLogger)
+        ILocalDiagLogger localDiagLogger)
     {
         _j = referenceGeneratorCounter.GetCount();
-        _diagLogger = diagLogger;
+        _localDiagLogger = localDiagLogger;
     }
 
     public string Generate(ITypeSymbol type)
@@ -38,9 +39,9 @@ internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
                 baseName = $"{char.ToLower(elementType.Name[0]).ToString()}{elementType.Name.Substring(1)}Array";
                 break;
             default:
-                _diagLogger.Log(Diagnostics.EmptyReferenceNameWarning(
-                    $"A reference name couldn't be generated for \"{type.FullName()}\"", 
-                    ExecutionPhase.Resolution));
+                _localDiagLogger.Warning(WarningLogData.EmptyReferenceNameWarning(
+                    $"A reference name couldn't be generated for \"{type.FullName()}\""),
+                    Location.None);
                 baseName = "empty";
                 break;
         }

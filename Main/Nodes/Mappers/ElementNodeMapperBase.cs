@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -33,9 +34,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     protected readonly IFunctionNode ParentFunction;
     protected readonly IRangeNode ParentRange;
     private readonly IContainerNode _parentContainer;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IDiagLogger _diagLogger;
     protected readonly WellKnownTypes WellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
     private readonly Func<IFieldSymbol, IFactoryFieldNode> _factoryFieldNodeFactory;
@@ -60,7 +61,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         IRangeNode parentRange,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IContainerWideContext containerWideContext,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory,
@@ -82,9 +83,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ParentFunction = parentFunction;
         ParentRange = parentRange;
         _parentContainer = parentContainer;
+        _localDiagLogger = localDiagLogger;
         _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
-        _diagLogger = diagLogger;
         WellKnownTypes = containerWideContext.WellKnownTypes;
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
         _factoryFieldNodeFactory = factoryFieldNodeFactory;
@@ -247,9 +248,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             {
                 if (classOrStructType.NullableAnnotation == NullableAnnotation.Annotated)
                 {
-                    _diagLogger.Log(Diagnostics.NullResolutionWarning(
-                        $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\", but injecting null instead.",
-                        ExecutionPhase.Resolution));
+                    _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
+                        $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\", but injecting null instead."),
+                        Location.None);
                     return _nullNodeFactory(classOrStructType)
                         .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
                 }
@@ -351,9 +352,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 },
                 implementationType).EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             
-        _diagLogger.Log(Diagnostics.NullResolutionWarning(
-            $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead.",
-            ExecutionPhase.Resolution));
+        _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
+            $"Interface: Multiple or no implementations where a single is required for \"{implementationType.FullName()}\", but injecting null instead."),
+            Location.None);
         return _nullNodeFactory(implementationType)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
     }
@@ -367,9 +368,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         {
             if (interfaceType.NullableAnnotation == NullableAnnotation.Annotated)
             {
-                _diagLogger.Log(Diagnostics.NullResolutionWarning(
-                    $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\", but injecting null instead.",
-                    ExecutionPhase.Resolution));
+                _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
+                    $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\", but injecting null instead."),
+                    Location.None);
                 return _nullNodeFactory(interfaceType)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
             }

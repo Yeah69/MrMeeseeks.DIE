@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -13,10 +14,12 @@ internal class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTypesBase,
     internal ContainerCurrentlyConsideredTypes(
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache)
+        IImplementationTypeSetCache implementationTypeSetCache,
+        ILocalDiagLogger localDiagLogger)
     : base(
         new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes },
-        implementationTypeSetCache)
+        implementationTypeSetCache,
+        localDiagLogger)
     {
     }
 }
@@ -31,10 +34,12 @@ internal class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, ISc
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
         IScopeTypesFromAttributes scopeTypesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache)
+        IImplementationTypeSetCache implementationTypeSetCache,
+        ILocalDiagLogger localDiagLogger)
         : base(
             new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes, scopeTypesFromAttributes },
-            implementationTypeSetCache)
+            implementationTypeSetCache,
+            localDiagLogger)
     {
     }
 }
@@ -68,7 +73,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
 {
     public CurrentlyConsideredTypesBase(
         IReadOnlyList<ITypesFromAttributesBase> typesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache)
+        IImplementationTypeSetCache implementationTypeSetCache,
+        ILocalDiagLogger localDiagLogger)
     {
         IImmutableSet<INamedTypeSymbol> allImplementations = ImmutableHashSet<INamedTypeSymbol>.Empty;
 
@@ -193,9 +199,12 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             {
                 var namedTypeSymbol = nts.OriginalDefinition.AllInterfaces
                     .Single(t => compositeInterfaces.Contains(t.UnboundIfGeneric(), CustomSymbolEqualityComparer.Default));
-                return namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol
-                    ? interfaceTypeSymbol.UnboundIfGeneric()
-                    : throw new ValidationDieException(ImmutableList.Create(Diagnostics.ValidationGeneral("Composite should implement composite interface")));
+                if (namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol)
+                    return interfaceTypeSymbol.UnboundIfGeneric();
+                localDiagLogger.Error(
+                    ErrorLogData.ValidationGeneral("Composite should implement composite interface"),
+                    nts.Locations.FirstOrDefault() ?? Location.None);
+                throw new ValidationDieException();
             }, CustomSymbolEqualityComparer.Default)
             .Where(g => g.Count() == 1)
             .ToDictionary(g => g.Key, g => g.Single(), CustomSymbolEqualityComparer.Default);
@@ -245,9 +254,12 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             {
                 var namedTypeSymbol = nts.OriginalDefinition.AllInterfaces
                     .Single(t => decoratorInterfaces.Contains(t.UnboundIfGeneric(), CustomSymbolEqualityComparer.Default));
-                return namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol
-                    ? interfaceTypeSymbol.UnboundIfGeneric()
-                    : throw new ValidationDieException(ImmutableList.Create(Diagnostics.ValidationGeneral("Decorator should implement decorator interface")));
+                if (namedTypeSymbol.TypeArguments.FirstOrDefault() is INamedTypeSymbol interfaceTypeSymbol)
+                    return interfaceTypeSymbol.UnboundIfGeneric();
+                localDiagLogger.Error(
+                    ErrorLogData.ValidationGeneral("Decorator should implement decorator interface"),
+                    nts.Locations.FirstOrDefault() ?? Location.None);
+                throw new ValidationDieException();
             }, CustomSymbolEqualityComparer.Default)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.ToList(), CustomSymbolEqualityComparer.Default);
         

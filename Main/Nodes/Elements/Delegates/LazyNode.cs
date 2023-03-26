@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
@@ -14,10 +15,10 @@ internal class LazyNode : DelegateBaseNode, ILazyNode
         INamedTypeSymbol lazyType,
         ILocalFunctionNode function,
         
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator) 
-        : base(lazyType, function, diagLogger, parentContainer, referenceGenerator)
+        : base(lazyType, function, localDiagLogger, parentContainer, referenceGenerator)
     {
     }
 

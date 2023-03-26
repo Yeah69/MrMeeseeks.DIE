@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
 using MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -22,7 +23,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         IFunctionNode parentFunction,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
-        IDiagLogger diagLogger, 
+        ILocalDiagLogger localDiagLogger,
         IContainerWideContext containerWideContext, 
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory, 
@@ -44,7 +45,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             transientScopeWideContext.Range, 
             parentContainer, 
             transientScopeWideContext, 
-            diagLogger, 
+            localDiagLogger, 
             containerWideContext, 
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 

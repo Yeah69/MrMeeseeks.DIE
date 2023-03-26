@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -74,14 +75,14 @@ internal class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAssemblyT
 {
     internal AssemblyTypesFromAttributes(
         Compilation compilation,
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext) 
         : base(
             compilation.Assembly.GetAttributes(), 
             null,
             null,
-            diagLogger,
+            localDiagLogger,
             validateAttributes, 
             containerWideContext)
     {
@@ -110,7 +111,7 @@ internal interface IContainerTypesFromAttributes : ITypesFromAttributesBase {}
 internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContainerTypesFromAttributes, IContainerInstance
 {
     internal ContainerTypesFromAttributes(
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerInfoContext containerInfoContext,
         IContainerWideContext containerWideContext) 
@@ -118,7 +119,7 @@ internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContaine
             containerInfoContext.ContainerInfo.ContainerType.GetAttributes(), 
             containerInfoContext.ContainerInfo.ContainerType,
             containerInfoContext.ContainerInfo.ContainerType, 
-            diagLogger,
+            localDiagLogger,
             validateAttributes, 
             containerWideContext)
     {
@@ -151,7 +152,7 @@ internal class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFr
         IScopeInfo scopeInfo,
 
         // dependencies
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerInfoContext containerInfoContext,
         IContainerWideContext containerWideContext)
@@ -159,7 +160,7 @@ internal class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFr
             scopeInfo.ScopeType?.GetAttributes() as IReadOnlyList<AttributeData> ?? Array.Empty<AttributeData>(),
             scopeInfo.ScopeType,
             containerInfoContext.ContainerInfo.ContainerType,
-            diagLogger,
+            localDiagLogger,
             validateAttributes,
             containerWideContext)
     {
@@ -170,9 +171,8 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 {
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IValidateAttributes _validateAttributes;
-    private readonly List<Diagnostic> _warnings = new();
-    private readonly List<Diagnostic> _errors = new();
 
     internal TypesFromAttributesBase(
         // parameter
@@ -181,12 +181,13 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         INamedTypeSymbol? containerType,
 
         // dependencies
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext)
     {
         _rangeType = rangeType;
         _containerType = containerType;
+        _localDiagLogger = localDiagLogger;
         _validateAttributes = validateAttributes;
         AttributeDictionary = attributeData
             .GroupBy(ad => ad.AttributeClass, CustomSymbolEqualityComparer.Default)
@@ -238,12 +239,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         
         void NotParsableAttribute(AttributeData ad) =>
-            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+            localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                 ad,
                 _rangeType,
                 _containerType,
-                "Not parsable attribute.",
-                ExecutionPhase.Validation));
+                "Not parsable attribute."),
+                ad.GetLocation());
         
         DecoratorSequenceChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.DecoratorSequenceChoiceAttribute, out var decoratorSequenceChoiceAttributes) 
@@ -267,12 +268,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                         .Select(t => t.UnboundIfGeneric())
                         .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -293,12 +294,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                                 .Select(t => t.UnboundIfGeneric())
                                 .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                         {
-                            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                            localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                                 ad,
                                 _rangeType,
                                 _containerType,
-                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
-                                ExecutionPhase.Validation));
+                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."),
+                                ad.GetLocation());
                             return null;
                         }
                         
@@ -333,12 +334,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                         .Select(t => t.UnboundIfGeneric())
                         .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -383,12 +384,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                         return (implementationType, constructorChoice);
                     }
 
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\"."),
+                        ad.GetLocation());
                     
                     return null;
                 }
@@ -447,12 +448,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                     .ToImmutableHashSet();
                 
                 foreach (var nonExistent in parameterTypes.Except(propertyNames))
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\"."),
+                        ad.GetLocation());
 
                 return (implementationType, propertyNames.Intersect(parameterTypes).ToList());
             })
@@ -492,24 +493,24 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                         && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
                         && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
                     {
-                        _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                             ad,
                             _rangeType,
                             _containerType,
-                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\".",
-                            ExecutionPhase.Validation));
+                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\"."),
+                            ad.GetLocation());
                         return null;
                     }
                     
                     return (type, initializationMethod);
                 }
                 
-                _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                     ad,
                     _rangeType,
                     _containerType,
-                    $"Couldn't find a method with the name \"{methodName}\" on \"{type.FullName()}\".",
-                    ExecutionPhase.Validation));
+                    $"Couldn't find a method with the name \"{methodName}\" on \"{type.FullName()}\"."),
+                    ad.GetLocation());
                 return null;
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
@@ -550,12 +551,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
 
@@ -606,12 +607,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -647,12 +648,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -688,12 +689,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -735,12 +736,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                         {
                             if (t.ContainingAssembly is null)
                             {
-                                _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                                localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                                     ad,
                                     _rangeType,
                                     _containerType,
-                                    $"Type \"{t.FullName()}\" doesn't lead to a single known assembly.",
-                                    ExecutionPhase.Validation));
+                                    $"Type \"{t.FullName()}\" doesn't lead to a single known assembly."),
+                                    ad.GetLocation());
                             }
                             return t.ContainingAssembly;
                         })
@@ -768,12 +769,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                 
                 if (!validateAttributes.ValidateImplementation(implementation))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Type \"{implementation.FullName()}\" has to be an implementation.",
-                        ExecutionPhase.Validation));
+                        $"Type \"{implementation.FullName()}\" has to be an implementation."),
+                        ad.GetLocation());
                     return null;
                 }
 
@@ -784,12 +785,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                         .Select(t => t.UnboundIfGeneric())
                         .Contains(unboundType, CustomSymbolEqualityComparer.Default))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -828,12 +829,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                                 .Select(t => t.UnboundIfGeneric())
                                 .Contains(unboundType, CustomSymbolEqualityComparer.Default))
                         {
-                            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                            localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                                 ad,
                                 _rangeType,
                                 _containerType,
-                                $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\".",
-                                ExecutionPhase.Validation));
+                                $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."),
+                                ad.GetLocation());
                             return null;
                         }
                         
@@ -849,13 +850,6 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         FilterImplementationChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
         
         FilterImplementationCollectionChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
-        
-                    
-        foreach (var diagnostic in Warnings)
-            diagLogger.Log(diagnostic);
-
-        if (Errors.Any())
-            throw new ValidationDieException(Errors.ToImmutableArray());
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
@@ -871,12 +865,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                     var ret = _validateAttributes.ValidateAbstraction(t.Item2);
 
                     if (!ret)
-                        _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                        _localDiagLogger.Warning(WarningLogData.ValidationConfigurationAttribute(
                             t.Item1,
                             _rangeType, 
                             _containerType, 
-                            $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored.",
-                            ExecutionPhase.Validation));
+                            $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored."),
+                            t.Item1.GetLocation());
                 
                     return ret;
                 })
@@ -894,12 +888,12 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                 var ret = _validateAttributes.ValidateImplementation(t.Item2);
 
                 if (!ret)
-                    _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                    _localDiagLogger.Warning(WarningLogData.ValidationConfigurationAttribute(
                         t.Item1,
                         _rangeType, 
                         _containerType, 
-                        $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored.",
-                        ExecutionPhase.Validation));
+                        $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored."),
+                        t.Item1.GetLocation());
                 
                 return ret;
             })
@@ -978,8 +972,4 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
     public IImmutableSet<IAssemblySymbol> FilterAssemblyImplementations { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
-
-    public IReadOnlyList<Diagnostic> Warnings => _warnings;
-
-    public IReadOnlyList<Diagnostic> Errors => _errors;
 }

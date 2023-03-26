@@ -223,6 +223,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public SynchronicityDecision SynchronicityDecision { get; private set; } = SynchronicityDecision.Sync;
     public abstract string Name { get; protected set; }
     public string ReturnedTypeFullName { get; protected set; } = "";
+    public abstract string ReturnedTypeNameNotWrapped { get; }
 
     public IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
 }

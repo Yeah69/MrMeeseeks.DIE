@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -45,7 +46,7 @@ internal class ImplementationNode : IImplementationNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly IReferenceGenerator _referenceGenerator;
-    private readonly IDiagLogger _diagLogger;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
 
     private readonly List<(string Name, IElementNode Element)> _constructorParameters = new ();
@@ -59,7 +60,7 @@ internal class ImplementationNode : IImplementationNode
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
-        IDiagLogger diagLogger,
+        ILocalDiagLogger localDiagLogger,
         IInjectablePropertyExtractor injectablePropertyExtractor)
     {
         _implementationType = implementationType;
@@ -70,7 +71,7 @@ internal class ImplementationNode : IImplementationNode
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _referenceGenerator = referenceGenerator;
-        _diagLogger = diagLogger;
+        _localDiagLogger = localDiagLogger;
         _injectablePropertyExtractor = injectablePropertyExtractor;
         TypeFullName = implementationType.FullName();
         // The constructor call shouldn't contain nullable annotations
@@ -94,6 +95,10 @@ internal class ImplementationNode : IImplementationNode
                 cycleStack = cycleStack.Push(popped);
                 i = popped;
             } while (!CustomSymbolEqualityComparer.Default.Equals(_implementationType, i));
+            
+            _localDiagLogger.Error(
+                ErrorLogData.CircularReferenceInsideFactory(cycleStack), 
+                _implementationType.Locations.FirstOrDefault() ?? Location.None);
             
             throw new ImplementationCycleDieException(cycleStack);
         }
@@ -168,10 +173,9 @@ internal class ImplementationNode : IImplementationNode
                      .GroupBy(t => t.Type, CustomSymbolEqualityComparer.IncludeNullability)
                      .Where(g => g.Count() > 1))
             if (sameTypeInjections.Key is ITypeSymbol type)
-                _diagLogger.Log(Diagnostics.ImplementationHasMultipleInjectionsOfSameTypeWarning(
-                    $"Implementation has multiple injections of same type \"{type.FullName()}\": {
-                        string.Join(", ", sameTypeInjections.Select(t => t.Item2))}",
-                    ExecutionPhase.Resolution));
+                _localDiagLogger.Warning(WarningLogData.ImplementationHasMultipleInjectionsOfSameTypeWarning(
+                    $"Implementation has multiple injections of same type \"{type.FullName()}\": {string.Join(", ", sameTypeInjections.Select(t => t.Item2))}"),
+                    _implementationType.Locations.FirstOrDefault() ?? Location.None);
             
 
         (UserDefinedInjection? UserdefinedInjection, IReadOnlyDictionary<string, IElementNode>) GetUserDefinedInjection(IMethodSymbol? method)

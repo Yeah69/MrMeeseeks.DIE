@@ -1,15 +1,22 @@
 using System.Reflection.Metadata;
+using MrMeeseeks.DIE.Logging;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 internal interface IValidateUserDefinedMethod
 {
-    IEnumerable<Diagnostic> Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
+    void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
 }
 
 internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
 {
-    public virtual IEnumerable<Diagnostic> Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    protected readonly ILocalDiagLogger LocalDiagLogger;
+
+    internal ValidateUserDefinedMethod(
+        ILocalDiagLogger localDiagLogger) =>
+        LocalDiagLogger = localDiagLogger;
+
+    public virtual void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
         if (method is
             {
@@ -29,36 +36,56 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
         }
         
         if (method.DeclaredAccessibility != Accessibility.Private)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be private.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be private."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Arity != 0)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have an arity of zero.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have an arity of zero."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.CallingConvention != SignatureCallingConvention.Default)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have a default calling signature.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have a default calling signature."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsAsync)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be async.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be async."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsConditional)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be marked with the ConditionalAttribute.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be marked with the ConditionalAttribute."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsVararg)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be CLI VARAG.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be CLI VARAG."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsExtensionMethod)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be an extension method.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be an extension method."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsInitOnly)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be an init method.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be an init method."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsStatic)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be static.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be static."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsImplicitlyDeclared)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be implicitly declared.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be implicitly declared."),
+                method.Locations.FirstOrDefault() ?? Location.None);
     }
 
-    protected static Diagnostic ValidationErrorDiagnostic(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification) =>
-        Diagnostics.ValidationUserDefinedElement(method, rangeType, container, specification, ExecutionPhase.Validation);
+    protected static DiagLogData ValidationErrorDiagnostic(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification) =>
+        ErrorLogData.ValidationUserDefinedElement(method, rangeType, container, specification);
 }

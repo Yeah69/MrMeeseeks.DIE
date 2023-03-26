@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -31,8 +32,9 @@ internal class ContainerCheckTypeProperties : CheckTypeProperties, IContainerChe
     internal ContainerCheckTypeProperties(
         IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
         IInjectablePropertyExtractor injectablePropertyExtractor,
-        IContainerWideContext containerWideContext) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext)
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger) 
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, localDiagLogger)
     {
     }
 }
@@ -47,8 +49,9 @@ internal class ScopeCheckTypeProperties : CheckTypeProperties, IScopeCheckTypePr
         IScopeCurrentlyConsideredTypes currentlyConsideredTypes, 
         
         IInjectablePropertyExtractor injectablePropertyExtractor,
-        IContainerWideContext containerWideContext) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext)
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger) 
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, localDiagLogger)
     {
     }
 }
@@ -75,15 +78,18 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
         IInjectablePropertyExtractor injectablePropertyExtractor,
-        IContainerWideContext containerWideContext)
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger)
     {
         _currentlyConsideredTypes = currentlyConsideredTypes;
         _injectablePropertyExtractor = injectablePropertyExtractor;
+        _localDiagLogger = localDiagLogger;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
     }
     
@@ -307,7 +313,13 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         var unboundTargetType = targetType.UnboundIfGeneric();
         var isTargetGeneric = targetType.IsGenericType;
         if (isTargetGeneric && targetType.TypeArguments.Any(tp => tp is not INamedTypeSymbol))
-            throw new ImpossibleDieException(new Guid("94B3BC00-9D37-4991-A66A-DDDF7C8402B6")); // Target type at this point should only have closed generic parameters
+        {
+            // Target type at this point should only have closed generic parameters
+            _localDiagLogger.Error(
+                ErrorLogData.ImpossibleException(new Guid("94B3BC00-9D37-4991-A66A-DDDF7C8402B6")),
+                Location.None);
+            throw new ImpossibleDieException(); 
+        }
 
         var ret = new List<INamedTypeSymbol>();
         foreach (var implementation in rawImplementations)

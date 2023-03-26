@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
@@ -10,6 +11,7 @@ namespace MrMeeseeks.DIE.MsContainer;
 
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
+[ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancerForRanges))]
 [CreateFunction(typeof(IExecuteContainer), "Create")]
 internal sealed partial class MsContainer
 {
@@ -83,6 +85,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(CreateFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateFunctionNodeRoot
@@ -90,6 +93,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateScopeFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(CreateScopeFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateScopeFunctionNodeRoot
@@ -97,6 +101,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateTransientScopeFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(CreateTransientScopeFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_CreateTransientScopeFunctionNodeRoot
@@ -104,6 +109,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(EntryFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(EntryFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_EntryFunctionNodeRoot
@@ -111,6 +117,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(LocalFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(LocalFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_LocalFunctionNodeRoot
@@ -118,6 +125,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(RangedInstanceFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_RangedInstanceFunctionNodeRoot
@@ -125,6 +133,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceInterfaceFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(RangedInstanceInterfaceFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_RangedInstanceInterfaceFunctionNodeRoot
@@ -132,6 +141,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(MultiFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(MultiFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_MultiFunctionNodeRoot
@@ -139,6 +149,7 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(VoidFunctionNode))]
+    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(VoidFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private sealed partial class DIE_Scope_VoidFunctionNodeRoot

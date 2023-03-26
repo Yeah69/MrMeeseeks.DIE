@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -24,7 +25,8 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext) 
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger) 
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync,
@@ -34,7 +36,8 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             validateAttributes,
-            containerWideContext)
+            containerWideContext,
+            localDiagLogger)
     {
         _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
 
@@ -65,16 +68,19 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
     
     protected abstract string ScopeName { get; }
 
-    public override IEnumerable<Diagnostic> Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    public override void Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
-        foreach (var diagnostic in base.Validate(rangeType, containerType))
-            yield return diagnostic;
+        base.Validate(rangeType, containerType);
 
         if (rangeType.DeclaredAccessibility != Accessibility.Private)
-            yield return ValidationErrorDiagnostic(rangeType, containerType, "Has to be declared private.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(rangeType, containerType, "Has to be declared private."),
+                rangeType.Locations.FirstOrDefault() ?? Location.None);
         
         if (rangeType.Name != DefaultScopeName && !rangeType.Name.StartsWith(CustomScopeName))
-            yield return ValidationErrorDiagnostic(rangeType, containerType, $"{ScopeName}'s name hast to be either \"{DefaultScopeName}\" if it is the default {ScopeName} or start with \"{CustomScopeName}\" if it is a custom {ScopeName}.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(rangeType, containerType, $"{ScopeName}'s name hast to be either \"{DefaultScopeName}\" if it is the default {ScopeName} or start with \"{CustomScopeName}\" if it is a custom {ScopeName}."),
+                rangeType.Locations.FirstOrDefault() ?? Location.None);
         
         foreach (var notAllowedAttributeType in rangeType
                      .GetAttributes()
@@ -82,7 +88,9 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
                      .Distinct(CustomSymbolEqualityComparer.Default)
                      .OfType<INamedTypeSymbol>()
                      .Where(nts => _notAllowedAttributeTypes.Contains(nts, CustomSymbolEqualityComparer.Default)))
-            yield return ValidationErrorDiagnostic(rangeType, containerType, $"{ScopeName}s aren't allowed to have attributes of type \"{notAllowedAttributeType.FullName()}\".");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(rangeType, containerType, $"{ScopeName}s aren't allowed to have attributes of type \"{notAllowedAttributeType.FullName()}\"."),
+                rangeType.Locations.FirstOrDefault() ?? Location.None);
 
         var isDefault = rangeType.Name == DefaultScopeName;
         var isCustom = rangeType.Name.StartsWith(CustomScopeName);
@@ -94,7 +102,9 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
                 .Any(ad => CustomSymbolEqualityComparer.Default.Equals(
                     ad.AttributeClass,
                     _wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute)))
-                yield return ValidationErrorDiagnostic(rangeType, containerType, $"A default (Transient)Scope isn't allowed to have the attribute of type \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\".");
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(rangeType, containerType, $"A default (Transient)Scope isn't allowed to have the attribute of type \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\"."),
+                    rangeType.Locations.FirstOrDefault() ?? Location.None);
         }
 
         if (isCustom)
@@ -104,7 +114,9 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
                 .Count(ad => CustomSymbolEqualityComparer.Default.Equals(
                     ad.AttributeClass,
                     _wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute)) != 1)
-                yield return ValidationErrorDiagnostic(rangeType, containerType, $"A custom (Transient)Scope has to have exactly one attribute of type \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\".");
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(rangeType, containerType, $"A custom (Transient)Scope has to have exactly one attribute of type \"{_wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute.FullName()}\"."),
+                    rangeType.Locations.FirstOrDefault() ?? Location.None);
         }
     }
 }

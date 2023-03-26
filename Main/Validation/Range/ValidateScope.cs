@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 
@@ -19,7 +20,8 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext) 
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger) 
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync,
@@ -29,7 +31,8 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             validateAttributes,
-            containerWideContext)
+            containerWideContext,
+            localDiagLogger)
     {
         
     }
@@ -38,9 +41,6 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
     protected override string CustomScopeName => Constants.CustomScopeName;
     protected override string ScopeName => Constants.ScopeName;
 
-    protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) => 
-        ValidationErrorDiagnostic(rangeType, containerType, specification, rangeType.Locations.FirstOrDefault() ?? Location.None);
-
-    protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification, Location location) => 
-        Diagnostics.ValidationScope(rangeType, containerType, specification, location, ExecutionPhase.Validation);
+    protected override DiagLogData ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) => 
+        ErrorLogData.ValidationScope(rangeType, containerType, specification);
 }

@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -10,6 +11,12 @@ internal interface IFunctionCycleTracker
 
 internal class FunctionCycleTracker : IFunctionCycleTracker
 {
+    private readonly ILocalDiagLogger _localDiagLogger;
+
+    internal FunctionCycleTracker(
+        ILocalDiagLogger localDiagLogger) =>
+        _localDiagLogger = localDiagLogger;
+
     public void DetectCycle(IContainerNode containerNode)
     {
         Queue<IFunctionNode> roots = new(containerNode.RootFunctions);
@@ -41,6 +48,8 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
                     i = stack.Pop();
                     cycleStack = cycleStack.Push(current.Description);
                 } while (i != current && stack.Any());
+                
+                _localDiagLogger.Error(ErrorLogData.CircularReferenceAmongFactories(cycleStack), Location.None);
                 throw new FunctionCycleDieException(cycleStack);
             }
             visited.Add(current);

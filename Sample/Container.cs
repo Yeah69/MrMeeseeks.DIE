@@ -2,22 +2,17 @@
 
 namespace MrMeeseeks.DIE.Sample;
 
+internal class Proxy
+{
+    internal Proxy(Dependency inner) {}
+}
+
 internal class Dependency
 {
-    internal int B { get; init; }    
-    internal int? F { get; init; }
-
-    internal Dependency(int a, int d, int? e) {}
-    public void Initialize(int c) { }
+    internal Dependency(Proxy inner) {}
 }
 
-internal class Root
-{
-    internal Root(Dependency _) { }
-}
-
-[Initializer(typeof(Dependency), nameof(Dependency.Initialize))]
-[CreateFunction(typeof(Root), "Create")]
+[CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
     private Container() {}

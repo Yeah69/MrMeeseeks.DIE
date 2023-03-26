@@ -1,6 +1,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Validation.Range;
 using MrMeeseeks.DIE.Visitors;
@@ -20,6 +21,8 @@ internal class ExecuteContainer : IExecuteContainer
     private readonly ICodeGenerationVisitor _codeGenerationVisitor;
     private readonly IValidateContainer _validateContainer;
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
+    private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IDiagLogger _diagLogger;
     private readonly IContainerInfo _containerInfo;
 
@@ -31,6 +34,8 @@ internal class ExecuteContainer : IExecuteContainer
         IValidateContainer validateContainer,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
         IContainerInfoContext containerInfoContext,
+        ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
+        ILocalDiagLogger localDiagLogger,
         IDiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
@@ -39,62 +44,69 @@ internal class ExecuteContainer : IExecuteContainer
         _codeGenerationVisitor = codeGenerationVisitor;
         _validateContainer = validateContainer;
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
+        _currentExecutionPhaseSetter = currentExecutionPhaseSetter;
+        _localDiagLogger = localDiagLogger;
         _diagLogger = diagLogger;
         _containerInfo = containerInfoContext.ContainerInfo;
     }
 
     public void Execute()
     {
-        var currentPhase = ExecutionPhase.Validation;
         try
         {
-            var validationDiagnostics = _validateContainer
-                .Validate(_containerInfo.ContainerType, _containerInfo.ContainerType)
-                .ToImmutableArray();
-            if (!validationDiagnostics.Any())
+            _currentExecutionPhaseSetter.Value = ExecutionPhase.ContainerValidation;
+            _validateContainer
+                .Validate(_containerInfo.ContainerType, _containerInfo.ContainerType);
+
+            if (_diagLogger.ErrorsIssued)
             {
-                // todo fix phases
-                currentPhase = ExecutionPhase.Resolution;
-                currentPhase = ExecutionPhase.CycleDetection;
-                currentPhase = ExecutionPhase.ResolutionBuilding;
-                currentPhase = ExecutionPhase.CodeGeneration;
-
-                _containerNode.Build(ImmutableStack.Create<INamedTypeSymbol>());
-
-                if (_diagLogger.ErrorsIssued)
-                    return;
-
-                _codeGenerationVisitor.VisitContainerNode(_containerNode);
-
-                var containerSource = CSharpSyntaxTree
-                    .ParseText(SourceText.From(_codeGenerationVisitor.GenerateContainerFile(), Encoding.UTF8))
-                    .GetRoot()
-                    .NormalizeWhitespace()
-                    .SyntaxTree
-                    .GetText();
-
-                _context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);
+                ErrorExit(null);
+                return;
             }
-            else
-                throw new ValidationDieException(validationDiagnostics);
+            
+            _currentExecutionPhaseSetter.Value = ExecutionPhase.Resolution;
+            _containerNode.Build(ImmutableStack.Create<INamedTypeSymbol>());
+
+            if (_diagLogger.ErrorsIssued)
+            {
+                ErrorExit(null);
+                return;
+            }
+
+            _currentExecutionPhaseSetter.Value = ExecutionPhase.CodeGeneration;
+            _codeGenerationVisitor.VisitContainerNode(_containerNode);
+
+            if (_diagLogger.ErrorsIssued)
+            {
+                ErrorExit(null);
+                return;
+            }
+
+            var containerSource = CSharpSyntaxTree
+                .ParseText(SourceText.From(_codeGenerationVisitor.GenerateContainerFile(), Encoding.UTF8))
+                .GetRoot()
+                .NormalizeWhitespace()
+                .SyntaxTree
+                .GetText();
+
+            _context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);
         }
         catch (DieException dieException)
         {
-            if (_errorDescriptionInsteadOfBuildFailure)
-                _containerDieExceptionGenerator.Generate(dieException);
-            else
-                _diagLogger.Error(dieException, currentPhase);
+            ErrorExit(dieException);
         }
         catch (Exception exception)
         {
+            _localDiagLogger.Error(
+                ErrorLogData.UnexpectedException(exception), 
+                _containerInfo.ContainerType.Locations.FirstOrDefault() ?? Location.None);
+            ErrorExit(exception);
+        }
+
+        void ErrorExit(Exception? exception)
+        {
             if (_errorDescriptionInsteadOfBuildFailure)
                 _containerDieExceptionGenerator.Generate(exception);
-            else
-                _diagLogger.Log(Diagnostics.UnexpectedException(exception, currentPhase));
-        }
-        finally
-        {
-            _diagLogger.Reset();
         }
     }
 }

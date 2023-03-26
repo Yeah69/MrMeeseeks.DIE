@@ -71,6 +71,8 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
         IsAsyncEnumerable =
             CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
 
+        ReturnedTypeNameNotWrapped = enumerableType.Name;
+
         Name = referenceGenerator.Generate("CreateMulti", enumerableType);
     }
 
@@ -111,6 +113,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
     public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitMultiFunctionNode(this);
 
     public override string Name { get; protected set; }
+    public override string ReturnedTypeNameNotWrapped { get; }
 
     public IReadOnlyList<IElementNode> ReturnedElements { get; private set; } = Array.Empty<IElementNode>();
     public bool IsAsyncEnumerable { get; }

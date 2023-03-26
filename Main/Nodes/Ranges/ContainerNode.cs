@@ -35,6 +35,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IFunctionCycleTracker _functionCycleTracker;
+    private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
     private readonly Func<IMethodSymbol, IVoidFunctionNode?, ICreateContainerFunctionNode> _creatContainerFunctionNodeFactory;
@@ -72,6 +73,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         IFunctionCycleTracker functionCycleTracker,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         IContainerWideContext containerWideContext,
+        ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
         Lazy<ITransientScopeInterfaceNode> lazyTransientScopeInterfaceNode,
         Lazy<IScopeManager> lazyScopeManager,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
@@ -97,6 +99,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
     {
         _containerInfo = containerInfoContext.ContainerInfo;
         _functionCycleTracker = functionCycleTracker;
+        _currentExecutionPhaseSetter = currentExecutionPhaseSetter;
         _lazyTransientScopeInterfaceNode = lazyTransientScopeInterfaceNode;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
         _creatContainerFunctionNodeFactory = creatContainerFunctionNodeFactory;
@@ -163,6 +166,8 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             if (buildJob.Node is IAsyncFunctionCallNode call)
                 asyncCallNodes.Add(call);
         }
+
+        _currentExecutionPhaseSetter.Value = ExecutionPhase.ResolutionValidation;
         
         while (AsyncCheckQueue.Any() && AsyncCheckQueue.Dequeue() is { } function)
             function.CheckSynchronicity();

@@ -15,10 +15,9 @@ public enum DieExceptionKind
 
 internal enum ExecutionPhase
 {
-    Validation,
+    ContainerValidation,
     Resolution,
-    CycleDetection,
-    ResolutionBuilding,
+    ResolutionValidation,
     CodeGeneration
 }
 
@@ -53,10 +52,6 @@ public class InitializedInstanceCycleDieException : DieException
 
 public class ValidationDieException : DieException
 {
-    public IImmutableList<Diagnostic> Diagnostics { get; }
-
-    public ValidationDieException(IImmutableList<Diagnostic> diagnostics) => Diagnostics = diagnostics;
-
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
 }
 
@@ -81,8 +76,5 @@ public class CompilationDieException : DieException
 
 public class ImpossibleDieException : DieException
 {
-    public Guid Code { get; }
-
-    public ImpossibleDieException(Guid code) => Code = code;
     public override DieExceptionKind Kind => DieExceptionKind.Impossible;
 }

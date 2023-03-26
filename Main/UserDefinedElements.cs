@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
@@ -29,11 +30,11 @@ internal class UserDefinedElements : IUserDefinedElements
         (INamedTypeSymbol? Range, INamedTypeSymbol Container) types,
 
         // dependencies
-        IContainerWideContext containerWideContext)
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger)
     {
         if (types.Range is { } range)
         {
-            var validationErrors = new List<Diagnostic>();
             var dieMembers = range.GetMembers()
                 .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_"))
                 .ToList();
@@ -44,13 +45,25 @@ internal class UserDefinedElements : IUserDefinedElements
                             && s is IFieldSymbol or IPropertySymbol or IMethodSymbol)
                 .GroupBy(s =>
                 {
-                    var outerType = s switch
+                    ITypeSymbol? outerType;
+                    switch (s)
                     {
-                        IFieldSymbol fs => fs.Type,
-                        IPropertySymbol ps => ps.Type,
-                        IMethodSymbol ms => ms.ReturnType,
-                        _ => throw new ImpossibleDieException(new Guid("B75E24B2-61A3-4C37-B5A5-C7E6D390279D"))
-                    };
+                        case IFieldSymbol fs:
+                            outerType = fs.Type;
+                            break;
+                        case IPropertySymbol ps:
+                            outerType = ps.Type;
+                            break;
+                        case IMethodSymbol ms:
+                            outerType = ms.ReturnType;
+                            break;
+                        default:
+                            localDiagLogger.Error(
+                                ErrorLogData.ImpossibleException(new Guid("B75E24B2-61A3-4C37-B5A5-C7E6D390279D")),
+                                s.Locations.FirstOrDefault() ?? Location.None);
+                            throw new ImpossibleDieException();
+                    }
+
                     return GetAsyncUnwrappedType(outerType, wellKnownTypes);
                 }, CustomSymbolEqualityComparer.IncludeNullability)
                 .Where(g => g.Count() > 1)
@@ -60,13 +73,13 @@ internal class UserDefinedElements : IUserDefinedElements
             {
                 foreach (var nonValidFactoryMemberGroup in nonValidFactoryMembers)
                     foreach (var symbol in nonValidFactoryMemberGroup)
-                        validationErrors.Add(
-                            Diagnostics.ValidationUserDefinedElement(
+                        localDiagLogger.Error(
+                            ErrorLogData.ValidationUserDefinedElement(
                                 symbol, 
                                 range, 
                                 types.Container,
-                                "Multiple user-defined factories aren't allowed to have the same type.",
-                                ExecutionPhase.Validation));
+                                "Multiple user-defined factories aren't allowed to have the same type."),
+                            symbol.Locations.FirstOrDefault() ?? Location.None);
 
                 _typeToField = new Dictionary<ITypeSymbol, IFieldSymbol>(CustomSymbolEqualityComparer.IncludeNullability);
             
@@ -136,9 +149,6 @@ internal class UserDefinedElements : IUserDefinedElements
             
             _initializerParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedInitParams, wellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute);
 
-            if (validationErrors.Any())
-                throw new ValidationDieException(validationErrors.ToImmutableArray());
-
             IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
             {
                 var injectionMethodCandidates = dieMembers
@@ -173,13 +183,13 @@ internal class UserDefinedElements : IUserDefinedElements
                 {
                     foreach (var nonValidInjectionMethodGroup in injectionMethodGroupings)
                         foreach (var t in nonValidInjectionMethodGroup)
-                            validationErrors.Add(
-                                Diagnostics.ValidationUserDefinedElement(
+                            localDiagLogger.Error(
+                                ErrorLogData.ValidationUserDefinedElement(
                                     t.Item2, 
                                     range, 
                                     types.Container,
-                                    "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on.",
-                                    ExecutionPhase.Validation));
+                                    "Multiple user-defined custom constructor parameter methods aren't allowed to have the same type that they are based on."),
+                                t.Item1.Locations.FirstOrDefault() ?? Location.None);
 
                     return new Dictionary<INamedTypeSymbol, IMethodSymbol>(CustomSymbolEqualityComparer.Default);
                 }

@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -12,10 +13,15 @@ internal abstract class ValidateUserDefinedInjectionMethod : ValidateUserDefined
 {
     protected abstract INamedTypeSymbol InjectionAttribute { get; }
 
-    public override IEnumerable<Diagnostic> Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    internal ValidateUserDefinedInjectionMethod(
+        ILocalDiagLogger localDiagLogger) 
+        : base(localDiagLogger)
     {
-        foreach (var diagnostic in base.Validate(method, rangeType, containerType))
-            yield return diagnostic;
+    }
+
+    public override void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    {
+        base.Validate(method, rangeType, containerType);
 
         if (method is
             {
@@ -39,42 +45,66 @@ internal abstract class ValidateUserDefinedInjectionMethod : ValidateUserDefined
         }
         
         if (!method.Parameters.Any(p => p.RefKind == RefKind.Out))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have at least one out parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have at least one out parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsPartialDefinition)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be partial.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be partial."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (!method.ReturnsVoid)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a return type.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a return type."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsDiscard))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a discard parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a discard parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsOptional))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a optional parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a optional parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsParams))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a params parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a params parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsThis))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a this parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a this parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.RefKind != RefKind.None && p.RefKind != RefKind.Out))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "All parameters should be either ordinary or an out parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "All parameters should be either ordinary or an out parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.HasExplicitDefaultValue))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a parameter which has an explicit default value.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a parameter which has an explicit default value."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.MethodKind != MethodKind.Ordinary)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be an ordinary method.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be an ordinary method."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (!method.CanBeReferencedByName)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Should be able to be referenced by name.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Should be able to be referenced by name."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method
                 .GetAttributes()
                 .Count(ad => CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, InjectionAttribute))
                 != 1)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have exactly one attribute of type \"{InjectionAttribute.FullName()}\".");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have exactly one attribute of type \"{InjectionAttribute.FullName()}\"."),
+                method.Locations.FirstOrDefault() ?? Location.None);
     }
 }

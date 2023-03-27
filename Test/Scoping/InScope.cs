@@ -21,5 +21,7 @@ public class Tests
     public void Test()
     {
         using var container = Container.DIE_CreateContainer();
+        var _ = container.Create0();
+        var __ = container.Create1();
     }
 }

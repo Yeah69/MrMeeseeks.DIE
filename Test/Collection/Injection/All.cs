@@ -153,5 +153,6 @@ public class Tests
     public void Test()
     {
         using var container = Container.DIE_CreateContainer();
+        var _ = container.Create();
     }
 }

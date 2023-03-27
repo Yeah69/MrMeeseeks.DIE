@@ -17,6 +17,7 @@ internal class Dependency
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -24,7 +25,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        var container = new Container();
-        Assert.Equal(DieExceptionKind.ImplementationCycle , container.ExceptionKind_0_0);
+        using var container = Container.DIE_CreateContainer();
+        Assert.Equal(DieExceptionKind.ImplementationCycle, container.ExceptionKind_0_0);
     }
 }

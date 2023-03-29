@@ -44,4 +44,5 @@ internal interface INodeVisitor
     void VisitErrorNode(IErrorNode errorNode);
     void VisitInitializedInstanceNode(IInitializedInstanceNode initializedInstanceNode);
     void VisitVoidFunctionNode(IVoidFunctionNode voidFunctionNode);
+    void VisitReusedNode(IReusedNode reusedNode);
 }

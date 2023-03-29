@@ -626,6 +626,9 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             case IEnumerableBasedNode enumerableBasedNode:
                 VisitEnumerableBasedNode(enumerableBasedNode);
                 break;
+            case IReusedNode reusedNode:
+                VisitReusedNode(reusedNode);
+                break;
         }
     }
 
@@ -850,6 +853,14 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             VisitSingleFunctionNode(localFunction, true);
         
         _code.AppendLine("}");
+    }
+
+    private readonly HashSet<IReusedNode> _doneReusedNodes = new();
+    public void VisitReusedNode(IReusedNode reusedNode)
+    {
+        if (_doneReusedNodes.Contains(reusedNode)) return;
+        _doneReusedNodes.Add(reusedNode);
+        VisitElementNode(reusedNode.Inner);
     }
 
     public string GenerateContainerFile() => _code.ToString();

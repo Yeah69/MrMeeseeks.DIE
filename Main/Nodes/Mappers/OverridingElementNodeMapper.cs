@@ -46,6 +46,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory, 
         Func<ITypeSymbol, INullNode> nullNodeFactory,
+        Func<IElementNode, IReusedNode> reusedNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory) 
         : base(parentFunction, 
@@ -68,6 +69,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             outParameterNodeFactory,
             errorNodeFactory, 
             nullNodeFactory,
+            reusedNodeFactory,
             localFunctionNodeFactory,
             overridingElementNodeMapperFactory)
     {

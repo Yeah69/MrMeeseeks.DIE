@@ -35,4 +35,7 @@ internal interface IFunctionNode : INode
     IScopeCallNode CreateScopeCall(string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scopeNode);
     ITransientScopeCallNode CreateTransientScopeCall(string containerParameter, IRangeNode callingRange, IFunctionNode callingFunction, ITransientScopeNode scopeNode);
     bool CheckIfReturnedType(ITypeSymbol type);
+
+    bool TryGetReusedNode(ITypeSymbol type, out IReusedNode? reusedNode);
+    void AddReusedNode(ITypeSymbol type, IReusedNode reusedNode);
 }

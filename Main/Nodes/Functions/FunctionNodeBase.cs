@@ -21,6 +21,9 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly List<IFunctionNode> _callingFunctions = new();
     private readonly List<IInitializedInstanceNode> _usedInitializedInstances = new();
 
+    private readonly Dictionary<ITypeSymbol, IReusedNode> _reusedNodes =
+        new(CustomSymbolEqualityComparer.IncludeNullability);
+
     private bool _synchronicityCheckedAlready;
 
     public FunctionNodeBase(
@@ -212,6 +215,17 @@ internal abstract class FunctionNodeBase : IFunctionNode
     }
 
     public abstract bool CheckIfReturnedType(ITypeSymbol type);
+    public bool TryGetReusedNode(ITypeSymbol type, out IReusedNode? reusedNode)
+    {
+        reusedNode = null;
+        if (!_reusedNodes.TryGetValue(type, out var rn))
+            return false;
+        reusedNode = rn;
+        return true;
+    }
+
+    public void AddReusedNode(ITypeSymbol type, IReusedNode reusedNode) => 
+        _reusedNodes[type] = reusedNode;
 
     public void AddLocalFunction(ILocalFunctionNode function) =>
         _localFunctions.Add(function);

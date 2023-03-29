@@ -53,6 +53,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<ITypeSymbol, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, INullNode> _nullNodeFactory;
+    private readonly Func<IElementNode, IReusedNode> _reusedNodeFactory;
     private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> _localFunctionNodeFactory;
     private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
     
@@ -77,6 +78,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, INullNode> nullNodeFactory,
+        Func<IElementNode, IReusedNode> reusedNodeFactory,
         Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> localFunctionNodeFactory,
         Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory)
     {
@@ -102,6 +104,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _outParameterNodeFactory = outParameterNodeFactory;
         _errorNodeFactory = errorNodeFactory;
         _nullNodeFactory = nullNodeFactory;
+        _reusedNodeFactory = reusedNodeFactory;
         _localFunctionNodeFactory = localFunctionNodeFactory;
         _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
     }
@@ -319,10 +322,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         if (config.CheckForRangedInstance)
         {
             var scopeLevel = _checkTypeProperties.GetScopeLevelFor(implementationType);
-
-            /* todo replace? if (scopeLevel != ScopeLevel.None 
-                && _scopedInstancesReferenceCache.TryGetValue(implementationType, out var scopedReference))
-                return (scopedReference, null);*/
+            
+            if (ParentFunction.TryGetReusedNode(implementationType, out var rn) && rn is not null)
+                return rn;
 
             var ret = scopeLevel switch
             {
@@ -332,7 +334,12 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 _ => null
             };
             if (ret is not null)
-                return ret;
+            {
+                var reusedNode = _reusedNodeFactory(ret)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
+                ParentFunction.AddReusedNode(implementationType, reusedNode);
+                return reusedNode;
+            }
         }
 
         if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is { } constructor)

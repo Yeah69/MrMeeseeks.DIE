@@ -19,7 +19,7 @@ internal sealed partial class MsContainer
     private readonly Compilation DIE_Factory_Compilation;
     private readonly IContainerInfo DIE_Factory_ContainerInfo;
 
-    public MsContainer(
+    private MsContainer(
         GeneratorExecutionContext context, 
         IContainerInfo dieFactoryContainerInfo)
     {

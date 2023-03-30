@@ -45,7 +45,7 @@ internal class ExecuteImpl : IExecute
                 .ToList();
             foreach (var containerInfo in containerInfos)
             {
-                using var msContainer = new MsContainer.MsContainer(_context, containerInfo);
+                using var msContainer = MsContainer.MsContainer.DIE_CreateContainer(_context, containerInfo);
                 var executeContainer = msContainer.Create();
                 executeContainer.Execute();
             }

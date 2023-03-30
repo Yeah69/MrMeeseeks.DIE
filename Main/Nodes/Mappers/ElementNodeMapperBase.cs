@@ -144,7 +144,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
             return _valueTupleNodeFactory(valueTupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
-
+        
         if (type.FullName().StartsWith("(") && type.FullName().EndsWith(")") && type is INamedTypeSymbol syntaxValueTupleType)
             return _valueTupleSyntaxNodeFactory(syntaxValueTupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
@@ -394,7 +394,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         INamedTypeSymbol interfaceType,
         INamedTypeSymbol implementationType, 
         ImmutableStack<INamedTypeSymbol> implementationSet,
-        IElementNodeMapperBase mapper) // todo mapper parameter needed?
+        IElementNodeMapperBase mapper)
     {
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
         if (!shouldBeDecorated)

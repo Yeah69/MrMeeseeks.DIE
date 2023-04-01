@@ -43,7 +43,7 @@ internal class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTrigge
     }
 
     public void Accept(INodeVisitor nodeVisitor) => 
-        nodeVisitor.VisitTransientScopeDisposalTriggerNode(this);
+        nodeVisitor.VisitITransientScopeDisposalTriggerNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

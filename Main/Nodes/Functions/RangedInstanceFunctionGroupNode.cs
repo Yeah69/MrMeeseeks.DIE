@@ -35,7 +35,7 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
         _rangedInstanceFunctionNodeFactory = rangedInstanceFunctionNodeFactory;
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitRangedInstanceFunctionGroupNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIRangedInstanceFunctionGroupNode(this);
     
     public IEnumerable<IRangedInstanceFunctionNode> Overloads => _overloads;
     

@@ -1,48 +1,11 @@
-using MrMeeseeks.DIE.Nodes.Elements;
-using MrMeeseeks.DIE.Nodes.Elements.Delegates;
-using MrMeeseeks.DIE.Nodes.Elements.Factories;
-using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
-using MrMeeseeks.DIE.Nodes.Elements.Tuples;
-using MrMeeseeks.DIE.Nodes.Functions;
-using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.Nodes;
+using MrMeeseeks.DIE.Visitors;
+using MrMeeseeks.Visitor;
+
+[assembly:VisitorInterfacePair(typeof(INodeVisitor), typeof(INode))]
 
 namespace MrMeeseeks.DIE.Visitors;
 
-internal interface INodeVisitor
+internal partial interface INodeVisitor
 {
-    void VisitContainerNode(IContainerNode container);
-    void VisitCreateContainerFunctionNode(ICreateContainerFunctionNode createContainerFunction);
-    void VisitTransientScopeInterfaceNode(ITransientScopeInterfaceNode transientScopeInterface);
-    void VisitScopeNode(IScopeNode scope);
-    void VisitTransientScopeNode(ITransientScopeNode transientScope);
-    void VisitScopeCallNode(IScopeCallNode scopeCall);
-    void VisitTransientScopeCallNode(ITransientScopeCallNode transientScopeCall);
-    void VisitCreateFunctionNode(ICreateFunctionNodeBase createFunction);
-    void VisitEntryFunctionNode(IEntryFunctionNode entryFunction);
-    void VisitLocalFunctionNode(ILocalFunctionNode localFunction);
-    void VisitRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode);
-    void VisitRangedInstanceInterfaceFunctionNode(IRangedInstanceInterfaceFunctionNode rangedInstanceInterfaceFunctionNode);
-    void VisitRangedInstanceFunctionGroupNode(IRangedInstanceFunctionGroupNode rangedInstanceFunctionGroupNode);
-    void VisitAsyncFunctionCallNode(IAsyncFunctionCallNode functionCallNode);
-    void VisitPlainFunctionCallNode(IPlainFunctionCallNode functionCallNode);
-    void VisitFactoryFieldNode(IFactoryFieldNode factoryFieldNode);
-    void VisitFactoryPropertyNode(IFactoryPropertyNode factoryPropertyNode);
-    void VisitFactoryFunctionNode(IFactoryFunctionNode factoryFunctionNode);
-    void VisitFuncNode(IFuncNode lazyNode);
-    void VisitLazyNode(ILazyNode lazyNode);
-    void VisitTupleNode(ITupleNode tupleNode);
-    void VisitValueTupleNode(IValueTupleNode valueTupleNode);
-    void VisitValueTupleSyntaxNode(IValueTupleSyntaxNode valueTupleSyntaxNode);
-    void VisitImplementationNode(IImplementationNode implementationNode);
-    void VisitParameterNode(IParameterNode parameterNode);
-    void VisitOutParameterNode(IOutParameterNode outParameterNode);
-    void VisitAbstractionNode(IAbstractionNode abstractionNode);
-    void VisitTransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode);
-    void VisitNullNode(INullNode nullNode);
-    void VisitMultiFunctionNode(IMultiFunctionNode multiFunctionNode);
-    void VisitEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode);
-    void VisitErrorNode(IErrorNode errorNode);
-    void VisitInitializedInstanceNode(IInitializedInstanceNode initializedInstanceNode);
-    void VisitVoidFunctionNode(IVoidFunctionNode voidFunctionNode);
-    void VisitReusedNode(IReusedNode reusedNode);
 }

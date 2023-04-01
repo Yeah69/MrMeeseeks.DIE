@@ -47,7 +47,7 @@ internal class CreateContainerFunctionNode : ICreateContainerFunctionNode
     }
 
     public void Accept(INodeVisitor nodeVisitor) => 
-        nodeVisitor.VisitCreateContainerFunctionNode(this);
+        nodeVisitor.VisitICreateContainerFunctionNode(this);
 
     public string Name { get; }
     public IReadOnlyList<(string TypeFullName, string Reference)> Parameters { get; }

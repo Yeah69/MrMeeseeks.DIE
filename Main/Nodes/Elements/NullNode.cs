@@ -22,7 +22,7 @@ internal class NullNode : INullNode
     {
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitNullNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitINullNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

@@ -22,7 +22,7 @@ internal class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNod
 
     public override void Accept(INodeVisitor nodeVisitor)
     {
-        nodeVisitor.VisitTransientScopeCallNode(this);
+        nodeVisitor.VisitITransientScopeCallNode(this);
     }
 
     public TransientScopeCallNode(

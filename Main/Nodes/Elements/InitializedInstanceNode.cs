@@ -31,7 +31,7 @@ internal class InitializedInstanceNode : IInitializedInstanceNode
     {
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitInitializedInstanceNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIInitializedInstanceNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

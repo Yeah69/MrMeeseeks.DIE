@@ -59,7 +59,7 @@ internal class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransie
     }
     protected override string ContainerParameterForScope => ContainerReference;
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitTransientScopeNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitITransientScopeNode(this);
 
     public override IFunctionCallNode BuildContainerInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction)
     {

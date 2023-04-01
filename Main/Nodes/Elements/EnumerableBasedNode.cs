@@ -292,7 +292,7 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
         EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction);
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitEnumerableBasedNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIEnumerableBasedNode(this);
 
     public string TypeFullName => Type != EnumerableBasedType.IEnumerable && Type != EnumerableBasedType.IAsyncEnumerable && CollectionData is not null
         ? CollectionData.CollectionTypeFullName

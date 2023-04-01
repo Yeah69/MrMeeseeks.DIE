@@ -22,7 +22,7 @@ internal class ParameterNode : IParameterNode
     {
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitParameterNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIParameterNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

@@ -34,7 +34,7 @@ internal class AbstractionNode : IAbstractionNode
             implementationStack);
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitAbstractionNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIAbstractionNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

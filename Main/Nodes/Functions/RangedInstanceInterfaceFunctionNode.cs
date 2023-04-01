@@ -54,7 +54,7 @@ internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, 
         Name = referenceGenerator.Generate("GetTransientScopeInstance", _type);
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitRangedInstanceInterfaceFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIRangedInstanceInterfaceFunctionNode(this);
     public override string Name { get; protected set; }
     public override string ReturnedTypeNameNotWrapped { get; }
 

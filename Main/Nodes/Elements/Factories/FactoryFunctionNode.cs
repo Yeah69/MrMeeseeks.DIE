@@ -37,7 +37,7 @@ internal class FactoryFunctionNode : FactoryNodeBase, IFactoryFunctionNode
         base.Build(implementationStack);
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitFactoryFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIFactoryFunctionNode(this);
     
     public IReadOnlyList<(string, IElementNode)> Parameters => _parameters;
 }

@@ -55,7 +55,7 @@ internal class AsyncFunctionCallNode : IAsyncFunctionCallNode
     {
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitAsyncFunctionCallNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIAsyncFunctionCallNode(this);
     public AsyncFunctionCallTransformation Transformation { get; private set; }
     
     public void AdjustToCurrentCalledFunctionSynchronicity()

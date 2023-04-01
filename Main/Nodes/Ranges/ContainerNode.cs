@@ -187,7 +187,7 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
             delegateBaseNode.CheckSynchronicity();
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitContainerNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIContainerNode(this);
 
     public override string? ContainerReference => null;
 

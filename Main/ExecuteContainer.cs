@@ -74,7 +74,7 @@ internal class ExecuteContainer : IExecuteContainer
             }
 
             _currentExecutionPhaseSetter.Value = ExecutionPhase.CodeGeneration;
-            _codeGenerationVisitor.VisitContainerNode(_containerNode);
+            _codeGenerationVisitor.VisitIContainerNode(_containerNode);
 
             if (_diagLogger.ErrorsIssued)
             {

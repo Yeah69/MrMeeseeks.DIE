@@ -31,7 +31,7 @@ internal class CodeGenerationVisitor : ICodeGenerationVisitor
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
     }
 
-    public void VisitContainerNode(IContainerNode container)
+    public void VisitIContainerNode(IContainerNode container)
     {
         var disposableImplementation = container.DisposalType.HasFlag(DisposalType.Async)
             ? $" , {_wellKnownTypes.IAsyncDisposable.FullName()}"
@@ -45,10 +45,10 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
 {
 """);
         foreach (var containerCreateContainerFunction in container.CreateContainerFunctions)
-            VisitCreateContainerFunctionNode(containerCreateContainerFunction);
+            VisitICreateContainerFunctionNode(containerCreateContainerFunction);
 
         foreach (var entryFunctionNode in container.RootFunctions)
-            VisitEntryFunctionNode(entryFunctionNode);
+            VisitIEntryFunctionNode(entryFunctionNode);
 
         GenerateRangeNodeContent(container);
         
@@ -59,13 +59,13 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
         _code.AppendLine(
             $"private {dictionaryTypeName} {container.TransientScopeDisposalReference} = new {dictionaryTypeName}();");
         
-        VisitTransientScopeInterfaceNode(container.TransientScopeInterface);
+        VisitITransientScopeInterfaceNode(container.TransientScopeInterface);
         
         foreach (var scope in container.Scopes)
-            VisitScopeNode(scope);
+            VisitIScopeNode(scope);
         
         foreach (var transientScope in container.TransientScopes)
-            VisitTransientScopeNode(transientScope);
+            VisitITransientScopeNode(transientScope);
         
         _code.AppendLine("""
 }
@@ -74,7 +74,7 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
 """);
     }
 
-    public void VisitCreateContainerFunctionNode(ICreateContainerFunctionNode createContainerFunction)
+    public void VisitICreateContainerFunctionNode(ICreateContainerFunctionNode createContainerFunction)
     {
         var asyncPrefix = createContainerFunction.InitializationAwaited
             ? "async "
@@ -96,19 +96,19 @@ return {{createContainerFunction.ContainerReference}};
 """);
     }
 
-    public void VisitTransientScopeInterfaceNode(ITransientScopeInterfaceNode transientScopeInterface)
+    public void VisitITransientScopeInterfaceNode(ITransientScopeInterfaceNode transientScopeInterface)
     {
         _code.AppendLine($$"""
 private interface {{transientScopeInterface.Name}}
 {
 """);
         foreach (var rangedInstanceInterfaceFunctionNode in transientScopeInterface.Functions)
-            VisitRangedInstanceInterfaceFunctionNode(rangedInstanceInterfaceFunctionNode);
+            VisitIRangedInstanceInterfaceFunctionNode(rangedInstanceInterfaceFunctionNode);
         
         _code.AppendLine("}");
     }
 
-    public void VisitScopeNode(IScopeNode scope)
+    public void VisitIScopeNode(IScopeNode scope)
     {
         var disposableImplementation = scope.DisposalType.HasFlag(DisposalType.Async) 
             ? $" : {_wellKnownTypes.IAsyncDisposable.FullName()}" 
@@ -131,7 +131,7 @@ internal {{scope.Name}}({{scope.ContainerFullName}} {{scope.ContainerParameterRe
         _code.AppendLine("}");
     }
 
-    public void VisitTransientScopeNode(ITransientScopeNode transientScope)
+    public void VisitITransientScopeNode(ITransientScopeNode transientScope)
     {
         var disposableImplementation = transientScope.DisposalType.HasFlag(DisposalType.Async) 
             ? $", {_wellKnownTypes.IAsyncDisposable.FullName()}" 
@@ -152,7 +152,7 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         _code.AppendLine("}");
     }
 
-    public void VisitScopeCallNode(IScopeCallNode scopeCall)
+    public void VisitIScopeCallNode(IScopeCallNode scopeCall)
     {
         _code.AppendLine(
             $"{scopeCall.ScopeFullName} {scopeCall.ScopeReference} = new {scopeCall.ScopeFullName}({scopeCall.ContainerParameter}, {scopeCall.TransientScopeInterfaceParameter});");
@@ -161,10 +161,10 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         else if (scopeCall.DisposalType.HasFlag(DisposalType.Sync))
             _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {scopeCall.ScopeReference});");
         GenerateInitialization(scopeCall.Initialization, scopeCall.ScopeReference);
-        VisitFunctionCallNode(scopeCall);
+        VisitIFunctionCallNode(scopeCall);
     }
 
-    public void VisitTransientScopeCallNode(ITransientScopeCallNode transientScopeCall)
+    public void VisitITransientScopeCallNode(ITransientScopeCallNode transientScopeCall)
     {
         _code.AppendLine(
             $"{transientScopeCall.TransientScopeFullName} {transientScopeCall.TransientScopeReference} = new {transientScopeCall.TransientScopeFullName}({transientScopeCall.ContainerParameter});");
@@ -180,7 +180,7 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
                 .AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference}[{transientScopeCall.TransientScopeReference}] = ({disposalType}) {transientScopeCall.TransientScopeReference};");
         }
         GenerateInitialization(transientScopeCall.Initialization, transientScopeCall.TransientScopeReference);
-        VisitFunctionCallNode(transientScopeCall);
+        VisitIFunctionCallNode(transientScopeCall);
     }
 
     private void GenerateInitialization(IFunctionCallNode? maybeInitialization, string ownerReference)
@@ -199,19 +199,19 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
     private void GenerateRangeNodeContent(IRangeNode rangeNode)
     {
         foreach (var initializedInstance in rangeNode.InitializedInstances)
-            VisitInitializedInstanceNode(initializedInstance);
+            VisitIInitializedInstanceNode(initializedInstance);
         
         foreach (var initializationFunction in rangeNode.InitializationFunctions)
-            VisitVoidFunctionNode(initializationFunction);
+            VisitIVoidFunctionNode(initializationFunction);
         
         foreach (var createFunctionNode in rangeNode.CreateFunctions)
-            VisitCreateFunctionNode(createFunctionNode);
+            VisitICreateFunctionNodeBase(createFunctionNode);
 
         foreach (var rangedInstanceFunctionGroup in rangeNode.RangedInstanceFunctionGroups)
-            VisitRangedInstanceFunctionGroupNode(rangedInstanceFunctionGroup);
+            VisitIRangedInstanceFunctionGroupNode(rangedInstanceFunctionGroup);
 
         foreach (var multiFunctionNode in rangeNode.MultiFunctions)
-            VisitMultiFunctionNode(multiFunctionNode);
+            VisitIMultiFunctionNode(multiFunctionNode);
         
         if (rangeNode is { AddForDisposal: true, DisposalHandling.SyncCollectionReference: { } syncCollectionReference })
             _code.AppendLine($$"""
@@ -225,6 +225,24 @@ private partial void {{Constants.UserDefinedAddForDisposalAsync}}({{_wellKnownTy
 {{asyncCollectionReference}}.Add(({{_wellKnownTypes.IAsyncDisposable.FullName()}}) asyncDisposable);
 """);
         GenerateDisposalFunction(rangeNode);
+    }
+
+    private void VisitICreateFunctionNodeBase(ICreateFunctionNodeBase element)
+    {
+        switch (element)
+        {
+            case ICreateFunctionNode createFunctionNode:
+                VisitICreateFunctionNode(createFunctionNode);
+                break;
+            case ICreateScopeFunctionNode createScopeFunctionNode:
+                VisitICreateScopeFunctionNode(createScopeFunctionNode);
+                break;
+            case ICreateTransientScopeFunctionNode createTransientScopeFunctionNode:
+                VisitICreateTransientScopeFunctionNode(createTransientScopeFunctionNode);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(element));
+        }
     }
 
     private void GenerateDisposalFunction(
@@ -365,7 +383,7 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
         }
     }
 
-    private void VisitSingleFunctionNode(ISingleFunctionNode singleFunction, bool doDisposedChecks)
+    private void VisitISingleFunctionNode(ISingleFunctionNode singleFunction, bool doDisposedChecks)
     {
         var accessibility = singleFunction is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
             ? $"{SyntaxFacts.GetText(acc)} "  
@@ -387,7 +405,7 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
                 singleFunction.RangeFullName, 
                 singleFunction.ReturnedTypeFullName);
         
-        VisitElementNode(singleFunction.ReturnedElement);
+        VisitIElementNode(singleFunction.ReturnedElement);
         
         if (doDisposedChecks)
             ObjectDisposedCheck(
@@ -397,26 +415,26 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
         _code.AppendLine($"return {singleFunction.ReturnedElement.Reference};");
             
         foreach (var localFunction in singleFunction.LocalFunctions)
-            VisitSingleFunctionNode(localFunction, true);
+            VisitISingleFunctionNode(localFunction, true);
         
         _code.AppendLine("}");
     }
 
-    public void VisitCreateFunctionNode(ICreateFunctionNodeBase createFunction) => VisitSingleFunctionNode(createFunction, false);
-    public void VisitEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitSingleFunctionNode(entryFunction, true);
-    public void VisitLocalFunctionNode(ILocalFunctionNode localFunction) => VisitSingleFunctionNode(localFunction, true);
-    public void VisitRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode)
+    public void VisitICreateFunctionNode(ICreateFunctionNode createFunction) => VisitISingleFunctionNode(createFunction, false);
+    public void VisitIEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitISingleFunctionNode(entryFunction, true);
+    public void VisitILocalFunctionNode(ILocalFunctionNode localFunction) => VisitISingleFunctionNode(localFunction, true);
+    public void VisitIRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode)
     {
         // Nothing to do here. It's generated in "VisitRangedInstanceFunctionGroupNode"
     }
 
-    public void VisitRangedInstanceInterfaceFunctionNode(IRangedInstanceInterfaceFunctionNode rangedInstanceInterfaceFunctionNode)
+    public void VisitIRangedInstanceInterfaceFunctionNode(IRangedInstanceInterfaceFunctionNode rangedInstanceInterfaceFunctionNode)
     {
         var parameter = string.Join(",", rangedInstanceInterfaceFunctionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($"{rangedInstanceInterfaceFunctionNode.ReturnedTypeFullName} {rangedInstanceInterfaceFunctionNode.Name}({parameter});");
     }
 
-    public void VisitRangedInstanceFunctionGroupNode(IRangedInstanceFunctionGroupNode rangedInstanceFunctionGroupNode)
+    public void VisitIRangedInstanceFunctionGroupNode(IRangedInstanceFunctionGroupNode rangedInstanceFunctionGroupNode)
     {
         var isRefType = rangedInstanceFunctionGroupNode.IsCreatedForStructs is null;
         _code.AppendLine($$"""
@@ -454,7 +472,7 @@ try
                 overload.ReturnedTypeFullName);
             _code.AppendLine(checkAndReturnAlreadyCreatedInstance);
             
-            VisitElementNode(overload.ReturnedElement);
+            VisitIElementNode(overload.ReturnedElement);
 
             _code.AppendLine($"{rangedInstanceFunctionGroupNode.FieldReference} = {overload.ReturnedElement.Reference};");
             if (!isRefType) _code.AppendLine($"{rangedInstanceFunctionGroupNode.IsCreatedForStructs} = true;");
@@ -474,12 +492,12 @@ finally
 return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReference}};
 """);
             foreach (var localFunction in overload.LocalFunctions)
-                VisitSingleFunctionNode(localFunction, true);
+                VisitISingleFunctionNode(localFunction, true);
             _code.AppendLine("}");
         }
     }
 
-    public void VisitAsyncFunctionCallNode(IAsyncFunctionCallNode functionCallNode)
+    public void VisitIAsyncFunctionCallNode(IAsyncFunctionCallNode functionCallNode)
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
         var typeFullName = functionCallNode.TypeFullName;
@@ -497,7 +515,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
     }
 
-    private void VisitFunctionCallNode(IFunctionCallNode functionCallNode)
+    private void VisitIFunctionCallNode(IFunctionCallNode functionCallNode)
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
         var typeFullName = functionCallNode.TypeFullName;
@@ -506,9 +524,12 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
     }
 
-    public void VisitPlainFunctionCallNode(IPlainFunctionCallNode plainFunctionCallNode) => VisitFunctionCallNode(plainFunctionCallNode);
+    public void VisitICreateScopeFunctionNode(ICreateScopeFunctionNode element) => 
+        VisitISingleFunctionNode(element, false);
 
-    private void VisitFactoryNodeBase(IFactoryNodeBase factoryNode, string optionalParameters)
+    public void VisitIPlainFunctionCallNode(IPlainFunctionCallNode plainFunctionCallNode) => VisitIFunctionCallNode(plainFunctionCallNode);
+
+    private void VisitIFactoryNodeBase(IFactoryNodeBase factoryNode, string optionalParameters)
     {
         var typeFullName = factoryNode.Awaited
             ? factoryNode.AsyncTypeFullName
@@ -517,131 +538,134 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         _code.AppendLine($"{typeFullName} {factoryNode.Reference} = ({typeFullName}){awaitPrefix}{factoryNode.Name}{optionalParameters};");
     }
 
-    public void VisitFactoryFieldNode(IFactoryFieldNode factoryFieldNode)
+    public void VisitIFactoryFieldNode(IFactoryFieldNode factoryFieldNode)
     {
-        VisitFactoryNodeBase(factoryFieldNode, "");
+        VisitIFactoryNodeBase(factoryFieldNode, "");
     }
 
-    public void VisitFactoryPropertyNode(IFactoryPropertyNode factoryPropertyNode)
+    public void VisitIFactoryPropertyNode(IFactoryPropertyNode factoryPropertyNode)
     {
-        VisitFactoryNodeBase(factoryPropertyNode, "");
+        VisitIFactoryNodeBase(factoryPropertyNode, "");
     }
 
-    public void VisitFactoryFunctionNode(IFactoryFunctionNode factoryFunctionNode)
+    public void VisitIFactoryFunctionNode(IFactoryFunctionNode factoryFunctionNode)
     {
         foreach (var (_, element) in factoryFunctionNode.Parameters)
-            VisitElementNode(element);
-        VisitFactoryNodeBase(factoryFunctionNode, $"({string.Join(", ", factoryFunctionNode.Parameters.Select(t => $"{t.Name.PrefixAtIfKeyword()}: {t.Element.Reference}"))})");
+            VisitIElementNode(element);
+        VisitIFactoryNodeBase(factoryFunctionNode, $"({string.Join(", ", factoryFunctionNode.Parameters.Select(t => $"{t.Name.PrefixAtIfKeyword()}: {t.Element.Reference}"))})");
     }
 
-    public void VisitFuncNode(IFuncNode funcNode) =>
+    public void VisitICreateTransientScopeFunctionNode(ICreateTransientScopeFunctionNode element) =>
+        VisitISingleFunctionNode(element, false);
+
+    public void VisitIFuncNode(IFuncNode funcNode) =>
         _code.AppendLine($"{funcNode.TypeFullName} {funcNode.Reference} = {funcNode.MethodGroup};");
 
-    public void VisitLazyNode(ILazyNode lazyNode) => 
+    public void VisitILazyNode(ILazyNode lazyNode) => 
         _code.AppendLine($"{lazyNode.TypeFullName} {lazyNode.Reference} = new {lazyNode.TypeFullName}({lazyNode.MethodGroup});");
 
-    public void VisitTupleNode(ITupleNode tupleNode)
+    public void VisitITupleNode(ITupleNode tupleNode)
     {
         foreach (var parameter in tupleNode.Parameters)
-            VisitElementNode(parameter.Node);
+            VisitIElementNode(parameter.Node);
         _code.AppendLine(
             $"{tupleNode.TypeFullName} {tupleNode.Reference} = new {tupleNode.TypeFullName}({string.Join(", ", tupleNode.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {p.Node.Reference}"))});");
     }
 
-    public void VisitValueTupleNode(IValueTupleNode valueTupleNode)
+    public void VisitIValueTupleNode(IValueTupleNode valueTupleNode)
     {
         foreach (var parameter in valueTupleNode.Parameters)
-            VisitElementNode(parameter.Node);
+            VisitIElementNode(parameter.Node);
         _code.AppendLine(
             $"{valueTupleNode.TypeFullName} {valueTupleNode.Reference} = new {valueTupleNode.TypeFullName}({string.Join(", ", valueTupleNode.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {p.Node.Reference}"))});");
     }
 
-    public void VisitValueTupleSyntaxNode(IValueTupleSyntaxNode valueTupleSyntaxNode)
+    public void VisitIValueTupleSyntaxNode(IValueTupleSyntaxNode valueTupleSyntaxNode)
     {
         foreach (var item in valueTupleSyntaxNode.Items)
         {
-            VisitElementNode(item);
+            VisitIElementNode(item);
         }
         _code.AppendLine($"{valueTupleSyntaxNode.TypeFullName} {valueTupleSyntaxNode.Reference} = ({string.Join(", ", valueTupleSyntaxNode.Items.Select(d => d.Reference))});");
     }
 
-    private void VisitElementNode(IElementNode elementNode)
+    private void VisitIElementNode(IElementNode elementNode)
     {
         switch (elementNode)
         {
             case IPlainFunctionCallNode createCallNode:
-                VisitPlainFunctionCallNode(createCallNode);
+                VisitIPlainFunctionCallNode(createCallNode);
                 break;
             case IAsyncFunctionCallNode asyncFunctionCallNode:
-                VisitAsyncFunctionCallNode(asyncFunctionCallNode);
+                VisitIAsyncFunctionCallNode(asyncFunctionCallNode);
                 break;
             case IScopeCallNode scopeCallNode:
-                VisitScopeCallNode(scopeCallNode);
+                VisitIScopeCallNode(scopeCallNode);
                 break;
             case ITransientScopeCallNode transientScopeCallNode:
-                VisitTransientScopeCallNode(transientScopeCallNode);
+                VisitITransientScopeCallNode(transientScopeCallNode);
                 break;
             case IParameterNode parameterNode:
-                VisitParameterNode(parameterNode);
+                VisitIParameterNode(parameterNode);
                 break;
             case IOutParameterNode outParameterNode:
-                VisitOutParameterNode(outParameterNode);
+                VisitIOutParameterNode(outParameterNode);
                 break;
             case IFactoryFieldNode factoryFieldNode:
-                VisitFactoryFieldNode(factoryFieldNode);
+                VisitIFactoryFieldNode(factoryFieldNode);
                 break;
             case IFactoryFunctionNode factoryFunctionNode:
-                VisitFactoryFunctionNode(factoryFunctionNode);
+                VisitIFactoryFunctionNode(factoryFunctionNode);
                 break;
             case IFactoryPropertyNode factoryPropertyNode:
-                VisitFactoryPropertyNode(factoryPropertyNode);
+                VisitIFactoryPropertyNode(factoryPropertyNode);
                 break;
             case IFuncNode funcNode:
-                VisitFuncNode(funcNode);
+                VisitIFuncNode(funcNode);
                 break;
             case ILazyNode lazyNode:
-                VisitLazyNode(lazyNode);
+                VisitILazyNode(lazyNode);
                 break;
             case ITupleNode tupleNode:
-                VisitTupleNode(tupleNode);
+                VisitITupleNode(tupleNode);
                 break;
             case IValueTupleNode valueTupleNode:
-                VisitValueTupleNode(valueTupleNode);
+                VisitIValueTupleNode(valueTupleNode);
                 break;
             case IValueTupleSyntaxNode valueTupleSyntaxNode:
-                VisitValueTupleSyntaxNode(valueTupleSyntaxNode);
+                VisitIValueTupleSyntaxNode(valueTupleSyntaxNode);
                 break;
             case IAbstractionNode abstractionNode:
-                VisitAbstractionNode(abstractionNode);
+                VisitIAbstractionNode(abstractionNode);
                 break;
             case IImplementationNode implementationNode:
-                VisitImplementationNode(implementationNode);
+                VisitIImplementationNode(implementationNode);
                 break;
             case ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode:
-                VisitTransientScopeDisposalTriggerNode(transientScopeDisposalTriggerNode);
+                VisitITransientScopeDisposalTriggerNode(transientScopeDisposalTriggerNode);
                 break;
             case INullNode nullNode:
-                VisitNullNode(nullNode);
+                VisitINullNode(nullNode);
                 break;
             case IEnumerableBasedNode enumerableBasedNode:
-                VisitEnumerableBasedNode(enumerableBasedNode);
+                VisitIEnumerableBasedNode(enumerableBasedNode);
                 break;
             case IReusedNode reusedNode:
-                VisitReusedNode(reusedNode);
+                VisitIReusedNode(reusedNode);
                 break;
         }
     }
 
-    public void VisitImplementationNode(IImplementationNode implementationNode)
+    public void VisitIImplementationNode(IImplementationNode implementationNode)
     {
         if (implementationNode.UserDefinedInjectionConstructor is {})
             ProcessUserDefinedInjection(implementationNode.UserDefinedInjectionConstructor);
         if (implementationNode.UserDefinedInjectionProperties is {})
             ProcessUserDefinedInjection(implementationNode.UserDefinedInjectionProperties);
         foreach (var (_, element) in implementationNode.ConstructorParameters)
-            VisitElementNode(element);
+            VisitIElementNode(element);
         foreach (var (_, element)  in implementationNode.Properties)
-            VisitElementNode(element);
+            VisitIElementNode(element);
         var objectInitializerParameter = implementationNode.Properties.Any()
             ? $" {{ {string.Join(", ", implementationNode.Properties.Select(p => $"{p.Name.PrefixAtIfKeyword()} = {p.Element.Reference}"))} }}"
             : "";
@@ -662,7 +686,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             if (init.UserDefinedInjection is {})
                 ProcessUserDefinedInjection(init.UserDefinedInjection);
             foreach (var (_, element) in init.Parameters)
-                VisitElementNode(element);
+                VisitIElementNode(element);
             var initializerParameters =
                 string.Join(", ", init.Parameters.Select(d => $"{d.Name.PrefixAtIfKeyword()}: {d.Element.Reference}"));
 
@@ -678,39 +702,39 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         void ProcessUserDefinedInjection(ImplementationNode.UserDefinedInjection userDefinedInjection)
         {
             foreach (var (_, element, _) in userDefinedInjection.Parameters)
-                VisitElementNode(element);
+                VisitIElementNode(element);
             _code.AppendLine(
                 $"{userDefinedInjection.Name}({string.Join(", ", userDefinedInjection.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {(p.IsOut ? "out var " : "")} {p.Element.Reference}"))});");
         }
     }
 
-    public void VisitParameterNode(IParameterNode parameterNode)
+    public void VisitIParameterNode(IParameterNode parameterNode)
     {
         // Processing is done in associated function node
     }
 
-    public void VisitOutParameterNode(IOutParameterNode outParameterNode)
+    public void VisitIOutParameterNode(IOutParameterNode outParameterNode)
     {
         // Processing is done in associated implementation node
     }
 
-    public void VisitAbstractionNode(IAbstractionNode abstractionNode)
+    public void VisitIAbstractionNode(IAbstractionNode abstractionNode)
     {
-        VisitElementNode(abstractionNode.Implementation);
+        VisitIElementNode(abstractionNode.Implementation);
         _code.AppendLine($"{abstractionNode.TypeFullName} {abstractionNode.Reference} = ({abstractionNode.TypeFullName}) {abstractionNode.Implementation.Reference};");
     }
 
-    public void VisitTransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode)
+    public void VisitITransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode)
     {
         transientScopeDisposalTriggerNode.CheckSynchronicity();
         _code.AppendLine(
             $"{transientScopeDisposalTriggerNode.TypeFullName} {transientScopeDisposalTriggerNode.Reference} = {Constants.ThisKeyword} as {transientScopeDisposalTriggerNode.TypeFullName};");
     }
 
-    public void VisitNullNode(INullNode nullNode) => _code.AppendLine(
+    public void VisitINullNode(INullNode nullNode) => _code.AppendLine(
         $"{nullNode.TypeFullName} {nullNode.Reference} = ({nullNode.TypeFullName}) null;");
 
-    public void VisitMultiFunctionNode(IMultiFunctionNode multiFunctionNode)
+    public void VisitIMultiFunctionNode(IMultiFunctionNode multiFunctionNode)
     {
         var accessibility = multiFunctionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
             ? $"{SyntaxFacts.GetText(acc)} "  
@@ -733,7 +757,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             multiFunctionNode.ReturnedTypeFullName);
         foreach (var returnedElement in multiFunctionNode.ReturnedElements)
         {
-            VisitElementNode(returnedElement);
+            VisitIElementNode(returnedElement);
             ObjectDisposedCheck(
                 multiFunctionNode.DisposedPropertyReference, 
                 multiFunctionNode.RangeFullName, 
@@ -743,7 +767,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         }
             
         foreach (var localFunction in multiFunctionNode.LocalFunctions)
-            VisitSingleFunctionNode(localFunction, true);
+            VisitISingleFunctionNode(localFunction, true);
         
         _code.AppendLine(multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync
             ? "yield break;"
@@ -752,9 +776,9 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         _code.AppendLine("}");
     }
 
-    public void VisitEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode)
+    public void VisitIEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode)
     {
-        VisitElementNode(enumerableBasedNode.EnumerableCall);
+        VisitIElementNode(enumerableBasedNode.EnumerableCall);
         if (enumerableBasedNode is { Type: EnumerableBasedType.IEnumerable or EnumerableBasedType.IAsyncEnumerable }
             || enumerableBasedNode.CollectionData is not
             {
@@ -814,12 +838,12 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         }
     }
 
-    public void VisitErrorNode(IErrorNode errorNode)
+    public void VisitIErrorNode(IErrorNode errorNode)
     {
         // Nothing to do here
     }
 
-    public void VisitInitializedInstanceNode(IInitializedInstanceNode initializedInstanceNode)
+    public void VisitIInitializedInstanceNode(IInitializedInstanceNode initializedInstanceNode)
     {
         var initialValue = initializedInstanceNode.IsReferenceType
             ? "null!"
@@ -827,7 +851,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         _code.AppendLine($"private {initializedInstanceNode.TypeFullName} {initializedInstanceNode.Reference} = {initialValue};");
     }
 
-    public void VisitVoidFunctionNode(IVoidFunctionNode voidFunctionNode)
+    public void VisitIVoidFunctionNode(IVoidFunctionNode voidFunctionNode)
     {
         var accessibility = voidFunctionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
             ? $"{SyntaxFacts.GetText(acc)} "  
@@ -845,22 +869,22 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
 """);
         foreach (var (functionCallNode, initializedInstanceNode) in voidFunctionNode.Initializations)
         {
-            VisitElementNode(functionCallNode);
+            VisitIElementNode(functionCallNode);
             _code.AppendLine($"{initializedInstanceNode.Reference} = {functionCallNode.Reference};");
         }
             
         foreach (var localFunction in voidFunctionNode.LocalFunctions)
-            VisitSingleFunctionNode(localFunction, true);
+            VisitISingleFunctionNode(localFunction, true);
         
         _code.AppendLine("}");
     }
 
     private readonly HashSet<IReusedNode> _doneReusedNodes = new();
-    public void VisitReusedNode(IReusedNode reusedNode)
+    public void VisitIReusedNode(IReusedNode reusedNode)
     {
         if (_doneReusedNodes.Contains(reusedNode)) return;
         _doneReusedNodes.Add(reusedNode);
-        VisitElementNode(reusedNode.Inner);
+        VisitIElementNode(reusedNode.Inner);
     }
 
     public string GenerateContainerFile() => _code.ToString();

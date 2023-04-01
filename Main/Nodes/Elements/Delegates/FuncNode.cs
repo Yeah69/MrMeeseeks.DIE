@@ -23,5 +23,5 @@ internal class FuncNode : DelegateBaseNode, IFuncNode
     {
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitFuncNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIFuncNode(this);
 }

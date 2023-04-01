@@ -19,7 +19,7 @@ internal class ReusedNode : IReusedNode
     }
 
     public void Accept(INodeVisitor nodeVisitor) => 
-        nodeVisitor.VisitReusedNode(this);
+        nodeVisitor.VisitIReusedNode(this);
 
     public string TypeFullName => Inner.TypeFullName;
     public string Reference => Inner.Reference;

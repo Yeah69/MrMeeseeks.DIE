@@ -38,7 +38,7 @@ internal class ValueTupleNode : IValueTupleNode
             .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, implementationStack))));
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitValueTupleNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIValueTupleNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

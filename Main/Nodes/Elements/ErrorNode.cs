@@ -31,7 +31,7 @@ internal class ErrorNode : IErrorNode
             ErrorLogData.ResolutionException(Message, _currentType, implementationStack),
             Location.None);
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitErrorNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIErrorNode(this);
 
     public string Message { get; }
     public string TypeFullName => "Errors have no type";

@@ -51,7 +51,7 @@ internal class ValueTupleSyntaxNode : IValueTupleSyntaxNode
         }
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitValueTupleSyntaxNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIValueTupleSyntaxNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

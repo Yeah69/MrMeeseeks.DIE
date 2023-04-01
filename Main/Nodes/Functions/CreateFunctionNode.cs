@@ -60,6 +60,6 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode,
 
     protected override IElementNodeMapperBase GetMapper() => _mapperFactory.Create(_mapperData);
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitICreateFunctionNode(this);
     public override string Name { get; protected set; }
 }

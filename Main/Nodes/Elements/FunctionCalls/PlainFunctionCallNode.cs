@@ -19,5 +19,5 @@ internal class PlainFunctionCallNode : FunctionCallNode, IPlainFunctionCallNode
     {
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitPlainFunctionCallNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIPlainFunctionCallNode(this);
 }

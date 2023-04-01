@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{4BFDBE50-2
 		Directory.build.props = Directory.build.props
 		.github\workflows\main.yml = .github\workflows\main.yml
 		README.md = README.md
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{5075D83B-EF12-4372-8210-CEB5D81A4FE2}"

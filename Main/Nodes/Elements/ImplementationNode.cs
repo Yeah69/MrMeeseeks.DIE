@@ -206,7 +206,7 @@ internal class ImplementationNode : IImplementationNode
                 : _elementNodeMapper.Map(typeParam, implementationStack);
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitImplementationNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIImplementationNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

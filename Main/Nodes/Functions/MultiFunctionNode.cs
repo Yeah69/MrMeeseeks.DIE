@@ -110,7 +110,7 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
             .ToList();
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitMultiFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIMultiFunctionNode(this);
 
     public override string Name { get; protected set; }
     public override string ReturnedTypeNameNotWrapped { get; }

@@ -61,6 +61,6 @@ internal class EntryFunctionNode : SingleFunctionNodeBase, IEntryFunctionNode, I
         return _nonWrapToCreateElementNodeMapperFactory(dummyMapper);
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitEntryFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIEntryFunctionNode(this);
     public override string Name { get; protected set; }
 }

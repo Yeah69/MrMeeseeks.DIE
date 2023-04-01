@@ -60,6 +60,6 @@ internal class LocalFunctionNode : SingleFunctionNodeBase, ILocalFunctionNode, I
         return _nonWrapToCreateElementNodeMapperFactory(baseMapper);
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitLocalFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitILocalFunctionNode(this);
     public override string Name { get; protected set; }
 }

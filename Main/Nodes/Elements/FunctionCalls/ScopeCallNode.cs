@@ -21,10 +21,7 @@ internal class ScopeCallNode : FunctionCallNode, IScopeCallNode
     private readonly IScopeNode _scope;
     private readonly IRangeNode _callingRange;
 
-    public override void Accept(INodeVisitor nodeVisitor)
-    {
-        nodeVisitor.VisitScopeCallNode(this);
-    }
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIScopeCallNode(this);
 
     public ScopeCallNode(
         (string ContainerParamter, string TransientScopeInterfaceParameter) stringParams,

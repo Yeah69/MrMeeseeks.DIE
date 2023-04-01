@@ -38,7 +38,7 @@ internal class TupleNode : ITupleNode
             .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, implementationStack))));
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitTupleNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitITupleNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

@@ -65,6 +65,6 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
         return _transientScopeDisposalElementNodeMapperFactory(parentMapper);
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitICreateTransientScopeFunctionNode(this);
     public override string Name { get; protected set; }
 }

@@ -22,5 +22,5 @@ internal class LazyNode : DelegateBaseNode, ILazyNode
     {
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitLazyNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitILazyNode(this);
 }

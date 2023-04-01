@@ -59,6 +59,6 @@ internal class CreateScopeFunctionNode : SingleFunctionNodeBase, ICreateScopeFun
     protected override IElementNodeMapperBase GetMapper() =>
         _typeToElementNodeMapperFactory();
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitCreateFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitICreateScopeFunctionNode(this);
     public override string Name { get; protected set; }
 }

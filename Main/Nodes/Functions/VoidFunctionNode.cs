@@ -66,7 +66,7 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
             .ToList();
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitVoidFunctionNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIVoidFunctionNode(this);
     protected override string GetAsyncTypeFullName() => "void";
 
     protected override string GetReturnedTypeFullName() =>

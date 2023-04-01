@@ -42,7 +42,7 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, ICont
     {
     }
 
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitTransientScopeInterfaceNode(this);
+    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitITransientScopeInterfaceNode(this);
 
     public string FullName { get; }
     public string Name { get; }

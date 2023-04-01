@@ -20,5 +20,5 @@ internal class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
     {
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitFactoryFieldNode(this);
+    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIFactoryFieldNode(this);
 }

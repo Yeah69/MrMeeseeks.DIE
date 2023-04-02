@@ -33,7 +33,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MrMeeseeks.Visitor" Version="1.0.0-alpha.5" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="MrMeeseeks.Visitor" Version="1.0.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="MsMeeseeks.DIE" Version="2.0.0-beta.1.3" PrivateAssets="all" GeneratePathProperty="true" />
     
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />

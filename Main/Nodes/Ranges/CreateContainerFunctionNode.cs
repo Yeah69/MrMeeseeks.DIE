@@ -1,6 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
@@ -16,7 +15,7 @@ internal interface ICreateContainerFunctionNode : INode
     string ReturnTypeFullName { get; }
 }
 
-internal class CreateContainerFunctionNode : ICreateContainerFunctionNode
+internal partial class CreateContainerFunctionNode : ICreateContainerFunctionNode
 {
     private readonly IVoidFunctionNode? _initializationFunction;
     private readonly INamedTypeSymbol _containerType;
@@ -45,9 +44,6 @@ internal class CreateContainerFunctionNode : ICreateContainerFunctionNode
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => 
-        nodeVisitor.VisitICreateContainerFunctionNode(this);
 
     public string Name { get; }
     public IReadOnlyList<(string TypeFullName, string Reference)> Parameters { get; }

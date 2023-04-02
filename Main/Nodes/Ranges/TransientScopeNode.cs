@@ -8,7 +8,6 @@ using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -19,7 +18,7 @@ internal interface ITransientScopeNode : IScopeNodeBase
     ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction);
 }
 
-internal class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransientScopeInstance
+internal partial class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransientScopeInstance
 {
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateTransientScopeFunctionNodeRoot> _createTransientScopeFunctionNodeFactory;
 
@@ -58,8 +57,6 @@ internal class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransie
         TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
     }
     protected override string ContainerParameterForScope => ContainerReference;
-
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitITransientScopeNode(this);
 
     public override IFunctionCallNode BuildContainerInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction)
     {

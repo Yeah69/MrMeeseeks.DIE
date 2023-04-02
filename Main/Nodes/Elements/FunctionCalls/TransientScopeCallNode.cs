@@ -1,7 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 
@@ -16,14 +15,9 @@ internal interface ITransientScopeCallNode : IFunctionCallNode
     IFunctionCallNode? Initialization { get; }
 }
 
-internal class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNode
+internal partial class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNode
 {
     private readonly ITransientScopeNode _scope;
-
-    public override void Accept(INodeVisitor nodeVisitor)
-    {
-        nodeVisitor.VisitITransientScopeCallNode(this);
-    }
 
     public TransientScopeCallNode(
         string containerParameter, 

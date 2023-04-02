@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
@@ -8,7 +7,7 @@ internal interface INullNode : IElementNode
     
 }
 
-internal class NullNode : INullNode
+internal partial class NullNode : INullNode
 {
     internal NullNode(
         ITypeSymbol nullableType,
@@ -21,8 +20,6 @@ internal class NullNode : INullNode
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitINullNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

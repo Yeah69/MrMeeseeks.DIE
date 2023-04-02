@@ -1,7 +1,6 @@
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Delegates;
 
@@ -10,7 +9,7 @@ internal interface IFuncNode : IDelegateBaseNode
     
 }
 
-internal class FuncNode : DelegateBaseNode, IFuncNode
+internal partial class FuncNode : DelegateBaseNode, IFuncNode
 {
     internal FuncNode(
         INamedTypeSymbol funcType,
@@ -22,6 +21,4 @@ internal class FuncNode : DelegateBaseNode, IFuncNode
         : base(funcType, function, localDiagLogger, parentContainer, referenceGenerator)
     {
     }
-
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIFuncNode(this);
 }

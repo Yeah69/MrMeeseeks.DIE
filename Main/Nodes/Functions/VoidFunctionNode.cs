@@ -4,7 +4,6 @@ using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -16,7 +15,7 @@ internal interface IVoidFunctionNode : IFunctionNode
     void ReorderOrDetectCycle();
 }
 
-internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeInstance
+internal partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeInstance
 {
     private readonly IReadOnlyList<IInitializedInstanceNode> _initializedInstanceNodes;
     private readonly ILocalDiagLogger _localDiagLogger;
@@ -66,7 +65,6 @@ internal class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeIns
             .ToList();
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIVoidFunctionNode(this);
     protected override string GetAsyncTypeFullName() => "void";
 
     protected override string GetReturnedTypeFullName() =>

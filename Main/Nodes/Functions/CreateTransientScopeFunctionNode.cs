@@ -4,7 +4,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -13,7 +12,7 @@ internal interface ICreateTransientScopeFunctionNode : ICreateFunctionNodeBase
 {
 }
 
-internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreateTransientScopeFunctionNode, IScopeInstance
+internal partial class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreateTransientScopeFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _typeSymbol;
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
@@ -65,6 +64,5 @@ internal class CreateTransientScopeFunctionNode : SingleFunctionNodeBase, ICreat
         return _transientScopeDisposalElementNodeMapperFactory(parentMapper);
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitICreateTransientScopeFunctionNode(this);
     public override string Name { get; protected set; }
 }

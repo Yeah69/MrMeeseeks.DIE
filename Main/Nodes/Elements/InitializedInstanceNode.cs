@@ -1,7 +1,6 @@
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
@@ -12,7 +11,7 @@ internal interface IInitializedInstanceNode : IElementNode
     IFunctionCallNode BuildCall(IRangeNode range, IFunctionNode callingFunction);
 }
 
-internal class InitializedInstanceNode : IInitializedInstanceNode
+internal partial class InitializedInstanceNode : IInitializedInstanceNode
 {
     private readonly INamedTypeSymbol _type;
 
@@ -30,8 +29,6 @@ internal class InitializedInstanceNode : IInitializedInstanceNode
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIInitializedInstanceNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

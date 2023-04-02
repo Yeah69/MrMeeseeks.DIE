@@ -3,7 +3,6 @@ using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -12,7 +11,7 @@ internal interface IRangedInstanceFunctionGroupNode : IRangedInstanceFunctionGro
     IEnumerable<IRangedInstanceFunctionNode> Overloads { get; }
 }
 
-internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNodeBase, IRangedInstanceFunctionGroupNode
+internal partial class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNodeBase, IRangedInstanceFunctionGroupNode
 {
     private readonly INamedTypeSymbol _type;
     private readonly IContainerNode _parentContainer;
@@ -35,8 +34,6 @@ internal class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNode
         _rangedInstanceFunctionNodeFactory = rangedInstanceFunctionNodeFactory;
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIRangedInstanceFunctionGroupNode(this);
-    
     public IEnumerable<IRangedInstanceFunctionNode> Overloads => _overloads;
     
     public override IRangedInstanceFunctionNode BuildFunction(IFunctionNode callingFunction) =>

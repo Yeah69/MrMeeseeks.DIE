@@ -5,7 +5,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -22,7 +21,7 @@ internal interface IRangedInstanceFunctionNodeInitializer
     void Initialize(string name, string explicitInterfaceFullName);
 }
 
-internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer, IScopeInstance
+internal partial class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer, IScopeInstance
 {
     private readonly INamedTypeSymbol _type;
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
@@ -70,7 +69,6 @@ internal class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInsta
         // "MapToImplementation" instead of "Map", because latter would cause an infinite recursion ever trying to create a new ranged instance function
         mapper.MapToImplementation(new(true, false, false), _type, ImmutableStack<INamedTypeSymbol>.Empty); 
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIRangedInstanceFunctionNode(this);
     public override string Name { get; protected set; }
 
     void IRangedInstanceFunctionNodeInitializer.Initialize(

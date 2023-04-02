@@ -4,7 +4,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -17,7 +16,7 @@ internal interface ICreateFunctionNode : ICreateFunctionNodeBase
 {
 }
 
-internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode, IScopeInstance
+internal partial class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode, IScopeInstance
 {
     private readonly MapperData _mapperData;
     private readonly IMapperFactory _mapperFactory;
@@ -59,7 +58,6 @@ internal class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode,
     }
 
     protected override IElementNodeMapperBase GetMapper() => _mapperFactory.Create(_mapperData);
-
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitICreateFunctionNode(this);
+    
     public override string Name { get; protected set; }
 }

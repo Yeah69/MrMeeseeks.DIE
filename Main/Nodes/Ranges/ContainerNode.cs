@@ -8,7 +8,6 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Roots;
-using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -31,7 +30,7 @@ internal interface IContainerNode : IRangeNode
 
 internal record BuildJob(INode Node, ImmutableStack<INamedTypeSymbol> PreviousImplementations);
 
-internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
+internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IFunctionCycleTracker _functionCycleTracker;
@@ -186,8 +185,6 @@ internal class ContainerNode : RangeNode, IContainerNode, IContainerInstance
         foreach (var delegateBaseNode in _delegateBaseNodes)
             delegateBaseNode.CheckSynchronicity();
     }
-
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIContainerNode(this);
 
     public override string? ContainerReference => null;
 

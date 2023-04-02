@@ -1,6 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
-using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Factories;
 
@@ -8,7 +7,7 @@ internal interface IFactoryFieldNode : IFactoryNodeBase
 {
 }
 
-internal class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
+internal partial class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
 {
     internal FactoryFieldNode(
         IFieldSymbol fieldSymbol, 
@@ -19,6 +18,4 @@ internal class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
         : base(fieldSymbol.Type, fieldSymbol, parentFunction, referenceGenerator, containerWideContext)
     {
     }
-
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIFactoryFieldNode(this);
 }

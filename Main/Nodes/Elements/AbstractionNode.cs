@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Nodes.Mappers;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
@@ -9,7 +8,7 @@ internal interface IAbstractionNode : IElementNode
     IElementNode Implementation { get; }
 }
 
-internal class AbstractionNode : IAbstractionNode
+internal partial class AbstractionNode : IAbstractionNode
 {
     private readonly INamedTypeSymbol _implementationType;
     private readonly IElementNodeMapperBase _mapper;
@@ -33,8 +32,6 @@ internal class AbstractionNode : IAbstractionNode
             _implementationType, 
             implementationStack);
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIAbstractionNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

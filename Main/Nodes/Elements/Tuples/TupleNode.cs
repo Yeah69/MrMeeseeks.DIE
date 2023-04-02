@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Nodes.Mappers;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Tuples;
@@ -9,7 +8,7 @@ internal interface ITupleNode : IElementNode
     IReadOnlyList<(string Name, IElementNode Node)> Parameters { get; }
 }
 
-internal class TupleNode : ITupleNode
+internal partial class TupleNode : ITupleNode
 {
     private readonly INamedTypeSymbol _tupleType;
     private readonly IElementNodeMapperBase _elementNodeMapper;
@@ -37,8 +36,6 @@ internal class TupleNode : ITupleNode
             .Parameters
             .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, implementationStack))));
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitITupleNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

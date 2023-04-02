@@ -3,7 +3,6 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -70,7 +69,7 @@ internal interface IEnumerableBasedNode : IElementNode
     IFunctionCallNode EnumerableCall { get; }
 }
 
-internal class EnumerableBasedNode : IEnumerableBasedNode
+internal partial class EnumerableBasedNode : IEnumerableBasedNode
 {
     private readonly ITypeSymbol _collectionType;
     private readonly IRangeNode _parentRange;
@@ -291,8 +290,6 @@ internal class EnumerableBasedNode : IEnumerableBasedNode
             : _wellKnownTypesCollections.IEnumerable1.Construct(collectionsInnerType);
         EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction);
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIEnumerableBasedNode(this);
 
     public string TypeFullName => Type != EnumerableBasedType.IEnumerable && Type != EnumerableBasedType.IAsyncEnumerable && CollectionData is not null
         ? CollectionData.CollectionTypeFullName

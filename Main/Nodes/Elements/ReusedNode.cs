@@ -1,5 +1,3 @@
-using MrMeeseeks.DIE.Visitors;
-
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
 internal interface IReusedNode : IElementNode
@@ -7,7 +5,7 @@ internal interface IReusedNode : IElementNode
     IElementNode Inner { get; }
 }
 
-internal class ReusedNode : IReusedNode
+internal partial class ReusedNode : IReusedNode
 {
     internal ReusedNode(
         IElementNode innerNode) =>
@@ -17,9 +15,6 @@ internal class ReusedNode : IReusedNode
     {
         
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => 
-        nodeVisitor.VisitIReusedNode(this);
 
     public string TypeFullName => Inner.TypeFullName;
     public string Reference => Inner.Reference;

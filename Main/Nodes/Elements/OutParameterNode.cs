@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
@@ -7,7 +6,7 @@ internal interface IOutParameterNode : IElementNode
 {
 }
 
-internal class OutParameterNode : IOutParameterNode
+internal partial class OutParameterNode : IOutParameterNode
 {
     internal OutParameterNode(
         ITypeSymbol type,
@@ -21,8 +20,6 @@ internal class OutParameterNode : IOutParameterNode
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIOutParameterNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

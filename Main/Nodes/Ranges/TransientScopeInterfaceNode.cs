@@ -4,7 +4,6 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
@@ -18,7 +17,7 @@ internal interface ITransientScopeInterfaceNode : INode
     void RegisterRange(IRangeNode range);
 }
 
-internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
+internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
 {
     private readonly IContainerNode _container;
     private readonly Dictionary<ITypeSymbol, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
@@ -41,8 +40,6 @@ internal class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, ICont
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitITransientScopeInterfaceNode(this);
 
     public string FullName { get; }
     public string Name { get; }

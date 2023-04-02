@@ -1,5 +1,4 @@
 ﻿using System;
-using MrMeeseeks.DIE.Sample;
 
 
 internal class Program

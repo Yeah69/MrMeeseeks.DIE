@@ -2,7 +2,6 @@ using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -13,7 +12,7 @@ internal interface ITransientScopeDisposalTriggerNode : IElementNode
     void CheckSynchronicity();
 }
 
-internal class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTriggerNode
+internal partial class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTriggerNode
 {
     private readonly bool _disposalHookIsSync;
     private readonly IContainerNode _parentContainer;
@@ -41,9 +40,6 @@ internal class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTrigge
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => 
-        nodeVisitor.VisitITransientScopeDisposalTriggerNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

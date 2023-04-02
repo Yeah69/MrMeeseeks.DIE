@@ -5,7 +5,6 @@ using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -26,7 +25,7 @@ internal interface IImplementationNode : IElementNode, IAwaitableNode
     string? AsyncTypeFullName { get; }
 }
 
-internal class ImplementationNode : IImplementationNode
+internal partial class ImplementationNode : IImplementationNode
 {
     internal record UserDefinedInjection(
         string Name, 
@@ -205,8 +204,6 @@ internal class ImplementationNode : IImplementationNode
                 ? element
                 : _elementNodeMapper.Map(typeParam, implementationStack);
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIImplementationNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

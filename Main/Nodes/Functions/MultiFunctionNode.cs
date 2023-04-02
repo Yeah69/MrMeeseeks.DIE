@@ -6,7 +6,6 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -19,7 +18,7 @@ internal interface IMultiFunctionNode : IFunctionNode
     string ItemTypeFullName { get; }
 }
 
-internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode, IScopeInstance
+internal partial class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
     private readonly ICheckTypeProperties _checkTypeProperties;
@@ -109,8 +108,6 @@ internal class MultiFunctionNode : ReturningFunctionNodeBase, IMultiFunctionNode
                 itemType))
             .ToList();
     }
-
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIMultiFunctionNode(this);
 
     public override string Name { get; protected set; }
     public override string ReturnedTypeNameNotWrapped { get; }

@@ -1,8 +1,4 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
-using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
@@ -11,7 +7,7 @@ internal interface IErrorNode : IElementNode
     string Message { get; }
 }
 
-internal class ErrorNode : IErrorNode
+internal partial class ErrorNode : IErrorNode
 {
     private readonly ITypeSymbol _currentType;
     private readonly ILocalDiagLogger _localDiagLogger;
@@ -30,8 +26,6 @@ internal class ErrorNode : IErrorNode
         _localDiagLogger.Error(
             ErrorLogData.ResolutionException(Message, _currentType, implementationStack),
             Location.None);
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIErrorNode(this);
 
     public string Message { get; }
     public string TypeFullName => "Errors have no type";

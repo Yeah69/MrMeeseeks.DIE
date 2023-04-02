@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Nodes.Mappers;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Tuples;
@@ -9,7 +8,7 @@ internal interface IValueTupleSyntaxNode : IElementNode
     IReadOnlyList<IElementNode> Items { get; }
 }
 
-internal class ValueTupleSyntaxNode : IValueTupleSyntaxNode
+internal partial class ValueTupleSyntaxNode : IValueTupleSyntaxNode
 {
     private readonly INamedTypeSymbol _valueTupleType;
     private readonly IElementNodeMapperBase _elementNodeMapper;
@@ -50,8 +49,6 @@ internal class ValueTupleSyntaxNode : IValueTupleSyntaxNode
             }
         }
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIValueTupleSyntaxNode(this);
 
     public string TypeFullName { get; }
     public string Reference { get; }

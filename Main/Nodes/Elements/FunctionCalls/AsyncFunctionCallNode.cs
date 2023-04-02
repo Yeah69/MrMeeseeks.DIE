@@ -1,6 +1,5 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -21,7 +20,7 @@ internal interface IAsyncFunctionCallNode : IFunctionCallNode
     void AdjustToCurrentCalledFunctionSynchronicity();
 }
 
-internal class AsyncFunctionCallNode : IAsyncFunctionCallNode
+internal partial class AsyncFunctionCallNode : IAsyncFunctionCallNode
 {
     private readonly IFunctionNode _calledFunction;
 
@@ -54,8 +53,7 @@ internal class AsyncFunctionCallNode : IAsyncFunctionCallNode
     public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
     }
-
-    public void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIAsyncFunctionCallNode(this);
+    
     public AsyncFunctionCallTransformation Transformation { get; private set; }
     
     public void AdjustToCurrentCalledFunctionSynchronicity()

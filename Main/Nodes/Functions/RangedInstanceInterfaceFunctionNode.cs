@@ -3,7 +3,6 @@ using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
-using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -13,7 +12,7 @@ internal interface IRangedInstanceInterfaceFunctionNode : IFunctionNode
     void AddConsideredRange(IRangeNode range);
 }
 
-internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, IRangedInstanceInterfaceFunctionNode, IScopeInstance
+internal partial class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, IRangedInstanceInterfaceFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _type;
     private readonly IContainerNode _parentContainer;
@@ -54,7 +53,6 @@ internal class RangedInstanceInterfaceFunctionNode : ReturningFunctionNodeBase, 
         Name = referenceGenerator.Generate("GetTransientScopeInstance", _type);
     }
 
-    public override void Accept(INodeVisitor nodeVisitor) => nodeVisitor.VisitIRangedInstanceInterfaceFunctionNode(this);
     public override string Name { get; protected set; }
     public override string ReturnedTypeNameNotWrapped { get; }
 

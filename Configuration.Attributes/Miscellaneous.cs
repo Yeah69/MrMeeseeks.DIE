@@ -1,4 +1,5 @@
 // ReSharper disable UnusedParameter.Local
+// ReSharper disable UnusedType.Global
 namespace MrMeeseeks.DIE.Configuration.Attributes;
 
 /// <summary>
@@ -103,5 +104,14 @@ public class CreateFunctionAttribute : Attribute
 [AttributeUsage(AttributeTargets.Assembly)]
 public class ErrorDescriptionInsteadOfBuildFailureAttribute : Attribute
 {
+}
+
+/// <summary>
+/// Describes the type of analytics that should be generated.
+/// </summary>
+[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class)]
+public class AnalyticsAttribute : Attribute
+{
+    public AnalyticsAttribute(Analytics analytics) { }
 }
 // ReSharper enable UnusedParameter.Local

@@ -4,7 +4,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Implementation.Double;
 
+// ReSharper disable UnusedTypeParameter
 internal class Class<T0, T1> {}
+// ReSharper restore UnusedTypeParameter
 
 [CreateFunction(typeof(Class<int, string>), "Create")]
 internal sealed partial class Container

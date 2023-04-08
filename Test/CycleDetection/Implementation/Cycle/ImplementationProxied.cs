@@ -7,11 +7,13 @@ namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation.Cycle.Proxied;
 
 internal class Proxy
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Proxy(Dependency inner) {}
 }
 
 internal class Dependency
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(Proxy inner) {}
 }
 
@@ -27,6 +29,6 @@ public class Tests
     public void Test()
     {
         using var container = Container.DIE_CreateContainer();
-        Assert.True(container.ExceptionKinds_0_0.Contains(DieExceptionKind.ImplementationCycle));
+        Assert.Contains(DieExceptionKind.ImplementationCycle, container.ExceptionKinds_0_0);
     }
 }

@@ -36,6 +36,7 @@ internal sealed partial class Container
     
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyScope))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultTransientScope
     {
         
@@ -43,6 +44,7 @@ internal sealed partial class Container
 
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyTransientScope))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope
     {
         

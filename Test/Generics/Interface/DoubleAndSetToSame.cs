@@ -4,7 +4,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Interface.DoubleAndSetToSame;
 
+// ReSharper disable UnusedTypeParameter
 internal interface IInterface<T0, T1> {}
+// ReSharper restore UnusedTypeParameter
 
 internal class Class<T0> : IInterface<T0, T0> {}
 

@@ -7,6 +7,7 @@ namespace MrMeeseeks.DIE.Test.CycleDetection.Function.NoCycle.DirectRecursionTra
 
 internal class Dependency : ITransientScopeInstance
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(Lazy<Dependency> inner) {}
 }
 

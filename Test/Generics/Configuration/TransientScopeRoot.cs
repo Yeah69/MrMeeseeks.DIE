@@ -6,6 +6,7 @@ namespace MrMeeseeks.DIE.Test.Generics.Configuration.TransientScopeRoot;
 
 internal class ScopeInstance : IScopeInstance {}
 
+// ReSharper disable once UnusedTypeParameter
 internal class TransientScopeRoot<T0> : ITransientScopeRoot
 {
     public ScopeInstance ScopeInstance { get; }

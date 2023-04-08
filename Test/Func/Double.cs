@@ -10,7 +10,9 @@ internal class Dependency{}
 internal class Parent
 {
     internal Parent(
+        // ReSharper disable once UnusedParameter.Local
         Func<Dependency> fac0,
+        // ReSharper disable once UnusedParameter.Local
         Func<Dependency> fac1)
     {
         

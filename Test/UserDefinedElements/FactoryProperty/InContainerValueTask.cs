@@ -15,6 +15,7 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private ValueTask<string> DIE_Factory_Yeah => new ("Yeah");
     
     private Container() {}

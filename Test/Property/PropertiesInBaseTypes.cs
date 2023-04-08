@@ -31,7 +31,9 @@ internal class Dependency : IntermediateBase
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private readonly string DIE_Factory_Yeah = "Yeah";
+    // ReSharper disable once InconsistentNaming
     private readonly string? DIE_Factory_YeahNullable = "YeahNullable";
     
     private Container() {}

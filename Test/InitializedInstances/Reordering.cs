@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
+// ReSharper disable UnusedParameter.Local
 
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.InitializedInstances.Reordering;
@@ -29,6 +30,7 @@ internal sealed partial class Container
     private Container() {}
     
     [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope
     {
         

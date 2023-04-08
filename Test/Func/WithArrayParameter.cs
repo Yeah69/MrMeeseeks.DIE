@@ -9,6 +9,7 @@ internal class ParameterDependency {}
 
 internal class Dependency
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(ParameterDependency[] parameters){}
 }
 

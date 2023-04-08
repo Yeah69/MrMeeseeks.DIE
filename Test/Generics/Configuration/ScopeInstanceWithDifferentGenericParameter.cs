@@ -4,6 +4,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.ScopeInstanceWithDifferentGenericParameter;
 
+// ReSharper disable once UnusedTypeParameter
 internal class Class<T0> : IScopeInstance { }
 
 internal class ScopeRoot : IScopeRoot

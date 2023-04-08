@@ -39,6 +39,7 @@ internal class DecoratorB : IValueTaskInitializer, IInterface, IDecorator<IInter
 {
     public bool IsInitialized { get; private set; }
     
+    // ReSharper disable once UnusedParameter.Local
     internal DecoratorB(IInterface _) {}
     
     async ValueTask IValueTaskInitializer.InitializeAsync()

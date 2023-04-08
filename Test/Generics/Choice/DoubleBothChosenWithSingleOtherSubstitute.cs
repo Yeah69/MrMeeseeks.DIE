@@ -6,7 +6,9 @@ namespace MrMeeseeks.DIE.Test.Generics.Choice.DoubleBothChosenWithSingleOtherSub
 
 internal interface IInterface {}
 
+// ReSharper disable UnusedTypeParameter
 internal class Class<T0, T1> : IInterface {}
+// ReSharper restore UnusedTypeParameter
 
 [GenericParameterSubstitutesChoice(typeof(Class<,>), "T0", typeof(uint))]
 [GenericParameterChoice(typeof(Class<,>), "T0", typeof(int))]

@@ -24,6 +24,7 @@ internal sealed partial class Container
 {
     private Container() {}
     
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultTransientScope
     {
         [UserDefinedConstructorParametersInjection(typeof(Dependency))]

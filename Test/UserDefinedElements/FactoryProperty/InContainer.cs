@@ -14,6 +14,7 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private string DIE_Factory_Yeah => "Yeah";
     
     private Container() {}

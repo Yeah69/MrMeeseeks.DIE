@@ -10,6 +10,7 @@ namespace MrMeeseeks.DIE.Test.UserDefinedElements.FactoryMethod.WithParameterInC
 [CreateFunction(typeof(FileInfo), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private string DIE_Factory_Path => "C:\\Yeah.txt";
     
     private Container() {}

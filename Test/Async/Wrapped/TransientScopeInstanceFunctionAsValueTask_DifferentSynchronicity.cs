@@ -44,6 +44,7 @@ internal class TransientScopeRoot0 : ITransientScopeRoot
 
 internal class TransientScopeRoot1 : ITransientScopeRoot
 {
+    // ReSharper disable once UnusedParameter.Local
     internal TransientScopeRoot1(ValueTask<Instance> dependency)
     {
         
@@ -58,6 +59,7 @@ internal sealed partial class Container
     private Container() {}
     
     [CustomScopeForRootTypes(typeof(TransientScopeRoot0))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_TransientScope0
     {
         
@@ -66,6 +68,7 @@ internal sealed partial class Container
     [FilterImplementationAggregation(typeof(DependencyA))]
     [ImplementationAggregation(typeof(DependencyB))]
     [CustomScopeForRootTypes(typeof(TransientScopeRoot1))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_TransientScope1
     {
         

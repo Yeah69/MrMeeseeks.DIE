@@ -22,6 +22,7 @@ internal sealed partial class Container
 {
     private Container() {}
     
+    // ReSharper disable once InconsistentNaming
     private Dependency DIE_Factory_Dependency
     {
         get

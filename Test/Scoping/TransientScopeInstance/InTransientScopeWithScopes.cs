@@ -63,7 +63,7 @@ internal sealed partial class Container
     private Container() {}
 }
 
-public partial class Tests
+public class Tests
 {
     [Fact]
     public void Test()

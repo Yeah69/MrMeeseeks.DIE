@@ -7,6 +7,7 @@ namespace MrMeeseeks.DIE.Test.CycleDetection.Function.NoCycle.DirectRecursionCon
 
 internal class Dependency : IContainerInstance
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(Func<Dependency> inner) {}
 }
 

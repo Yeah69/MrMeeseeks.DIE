@@ -7,6 +7,7 @@ namespace MrMeeseeks.DIE.Test.CycleDetection.Function.NoCycle.DirectRecursionSco
 
 internal class Dependency : IScopeInstance
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(Func<Dependency> inner) {}
 }
 

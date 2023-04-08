@@ -11,8 +11,10 @@ internal class Managed : IAsyncDisposable
     public ValueTask DisposeAsync() => default;
 }
 
+// ReSharper disable once UnusedTypeParameter
 internal class Class<T0> : ITransient, IAsyncDisposable
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Class(Managed _) { }
     internal bool IsDisposed { get; private set; }
     public async ValueTask DisposeAsync()

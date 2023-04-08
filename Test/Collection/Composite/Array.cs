@@ -14,6 +14,7 @@ internal class ClassC : IInterface {}
 
 internal class Composite : IInterface, IComposite<IInterface>
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Composite(IInterface[] _) {}
 }
 

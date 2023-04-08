@@ -24,6 +24,8 @@ internal class Parent
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
+    // ReSharper disable once UnusedMember.Local
     private int DIE_Factory_int => 0;
     
     private Container() {}

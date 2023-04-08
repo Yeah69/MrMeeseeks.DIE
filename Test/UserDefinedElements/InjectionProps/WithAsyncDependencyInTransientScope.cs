@@ -29,9 +29,11 @@ internal sealed partial class Container
 {
     private Container() {}
     
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultTransientScope
     {
         [UserDefinedPropertiesInjection(typeof(Dependency))]
+        // ReSharper disable once InconsistentNaming
         private void DIE_Props_Dependency(OtherDependency otherDependency, out int Number) => Number = otherDependency.Number;
     }
 }

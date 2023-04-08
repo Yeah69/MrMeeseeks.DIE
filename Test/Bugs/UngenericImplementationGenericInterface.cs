@@ -4,6 +4,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Bugs.UngenericImplementationGenericInterface;
 
+// ReSharper disable once UnusedTypeParameter
 internal interface IInterface<T> {}
 
 internal class DependencyA : IInterface<int> {}

@@ -6,6 +6,7 @@ namespace MrMeeseeks.DIE.Test.CycleDetection.Implementation.Cycle.DirectRecursio
 
 internal class Dependency
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(Dependency inner) {}
 }
 
@@ -21,6 +22,6 @@ public class Tests
     public void Test()
     {
         using var container = Container.DIE_CreateContainer();
-        Assert.True(container.ExceptionKinds_0_0.Contains(DieExceptionKind.ImplementationCycle));
+        Assert.Contains(DieExceptionKind.ImplementationCycle, container.ExceptionKinds_0_0);
     }
 }

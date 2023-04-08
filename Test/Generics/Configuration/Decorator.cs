@@ -14,6 +14,7 @@ internal class Implementation : IInterface
     public IInterface Decorated => this;
 }
 
+// ReSharper disable once UnusedTypeParameter
 internal class DecoratorA<T0> : IInterface, IDecorator<IInterface>
 {
     public IInterface Decorated { get; }
@@ -23,6 +24,7 @@ internal class DecoratorA<T0> : IInterface, IDecorator<IInterface>
         Decorated = decorated;
 }
 
+// ReSharper disable once UnusedTypeParameter
 internal class DecoratorB<T0> : IInterface, IDecorator<IInterface>
 {
     public IInterface Decorated { get; }

@@ -5,6 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerInterfaceAsync;
 
+// ReSharper disable once UnusedTypeParameter
 internal class Dependency<T0> : ITaskInitializer
 {
     async Task ITaskInitializer.InitializeAsync()

@@ -11,7 +11,9 @@ internal class Dependency
 internal class Parent
 {
     internal Parent(
+        // ReSharper disable once UnusedParameter.Local
         Dependency dep0,
+        // ReSharper disable once UnusedParameter.Local
         Dependency dep1)
     {
         

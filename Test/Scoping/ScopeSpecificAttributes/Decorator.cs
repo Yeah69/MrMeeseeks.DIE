@@ -1,5 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
+// ReSharper disable UnusedParameter.Local
+// ReSharper disable InconsistentNaming
 
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.Decorator;

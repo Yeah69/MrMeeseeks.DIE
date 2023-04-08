@@ -24,7 +24,9 @@ internal class Dependency
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private readonly int DIE_Factory_Number = 69;
+    // ReSharper disable once InconsistentNaming
     private readonly string DIE_Factory_Text = "foo";
     
     private Container() {}

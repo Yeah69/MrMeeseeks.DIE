@@ -9,6 +9,7 @@ public class Class : IClass
         
     }
 
+    // ReSharper disable once UnusedParameter.Local
     public Class(int i)
     {
         
@@ -24,6 +25,7 @@ public class ClassToo : IClassToo
         
     }
 
+    // ReSharper disable once UnusedParameter.Local
     public ClassToo(int i)
     {
         

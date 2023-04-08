@@ -6,11 +6,13 @@ namespace MrMeeseeks.DIE.Test.CycleDetection.Function.Cycle.IndirectRecursionTra
 
 internal class Dependency : ITransientScopeRoot
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(InnerDependency inner) {}
 }
 
 internal class InnerDependency : ITransientScopeInstance
 {
+    // ReSharper disable once UnusedParameter.Local
     internal InnerDependency(Dependency inner) {}
 }
 
@@ -26,6 +28,6 @@ public class Tests
     public void Test()
     {
         using var container = Container.DIE_CreateContainer();
-        Assert.True(container.ExceptionKinds_0_0.Contains(DieExceptionKind.FunctionCycle));
+        Assert.Contains(DieExceptionKind.FunctionCycle, container.ExceptionKinds_0_0);
     }
 }

@@ -21,6 +21,7 @@ internal class DependencyHolder
 [CreateFunction(typeof(IInterface), "CreateInterface")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private readonly IInterface DIE_Factory_dependency;
     
     private Container(IInterface dependency)

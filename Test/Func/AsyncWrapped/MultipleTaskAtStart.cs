@@ -14,6 +14,7 @@ internal class Dependency : IValueTaskInitializer
 internal class OuterDependency
 {
     internal OuterDependency(
+        // ReSharper disable once UnusedParameter.Local
         Dependency dependency)
     {
         

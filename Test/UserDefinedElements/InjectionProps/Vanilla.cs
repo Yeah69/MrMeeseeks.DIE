@@ -15,6 +15,7 @@ internal sealed partial class Container
     private Container() {}
     
     [UserDefinedPropertiesInjection(typeof(Dependency))]
+    // ReSharper disable once InconsistentNaming
     private void DIE_Props_Dependency(out int Number) => Number = 69;
 }
 

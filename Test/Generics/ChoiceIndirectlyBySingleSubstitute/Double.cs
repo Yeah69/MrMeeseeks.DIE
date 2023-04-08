@@ -4,8 +4,10 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.ChoiceIndirectlyBySingleSubstitute.Double;
 
+// ReSharper disable once UnusedTypeParameter
 internal interface IInterface<T0> {}
 
+// ReSharper disable once UnusedTypeParameter
 internal class Class<T0, T1> : IInterface<T0> {}
 
 [GenericParameterSubstitutesChoice(typeof(Class<,>), "T1", typeof(string))]

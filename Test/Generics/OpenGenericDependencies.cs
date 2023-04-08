@@ -9,6 +9,7 @@ internal record struct Dependency<T0>(T0 _);
 internal class DependencyHolder<T0>
 {
     public Dependency<T0> Dependency { get; set; }
+    // ReSharper disable once UnusedParameter.Local
     internal DependencyHolder(Dependency<T0> _) {}
 }
 

@@ -1,4 +1,6 @@
-﻿namespace MrMeeseeks.DIE.TestNotInternalsVisibleToChild.Internal;
+﻿// ReSharper disable once CheckNamespace
+// ReSharper disable UnusedParameter.Local
+namespace MrMeeseeks.DIE.TestNotInternalsVisibleToChild.Internal;
 
 internal interface IClass {}
 
@@ -29,7 +31,9 @@ internal class ClassToo : IClassToo
     }
 }
 
+// ReSharper disable UnusedTypeParameter
 internal interface IClass<T0, T1> {}
+// ReSharper restore UnusedTypeParameter
 
 internal class Class<T0, T1> : IClass<T0, T1>
 {
@@ -85,6 +89,7 @@ internal static class StaticParent
 
 internal class Parent
 {
+    // ReSharper disable once EmptyConstructor
     internal Parent() {}
     internal class Class : IClass
     {

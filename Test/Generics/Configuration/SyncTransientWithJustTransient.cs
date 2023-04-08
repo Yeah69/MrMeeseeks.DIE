@@ -12,8 +12,10 @@ internal class Managed : IDisposable
     }
 }
 
+// ReSharper disable once UnusedTypeParameter
 internal class Class<T0> : ITransient, IDisposable
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Class(Managed _) { }
     internal bool IsDisposed { get; private set; }
     public void Dispose() => IsDisposed = true;

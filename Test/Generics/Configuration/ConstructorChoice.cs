@@ -10,6 +10,7 @@ internal class DependencyA : IInterface { }
 
 internal class DependencyB : IInterface { }
 
+// ReSharper disable once UnusedTypeParameter
 internal class Implementation<T0>
 {
     public IInterface Dependency { get; }

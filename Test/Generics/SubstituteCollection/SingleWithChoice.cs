@@ -7,6 +7,7 @@ namespace MrMeeseeks.DIE.Test.Generics.SubstituteCollection.Single;
 
 internal interface IInterface {}
 
+// ReSharper disable once UnusedTypeParameter
 internal class Class<T0> : IInterface {}
 
 [GenericParameterSubstitutesChoice(typeof(Class<>), "T0", typeof(int))]

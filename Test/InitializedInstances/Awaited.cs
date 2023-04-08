@@ -26,7 +26,9 @@ internal class DependencyC : ITaskInitializer
 
 internal class Root : IScopeRoot
 {
+    // ReSharper disable UnusedParameter.Local
     internal Root(DependencyA a, DependencyB b, DependencyC c){}
+    // ReSharper restore UnusedParameter.Local
 }
 
 [CreateFunction(typeof(Root), "Create")]
@@ -35,6 +37,7 @@ internal sealed partial class Container
     private Container() {}
     
     [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope
     {
         

@@ -16,8 +16,10 @@ internal sealed partial class Container
 {
     private Container() {}
     
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope
     {
+        // ReSharper disable once InconsistentNaming
         private string DIE_Factory_Yeah => "Yeah";
     }
 }

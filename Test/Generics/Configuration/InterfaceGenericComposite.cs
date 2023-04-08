@@ -20,6 +20,7 @@ internal class BaseB<T0> : IInterface<T0>
     public IReadOnlyList<IInterface<T0>> Implementations => new[] { this };
 }
 
+// ReSharper disable once UnusedTypeParameter
 internal class Composite<T0, T1> : IInterface<T0>, IComposite<IInterface<T0>>
 {
     public IReadOnlyList<IInterface<T0>> Implementations { get; }

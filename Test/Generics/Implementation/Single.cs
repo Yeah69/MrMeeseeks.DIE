@@ -4,6 +4,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Implementation.Single;
 
+// ReSharper disable once UnusedTypeParameter
 internal class Class<T0> {}
 
 [CreateFunction(typeof(Class<int>), "Create")]

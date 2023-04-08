@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Interface.Single;
 
 internal interface IInterface<T0> {}

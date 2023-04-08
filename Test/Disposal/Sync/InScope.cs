@@ -2,6 +2,7 @@ using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Disposal.Sync.InScope;
 
 internal class Dependency :  IDisposable

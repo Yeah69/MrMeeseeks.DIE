@@ -2,6 +2,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using System;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.FuncContainerInstance;
 
 internal class Dependency : IContainerInstance {}

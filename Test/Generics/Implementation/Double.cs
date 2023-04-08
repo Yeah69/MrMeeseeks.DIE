@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Implementation.Double;
 
 internal class Class<T0, T1> {}

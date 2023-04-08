@@ -2,6 +2,7 @@ using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ValueTuple.NonSyntaxVariantSingleItem;
 
 internal class Wrapper

@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerInterfaceAsync;
 
 internal class Dependency<T0> : ITaskInitializer

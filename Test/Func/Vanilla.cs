@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.Vanilla;
 
 internal class Dependency{}

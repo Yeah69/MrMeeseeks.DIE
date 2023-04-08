@@ -3,6 +3,7 @@ using System.IO;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ConstructorChoice.WithParameter;
 
 [ImplementationAggregation(typeof(FileInfo))]

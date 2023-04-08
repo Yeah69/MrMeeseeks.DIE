@@ -2,6 +2,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.TestInternalsVisibleToChild.Internal;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.InternalsVisibleTo;
 
 [ConstructorChoice(typeof(Parent.ClassToo))]

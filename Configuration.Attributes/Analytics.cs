@@ -7,5 +7,6 @@ namespace MrMeeseeks.DIE.Configuration.Attributes;
 public enum Analytics
 {
     None = 0,
-    ResolutionGraph = 1<<0
+    ResolutionGraph = 1<<0,
+    ErrorFilteredResolutionGraph = 1<<1
 }

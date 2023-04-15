@@ -7,6 +7,7 @@ namespace MrMeeseeks.DIE.Analytics;
 internal interface IAnalyticsFlags
 {
     bool ResolutionGraph { get; }
+    bool ErrorFilteredResolutionGraph { get; }
 }
 
 internal class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
@@ -34,4 +35,6 @@ internal class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
     }
 
     public bool ResolutionGraph => _analytics?.HasFlag(Configuration.Attributes.Analytics.ResolutionGraph) ?? false;
+
+    public bool ErrorFilteredResolutionGraph => _analytics?.HasFlag(Configuration.Attributes.Analytics.ErrorFilteredResolutionGraph) ?? false;
 }

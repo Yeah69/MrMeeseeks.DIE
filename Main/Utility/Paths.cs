@@ -5,6 +5,7 @@ namespace MrMeeseeks.DIE.Utility;
 internal interface IPaths
 {
     string Analytics { get; }
+    string AnalyticsErrorFilteredResolutionGraph(string containerName);
     string AnalyticsResolutionGraph(string containerName);
 }
 
@@ -18,7 +19,10 @@ internal class Paths : IPaths
     }
 
     public string Analytics { get; }
-    
+
+    public string AnalyticsErrorFilteredResolutionGraph(string containerName) => 
+        Path.Combine(Analytics, $"ErrorFilteredResolutionGraph_{containerName}.puml");
+
     public string AnalyticsResolutionGraph(string containerName) => 
         Path.Combine(Analytics, $"ResolutionGraph_{containerName}.puml");
 }

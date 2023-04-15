@@ -20,6 +20,7 @@ internal interface IResolutionGraphAnalyticsNodeVisitor : INodeVisitor
 
 internal class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNodeVisitor
 {
+    private readonly IImmutableSet<INode>? _relevantNodes;
     private readonly IPaths _paths;
     private readonly IContainerInfoContext _containerInfoContext;
     private readonly string _dirPath;
@@ -31,9 +32,14 @@ internal class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNo
     private IFunctionNode? _currentFunctionNode;
 
     internal ResolutionGraphAnalyticsNodeVisitor(
+        // parameters
+        IImmutableSet<INode>? relevantNodes,
+
+        // dependencies
         IPaths paths,
         IContainerInfoContext containerInfoContext)
     {
+        _relevantNodes = relevantNodes;
         _paths = paths;
         _containerInfoContext = containerInfoContext;
         _dirPath = paths.Analytics;
@@ -56,6 +62,9 @@ internal class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNo
 
     public void VisitIMultiFunctionNode(IMultiFunctionNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+        
         var previousFunctionNode = _currentFunctionNode;
         _currentFunctionNode = element;
         
@@ -85,6 +94,9 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
 
     public void VisitIContainerNode(IContainerNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var previousRangeReference = _currentRangeReference;
         var reference = GetOrAddReference(element);
         _currentRangeReference = reference;
@@ -121,7 +133,12 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
         
         if (!Directory.Exists(_dirPath))
             Directory.CreateDirectory(_dirPath);
-        File.WriteAllText(_paths.AnalyticsResolutionGraph($"{_containerInfoContext.ContainerInfo.Namespace}{_containerInfoContext.ContainerInfo.Name}"), _code.ToString());
+        var fileNamePart = $"{_containerInfoContext.ContainerInfo.Namespace}{_containerInfoContext.ContainerInfo.Name}";
+        File.WriteAllText(
+            _relevantNodes is null 
+                ? _paths.AnalyticsResolutionGraph(fileNamePart) 
+                : _paths.AnalyticsErrorFilteredResolutionGraph(fileNamePart), 
+            _code.ToString());
     }
 
     private void VisitIRangeNode(IRangeNode element)
@@ -143,6 +160,9 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
 
     private void VisitISingleFunctionNode(ISingleFunctionNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var previousFunctionNode = _currentFunctionNode;
         _currentFunctionNode = element;
 
@@ -238,6 +258,9 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
 
     public void VisitIScopeNode(IScopeNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 package "{{element.Name}}" as {{reference}} {
@@ -253,6 +276,9 @@ package "{{element.Name}}" as {{reference}} {
 
     public void VisitITransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 object "Transient Scope Disposal Hook" as {{reference}}
@@ -272,6 +298,9 @@ object "Transient Scope Disposal Hook" as {{reference}}
 
     public void VisitINullNode(INullNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 object "null" as {{reference}}
@@ -291,6 +320,9 @@ object "null" as {{reference}}
 
     public void VisitIValueTupleNode(IValueTupleNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 map "ValueTuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFullName))}}>" as {{reference}} {
@@ -321,12 +353,18 @@ map "ValueTuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFu
 
     public void VisitIRangedInstanceFunctionGroupNode(IRangedInstanceFunctionGroupNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         foreach (var rangedInstanceFunctionNode in element.Overloads)
             VisitIRangedInstanceFunctionNode(rangedInstanceFunctionNode);
     }
 
     public void VisitITransientScopeNode(ITransientScopeNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 package "{{element.Name}}" as {{reference}} {
@@ -348,6 +386,9 @@ package "{{element.Name}}" as {{reference}} {
 
     public void VisitIValueTupleSyntaxNode(IValueTupleSyntaxNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 map "({{string.Join(", ", element.Items.Select(i => i.TypeFullName))}})" as {{reference}} {
@@ -377,6 +418,9 @@ map "({{string.Join(", ", element.Items.Select(i => i.TypeFullName))}})" as {{re
 
     private void VisitIDelegateBaseNode(IDelegateBaseNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         if (_currentFunctionNode
                 ?.LocalFunctions
                 .FirstOrDefault(f => f.Name == element.MethodGroup) 
@@ -408,6 +452,9 @@ map "({{string.Join(", ", element.Items.Select(i => i.TypeFullName))}})" as {{re
 
     public void VisitITupleNode(ITupleNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 map "Tuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFullName))}}>" as {{reference}} {
@@ -435,6 +482,9 @@ map "Tuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFullNam
 
     public void VisitIErrorNode(IErrorNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($"object \"{element.Message}\" as {reference} #line:red");
         _relations.AppendLine($"{_currentReference} --> {reference}");
@@ -442,6 +492,9 @@ map "Tuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFullNam
 
     public void VisitIImplementationNode(IImplementationNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var reference = GetOrAddReference(element);
         _code.AppendLine($$"""
 map "{{element.TypeFullName}}" as {{reference}} {
@@ -492,8 +545,13 @@ map "{{element.TypeFullName}}" as {{reference}} {
     {
     }
 
-    private void VisitIFunctionCallNode(IFunctionCallNode functionCallNode) => 
-        _relations.AppendLine($"{_currentReference} --> {GetOrAddReference(functionCallNode.CalledFunction)}");
+    private void VisitIFunctionCallNode(IFunctionCallNode element)
+    {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
+        _relations.AppendLine($"{_currentReference} --> {GetOrAddReference(element.CalledFunction)}");
+    }
 
     public void VisitIPlainFunctionCallNode(IPlainFunctionCallNode element) => 
         VisitIFunctionCallNode(element);
@@ -524,6 +582,9 @@ map "{{element.TypeFullName}}" as {{reference}} {
 
     public void VisitIVoidFunctionNode(IVoidFunctionNode element)
     {
+        if (_relevantNodes is not null && !_relevantNodes.Contains(element))
+            return;
+
         var previousFunctionNode = _currentFunctionNode;
         _currentFunctionNode = element;
 

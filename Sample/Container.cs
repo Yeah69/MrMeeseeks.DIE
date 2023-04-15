@@ -3,6 +3,8 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
+internal interface IInterface {}
+
 internal class Root
 {
     internal Root((Dependency, Dependency) inner, Func<Dependency> two) {}
@@ -10,6 +12,7 @@ internal class Root
 
 internal class Dependency
 {
+    internal Dependency() {}
 }
 
 [CreateFunction(typeof(Root), "Create")]

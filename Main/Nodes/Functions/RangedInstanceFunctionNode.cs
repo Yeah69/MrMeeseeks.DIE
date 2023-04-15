@@ -67,7 +67,7 @@ internal partial class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRan
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
         // "MapToImplementation" instead of "Map", because latter would cause an infinite recursion ever trying to create a new ranged instance function
-        mapper.MapToImplementation(new(true, false, false), _type, ImmutableStack<INamedTypeSymbol>.Empty); 
+        mapper.MapToImplementation(new(true, false, false), null, _type, ImmutableStack<INamedTypeSymbol>.Empty); 
 
     public override string Name { get; protected set; }
 

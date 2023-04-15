@@ -17,8 +17,8 @@ namespace MrMeeseeks.DIE.Nodes.Mappers;
 internal interface IElementNodeMapperBase
 {
     IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
-    IElementNode MapToImplementation(
-        ImplementationMappingConfiguration config,
+    IElementNode MapToImplementation(ImplementationMappingConfiguration config,
+        INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType,
         ImmutableStack<INamedTypeSymbol> implementationStack);
     IElementNode MapToOutParameter(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
@@ -48,8 +48,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> _lazyNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> _funcNodeFactory;
     private readonly Func<ITypeSymbol, IEnumerableBasedNode> _enumerableBasedNodeFactory;
-    private readonly Func<(INamedTypeSymbol, INamedTypeSymbol), IElementNodeMapperBase, IAbstractionNode> _abstractionNodeFactory;
-    private readonly Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
+    private readonly Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, INullNode> _nullNodeFactory;
@@ -73,8 +72,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory,
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
-        Func<(INamedTypeSymbol, INamedTypeSymbol), IElementNodeMapperBase, IAbstractionNode> abstractionNodeFactory,
-        Func<INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
+        Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, INullNode> nullNodeFactory,
@@ -99,7 +97,6 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _lazyNodeFactory = lazyNodeFactory;
         _funcNodeFactory = funcNodeFactory;
         _enumerableBasedNodeFactory = enumerableBasedNodeFactory;
-        _abstractionNodeFactory = abstractionNodeFactory;
         _implementationNodeFactory = implementationNodeFactory;
         _outParameterNodeFactory = outParameterNodeFactory;
         _errorNodeFactory = errorNodeFactory;
@@ -265,6 +262,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
             return SwitchImplementation(
                 new(true, true, true),
+                null,
                 chosenImplementationType,
                 implementationStack,
                 Next);
@@ -279,12 +277,13 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     /// <summary>
     /// Meant as entry point for mappings where concrete implementation type is already chosen.
     /// </summary>
-    public IElementNode MapToImplementation(
-        ImplementationMappingConfiguration config,
+    public IElementNode MapToImplementation(ImplementationMappingConfiguration config,
+        INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType,
         ImmutableStack<INamedTypeSymbol> implementationStack) =>
         SwitchImplementation(
             config,
+            abstractionType,
             implementationType, 
             implementationStack, 
             NextForWraps); // Use NextForWraps, cause MapToImplementation is entry point
@@ -293,8 +292,9 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _outParameterNodeFactory(type)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 
-    private IElementNode SwitchImplementation(
+    protected IElementNode SwitchImplementation(
         ImplementationMappingConfiguration config,
+        INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType, 
         ImmutableStack<INamedTypeSymbol> implementationSet,
         IElementNodeMapperBase nextMapper)
@@ -344,6 +344,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
         if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is { } constructor)
             return _implementationNodeFactory(
+                    abstractionType,
                     implementationType, 
                     constructor, 
                     nextMapper)
@@ -398,23 +399,23 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     {
         var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
         if (!shouldBeDecorated)
-            return _abstractionNodeFactory((interfaceType, implementationType), mapper)
-                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
+            return SwitchImplementation(
+                new(true, true, true),
+                interfaceType,
+                implementationType,
+                implementationSet,
+                mapper);
 
         var decoratorSequence = _checkTypeProperties.GetSequenceFor(interfaceType, implementationType)
             .Reverse()
             .Append(implementationType)
             .ToList();
-        var outerDecorator = decoratorSequence[0];
-        var decoratorTypes = ImmutableQueue.CreateRange(
-            (decoratorSequence.Count > 1 
-                ? decoratorSequence.Skip(1) // skip the outer decorator
-                : decoratorSequence) 
+        
+        var decoratorTypes = ImmutableQueue.CreateRange(decoratorSequence
             .Select(t => (interfaceType, t))
             .Append((interfaceType, implementationType)));
             
         var overridingMapper = _overridingElementNodeMapperFactory(this, decoratorTypes);
-        return _abstractionNodeFactory((interfaceType, outerDecorator), overridingMapper)
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationSet);
+        return overridingMapper.Map(interfaceType, implementationSet);
     }
 }

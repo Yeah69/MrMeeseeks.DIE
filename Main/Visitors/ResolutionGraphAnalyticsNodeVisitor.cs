@@ -232,9 +232,6 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
             case IValueTupleSyntaxNode valueTupleSyntaxNode:
                 VisitIValueTupleSyntaxNode(valueTupleSyntaxNode);
                 break;
-            case IAbstractionNode abstractionNode:
-                VisitIAbstractionNode(abstractionNode);
-                break;
             case IImplementationNode implementationNode:
                 VisitIImplementationNode(implementationNode);
                 break;
@@ -476,9 +473,6 @@ map "Tuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFullNam
             _currentReference = previousReference;
         }
     }
-
-    public void VisitIAbstractionNode(IAbstractionNode element) => 
-        VisitIElementNode(element.Implementation);
 
     public void VisitIErrorNode(IErrorNode element)
     {

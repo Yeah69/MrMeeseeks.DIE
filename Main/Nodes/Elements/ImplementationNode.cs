@@ -23,6 +23,8 @@ internal interface IImplementationNode : IElementNode, IAwaitableNode
     
     string? AsyncReference { get; }
     string? AsyncTypeFullName { get; }
+    
+    string ImplementationTypeFullName { get; }
 }
 
 internal partial class ImplementationNode : IImplementationNode
@@ -52,6 +54,7 @@ internal partial class ImplementationNode : IImplementationNode
     private readonly List<(string Name, IElementNode Element)> _properties = new ();
 
     internal ImplementationNode(
+        INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType,
         IMethodSymbol constructor,
         
@@ -72,7 +75,8 @@ internal partial class ImplementationNode : IImplementationNode
         _referenceGenerator = referenceGenerator;
         _localDiagLogger = localDiagLogger;
         _injectablePropertyExtractor = injectablePropertyExtractor;
-        TypeFullName = implementationType.FullName();
+        TypeFullName = abstractionType?.FullName() ?? implementationType.FullName();
+        ImplementationTypeFullName = implementationType.FullName();
         // The constructor call shouldn't contain nullable annotations
         ConstructorCallName = implementationType.FullName(SymbolDisplayMiscellaneousOptions.None);
         Reference = referenceGenerator.Generate(implementationType);
@@ -224,4 +228,5 @@ internal partial class ImplementationNode : IImplementationNode
     public bool Awaited { get; private set; }
     public string? AsyncReference { get; private set; }
     public string? AsyncTypeFullName { get; private set; }
+    public string ImplementationTypeFullName { get; }
 }

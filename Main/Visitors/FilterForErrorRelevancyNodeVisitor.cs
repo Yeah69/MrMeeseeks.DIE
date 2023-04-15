@@ -135,9 +135,6 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
             case IValueTupleSyntaxNode valueTupleSyntaxNode:
                 VisitIValueTupleSyntaxNode(valueTupleSyntaxNode);
                 break;
-            case IAbstractionNode abstractionNode:
-                VisitIAbstractionNode(abstractionNode);
-                break;
             case IImplementationNode implementationNode:
                 VisitIImplementationNode(implementationNode);
                 break;
@@ -260,9 +257,6 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
         
         _currentNodeStack.Pop();
     }
-
-    public void VisitIAbstractionNode(IAbstractionNode element) => 
-        VisitIElementNode(element.Implementation);
 
     public void VisitIErrorNode(IErrorNode element)
     {

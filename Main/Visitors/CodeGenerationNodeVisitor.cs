@@ -635,9 +635,6 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             case IValueTupleSyntaxNode valueTupleSyntaxNode:
                 VisitIValueTupleSyntaxNode(valueTupleSyntaxNode);
                 break;
-            case IAbstractionNode abstractionNode:
-                VisitIAbstractionNode(abstractionNode);
-                break;
             case IImplementationNode implementationNode:
                 VisitIImplementationNode(implementationNode);
                 break;
@@ -671,8 +668,11 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             : "";
         var constructorParameters =
             string.Join(", ", implementationNode.ConstructorParameters.Select(d => $"{d.Name.PrefixAtIfKeyword()}: {d.Element.Reference}"));
+        var cast = implementationNode.TypeFullName == implementationNode.ImplementationTypeFullName
+            ? ""
+            : $"({implementationNode.TypeFullName}) ";
         _code.AppendLine(
-            $"{implementationNode.TypeFullName} {implementationNode.Reference} = new {implementationNode.ConstructorCallName}({constructorParameters}){objectInitializerParameter};");
+            $"{implementationNode.TypeFullName} {implementationNode.Reference} = {cast}new {implementationNode.ConstructorCallName}({constructorParameters}){objectInitializerParameter};");
         
         if (implementationNode.SyncDisposalCollectionReference is {} syncDisposalCollectionReference)
             _code.AppendLine(
@@ -716,12 +716,6 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     public void VisitIOutParameterNode(IOutParameterNode outParameterNode)
     {
         // Processing is done in associated implementation node
-    }
-
-    public void VisitIAbstractionNode(IAbstractionNode abstractionNode)
-    {
-        VisitIElementNode(abstractionNode.Implementation);
-        _code.AppendLine($"{abstractionNode.TypeFullName} {abstractionNode.Reference} = ({abstractionNode.TypeFullName}) {abstractionNode.Implementation.Reference};");
     }
 
     public void VisitITransientScopeDisposalTriggerNode(ITransientScopeDisposalTriggerNode transientScopeDisposalTriggerNode)

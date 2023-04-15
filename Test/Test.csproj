@@ -8,7 +8,7 @@
         <IsPackable>false</IsPackable>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
-        <RestoreAdditionalProjectSources>./_SupportPackages</RestoreAdditionalProjectSources>
+        <RestoreAdditionalProjectSources>../_SupportPackages</RestoreAdditionalProjectSources>
     </PropertyGroup>
 
     <ItemGroup>

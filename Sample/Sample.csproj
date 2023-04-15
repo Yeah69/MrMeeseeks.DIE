@@ -9,7 +9,7 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     <LangVersion>11</LangVersion>
-    <RestoreAdditionalProjectSources>./_SupportPackages</RestoreAdditionalProjectSources>
+    <RestoreAdditionalProjectSources>../_SupportPackages</RestoreAdditionalProjectSources>
   </PropertyGroup>
 
   <ItemGroup>

@@ -3,6 +3,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 
 //[assembly:ErrorDescriptionInsteadOfBuildFailure]
+[assembly:Analytics(Analytics.ResolutionGraph)]
 
 [assembly:ContainerInstanceAbstractionAggregation(typeof(IContainerInstance))]
 [assembly:TransientScopeInstanceAbstractionAggregation(typeof(ITransientScopeInstance))]
@@ -30,7 +31,9 @@ public interface IScopeRoot { }
 public interface ITransient { }
 public interface ISyncTransient { }
 public interface IAsyncTransient { }
+// ReSharper disable once UnusedTypeParameter
 public interface IDecorator<T> { }
+// ReSharper disable once UnusedTypeParameter
 public interface IComposite<T> { }
 public interface IInitializer
 {

@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using MrMeeseeks.DIE.Analytics;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -23,6 +24,8 @@ internal class ExecuteContainer : IExecuteContainer
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly IAnalyticsFlags _analyticsFlags;
+    private readonly IResolutionGraphAnalyticsNodeVisitor _resolutionGraphAnalyticsNodeVisitor;
     private readonly IDiagLogger _diagLogger;
     private readonly IContainerInfo _containerInfo;
 
@@ -36,6 +39,8 @@ internal class ExecuteContainer : IExecuteContainer
         IContainerInfoContext containerInfoContext,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
         ILocalDiagLogger localDiagLogger,
+        IAnalyticsFlags analyticsFlags,
+        IResolutionGraphAnalyticsNodeVisitor resolutionGraphAnalyticsNodeVisitor,
         IDiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
@@ -46,6 +51,8 @@ internal class ExecuteContainer : IExecuteContainer
         _containerDieExceptionGenerator = containerDieExceptionGenerator;
         _currentExecutionPhaseSetter = currentExecutionPhaseSetter;
         _localDiagLogger = localDiagLogger;
+        _analyticsFlags = analyticsFlags;
+        _resolutionGraphAnalyticsNodeVisitor = resolutionGraphAnalyticsNodeVisitor;
         _diagLogger = diagLogger;
         _containerInfo = containerInfoContext.ContainerInfo;
     }
@@ -90,6 +97,10 @@ internal class ExecuteContainer : IExecuteContainer
                 .GetText();
 
             _context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);
+                
+            _currentExecutionPhaseSetter.Value = ExecutionPhase.Analytics;
+            if (_analyticsFlags.ResolutionGraph)
+                _resolutionGraphAnalyticsNodeVisitor.VisitIContainerNode(_containerNode);
         }
         catch (DieException dieException)
         {

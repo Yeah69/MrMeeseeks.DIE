@@ -13,6 +13,7 @@ internal record WellKnownTypesMiscellaneous(
     INamedTypeSymbol UserDefinedInitializerParametersInjectionAttribute,
     INamedTypeSymbol CreateFunctionAttribute,
     INamedTypeSymbol ErrorDescriptionInsteadOfBuildFailureAttribute,
+    INamedTypeSymbol AnalyticsAttribute,
     INamedTypeSymbol DieExceptionKind)
 {
     internal static WellKnownTypesMiscellaneous Create(Compilation compilation) => new (
@@ -25,5 +26,6 @@ internal record WellKnownTypesMiscellaneous(
         UserDefinedInitializerParametersInjectionAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(UserDefinedInitializerParametersInjectionAttribute).FullName ?? ""), 
         CreateFunctionAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(CreateFunctionAttribute).FullName ?? ""),
         ErrorDescriptionInsteadOfBuildFailureAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ErrorDescriptionInsteadOfBuildFailureAttribute).FullName ?? ""),
+        AnalyticsAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(AnalyticsAttribute).FullName ?? ""),
         DieExceptionKind: compilation.GetTypeByMetadataNameOrThrow(typeof(DieExceptionKind).FullName ?? ""));
 }

@@ -18,7 +18,8 @@ internal enum ExecutionPhase
     ContainerValidation,
     Resolution,
     ResolutionValidation,
-    CodeGeneration
+    CodeGeneration,
+    Analytics
 }
 
 public abstract class DieException : Exception

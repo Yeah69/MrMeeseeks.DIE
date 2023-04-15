@@ -1,5 +1,8 @@
 # Welcome to MrMeeseeks.DIE
 
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://matrix.to/#/#Yeah69_MrMeeseeks.DIE:gitter.im)
+[![SOQnA](https://img.shields.io/badge/StackOverflow-QnA-green.svg)](http://stackoverflow.com/questions/tagged/MrMeeseeks.DIE)
+
 DIE is a secret agency organized by a bunch of Mr. Meeseekses. Its goal is to gather the information necessary to resolve your dependencies. Therefore, …
 
 > The acronym DIE stands for **D**ependency **I**njection DI**E**

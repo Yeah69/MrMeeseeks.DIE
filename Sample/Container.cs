@@ -1,13 +1,14 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
 internal class Root
 {
-    internal Root(Dependency inner, Dependency two) {}
+    internal Root((Dependency, Dependency) inner, Func<Dependency> two) {}
 }
 
-internal class Dependency : IContainerInstance
+internal class Dependency
 {
 }
 

@@ -2,6 +2,7 @@ using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.TransientScopeInstance.InContainer.InTransientScopeWithScopes;
 
 internal interface IInterface
@@ -59,15 +60,15 @@ internal class TransientScopeWithScopes : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeWithScopes), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
-public partial class Tests
+public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
         Assert.NotEqual(transientScopeRoot.A, transientScopeRoot.B);
         Assert.Equal(transientScopeRoot.A.TransientScopeInstance, transientScopeRoot.B.TransientScopeInstance);

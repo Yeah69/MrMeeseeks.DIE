@@ -2,12 +2,14 @@ using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.WithArrayParameter;
 
 internal class ParameterDependency {}
 
 internal class Dependency
 {
+    // ReSharper disable once UnusedParameter.Local
     internal Dependency(ParameterDependency[] parameters){}
 }
 
@@ -15,6 +17,7 @@ internal class Dependency
 [CreateFunction(typeof(ParameterDependency), "CreateParameter")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -22,7 +25,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var _ = container.Create()(new []
         {
             container.CreateParameter(), 

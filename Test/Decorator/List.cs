@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Decorator.List;
 
 internal interface IInterface
@@ -30,7 +31,7 @@ internal class Decorator : IInterface, IDecorator<IInterface>
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -38,7 +39,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var decorated = container.Create();
         var decoratedOfA = decorated[0];
         var decoratedOfB = decorated[1];

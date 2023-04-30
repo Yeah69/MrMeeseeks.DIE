@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Disposal.Async.InContainer;
 
 internal class Dependency :  IAsyncDisposable
@@ -19,7 +20,7 @@ internal class Dependency :  IAsyncDisposable
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -27,7 +28,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var dependency = container.Create();
         Assert.False(dependency.IsDisposed);
         await container.DisposeAsync().ConfigureAwait(false);

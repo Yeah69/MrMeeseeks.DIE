@@ -1,6 +1,9 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
+// ReSharper disable UnusedParameter.Local
+// ReSharper disable InconsistentNaming
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.Decorator;
 
 internal interface IInterface
@@ -96,6 +99,8 @@ internal class ScopeRoot : IScopeRoot
 [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(ContainerDecorator))]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(TransientScopeDecorator))]
     private sealed partial class DIE_DefaultTransientScope
     {
@@ -128,35 +133,35 @@ public class Tests
     [Fact]
     public void Container()
     {
-        using var container = new Container();
+        using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create0();
         Assert.Equal(69, instance.CheckNumber);
     }
     [Fact]
     public void TransientScope()
     {
-        using var container = new Container();
+        using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create1();
         Assert.Equal(23, instance.Dep.CheckNumber);
     }
     [Fact]
     public void TransientScopeSpecific()
     {
-        using var container = new Container();
+        using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create2();
         Assert.Equal(7, instance.Dep.CheckNumber);
     }
     [Fact]
     public void Scope()
     {
-        using var container = new Container();
+        using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create3();
         Assert.Equal(3, instance.Dep.CheckNumber);
     }
     [Fact]
     public void ScopeSpecific()
     {
-        using var container = new Container();
+        using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create4();
         Assert.Equal(13, instance.Dep.CheckNumber);
     }

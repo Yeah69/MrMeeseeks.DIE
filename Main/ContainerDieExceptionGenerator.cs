@@ -1,39 +1,68 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
 internal interface IContainerDieExceptionGenerator 
 {
-    void Generate(string namespaceName, string containerClassName, Exception exception);
+    void Generate(Exception? exception);
 }
 
 internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
 {
     private readonly GeneratorExecutionContext _context;
+    private readonly IDiagLogger _diagLogger;
+    private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
+    private readonly INamedTypeSymbol _containerType;
+    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
+        IContainerInfoContext containerInfoContext,
+        IContainerWideContext containerWideContext,
+        IDiagLogger diagLogger)
     {
         _context = context;
-        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+        _diagLogger = diagLogger;
+        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
+        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
+        _containerType = containerInfoContext.ContainerInfo.ContainerType;
     }
 
-    public void Generate(string namespaceName, string containerClassName, Exception exception)
+    public void Generate(Exception? exception)
     {
         var generatedContainer = new StringBuilder()
-            .AppendLine($"#nullable enable")
-            .AppendLine($"namespace {namespaceName}")
-            .AppendLine($"{{")
-            .AppendLine($"partial class {containerClassName}")
-            .AppendLine($"{{")
-            .AppendLine($"public {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()} ExceptionKind_0_0 => {_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{((exception as DieException)?.Kind ?? DieExceptionKind.NoneDIE).ToString()};")
-            .AppendLine($"public string ExceptionToString_0_1 => @\"{exception}\";")
-            .AppendLine($"}}")
-            .AppendLine($"}}")
-            .AppendLine($"#nullable disable");
+            .AppendLine($$"""
+#nullable enable
+namespace {{_containerType.ContainingNamespace.FullName()}}
+{
+partial class {{_containerType.Name}} : {{_wellKnownTypes.IAsyncDisposable.FullName()}}, {{_wellKnownTypes.IDisposable.FullName()}}
+{
+""");
+        
+        foreach (var constructor in _containerType.InstanceConstructors)
+            generatedContainer.AppendLine($$"""
+public static {{_containerType.FullName()}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Type.FullName()} {p.Name}"))}})
+{
+return new {{_containerType.FullName()}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Name}: {p.Name}"))}});
+}
+""");
+        var listOfKinds = _wellKnownTypesCollections.List1.Construct(_wellKnownTypesMiscellaneous.DieExceptionKind);
+
+        generatedContainer.AppendLine($$"""
+public {{listOfKinds.FullName()}} ExceptionKinds_0_0 { get; } = new {{listOfKinds.FullName()}}() { {{string.Join(", ", _diagLogger.ErrorKinds.Select(k => $"{_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{k.ToString()}"))}} };
+public string ExceptionToString_0_1 => @"{{exception?.ToString() ?? "no exception"}}";
+public void Dispose(){}
+public {{_wellKnownTypes.ValueTask.FullName()}} DisposeAsync() => new {{_wellKnownTypes.ValueTask.FullName()}}();
+}
+}
+#nullable disable
+""");
 
         var containerSource = CSharpSyntaxTree
             .ParseText(SourceText.From(generatedContainer.ToString(), Encoding.UTF8))
@@ -41,6 +70,6 @@ internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
             .NormalizeWhitespace()
             .SyntaxTree
             .GetText();
-        _context.AddSource($"{namespaceName}.{containerClassName}.g.cs", containerSource);
+        _context.AddSource($"{_containerType.ContainingNamespace.FullName()}.{_containerType.Name}.g.cs", containerSource);
     }
 }

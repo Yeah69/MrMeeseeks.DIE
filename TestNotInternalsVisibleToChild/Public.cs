@@ -1,4 +1,6 @@
-﻿namespace MrMeeseeks.DIE.TestNotInternalsVisibleToChild.Public;
+﻿// ReSharper disable once CheckNamespace
+// ReSharper disable UnusedParameter.Local
+namespace MrMeeseeks.DIE.TestNotInternalsVisibleToChild.Public;
 
 public interface IClass {}
 
@@ -29,7 +31,9 @@ public class ClassToo : IClassToo
     }
 }
 
+// ReSharper disable UnusedTypeParameter
 public interface IClass<T0, T1> {}
+// ReSharper restore UnusedTypeParameter
 
 public class Class<T0, T1> : IClass<T0, T1>
 {

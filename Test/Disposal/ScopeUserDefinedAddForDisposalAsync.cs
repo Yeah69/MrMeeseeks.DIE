@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Disposal.ScopeUserDefinedAddForDisposalAsync;
 
 internal class Dependency : IAsyncDisposable
@@ -29,8 +30,12 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope
     {
+        // ReSharper disable once InconsistentNaming
         private Dependency DIE_Factory_Dependency
         {
             get
@@ -50,7 +55,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         await container.DisposeAsync().ConfigureAwait(false);
         Assert.True(instance.Dependency.IsDisposed);

@@ -1,3 +1,8 @@
+using System.Threading;
+using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
+
 namespace MrMeeseeks.DIE;
 
 internal interface IReferenceGenerator
@@ -8,21 +13,18 @@ internal interface IReferenceGenerator
     string Generate(string hardcodedName);
 }
 
-internal class ReferenceGenerator : IReferenceGenerator
+internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
 {
     private int _i = -1;
     private readonly int _j;
-    private readonly IDiagLogger _diagLogger;
+    private readonly ILocalDiagLogger _localDiagLogger;
 
     internal ReferenceGenerator(
-        // parameters
-        int j,
-        
-        // dependencies
-        IDiagLogger diagLogger)
+        IReferenceGeneratorCounter referenceGeneratorCounter,
+        ILocalDiagLogger localDiagLogger)
     {
-        _j = j;
-        _diagLogger = diagLogger;
+        _j = referenceGeneratorCounter.GetCount();
+        _localDiagLogger = localDiagLogger;
     }
 
     public string Generate(ITypeSymbol type)
@@ -31,15 +33,15 @@ internal class ReferenceGenerator : IReferenceGenerator
         switch (type)
         {
             case INamedTypeSymbol namedTypeSymbol:
-                baseName = $"{char.ToLower(namedTypeSymbol.Name[0])}{namedTypeSymbol.Name.Substring(1)}";
+                baseName = $"{char.ToLower(namedTypeSymbol.Name[0]).ToString()}{namedTypeSymbol.Name.Substring(1)}";
                 break;
             case IArrayTypeSymbol { ElementType: { } elementType }:
-                baseName = $"{char.ToLower(elementType.Name[0])}{elementType.Name.Substring(1)}Array";
+                baseName = $"{char.ToLower(elementType.Name[0]).ToString()}{elementType.Name.Substring(1)}Array";
                 break;
             default:
-                _diagLogger.Log(Diagnostics.EmptyReferenceNameWarning(
-                    $"A reference name couldn't be generated for \"{type.FullName()}\"", 
-                    ExecutionPhase.Resolution));
+                _localDiagLogger.Warning(WarningLogData.EmptyReferenceNameWarning(
+                    $"A reference name couldn't be generated for \"{type.FullName()}\""),
+                    Location.None);
                 baseName = "empty";
                 break;
         }
@@ -57,20 +59,17 @@ internal class ReferenceGenerator : IReferenceGenerator
         GenerateInner(string.Empty, hardcodedName, string.Empty);
     
     private string GenerateInner(string prefix, string inner, string suffix) => 
-        $"{prefix}{inner}{suffix}_{_j}_{++_i}";
+        $"{prefix}{inner}{suffix}_{_j.ToString()}_{(Interlocked.Increment(ref _i)).ToString()}";
 }
     
-internal interface IReferenceGeneratorFactory
+internal interface IReferenceGeneratorCounter
 {
-    IReferenceGenerator Create();
+    int GetCount();
 }
 
-internal class ReferenceGeneratorFactory : IReferenceGeneratorFactory
+internal class ReferenceGeneratorCounter : IReferenceGeneratorCounter, IContainerInstance
 {
-    private readonly Func<int, IReferenceGenerator> _referenceGeneratorFactory;
     private int _j = -1;
-        
-    public ReferenceGeneratorFactory(Func<int, IReferenceGenerator> referenceGeneratorFactory) => _referenceGeneratorFactory = referenceGeneratorFactory;
 
-    public IReferenceGenerator Create() => _referenceGeneratorFactory(++_j);
+    public int GetCount() => Interlocked.Increment(ref _j);
 }

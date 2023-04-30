@@ -2,6 +2,7 @@ using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.OverrideExistingOverride;
 
 internal class Dependency
@@ -32,6 +33,7 @@ internal class Parent1
 [CreateFunction(typeof(Parent1), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -39,7 +41,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var parent = container.Create();
         Assert.IsType<Parent1>(parent);
         Assert.Equal(6, parent.Dependency.Value);

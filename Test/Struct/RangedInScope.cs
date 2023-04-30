@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Struct.RangedInScope;
 
 internal struct Dependency : IScopeInstance
@@ -14,7 +15,10 @@ internal struct Dependency : IScopeInstance
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private int DIE_Factory_int => 23;
+    
+    private Container() {}
 }
 
 public class Tests
@@ -22,7 +26,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var value = container.Create();
         Assert.IsType<Dependency>(value);
         Assert.Equal(23, value.Value);

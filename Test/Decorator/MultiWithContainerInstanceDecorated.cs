@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Decorator.MultiWithContainerInstanceDecorated;
 
 internal interface IInterface
@@ -33,7 +34,7 @@ internal class DecoratorB : IInterface, IDecorator<IInterface>
 [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -41,7 +42,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var decorated = container.Create();
         var decoratedB = decorated;
         var decoratedA = decorated.Decorated;

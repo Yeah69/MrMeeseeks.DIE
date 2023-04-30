@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InterfaceGenericDecorator;
 
 internal interface IInterface<T0>
@@ -13,6 +14,7 @@ internal class Implementation<T0> : IInterface<T0>
     public IInterface<T0> Decorated => this;
 }
 
+// ReSharper disable once UnusedTypeParameter
 internal class DecoratorA<T0, T1> : IInterface<T1>, IDecorator<IInterface<T1>>
 {
     public IInterface<T1> Decorated { get; }
@@ -22,6 +24,7 @@ internal class DecoratorA<T0, T1> : IInterface<T1>, IDecorator<IInterface<T1>>
         Decorated = decorated;
 }
 
+// ReSharper disable once UnusedTypeParameter
 internal class DecoratorB<T0, T1> : IInterface<T1>, IDecorator<IInterface<T1>>
 {
     public IInterface<T1> Decorated { get; }
@@ -37,7 +40,7 @@ internal class DecoratorB<T0, T1> : IInterface<T1>, IDecorator<IInterface<T1>>
 [CreateFunction(typeof(IInterface<byte>), "Create")]
 internal sealed partial class Container
 {
-    
+    private Container() {}
 }
 
 public class Tests
@@ -45,7 +48,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var decorator = container.Create();
         Assert.IsType<DecoratorB<string, byte>>(decorator);
         Assert.IsType<DecoratorA<int, byte>>(decorator.Decorated);

@@ -1,3 +1,6 @@
+using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
+
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 internal interface IValidateUserDefinedInitializerParametersInjectionMethod : IValidateUserDefinedInjectionMethod
@@ -7,8 +10,11 @@ internal interface IValidateUserDefinedInitializerParametersInjectionMethod : IV
 
 internal class ValidateUserDefinedInitializerParametersInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedInitializerParametersInjectionMethod
 {
-    internal ValidateUserDefinedInitializerParametersInjectionMethod(WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) => 
-        InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute;
+    internal ValidateUserDefinedInitializerParametersInjectionMethod(
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger diagLogger) 
+        : base(diagLogger) => 
+        InjectionAttribute = containerWideContext.WellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute;
 
     protected override INamedTypeSymbol InjectionAttribute { get; }
 }

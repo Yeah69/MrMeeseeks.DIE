@@ -1,10 +1,12 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.ScopeRoot;
 
 internal class ScopeInstance : IScopeInstance {}
 
+// ReSharper disable once UnusedTypeParameter
 internal class ScopeRoot<T0> : IScopeRoot
 {
     public ScopeInstance ScopeInstance { get; }
@@ -27,14 +29,17 @@ internal class Root
 }
 
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var root = container.Create();
         Assert.NotSame(root.ScopeInstance, root.ScopeRoot.ScopeInstance);
     }

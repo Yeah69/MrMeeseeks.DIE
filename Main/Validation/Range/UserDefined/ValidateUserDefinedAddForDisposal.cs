@@ -1,3 +1,8 @@
+using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
+
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 internal interface IValidateUserDefinedAddForDisposalSync : IValidateUserDefinedAddForDisposalBase
@@ -8,9 +13,11 @@ internal interface IValidateUserDefinedAddForDisposalSync : IValidateUserDefined
 internal class ValidateUserDefinedAddForDisposalSync : ValidateUserDefinedAddForDisposalBase,
     IValidateUserDefinedAddForDisposalSync
 {
-
-    public ValidateUserDefinedAddForDisposalSync(WellKnownTypes wellKnownTypes) => 
-        DisposableType = wellKnownTypes.Disposable;
+    internal ValidateUserDefinedAddForDisposalSync(
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger)
+        : base(localDiagLogger) => 
+        DisposableType = containerWideContext.WellKnownTypes.IDisposable;
 
     protected override INamedTypeSymbol DisposableType { get; }
 }
@@ -23,9 +30,11 @@ internal interface IValidateUserDefinedAddForDisposalAsync : IValidateUserDefine
 internal class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefinedAddForDisposalBase,
     IValidateUserDefinedAddForDisposalAsync
 {
-
-    public ValidateUserDefinedAddForDisposalAsync(WellKnownTypes wellKnownTypes) => 
-        DisposableType = wellKnownTypes.AsyncDisposable;
+    internal ValidateUserDefinedAddForDisposalAsync(
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger)
+        : base(localDiagLogger) => 
+        DisposableType = containerWideContext.WellKnownTypes.IAsyncDisposable;
 
     protected override INamedTypeSymbol DisposableType { get; }
 }
@@ -37,12 +46,16 @@ internal interface IValidateUserDefinedAddForDisposalBase : IValidateUserDefined
 
 internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefinedMethod, IValidateUserDefinedAddForDisposalBase
 {
+    internal ValidateUserDefinedAddForDisposalBase(
+        ILocalDiagLogger localDiagLogger) 
+        : base(localDiagLogger)
+    {
+    }
     protected abstract INamedTypeSymbol DisposableType { get; }
 
-    public override IEnumerable<Diagnostic> Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    public override void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
-        foreach (var diagnostic in base.Validate(method, rangeType, containerType))
-            yield return diagnostic;
+        base.Validate(method, rangeType, containerType);
 
         if (method is
             {
@@ -61,44 +74,66 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
                 RefKind: RefKind.None,
                 HasExplicitDefaultValue: false
             }
-            && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
+            && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
         {
         }
 
         if (!method.ReturnsVoid)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a return type.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a return type."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (!method.IsPartialDefinition)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "User-defined part has to have the partial definition only.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "User-defined part has to have the partial definition only."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
-        if (method.Parameters.Length != 1 || !SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type.OriginalDefinition, DisposableType.OriginalDefinition))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have a single parameter which is of type \"{DisposableType.FullName()}\".");
+        if (method.Parameters.Length != 1 || !CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have a single parameter which is of type \"{DisposableType.FullName()}\"."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.MethodKind != MethodKind.Ordinary)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be an ordinary method.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be an ordinary method."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (!method.CanBeReferencedByName)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Should be able to be referenced by name.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Should be able to be referenced by name."),
+                method.Locations.FirstOrDefault() ?? Location.None);
 
         if (method.Parameters.Length == 1 && method.Parameters[0] is {} parameter)
         {
             if (parameter.IsDiscard)
-                yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be discard parameter.");
+                LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be discard parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
             
             if (parameter.IsOptional)
-                yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be optional.");
+                LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be optional."),
+                method.Locations.FirstOrDefault() ?? Location.None);
             
             if (parameter.IsParams)
-                yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be params parameter.");
+                LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be params parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
             
             if (parameter.IsThis)
-                yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be this parameter.");
+                LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be this parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
             
             if (parameter.RefKind != RefKind.None)
-                yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be of a special ref kind.");
+                LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to be of a special ref kind."),
+                method.Locations.FirstOrDefault() ?? Location.None);
             
             if (parameter.HasExplicitDefaultValue)
-                yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to have explicit default value.");
+                LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Parameter isn't allowed to have explicit default value."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         }
     }
 }

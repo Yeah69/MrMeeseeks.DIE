@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Record.CustomProperty;
 
 internal record Dependency;
@@ -13,14 +14,17 @@ internal record Implementation(Dependency Dependency)
 
 [PropertyChoice(typeof(Implementation), nameof(Implementation.DependencyA))]
 [CreateFunction(typeof(Implementation), "Create")]
-internal sealed partial class Container{}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.IsType<Implementation>(instance);
         Assert.IsType<Dependency>(instance.Dependency);

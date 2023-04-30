@@ -1,9 +1,13 @@
-using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Validation.Attributes;
+using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
-internal interface ITypesFromAttributes
+internal interface ITypesFromAttributesBase
 {
     IImmutableSet<INamedTypeSymbol> Implementation { get; }
     IImmutableSet<INamedTypeSymbol> TransientAbstraction { get; }
@@ -29,7 +33,7 @@ internal interface ITypesFromAttributes
     IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; } 
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
-    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<string>)> PropertyChoices { get; }
     bool AllImplementations { get; }
     IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
     IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
@@ -65,30 +69,24 @@ internal interface ITypesFromAttributes
     IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
 }
 
-internal class TypesFromAttributes : ScopeTypesFromAttributes
-{
-    internal TypesFromAttributes(
-        // parameter
-        IReadOnlyList<AttributeData> attributeData,
-        INamedTypeSymbol? rangeType,
-        INamedTypeSymbol? containerType,
+internal interface IAssemblyTypesFromAttributes : ITypesFromAttributesBase {}
 
-        // dependencies
+internal class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAssemblyTypesFromAttributes, IContainerInstance
+{
+    internal AssemblyTypesFromAttributes(
+        Compilation compilation,
+        ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
-        WellKnownTypesChoice wellKnownTypesChoice,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        WellKnownTypes wellKnownTypes) 
+        IContainerWideContext containerWideContext) 
         : base(
-            attributeData, 
-            rangeType, 
-            containerType, 
+            compilation.Assembly.GetAttributes(), 
+            null,
+            null,
+            localDiagLogger,
             validateAttributes, 
-            wellKnownTypesAggregation, 
-            wellKnownTypesChoice, 
-            wellKnownTypesMiscellaneous, 
-            wellKnownTypes)
+            containerWideContext)
     {
+        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
         ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
         TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
         TransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
@@ -108,34 +106,98 @@ internal class TypesFromAttributes : ScopeTypesFromAttributes
     }
 }
 
-internal class ScopeTypesFromAttributes : ITypesFromAttributes
+internal interface IContainerTypesFromAttributes : ITypesFromAttributesBase {}
+
+internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContainerTypesFromAttributes, IContainerInstance
+{
+    internal ContainerTypesFromAttributes(
+        ILocalDiagLogger localDiagLogger,
+        IValidateAttributes validateAttributes,
+        IContainerInfoContext containerInfoContext,
+        IContainerWideContext containerWideContext) 
+        : base(
+            containerInfoContext.ContainerInfo.ContainerType.GetAttributes(), 
+            containerInfoContext.ContainerInfo.ContainerType,
+            containerInfoContext.ContainerInfo.ContainerType, 
+            localDiagLogger,
+            validateAttributes, 
+            containerWideContext)
+    {
+        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
+        ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
+        TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
+        TransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
+        ScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ScopeRootAbstractionAggregationAttribute);
+        ContainerInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute);
+        TransientScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceImplementationAggregationAttribute);
+        TransientScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootImplementationAggregationAttribute);
+        ScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ScopeRootImplementationAggregationAttribute);
+        FilterContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceAbstractionAggregationAttribute);
+        FilterTransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootAbstractionAggregationAttribute);
+        FilterScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootAbstractionAggregationAttribute);
+        FilterContainerInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterContainerInstanceImplementationAggregationAttribute);
+        FilterTransientScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeInstanceImplementationAggregationAttribute);
+        FilterTransientScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterTransientScopeRootImplementationAggregationAttribute);
+        FilterScopeRootImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterScopeRootImplementationAggregationAttribute);
+    }
+}
+
+internal interface IScopeTypesFromAttributes : ITypesFromAttributesBase {}
+
+internal class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFromAttributes, ITransientScopeInstance
+{
+    internal ScopeTypesFromAttributes(
+        // parameter
+        IScopeInfo scopeInfo,
+
+        // dependencies
+        ILocalDiagLogger localDiagLogger,
+        IValidateAttributes validateAttributes,
+        IContainerInfoContext containerInfoContext,
+        IContainerWideContext containerWideContext)
+        : base(
+            scopeInfo.ScopeType?.GetAttributes() as IReadOnlyList<AttributeData> ?? Array.Empty<AttributeData>(),
+            scopeInfo.ScopeType,
+            containerInfoContext.ContainerInfo.ContainerType,
+            localDiagLogger,
+            validateAttributes,
+            containerWideContext)
+    {
+    }
+}
+
+internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 {
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IValidateAttributes _validateAttributes;
-    protected readonly List<Diagnostic> _warnings = new(); 
-    protected readonly List<Diagnostic> _errors = new();
 
-    internal ScopeTypesFromAttributes(
+    internal TypesFromAttributesBase(
         // parameter
         IReadOnlyList<AttributeData> attributeData,
         INamedTypeSymbol? rangeType,
         INamedTypeSymbol? containerType,
 
         // dependencies
+        ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
-        WellKnownTypesChoice wellKnownTypesChoice,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        WellKnownTypes wellKnownTypes)
+        IContainerWideContext containerWideContext)
     {
         _rangeType = rangeType;
         _containerType = containerType;
+        _localDiagLogger = localDiagLogger;
         _validateAttributes = validateAttributes;
         AttributeDictionary = attributeData
-            .GroupBy(ad => ad.AttributeClass, SymbolEqualityComparer.Default)
-            .ToDictionary(g => g.Key, g => g, SymbolEqualityComparer.Default);
+            .GroupBy(ad => ad.AttributeClass, CustomSymbolEqualityComparer.Default)
+            .ToDictionary(g => g.Key, g => g, CustomSymbolEqualityComparer.Default);
 
+        var wellKnownTypes = containerWideContext.WellKnownTypes;
+        var wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
+        var wellKnownTypesChoice = containerWideContext.WellKnownTypesChoice;
+        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
+        
         Implementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
         TransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
         SyncTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.SyncTransientAbstractionAggregationAttribute);
@@ -176,13 +238,13 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         
-        void NotParsableAttribute(AttributeData attributeData) =>
-            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
-                attributeData,
+        void NotParsableAttribute(AttributeData ad) =>
+            localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
+                ad,
                 _rangeType,
                 _containerType,
-                "Not parsable attribute.",
-                ExecutionPhase.Validation));
+                "Not parsable attribute."),
+                ad.GetLocation());
         
         DecoratorSequenceChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.DecoratorSequenceChoiceAttribute, out var decoratorSequenceChoiceAttributes) 
@@ -204,14 +266,14 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .OriginalDefinition
                         .AllDerivedTypesAndSelf()
                         .Select(t => t.UnboundIfGeneric())
-                        .Contains(interfaceType, SymbolEqualityComparer.Default))
+                        .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -230,14 +292,14 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                                 .OriginalDefinition
                                 .AllDerivedTypesAndSelf()
                                 .Select(t => t.UnboundIfGeneric())
-                                .Contains(interfaceType, SymbolEqualityComparer.Default))
+                                .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                         {
-                            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                            localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                                 ad,
                                 _rangeType,
                                 _containerType,
-                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
-                                ExecutionPhase.Validation));
+                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."),
+                                ad.GetLocation());
                             return null;
                         }
                         
@@ -270,14 +332,14 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .OriginalDefinition
                         .AllDerivedTypesAndSelf()
                         .Select(t => t.UnboundIfGeneric())
-                        .Contains(interfaceType, SymbolEqualityComparer.Default))
+                        .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Decorated type \"{decoratedType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -314,7 +376,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .Where(c => c.Parameters.Length == parameterTypes.Count)
                         .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
                             .Zip(parameterTypes,
-                                (pLeft, pRight) => pLeft.Equals(pRight, SymbolEqualityComparer.Default))
+                                (pLeft, pRight) => CustomSymbolEqualityComparer.Default.Equals(pLeft, pRight))
                             .All(b => b));
 
                     if (constructorChoice is { })
@@ -322,12 +384,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         return (implementationType, constructorChoice);
                     }
 
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\"."),
+                        ad.GetLocation());
                     
                     return null;
                 }
@@ -337,19 +399,17 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
 
-        INamedTypeSymbol? SingleTypeArgument(AttributeData attributeData)
+        INamedTypeSymbol? SingleTypeArgument(AttributeData ad)
         {
-            if (attributeData.ConstructorArguments.Length != 1
-                || attributeData.ConstructorArguments[0].Value is not INamedTypeSymbol type)
-            {
-                NotParsableAttribute(attributeData);
-                return null;
-            }
-            return type;
+            if (ad.ConstructorArguments.Length == 1
+                && ad.ConstructorArguments[0].Value is INamedTypeSymbol type) 
+                return type;
+            NotParsableAttribute(ad);
+            return null;
         }
 
         FilterConstructorChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterConstructorChoiceAttribute, out var filterConstructorChoiceAttributes) 
                 ? filterConstructorChoiceAttributes
                 : Enumerable.Empty<AttributeData>())
@@ -365,7 +425,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 if (ad.ConstructorArguments.Length < 1)
                 {
                     NotParsableAttribute(ad);
-                    return ((INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)?) null;
+                    return ((INamedTypeSymbol, IReadOnlyList<string>)?) null;
                 }
 
                 if (ad.ConstructorArguments[0].Value is not INamedTypeSymbol implementationType)
@@ -388,28 +448,19 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                     .ToImmutableHashSet();
                 
                 foreach (var nonExistent in parameterTypes.Except(propertyNames))
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find property \"{nonExistent}\" on \"{implementationType.FullName()}\"."),
+                        ad.GetLocation());
 
-                var pickedProperties = propertyNames.Intersect(parameterTypes);
-                
-                var properties = implementationType
-                    .OriginalDefinitionIfUnbound()
-                    .GetMembers()
-                    .OfType<IPropertySymbol>()
-                    .Where(ps => pickedProperties.Contains(ps.Name))
-                    .ToList();
-
-                return (implementationType, properties);
+                return (implementationType, propertyNames.Intersect(parameterTypes).ToList());
             })
-            .OfType<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)>());
+            .OfType<(INamedTypeSymbol, IReadOnlyList<string>)>());
 
         FilterPropertyChoices = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterPropertyChoiceAttribute, out var filterPropertyChoicesGroup)
                 ? filterPropertyChoicesGroup
                 : Enumerable.Empty<AttributeData>())
@@ -439,33 +490,33 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 if (initializationMethod is { })
                 {
                     if (!initializationMethod.ReturnsVoid
-                        && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
-                        && !SymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
+                        && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
+                        && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
                     {
-                        _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                        localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                             ad,
                             _rangeType,
                             _containerType,
-                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\".",
-                            ExecutionPhase.Validation));
+                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\"."),
+                            ad.GetLocation());
                         return null;
                     }
                     
                     return (type, initializationMethod);
                 }
                 
-                _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                     ad,
                     _rangeType,
                     _containerType,
-                    $"Couldn't find a method with the name \"{methodName}\" on \"{type.FullName()}\".",
-                    ExecutionPhase.Validation));
+                    $"Couldn't find a method with the name \"{methodName}\" on \"{type.FullName()}\"."),
+                    ad.GetLocation());
                 return null;
             })
             .OfType<(INamedTypeSymbol, IMethodSymbol)>());
         
         FilterInitializers = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             (AttributeDictionary.TryGetValue(wellKnownTypesMiscellaneous.FilterInitializerAttribute, out var filterInitializerAttributes) 
                 ? filterInitializerAttributes 
                 : Enumerable.Empty<AttributeData>())
@@ -500,12 +551,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
 
@@ -556,12 +607,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -597,12 +648,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -638,12 +689,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
                 if (typeParameterSymbol is null)
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Couldn't find the generic type parameter with the name \"{nameOfGenericParameter}\" on \"{genericType.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -663,7 +714,7 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
 
         IImmutableSet<IAssemblySymbol> GetAssemblies(INamedTypeSymbol attributeType) =>
             ImmutableHashSet.CreateRange<IAssemblySymbol>(
-                SymbolEqualityComparer.Default,
+                CustomSymbolEqualityComparer.Default,
                 (AttributeDictionary.TryGetValue(attributeType, out var assemblyImplementationsAttributes)
                     ? assemblyImplementationsAttributes
                     : Enumerable.Empty<AttributeData>())
@@ -685,17 +736,17 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         {
                             if (t.ContainingAssembly is null)
                             {
-                                _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                                localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                                     ad,
                                     _rangeType,
                                     _containerType,
-                                    $"Type \"{t.FullName()}\" doesn't lead to a single known assembly.",
-                                    ExecutionPhase.Validation));
+                                    $"Type \"{t.FullName()}\" doesn't lead to a single known assembly."),
+                                    ad.GetLocation());
                             }
                             return t.ContainingAssembly;
                         })
                         .OfType<IAssemblySymbol>())
-                .Distinct(SymbolEqualityComparer.Default)
+                .Distinct(CustomSymbolEqualityComparer.Default)
                 .OfType<IAssemblySymbol>());
 
         AssemblyImplementations = GetAssemblies(wellKnownTypesAggregation.AssemblyImplementationsAggregationAttribute);
@@ -718,12 +769,12 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                 
                 if (!validateAttributes.ValidateImplementation(implementation))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Type \"{implementation.FullName()}\" has to be an implementation.",
-                        ExecutionPhase.Validation));
+                        $"Type \"{implementation.FullName()}\" has to be an implementation."),
+                        ad.GetLocation());
                     return null;
                 }
 
@@ -732,14 +783,14 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                         .OriginalDefinitionIfUnbound()
                         .AllDerivedTypesAndSelf()
                         .Select(t => t.UnboundIfGeneric())
-                        .Contains(unboundType, SymbolEqualityComparer.Default))
+                        .Contains(unboundType, CustomSymbolEqualityComparer.Default))
                 {
-                    _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                         ad,
                         _rangeType,
                         _containerType,
-                        $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\".",
-                        ExecutionPhase.Validation));
+                        $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."),
+                        ad.GetLocation());
                     return null;
                 }
                 
@@ -776,14 +827,14 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
                                 .OriginalDefinitionIfUnbound()
                                 .AllDerivedTypesAndSelf()
                                 .Select(t => t.UnboundIfGeneric())
-                                .Contains(unboundType, SymbolEqualityComparer.Default))
+                                .Contains(unboundType, CustomSymbolEqualityComparer.Default))
                         {
-                            _errors.Add(Diagnostics.ValidationConfigurationAttribute(
+                            localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                                 ad,
                                 _rangeType,
                                 _containerType,
-                                $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\".",
-                                ExecutionPhase.Validation));
+                                $"Type \"{implementation.FullName()}\" has to implement \"{type.FullName()}\"."),
+                                ad.GetLocation());
                             return null;
                         }
                         
@@ -796,9 +847,9 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
             })
             .OfType<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)>());
         
-        FilterImplementationChoices = GetImplementationTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
+        FilterImplementationChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
         
-        FilterImplementationCollectionChoices = GetImplementationTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
+        FilterImplementationCollectionChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
@@ -807,19 +858,19 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         INamedTypeSymbol attribute)
     {
         return ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             GetTypesFromAttribute(attribute)
                 .Where(t =>
                 {
                     var ret = _validateAttributes.ValidateAbstraction(t.Item2);
 
                     if (!ret)
-                        _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                        _localDiagLogger.Warning(WarningLogData.ValidationConfigurationAttribute(
                             t.Item1,
                             _rangeType, 
                             _containerType, 
-                            $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored.",
-                            ExecutionPhase.Validation));
+                            $"Given type \"{t.Item2.FullName()}\" isn't a valid abstraction type. It'll be ignored."),
+                            t.Item1.GetLocation());
                 
                     return ret;
                 })
@@ -830,19 +881,19 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
         INamedTypeSymbol attribute)
     {
         return ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default,
+            CustomSymbolEqualityComparer.Default,
             GetTypesFromAttribute(attribute)
             .Where(t =>
             {
                 var ret = _validateAttributes.ValidateImplementation(t.Item2);
 
                 if (!ret)
-                    _warnings.Add(Diagnostics.ValidationConfigurationAttribute(
+                    _localDiagLogger.Warning(WarningLogData.ValidationConfigurationAttribute(
                         t.Item1,
                         _rangeType, 
                         _containerType, 
-                        $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored.",
-                        ExecutionPhase.Validation));
+                        $"Given type \"{t.Item2.FullName()}\" isn't a valid implementation type. It'll be ignored."),
+                        t.Item1.GetLocation());
                 
                 return ret;
             })
@@ -867,27 +918,27 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<INamedTypeSymbol> TransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> SyncTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> AsyncTransientAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> ContainerInstanceAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ContainerInstanceAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> ScopeInstanceAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeRootAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> ScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeRootAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> ScopeRootAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> DecoratorAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> CompositeAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> TransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> SyncTransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> AsyncTransientImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> ContainerInstanceImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> ContainerInstanceImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeInstanceImplementation { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> ScopeInstanceImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected set; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }
-    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<IPropertySymbol>)> PropertyChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<string>)> PropertyChoices { get; }
     public bool AllImplementations { get; }
     public IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
@@ -896,21 +947,21 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterAsyncTransientAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> FilterScopeInstanceAbstraction { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterScopeRootAbstraction { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootAbstraction { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeRootAbstraction { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> FilterDecoratorAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterCompositeAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterTransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> FilterSyncTransientImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> FilterAsyncTransientImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterContainerInstanceImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeInstanceImplementation { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> FilterScopeInstanceImplementation { get; }
-    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; protected init; }
-    public IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; protected init; }
+    public IImmutableSet<INamedTypeSymbol> FilterTransientScopeRootImplementation { get; protected set; }
+    public IImmutableSet<INamedTypeSymbol> FilterScopeRootImplementation { get; protected set; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> FilterDecoratorSequenceChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterConstructorChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterInitializers { get; }
@@ -921,8 +972,4 @@ internal class ScopeTypesFromAttributes : ITypesFromAttributes
     public IImmutableSet<IAssemblySymbol> FilterAssemblyImplementations { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
-
-    public IReadOnlyList<Diagnostic> Warnings => _warnings;
-
-    public IReadOnlyList<Diagnostic> Errors => _errors;
 }

@@ -2,6 +2,7 @@ using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Disposal.TransientScopeDisposalHandle.NoneContainerToSyncDisposalHandle;
 
 internal class Dependency
@@ -26,14 +27,17 @@ internal class TransientScopeRoot : ITransientScopeRoot
 }
 
 [CreateFunction(typeof(TransientScopeRoot), "Create")]
-internal sealed partial class Container {}
+internal sealed partial class Container
+{
+    private Container() {}
+}
 
 public class Tests
 {
     [Fact]
     public void Test()
     {
-        var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
         Assert.True(transientScopeRoot.Dependency.IsDisposed);
         transientScopeRoot.Cleanup();

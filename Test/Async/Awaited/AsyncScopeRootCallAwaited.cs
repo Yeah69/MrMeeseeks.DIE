@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Async.Awaited.AsyncScopeRootCallAwaited;
 
 
@@ -28,6 +29,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -35,8 +37,8 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
-        var root = await container.CreateValueAsync().ConfigureAwait(false);
+        await using var container = Container.DIE_CreateContainer();
+        var root = await container.Create().ConfigureAwait(false);
         Assert.True(root.Dep.IsInitialized);
     }
 }

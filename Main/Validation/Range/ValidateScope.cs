@@ -1,3 +1,6 @@
+using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 namespace MrMeeseeks.DIE.Validation.Range;
@@ -16,9 +19,9 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
+        IValidateAttributes validateAttributes,
+        IContainerWideContext containerWideContext,
+        ILocalDiagLogger localDiagLogger) 
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync,
@@ -27,9 +30,9 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
             validateUserDefinedInitializerParametersInjectionMethod,
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
-            wellKnownTypes,
-            wellKnownTypesAggregation, 
-            wellKnownTypesMiscellaneous)
+            validateAttributes,
+            containerWideContext,
+            localDiagLogger)
     {
         
     }
@@ -38,6 +41,6 @@ internal class ValidateScope : ValidateScopeBase, IValidateScope
     protected override string CustomScopeName => Constants.CustomScopeName;
     protected override string ScopeName => Constants.ScopeName;
 
-    protected override Diagnostic ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) => 
-        Diagnostics.ValidationScope(rangeType, containerType, specification, ExecutionPhase.Validation);
+    protected override DiagLogData ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) => 
+        ErrorLogData.ValidationScope(rangeType, containerType, specification);
 }

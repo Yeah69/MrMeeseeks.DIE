@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.InjectionInitParams.VanillaInTransientScope;
 
 internal class Dependency
@@ -22,6 +23,9 @@ internal class TransientScopeRoot : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeRoot), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultTransientScope
     {
         [UserDefinedInitializerParametersInjection(typeof(Dependency))]
@@ -34,7 +38,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create().Dependency;
         Assert.Equal(69, instance.Number);
     }

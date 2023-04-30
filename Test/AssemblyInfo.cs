@@ -18,3 +18,5 @@ using MrMeeseeks.DIE.Test;
 [assembly:AllImplementationsAggregation]
 
 [assembly:ErrorDescriptionInsteadOfBuildFailure]
+
+[assembly:Analytics(Analytics.ResolutionGraph)]

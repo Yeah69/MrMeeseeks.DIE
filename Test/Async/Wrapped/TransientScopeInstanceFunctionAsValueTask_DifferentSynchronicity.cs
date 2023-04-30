@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.TransientScopeInstanceFunctionAsValueTask_DifferentSynchronicity;
 
 internal interface IInterface {}
@@ -43,6 +44,7 @@ internal class TransientScopeRoot0 : ITransientScopeRoot
 
 internal class TransientScopeRoot1 : ITransientScopeRoot
 {
+    // ReSharper disable once UnusedParameter.Local
     internal TransientScopeRoot1(ValueTask<Instance> dependency)
     {
         
@@ -54,7 +56,10 @@ internal class TransientScopeRoot1 : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeRoot1), "Create1")]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [CustomScopeForRootTypes(typeof(TransientScopeRoot0))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_TransientScope0
     {
         
@@ -63,6 +68,7 @@ internal sealed partial class Container
     [FilterImplementationAggregation(typeof(DependencyA))]
     [ImplementationAggregation(typeof(DependencyB))]
     [CustomScopeForRootTypes(typeof(TransientScopeRoot1))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_TransientScope1
     {
         
@@ -74,7 +80,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance0 = container.Create0();
         var _ = container.Create1();
         Assert.True(((await instance0.Dependency.ConfigureAwait(false)).Inner as DependencyA)?.IsInitialized);

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.ValueTaskCollection;
 
 internal interface IInterface
@@ -50,6 +51,7 @@ internal class DependencyD : IInterface
 [CreateFunction(typeof(IReadOnlyList<ValueTask<IInterface>>), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -57,7 +59,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.Equal(4, instance.Count);
         foreach (var task in instance)

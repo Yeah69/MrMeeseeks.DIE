@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.Implementation;
 
 internal interface IDependency {}
@@ -32,8 +33,11 @@ internal class Scope : IScopeRoot
 [FilterImplementationAggregation(typeof(DependencyTransientScope))]
 internal sealed partial class Container
 {
+    private Container() {}
+    
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyTransientScope))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultTransientScope
     {
         
@@ -41,6 +45,7 @@ internal sealed partial class Container
 
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyScope))]
+    // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope
     {
         
@@ -51,21 +56,21 @@ public class Tests
     [Fact]
     public void Container()
     {
-        using var container = new Container();
+        using var container = Implementation.Container.DIE_CreateContainer();
         var dependency = container.Create0();
         Assert.IsType<DependencyContainer>(dependency);
     }
     [Fact]
     public void TransientScope()
     {
-        using var container = new Container();
+        using var container = Implementation.Container.DIE_CreateContainer();
         var dependency = container.Create1();
         Assert.IsType<DependencyTransientScope>(dependency.Dependency);
     }
     [Fact]
     public void Scope()
     {
-        using var container = new Container();
+        using var container = Implementation.Container.DIE_CreateContainer();
         var dependency = container.Create2();
         Assert.IsType<DependencyScope>(dependency.Dependency);
     }

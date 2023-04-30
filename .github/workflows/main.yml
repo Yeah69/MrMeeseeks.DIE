@@ -13,14 +13,14 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: MrMeeseeks.DIE.sln                        # Replace with your solution name, i.e. MyWpfApp.sln.
+      Solution_Name: MrMeeseeks.DIE.sln
       
     steps:
     - uses: actions/checkout@main
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v2.1.0
+      uses: actions/setup-dotnet@v3.0.3
       with:
-        dotnet-version: 6.0.401
+        dotnet-version: 6.0.406
     - run: set DOTNET_CLI_TELEMETRY_OPTOUT=1
     - name: Install dependencies
       run: dotnet restore .\MrMeeseeks.DIE.sln
@@ -28,6 +28,13 @@ jobs:
       run: dotnet build .\MrMeeseeks.DIE.sln --configuration Release --no-restore
     - name: Test
       run: dotnet test .\Test\Test.csproj --no-restore --verbosity normal
+    - name: Publish to NuGet
+      uses: brandedoutcast/publish-nuget@master
+      with:
+        PROJECT_FILE_PATH: Configuration.Attributes/Configuration.Attributes.csproj
+        VERSION_FILE_PATH: Directory.Build.props
+        TAG_COMMIT: false
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
     - name: Publish to NuGet
       uses: brandedoutcast/publish-nuget@master
       with:

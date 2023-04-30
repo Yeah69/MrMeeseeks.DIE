@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.Lazy;
 
 internal class Dependency : ITaskInitializer
@@ -19,6 +20,7 @@ internal class Dependency : ITaskInitializer
 [CreateFunction(typeof(Lazy<Task<Dependency>>), "Create")]
 internal sealed partial class Container
 {
+    private Container() {}
 }
 
 public class Tests
@@ -26,7 +28,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = new Container();
+        await using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.True((await instance.Value.ConfigureAwait(false)).IsInitialized);
     }

@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.Logging;
+
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 internal interface IValidateUserDefinedFactoryMethod : IValidateUserDefinedMethod
@@ -7,10 +9,15 @@ internal interface IValidateUserDefinedFactoryMethod : IValidateUserDefinedMetho
 
 internal class ValidateUserDefinedFactoryMethod : ValidateUserDefinedMethod, IValidateUserDefinedFactoryMethod
 {
-    public override IEnumerable<Diagnostic> Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    internal ValidateUserDefinedFactoryMethod(
+        ILocalDiagLogger localDiagLogger) 
+        : base(localDiagLogger)
     {
-        foreach (var diagnostic in base.Validate(method, rangeType, containerType))
-            yield return diagnostic;
+    }
+    
+    public override void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
+    {
+        base.Validate(method, rangeType, containerType);
 
         if (method is
             {
@@ -31,30 +38,48 @@ internal class ValidateUserDefinedFactoryMethod : ValidateUserDefinedMethod, IVa
         }
         
         if (method.IsPartialDefinition)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be partial.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be partial."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.ReturnsVoid)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to return void.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to return void."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsDiscard))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a discard parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a discard parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsOptional))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a optional parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a optional parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsParams))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a params parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a params parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.IsThis))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a this parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a this parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.RefKind != RefKind.None))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "All parameters should be either ordinary or an out parameter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "All parameters should be either ordinary or an out parameter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Parameters.Any(p => p.HasExplicitDefaultValue))
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a parameter which has an explicit default value.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to have a parameter which has an explicit default value."),
+                method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.MethodKind != MethodKind.Ordinary && method.MethodKind != MethodKind.PropertyGet)
-            yield return ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be either an ordinary method or a property getter.");
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be either an ordinary method or a property getter."),
+                method.Locations.FirstOrDefault() ?? Location.None);
     }
 }

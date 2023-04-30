@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Initializer.Sync;
 
 internal class Dependency : IInitializer
@@ -13,6 +14,7 @@ internal class Dependency : IInitializer
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container 
 {
+    private Container() {}
 }
 
 public class Tests
@@ -20,7 +22,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         Assert.True(instance.IsInitialized);
     }

@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ValueTuple.SyntaxVariant;
 
 internal class Wrapper
@@ -28,6 +29,8 @@ internal sealed partial class Container
     private int _i;
 
     private int DIE_Factory_Counter() => _i++;
+    
+    private Container() {}
 }
 
 public class Tests
@@ -35,7 +38,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var valueTupleBase = container.Create();
         Assert.Equal(25, valueTupleBase.Dependency._25);
     }

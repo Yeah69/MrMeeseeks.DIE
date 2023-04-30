@@ -2,6 +2,7 @@ using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
+// ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.ReductionCase;
 
 internal class DependencyA
@@ -46,7 +47,10 @@ internal class Parent
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container
 {
+    // ReSharper disable once InconsistentNaming
     private int DIE_Factory_int => 0;
+    
+    private Container() {}
 }
 
 public class Tests
@@ -54,7 +58,7 @@ public class Tests
     [Fact]
     public void Test()
     {
-        using var container = new Container();
+        using var container = Container.DIE_CreateContainer();
         var parent = container.Create();
         Assert.IsType<Parent>(parent);
         Assert.True(0 == parent.Dependency.Value);

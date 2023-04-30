@@ -1,28 +1,22 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
+namespace MrMeeseeks.DIE.Sample;
 
-internal interface IInterface<T> {}
+internal interface IInterface {}
 
-internal class Dependency : IInterface<int> {}
-
-internal class DependencyHolder
+internal class Root
 {
-    public IInterface<int> Dependency { get; }
-    internal DependencyHolder(IInterface<int> dependency)
-    {
-        Dependency = dependency;
-    }
+    internal Root((Dependency, Dependency) inner, Func<Dependency> two) {}
 }
 
-[CreateFunction(typeof(DependencyHolder), "CreateHolder")]
-[CreateFunction(typeof(IInterface<int>), "CreateInterface")]
+internal class Dependency
+{
+    internal Dependency() {}
+}
+
+[CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {
-    private readonly IInterface<int> DIE_Factory_dependency;
-
-    internal Container(IInterface<int> dependency)
-    {
-        DIE_Factory_dependency = dependency;
-    }
+    private Container() {}
 }

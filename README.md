@@ -1,5 +1,8 @@
 # Welcome to MrMeeseeks.DIE
 
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://matrix.to/#/#Yeah69_MrMeeseeks.DIE:gitter.im)
+[![SOQnA](https://img.shields.io/badge/StackOverflow-QnA-green.svg)](http://stackoverflow.com/questions/tagged/MrMeeseeks.DIE)
+
 DIE is a secret agency organized by a bunch of Mr. Meeseekses. Its goal is to gather the information necessary to resolve your dependencies. Therefore, …
 
 > The acronym DIE stands for **D**ependency **I**njection DI**E**
@@ -35,6 +38,32 @@ Or manually add the package reference to the target `.csproj`:
 ```xml
 <PackageReference Include="MrMeeseeks.DIE" Version="[preferrably the current version]" />
 ```
+
+## Characteristics Of DIE
+
+- Compile-Time Code Generation
+    - Incomplete configurations will most likely result in a failed build
+- Unambiguousness
+    - Container doesn't resolve ambiguity through assumptions
+    - Configuration features to resolve ambiguities
+- Convenience
+    - Default behaviors designed to reduce the amount of configuration required
+    - Optional marker interfaces can be used for configurations
+    - Mass configuration (e.g., register all implementations with a single configuration)
+- Flexibility
+    - Allows opt-in configuration style
+    - Allows opt-out configuration style
+- Feature richness
+    - Scoping
+    - Async support
+    - Generics support
+    - User-defined elements (factories, custom parameters, …)
+    - Generated factories (Func<…>, Lazy<…>)
+    - Decorators & Composites
+    - Collection injections (IEnumerable<…>, IAsyncEnumerable<…>, IList<…> and many more)
+- Maximum transparency
+    - Only your configuration code needs to know about DIE
+    - The rest of your code base can remain oblivious
 
 ## Documentation
 

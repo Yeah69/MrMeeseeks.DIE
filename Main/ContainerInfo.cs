@@ -1,3 +1,6 @@
+using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
+
 namespace MrMeeseeks.DIE;
 
 internal interface IContainerInfo
@@ -6,7 +9,7 @@ internal interface IContainerInfo
     string Namespace { get; }
     string FullName { get; }
     INamedTypeSymbol ContainerType { get; }
-    IReadOnlyList<(ITypeSymbol, string)> CreateFunctionData { get; }
+    IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)> CreateFunctionData { get; }
 }
 
 internal class ContainerInfo : IContainerInfo
@@ -16,7 +19,7 @@ internal class ContainerInfo : IContainerInfo
         INamedTypeSymbol containerClass,
             
         // dependencies
-        WellKnownTypesMiscellaneous wellKnowTypesMiscellaneous)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();
@@ -25,15 +28,17 @@ internal class ContainerInfo : IContainerInfo
             
         CreateFunctionData = containerClass
             .GetAttributes()
-            .Where(ad => wellKnowTypesMiscellaneous.CreateFunctionAttribute.Equals(ad.AttributeClass, SymbolEqualityComparer.Default))
-            .Select(ad => ad.ConstructorArguments.Length == 2 
+            .Where(ad => CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass))
+            .Select(ad => ad.ConstructorArguments.Length == 3 
                           && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type
                           && ad.ConstructorArguments[0].Value is ITypeSymbol type
                           && ad.ConstructorArguments[1].Kind == TypedConstantKind.Primitive
                           && ad.ConstructorArguments[1].Value is string methodNamePrefix
-                          ? (type, methodNamePrefix)
-                          : ((ITypeSymbol, string)?) null)
-            .OfType<(ITypeSymbol, string)>()
+                          && ad.ConstructorArguments[2].Kind == TypedConstantKind.Array
+                          && ad.ConstructorArguments[2].Values.Select(v => v.Value).All(v => v is ITypeSymbol)
+                          ? (type, methodNamePrefix, ad.ConstructorArguments[2].Values.Select(v => v.Value).OfType<ITypeSymbol>().ToList())
+                          : ((ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)?) null)
+            .OfType<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)>()
             .ToList();
     }
 
@@ -41,5 +46,5 @@ internal class ContainerInfo : IContainerInfo
     public string Namespace { get; }
     public string FullName { get; }
     public INamedTypeSymbol ContainerType { get; }
-    public IReadOnlyList<(ITypeSymbol, string)> CreateFunctionData { get; }
+    public IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)> CreateFunctionData { get; }
 }

@@ -22,27 +22,27 @@ using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.MsContainer;
 
-public interface IContainerInstance { }
-public interface ITransientScopeInstance { }
-public interface IScopeInstance { }
-public interface ITransientScopeRoot { }
-public interface IScopeRoot { }
-public interface ITransient { }
-public interface ISyncTransient { }
-public interface IAsyncTransient { }
+internal interface IContainerInstance { }
+internal interface ITransientScopeInstance { }
+internal interface IScopeInstance { }
+internal interface ITransientScopeRoot { }
+internal interface IScopeRoot { }
+internal interface ITransient { }
+internal interface ISyncTransient { }
+internal interface IAsyncTransient { }
 // ReSharper disable once UnusedTypeParameter
-public interface IDecorator<T> { }
+internal interface IDecorator<T> { }
 // ReSharper disable once UnusedTypeParameter
-public interface IComposite<T> { }
-public interface IInitializer
+internal interface IComposite<T> { }
+internal interface IInitializer
 {
     void Initialize();
 }
-public interface ITaskInitializer
+internal interface ITaskInitializer
 {
     Task InitializeAsync();
 }
-public interface IValueTaskInitializer
+internal interface IValueTaskInitializer
 {
     ValueTask InitializeAsync();
 }

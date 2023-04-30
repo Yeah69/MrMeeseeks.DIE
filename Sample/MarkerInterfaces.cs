@@ -3,7 +3,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 
 //[assembly:ErrorDescriptionInsteadOfBuildFailure]
-//[assembly:Analytics(Analytics.ResolutionGraph | Analytics.ErrorFilteredResolutionGraph)]
+[assembly:Analytics(Analytics.ResolutionGraph | Analytics.ErrorFilteredResolutionGraph)]
 
 [assembly:ContainerInstanceAbstractionAggregation(typeof(IContainerInstance))]
 [assembly:TransientScopeInstanceAbstractionAggregation(typeof(ITransientScopeInstance))]

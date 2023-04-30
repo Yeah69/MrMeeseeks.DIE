@@ -13,9 +13,8 @@ internal class Paths : IPaths
 {
     internal Paths(GeneratorExecutionContext context)
     {
-        Analytics = Path.Combine(
-            Path.GetDirectoryName(context.Compilation.SyntaxTrees.First(x => x.HasCompilationUnitRoot).FilePath) ?? "",
-            $"_{Constants.DieAbbreviation}_Analytics");
+        context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDirectory);
+        Analytics = Path.Combine(projectDirectory ?? "", $"_{Constants.DieAbbreviation}_Analytics");
     }
 
     public string Analytics { get; }

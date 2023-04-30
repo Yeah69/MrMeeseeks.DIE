@@ -19,4 +19,4 @@ using MrMeeseeks.DIE.Test;
 
 [assembly:ErrorDescriptionInsteadOfBuildFailure]
 
-//[assembly:Analytics(Analytics.ResolutionGraph)]
+[assembly:Analytics(Analytics.ResolutionGraph)]

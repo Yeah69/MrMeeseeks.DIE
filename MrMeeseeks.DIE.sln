@@ -24,8 +24,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestNotInternalsVisibleToCh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestInternalsVisibleToChild", "TestInternalsVisibleToChild\TestInternalsVisibleToChild.csproj", "{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Configuration.Attributes", "Configuration.Attributes\Configuration.Attributes.csproj", "{A998A43D-F521-4ECE-851C-B537AC41B6A8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,10 +54,6 @@ Global
 		{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB74CB8A-5195-4CB0-9844-71AFB1F5C926}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A998A43D-F521-4ECE-851C-B537AC41B6A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A998A43D-F521-4ECE-851C-B537AC41B6A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A998A43D-F521-4ECE-851C-B537AC41B6A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A998A43D-F521-4ECE-851C-B537AC41B6A8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

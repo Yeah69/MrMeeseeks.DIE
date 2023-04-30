@@ -12,7 +12,6 @@
     <IsRoslynComponent>true</IsRoslynComponent>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
-    <RestoreAdditionalProjectSources>./_SupportPackages</RestoreAdditionalProjectSources>
     <NoWarn>$(NoWarn);RS1024</NoWarn> <!-- RS1024 is about the SymbolEqualityComparer which is replaced by the custom alternative -->
   </PropertyGroup>
 
@@ -33,8 +32,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MrMeeseeks.Visitor" Version="1.0.0" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="MsMeeseeks.DIE" Version="2.0.0-beta.1.3" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="MrMeeseeks.Visitor" Version="1.1.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="MsMeeseeks.DIE" Version="2.0.0-beta.6" PrivateAssets="all" GeneratePathProperty="true" />
     
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 
@@ -44,7 +43,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.4.0" PrivateAssets="all" GeneratePathProperty="true" />
     <None Include="$(PkgMicrosoft_CodeAnalysis_CSharp_Workspaces)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     
-    <PackageReference Include="MrMeeseeks.DIE.Configuration.Attributes" Version="2.0.0-beta.5" GeneratePathProperty="true" />
+    <PackageReference Include="MrMeeseeks.DIE.Configuration.Attributes" Version="2.0.0-beta.6" GeneratePathProperty="true" />
     <None Include="$(PkgMrMeeseeks_DIE_Configuration_Attributes)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     
     <PackageReference Include="MrMeeseeks.SourceGeneratorUtility" Version="1.0.6" PrivateAssets="all" GeneratePathProperty="true" />

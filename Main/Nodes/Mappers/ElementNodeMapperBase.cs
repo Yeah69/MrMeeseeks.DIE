@@ -17,7 +17,8 @@ namespace MrMeeseeks.DIE.Nodes.Mappers;
 internal interface IElementNodeMapperBase
 {
     IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack);
-    IElementNode MapToImplementation(ImplementationMappingConfiguration config,
+    IElementNode MapToImplementation(
+        ImplementationMappingConfiguration config,
         INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType,
         ImmutableStack<INamedTypeSymbol> implementationStack);

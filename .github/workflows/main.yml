@@ -20,7 +20,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3.2.0
       with:
-        dotnet-version: 6.0.406
+        dotnet-version: 6.0.408
     - run: set DOTNET_CLI_TELEMETRY_OPTOUT=1
     - name: Install dependencies
       run: dotnet restore .\MrMeeseeks.DIE.sln

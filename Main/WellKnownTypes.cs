@@ -20,7 +20,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol Exception,
     INamedTypeSymbol AggregateException,
     INamedTypeSymbol SemaphoreSlim,
-    INamedTypeSymbol InternalsVisibleToAttribute)
+    INamedTypeSymbol InternalsVisibleToAttribute,
+    INamedTypeSymbol Nullable1)
 {
     internal static WellKnownTypes Create(Compilation compilation)
     {
@@ -45,6 +46,7 @@ internal record WellKnownTypes(
             Exception: compilation.GetTypeByMetadataNameOrThrow("System.Exception"),
             AggregateException: compilation.GetTypeByMetadataNameOrThrow("System.AggregateException"),
             SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
-            InternalsVisibleToAttribute: compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.InternalsVisibleToAttribute"));
+            InternalsVisibleToAttribute: compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.InternalsVisibleToAttribute"),
+            Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"));
     }
 }

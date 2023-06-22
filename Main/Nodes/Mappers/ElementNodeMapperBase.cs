@@ -209,7 +209,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             return _funcNodeFactory(funcType, function)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
-        
+
         if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1)
             || type is IArrayTypeSymbol
@@ -245,9 +245,20 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
         if (type is INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } classOrStructType)
         {
-            if (_checkTypeProperties.MapToSingleFittingImplementation(classOrStructType) is not { } chosenImplementationType)
+            var implementationType = classOrStructType;
+            var isNullableStruct = classOrStructType.TypeArguments.Length == 1
+                                   && classOrStructType.TypeArguments.Single() is INamedTypeSymbol maybeInnerStruct
+                                   && CustomSymbolEqualityComparer.Default.Equals(classOrStructType,
+                                       WellKnownTypes.Nullable1.Construct(maybeInnerStruct));
+            if (isNullableStruct && classOrStructType.TypeArguments.Single() is INamedTypeSymbol innerType)
             {
-                if (classOrStructType.NullableAnnotation == NullableAnnotation.Annotated)
+                // Take inner type of Nullable<T>
+                implementationType = innerType;
+            }
+            
+            if (_checkTypeProperties.MapToSingleFittingImplementation(implementationType) is not { } chosenImplementationType)
+            {
+                if (classOrStructType.NullableAnnotation == NullableAnnotation.Annotated || isNullableStruct)
                 {
                     _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
                         $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\", but injecting null instead."),
@@ -257,7 +268,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 }
                 return _errorNodeFactory(
                         $"Interface: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",",
-                        type)
+                        classOrStructType)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
             }
 

@@ -1,20 +1,17 @@
-﻿using System;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal interface IInterface {}
+internal struct Dependency {}
 
 internal class Root
 {
-    internal Root((Dependency, Dependency) inner, Func<Dependency> two) {}
+    internal Root(Dependency? dependency) => Dependency = dependency;
+    
+    internal Dependency? Dependency { get; }
 }
 
-internal class Dependency
-{
-    internal Dependency() {}
-}
-
+[FilterImplementationAggregation(typeof(Dependency))]
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {

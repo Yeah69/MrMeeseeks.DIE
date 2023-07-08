@@ -15,8 +15,12 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container
 {
-    private Task<string> DIE_Factory_Yeah() => Task.FromResult("Yeah");
-    
+    private async Task<string> DIE_Factory_Yeah()
+    {
+        await Task.Yield();
+        return "Yeah";
+    }
+
     private Container() {}
 }
 

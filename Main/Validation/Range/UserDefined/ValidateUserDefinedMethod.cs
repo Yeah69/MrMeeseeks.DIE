@@ -23,7 +23,6 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
                 DeclaredAccessibility: Accessibility.Private,
                 Arity: 0,
                 CallingConvention: SignatureCallingConvention.Default,
-                IsAsync: false,
                 IsConditional: false,
                 IsVararg: false,
                 IsExtensionMethod: false,
@@ -33,6 +32,7 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
                 IsImplicitlyDeclared: false
             })
         {
+            return;
         }
         
         if (method.DeclaredAccessibility != Accessibility.Private)
@@ -49,12 +49,7 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have a default calling signature."),
                 method.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (method.IsAsync)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be async."),
-                method.Locations.FirstOrDefault() ?? Location.None);
-        
+
         if (method.IsConditional)
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be marked with the ConditionalAttribute."),

@@ -17,10 +17,13 @@ internal interface INonWrapToCreateElementNodeMapper : IElementNodeMapperBase
 
 internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWrapToCreateElementNodeMapper
 {
+    private readonly IRangeNode _parentRange;
+
     public NonWrapToCreateElementNodeMapper(
         IElementNodeMapperBase parentElementNodeMapper,
         
         IFunctionNode parentFunction,
+        IRangeNode _parentRange,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         ILocalDiagLogger localDiagLogger,
@@ -64,6 +67,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             localFunctionNodeFactory,
             overridingElementNodeMapperFactory)
     {
+        this._parentRange = _parentRange;
         Next = parentElementNodeMapper;
     }
 
@@ -71,8 +75,13 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) => 
-        TypeSymbolUtility.IsWrapType(type, WellKnownTypes) 
-            ? base.Map(type, implementationStack) 
+    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
+    {
+        if (type is INamedTypeSymbol namedType && _parentRange.GetInitializedNode(namedType) is { } initializedNode)
+            return initializedNode;
+        
+        return TypeSymbolUtility.IsWrapType(type, WellKnownTypes)
+            ? base.Map(type, implementationStack)
             : ParentRange.BuildCreateCall(type, ParentFunction);
+    }
 }

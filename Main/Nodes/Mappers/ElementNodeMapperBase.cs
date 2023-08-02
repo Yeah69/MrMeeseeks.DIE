@@ -47,6 +47,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> _valueTupleSyntaxNodeFactory;
     private readonly Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> _tupleNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> _lazyNodeFactory;
+    private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> _threadLocalNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> _funcNodeFactory;
     private readonly Func<ITypeSymbol, IEnumerableBasedNode> _enumerableBasedNodeFactory;
     private readonly Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
@@ -71,6 +72,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory,
         Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> tupleNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory,
+        Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> threadLocalNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory,
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
         Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
@@ -96,6 +98,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _valueTupleSyntaxNodeFactory = valueTupleSyntaxNodeFactory;
         _tupleNodeFactory = tupleNodeFactory;
         _lazyNodeFactory = lazyNodeFactory;
+        _threadLocalNodeFactory = threadLocalNodeFactory;
         _funcNodeFactory = funcNodeFactory;
         _enumerableBasedNodeFactory = enumerableBasedNodeFactory;
         _implementationNodeFactory = implementationNodeFactory;
@@ -175,6 +178,33 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             ParentFunction.AddLocalFunction(function);
             
             return _lazyNodeFactory(lazyType, function)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
+        }
+
+        if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ThreadLocal1)
+            && type is INamedTypeSymbol threadLocalType)
+        {
+            if (threadLocalType.TypeArguments.SingleOrDefault() is not { } valueType)
+            {
+                return _errorNodeFactory(threadLocalType.TypeArguments.Length switch 
+                        {
+                            0 => "ThreadLocal: No type argument",
+                            > 1 => "ThreadLocal: more than one type argument",
+                            _ => $"ThreadLocal: {threadLocalType.TypeArguments.First().FullName()} is not a type symbol",
+                        },
+                        type)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
+            }
+
+            var function = _localFunctionNodeFactory(
+                    valueType,
+                    Array.Empty<ITypeSymbol>(),
+                    ParentFunction.Overrides)
+                .Function
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
+            ParentFunction.AddLocalFunction(function);
+            
+            return _threadLocalNodeFactory(threadLocalType, function)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
 

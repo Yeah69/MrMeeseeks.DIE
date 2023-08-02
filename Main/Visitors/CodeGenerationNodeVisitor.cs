@@ -563,6 +563,15 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
 
     public void VisitILazyNode(ILazyNode lazyNode) => 
         _code.AppendLine($"{lazyNode.TypeFullName} {lazyNode.Reference} = new {lazyNode.TypeFullName}({lazyNode.MethodGroup});");
+    
+    public void VisitIThreadLocalNode(IThreadLocalNode threadLocalNode)
+    {
+        _code.AppendLine(
+            $"{threadLocalNode.TypeFullName} {threadLocalNode.Reference} = new {threadLocalNode.TypeFullName}({threadLocalNode.MethodGroup}, false);");
+        if (threadLocalNode.SyncDisposalCollectionReference is {} syncDisposalCollectionReference)
+            _code.AppendLine(
+                $"{syncDisposalCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {threadLocalNode.Reference});");
+    }
 
     public void VisitITupleNode(ITupleNode tupleNode)
     {
@@ -625,6 +634,9 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                 break;
             case ILazyNode lazyNode:
                 VisitILazyNode(lazyNode);
+                break;
+            case IThreadLocalNode threadLocalNode:
+                VisitIThreadLocalNode(threadLocalNode);
                 break;
             case ITupleNode tupleNode:
                 VisitITupleNode(tupleNode);

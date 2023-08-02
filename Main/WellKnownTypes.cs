@@ -8,6 +8,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol IAsyncDisposable,
     // ReSharper restore InconsistentNaming
     INamedTypeSymbol Lazy1,
+    INamedTypeSymbol ThreadLocal1,
     INamedTypeSymbol ValueTask,
     INamedTypeSymbol ValueTask1,
     INamedTypeSymbol Task,
@@ -34,6 +35,7 @@ internal record WellKnownTypes(
             IDisposable: iDisposable,
             IAsyncDisposable: iAsyncDisposable,
             Lazy1: compilation.GetTypeByMetadataNameOrThrow("System.Lazy`1"),
+            ThreadLocal1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.ThreadLocal`1"),
             ValueTask: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.ValueTask"),
             ValueTask1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.ValueTask`1"),
             Task: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task"),

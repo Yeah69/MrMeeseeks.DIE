@@ -36,7 +36,7 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
         _innerType = delegateType.TypeArguments.Last();
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => 
+    public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack) => 
         _parentContainer.RegisterDelegateBaseNode(this);
 
     public abstract void Accept(INodeVisitor nodeVisitor);

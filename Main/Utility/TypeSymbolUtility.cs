@@ -7,9 +7,7 @@ internal static class TypeSymbolUtility
 {
     internal static ITypeSymbol GetUnwrappedType(ITypeSymbol type, WellKnownTypes wellKnownTypes)
     {
-        if ((CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
-             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
-             || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1))
+        if (IsWrapTypeOfSingleGenericType(type, wellKnownTypes)
             && type is INamedTypeSymbol namedType)
             return GetUnwrappedType(namedType.TypeArguments.First(), wellKnownTypes);
 
@@ -21,11 +19,12 @@ internal static class TypeSymbolUtility
         return type;
     }
     internal static bool IsWrapType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
-        IsAsyncWrapType(type, wellKnownTypes)
-        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)
+        IsWrapTypeOfSingleGenericType(type, wellKnownTypes)
         || type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<");
 
-    internal static bool IsAsyncWrapType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
+    private static bool IsWrapTypeOfSingleGenericType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
         CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
-        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1);
+        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
+        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)
+        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ThreadLocal1);
 }

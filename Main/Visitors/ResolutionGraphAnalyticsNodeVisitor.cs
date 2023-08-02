@@ -223,6 +223,9 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
             case ILazyNode lazyNode:
                 VisitILazyNode(lazyNode);
                 break;
+            case IThreadLocalNode threadLocalNode:
+                VisitIThreadLocalNode(threadLocalNode);
+                break;
             case ITupleNode tupleNode:
                 VisitITupleNode(tupleNode);
                 break;
@@ -431,6 +434,9 @@ map "({{string.Join(", ", element.Items.Select(i => i.TypeFullName))}})" as {{re
         VisitIDelegateBaseNode(element);
 
     public void VisitILazyNode(ILazyNode element) => 
+        VisitIDelegateBaseNode(element);
+
+    public void VisitIThreadLocalNode(IThreadLocalNode element) => 
         VisitIDelegateBaseNode(element);
 
     public void VisitIEnumerableBasedNode(IEnumerableBasedNode element) => 

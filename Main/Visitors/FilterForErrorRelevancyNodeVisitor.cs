@@ -126,6 +126,9 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
             case ILazyNode lazyNode:
                 VisitILazyNode(lazyNode);
                 break;
+            case IThreadLocalNode threadLocalNode:
+                VisitIThreadLocalNode(threadLocalNode);
+                break;
             case ITupleNode tupleNode:
                 VisitITupleNode(tupleNode);
                 break;
@@ -235,6 +238,8 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
     public void VisitIFuncNode(IFuncNode element) {}
 
     public void VisitILazyNode(ILazyNode element) {}
+
+    public void VisitIThreadLocalNode(IThreadLocalNode element) {}
 
     public void VisitIEnumerableBasedNode(IEnumerableBasedNode element) {}
 

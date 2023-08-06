@@ -1,17 +1,26 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using System.Threading;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal struct Dependency {}
+internal class Dependency
+{
+    internal Dependency()
+    {
+        Value = "Thread" + Thread.CurrentThread.ManagedThreadId;
+    }
+
+    public string Value { get; set; }
+}
 
 internal class Root
 {
-    internal Root(Dependency? dependency) => Dependency = dependency;
+    internal Root(ThreadLocal<Lazy<Dependency>> dependency) => Dependency = dependency;
     
-    internal Dependency? Dependency { get; }
+    internal ThreadLocal<Lazy<Dependency>> Dependency { get; }
 }
 
-[FilterImplementationAggregation(typeof(Dependency))]
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {

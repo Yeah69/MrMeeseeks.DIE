@@ -210,8 +210,18 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         foreach (var rangedInstanceFunctionGroup in rangeNode.RangedInstanceFunctionGroups)
             VisitIRangedInstanceFunctionGroupNode(rangedInstanceFunctionGroup);
 
-        foreach (var multiFunctionNode in rangeNode.MultiFunctions)
-            VisitIMultiFunctionNode(multiFunctionNode);
+        foreach (var multiFunctionNodeBase in rangeNode.MultiFunctions)
+            switch (multiFunctionNodeBase)
+            {
+                case IMultiFunctionNode multiFunctionNode:
+                    VisitIMultiFunctionNode(multiFunctionNode);
+                    break;
+                case IMultiKeyValueFunctionNode multiKeyValueFunctionNode:
+                    VisitIMultiKeyValueFunctionNode(multiKeyValueFunctionNode);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(multiFunctionNodeBase));
+            }
         
         if (rangeNode is { AddForDisposal: true, DisposalHandling.SyncCollectionReference: { } syncCollectionReference })
             _code.AppendLine($$"""
@@ -662,6 +672,12 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             case IReusedNode reusedNode:
                 VisitIReusedNode(reusedNode);
                 break;
+            case IKeyValueBasedNode keyValueBasedNode:
+                VisitIKeyValueBasedNode(keyValueBasedNode);
+                break;
+            case IKeyValuePairNode keyValuePairNode:
+                VisitIKeyValuePairNode(keyValuePairNode);
+                break;
         }
     }
 
@@ -740,44 +756,47 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     public void VisitINullNode(INullNode nullNode) => _code.AppendLine(
         $"{nullNode.TypeFullName} {nullNode.Reference} = ({nullNode.TypeFullName}) null;");
 
-    public void VisitIMultiFunctionNode(IMultiFunctionNode multiFunctionNode)
+    public void VisitIMultiFunctionNode(IMultiFunctionNode multiFunctionNode) =>
+        VisitIMultiFunctionNodeBase(multiFunctionNode);
+
+    private void VisitIMultiFunctionNodeBase(IMultiFunctionNodeBase multiFunctionNodeBase)
     {
-        var accessibility = multiFunctionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
+        var accessibility = multiFunctionNodeBase is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
             ? $"{SyntaxFacts.GetText(acc)} "  
             : "";
-        var asyncModifier = multiFunctionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
-            || multiFunctionNode.IsAsyncEnumerable
+        var asyncModifier = multiFunctionNodeBase.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
+                            || multiFunctionNodeBase.IsAsyncEnumerable
             ? "async "
             : "";
-        var explicitInterfaceFullName = multiFunctionNode.ExplicitInterfaceFullName is { } interfaceName
+        var explicitInterfaceFullName = multiFunctionNodeBase.ExplicitInterfaceFullName is { } interfaceName
             ? $"{interfaceName}."
             : "";
-        var parameter = string.Join(",", multiFunctionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
+        var parameter = string.Join(",", multiFunctionNodeBase.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($$"""
-{{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{multiFunctionNode.ReturnedTypeFullName}} {{multiFunctionNode.Name}}({{parameter}})
+{{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{multiFunctionNodeBase.ReturnedTypeFullName}} {{multiFunctionNodeBase.Name}}({{parameter}})
 {
 """);
         ObjectDisposedCheck(
-            multiFunctionNode.DisposedPropertyReference, 
-            multiFunctionNode.RangeFullName, 
-            multiFunctionNode.ReturnedTypeFullName);
-        foreach (var returnedElement in multiFunctionNode.ReturnedElements)
+            multiFunctionNodeBase.DisposedPropertyReference, 
+            multiFunctionNodeBase.RangeFullName, 
+            multiFunctionNodeBase.ReturnedTypeFullName);
+        foreach (var returnedElement in multiFunctionNodeBase.ReturnedElements)
         {
             VisitIElementNode(returnedElement);
             ObjectDisposedCheck(
-                multiFunctionNode.DisposedPropertyReference, 
-                multiFunctionNode.RangeFullName, 
-                multiFunctionNode.ReturnedTypeFullName);
-            if (multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync)
+                multiFunctionNodeBase.DisposedPropertyReference, 
+                multiFunctionNodeBase.RangeFullName, 
+                multiFunctionNodeBase.ReturnedTypeFullName);
+            if (multiFunctionNodeBase.SynchronicityDecision == SynchronicityDecision.Sync)
                 _code.AppendLine($"yield return {returnedElement.Reference};");
         }
             
-        foreach (var localFunction in multiFunctionNode.LocalFunctions)
+        foreach (var localFunction in multiFunctionNodeBase.LocalFunctions)
             VisitISingleFunctionNode(localFunction, true);
         
-        _code.AppendLine(multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync
+        _code.AppendLine(multiFunctionNodeBase.SynchronicityDecision == SynchronicityDecision.Sync
             ? "yield break;"
-            : $"return new {multiFunctionNode.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNode.ReturnedElements.Select(re => re.Reference))} }};");
+            : $"return new {multiFunctionNodeBase.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNodeBase.ReturnedElements.Select(re => re.Reference))} }};");
         
         _code.AppendLine("}");
     }
@@ -808,13 +827,9 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                 break;
             case EnumerableBasedType.ReadOnlyCollection
                 or EnumerableBasedType.IReadOnlyCollection
-                or EnumerableBasedType.IReadOnlyList
-                when enumerableBasedNode.CollectionData is ReadOnlyCollectionData
-                {
-                    ConcreteReadOnlyCollectionTypeFullName: { } concreteReadOnlyCollectionTypeFullName
-                }:
+                or EnumerableBasedType.IReadOnlyList:
                 _code.AppendLine(
-                    $"{collectionTypeFullName} {collectionReference} = new {concreteReadOnlyCollectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToList({enumerableBasedNode.EnumerableCall.Reference}));");
+                    $"{collectionTypeFullName} {collectionReference} = new {collectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToList({enumerableBasedNode.EnumerableCall.Reference}));");
                 break;
             case EnumerableBasedType.ConcurrentBag
                 or EnumerableBasedType.ConcurrentQueue
@@ -883,6 +898,55 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
             VisitISingleFunctionNode(localFunction, true);
         
         _code.AppendLine("}");
+    }
+
+    public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode multiKeyValueFunctionNode) =>
+        VisitIMultiFunctionNodeBase(multiKeyValueFunctionNode);
+
+    public void VisitIKeyValueBasedNode(IKeyValueBasedNode keyValueBasedNode)
+    {
+        VisitIElementNode(keyValueBasedNode.EnumerableCall);
+        if (keyValueBasedNode is { Type: KeyValueBasedType.SingleIEnumerable or KeyValueBasedType.SingleIAsyncEnumerable }
+            || keyValueBasedNode.MapData is not
+            {
+                MapReference: { } mapReference, MapTypeFullName: { } mapTypeFullName
+            }) 
+            return;
+        switch (keyValueBasedNode.Type)
+        {
+            case KeyValueBasedType.SingleIDictionary 
+                or KeyValueBasedType.SingleIReadOnlyDictionary
+                or KeyValueBasedType.SingleDictionary:
+                _code.AppendLine(
+                    $"{mapTypeFullName} {mapReference} = {_wellKnownTypesCollections.Enumerable}.ToDictionary({keyValueBasedNode.EnumerableCall.Reference}, kvp => kvp.Key, kvp => kvp.Value);");
+                break;
+            case KeyValueBasedType.SingleReadOnlyDictionary 
+                or KeyValueBasedType.SingleSortedDictionary
+                or KeyValueBasedType.SingleSortedList:
+                _code.AppendLine(
+                    $"{mapTypeFullName} {mapReference} = new {mapTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToDictionary({keyValueBasedNode.EnumerableCall.Reference}, kvp => kvp.Key, kvp => kvp.Value));");
+                break;
+            case KeyValueBasedType.SingleImmutableDictionary
+                or KeyValueBasedType.SingleImmutableDictionary
+                when keyValueBasedNode.MapData is ImmutableMapData
+                {
+                    ImmutableUngenericTypeFullName: { } immutableUngenericTypeFullName
+                }:
+                _code.AppendLine(
+                    $"{mapTypeFullName} {mapReference} = {immutableUngenericTypeFullName}.CreateRange({keyValueBasedNode.EnumerableCall.Reference});");
+                break;
+        }
+    }
+
+    public void VisitIKeyValuePairNode(IKeyValuePairNode keyValuePairNode)
+    {
+        VisitIElementNode(keyValuePairNode.Value);
+        // todo support typeof?
+        var keyLiteral = keyValuePairNode.KeyType.TypeKind == TypeKind.Enum 
+            ? $"({keyValuePairNode.KeyType.FullName()}) {SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false)}" 
+            : SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false);
+        _code.AppendLine(
+            $"{keyValuePairNode.TypeFullName} {keyValuePairNode.Reference} = new {keyValuePairNode.TypeFullName}({keyLiteral}, {keyValuePairNode.Value.Reference});");
     }
 
     private readonly HashSet<IReusedNode> _doneReusedNodes = new();

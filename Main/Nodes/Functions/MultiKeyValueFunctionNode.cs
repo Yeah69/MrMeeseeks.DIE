@@ -9,25 +9,26 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IMultiFunctionNode : IMultiFunctionNodeBase
+internal interface IMultiKeyValueFunctionNode : IMultiFunctionNodeBase
 {
 }
 
-internal partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunctionNode, IScopeInstance
+internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMultiKeyValueFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
+    private readonly Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> _keyValuePairNodeFactory;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly WellKnownTypes _wellKnownTypes;
 
-    internal MultiFunctionNode(
+    internal MultiKeyValueFunctionNode(
         // parameters
         INamedTypeSymbol enumerableType,
         IReadOnlyList<ITypeSymbol> parameters,
+        
+        // dependencies
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
-        
-        // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -35,6 +36,7 @@ internal partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunction
         Func<string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
+        Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> keyValuePairNodeFactory,
         IContainerWideContext containerWideContext)
         : base(
             enumerableType, 
@@ -51,9 +53,11 @@ internal partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunction
             containerWideContext)
     {
         _enumerableType = enumerableType;
+        _keyValuePairNodeFactory = keyValuePairNodeFactory;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
-        Name = referenceGenerator.Generate("CreateMulti", enumerableType);
+
+        Name = referenceGenerator.Generate("CreateMultiKeyValue", enumerableType);
     }
 
     private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
@@ -62,17 +66,19 @@ internal partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunction
     public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
     {
         base.Build(implementationStack);
-        var itemType = CollectionUtility.GetCollectionsInnerType(_enumerableType);
-        var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes);
+        var keyValueType = (INamedTypeSymbol) _enumerableType.TypeArguments[0];
+        var itemType = keyValueType.TypeArguments[1];
+        var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(keyValueType.TypeArguments[1], _wellKnownTypes) as INamedTypeSymbol ?? throw new InvalidOperationException(); // todo replace exception with error log
 
-        var concreteItemTypes = unwrappedItemType is INamedTypeSymbol namedTypeSymbol
-            ? _checkTypeProperties.MapToImplementations(namedTypeSymbol)
-            : (IReadOnlyList<ITypeSymbol>) new[] { unwrappedItemType };
+        var concreteItemTypesMap = _checkTypeProperties.MapToKeyedImplementations(unwrappedItemType, keyValueType.TypeArguments[0]);
 
-        ReturnedElements = concreteItemTypes
-            .Select(cit => MapToReturnedElement(
-                GetMapper(unwrappedItemType, cit),
-                itemType))
+        ReturnedElements = concreteItemTypesMap
+            .Select(kvp => _keyValuePairNodeFactory(
+                    keyValueType,
+                    kvp.Key,
+                    MapToReturnedElement(
+                        GetMapper(unwrappedItemType, kvp.Value),
+                        itemType)))
             .ToList();
     }
 

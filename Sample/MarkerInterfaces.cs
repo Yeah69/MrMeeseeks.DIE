@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
@@ -22,6 +23,8 @@ using MrMeeseeks.DIE.Sample;
 [assembly:Initializer(typeof(IInitializer), nameof(IInitializer.Initialize))]
 [assembly:Initializer(typeof(ITaskInitializer), nameof(ITaskInitializer.InitializeAsync))]
 [assembly:Initializer(typeof(IValueTaskInitializer), nameof(IValueTaskInitializer.InitializeAsync))]
+
+[assembly:InjectionKeyMapping(typeof(KeyAttribute))]
 
 [assembly:AllImplementationsAggregation]
 
@@ -50,4 +53,12 @@ public interface ITaskInitializer
 public interface IValueTaskInitializer
 {
     ValueTask InitializeAsync();
+}
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Parameter | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
+public class KeyAttribute : Attribute
+{
+    public KeyAttribute(object key) => Key = key;
+
+    public object Key { get; }
 }

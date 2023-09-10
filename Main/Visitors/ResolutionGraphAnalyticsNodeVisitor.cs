@@ -152,8 +152,18 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
         foreach (var rangedInstanceFunctionGroup in element.RangedInstanceFunctionGroups)
             VisitIRangedInstanceFunctionGroupNode(rangedInstanceFunctionGroup);
         
-        foreach (var multiFunction in element.MultiFunctions)
-            VisitIMultiFunctionNode(multiFunction);
+        foreach (var multiFunctionBase in element.MultiFunctions)
+            switch (multiFunctionBase)
+            {
+                case IMultiFunctionNode multiFunctionNode:
+                    VisitIMultiFunctionNode(multiFunctionNode);
+                    break;
+                case IMultiKeyValueFunctionNode multiKeyValueFunctionNode:
+                    VisitIMultiKeyValueFunctionNode(multiKeyValueFunctionNode);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(multiFunctionBase));
+            }
     }
 
     private string? _currentReference;
@@ -249,6 +259,12 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
                 break;
             case IReusedNode reusedNode:
                 VisitIReusedNode(reusedNode);
+                break;
+            case IKeyValueBasedNode keyValueBasedNode:
+                VisitIKeyValueBasedNode(keyValueBasedNode);
+                break;
+            case IKeyValuePairNode keyValuePairNode:
+                VisitIKeyValuePairNode(keyValuePairNode);
                 break;
         }
     }
@@ -611,5 +627,20 @@ package "void {{element.Name}}({{string.Join(", ", element.Parameters.Select(p =
 
     public void VisitIOutParameterNode(IOutParameterNode element)
     {
+    }
+
+    public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode multiKeyValueFunctionNode)
+    {
+        // todo implement
+    } 
+
+    public void VisitIKeyValueBasedNode(IKeyValueBasedNode keyValueBasedNode)
+    {
+        // todo implement
+    }
+
+    public void VisitIKeyValuePairNode(IKeyValuePairNode keyValuePairNode)
+    {
+        // todo implement
     }
 }

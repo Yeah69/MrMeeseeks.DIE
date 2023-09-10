@@ -7,6 +7,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
@@ -22,6 +23,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
         ITransientScopeWideContext transientScopeWideContext,
         ILocalDiagLogger localDiagLogger,
         IContainerWideContext containerWideContext,
+        ICheckIterableTypes checkIterableTypes,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory, 
@@ -32,6 +34,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
         Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> threadLocalNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
+        Func<INamedTypeSymbol, IKeyValueBasedNode> keyValueBasedNodeFactory,
         Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory, 
@@ -45,6 +48,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
             transientScopeWideContext, 
             localDiagLogger, 
             containerWideContext,
+            checkIterableTypes,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 
@@ -55,6 +59,7 @@ internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
             threadLocalNodeFactory,
             funcNodeFactory, 
             enumerableBasedNodeFactory,
+            keyValueBasedNodeFactory,
             implementationNodeFactory, 
             outParameterNodeFactory,
             errorNodeFactory, 

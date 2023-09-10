@@ -43,7 +43,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.4.0" PrivateAssets="all" GeneratePathProperty="true" />
     <None Include="$(PkgMicrosoft_CodeAnalysis_CSharp_Workspaces)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     
-    <PackageReference Include="MrMeeseeks.DIE.Configuration.Attributes" Version="2.0.1" GeneratePathProperty="true" />
+    <PackageReference Include="MrMeeseeks.DIE.Configuration.Attributes" Version="2.1.0-beta.2" GeneratePathProperty="true" />
     <None Include="$(PkgMrMeeseeks_DIE_Configuration_Attributes)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     
     <PackageReference Include="MrMeeseeks.SourceGeneratorUtility" Version="1.0.6" PrivateAssets="all" GeneratePathProperty="true" />

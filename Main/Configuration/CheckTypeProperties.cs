@@ -70,6 +70,8 @@ internal interface ICheckTypeProperties
 
     INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type);
     IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol);
+    IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType);
+    IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType);
     (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType);
     IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType);
 }
@@ -80,6 +82,9 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
+    
+    private readonly IDictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = 
+        new Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>>();
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
@@ -91,6 +96,37 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         _injectablePropertyExtractor = injectablePropertyExtractor;
         _localDiagLogger = localDiagLogger;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
+
+        var injectionKeyMappings = currentlyConsideredTypes.AllConsideredImplementations
+            .SelectMany(i => i.GetAttributes().Select(a => (i, a)))
+            .Select(t =>
+            {
+                var (implementation, attribute) = t;
+                if (!currentlyConsideredTypes.InjectionKeyAttributeTypes.Any(a =>
+                        CustomSymbolEqualityComparer.Default.Equals(a, attribute.AttributeClass)))
+                    return ((INamedTypeSymbol, ITypeSymbol?, object?)?)null;
+                return (implementation, 
+                    attribute.ConstructorArguments[0].Type,
+                    attribute.ConstructorArguments[0].Value);
+            });
+        
+        foreach (var injectionKeyMapping in injectionKeyMappings)
+        {
+            if (injectionKeyMapping is not { Item1: {} implementationType, Item2: {} keyType, Item3: {} keyValue })
+                continue;
+            
+            if (_typeToKeyToValue.TryGetValue(implementationType, out var keyToValue))
+            {
+                if (keyToValue.TryGetValue(keyType, out var values))
+                    values.Add(keyValue);
+                else
+                    keyToValue.Add(keyType, new HashSet<object>{keyValue});
+            }
+            else
+            {
+                _typeToKeyToValue.Add(implementationType, new Dictionary<ITypeSymbol, ISet<object>>{{keyType, new HashSet<object>{keyValue}}});
+            }
+        }
     }
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
@@ -298,6 +334,23 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             ? GetClosedImplementations(typeSymbol, implementations, false, false, false)
             : Array.Empty<INamedTypeSymbol>();
     }
+
+    public IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>
+        MapToImplementations(typeSymbol)
+            .SelectMany(i => _typeToKeyToValue.TryGetValue(i, out var keyToValue)
+                ? keyToValue.TryGetValue(keyType, out var values)
+                    ? values.Select(v => (v, i))
+                    : Enumerable.Empty<(object, INamedTypeSymbol)>()
+                : Enumerable.Empty<(object, INamedTypeSymbol)>())
+            .GroupBy(t => t.Item1)
+            .ToDictionary(
+                g => g.Key, 
+                g => (IReadOnlyList<INamedTypeSymbol>) g.Select(t => t.Item2).ToList());
+
+    public IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>
+        MapToKeyedMultipleImplementations(typeSymbol, keyType)
+            .Where(kvp => kvp.Value.Count == 1)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
 
     private IReadOnlyList<INamedTypeSymbol> GetClosedImplementations(
         INamedTypeSymbol targetType,

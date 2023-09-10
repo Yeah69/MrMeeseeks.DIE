@@ -9,6 +9,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -36,10 +37,10 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     protected readonly IRangeNode ParentRange;
     private readonly IContainerNode _parentContainer;
     private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly ICheckIterableTypes _checkIterableTypes;
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly ICheckTypeProperties _checkTypeProperties;
     protected readonly WellKnownTypes WellKnownTypes;
-    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
     private readonly Func<IFieldSymbol, IFactoryFieldNode> _factoryFieldNodeFactory;
     private readonly Func<IPropertySymbol, IFactoryPropertyNode> _factoryPropertyNodeFactory;
     private readonly Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> _factoryFunctionNodeFactory;
@@ -50,6 +51,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> _threadLocalNodeFactory;
     private readonly Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> _funcNodeFactory;
     private readonly Func<ITypeSymbol, IEnumerableBasedNode> _enumerableBasedNodeFactory;
+    private readonly Func<INamedTypeSymbol, IKeyValueBasedNode> _keyValueBasedNodeFactory;
     private readonly Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
     private readonly Func<ITypeSymbol, IOutParameterNode> _outParameterNodeFactory;
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
@@ -65,6 +67,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ITransientScopeWideContext transientScopeWideContext,
         ILocalDiagLogger localDiagLogger,
         IContainerWideContext containerWideContext,
+        ICheckIterableTypes checkIterableTypes,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory,
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory,
@@ -75,6 +78,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> threadLocalNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory,
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
+        Func<INamedTypeSymbol, IKeyValueBasedNode> keyValueBasedNodeFactory,
         Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
@@ -87,10 +91,10 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ParentRange = parentRange;
         _parentContainer = parentContainer;
         _localDiagLogger = localDiagLogger;
+        _checkIterableTypes = checkIterableTypes;
         _userDefinedElements = transientScopeWideContext.UserDefinedElements;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         WellKnownTypes = containerWideContext.WellKnownTypes;
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
         _factoryFieldNodeFactory = factoryFieldNodeFactory;
         _factoryPropertyNodeFactory = factoryPropertyNodeFactory;
         _factoryFunctionNodeFactory = factoryFunctionNodeFactory;
@@ -101,6 +105,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _threadLocalNodeFactory = threadLocalNodeFactory;
         _funcNodeFactory = funcNodeFactory;
         _enumerableBasedNodeFactory = enumerableBasedNodeFactory;
+        _keyValueBasedNodeFactory = keyValueBasedNodeFactory;
         _implementationNodeFactory = implementationNodeFactory;
         _outParameterNodeFactory = outParameterNodeFactory;
         _errorNodeFactory = errorNodeFactory;
@@ -240,30 +245,22 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
         }
 
-        if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1)
-            || type is IArrayTypeSymbol
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IList1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ICollection1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyCollection1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentBag1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentQueue1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ConcurrentStack1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.HashSet1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.LinkedList1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.List1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Queue1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.SortedSet1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.Stack1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1)
-            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
+        _localDiagLogger.Warning(WarningLogData.Logging("ASDF A"), Location.None);
+        if (_checkIterableTypes.IsMapType(type) && type is INamedTypeSymbol mapType)
+        {
+            _localDiagLogger.Warning(WarningLogData.Logging("ASDF B"), Location.None);
+            /*if (_checkIterableTypes.MapTypeHasPluralItemType(mapType))
+            {
+                // todo 
+            }
+            else
+            {*/
+            return _keyValueBasedNodeFactory(mapType)
+                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
+            //}
+        }
+
+        if (_checkIterableTypes.IsCollectionType(type))
             return _enumerableBasedNodeFactory(type)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, implementationStack);
 

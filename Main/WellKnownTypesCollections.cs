@@ -37,8 +37,18 @@ internal record WellKnownTypesCollections(
     INamedTypeSymbol ImmutableSortedSet1,
     INamedTypeSymbol ImmutableSortedSet,
     INamedTypeSymbol ImmutableStack1,
-    INamedTypeSymbol ImmutableStack
-    )
+    INamedTypeSymbol ImmutableStack,
+    INamedTypeSymbol KeyValuePair2,
+    INamedTypeSymbol IDictionary2,
+    INamedTypeSymbol IReadOnlyDictionary2,
+    INamedTypeSymbol Dictionary2,
+    INamedTypeSymbol ReadOnlyDictionary2,
+    INamedTypeSymbol SortedDictionary2,
+    INamedTypeSymbol SortedList2,
+    INamedTypeSymbol ImmutableDictionary2,
+    INamedTypeSymbol ImmutableDictionary,
+    INamedTypeSymbol ImmutableSortedDictionary2,
+    INamedTypeSymbol ImmutableSortedDictionary)
 {
     internal static WellKnownTypesCollections Create(Compilation compilation)
     {
@@ -72,6 +82,17 @@ internal record WellKnownTypesCollections(
             ImmutableSortedSet1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedSet`1"),
             ImmutableSortedSet: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedSet"),
             ImmutableStack1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableStack`1"),
-            ImmutableStack: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableStack"));
+            ImmutableStack: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableStack"),
+            KeyValuePair2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.KeyValuePair`2"),
+            IDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IDictionary`2"),
+            IReadOnlyDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IReadOnlyDictionary`2"),
+            Dictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.Dictionary`2"),
+            ReadOnlyDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.ObjectModel.ReadOnlyDictionary`2"),
+            SortedDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.SortedDictionary`2"),
+            SortedList2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.SortedList`2"),
+            ImmutableDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableDictionary`2"),
+            ImmutableDictionary: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableDictionary"),
+            ImmutableSortedDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedDictionary`2"),
+            ImmutableSortedDictionary: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedDictionary"));
     }
 }

@@ -56,6 +56,7 @@ internal interface ICurrentlyConsideredTypes
     IImmutableSet<INamedTypeSymbol> ScopeRootTypes { get; }
     IImmutableSet<INamedTypeSymbol> DecoratorTypes { get; }
     IImmutableSet<INamedTypeSymbol> CompositeTypes { get; }
+    IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
     IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
@@ -393,6 +394,23 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
 
         ImplementationCollectionChoices = implementationCollectionChoices;
         
+        var injectionKeyAttributeTypes = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        foreach (var typesFromAttribute in typesFromAttributes)
+        {
+            injectionKeyAttributeTypes = injectionKeyAttributeTypes.Except(typesFromAttribute.FilterInjectionKeyAttributeTypes);
+            injectionKeyAttributeTypes = injectionKeyAttributeTypes.Union(typesFromAttribute.InjectionKeyAttributeTypes);
+        }
+        
+        foreach (var attributeData in allImplementations
+                     .SelectMany(i => i.GetAttributes())
+                     .Where(ad => injectionKeyAttributeTypes.Any(a => CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, a))))
+        {
+            var argument = attributeData.ConstructorArguments[0];
+            localDiagLogger.Warning(WarningLogData.Logging($"argument type: {argument.Type}, argument value: {argument.Value}"), Location.None);
+        }
+        
+        InjectionKeyAttributeTypes = injectionKeyAttributeTypes;
+        
         IImmutableSet<INamedTypeSymbol> GetSetOfTypesWithProperties(
             Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> propertyGivingAbstractTypesGetter, 
             Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> filteredPropertyGivingAbstractTypesGetter,
@@ -437,6 +455,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
     public IImmutableSet<INamedTypeSymbol> ScopeRootTypes { get; }
     public IImmutableSet<INamedTypeSymbol> DecoratorTypes { get; }
     public IImmutableSet<INamedTypeSymbol> CompositeTypes { get; }
+    public IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
     public IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     public IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }

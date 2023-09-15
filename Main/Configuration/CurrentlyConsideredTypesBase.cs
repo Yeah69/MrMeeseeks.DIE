@@ -401,14 +401,6 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             injectionKeyAttributeTypes = injectionKeyAttributeTypes.Union(typesFromAttribute.InjectionKeyAttributeTypes);
         }
         
-        foreach (var attributeData in allImplementations
-                     .SelectMany(i => i.GetAttributes())
-                     .Where(ad => injectionKeyAttributeTypes.Any(a => CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, a))))
-        {
-            var argument = attributeData.ConstructorArguments[0];
-            localDiagLogger.Warning(WarningLogData.Logging($"argument type: {argument.Type}, argument value: {argument.Value}"), Location.None);
-        }
-        
         InjectionKeyAttributeTypes = injectionKeyAttributeTypes;
         
         IImmutableSet<INamedTypeSymbol> GetSetOfTypesWithProperties(

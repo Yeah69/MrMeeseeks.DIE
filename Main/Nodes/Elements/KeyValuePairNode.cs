@@ -26,10 +26,7 @@ internal partial class KeyValuePairNode : IKeyValuePairNode
         TypeFullName = keyValuePairType.FullName();
         Reference = referenceGenerator.Generate(keyValuePairType);
     }
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-        
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string TypeFullName { get; }
     public string Reference { get; }

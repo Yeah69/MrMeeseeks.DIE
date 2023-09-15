@@ -61,11 +61,11 @@ internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMulti
     }
 
     private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
-        mapper.Map(itemType, ImmutableStack.Create<INamedTypeSymbol>());
+        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty));
     
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override void Build(PassedContext passedContext)
     {
-        base.Build(implementationStack);
+        base.Build(passedContext);
         var keyValueType = (INamedTypeSymbol) _enumerableType.TypeArguments[0];
         var itemType = keyValueType.TypeArguments[1];
         var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(keyValueType.TypeArguments[1], _wellKnownTypes) as INamedTypeSymbol ?? throw new InvalidOperationException(); // todo replace exception with error log

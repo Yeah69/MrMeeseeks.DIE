@@ -84,13 +84,13 @@ internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, 
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override IElementNode Map(ITypeSymbol type, PassedContext passedContext)
     {
         if (type is INamedTypeSymbol namedType
             && (CustomSymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IDisposable)
                 || CustomSymbolEqualityComparer.Default.Equals(namedType, _wellKnownTypes.IAsyncDisposable)))
             return _transientScopeDisposalTriggerNodeFactory(namedType);
 
-        return base.Map(type, implementationStack);
+        return base.Map(type, passedContext);
     }
 }

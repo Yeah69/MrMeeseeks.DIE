@@ -41,9 +41,7 @@ internal partial class CreateContainerFunctionNode : ICreateContainerFunctionNod
         _wellKnownTypes = containerWideContext.WellKnownTypes;
     }
     
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string Name { get; }
     public IReadOnlyList<(string TypeFullName, string Reference)> Parameters { get; }

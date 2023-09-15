@@ -72,7 +72,7 @@ internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public void Build(PassedContext passedContext)
     {
         var isIEnumerable = CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1);
         var isIAsyncEnumerable = CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1);

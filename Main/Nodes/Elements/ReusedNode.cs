@@ -11,10 +11,7 @@ internal partial class ReusedNode : IReusedNode
         IElementNode innerNode) =>
         Inner = innerNode;
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-        
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string TypeFullName => Inner.TypeFullName;
     public string Reference => Inner.Reference;

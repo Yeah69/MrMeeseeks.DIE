@@ -26,9 +26,9 @@ internal partial class ValueTupleSyntaxNode : IValueTupleSyntaxNode
         Reference = referenceGenerator.Generate(_valueTupleType);
     }
     
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public void Build(PassedContext passedContext)
     {
-        _items = GetTypeArguments(_valueTupleType).Select(type => _elementNodeMapper.Map(type, implementationStack)).ToList();
+        _items = GetTypeArguments(_valueTupleType).Select(type => _elementNodeMapper.Map(type, passedContext)).ToList();
 
         static IEnumerable<ITypeSymbol> GetTypeArguments(INamedTypeSymbol valueTupleType)
         {

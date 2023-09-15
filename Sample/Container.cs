@@ -1,9 +1,24 @@
 ﻿using System.Collections.Generic;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
+internal abstract class Class {}
+
+internal class SubClassA : Class {}
+
+internal class SubClassB : Class {}
+
+internal class SubClassC : Class {}
+
+[ImplementationCollectionChoice(typeof(Class), typeof(SubClassA), typeof(SubClassB))]
+[CreateFunction(typeof(IReadOnlyList<Class>), "Create")]
+internal sealed partial class Container
+{
+    private Container() {}
+}
+
+/*
 internal enum Keys
 {
     A,
@@ -26,4 +41,4 @@ internal class DependencyC : IInterface { }
 internal sealed partial class Container
 {
     private Container() {}
-}
+}*/

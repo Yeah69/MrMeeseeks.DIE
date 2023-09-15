@@ -84,7 +84,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override IElementNode Map(ITypeSymbol type, PassedContext passedContext)
     {
         if (_override.Any() 
             && type is INamedTypeSymbol abstraction 
@@ -96,10 +96,10 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
                 new(true, true, true),
                 abstraction,
                 currentOverride.ImplementationType,
-                implementationStack,
+                passedContext,
                 mapper);
         }
-        return base.Map(type, implementationStack);
+        return base.Map(type, passedContext);
     }
 
     protected override MapperData GetMapperDataForAsyncWrapping() => new OverridingMapperData(_override);

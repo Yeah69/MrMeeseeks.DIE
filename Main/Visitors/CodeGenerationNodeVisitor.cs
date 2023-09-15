@@ -825,11 +825,18 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                 _code.AppendLine(
                     $"{collectionTypeFullName} {collectionReference} = new {collectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToArray({enumerableBasedNode.EnumerableCall.Reference}));");
                 break;
-            case EnumerableBasedType.ReadOnlyCollection
-                or EnumerableBasedType.IReadOnlyCollection
-                or EnumerableBasedType.IReadOnlyList:
+            case EnumerableBasedType.ReadOnlyCollection:
                 _code.AppendLine(
                     $"{collectionTypeFullName} {collectionReference} = new {collectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToList({enumerableBasedNode.EnumerableCall.Reference}));");
+                break;
+            case EnumerableBasedType.IReadOnlyCollection
+                or EnumerableBasedType.IReadOnlyList
+                when enumerableBasedNode.CollectionData is ReadOnlyInterfaceCollectionData
+                {
+                    ConcreteCollectionTypeFullName: { } concreteCollectionTypeFullName
+                }:
+                _code.AppendLine(
+                    $"{collectionTypeFullName} {collectionReference} = new {concreteCollectionTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToList({enumerableBasedNode.EnumerableCall.Reference}));");
                 break;
             case EnumerableBasedType.ConcurrentBag
                 or EnumerableBasedType.ConcurrentQueue

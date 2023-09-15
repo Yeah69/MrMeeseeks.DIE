@@ -82,15 +82,15 @@ internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack) =>
+    public override IElementNode Map(ITypeSymbol type, PassedContext passedContext) =>
         CustomSymbolEqualityComparer.Default.Equals(_override.InterfaceType, type) 
         && type is INamedTypeSymbol abstractionType
             ? SwitchInterfaceWithPotentialDecoration(
                 abstractionType, 
                 _override.ImplementationType, 
-                implementationStack,
+                passedContext,
                 Next)
-            : base.Map(type, implementationStack);
+            : base.Map(type, passedContext);
 
     protected override MapperData GetMapperDataForAsyncWrapping() => new OverridingWithDecorationMapperData(_override);
 }

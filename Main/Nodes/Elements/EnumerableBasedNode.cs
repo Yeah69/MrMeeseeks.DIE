@@ -50,6 +50,12 @@ internal record SimpleCollectionData(
     string CollectionReference) 
     : ICollectionData;
 
+internal record ReadOnlyInterfaceCollectionData(
+        string CollectionTypeFullName, 
+        string CollectionReference,
+        string ConcreteCollectionTypeFullName) 
+    : ICollectionData;
+
 internal record ImmutableCollectionData(
         string CollectionTypeFullName, 
         string CollectionReference,
@@ -86,7 +92,7 @@ internal partial class EnumerableBasedNode : IEnumerableBasedNode
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public void Build(PassedContext passedContext)
     {
         var collectionsInnerType = CollectionUtility.GetCollectionsInnerType(_collectionType);
         
@@ -128,18 +134,22 @@ internal partial class EnumerableBasedNode : IEnumerableBasedNode
         if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1))
         {
             var collectionType = _wellKnownTypesCollections.IReadOnlyCollection1.Construct(collectionsInnerType);
+            var concreteCollectionType = _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.IReadOnlyCollection;
-            CollectionData = new SimpleCollectionData(
+            CollectionData = new ReadOnlyInterfaceCollectionData(
                 collectionType.FullName(), 
-                _referenceGenerator.Generate(collectionType));
+                _referenceGenerator.Generate(collectionType),
+                concreteCollectionType.FullName());
         }
         if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1))
         {
             var collectionType = _wellKnownTypesCollections.IReadOnlyList1.Construct(collectionsInnerType);
+            var concreteCollectionType = _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.IReadOnlyList;
-            CollectionData = new SimpleCollectionData(
+            CollectionData = new ReadOnlyInterfaceCollectionData(
                 collectionType.FullName(), 
-                _referenceGenerator.Generate(collectionType));
+                _referenceGenerator.Generate(collectionType),
+                concreteCollectionType.FullName());
         }
         if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1))
         {

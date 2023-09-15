@@ -57,11 +57,11 @@ internal partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunction
     }
 
     private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
-        mapper.Map(itemType, ImmutableStack.Create<INamedTypeSymbol>());
+        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty));
     
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override void Build(PassedContext passedContext)
     {
-        base.Build(implementationStack);
+        base.Build(passedContext);
         var itemType = CollectionUtility.GetCollectionsInnerType(_enumerableType);
         var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes);
 

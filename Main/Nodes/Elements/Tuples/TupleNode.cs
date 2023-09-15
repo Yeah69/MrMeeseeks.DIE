@@ -26,7 +26,7 @@ internal partial class TupleNode : ITupleNode
         Reference = referenceGenerator.Generate(_tupleType);
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public void Build(PassedContext passedContext)
     {
         var constructor = _tupleType
             .InstanceConstructors
@@ -34,7 +34,7 @@ internal partial class TupleNode : ITupleNode
             .First();
         _parameters.AddRange(constructor
             .Parameters
-            .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, implementationStack))));
+            .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, passedContext))));
     }
 
     public string TypeFullName { get; }

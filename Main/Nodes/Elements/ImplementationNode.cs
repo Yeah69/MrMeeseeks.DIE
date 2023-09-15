@@ -82,15 +82,15 @@ internal partial class ImplementationNode : IImplementationNode
         Reference = referenceGenerator.Generate(implementationType);
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public void Build(PassedContext passedContext)
     {
         _parentFunction.RegisterAwaitableNode(this);
-        var implementationCycle = implementationStack.Contains(_implementationType, CustomSymbolEqualityComparer.Default);
+        var implementationCycle = passedContext.ImplementationStack.Contains(_implementationType, CustomSymbolEqualityComparer.Default);
 
         if (implementationCycle)
         {
             var cycleStack = ImmutableStack.Create(_implementationType);
-            var stack = implementationStack;
+            var stack = passedContext.ImplementationStack;
             INamedTypeSymbol i;
             do
             {
@@ -106,7 +106,7 @@ internal partial class ImplementationNode : IImplementationNode
             throw new ImplementationCycleDieException(cycleStack);
         }
 
-        implementationStack = implementationStack.Push(_implementationType);
+        passedContext = new PassedContext(ImplementationStack: passedContext.ImplementationStack.Push(_implementationType));
         
         var (userDefinedInjectionConstructor, outParamsConstructor) = GetUserDefinedInjection(_userDefinedElements.GetConstructorParametersInjectionFor(_implementationType));
         var (userDefinedInjectionProperties, outParamsProperties) = GetUserDefinedInjection(_userDefinedElements.GetPropertiesInjectionFor(_implementationType));
@@ -190,8 +190,8 @@ internal partial class ImplementationNode : IImplementationNode
                 {
                     var isOut = p.RefKind == RefKind.Out;
                     var element = isOut
-                        ? _elementNodeMapper.MapToOutParameter(p.Type, implementationStack)
-                        : _elementNodeMapper.Map(p.Type, implementationStack);
+                        ? _elementNodeMapper.MapToOutParameter(p.Type, passedContext)
+                        : _elementNodeMapper.Map(p.Type, passedContext);
                     return (p.Type, p.Name, Element: element, IsOut: isOut);
                 })
                 .ToArray();
@@ -206,7 +206,7 @@ internal partial class ImplementationNode : IImplementationNode
             IReadOnlyDictionary<string, IElementNode> outElementsCache) =>
             outElementsCache.TryGetValue(key, value: out var element)
                 ? element
-                : _elementNodeMapper.Map(typeParam, implementationStack);
+                : _elementNodeMapper.Map(typeParam, passedContext);
     }
 
     public string TypeFullName { get; }

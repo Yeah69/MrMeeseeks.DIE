@@ -83,7 +83,7 @@ internal abstract class RangeNode : IRangeNode
                 type,
                 callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)),
             f => f.CreateCall(null, callingFunction));
 
     public IFunctionCallNode BuildEnumerableKeyValueCall(INamedTypeSymbol type, IFunctionNode callingFunction) =>
@@ -95,7 +95,7 @@ internal abstract class RangeNode : IRangeNode
                     type,
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)),
             f => f.CreateCall(null, callingFunction));
 
     public IEnumerable<ICreateFunctionNodeBase> CreateFunctions => _createFunctions.Values.SelectMany(l => l);
@@ -170,7 +170,7 @@ internal abstract class RangeNode : IRangeNode
 
     protected virtual string TransientScopeInterfaceParameterForScope => Constants.ThisKeyword;
 
-    public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack) {}
+    public virtual void Build(PassedContext passedContext) {}
 
     public abstract void Accept(INodeVisitor nodeVisitor);
     public IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction) =>
@@ -183,7 +183,7 @@ internal abstract class RangeNode : IRangeNode
                     type,
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)),
             f => f.CreateCall(null, callingFunction));
 
     public IAsyncFunctionCallNode BuildAsyncCreateCall(
@@ -200,7 +200,7 @@ internal abstract class RangeNode : IRangeNode
                     type,
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)),
             f => f.CreateAsyncCall(type, null, synchronicity, callingFunction));
 
     public IFunctionCallNode BuildInitializationCall(IFunctionNode callingFunction)
@@ -212,7 +212,7 @@ internal abstract class RangeNode : IRangeNode
                     InitializedInstances.ToList(),
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty));
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)));
 
         return voidFunction.CreateCall(null, callingFunction);
     }
@@ -241,7 +241,7 @@ internal abstract class RangeNode : IRangeNode
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 level,
                 type)
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
             _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
@@ -265,7 +265,7 @@ internal abstract class RangeNode : IRangeNode
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 ScopeLevel.TransientScope,
                 type)
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
             _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);

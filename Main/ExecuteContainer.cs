@@ -76,7 +76,7 @@ internal class ExecuteContainer : IExecuteContainer
             }
             
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Resolution;
-            _containerNode.Build(new(ImmutableStack.Create<INamedTypeSymbol>()));
+            _containerNode.Build(new(ImmutableStack<INamedTypeSymbol>.Empty, null));
 
             if (_diagLogger.ErrorsIssued)
             {

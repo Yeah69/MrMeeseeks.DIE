@@ -1,4 +1,7 @@
 namespace MrMeeseeks.DIE.Nodes;
 
-public record PassedContext(
-    ImmutableStack<INamedTypeSymbol> ImplementationStack);
+internal record PassedContext(
+    ImmutableStack<INamedTypeSymbol> ImplementationStack,
+    InjectionKey? InjectionKeyModification);
+    
+internal record InjectionKey(ITypeSymbol Type, object Value);

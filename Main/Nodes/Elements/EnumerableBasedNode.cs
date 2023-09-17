@@ -289,7 +289,7 @@ internal partial class EnumerableBasedNode : IEnumerableBasedNode
         var enumerableType = Type == EnumerableBasedType.IAsyncEnumerable 
             ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(collectionsInnerType)
             : _wellKnownTypesCollections.IEnumerable1.Construct(collectionsInnerType);
-        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction);
+        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction, passedContext);
     }
 
     public string TypeFullName => Type != EnumerableBasedType.IEnumerable && Type != EnumerableBasedType.IAsyncEnumerable && CollectionData is not null

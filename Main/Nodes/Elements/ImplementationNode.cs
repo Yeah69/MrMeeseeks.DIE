@@ -54,10 +54,12 @@ internal partial class ImplementationNode : IImplementationNode
     private readonly List<(string Name, IElementNode Element)> _properties = new ();
 
     internal ImplementationNode(
+        // parameters
         INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType,
         IMethodSymbol constructor,
         
+        // dependencies
         IFunctionNode parentFunction,
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
@@ -106,7 +108,10 @@ internal partial class ImplementationNode : IImplementationNode
             throw new ImplementationCycleDieException(cycleStack);
         }
 
-        passedContext = new PassedContext(ImplementationStack: passedContext.ImplementationStack.Push(_implementationType));
+        passedContext = passedContext with
+        {
+            ImplementationStack = passedContext.ImplementationStack.Push(_implementationType)
+        };
         
         var (userDefinedInjectionConstructor, outParamsConstructor) = GetUserDefinedInjection(_userDefinedElements.GetConstructorParametersInjectionFor(_implementationType));
         var (userDefinedInjectionProperties, outParamsProperties) = GetUserDefinedInjection(_userDefinedElements.GetPropertiesInjectionFor(_implementationType));
@@ -115,7 +120,7 @@ internal partial class ImplementationNode : IImplementationNode
         UserDefinedInjectionProperties = userDefinedInjectionProperties;
         
         _constructorParameters.AddRange(_constructor.Parameters
-            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsConstructor))));
+            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsConstructor))));
 
         IReadOnlyList<IPropertySymbol> properties;
         if (_checkTypeProperties.GetPropertyChoicesFor(_implementationType) is { } propertyChoice)
@@ -130,7 +135,7 @@ internal partial class ImplementationNode : IImplementationNode
         else 
             properties = Array.Empty<IPropertySymbol>();
         _properties.AddRange(properties
-            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsProperties))));
+            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsProperties))));
 
         var injectionsAnalysisGathering = _constructor
             .Parameters
@@ -144,7 +149,7 @@ internal partial class ImplementationNode : IImplementationNode
             var (userDefinedInjectionInitializer, outParamsInitializer) = GetUserDefinedInjection(_userDefinedElements.GetInitializerParametersInjectionFor(_implementationType));
 
             var initializerParameters = initializerMethod.Parameters
-                .Select(p => (p.Name, MapToInjection(p.Name, p.Type, outParamsInitializer)))
+                .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsInitializer)))
                 .ToList();
 
             Initializer = new Initialization(
@@ -203,10 +208,16 @@ internal partial class ImplementationNode : IImplementationNode
         IElementNode MapToInjection(
             string key,
             ITypeSymbol typeParam,
+            ISymbol parameterOrProperty,
             IReadOnlyDictionary<string, IElementNode> outElementsCache) =>
             outElementsCache.TryGetValue(key, value: out var element)
                 ? element
-                : _elementNodeMapper.Map(typeParam, passedContext);
+                : _elementNodeMapper.Map(typeParam,
+                    passedContext with
+                    {
+                        InjectionKeyModification = 
+                        _checkTypeProperties.IdentifyInjectionKeyModification(parameterOrProperty)
+                    });
     }
 
     public string TypeFullName { get; }

@@ -281,7 +281,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 implementationType = innerType;
             }
             
-            if (_checkTypeProperties.MapToSingleFittingImplementation(implementationType) is not { } chosenImplementationType)
+            if (_checkTypeProperties.MapToSingleFittingImplementation(implementationType, passedContext.InjectionKeyModification) is not { } chosenImplementationType)
             {
                 if (classOrStructType.NullableAnnotation == NullableAnnotation.Annotated || isNullableStruct)
                 {
@@ -409,7 +409,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         if (_checkTypeProperties.ShouldBeComposite(interfaceType)
             && _checkTypeProperties.GetCompositeFor(interfaceType) is {} compositeImplementationType)
             return SwitchInterfaceWithPotentialDecoration(interfaceType, compositeImplementationType, passedContext, Next);
-        if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType) is not { } impType)
+        if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType, passedContext.InjectionKeyModification) is not { } impType)
         {
             if (interfaceType.NullableAnnotation == NullableAnnotation.Annotated)
             {

@@ -57,7 +57,7 @@ internal partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunction
     }
 
     private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
-        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty));
+        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
     
     public override void Build(PassedContext passedContext)
     {
@@ -66,7 +66,7 @@ internal partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunction
         var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes);
 
         var concreteItemTypes = unwrappedItemType is INamedTypeSymbol namedTypeSymbol
-            ? _checkTypeProperties.MapToImplementations(namedTypeSymbol)
+            ? _checkTypeProperties.MapToImplementations(namedTypeSymbol, passedContext.InjectionKeyModification)
             : (IReadOnlyList<ITypeSymbol>) new[] { unwrappedItemType };
 
         ReturnedElements = concreteItemTypes

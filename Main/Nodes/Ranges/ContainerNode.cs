@@ -135,7 +135,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
                     InitializedInstances.ToList(),
                     Array.Empty<ITypeSymbol>())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty))
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null))
             : null;
         
         if (initializedInstancesFunction is {})

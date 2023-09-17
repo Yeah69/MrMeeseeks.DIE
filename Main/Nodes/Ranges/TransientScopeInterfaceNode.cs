@@ -52,7 +52,7 @@ internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNod
                         type,
                         callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                     .Function
-                    .EnqueueBuildJobTo(_container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+                    .EnqueueBuildJobTo(_container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
                 foreach (var range in _ranges)
                     interfaceFunction.AddConsideredRange(range);
                 return interfaceFunction;

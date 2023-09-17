@@ -82,7 +82,7 @@ internal partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeIns
                 type,
                 callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)),
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
             f => f.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this));
 
     public string TransientScopeInterfaceFullName { get; }

@@ -61,7 +61,7 @@ internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMulti
     }
 
     private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
-        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty));
+        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
     
     public override void Build(PassedContext passedContext)
     {

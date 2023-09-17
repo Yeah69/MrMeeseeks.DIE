@@ -60,7 +60,7 @@ internal partial class CreateTransientScopeFunctionNode : SingleFunctionNodeBase
             new(false, false, false), 
             null, 
             _typeSymbol, 
-            new(ImmutableStack<INamedTypeSymbol>.Empty));
+            new(ImmutableStack<INamedTypeSymbol>.Empty, null));
 
     protected override IElementNodeMapperBase GetMapper()
     {

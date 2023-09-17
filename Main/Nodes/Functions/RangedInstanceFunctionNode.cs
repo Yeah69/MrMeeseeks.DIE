@@ -71,7 +71,7 @@ internal partial class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRan
             new(true, false, false), 
             null, 
             _type,
-            new(ImmutableStack<INamedTypeSymbol>.Empty)); 
+            new(ImmutableStack<INamedTypeSymbol>.Empty, null)); 
 
     public override string Name { get; protected set; }
 

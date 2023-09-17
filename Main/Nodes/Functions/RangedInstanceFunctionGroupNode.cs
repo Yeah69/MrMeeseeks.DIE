@@ -45,5 +45,5 @@ internal partial class RangedInstanceFunctionGroupNode : RangedInstanceFunctionG
                 _type,
                 callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)));
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)));
 }

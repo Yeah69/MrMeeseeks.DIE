@@ -49,7 +49,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
                 var defaultScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultScopeName).FirstOrDefault();
                 return scopeFactory(Constants.DefaultScopeName, defaultScopeType)
                     .Scope
-                    .EnqueueBuildJobTo(container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+                    .EnqueueBuildJobTo(container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
             },
             LazyThreadSafetyMode.ExecutionAndPublication);
         _defaultTransientScope = new Lazy<ITransientScopeNode>(
@@ -58,7 +58,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
                 var defaultTransientScopeType = containerInfo.ContainerType.GetTypeMembers(Constants.DefaultTransientScopeName).FirstOrDefault();
                 var ret = transientScopeFactory(Constants.DefaultTransientScopeName, defaultTransientScopeType)
                     .TransientScope
-                    .EnqueueBuildJobTo(container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+                    .EnqueueBuildJobTo(container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
                 _transientScopeInterface.RegisterRange(ret);
                 return ret;
             },
@@ -129,7 +129,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         
         var ret = _scopeFactory(scopeType.Name, scopeType)
             .Scope
-            .EnqueueBuildJobTo(_container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+            .EnqueueBuildJobTo(_container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         _customScopes[scopeRootType] = ret;
         return ret;
     }
@@ -144,7 +144,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         
         var ret = _transientScopeFactory(transientScopeType.Name, transientScopeType)
             .TransientScope
-            .EnqueueBuildJobTo(_container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+            .EnqueueBuildJobTo(_container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         _customTransientScopes[transientScopeRootType] = ret;
          _transientScopeInterface.RegisterRange(ret);
         return ret;

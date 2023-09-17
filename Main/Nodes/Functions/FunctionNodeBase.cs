@@ -49,7 +49,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
         WellKnownTypes = containerWideContext.WellKnownTypes;
         Parameters = parameters.Select(p=> (p, parameterNodeFactory(p)
-            .EnqueueBuildJobTo(parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty)))).ToList();
+            .EnqueueBuildJobTo(parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)))).ToList();
         Accessibility = accessibility;
 
         var setOfProcessedTypes = new HashSet<ITypeSymbol>(CustomSymbolEqualityComparer.IncludeNullability);
@@ -151,7 +151,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         var call = _plainFunctionCallNodeFactory(
                 ownerReference,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList())
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
         callingFunction.RegisterAwaitableNode(call);
@@ -167,7 +167,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 ownerReference,
                 synchronicity,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList())
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
         callingFunction.RegisterAwaitableNode(call);
@@ -184,7 +184,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 callingRange,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 scope.InitializedInstances.Any() ? scope.BuildInitializationCall(callingFunction) : null)
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
         callingFunction.RegisterAwaitableNode(call);
@@ -205,7 +205,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 callingRange,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 transientScopeNode.InitializedInstances.Any() ? transientScopeNode.BuildInitializationCall(callingFunction) : null)
-            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty));
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
         callingFunction.RegisterAwaitableNode(call);

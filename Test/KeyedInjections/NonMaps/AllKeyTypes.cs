@@ -29,6 +29,7 @@ internal interface IInterface
 [Key(Double)]
 [Key(String)]
 [Key(Bool)]
+[Key(typeof(DependencyA))]
 internal class DependencyA : IInterface
 {
     internal const byte Byte = 0;
@@ -93,6 +94,7 @@ internal class DependencyB : IInterface
 [Key(Double)]
 [Key(String)]
 [Key(Bool)]
+[Key(typeof(DependencyC))]
 internal class DependencyC : IInterface
 {
     internal const byte Byte = 24;

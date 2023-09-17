@@ -952,7 +952,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         var keyLiteral = keyValuePairNode.KeyType.TypeKind == TypeKind.Enum 
             ? $"({keyValuePairNode.KeyType.FullName()}) {SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false)}" 
             : CustomSymbolEqualityComparer.Default.Equals(keyValuePairNode.KeyType, _wellKnownTypes.Type) 
-                ? $"typeof({keyValuePairNode.KeyType.FullName()})" 
+                ? $"typeof({(keyValuePairNode.Key as ITypeSymbol)?.FullName() ?? ""})" 
                 : SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false);
         _code.AppendLine(
             $"{keyValuePairNode.TypeFullName} {keyValuePairNode.Reference} = new {keyValuePairNode.TypeFullName}({keyLiteral}, {keyValuePairNode.Value.Reference});");

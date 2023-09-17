@@ -247,15 +247,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
         if (_checkIterableTypes.IsMapType(type) && type is INamedTypeSymbol mapType)
         {
-            /*if (_checkIterableTypes.MapTypeHasPluralItemType(mapType))
-            {
-                // todo 
-            }
-            else
-            {*/
             return _keyValueBasedNodeFactory(mapType)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
-            //}
         }
 
         if (_checkIterableTypes.IsCollectionType(type))

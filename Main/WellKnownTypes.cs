@@ -23,7 +23,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol SemaphoreSlim,
     INamedTypeSymbol InternalsVisibleToAttribute,
     INamedTypeSymbol Nullable1,
-    INamedTypeSymbol String)
+    INamedTypeSymbol String,
+    INamedTypeSymbol Type)
 {
     internal static WellKnownTypes Create(Compilation compilation)
     {
@@ -51,6 +52,7 @@ internal record WellKnownTypes(
             SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
             InternalsVisibleToAttribute: compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.InternalsVisibleToAttribute"),
             Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"),
-            String: compilation.GetTypeByMetadataNameOrThrow("System.String"));
+            String: compilation.GetTypeByMetadataNameOrThrow("System.String"),
+            Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"));
     }
 }

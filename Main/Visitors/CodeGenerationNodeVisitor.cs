@@ -9,6 +9,7 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Visitors;
@@ -934,7 +935,7 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                     $"{mapTypeFullName} {mapReference} = new {mapTypeFullName}({_wellKnownTypesCollections.Enumerable}.ToDictionary({keyValueBasedNode.EnumerableCall.Reference}, kvp => kvp.Key, kvp => kvp.Value));");
                 break;
             case KeyValueBasedType.SingleImmutableDictionary
-                or KeyValueBasedType.SingleImmutableDictionary
+                or KeyValueBasedType.SingleImmutableSortedDictionary
                 when keyValueBasedNode.MapData is ImmutableMapData
                 {
                     ImmutableUngenericTypeFullName: { } immutableUngenericTypeFullName
@@ -948,10 +949,11 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     public void VisitIKeyValuePairNode(IKeyValuePairNode keyValuePairNode)
     {
         VisitIElementNode(keyValuePairNode.Value);
-        // todo support typeof?
         var keyLiteral = keyValuePairNode.KeyType.TypeKind == TypeKind.Enum 
             ? $"({keyValuePairNode.KeyType.FullName()}) {SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false)}" 
-            : SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false);
+            : CustomSymbolEqualityComparer.Default.Equals(keyValuePairNode.KeyType, _wellKnownTypes.Type) 
+                ? $"typeof({keyValuePairNode.KeyType.FullName()})" 
+                : SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false);
         _code.AppendLine(
             $"{keyValuePairNode.TypeFullName} {keyValuePairNode.Reference} = new {keyValuePairNode.TypeFullName}({keyLiteral}, {keyValuePairNode.Value.Reference});");
     }

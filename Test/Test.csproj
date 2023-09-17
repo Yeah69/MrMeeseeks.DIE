@@ -26,7 +26,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="MrMeeseeks.DIE" Version="2.0.6-alpha.0.3" />
+        <PackageReference Include="MrMeeseeks.DIE" Version="2.0.6-alpha.0.4" />
     </ItemGroup>
 
     <ItemGroup>
@@ -34,5 +34,7 @@
         <ProjectReference Include="..\TestInternalsVisibleToChild\TestInternalsVisibleToChild.csproj" />
         <ProjectReference Include="..\TestNotInternalsVisibleToChild\TestNotInternalsVisibleToChild.csproj" />
     </ItemGroup>
+
+
 
 </Project>

@@ -372,7 +372,9 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             ? possibleChoices
             : possibleChoices
                 .Where(c => 
-                    _typeToKeyToValue[c.OriginalDefinition][injectionKey.Type].Contains(injectionKey.Value))
+                    _typeToKeyToValue.TryGetValue(c.OriginalDefinition, out var keyToValue)
+                    && keyToValue.TryGetValue(injectionKey.Type, out var values)
+                    && values.Contains(injectionKey.Value))
                 .ToList();
 
     public IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>

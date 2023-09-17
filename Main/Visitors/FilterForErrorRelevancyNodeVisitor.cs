@@ -84,6 +84,9 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
                 case IMultiKeyValueFunctionNode multiKeyValueFunctionNode:
                     VisitIMultiKeyValueFunctionNode(multiKeyValueFunctionNode);
                     break;
+                case IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode:
+                    VisitIMultiKeyValueMultiFunctionNode(multiKeyValueMultiFunctionNode);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(multiFunctionBase));
             }
@@ -350,6 +353,9 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
     }
 
     public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode element) =>
+        VisitIMultiFunctionNodeBase(element);
+
+    public void VisitIMultiKeyValueMultiFunctionNode(IMultiKeyValueMultiFunctionNode element) =>
         VisitIMultiFunctionNodeBase(element);
 
     public void VisitIKeyValueBasedNode(IKeyValueBasedNode element) { }

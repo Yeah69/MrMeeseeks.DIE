@@ -9,18 +9,19 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IMultiKeyValueFunctionNode : IMultiFunctionNodeBase
+internal interface IMultiKeyValueMultiFunctionNode : IMultiFunctionNodeBase
 {
 }
 
-internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMultiKeyValueFunctionNode, IScopeInstance
+internal partial class MultiKeyValueMultiFunctionNode : MultiFunctionNodeBase, IMultiKeyValueMultiFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
+    private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> _keyValuePairNodeFactory;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly WellKnownTypes _wellKnownTypes;
 
-    internal MultiKeyValueFunctionNode(
+    internal MultiKeyValueMultiFunctionNode(
         // parameters
         INamedTypeSymbol enumerableType,
         IReadOnlyList<ITypeSymbol> parameters,
@@ -53,6 +54,7 @@ internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMulti
             containerWideContext)
     {
         _enumerableType = enumerableType;
+        _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _keyValuePairNodeFactory = keyValuePairNodeFactory;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
@@ -60,8 +62,8 @@ internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMulti
         Name = referenceGenerator.Generate("CreateMultiKeyValue", enumerableType);
     }
 
-    private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
-        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
+    private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType, ITypeSymbol keyType, object keyValue) =>
+        mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty, new(keyType, keyValue)));
     
     public override void Build(PassedContext passedContext)
     {
@@ -69,16 +71,19 @@ internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMulti
         var keyValueType = (INamedTypeSymbol) _enumerableType.TypeArguments[0];
         var itemType = keyValueType.TypeArguments[1];
         var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes) as INamedTypeSymbol ?? throw new InvalidOperationException(); // todo replace exception with error log
-
-        var concreteItemTypesMap = _checkTypeProperties.MapToKeyedImplementations(unwrappedItemType, keyValueType.TypeArguments[0]);
+        var iterableItemType = CollectionUtility.GetCollectionsInnerType(unwrappedItemType) as INamedTypeSymbol ?? throw new InvalidOperationException(); // todo replace exception with error log
+        
+        var concreteItemTypesMap = _checkTypeProperties.MapToKeyedMultipleImplementations(iterableItemType, keyValueType.TypeArguments[0]);
 
         ReturnedElements = concreteItemTypesMap
             .Select(kvp => _keyValuePairNodeFactory(
                     keyValueType,
                     kvp.Key,
                     MapToReturnedElement(
-                        GetMapper(unwrappedItemType, kvp.Value),
-                        itemType)))
+                        _typeToElementNodeMapperFactory(),
+                        itemType,
+                        keyValueType.TypeArguments[0],
+                        kvp.Key)))
             .ToList();
     }
 

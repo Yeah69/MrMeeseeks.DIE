@@ -2,6 +2,7 @@ using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -53,6 +54,7 @@ internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
     private readonly IRangeNode _parentRange;
     private readonly IFunctionNode _parentFunction;
     private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ICheckIterableTypes _checkIterableTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     public KeyValueBasedBasedNode(
@@ -63,12 +65,14 @@ internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
         ITransientScopeWideContext transientScopeWideContext,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        IContainerWideContext containerWideContext)
+        IContainerWideContext containerWideContext,
+        ICheckIterableTypes checkIterableTypes)
     {
         _mapType = mapType;
         _parentRange = transientScopeWideContext.Range;
         _parentFunction = parentFunction;
         _referenceGenerator = referenceGenerator;
+        _checkIterableTypes = checkIterableTypes;
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
     }
 
@@ -87,7 +91,7 @@ internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
         
         var keyValuePairType = _wellKnownTypesCollections.KeyValuePair2.Construct(keyType, valueType);
         
-        // todo multi variants
+        var isMulti = _checkIterableTypes.MapTypeHasPluralItemType(_mapType);
 
         if (isIEnumerable)
             Type = KeyValueBasedType.SingleIEnumerable;
@@ -163,7 +167,9 @@ internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
         var enumerableType = Type == KeyValueBasedType.SingleIAsyncEnumerable 
             ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(keyValuePairType)
             : _wellKnownTypesCollections.IEnumerable1.Construct(keyValuePairType);
-        EnumerableCall = _parentRange.BuildEnumerableKeyValueCall(enumerableType, _parentFunction);
+        EnumerableCall = isMulti 
+            ? _parentRange.BuildEnumerableKeyValueMultiCall(enumerableType, _parentFunction)
+            : _parentRange.BuildEnumerableKeyValueCall(enumerableType, _parentFunction);
     }
 
     public string TypeFullName => Type != KeyValueBasedType.SingleIEnumerable && Type != KeyValueBasedType.SingleIAsyncEnumerable && MapData is not null

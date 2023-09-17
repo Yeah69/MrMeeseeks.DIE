@@ -36,6 +36,7 @@ internal interface IRangeNode : INode
     IFunctionCallNode BuildScopeInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IFunctionCallNode BuildEnumerableCall(INamedTypeSymbol type, IFunctionNode callingFunction, PassedContext passedContext);
     IFunctionCallNode BuildEnumerableKeyValueCall(INamedTypeSymbol type, IFunctionNode callingFunction);
+    IFunctionCallNode BuildEnumerableKeyValueMultiCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IEnumerable<ICreateFunctionNodeBase> CreateFunctions { get; }
     IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups { get; }
     IEnumerable<IMultiFunctionNodeBase> MultiFunctions { get; }
@@ -53,6 +54,7 @@ internal abstract class RangeNode : IRangeNode
     private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> _multiKeyValueFunctionNodeFactory;
+    private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> _multiKeyValueMultiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
     protected readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> VoidFunctionNodeFactory;
     protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
@@ -130,6 +132,18 @@ internal abstract class RangeNode : IRangeNode
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
             f => f.CreateCall(null, callingFunction));
 
+    public IFunctionCallNode BuildEnumerableKeyValueMultiCall(INamedTypeSymbol type, IFunctionNode callingFunction) =>
+        FunctionResolutionUtility.GetOrCreateFunctionCall(
+            type,
+            callingFunction,
+            _multiFunctions,
+            () => _multiKeyValueMultiFunctionNodeFactory(
+                    type,
+                    callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
+                .Function
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
+            f => f.CreateCall(null, callingFunction));
+
     public IEnumerable<ICreateFunctionNodeBase> CreateFunctions => _createFunctions.Values.SelectMany(l => l);
 
     public IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups =>
@@ -155,6 +169,7 @@ internal abstract class RangeNode : IRangeNode
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> multiKeyValueMultiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IDisposalHandlingNode> disposalHandlingNodeFactory,
@@ -164,6 +179,7 @@ internal abstract class RangeNode : IRangeNode
         _createFunctionNodeFactory = createFunctionNodeFactory;
         _multiFunctionNodeFactory = multiFunctionNodeFactory;
         _multiKeyValueFunctionNodeFactory = multiKeyValueFunctionNodeFactory;
+        _multiKeyValueMultiFunctionNodeFactory = multiKeyValueMultiFunctionNodeFactory;
         _rangedInstanceFunctionGroupNodeFactory = rangedInstanceFunctionGroupNodeFactory;
         VoidFunctionNodeFactory = voidFunctionNodeFactory;
         Name = name;

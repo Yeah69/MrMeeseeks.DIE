@@ -161,6 +161,9 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
                 case IMultiKeyValueFunctionNode multiKeyValueFunctionNode:
                     VisitIMultiKeyValueFunctionNode(multiKeyValueFunctionNode);
                     break;
+                case IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode:
+                    VisitIMultiKeyValueMultiFunctionNode(multiKeyValueMultiFunctionNode);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(multiFunctionBase));
             }
@@ -630,6 +633,11 @@ package "void {{element.Name}}({{string.Join(", ", element.Parameters.Select(p =
     }
 
     public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode multiKeyValueFunctionNode)
+    {
+        // todo implement
+    } 
+
+    public void VisitIMultiKeyValueMultiFunctionNode(IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode)
     {
         // todo implement
     } 

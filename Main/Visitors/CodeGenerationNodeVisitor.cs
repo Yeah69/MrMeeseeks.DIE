@@ -220,6 +220,9 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
                 case IMultiKeyValueFunctionNode multiKeyValueFunctionNode:
                     VisitIMultiKeyValueFunctionNode(multiKeyValueFunctionNode);
                     break;
+                case IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode:
+                    VisitIMultiKeyValueMultiFunctionNode(multiKeyValueMultiFunctionNode);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(multiFunctionNodeBase));
             }
@@ -910,6 +913,9 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
 
     public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode multiKeyValueFunctionNode) =>
         VisitIMultiFunctionNodeBase(multiKeyValueFunctionNode);
+
+    public void VisitIMultiKeyValueMultiFunctionNode(IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode) =>
+        VisitIMultiFunctionNodeBase(multiKeyValueMultiFunctionNode);
 
     public void VisitIKeyValueBasedNode(IKeyValueBasedNode keyValueBasedNode)
     {

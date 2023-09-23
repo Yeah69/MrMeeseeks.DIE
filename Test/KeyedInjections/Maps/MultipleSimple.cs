@@ -1,4 +1,4 @@
-﻿/*using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -59,17 +59,21 @@ public class Tests
     {
         using var container = Container.DIE_CreateContainer();
         var map = container.Create();
+        Assert.Equal(3, map.Count);
+        Assert.Equal(2, map[Key.A].Count);
         foreach (var a in map[Key.A])
         {
             Assert.True(a is DependencyA0 or DependencyA1);
         }
+        Assert.Equal(2, map[Key.B].Count);
         foreach (var b in map[Key.B])
         {
             Assert.True(b is DependencyB0 or DependencyB1);
         }
+        Assert.Equal(2, map[Key.C].Count);
         foreach (var c in map[Key.C])
         {
             Assert.True(c is DependencyC0 or DependencyC1);
         }
     }
-}*/
+}

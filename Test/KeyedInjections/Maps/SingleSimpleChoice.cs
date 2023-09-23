@@ -3,33 +3,34 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.KeyedInjections.Maps.SingleKeyReused;
+namespace MrMeeseeks.DIE.Test.KeyedInjections.Maps.SingleSimpleChoice;
 
 internal enum Key
 {
     A,
-    B
+    B,
+    C
 }
 
 internal interface IInterface
 {
 }
 
-[Key(Key.A)]
-internal class DependencyA0 : IInterface
+internal class DependencyA : IInterface
 {
 }
 
-[Key(Key.A)]
-internal class DependencyA1 : IInterface
-{
-}
-
-[Key(Key.B)]
 internal class DependencyB : IInterface
 {
 }
 
+internal class DependencyC : IInterface
+{
+}
+
+[InjectionKeyChoice(Key.A, typeof(DependencyA))]
+[InjectionKeyChoice(Key.B, typeof(DependencyB))]
+[InjectionKeyChoice(Key.C, typeof(DependencyC))]
 [CreateFunction(typeof(IReadOnlyDictionary<Key, IInterface>), "Create")]
 internal partial class Container
 {
@@ -43,8 +44,11 @@ public class Tests
     {
         using var container = Container.DIE_CreateContainer();
         var map = container.Create();
-        Assert.False(map.TryGetValue(Key.A, out _));
+        Assert.True(map.TryGetValue(Key.A, out var a));
+        Assert.IsType<DependencyA>(a);
         Assert.True(map.TryGetValue(Key.B, out var b));
         Assert.IsType<DependencyB>(b);
+        Assert.True(map.TryGetValue(Key.C, out var c));
+        Assert.IsType<DependencyC>(c);
     }
 }

@@ -107,15 +107,24 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 var (implementation, attribute) = t;
                 if (!currentlyConsideredTypes.InjectionKeyAttributeTypes.Any(a =>
                         CustomSymbolEqualityComparer.Default.Equals(a, attribute.AttributeClass)))
-                    return ((INamedTypeSymbol, ITypeSymbol?, object?)?)null;
-                return (implementation, 
+                    return ((ITypeSymbol? KeyType, object? KeyValue, INamedTypeSymbol ImplementationType)?)null;
+                return ( 
                     attribute.ConstructorArguments[0].Type,
-                    attribute.ConstructorArguments[0].Value);
-            });
+                    attribute.ConstructorArguments[0].Value,
+                    implementation);
+            })
+            .Concat(currentlyConsideredTypes.InjectionKeyChoices.Select(t => 
+                (t.KeyType, t.KeyValue, t.ImplementationType) 
+                as (ITypeSymbol? KeyType, object? KeyValue, INamedTypeSymbol ImplementationType)?));
         
         foreach (var injectionKeyMapping in injectionKeyMappings)
         {
-            if (injectionKeyMapping is not { Item1: {} implementationType, Item2: {} keyType, Item3: {} keyValue })
+            if (injectionKeyMapping is not
+                {
+                    KeyType: {} keyType, 
+                    KeyValue: {} keyValue, 
+                    ImplementationType: {} implementationType
+                })
                 continue;
             
             if (_typeToKeyToValue.TryGetValue(implementationType, out var keyToValue))
@@ -126,9 +135,9 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     keyToValue.Add(keyType, new HashSet<object>{keyValue});
             }
             else
-            {
-                _typeToKeyToValue.Add(implementationType.OriginalDefinition, new Dictionary<ITypeSymbol, ISet<object>>{{keyType, new HashSet<object>{keyValue}}});
-            }
+                _typeToKeyToValue.Add(
+                    implementationType.OriginalDefinition, 
+                    new Dictionary<ITypeSymbol, ISet<object>>{{keyType, new HashSet<object>{keyValue}}});
         }
     }
     

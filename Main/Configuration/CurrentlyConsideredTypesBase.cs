@@ -57,6 +57,7 @@ internal interface ICurrentlyConsideredTypes
     IImmutableSet<INamedTypeSymbol> DecoratorTypes { get; }
     IImmutableSet<INamedTypeSymbol> CompositeTypes { get; }
     IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
+    IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
     IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
@@ -68,6 +69,7 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<string>> PropertyChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
+    
 }
 
 internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
@@ -403,6 +405,18 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         
         InjectionKeyAttributeTypes = injectionKeyAttributeTypes;
         
+        var injectionKeyChoices = 
+            ImmutableHashSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)>.Empty;
+        foreach (var types in typesFromAttributes)
+        {
+            injectionKeyChoices = injectionKeyChoices.Except(types.FilterInjectionKeyChoices);
+            injectionKeyChoices = injectionKeyChoices.Union(types.InjectionKeyChoices);
+        }
+        
+        InjectionKeyChoices = injectionKeyChoices;
+        
+        return;
+
         IImmutableSet<INamedTypeSymbol> GetSetOfTypesWithProperties(
             Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> propertyGivingAbstractTypesGetter, 
             Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> filteredPropertyGivingAbstractTypesGetter,
@@ -448,6 +462,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
     public IImmutableSet<INamedTypeSymbol> DecoratorTypes { get; }
     public IImmutableSet<INamedTypeSymbol> CompositeTypes { get; }
     public IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
+    public IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
+
     public IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     public IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }

@@ -50,9 +50,7 @@ internal partial class AsyncFunctionCallNode : IAsyncFunctionCallNode
         TypeFullName = asyncType.FullName();
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public void Build(PassedContext passedContext) { }
     
     public AsyncFunctionCallTransformation Transformation { get; private set; }
     

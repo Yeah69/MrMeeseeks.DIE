@@ -17,9 +17,7 @@ internal partial class NullNode : INullNode
         TypeFullName = nullableType.FullName();
         Reference = referenceGenerator.Generate(nullableType);
     }
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string TypeFullName { get; }
     public string Reference { get; }

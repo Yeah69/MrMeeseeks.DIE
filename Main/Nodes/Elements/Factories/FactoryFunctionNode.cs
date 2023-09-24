@@ -28,12 +28,12 @@ internal partial class FactoryFunctionNode : FactoryNodeBase, IFactoryFunctionNo
         _elementNodeMapperBase = elementNodeMapperBase;
     }
 
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override void Build(PassedContext passedContext)
     {
         _parameters.AddRange(_methodSymbol
             .Parameters
-            .Select(p => (p.Name, _elementNodeMapperBase.Map(p.Type, implementationStack))));
-        base.Build(implementationStack);
+            .Select(p => (p.Name, _elementNodeMapperBase.Map(p.Type, passedContext))));
+        base.Build(passedContext);
     }
     
     public IReadOnlyList<(string, IElementNode)> Parameters => _parameters;

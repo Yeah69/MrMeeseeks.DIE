@@ -22,9 +22,9 @@ internal partial class ErrorNode : IErrorNode
         Message = message;
     }
     
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack) =>
+    public void Build(PassedContext passedContext) =>
         _localDiagLogger.Error(
-            ErrorLogData.ResolutionException(Message, _currentType, implementationStack),
+            ErrorLogData.ResolutionException(Message, _currentType, passedContext.ImplementationStack),
             Location.None);
 
     public string Message { get; }

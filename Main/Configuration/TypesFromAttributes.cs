@@ -38,6 +38,8 @@ internal interface ITypesFromAttributesBase
     IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
     IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
     IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
+    IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
+    IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterImplementation { get; }
     IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
     IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
@@ -67,6 +69,8 @@ internal interface ITypesFromAttributesBase
     IImmutableSet<IAssemblySymbol> FilterAssemblyImplementations { get; }
     IImmutableSet<INamedTypeSymbol> FilterImplementationChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
+    IImmutableSet<INamedTypeSymbol> FilterInjectionKeyAttributeTypes { get; }
+    IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> FilterInjectionKeyChoices { get; }
 }
 
 internal interface IAssemblyTypesFromAttributes : ITypesFromAttributesBase {}
@@ -217,6 +221,9 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         ScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ScopeInstanceImplementationAggregationAttribute);
         TransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         ScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        InjectionKeyAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.InjectionKeyMappingAttribute)
+            .Select(t => t.Item2)
+            .ToImmutableHashSet();
 
         FilterImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterImplementationAggregationAttribute);
         FilterTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientAbstractionAggregationAttribute);
@@ -237,6 +244,9 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         FilterScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceImplementationAggregationAttribute);
         FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        FilterInjectionKeyAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.FilterInjectionKeyMappingAttribute)
+            .Select(t => t.Item2)
+            .ToImmutableHashSet();
         
         void NotParsableAttribute(AttributeData ad) =>
             localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
@@ -850,6 +860,38 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         FilterImplementationChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationChoiceAttribute);
         
         FilterImplementationCollectionChoices = GetAbstractionTypesFromAttribute(wellKnownTypesChoice.FilterImplementationCollectionChoiceAttribute);
+        
+        InjectionKeyChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.InjectionKeyChoiceAttribute, out var injectionKeyChoiceAttributes) 
+                ? injectionKeyChoiceAttributes 
+                : Enumerable.Empty<AttributeData>())
+            .Select(ParseInjectionKeyChoice)
+            .OfType<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)>());
+        
+        FilterInjectionKeyChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterInjectionKeyChoiceAttribute, out var filterInjectionKeyChoiceAttributes) 
+                ? filterInjectionKeyChoiceAttributes 
+                : Enumerable.Empty<AttributeData>())
+            .Select(ParseInjectionKeyChoice)
+            .OfType<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)>());
+        
+        return;
+
+        (ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)? ParseInjectionKeyChoice(
+            AttributeData injectionKeyChoiceAttribute)
+        {
+            if (injectionKeyChoiceAttribute.ConstructorArguments.Length < 2
+                || injectionKeyChoiceAttribute.ConstructorArguments[0].Value is not object keyValue
+                || injectionKeyChoiceAttribute.ConstructorArguments[0].Type is not {} keyType
+                || injectionKeyChoiceAttribute.ConstructorArguments[1].Value is not INamedTypeSymbol implementationType
+                || !validateAttributes.ValidateImplementation(implementationType))
+            {
+                NotParsableAttribute(injectionKeyChoiceAttribute);
+                return null;
+            }
+
+            return (keyType, keyValue, implementationType);
+        }
     }
 
     private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
@@ -943,6 +985,9 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
     public IImmutableSet<IAssemblySymbol> AssemblyImplementations { get; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
+
+    public IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
@@ -972,4 +1017,6 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
     public IImmutableSet<IAssemblySymbol> FilterAssemblyImplementations { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterInjectionKeyAttributeTypes { get; }
+    public IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> FilterInjectionKeyChoices { get; }
 }

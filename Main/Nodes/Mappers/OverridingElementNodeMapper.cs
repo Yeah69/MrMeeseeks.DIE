@@ -7,6 +7,7 @@ using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
@@ -29,6 +30,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         ITransientScopeWideContext transientScopeWideContext,
         ILocalDiagLogger localDiagLogger,
         IContainerWideContext containerWideContext,
+        ICheckIterableTypes checkIterableTypes,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory, 
@@ -39,6 +41,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
         Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> threadLocalNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
+        Func<INamedTypeSymbol, IKeyValueBasedNode> keyValueBasedNodeFactory,
         Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory, 
@@ -52,6 +55,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             transientScopeWideContext, 
             localDiagLogger, 
             containerWideContext,
+            checkIterableTypes,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 
@@ -62,6 +66,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
             threadLocalNodeFactory,
             funcNodeFactory, 
             enumerableBasedNodeFactory,
+            keyValueBasedNodeFactory,
             implementationNodeFactory, 
             outParameterNodeFactory,
             errorNodeFactory, 
@@ -79,7 +84,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override IElementNode Map(ITypeSymbol type, PassedContext passedContext)
     {
         if (_override.Any() 
             && type is INamedTypeSymbol abstraction 
@@ -91,10 +96,10 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
                 new(true, true, true),
                 abstraction,
                 currentOverride.ImplementationType,
-                implementationStack,
+                passedContext,
                 mapper);
         }
-        return base.Map(type, implementationStack);
+        return base.Map(type, passedContext);
     }
 
     protected override MapperData GetMapperDataForAsyncWrapping() => new OverridingMapperData(_override);

@@ -29,9 +29,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         Reference = referenceGenerator.Generate("functionCallResult");
     }
 
-    public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public virtual void Build(PassedContext passedContext) { }
 
     public abstract void Accept(INodeVisitor nodeVisitor);
 

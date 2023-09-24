@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace MrMeeseeks.DIE.Test;
@@ -25,4 +26,12 @@ public interface ITaskInitializer
 public interface IValueTaskInitializer
 {
     ValueTask InitializeAsync();
+}
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Parameter | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
+public class KeyAttribute : Attribute
+{
+    public KeyAttribute(object key) => Key = key;
+
+    public object Key { get; }
 }

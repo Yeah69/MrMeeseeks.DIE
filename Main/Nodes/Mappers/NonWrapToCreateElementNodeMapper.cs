@@ -23,11 +23,12 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         IElementNodeMapperBase parentElementNodeMapper,
         
         IFunctionNode parentFunction,
-        IRangeNode _parentRange,
+        IRangeNode parentRange,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         ILocalDiagLogger localDiagLogger,
-        IContainerWideContext containerWideContext, 
+        IContainerWideContext containerWideContext,
+        ICheckIterableTypes checkIterableTypes, 
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory, 
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory, 
@@ -38,6 +39,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> threadLocalNodeFactory,
         Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
+        Func<INamedTypeSymbol, IKeyValueBasedNode> keyValueBasedNodeFactory,
         Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory, 
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory, 
@@ -51,6 +53,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             transientScopeWideContext, 
             localDiagLogger, 
             containerWideContext, 
+            checkIterableTypes,
             factoryFieldNodeFactory, 
             factoryPropertyNodeFactory, 
             factoryFunctionNodeFactory, 
@@ -61,6 +64,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             threadLocalNodeFactory,
             funcNodeFactory, 
             enumerableBasedNodeFactory,
+            keyValueBasedNodeFactory,
             implementationNodeFactory, 
             outParameterNodeFactory,
             errorNodeFactory, 
@@ -69,7 +73,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             localFunctionNodeFactory,
             overridingElementNodeMapperFactory)
     {
-        this._parentRange = _parentRange;
+        this._parentRange = parentRange;
         Next = parentElementNodeMapper;
     }
 
@@ -77,13 +81,13 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
 
     protected override IElementNodeMapperBase Next { get; }
 
-    public override IElementNode Map(ITypeSymbol type, ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override IElementNode Map(ITypeSymbol type, PassedContext passedContext)
     {
         if (type is INamedTypeSymbol namedType && _parentRange.GetInitializedNode(namedType) is { } initializedNode)
             return initializedNode;
         
         return TypeSymbolUtility.IsWrapType(type, WellKnownTypes)
-            ? base.Map(type, implementationStack)
+            ? base.Map(type, passedContext)
             : ParentRange.BuildCreateCall(type, ParentFunction);
     }
 }

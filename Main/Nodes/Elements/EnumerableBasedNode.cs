@@ -50,16 +50,16 @@ internal record SimpleCollectionData(
     string CollectionReference) 
     : ICollectionData;
 
+internal record ReadOnlyInterfaceCollectionData(
+        string CollectionTypeFullName, 
+        string CollectionReference,
+        string ConcreteCollectionTypeFullName) 
+    : ICollectionData;
+
 internal record ImmutableCollectionData(
         string CollectionTypeFullName, 
         string CollectionReference,
         string ImmutableUngenericTypeFullName) 
-    : ICollectionData;
-
-internal record ReadOnlyCollectionData(
-        string CollectionTypeFullName, 
-        string CollectionReference,
-        string ConcreteReadOnlyCollectionTypeFullName) 
     : ICollectionData;
 
 internal interface IEnumerableBasedNode : IElementNode
@@ -92,7 +92,7 @@ internal partial class EnumerableBasedNode : IEnumerableBasedNode
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public void Build(PassedContext passedContext)
     {
         var collectionsInnerType = CollectionUtility.GetCollectionsInnerType(_collectionType);
         
@@ -127,28 +127,29 @@ internal partial class EnumerableBasedNode : IEnumerableBasedNode
         {
             var collectionType = _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ReadOnlyCollection;
-            CollectionData = new ReadOnlyCollectionData(
+            CollectionData = new SimpleCollectionData(
                 collectionType.FullName(), 
-                _referenceGenerator.Generate(collectionType),
-                _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType).FullName());
+                _referenceGenerator.Generate(collectionType));
         }
         if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyCollection1))
         {
             var collectionType = _wellKnownTypesCollections.IReadOnlyCollection1.Construct(collectionsInnerType);
+            var concreteCollectionType = _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.IReadOnlyCollection;
-            CollectionData = new ReadOnlyCollectionData(
+            CollectionData = new ReadOnlyInterfaceCollectionData(
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType),
-                _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType).FullName());
+                concreteCollectionType.FullName());
         }
         if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyList1))
         {
             var collectionType = _wellKnownTypesCollections.IReadOnlyList1.Construct(collectionsInnerType);
+            var concreteCollectionType = _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.IReadOnlyList;
-            CollectionData = new ReadOnlyCollectionData(
+            CollectionData = new ReadOnlyInterfaceCollectionData(
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType),
-                _wellKnownTypesCollections.ReadOnlyCollection1.Construct(collectionsInnerType).FullName());
+                concreteCollectionType.FullName());
         }
         if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ArraySegment1))
         {
@@ -288,7 +289,7 @@ internal partial class EnumerableBasedNode : IEnumerableBasedNode
         var enumerableType = Type == EnumerableBasedType.IAsyncEnumerable 
             ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(collectionsInnerType)
             : _wellKnownTypesCollections.IEnumerable1.Construct(collectionsInnerType);
-        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction);
+        EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction, passedContext);
     }
 
     public string TypeFullName => Type != EnumerableBasedType.IEnumerable && Type != EnumerableBasedType.IAsyncEnumerable && CollectionData is not null

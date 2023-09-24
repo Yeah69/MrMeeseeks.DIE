@@ -17,9 +17,7 @@ internal partial class ParameterNode : IParameterNode
         Reference = referenceGenerator.Generate(type);
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string TypeFullName { get; }
     public string Reference { get; }

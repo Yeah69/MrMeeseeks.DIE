@@ -37,9 +37,7 @@ internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNod
         FullName = $"{container.FullName}.{Name}";
     }
     
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string FullName { get; }
     public string Name { get; }
@@ -54,7 +52,7 @@ internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNod
                         type,
                         callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                     .Function
-                    .EnqueueBuildJobTo(_container.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty);
+                    .EnqueueBuildJobTo(_container.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
                 foreach (var range in _ranges)
                     interfaceFunction.AddConsideredRange(range);
                 return interfaceFunction;

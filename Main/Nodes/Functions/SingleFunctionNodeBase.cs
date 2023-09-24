@@ -49,11 +49,11 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
     protected abstract IElementNodeMapperBase GetMapper();
 
     protected virtual IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
-        mapper.Map(TypeSymbol, ImmutableStack.Create<INamedTypeSymbol>());
+        mapper.Map(TypeSymbol, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
     
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override void Build(PassedContext passedContext)
     {
-        base.Build(implementationStack);
+        base.Build(passedContext);
         ReturnedElement = MapToReturnedElement(GetMapper());
     }
 

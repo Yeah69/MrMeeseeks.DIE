@@ -14,6 +14,8 @@ internal record WellKnownTypesMiscellaneous(
     INamedTypeSymbol CreateFunctionAttribute,
     INamedTypeSymbol ErrorDescriptionInsteadOfBuildFailureAttribute,
     INamedTypeSymbol AnalyticsAttribute,
+    INamedTypeSymbol InjectionKeyMappingAttribute,
+    INamedTypeSymbol FilterInjectionKeyMappingAttribute,
     INamedTypeSymbol DieExceptionKind)
 {
     internal static WellKnownTypesMiscellaneous Create(Compilation compilation) => new (
@@ -27,5 +29,7 @@ internal record WellKnownTypesMiscellaneous(
         CreateFunctionAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(CreateFunctionAttribute).FullName ?? ""),
         ErrorDescriptionInsteadOfBuildFailureAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ErrorDescriptionInsteadOfBuildFailureAttribute).FullName ?? ""),
         AnalyticsAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(AnalyticsAttribute).FullName ?? ""),
+        InjectionKeyMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InjectionKeyMappingAttribute).FullName ?? ""),
+        FilterInjectionKeyMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInjectionKeyMappingAttribute).FullName ?? ""),
         DieExceptionKind: compilation.GetTypeByMetadataNameOrThrow(typeof(DieExceptionKind).FullName ?? ""));
 }

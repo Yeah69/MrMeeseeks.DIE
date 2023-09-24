@@ -34,6 +34,8 @@ internal partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeIns
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> multiKeyValueMultiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateScopeFunctionNodeRoot> createScopeFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
@@ -49,6 +51,8 @@ internal partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeIns
             mapperDataToFunctionKeyTypeConverter,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
+            multiKeyValueFunctionNodeFactory,
+            multiKeyValueMultiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
             voidFunctionNodeFactory,
             disposalHandlingNodeFactory,
@@ -80,7 +84,7 @@ internal partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeIns
                 type,
                 callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty),
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
             f => f.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this));
 
     public string TransientScopeInterfaceFullName { get; }

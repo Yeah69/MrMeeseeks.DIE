@@ -39,7 +39,7 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         }
     }
     
-    public virtual void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public virtual void Build(PassedContext passedContext)
     {
         _parentFunction.RegisterAwaitableNode(this);
     }

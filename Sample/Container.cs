@@ -1,28 +1,51 @@
-﻿using System;
-using System.Threading;
+﻿using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Dependency
+internal enum Key
 {
-    internal Dependency()
-    {
-        Value = "Thread" + Thread.CurrentThread.ManagedThreadId;
-    }
-
-    public string Value { get; set; }
+    A,
+    B,
+    C
 }
 
-internal class Root
+internal interface IInterface
 {
-    internal Root(ThreadLocal<Lazy<Dependency>> dependency) => Dependency = dependency;
-    
-    internal ThreadLocal<Lazy<Dependency>> Dependency { get; }
 }
 
-[CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container
+internal class DependencyA0 : IInterface
+{
+}
+
+internal class DependencyA1 : IInterface
+{
+}
+
+internal class DependencyB0 : IInterface
+{
+}
+
+internal class DependencyB1 : IInterface
+{
+}
+
+internal class DependencyC0 : IInterface
+{
+}
+
+internal class DependencyC1 : IInterface
+{
+}
+
+[InjectionKeyChoice(Key.A, typeof(DependencyA0))]
+[InjectionKeyChoice(Key.A, typeof(DependencyA1))]
+[InjectionKeyChoice(Key.B, typeof(DependencyB0))]
+[InjectionKeyChoice(Key.B, typeof(DependencyB1))]
+[InjectionKeyChoice(Key.C, typeof(DependencyC0))]
+[InjectionKeyChoice(Key.C, typeof(DependencyC1))]
+[CreateFunction(typeof(IReadOnlyDictionary<Key, IReadOnlyList<IInterface>>), "Create")]
+internal partial class Container
 {
     private Container() {}
 }

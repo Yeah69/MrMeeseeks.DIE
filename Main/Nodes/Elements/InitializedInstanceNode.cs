@@ -26,9 +26,7 @@ internal partial class InitializedInstanceNode : IInitializedInstanceNode
         IsReferenceType = type.IsReferenceType;
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string TypeFullName { get; }
     public string Reference { get; }

@@ -26,7 +26,7 @@ internal partial class ValueTupleNode : IValueTupleNode
         Reference = referenceGenerator.Generate(_valueTupleType);
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public void Build(PassedContext passedContext)
     {
         var constructor = _valueTupleType
             .InstanceConstructors
@@ -34,7 +34,7 @@ internal partial class ValueTupleNode : IValueTupleNode
             .First(c => c.Parameters.Length > 0);
         _parameters.AddRange(constructor
             .Parameters
-            .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, implementationStack))));
+            .Select(p => (p.Name, _elementNodeMapper.Map(p.Type, passedContext))));
     }
 
     public string TypeFullName { get; }

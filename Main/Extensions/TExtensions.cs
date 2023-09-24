@@ -6,10 +6,10 @@ namespace MrMeeseeks.DIE.Extensions;
 // ReSharper disable once InconsistentNaming
 internal static class TExtensions
 {
-    internal static T EnqueueBuildJobTo<T>(this T item, Queue<BuildJob> queue, ImmutableStack<INamedTypeSymbol> implementationSet) 
+    internal static T EnqueueBuildJobTo<T>(this T item, Queue<BuildJob> queue, PassedContext passedContext) 
         where T : INode
     {
-        var buildJob = new BuildJob(item, implementationSet);
+        var buildJob = new BuildJob(item, passedContext);
         queue.Enqueue(buildJob);
         return item;
     }

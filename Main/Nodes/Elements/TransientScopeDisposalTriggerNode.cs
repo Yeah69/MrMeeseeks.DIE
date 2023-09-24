@@ -37,9 +37,7 @@ internal partial class TransientScopeDisposalTriggerNode : ITransientScopeDispos
             disposableType);
     }
 
-    public void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
-    {
-    }
+    public void Build(PassedContext passedContext) { }
 
     public string TypeFullName { get; }
     public string Reference { get; }

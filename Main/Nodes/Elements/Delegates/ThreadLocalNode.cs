@@ -32,9 +32,9 @@ internal partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNode
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
     }
 
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override void Build(PassedContext passedContext)
     {
-        base.Build(implementationStack);
+        base.Build(passedContext);
         var disposalType = _checkTypeProperties.ShouldDisposalBeManaged(_threadLocalType);
         if (disposalType.HasFlag(DisposalType.Sync))
             SyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterSyncDisposal();

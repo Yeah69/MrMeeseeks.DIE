@@ -28,7 +28,7 @@ internal interface IContainerNode : IRangeNode
     void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode);
 }
 
-internal record BuildJob(INode Node, ImmutableStack<INamedTypeSymbol> PreviousImplementations);
+internal record BuildJob(INode Node, PassedContext PassedContext);
 
 internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
@@ -77,6 +77,8 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         Lazy<IScopeManager> lazyScopeManager,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
+        Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> multiKeyValueMultiFunctionNodeFactory,
         Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> rangedInstanceFunctionGroupNodeFactory,
         Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> entryFunctionNodeFactory,
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
@@ -91,6 +93,8 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
             containerWideContext,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
+            multiKeyValueFunctionNodeFactory,
+            multiKeyValueMultiFunctionNodeFactory,
             rangedInstanceFunctionGroupNodeFactory,
             voidFunctionNodeFactory,
             disposalHandlingNodeFactory,
@@ -126,14 +130,14 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
     protected override string ContainerParameterForScope =>
         Constants.ThisKeyword;
 
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override void Build(PassedContext passedContext)
     {
         var initializedInstancesFunction = InitializedInstances.Any()
             ? VoidFunctionNodeFactory(
                     InitializedInstances.ToList(),
                     Array.Empty<ITypeSymbol>())
                 .Function
-                .EnqueueBuildJobTo(ParentContainer.BuildQueue, ImmutableStack<INamedTypeSymbol>.Empty)
+                .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null))
             : null;
         
         if (initializedInstancesFunction is {})
@@ -146,7 +150,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
             .ToList();
 
         TransientScopeInterface.RegisterRange(this);
-        base.Build(implementationStack);
+        base.Build(passedContext);
         foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)
         {
             var functionNode = _entryFunctionNodeFactory(
@@ -155,13 +159,13 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
                 parameterTypes)
                 .Function;
             _rootFunctions.Add(functionNode);
-            BuildQueue.Enqueue(new(functionNode, implementationStack));
+            BuildQueue.Enqueue(new(functionNode, passedContext));
         }
 
         var asyncCallNodes = new List<IAsyncFunctionCallNode>();
         while (BuildQueue.Any() && BuildQueue.Dequeue() is { } buildJob)
         {
-            buildJob.Node.Build(buildJob.PreviousImplementations);
+            buildJob.Node.Build(buildJob.PassedContext);
             if (buildJob.Node is IAsyncFunctionCallNode call)
                 asyncCallNodes.Add(call);
         }

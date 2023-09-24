@@ -28,7 +28,9 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
     public void VisitICreateTransientScopeFunctionNode(ICreateTransientScopeFunctionNode element) =>
         VisitISingleFunctionNode(element);
 
-    public void VisitIMultiFunctionNode(IMultiFunctionNode element)
+    public void VisitIMultiFunctionNode(IMultiFunctionNode element) => VisitIMultiFunctionNodeBase(element);
+
+    private void VisitIMultiFunctionNodeBase(IMultiFunctionNodeBase element)
     {
         _currentNodeStack.Push(element);
         
@@ -73,8 +75,21 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
         foreach (var rangedInstanceFunctionGroup in element.RangedInstanceFunctionGroups)
             VisitIRangedInstanceFunctionGroupNode(rangedInstanceFunctionGroup);
         
-        foreach (var multiFunction in element.MultiFunctions)
-            VisitIMultiFunctionNode(multiFunction);
+        foreach (var multiFunctionBase in element.MultiFunctions)
+            switch (multiFunctionBase)
+            {
+                case IMultiFunctionNode multiFunctionNode:
+                    VisitIMultiFunctionNode(multiFunctionNode);
+                    break;
+                case IMultiKeyValueFunctionNode multiKeyValueFunctionNode:
+                    VisitIMultiKeyValueFunctionNode(multiKeyValueFunctionNode);
+                    break;
+                case IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode:
+                    VisitIMultiKeyValueMultiFunctionNode(multiKeyValueMultiFunctionNode);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(multiFunctionBase));
+            }
     }
 
     private void VisitISingleFunctionNode(ISingleFunctionNode element)
@@ -152,6 +167,12 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
                 break;
             case IReusedNode reusedNode:
                 VisitIReusedNode(reusedNode);
+                break;
+            case IKeyValueBasedNode keyValueBasedNode:
+                VisitIKeyValueBasedNode(keyValueBasedNode);
+                break;
+            case IKeyValuePairNode keyValuePairNode:
+                VisitIKeyValuePairNode(keyValuePairNode);
                 break;
         }
     }
@@ -329,5 +350,22 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
 
     public void VisitIOutParameterNode(IOutParameterNode element)
     {
+    }
+
+    public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode element) =>
+        VisitIMultiFunctionNodeBase(element);
+
+    public void VisitIMultiKeyValueMultiFunctionNode(IMultiKeyValueMultiFunctionNode element) =>
+        VisitIMultiFunctionNodeBase(element);
+
+    public void VisitIKeyValueBasedNode(IKeyValueBasedNode element) { }
+
+    public void VisitIKeyValuePairNode(IKeyValuePairNode element)
+    {
+        _currentNodeStack.Push(element);
+
+        VisitIElementNode(element.Value);
+        
+        _currentNodeStack.Pop();
     }
 }

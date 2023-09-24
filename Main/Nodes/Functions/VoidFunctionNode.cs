@@ -57,9 +57,9 @@ internal partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, I
         Name = referenceGenerator.Generate("Initialize");
     }
     
-    public override void Build(ImmutableStack<INamedTypeSymbol> implementationStack)
+    public override void Build(PassedContext passedContext)
     {
-        base.Build(implementationStack);
+        base.Build(passedContext);
         Initializations = _initializedInstanceNodes
             .Select(i => (i.BuildCall(_parentRange, this), i))
             .ToList();

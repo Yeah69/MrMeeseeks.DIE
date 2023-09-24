@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -68,10 +69,14 @@ internal interface ICheckTypeProperties
     bool ShouldBeDecorated(INamedTypeSymbol interfaceType);
     IReadOnlyList<INamedTypeSymbol> GetSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType);
 
-    INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type);
-    IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol);
+    INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey);
+    IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey);
+    IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType);
+    IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType);
     (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType);
     IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType);
+
+    InjectionKey? IdentifyInjectionKeyModification(ISymbol parameterOrProperty);
 }
 
 internal abstract class CheckTypeProperties : ICheckTypeProperties
@@ -80,6 +85,9 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
+    
+    private readonly IDictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = 
+        new Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>>();
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
@@ -91,6 +99,46 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         _injectablePropertyExtractor = injectablePropertyExtractor;
         _localDiagLogger = localDiagLogger;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
+
+        var injectionKeyMappings = currentlyConsideredTypes.AllConsideredImplementations
+            .SelectMany(i => i.GetAttributes().Select(a => (i, a)))
+            .Select(t =>
+            {
+                var (implementation, attribute) = t;
+                if (!currentlyConsideredTypes.InjectionKeyAttributeTypes.Any(a =>
+                        CustomSymbolEqualityComparer.Default.Equals(a, attribute.AttributeClass)))
+                    return ((ITypeSymbol? KeyType, object? KeyValue, INamedTypeSymbol ImplementationType)?)null;
+                return ( 
+                    attribute.ConstructorArguments[0].Type,
+                    attribute.ConstructorArguments[0].Value,
+                    implementation);
+            })
+            .Concat(currentlyConsideredTypes.InjectionKeyChoices.Select(t => 
+                (t.KeyType, t.KeyValue, t.ImplementationType) 
+                as (ITypeSymbol? KeyType, object? KeyValue, INamedTypeSymbol ImplementationType)?));
+        
+        foreach (var injectionKeyMapping in injectionKeyMappings)
+        {
+            if (injectionKeyMapping is not
+                {
+                    KeyType: {} keyType, 
+                    KeyValue: {} keyValue, 
+                    ImplementationType: {} implementationType
+                })
+                continue;
+            
+            if (_typeToKeyToValue.TryGetValue(implementationType, out var keyToValue))
+            {
+                if (keyToValue.TryGetValue(keyType, out var values))
+                    values.Add(keyValue);
+                else
+                    keyToValue.Add(keyType, new HashSet<object>{keyValue});
+            }
+            else
+                _typeToKeyToValue.Add(
+                    implementationType.OriginalDefinition, 
+                    new Dictionary<ITypeSymbol, ISet<object>>{{keyType, new HashSet<object>{keyValue}}});
+        }
     }
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
@@ -219,7 +267,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             .ToList();
     }
 
-    public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type)
+    public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey)
     {
         var choice =
             _currentlyConsideredTypes.ImplementationChoices.TryGetValue(type.UnboundIfGeneric(), out var choice0)
@@ -232,12 +280,14 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         
         if (choice is not null)
         {
-            var possibleChoices = GetClosedImplementations(
-                type, 
-                ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, choice), 
-                true, 
-                false, 
-                false);
+            var possibleChoices = FilterByInjectionKey(
+                GetClosedImplementations(
+                    type, 
+                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, choice), 
+                    true, 
+                    false, 
+                    false), 
+                injectionKey);
             return possibleChoices.Count == 1
                 ? possibleChoices.FirstOrDefault()
                 : null;
@@ -249,19 +299,28 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 _currentlyConsideredTypes.CompositeTypes.Contains(type))
                 // if concrete type is decorator or composite then just shortcut
                 return type;
-            var possibleConcreteTypeImplementations = GetClosedImplementations(
-                type,
-                ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, type),
-                true,
-                false,
-                false);
+            var possibleConcreteTypeImplementations = FilterByInjectionKey(
+                GetClosedImplementations(
+                    type,
+                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, type),
+                    true,
+                    false,
+                    false),
+                injectionKey);
             return possibleConcreteTypeImplementations.Count == 1
                 ? possibleConcreteTypeImplementations.FirstOrDefault()
                 : null;
         }
 
         var possibleImplementations = _currentlyConsideredTypes.ImplementationMap.TryGetValue(type.UnboundIfGeneric(), out var implementations) 
-            ? GetClosedImplementations(type, implementations, true, false, false)
+            ? FilterByInjectionKey(
+                GetClosedImplementations(
+                    type, 
+                    implementations, 
+                    true, 
+                    false, 
+                    false),
+                injectionKey)
             : Array.Empty<INamedTypeSymbol>();
 
         return possibleImplementations.Count == 1
@@ -269,7 +328,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             : null;
     }
 
-    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol)
+    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey)
     {
         var isChoice =
             _currentlyConsideredTypes
@@ -285,19 +344,64 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         {
             var set = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
                 CustomSymbolEqualityComparer.Default,
-                isCollectionChoice && choiceCollection is { }
+                isCollectionChoice && choiceCollection is {}
                     ? choiceCollection
                     : Enumerable.Empty<INamedTypeSymbol>());
-            if (isChoice && choice is { })
+            if (isChoice && choice is {})
                 set = set.Add(choice);
-            return GetClosedImplementations(typeSymbol, set, false, false, false);
+            return FilterByInjectionKey(
+                GetClosedImplementations(
+                    typeSymbol, 
+                    set, 
+                    false, 
+                    false, 
+                    false),
+                injectionKey);
         }
         
         return _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol.UnboundIfGeneric(),
             out var implementations)
-            ? GetClosedImplementations(typeSymbol, implementations, false, false, false)
+            ? FilterByInjectionKey(
+                GetClosedImplementations(
+                    typeSymbol,
+                    implementations, 
+                    false, 
+                    false, 
+                    false),
+                injectionKey)
             : Array.Empty<INamedTypeSymbol>();
+        
+        
     }
+    
+    private IReadOnlyList<INamedTypeSymbol> FilterByInjectionKey(
+        IReadOnlyList<INamedTypeSymbol> possibleChoices,
+        InjectionKey? injectionKey) =>
+        injectionKey is null
+            ? possibleChoices
+            : possibleChoices
+                .Where(c => 
+                    _typeToKeyToValue.TryGetValue(c.OriginalDefinition, out var keyToValue)
+                    && keyToValue.TryGetValue(injectionKey.Type, out var values)
+                    && values.Contains(injectionKey.Value))
+                .ToList();
+
+    public IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>
+        MapToImplementations(typeSymbol, null)
+            .SelectMany(i => _typeToKeyToValue.TryGetValue(i.OriginalDefinition, out var keyToValue)
+                ? keyToValue.TryGetValue(keyType, out var values)
+                    ? values.Select(v => (v, i))
+                    : Enumerable.Empty<(object, INamedTypeSymbol)>()
+                : Enumerable.Empty<(object, INamedTypeSymbol)>())
+            .GroupBy(t => t.Item1)
+            .ToDictionary(
+                g => g.Key, 
+                g => (IReadOnlyList<INamedTypeSymbol>) g.Select(t => t.Item2).ToList());
+
+    public IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>
+        MapToKeyedMultipleImplementations(typeSymbol, keyType)
+            .Where(kvp => kvp.Value.Count == 1)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
 
     private IReadOnlyList<INamedTypeSymbol> GetClosedImplementations(
         INamedTypeSymbol targetType,
@@ -499,5 +603,23 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             .GetInjectableProperties(implementationType)
             .Where(p => propertyChoicesNames.Contains(p.Name))
             .ToList();
+    }
+
+    public InjectionKey? IdentifyInjectionKeyModification(ISymbol parameterOrProperty)
+    {
+        var intermediate = parameterOrProperty
+            .GetAttributes()
+            .Select(a => _currentlyConsideredTypes.InjectionKeyAttributeTypes.Any(ika =>
+                             CustomSymbolEqualityComparer.Default.Equals(a.AttributeClass, ika))
+                         && a.ConstructorArguments.Length == 1
+                         && a.ConstructorArguments[0].Type is { } type
+                         && a.ConstructorArguments[0].Value is { } value
+                ? (type, value)
+                : ((ITypeSymbol, object)?)null)
+            .Where(t => t is not null)
+            .ToArray();
+        return intermediate.Length == 1 && intermediate[0] is { } ret
+            ? new(ret.Item1, ret.Item2)
+            : null;
     }
 }

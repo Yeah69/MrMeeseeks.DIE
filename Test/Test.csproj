@@ -26,27 +26,13 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="MrMeeseeks.DIE" Version="2.0.5" />
+        <PackageReference Include="MrMeeseeks.DIE" Version="2.1.0-beta.2" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\TestChild\TestChild.csproj" />
         <ProjectReference Include="..\TestInternalsVisibleToChild\TestInternalsVisibleToChild.csproj" />
         <ProjectReference Include="..\TestNotInternalsVisibleToChild\TestNotInternalsVisibleToChild.csproj" />
-    </ItemGroup>
-
-
-
-    <ItemGroup>
-      <Compile Remove="KeyedInjections\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Remove="KeyedInjections\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="KeyedInjections\**" />
     </ItemGroup>
 
 </Project>

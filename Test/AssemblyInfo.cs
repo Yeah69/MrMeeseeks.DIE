@@ -15,7 +15,7 @@ using MrMeeseeks.DIE.Test;
 [assembly:Initializer(typeof(ITaskInitializer), nameof(ITaskInitializer.InitializeAsync))]
 [assembly:Initializer(typeof(IValueTaskInitializer), nameof(IValueTaskInitializer.InitializeAsync))]
 
-//[assembly:InjectionKeyMapping(typeof(KeyAttribute))]
+[assembly:InjectionKeyMapping(typeof(KeyAttribute))]
 
 [assembly:AllImplementationsAggregation]
 

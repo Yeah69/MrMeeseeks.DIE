@@ -60,7 +60,9 @@ internal class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNo
     public void VisitICreateTransientScopeFunctionNode(ICreateTransientScopeFunctionNode element) =>
         VisitISingleFunctionNode(element);
 
-    public void VisitIMultiFunctionNode(IMultiFunctionNode element)
+    public void VisitIMultiFunctionNode(IMultiFunctionNode element) => VisitIMultiFunctionNodeBase(element);
+
+    public void VisitIMultiFunctionNodeBase(IMultiFunctionNodeBase element)
     {
         if (_relevantNodes is not null && !_relevantNodes.Contains(element))
             return;
@@ -72,8 +74,8 @@ internal class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNo
         var reference = GetOrAddReference(element);
         _currentReference = reference;
         _code.AppendLine($$"""
-package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
-""");
+                           package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
+                           """);
 
         foreach (var returnedElement in element.ReturnedElements)
             VisitIElementNode(returnedElement);
@@ -82,8 +84,8 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
             VisitISingleFunctionNode(localFunction);
         
         _code.AppendLine($$"""
-}
-""");
+                           }
+                           """);
         _currentReference = previousReference;
         
         _currentFunctionNode = previousFunctionNode;
@@ -632,15 +634,11 @@ package "void {{element.Name}}({{string.Join(", ", element.Parameters.Select(p =
     {
     }
 
-    public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode multiKeyValueFunctionNode)
-    {
-        // todo implement
-    } 
+    public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode multiKeyValueFunctionNode) => 
+        VisitIMultiFunctionNodeBase(multiKeyValueFunctionNode);
 
-    public void VisitIMultiKeyValueMultiFunctionNode(IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode)
-    {
-        // todo implement
-    } 
+    public void VisitIMultiKeyValueMultiFunctionNode(IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode) => 
+        VisitIMultiFunctionNodeBase(multiKeyValueMultiFunctionNode);
 
     public void VisitIKeyValueBasedNode(IKeyValueBasedNode keyValueBasedNode)
     {

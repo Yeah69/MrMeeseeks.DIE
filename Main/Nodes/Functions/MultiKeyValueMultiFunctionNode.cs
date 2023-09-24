@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -16,6 +17,7 @@ internal interface IMultiKeyValueMultiFunctionNode : IMultiFunctionNodeBase
 internal partial class MultiKeyValueMultiFunctionNode : MultiFunctionNodeBase, IMultiKeyValueMultiFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
+    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> _keyValuePairNodeFactory;
     private readonly ICheckTypeProperties _checkTypeProperties;
@@ -30,6 +32,7 @@ internal partial class MultiKeyValueMultiFunctionNode : MultiFunctionNodeBase, I
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
+        ILocalDiagLogger localDiagLogger,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -54,6 +57,7 @@ internal partial class MultiKeyValueMultiFunctionNode : MultiFunctionNodeBase, I
             containerWideContext)
     {
         _enumerableType = enumerableType;
+        _localDiagLogger = localDiagLogger;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _keyValuePairNodeFactory = keyValuePairNodeFactory;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
@@ -70,8 +74,12 @@ internal partial class MultiKeyValueMultiFunctionNode : MultiFunctionNodeBase, I
         base.Build(passedContext);
         var keyValueType = (INamedTypeSymbol) _enumerableType.TypeArguments[0];
         var itemType = keyValueType.TypeArguments[1];
-        var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes) as INamedTypeSymbol ?? throw new InvalidOperationException(); // todo replace exception with error log
-        var iterableItemType = CollectionUtility.GetCollectionsInnerType(unwrappedItemType) as INamedTypeSymbol ?? throw new InvalidOperationException(); // todo replace exception with error log
+        var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes);
+        if (CollectionUtility.GetCollectionsInnerType(unwrappedItemType) is not INamedTypeSymbol iterableItemType)
+        {
+            _localDiagLogger.Error(ErrorLogData.ResolutionException("The iterable value type of the keyed map has to have a named item type (class, struct or interface).", _enumerableType, ImmutableStack<INamedTypeSymbol>.Empty), Location.None);
+            throw new InvalidOperationException();
+        }
         
         var concreteItemTypesMap = _checkTypeProperties.MapToKeyedMultipleImplementations(iterableItemType, keyValueType.TypeArguments[0]);
 

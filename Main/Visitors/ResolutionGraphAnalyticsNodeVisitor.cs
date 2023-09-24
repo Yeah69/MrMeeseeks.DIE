@@ -612,9 +612,10 @@ map "{{element.TypeFullName}}" as {{reference}} {
         var previousReference = _currentReference;
         var reference = GetOrAddReference(element);
         _currentReference = reference;
-        _code.AppendLine($$"""
-package "void {{element.Name}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
-""");
+        _code.AppendLine(
+            $$"""
+              package "void {{element.Name}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
+              """);
 
         foreach (var initialization in element.Initializations)
             VisitIFunctionCallNode(initialization.Item1);
@@ -622,9 +623,7 @@ package "void {{element.Name}}({{string.Join(", ", element.Parameters.Select(p =
         foreach (var localFunction in element.LocalFunctions)
             VisitISingleFunctionNode(localFunction);
         
-        _code.AppendLine($$"""
-}
-""");
+        _code.AppendLine("}");
         _currentReference = previousReference;
         
         _currentFunctionNode = previousFunctionNode;

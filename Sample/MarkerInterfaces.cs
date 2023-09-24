@@ -24,7 +24,7 @@ using MrMeeseeks.DIE.Sample;
 [assembly:Initializer(typeof(ITaskInitializer), nameof(ITaskInitializer.InitializeAsync))]
 [assembly:Initializer(typeof(IValueTaskInitializer), nameof(IValueTaskInitializer.InitializeAsync))]
 
-[assembly:InjectionKeyMapping(typeof(KeyAttribute))]
+//[assembly:InjectionKeyMapping(typeof(KeyAttribute))]
 
 [assembly:AllImplementationsAggregation]
 

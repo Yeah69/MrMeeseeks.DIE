@@ -26,7 +26,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="MrMeeseeks.DIE" Version="2.0.6-alpha.0.8" />
+        <PackageReference Include="MrMeeseeks.DIE" Version="2.0.5" />
     </ItemGroup>
 
     <ItemGroup>
@@ -36,5 +36,17 @@
     </ItemGroup>
 
 
+
+    <ItemGroup>
+      <Compile Remove="KeyedInjections\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="KeyedInjections\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="KeyedInjections\**" />
+    </ItemGroup>
 
 </Project>

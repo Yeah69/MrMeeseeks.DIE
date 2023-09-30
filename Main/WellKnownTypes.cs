@@ -24,7 +24,8 @@ internal record WellKnownTypes(
     INamedTypeSymbol InternalsVisibleToAttribute,
     INamedTypeSymbol Nullable1,
     INamedTypeSymbol String,
-    INamedTypeSymbol Type)
+    INamedTypeSymbol Type,
+    INamedTypeSymbol Object)
 {
     internal static WellKnownTypes Create(Compilation compilation)
     {
@@ -53,6 +54,7 @@ internal record WellKnownTypes(
             InternalsVisibleToAttribute: compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.InternalsVisibleToAttribute"),
             Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"),
             String: compilation.GetTypeByMetadataNameOrThrow("System.String"),
-            Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"));
+            Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"),
+            Object: compilation.GetTypeByMetadataNameOrThrow("System.Object"));
     }
 }

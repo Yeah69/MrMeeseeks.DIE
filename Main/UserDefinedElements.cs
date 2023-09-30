@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
@@ -35,7 +36,17 @@ internal class UserDefinedElements : IUserDefinedElements
     {
         if (types.Range is { } range)
         {
-            var dieMembers = range.GetMembers()
+            var dieMembers = range
+                .GetMembers()
+                .Select(s => (s, i: 0))
+                .Concat(range
+                    .AllBaseTypes()
+                    .SelectMany((t, i) => t
+                        .GetMembers()
+                        .Where(s => s.DeclaredAccessibility == Accessibility.Protected)
+                        .Select(s => (s, i: i + 1))))
+                .GroupBy(t => t.s.Name)
+                .Select(g => g.OrderBy(t => t.i).Select(t => t.s).First())
                 .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_"))
                 .ToList();
 

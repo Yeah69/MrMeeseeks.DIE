@@ -68,6 +68,13 @@ internal static class ErrorLogData
             "Validation (Scope)",
             $"The scope \"{scope.Name}\" (of parent-container \"{parentContainer.Name}\") isn't validly defined: {specification}",
             DieExceptionKind.Validation);
+    
+    internal static DiagLogData ValidationBaseClass(INamedTypeSymbol baseType, INamedTypeSymbol range, string specification) =>
+        new(67,
+            2,
+            "Validation (Scope)",
+            $"The scope \"{baseType.Name}\" (of container/(transient) scope \"{range.Name}\") isn't validly defined: {specification}",
+            DieExceptionKind.Validation);
 
     internal static DiagLogData ValidationUserDefinedElement(
         ISymbol userDefinedElement, 

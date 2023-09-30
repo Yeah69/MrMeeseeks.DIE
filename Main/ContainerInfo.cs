@@ -27,7 +27,8 @@ internal class ContainerInfo : IContainerInfo
         ContainerType = containerClass;
             
         CreateFunctionData = containerClass
-            .GetAttributes()
+            .AllBaseTypesAndSelf()
+            .SelectMany(t => t.GetAttributes())
             .Where(ad => CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass))
             .Select(ad => ad.ConstructorArguments.Length == 3 
                           && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type

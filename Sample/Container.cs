@@ -41,11 +41,15 @@ internal class DependencyC1 : IInterface
 [InjectionKeyChoice(Key.A, typeof(DependencyA0))]
 [InjectionKeyChoice(Key.A, typeof(DependencyA1))]
 [InjectionKeyChoice(Key.B, typeof(DependencyB0))]
+internal abstract partial class ContainerBase
+{
+}
+
 [InjectionKeyChoice(Key.B, typeof(DependencyB1))]
 [InjectionKeyChoice(Key.C, typeof(DependencyC0))]
 [InjectionKeyChoice(Key.C, typeof(DependencyC1))]
 [CreateFunction(typeof(IReadOnlyDictionary<Key, IReadOnlyList<IInterface>>), "Create")]
-internal partial class Container
+internal partial class Container : ContainerBase
 {
     private Container() {}
 }

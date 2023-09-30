@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
@@ -33,11 +34,12 @@ internal class ExecuteImpl : IExecute
                 .GetRoot()
                 .DescendantNodesAndSelf()
                 .OfType<ClassDeclarationSyntax>()
-                .Select(x => ModelExtensions.GetDeclaredSymbol(semanticModel, x))
+                .Select(x => semanticModel.GetDeclaredSymbol(x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x
-                    .GetAttributes()
+                .Where(x => x is { IsAbstract: false } && x
+                    .AllBaseTypesAndSelf()
+                    .SelectMany(t => t.GetAttributes())
                     .Any(ad => CustomSymbolEqualityComparer.Default.Equals(
                         _wellKnownTypesMiscellaneous.CreateFunctionAttribute, 
                         ad.AttributeClass)))

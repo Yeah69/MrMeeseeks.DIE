@@ -120,7 +120,12 @@ internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContaine
         IContainerInfoContext containerInfoContext,
         IContainerWideContext containerWideContext) 
         : base(
-            containerInfoContext.ContainerInfo.ContainerType.GetAttributes(), 
+            containerInfoContext
+                .ContainerInfo
+                .ContainerType
+                .AllBaseTypesAndSelf()
+                .SelectMany(t => t.GetAttributes())
+                .ToArray(), 
             containerInfoContext.ContainerInfo.ContainerType,
             containerInfoContext.ContainerInfo.ContainerType, 
             localDiagLogger,
@@ -161,7 +166,11 @@ internal class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFr
         IContainerInfoContext containerInfoContext,
         IContainerWideContext containerWideContext)
         : base(
-            scopeInfo.ScopeType?.GetAttributes() as IReadOnlyList<AttributeData> ?? Array.Empty<AttributeData>(),
+            scopeInfo
+                .ScopeType
+                ?.AllBaseTypesAndSelf()
+                .SelectMany(t => t.GetAttributes())
+                .ToArray() ?? Array.Empty<AttributeData>(),
             scopeInfo.ScopeType,
             containerInfoContext.ContainerInfo.ContainerType,
             localDiagLogger,

@@ -98,7 +98,8 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         }
 
         var createFunctionAttributes = rangeType
-            .GetAttributes()
+            .AllBaseTypesAndSelf()
+            .SelectMany(t => t.GetAttributes())
             .Where(ad =>
                 CustomSymbolEqualityComparer.Default.Equals(
                     ad.AttributeClass, 

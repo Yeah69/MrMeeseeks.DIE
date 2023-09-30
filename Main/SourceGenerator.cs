@@ -5,13 +5,7 @@ public class SourceGenerator : ISourceGenerator
 {
     public void Initialize(GeneratorInitializationContext context)
     {
-        new InitializeImpl(context, SyntaxReceiverFactory).Initialize();
-            
-        ISyntaxReceiver SyntaxReceiverFactory() => new SyntaxReceiver();
-        //if (!Debugger.IsAttached)
-        {
-            //Debugger.Launch();
-        }
+        // no initialization required
     }
 
     public void Execute(GeneratorExecutionContext context)

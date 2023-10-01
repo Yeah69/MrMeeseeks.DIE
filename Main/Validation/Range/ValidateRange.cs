@@ -200,37 +200,29 @@ internal abstract class ValidateRange : IValidateRange
 
         void ValidateAddForDisposal(string addForDisposalName, bool isSync)
         {
-            var addForDisposalMembers = unfilteredMembers
+            var addForDisposalMembers = rangeType
+                .GetMembers()
                 .Where(s => s.Name == addForDisposalName)
                 .ToImmutableArray();
 
-            switch (addForDisposalMembers.Length)
-            {
-                case > 1:
-                    LogError(rangeType, containerType, $"Only a single \"{addForDisposalName}\"-member is allowed.");
-                    break;
-                case 1 when addForDisposalMembers[0] is not IMethodSymbol:
-                    LogError(rangeType, containerType, $"The \"{addForDisposalName}\"-member is required to be a method.");
-                    break;
-                case 1:
+            if (addForDisposalMembers.Length > 1)
+                LogError(rangeType, containerType, $"Only a single \"{addForDisposalName}\"-member is allowed.");
+            else if (addForDisposalMembers.Length == 1 && addForDisposalMembers[0] is not IMethodSymbol)
+                LogError(rangeType, containerType, $"The \"{addForDisposalName}\"-member is required to be a method.");
+            else if (addForDisposalMembers.Length == 1)
+                if (addForDisposalMembers[0] is IMethodSymbol addForDisposalMember)
                 {
-                    if (addForDisposalMembers[0] is IMethodSymbol addForDisposalMember)
-                    {
-                        if (isSync)
-                            _validateUserDefinedAddForDisposalSync.Validate(
-                                addForDisposalMember, 
-                                rangeType,
-                                containerType);
-                        else
-                            _validateUserDefinedAddForDisposalAsync.Validate(
-                                addForDisposalMember, 
-                                rangeType,
-                                containerType);
-                    }
-
-                    break;
+                    if (isSync)
+                        _validateUserDefinedAddForDisposalSync.Validate(
+                            addForDisposalMember,
+                            rangeType,
+                            containerType);
+                    else
+                        _validateUserDefinedAddForDisposalAsync.Validate(
+                            addForDisposalMember,
+                            rangeType,
+                            containerType);
                 }
-            }
         }
 
         void ValidateUserDefinedInjection(string prefix, IValidateUserDefinedInjectionMethod validateUserDefinedInjectionMethod)

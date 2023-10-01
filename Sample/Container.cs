@@ -26,5 +26,5 @@ internal abstract class ContainerBase
 internal sealed partial class Container : ContainerBase
 {
     private Container() {}
-    protected new partial void DIE_AddForDisposal(IDisposable disposable);
+    protected override partial void DIE_AddForDisposal(IDisposable disposable);
 }

@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 
@@ -21,7 +22,8 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext,
-        ILocalDiagLogger localDiagLogger) 
+        ILocalDiagLogger localDiagLogger,
+        IRangeUtility rangeUtility) 
         : base(
             validateUserDefinedAddForDisposalSync,
             validateUserDefinedAddForDisposalAsync, 
@@ -32,7 +34,8 @@ internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientSco
             validateUserDefinedFactoryField,
             validateAttributes,
             containerWideContext,
-            localDiagLogger)
+            localDiagLogger,
+            rangeUtility)
     {
         
     }

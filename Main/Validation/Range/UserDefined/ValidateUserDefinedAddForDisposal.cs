@@ -59,6 +59,7 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
 
         if (method is
             {
+                DeclaredAccessibility: Accessibility.Private or Accessibility.Protected, 
                 ReturnsVoid: true,
                 IsPartialDefinition: true,
                 Parameters.Length: 1,
@@ -77,6 +78,11 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
             && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
         {
         }
+
+        if (method.DeclaredAccessibility != Accessibility.Private && method.DeclaredAccessibility != Accessibility.Protected)
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be private or protected."),
+                method.Locations.FirstOrDefault() ?? Location.None);
 
         if (!method.ReturnsVoid)
             LocalDiagLogger.Error(

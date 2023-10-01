@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;
 
@@ -12,16 +11,16 @@ internal interface IExecute
 internal class ExecuteImpl : IExecute
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
+    private readonly IRangeUtility _rangeUtility;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
+        IRangeUtility rangeUtility,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory)
     {
         _context = context;
-        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+        _rangeUtility = rangeUtility;
         _containerInfoFactory = containerInfoFactory;
     }
 
@@ -37,12 +36,7 @@ internal class ExecuteImpl : IExecute
                 .Select(x => semanticModel.GetDeclaredSymbol(x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x is { IsAbstract: false } && x
-                    .AllBaseTypesAndSelf()
-                    .SelectMany(t => t.GetAttributes())
-                    .Any(ad => CustomSymbolEqualityComparer.Default.Equals(
-                        _wellKnownTypesMiscellaneous.CreateFunctionAttribute, 
-                        ad.AttributeClass)))
+                .Where(x => _rangeUtility.IsAContainer(x))
                 .Select(_containerInfoFactory)
                 .ToList();
             foreach (var containerInfo in containerInfos)

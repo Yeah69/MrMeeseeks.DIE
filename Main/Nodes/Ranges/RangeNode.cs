@@ -18,8 +18,8 @@ internal interface IRangeNode : INode
     string Name { get; }
     DisposalType DisposalType { get; }
     IDisposalHandlingNode DisposalHandling { get; }
-    bool AddForDisposal { get; }
-    bool AddForDisposalAsync { get; }
+    IMethodSymbol? AddForDisposal { get; }
+    IMethodSymbol? AddForDisposalAsync { get; }
     string? ContainerReference { get; }
     IEnumerable<IInitializedInstanceNode> InitializedInstances { get; }
 
@@ -72,8 +72,8 @@ internal abstract class RangeNode : IRangeNode
     public string Name { get; }
     public abstract DisposalType DisposalType { get; }
     public IDisposalHandlingNode DisposalHandling { get; }
-    public bool AddForDisposal { get; }
-    public bool AddForDisposalAsync { get; }
+    public IMethodSymbol? AddForDisposal { get; }
+    public IMethodSymbol? AddForDisposalAsync { get; }
     public abstract string? ContainerReference { get; }
 
     public IEnumerable<IInitializedInstanceNode> InitializedInstances => InitializedInstanceNodesMap.Values;
@@ -188,13 +188,13 @@ internal abstract class RangeNode : IRangeNode
 
         if (userDefinedElements.AddForDisposal is { })
         {
-            AddForDisposal = true;
+            AddForDisposal = userDefinedElements.AddForDisposal;
             DisposalHandling.RegisterSyncDisposal();
         }
 
         if (userDefinedElements.AddForDisposalAsync is { })
         {
-            AddForDisposalAsync = true;
+            AddForDisposalAsync = userDefinedElements.AddForDisposalAsync;
             DisposalHandling.RegisterAsyncDisposal();
         }
         

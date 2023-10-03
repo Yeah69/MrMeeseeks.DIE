@@ -17,7 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MrMeeseeks.DIE" Version="2.1.1-alpha.0.5" />
+    <PackageReference Include="MrMeeseeks.DIE" Version="2.1.1-alpha.0.6" />
   </ItemGroup>
 
 </Project>

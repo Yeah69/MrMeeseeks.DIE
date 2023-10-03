@@ -25,6 +25,7 @@ internal class RangeUtility : IRangeUtility
         rangeType is { IsAbstract: false, ContainingType: null } 
         && rangeType
             .AllBaseTypesAndSelf()
+            .Concat(rangeType.AllInterfaces)
             .SelectMany(t => t.GetAttributes())
             .Any(ad => CustomSymbolEqualityComparer.Default.Equals(
                 _wellKnownTypesMiscellaneous.CreateFunctionAttribute,
@@ -33,6 +34,7 @@ internal class RangeUtility : IRangeUtility
     public IReadOnlyList<AttributeData> GetRangeAttributes(INamedTypeSymbol rangeType) =>
         rangeType
             .AllBaseTypesAndSelf()
+            .Concat(rangeType.AllInterfaces)
             .SelectMany(t => t.GetAttributes())
             .ToArray();
 

@@ -19,16 +19,16 @@ internal class ValidateUserDefinedFactoryField : IValidateUserDefinedFactoryFiel
     {
         if (field is
             {
-                DeclaredAccessibility: Accessibility.Private,
+                DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
                 IsStatic: false,
                 IsImplicitlyDeclared: false
             })
         {
         }
         
-        if (field.DeclaredAccessibility != Accessibility.Private)
+        if (field.DeclaredAccessibility != Accessibility.Private && field.DeclaredAccessibility != Accessibility.Protected)
             _localDiagLogger.Error(
-                ValidationErrorDiagnostic(field, rangeType, containerType, "Has to be private."),
+                ValidationErrorDiagnostic(field, rangeType, containerType, "Has to be private or protected."),
                 field.Locations.FirstOrDefault() ?? Location.None);
         
         if (field.IsStatic)

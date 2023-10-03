@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -118,9 +119,10 @@ internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContaine
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerInfoContext containerInfoContext,
-        IContainerWideContext containerWideContext) 
+        IContainerWideContext containerWideContext,
+        IRangeUtility rangeUtility) 
         : base(
-            containerInfoContext.ContainerInfo.ContainerType.GetAttributes(), 
+            rangeUtility.GetRangeAttributes(containerInfoContext.ContainerInfo.ContainerType), 
             containerInfoContext.ContainerInfo.ContainerType,
             containerInfoContext.ContainerInfo.ContainerType, 
             localDiagLogger,
@@ -159,9 +161,12 @@ internal class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFr
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerInfoContext containerInfoContext,
-        IContainerWideContext containerWideContext)
+        IContainerWideContext containerWideContext,
+        IRangeUtility rangeUtility)
         : base(
-            scopeInfo.ScopeType?.GetAttributes() as IReadOnlyList<AttributeData> ?? Array.Empty<AttributeData>(),
+            scopeInfo.ScopeType is not null 
+                ? rangeUtility.GetRangeAttributes(scopeInfo.ScopeType) 
+                : Array.Empty<AttributeData>(),
             scopeInfo.ScopeType,
             containerInfoContext.ContainerInfo.ContainerType,
             localDiagLogger,

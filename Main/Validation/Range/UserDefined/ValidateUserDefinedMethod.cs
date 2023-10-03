@@ -20,7 +20,7 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
     {
         if (method is
             {
-                DeclaredAccessibility: Accessibility.Private,
+                DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
                 Arity: 0,
                 CallingConvention: SignatureCallingConvention.Default,
                 IsConditional: false,
@@ -35,9 +35,9 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
             return;
         }
         
-        if (method.DeclaredAccessibility != Accessibility.Private)
+        if (method.DeclaredAccessibility != Accessibility.Private && method.DeclaredAccessibility != Accessibility.Protected)
             LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be private."),
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be private or protected."),
                 method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.Arity != 0)

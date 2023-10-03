@@ -1,5 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;
 
@@ -11,16 +11,16 @@ internal interface IExecute
 internal class ExecuteImpl : IExecute
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
+    private readonly IRangeUtility _rangeUtility;
     private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
+        IRangeUtility rangeUtility,
         Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory)
     {
         _context = context;
-        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+        _rangeUtility = rangeUtility;
         _containerInfoFactory = containerInfoFactory;
     }
 
@@ -33,14 +33,10 @@ internal class ExecuteImpl : IExecute
                 .GetRoot()
                 .DescendantNodesAndSelf()
                 .OfType<ClassDeclarationSyntax>()
-                .Select(x => ModelExtensions.GetDeclaredSymbol(semanticModel, x))
+                .Select(x => semanticModel.GetDeclaredSymbol(x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
-                .Where(x => x
-                    .GetAttributes()
-                    .Any(ad => CustomSymbolEqualityComparer.Default.Equals(
-                        _wellKnownTypesMiscellaneous.CreateFunctionAttribute, 
-                        ad.AttributeClass)))
+                .Where(x => _rangeUtility.IsAContainer(x))
                 .Select(_containerInfoFactory)
                 .ToList();
             foreach (var containerInfo in containerInfos)

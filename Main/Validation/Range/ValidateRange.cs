@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -24,6 +25,7 @@ internal abstract class ValidateRange : IValidateRange
     private readonly IValidateUserDefinedFactoryField _validateUserDefinedFactoryField;
     private readonly IValidateAttributes _validateAttributes;
     protected readonly ILocalDiagLogger LocalDiagLogger;
+    private readonly IRangeUtility _rangeUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly Regex _generatedMemberNames = new("(_[1-9][0-9]*){2}$");
@@ -38,7 +40,8 @@ internal abstract class ValidateRange : IValidateRange
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext,
-        ILocalDiagLogger localDiagLogger)
+        ILocalDiagLogger localDiagLogger,
+        IRangeUtility rangeUtility)
     {
         _validateUserDefinedAddForDisposalSync = validateUserDefinedAddForDisposalSync;
         _validateUserDefinedAddForDisposalAsync = validateUserDefinedAddForDisposalAsync;
@@ -49,323 +52,204 @@ internal abstract class ValidateRange : IValidateRange
         _validateUserDefinedFactoryField = validateUserDefinedFactoryField;
         _validateAttributes = validateAttributes;
         LocalDiagLogger = localDiagLogger;
+        _rangeUtility = rangeUtility;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
         _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
     }
 
     protected abstract DiagLogData ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification);
 
+    protected DiagLogData ValidationErrorDiagnosticBase(INamedTypeSymbol baseType, INamedTypeSymbol rangeType, string specification) => 
+        ErrorLogData.ValidationBaseClass(baseType, rangeType, specification);
+    
+    private void LogError(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) =>
+        LocalDiagLogger.Error(
+            ValidationErrorDiagnostic(rangeType, containerType, specification),
+            rangeType.Locations.FirstOrDefault() ?? Location.None);
+    
+    private void LogErrorBase(INamedTypeSymbol baseType, INamedTypeSymbol rangeType, string specification) =>
+        LocalDiagLogger.Error(
+            ValidationErrorDiagnosticBase(baseType, rangeType, specification),
+            baseType.Locations.FirstOrDefault() ?? Location.None);
+
     public virtual void Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
-        if (rangeType is
-            {
-                // What it shouldn't be
-                IsAbstract: false,
-                IsExtern: false,
-                IsComImport: false,
-                IsImplicitClass: false,
-                IsUnboundGenericType: false,
-                IsScriptClass: false,
-                IsNamespace: false,
-                IsRecord: false,
-                IsStatic: false,
-                IsVirtual: false,
-                IsAnonymousType: false,
-                IsTupleType: false,
-                IsUnmanagedType: false,
-                IsValueType: false,
-                IsReadOnly: false,
-                IsImplicitlyDeclared: false,
-                IsNativeIntegerType: false,
-                MightContainExtensionMethods: false,
-                EnumUnderlyingType: null,
-                NativeIntegerUnderlyingType: null,
-                TupleUnderlyingType: null,
+        ValidateRangeAndBaseType(rangeType, false);
+        
+        /* ToDo: Add with next breaking change release for range types only (not for base types)
+            if (!type.IsSealed) log("Has to be a sealed type."); */
+        
+        var unfilteredMembers = _rangeUtility.GetUnfilteredMembers(rangeType);
 
-                // What it should be
-                IsType: true,
-                IsReferenceType: true,
-                TypeKind: TypeKind.Class,
-                CanBeReferencedByName: true,
-            })
+        foreach (var baseType in GetBaseTypes())
         {
-            if (rangeType
-                .GetMembers()
-                .Any(m => _generatedMemberNames.IsMatch(m.Name)))
+            ValidateRangeAndBaseType(baseType, true);
+            if (baseType.IsSealed) LogErrorBase(baseType, rangeType, "Has to be a non-sealed base type.");
+        }
+
+        if (rangeType.AllInterfaces.Any(nts => 
+                CustomSymbolEqualityComparer.Default.Equals(nts, _wellKnownTypes.IDisposable)))
+            LogError(rangeType, containerType, $"Isn't allowed to implement the interface {_wellKnownTypes.IDisposable.FullName()}. It'll be generated by DIE.");
+
+        if (rangeType.AllInterfaces.Any(nts =>
+                CustomSymbolEqualityComparer.Default.Equals(nts, _wellKnownTypes.IAsyncDisposable)))
+            LogError(rangeType, containerType, $"Isn't allowed to implement the interface {_wellKnownTypes.IAsyncDisposable.FullName()}. It'll be generated by DIE.");
+
+        ValidateAddForDisposal(Constants.UserDefinedAddForDisposal, true);
+        ValidateAddForDisposal(Constants.UserDefinedAddForDisposalAsync, false);
+
+        ValidateUserDefinedInjection(
+            Constants.UserDefinedConstrParams, 
+            _validateUserDefinedConstructorParametersInjectionMethod);
+        ValidateUserDefinedInjection(
+            Constants.UserDefinedProps, 
+            _validateUserDefinedPropertiesMethod);
+        ValidateUserDefinedInjection(
+            Constants.UserDefinedInitParams,
+            _validateUserDefinedInitializerParametersInjectionMethod);
+
+        var userDefinedFactories = unfilteredMembers
+            .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
+            .ToImmutableArray();
+        
+        if (userDefinedFactories.Any())
+        {
+            foreach (var symbol in userDefinedFactories
+                         .Where(s => s is not (IFieldSymbol or IMethodSymbol or IPropertySymbol)))
+                LogError(rangeType, containerType, $"Member \"{symbol.Name}\" should be a field variable, a property, or a method but isn't.");
+
+            foreach (var userDefinedFactoryMethod in userDefinedFactories
+                         .OfType<IMethodSymbol>())
+                _validateUserDefinedFactoryMethod.Validate(userDefinedFactoryMethod, rangeType, containerType);
+
+            foreach (var userDefinedFactoryProperty in userDefinedFactories
+                         .OfType<IPropertySymbol>())
+            {
+                if (userDefinedFactoryProperty.GetMethod is { } getter)
+                    _validateUserDefinedFactoryMethod.Validate(getter, rangeType, containerType);
+                else
+                    LogError(rangeType, containerType, $"Factory property \"{userDefinedFactoryProperty.Name}\" has to have a getter method.");
+            }
+
+            foreach (var userDefinedFactoryField in userDefinedFactories.OfType<IFieldSymbol>())
+                _validateUserDefinedFactoryField.Validate(userDefinedFactoryField, rangeType, containerType);
+        }
+
+        foreach (var initializedInstancesAttribute in GetInitializedInstancesAttributes())
+        {
+            if (initializedInstancesAttribute
+                .ConstructorArguments[0]
+                .Values
+                .Select(v => v.Value)
+                .Any(o => o is not INamedTypeSymbol type || !_validateAttributes.ValidateImplementation(type)))
                 LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, containerType, "Isn't allowed to contain user-defined members which match regex \"(_[1-9][0-9]*){2}$\"."),
-                    rangeType.Locations.FirstOrDefault() ?? Location.None);
+                    ValidationErrorDiagnostic(
+                        rangeType, 
+                        containerType, 
+                        "Initialized instance attribute is only allowed to have implementation types passed to."),
+                    initializedInstancesAttribute.GetLocation());
+        }
+
+        return;
+
+        void ValidateRangeAndBaseType(INamedTypeSymbol type, bool isBaseType)
+        {
+            Action<string> log = isBaseType 
+                ? s => LogErrorBase(type, rangeType, s) 
+                : s => LogError(rangeType, containerType, s);
+
+            if (type.IsAbstract != isBaseType) log(isBaseType ? "Has to be abstract." : "Has to be non-abstract.");
+            if (type.IsExtern) log("Has to be non-extern.");
+            if (type.IsUnmanagedType) log("Has to be a managed type.");
+            if (type.IsComImport) log("Has to be no COM import.");
+            if (type.IsImplicitClass) log("Has to be non-implicit.");
+            if (type.IsUnboundGenericType) log("Has to be no unbound generic type.");
+            if (type.IsScriptClass) log("Has to be no script class.");
+            if (type.IsNamespace) log("Has to be no namespace.");
+            if (type.IsRecord) log("Has to be no record.");
+            if (type.IsStatic) log("Has to be non-static.");
+            if (type.IsVirtual) log("Has to be non-virtual.");
+            if (type.IsAnonymousType) log("Has to be non-anonymous.");
+            if (type.IsTupleType) log("Has to be no tuple type.");
+            if (type.IsReadOnly) log("Has to be non-read-only.");;
+            if (type.IsImplicitlyDeclared) log("Has to be non-implicitly-declared.");
+            if (type.IsNativeIntegerType) log("Has to be no native integer type.");
+            if (type.MightContainExtensionMethods) log("Isn't allowed to contain extension methods.");
+            if (type.EnumUnderlyingType is not null) log("Isn't allowed to have an underlying enum type.");
+            if (type.NativeIntegerUnderlyingType is not null) log("Isn't allowed to have an underlying native integer type.");
+            if (type.TupleUnderlyingType is not null) log("Isn't allowed to have an underlying tuple type.");
+            if (!type.IsReferenceType) log("Has to be a reference type.");
+            if (!type.IsType) log("Has to be a type.");
+            if (!type.CanBeReferencedByName) log("Has to be referable by name.");
+            if (type.TypeKind != TypeKind.Class) log("Has to be a class.");
             
-            if (rangeType
-                .GetTypeMembers()
-                .Any(m => _generatedMemberNames.IsMatch(m.Name)))
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, containerType, "Isn't allowed to contain user-defined type members which match regex \"(_[1-9][0-9]*){2}$\"."),
-                    rangeType.Locations.FirstOrDefault() ?? Location.None);
+            if (type.GetMembers().Any(m => _generatedMemberNames.IsMatch(m.Name)))
+                log("Isn't allowed to contain user-defined members which match regex \"(_[1-9][0-9]*){2}$\".");
+            if (type.GetTypeMembers().Any(m => _generatedMemberNames.IsMatch(m.Name)))
+                log("Isn't allowed to contain user-defined type members which match regex \"(_[1-9][0-9]*){2}$\".");
 
-            if (rangeType.AllInterfaces.Any(nts =>
-                    CustomSymbolEqualityComparer.Default.Equals(nts, _wellKnownTypes.IDisposable)))
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, containerType, $"Isn't allowed to implement the interface {_wellKnownTypes.IDisposable.FullName()}. It'll be generated by DIE."),
-                    rangeType.Locations.FirstOrDefault() ?? Location.None);
+            if (rangeType.MemberNames.Contains(nameof(IDisposable.Dispose)))
+                log($"Isn't allowed to contain an user-defined member \"{nameof(IDisposable.Dispose)}\", because a method with that name may have to be generated by the container.");
+            if (rangeType.MemberNames.Contains(nameof(IAsyncDisposable.DisposeAsync)))
+                log($"Isn't allowed to contain an user-defined member \"{nameof(IAsyncDisposable.DisposeAsync)}\", because a method with that name will be generated by the container.");
+        }
 
-            if (rangeType
-                .MemberNames
-                .Contains(nameof(IDisposable.Dispose)))
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, containerType, $"Isn't allowed to contain an user-defined member \"{nameof(IDisposable.Dispose)}\", because a method with that name may have to be generated by the container."),
-                    rangeType.Locations.FirstOrDefault() ?? Location.None);
+        IEnumerable<INamedTypeSymbol> GetBaseTypes() => rangeType
+            .AllBaseTypes()
+            .Where(t => !CustomSymbolEqualityComparer.Default.Equals(t, _wellKnownTypes.Object));
 
-            if (rangeType.AllInterfaces.Any(nts =>
-                    CustomSymbolEqualityComparer.Default.Equals(nts, _wellKnownTypes.IAsyncDisposable)))
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, containerType, $"Isn't allowed to implement the interface {_wellKnownTypes.IAsyncDisposable.FullName()}. It'll be generated by DIE."),
-                    rangeType.Locations.FirstOrDefault() ?? Location.None);
-
-            if (rangeType
-                .MemberNames
-                .Contains(nameof(IAsyncDisposable.DisposeAsync)))
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, containerType, $"Isn't allowed to contain an user-defined member \"{nameof(IAsyncDisposable.DisposeAsync)}\", because a method with that name will be generated by the container."),
-                    rangeType.Locations.FirstOrDefault() ?? Location.None);
-
-            ValidateAddForDisposal(Constants.UserDefinedAddForDisposal, true);
-            ValidateAddForDisposal(Constants.UserDefinedAddForDisposalAsync, false);
-
-            ValidateUserDefinedInjection(
-                Constants.UserDefinedConstrParams,
-                _validateUserDefinedConstructorParametersInjectionMethod);
-            ValidateUserDefinedInjection(
-                Constants.UserDefinedProps, 
-                _validateUserDefinedPropertiesMethod);
-            ValidateUserDefinedInjection(
-                Constants.UserDefinedInitParams,
-                _validateUserDefinedInitializerParametersInjectionMethod);
-
-            var userDefinedFactories = rangeType
+        void ValidateAddForDisposal(string addForDisposalName, bool isSync)
+        {
+            var addForDisposalMembers = rangeType
                 .GetMembers()
-                .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
+                .Where(s => s.Name == addForDisposalName)
                 .ToImmutableArray();
-            
-            if (userDefinedFactories.Any())
-            {
-                foreach (var symbol in userDefinedFactories
-                             .Where(s => s is not (IFieldSymbol or IMethodSymbol or IPropertySymbol)))
-                    LocalDiagLogger.Error(
-                        ValidationErrorDiagnostic(rangeType, containerType, $"Member \"{symbol.Name}\" should be a field variable, a property, or a method but isn't."),
-                        rangeType.Locations.FirstOrDefault() ?? Location.None);
 
-                foreach (var userDefinedFactoryMethod in userDefinedFactories
-                             .OfType<IMethodSymbol>())
-                    _validateUserDefinedFactoryMethod.Validate(userDefinedFactoryMethod, rangeType, containerType);
-
-                foreach (var userDefinedFactoryProperty in userDefinedFactories
-                             .OfType<IPropertySymbol>())
+            if (addForDisposalMembers.Length > 1)
+                LogError(rangeType, containerType, $"Only a single \"{addForDisposalName}\"-member is allowed.");
+            else if (addForDisposalMembers.Length == 1 && addForDisposalMembers[0] is not IMethodSymbol)
+                LogError(rangeType, containerType, $"The \"{addForDisposalName}\"-member is required to be a method.");
+            else if (addForDisposalMembers.Length == 1)
+                if (addForDisposalMembers[0] is IMethodSymbol addForDisposalMember)
                 {
-                    if (userDefinedFactoryProperty.GetMethod is { } getter)
-                        _validateUserDefinedFactoryMethod.Validate(getter, rangeType, containerType);
+                    if (isSync)
+                        _validateUserDefinedAddForDisposalSync.Validate(
+                            addForDisposalMember,
+                            rangeType,
+                            containerType);
                     else
-                        LocalDiagLogger.Error(
-                            ValidationErrorDiagnostic(rangeType, containerType, $"Factory property \"{userDefinedFactoryProperty.Name}\" has to have a getter method."),
-                            rangeType.Locations.FirstOrDefault() ?? Location.None);
-                }
-
-                foreach (var userDefinedFactoryField in userDefinedFactories
-                             .OfType<IFieldSymbol>())
-                    _validateUserDefinedFactoryField.Validate(userDefinedFactoryField, rangeType, containerType);
-            }
-
-            foreach (var initializedInstancesAttribute in rangeType
-                         .GetAttributes()
-                         .Where(ad => CustomSymbolEqualityComparer.Default.Equals(
-                                          ad.AttributeClass, 
-                                          _wellKnownTypesMiscellaneous.InitializedInstancesAttribute) 
-                                      && ad.ConstructorArguments.Length == 1 
-                                      && ad.ConstructorArguments[0].Kind == TypedConstantKind.Array))
-            {
-                if (initializedInstancesAttribute
-                    .ConstructorArguments[0]
-                    .Values
-                    .Select(v => v.Value)
-                    .Any(o => o is not INamedTypeSymbol type || !_validateAttributes.ValidateImplementation(type)))
-                    LocalDiagLogger.Error(
-                        ValidationErrorDiagnostic(
-                            rangeType, 
-                            containerType, 
-                            "Initialized instance attribute is only allowed to have implementation types passed to."),
-                        initializedInstancesAttribute.GetLocation());
-            }
-
-            void ValidateAddForDisposal(string addForDisposalName, bool isSync)
-            {
-                var addForDisposalMembers = rangeType
-                    .GetMembers()
-                    .Where(s => s.Name == addForDisposalName)
-                    .ToImmutableArray();
-
-                if (addForDisposalMembers.Length > 1)
-                    LocalDiagLogger.Error(
-                        ValidationErrorDiagnostic(rangeType, containerType, $"Only a single \"{addForDisposalName}\"-member is allowed."),
-                        rangeType.Locations.FirstOrDefault() ?? Location.None);
-                else if (addForDisposalMembers.Length == 1)
-                {
-                    if (addForDisposalMembers[0] is not IMethodSymbol)
-                        LocalDiagLogger.Error(
-                            ValidationErrorDiagnostic(rangeType, containerType, $"The \"{addForDisposalName}\"-member is required to be a method."),
-                            rangeType.Locations.FirstOrDefault() ?? Location.None);
-                    else if (addForDisposalMembers[0] is IMethodSymbol addForDisposalMember)
-                    {
-                        if (isSync)
-                            _validateUserDefinedAddForDisposalSync.Validate(
-                                addForDisposalMember, 
-                                rangeType,
-                                containerType);
-                        else
-                            _validateUserDefinedAddForDisposalAsync.Validate(
-                                addForDisposalMember, 
-                                rangeType,
-                                containerType);
-                    }
-                }
-            }
-
-            void ValidateUserDefinedInjection(string prefix, IValidateUserDefinedInjectionMethod validateUserDefinedInjectionMethod)
-            {
-                var userDefinedInjectionMethods = rangeType
-                    .GetMembers()
-                    .Where(s => s.Name.StartsWith(prefix))
-                    .ToImmutableArray();
-
-                if (userDefinedInjectionMethods.Any())
-                {
-                    foreach (var symbol in userDefinedInjectionMethods
-                                 .Where(s => s is not IMethodSymbol))
-                        LocalDiagLogger.Error(
-                            ValidationErrorDiagnostic(rangeType, containerType, $"Member \"{symbol.Name}\" should be a method but isn't."),
-                            rangeType.Locations.FirstOrDefault() ?? Location.None);
-
-                    foreach (var userDefinedPropertyMethod in userDefinedInjectionMethods.OfType<IMethodSymbol>())
-                        validateUserDefinedInjectionMethod.Validate(
-                            userDefinedPropertyMethod, 
+                        _validateUserDefinedAddForDisposalAsync.Validate(
+                            addForDisposalMember,
                             rangeType,
                             containerType);
                 }
+        }
+
+        void ValidateUserDefinedInjection(string prefix, IValidateUserDefinedInjectionMethod validateUserDefinedInjectionMethod)
+        {
+            var userDefinedInjectionMethods = unfilteredMembers
+                .Where(s => s.Name.StartsWith(prefix))
+                .ToImmutableArray();
+
+            if (userDefinedInjectionMethods.Any())
+            {
+                foreach (var symbol in userDefinedInjectionMethods.Where(s => s is not IMethodSymbol))
+                    LogError(rangeType, containerType, $"Member \"{symbol.Name}\" should be a method but isn't.");
+
+                foreach (var userDefinedPropertyMethod in userDefinedInjectionMethods.OfType<IMethodSymbol>())
+                    validateUserDefinedInjectionMethod.Validate(
+                        userDefinedPropertyMethod, 
+                        rangeType,
+                        containerType);
             }
         }
-        
-        if (rangeType.IsAbstract)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-abstract."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsExtern)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-extern."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsComImport)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be no COM import."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsImplicitClass)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-implicit."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsUnboundGenericType)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be no unbound generic type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsScriptClass)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be no script class."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsNamespace)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be no namespace."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsRecord)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be no record."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsStatic)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-static."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsVirtual)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-virtual."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsAnonymousType)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-anonymous."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsTupleType)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be no tuple type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsReadOnly)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-read-only."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsImplicitlyDeclared)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be non-implicitly-declared."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.IsNativeIntegerType)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be no native integer type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.MightContainExtensionMethods)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Isn't allowed to contain extension types."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.EnumUnderlyingType is {})
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Isn't allowed to have an underlying enum type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.NativeIntegerUnderlyingType is {})
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Isn't allowed to have an underlying native integer type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.TupleUnderlyingType is {})
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Isn't allowed to have an underlying tuple type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (!rangeType.IsType)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be a type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (!rangeType.IsReferenceType)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be a reference type."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (!rangeType.CanBeReferencedByName)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be referable by name."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (rangeType.TypeKind != TypeKind.Class)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(rangeType, containerType, "Has to be a class."),
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
+
+        IEnumerable<AttributeData> GetInitializedInstancesAttributes() => _rangeUtility
+            .GetRangeAttributes(rangeType)
+            .Where(ad => CustomSymbolEqualityComparer.Default.Equals(
+                             ad.AttributeClass,
+                             _wellKnownTypesMiscellaneous.InitializedInstancesAttribute)
+                         && ad.ConstructorArguments.Length == 1
+                         && ad.ConstructorArguments[0].Kind == TypedConstantKind.Array);
     }
 }

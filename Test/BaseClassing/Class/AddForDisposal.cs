@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Sample;
+// ReSharper disable once CheckNamespace
+namespace MrMeeseeks.DIE.Test.BaseClassing.Class.AddForDisposal;
 
 internal class Dependency : IDisposable
 {
@@ -27,4 +28,16 @@ internal sealed partial class Container : ContainerBase
 {
     private Container() {}
     protected override partial void DIE_AddForDisposal(IDisposable disposable);
+}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        var container = Container.DIE_CreateContainer();
+        var instance = container.Create();
+        container.Dispose();
+        Assert.True(instance.IsDisposed);
+    }
 }

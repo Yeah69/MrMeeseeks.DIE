@@ -227,18 +227,43 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
                     throw new ArgumentOutOfRangeException(nameof(multiFunctionNodeBase));
             }
         
-        if (rangeNode is { AddForDisposal: true, DisposalHandling.SyncCollectionReference: { } syncCollectionReference })
-            _code.AppendLine($$"""
-private partial void {{Constants.UserDefinedAddForDisposal}}({{_wellKnownTypes.IDisposable.FullName()}} disposable) =>
-{{syncCollectionReference}}.Add(({{_wellKnownTypes.IDisposable.FullName()}}) disposable);
-""");
+        if (rangeNode is { AddForDisposal: { } addForDisposal, DisposalHandling.SyncCollectionReference: { } syncCollectionReference })
+            GenerateAddForDisposal(
+                addForDisposal,
+                Constants.UserDefinedAddForDisposal,
+                _wellKnownTypes.IDisposable.FullName(),
+                "disposable",
+                syncCollectionReference);
 
-        if (rangeNode is { AddForDisposalAsync: true, DisposalHandling.AsyncCollectionReference: { } asyncCollectionReference })
-            _code.AppendLine($$"""
-private partial void {{Constants.UserDefinedAddForDisposalAsync}}({{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable) =>
-{{asyncCollectionReference}}.Add(({{_wellKnownTypes.IAsyncDisposable.FullName()}}) asyncDisposable);
-""");
+        if (rangeNode is { AddForDisposalAsync: { } addForDisposalAsync, DisposalHandling.AsyncCollectionReference: { } asyncCollectionReference })
+            GenerateAddForDisposal(
+                addForDisposalAsync,
+                Constants.UserDefinedAddForDisposalAsync,
+                _wellKnownTypes.IAsyncDisposable.FullName(),
+                "asyncDisposable",
+                asyncCollectionReference);
+        
         GenerateDisposalFunction(rangeNode);
+        return;
+
+        void GenerateAddForDisposal(
+            IMethodSymbol addForDisposalMethod, 
+            string methodName,
+            string disposableFullName, 
+            string disposableParameterName, 
+            string collectionReference)
+        {
+            var declaredAccessibility =
+                addForDisposalMethod.DeclaredAccessibility == Accessibility.Private ? "private" : "protected";
+            var virtualModifier = addForDisposalMethod.IsVirtual ? "virtual " : "";
+            var overrideModifier = addForDisposalMethod.IsOverride ? "override " : "";
+            var sealedModifier = addForDisposalMethod.IsSealed ? "sealed " : "";
+            _code.AppendLine(
+                $$"""
+                  {{declaredAccessibility}} {{sealedModifier}}{{virtualModifier}}{{overrideModifier}}partial void {{methodName}}({{disposableFullName}} {{disposableParameterName}}) =>
+                  {{collectionReference}}.Add(({{disposableFullName}}) {{disposableParameterName}});
+                  """);
+        }
     }
 
     private void VisitICreateFunctionNodeBase(ICreateFunctionNodeBase element)

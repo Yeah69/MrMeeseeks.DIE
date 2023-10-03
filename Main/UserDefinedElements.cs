@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
@@ -31,11 +32,12 @@ internal class UserDefinedElements : IUserDefinedElements
 
         // dependencies
         IContainerWideContext containerWideContext,
-        ILocalDiagLogger localDiagLogger)
+        ILocalDiagLogger localDiagLogger,
+        IRangeUtility rangeUtility)
     {
         if (types.Range is { } range)
         {
-            var dieMembers = range.GetMembers()
+            var dieMembers = rangeUtility.GetEffectiveMembers(range) 
                 .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_"))
                 .ToList();
 
@@ -119,7 +121,7 @@ internal class UserDefinedElements : IUserDefinedElements
             AddForDisposal = dieMembers
                 .Where(s => s is IMethodSymbol
                 {
-                    DeclaredAccessibility: Accessibility.Private,
+                    DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
                     Arity: 0,
                     ReturnsVoid: true,
                     IsPartialDefinition: true,
@@ -132,7 +134,7 @@ internal class UserDefinedElements : IUserDefinedElements
             AddForDisposalAsync = dieMembers
                 .Where(s => s is IMethodSymbol
                 {
-                    DeclaredAccessibility: Accessibility.Private,
+                    DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
                     Arity: 0,
                     ReturnsVoid: true,
                     IsPartialDefinition: true,

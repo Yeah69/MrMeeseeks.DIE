@@ -1,6 +1,7 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
 using MrMeeseeks.DIE.Validation.Range.UserDefined;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -16,6 +17,7 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
 {
     private readonly IValidateTransientScope _validateTransientScopeFactory;
     private readonly IValidateScope _validateScopeFactory;
+    private readonly IRangeUtility _rangeUtility;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
     internal ValidateContainer(
@@ -30,7 +32,8 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
         IContainerWideContext containerWideContext,
-        ILocalDiagLogger localDiagLogger) 
+        ILocalDiagLogger localDiagLogger,
+        IRangeUtility rangeUtility) 
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
@@ -41,10 +44,12 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             validateUserDefinedFactoryField,
             validateAttributes,
             containerWideContext,
-            localDiagLogger)
+            localDiagLogger,
+            rangeUtility)
     {
         _validateTransientScopeFactory = validateTransientScopeFactory;
         _validateScopeFactory = validateScopeFactory;
+        _rangeUtility = rangeUtility;
         _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
     }
 
@@ -97,8 +102,8 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
             _validateScopeFactory.Validate(customScope, rangeType);
         }
 
-        var createFunctionAttributes = rangeType
-            .GetAttributes()
+        var createFunctionAttributes = _rangeUtility
+            .GetRangeAttributes(rangeType)
             .Where(ad =>
                 CustomSymbolEqualityComparer.Default.Equals(
                     ad.AttributeClass, 

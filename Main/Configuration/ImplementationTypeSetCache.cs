@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.MsContainer;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
+using ICheckInternalsVisible = MrMeeseeks.SourceGeneratorUtility.ICheckInternalsVisible;
 
 namespace MrMeeseeks.DIE.Configuration;
 

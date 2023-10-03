@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -19,15 +20,15 @@ internal class ContainerInfo : IContainerInfo
         INamedTypeSymbol containerClass,
             
         // dependencies
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
+        IRangeUtility rangeUtility)
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();
         FullName = containerClass.FullName();
         ContainerType = containerClass;
             
-        CreateFunctionData = containerClass
-            .GetAttributes()
+        CreateFunctionData = rangeUtility.GetRangeAttributes(containerClass)
             .Where(ad => CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass))
             .Select(ad => ad.ConstructorArguments.Length == 3 
                           && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type

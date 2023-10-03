@@ -3,7 +3,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.BaseClassing.AddForDisposal;
+namespace MrMeeseeks.DIE.Test.BaseClassing.Class.AddForDisposal;
 
 internal class Dependency : IDisposable
 {

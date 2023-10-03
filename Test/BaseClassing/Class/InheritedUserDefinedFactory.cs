@@ -2,7 +2,7 @@
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.BaseClassing.InheritedUserDefinedFactory;
+namespace MrMeeseeks.DIE.Test.BaseClassing.Class.InheritedUserDefinedFactory;
 
 internal abstract class ContainerBase
 {

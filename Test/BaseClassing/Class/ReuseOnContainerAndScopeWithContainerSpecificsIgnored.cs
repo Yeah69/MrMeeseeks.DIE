@@ -2,20 +2,21 @@
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.BaseClassing.ReuseOnContainerAndScope;
+namespace MrMeeseeks.DIE.Test.BaseClassing.Class.ReuseOnContainerAndScopeWithContainerSpecificsIgnored;
 
 internal class ScopeRoot
 {
     internal int Number { get; init; }
 }
 
+[ScopeRootImplementationAggregation(typeof(ScopeRoot))]
+[CreateFunction(typeof(int), "Create")]
+[CreateFunction(typeof(ScopeRoot), "CreateScopeRoot")]
 internal abstract class RangeBase
 {
     protected int DIE_Factory_Int => 69;
 }
 
-[CreateFunction(typeof(int), "Create")]
-[CreateFunction(typeof(ScopeRoot), "CreateScopeRoot")]
 internal sealed partial class Container : RangeBase
 {
     private Container() {}

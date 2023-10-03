@@ -2,16 +2,15 @@
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.BaseClassing.InheritedContainerInstanceAttribute;
+namespace MrMeeseeks.DIE.Test.BaseClassing.Class.InheritedCreateFunctionAttribute;
 
 internal class Class {}
 
-[ContainerInstanceImplementationAggregation(typeof(Class))]
+[CreateFunction(typeof(Class), "Create")]
 internal abstract class ContainerBase
 {
 }
 
-[CreateFunction(typeof(Class), "Create")]
 internal sealed partial class Container : ContainerBase
 {
     private Container() {}
@@ -23,8 +22,7 @@ public class Tests
     public void Test()
     {
         using var container = Container.DIE_CreateContainer();
-        var instanceA = container.Create();
-        var instanceB = container.Create();
-        Assert.Same(instanceA, instanceB);
+        var instance = container.Create();
+        Assert.NotNull(instance);
     }
 }

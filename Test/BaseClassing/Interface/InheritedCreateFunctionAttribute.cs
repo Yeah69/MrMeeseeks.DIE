@@ -2,16 +2,14 @@
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.BaseClassing.InheritedCreateFunctionAttribute;
+namespace MrMeeseeks.DIE.Test.BaseClassing.Interface.InheritedCreateFunctionAttribute;
 
 internal class Class {}
 
 [CreateFunction(typeof(Class), "Create")]
-internal abstract class ContainerBase
-{
-}
+internal interface IContainerBase { }
 
-internal sealed partial class Container : ContainerBase
+internal sealed partial class Container : IContainerBase
 {
     private Container() {}
 }

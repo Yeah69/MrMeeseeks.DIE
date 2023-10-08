@@ -7,14 +7,6 @@
     "Main_Test": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "..\\Test\\Test.csproj"
-    },
-    "Main_BFF": {
-      "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\..\\BFF\\develop\\Composition.DIE\\Composition.DIE.csproj"
-    },
-    "Main_Central": {
-      "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\..\\Private.ZeroInstall.UI\\Central.Container\\Central.Container.csproj"
     }
   }
 }

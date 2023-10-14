@@ -11,6 +11,8 @@ internal record WellKnownTypesChoice(
     INamedTypeSymbol PropertyChoiceAttribute,
     INamedTypeSymbol ImplementationChoiceAttribute,
     INamedTypeSymbol ImplementationCollectionChoiceAttribute,
+    INamedTypeSymbol InjectionKeyChoiceAttribute,
+    INamedTypeSymbol DecorationOrdinalChoiceAttribute,
     INamedTypeSymbol FilterGenericParameterSubstitutesChoiceAttribute,
     INamedTypeSymbol FilterGenericParameterChoiceAttribute,
     INamedTypeSymbol FilterDecoratorSequenceChoiceAttribute,
@@ -18,8 +20,8 @@ internal record WellKnownTypesChoice(
     INamedTypeSymbol FilterPropertyChoiceAttribute,
     INamedTypeSymbol FilterImplementationChoiceAttribute,
     INamedTypeSymbol FilterImplementationCollectionChoiceAttribute,
-    INamedTypeSymbol InjectionKeyChoiceAttribute,
-    INamedTypeSymbol FilterInjectionKeyChoiceAttribute)
+    INamedTypeSymbol FilterInjectionKeyChoiceAttribute,
+    INamedTypeSymbol FilterDecorationOrdinalChoiceAttribute)
 {
     internal static WellKnownTypesChoice Create(Compilation compilation) => new (
         ImplementationChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ImplementationChoiceAttribute).FullName ?? ""),
@@ -30,6 +32,7 @@ internal record WellKnownTypesChoice(
         ConstructorChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ConstructorChoiceAttribute).FullName ?? ""),
         PropertyChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(PropertyChoiceAttribute).FullName ?? ""),
         InjectionKeyChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InjectionKeyChoiceAttribute).FullName ?? ""),
+        DecorationOrdinalChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(DecorationOrdinalChoiceAttribute).FullName ?? ""),
         FilterImplementationChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterImplementationChoiceAttribute).FullName ?? ""),
         FilterImplementationCollectionChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterImplementationCollectionChoiceAttribute).FullName ?? ""),
         FilterGenericParameterSubstitutesChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterGenericParameterSubstitutesChoiceAttribute).FullName ?? ""),
@@ -37,5 +40,6 @@ internal record WellKnownTypesChoice(
         FilterDecoratorSequenceChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterDecoratorSequenceChoiceAttribute).FullName ?? ""),
         FilterConstructorChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterConstructorChoiceAttribute).FullName ?? ""),
         FilterPropertyChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterPropertyChoiceAttribute).FullName ?? ""),
-        FilterInjectionKeyChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInjectionKeyChoiceAttribute).FullName ?? ""));
+        FilterInjectionKeyChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInjectionKeyChoiceAttribute).FullName ?? ""),
+        FilterDecorationOrdinalChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterDecorationOrdinalChoiceAttribute).FullName ?? ""));
 }

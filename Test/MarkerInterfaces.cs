@@ -35,3 +35,11 @@ public class KeyAttribute : Attribute
 
     public object Key { get; }
 }
+
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public class DecorationOrdinalAttribute : Attribute
+{
+    public DecorationOrdinalAttribute(int ordinal) => Ordinal = ordinal;
+
+    public int Ordinal { get; }
+}

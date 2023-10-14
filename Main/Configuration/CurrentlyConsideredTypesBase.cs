@@ -58,6 +58,8 @@ internal interface ICurrentlyConsideredTypes
     IImmutableSet<INamedTypeSymbol> CompositeTypes { get; }
     IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
     IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
+    IImmutableSet<INamedTypeSymbol> DecorationOrdinalAttributeTypes { get; }
+    IImmutableSet<(INamedTypeSymbol DecorationImplementationType, int Ordinal)> DecorationOrdinalChoices { get; }
     IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
     IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
@@ -415,6 +417,28 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         
         InjectionKeyChoices = injectionKeyChoices;
         
+        var decorationOrdinalAttributeTypes = ImmutableHashSet<INamedTypeSymbol>.Empty;
+        foreach (var typesFromAttribute in typesFromAttributes)
+        {
+            decorationOrdinalAttributeTypes = decorationOrdinalAttributeTypes.Except(typesFromAttribute.FilterDecorationOrdinalAttributeTypes);
+            decorationOrdinalAttributeTypes = decorationOrdinalAttributeTypes.Union(typesFromAttribute.DecorationOrdinalAttributeTypes);
+        }
+        
+        DecorationOrdinalAttributeTypes = decorationOrdinalAttributeTypes;
+        
+        var decorationOrdinalChoices = 
+            ImmutableHashSet<(INamedTypeSymbol DecorationImplementationType, int Ordinal)>.Empty;
+        
+        foreach (var types in typesFromAttributes)
+        {
+            decorationOrdinalChoices = decorationOrdinalChoices.Except(
+                decorationOrdinalChoices.Where(t => 
+                    types.FilterDecorationOrdinalChoices.Contains(t.DecorationImplementationType)));
+            decorationOrdinalChoices = decorationOrdinalChoices.Union(types.DecorationOrdinalChoices);
+        }
+        
+        DecorationOrdinalChoices = decorationOrdinalChoices;
+        
         return;
 
         IImmutableSet<INamedTypeSymbol> GetSetOfTypesWithProperties(
@@ -463,6 +487,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
     public IImmutableSet<INamedTypeSymbol> CompositeTypes { get; }
     public IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
     public IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> DecorationOrdinalAttributeTypes { get; }
+    public IImmutableSet<(INamedTypeSymbol DecorationImplementationType, int Ordinal)> DecorationOrdinalChoices { get; }
 
     public IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }

@@ -436,7 +436,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
                 passedContext,
                 mapper);
 
-        var decoratorSequence = _checkTypeProperties.GetSequenceFor(interfaceType, implementationType)
+        var decoratorSequence = _checkTypeProperties.GetDecorationSequenceFor(interfaceType, implementationType)
             .Reverse()
             .Append(implementationType)
             .ToList();

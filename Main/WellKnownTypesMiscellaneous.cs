@@ -16,6 +16,8 @@ internal record WellKnownTypesMiscellaneous(
     INamedTypeSymbol AnalyticsAttribute,
     INamedTypeSymbol InjectionKeyMappingAttribute,
     INamedTypeSymbol FilterInjectionKeyMappingAttribute,
+    INamedTypeSymbol DecorationOrdinalMappingAttribute,
+    INamedTypeSymbol FilterDecorationOrdinalMappingAttribute,
     INamedTypeSymbol DieExceptionKind)
 {
     internal static WellKnownTypesMiscellaneous Create(Compilation compilation) => new (
@@ -31,5 +33,7 @@ internal record WellKnownTypesMiscellaneous(
         AnalyticsAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(AnalyticsAttribute).FullName ?? ""),
         InjectionKeyMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InjectionKeyMappingAttribute).FullName ?? ""),
         FilterInjectionKeyMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInjectionKeyMappingAttribute).FullName ?? ""),
+        DecorationOrdinalMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(DecorationOrdinalMappingAttribute).FullName ?? ""),
+        FilterDecorationOrdinalMappingAttribute:  compilation.GetTypeByMetadataNameOrThrow(typeof(FilterDecorationOrdinalMappingAttribute).FullName ?? ""),
         DieExceptionKind: compilation.GetTypeByMetadataNameOrThrow(typeof(DieExceptionKind).FullName ?? ""));
 }

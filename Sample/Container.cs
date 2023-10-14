@@ -1,30 +1,53 @@
-﻿using System;
-using System.Collections.Generic;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Dependency : IDisposable
+internal interface IInterface
 {
-    internal bool IsDisposed { get; private set; }
-    public void Dispose() => IsDisposed = true;
+    IInterface Decorated { get; }
 }
 
-[CreateFunction(typeof(Dependency), "Create")]
+internal class DecoratorH : IInterface, IDecorator<IInterface>
+{
+    public required IInterface Decorated { get; internal init; }
+}
+
+internal class DecoratorE : IInterface, IDecorator<IInterface>
+{
+    public required IInterface Decorated { get; internal init; }
+}
+
+internal class DecoratorUh : IInterface, IDecorator<IInterface>
+{
+    public required IInterface Decorated { get; internal init; }
+}
+
+internal class DecoratorY : IInterface, IDecorator<IInterface>
+{
+    public required IInterface Decorated { get; internal init; }
+}
+
+[DecorationOrdinal(2)]
+internal class DecoratorA : IInterface, IDecorator<IInterface>
+{
+    public required IInterface Decorated { get; internal init; }
+}
+
+internal class Dependency : IInterface
+{
+    public IInterface Decorated => this;
+}
+
+[DecorationOrdinalChoice(typeof(DecoratorH), -1)]
+[DecorationOrdinalChoice(typeof(DecoratorE), 3)]
+[DecorationOrdinalChoice(typeof(DecoratorY), 23)]
+[DecorationOrdinalChoice(typeof(DecoratorUh), 69)]
+[CreateFunction(typeof(IInterface), "Create")]
 internal abstract class ContainerBase
 {
-    protected abstract void DIE_AddForDisposal(IDisposable disposable);
-    
-    protected Dependency DIE_Factory_Dependency()
-    {
-        var dependency = new Dependency();
-        DIE_AddForDisposal(dependency);
-        return dependency;
-    }
 }
 
 internal sealed partial class Container : ContainerBase
 {
     private Container() {}
-    protected override partial void DIE_AddForDisposal(IDisposable disposable);
 }

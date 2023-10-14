@@ -76,8 +76,7 @@ internal abstract class ValidateRange : IValidateRange
     {
         ValidateRangeAndBaseType(rangeType, false);
         
-        /* ToDo: Add with next breaking change release for range types only (not for base types)
-            if (!type.IsSealed) log("Has to be a sealed type."); */
+        if (!rangeType.IsSealed) LogError(rangeType, containerType, "Has to be a sealed type.");
         
         var unfilteredMembers = _rangeUtility.GetUnfilteredMembers(rangeType);
 

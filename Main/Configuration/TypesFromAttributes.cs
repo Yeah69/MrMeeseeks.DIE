@@ -41,6 +41,8 @@ internal interface ITypesFromAttributesBase
     IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
     IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
     IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
+    IImmutableSet<INamedTypeSymbol> DecorationOrdinalAttributeTypes { get; }
+    IImmutableSet<(INamedTypeSymbol, int)> DecorationOrdinalChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterImplementation { get; }
     IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
     IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
@@ -72,6 +74,8 @@ internal interface ITypesFromAttributesBase
     IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
     IImmutableSet<INamedTypeSymbol> FilterInjectionKeyAttributeTypes { get; }
     IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> FilterInjectionKeyChoices { get; }
+    IImmutableSet<INamedTypeSymbol> FilterDecorationOrdinalAttributeTypes { get; }
+    IImmutableSet<INamedTypeSymbol> FilterDecorationOrdinalChoices { get; }
 }
 
 internal interface IAssemblyTypesFromAttributes : ITypesFromAttributesBase {}
@@ -229,6 +233,9 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         InjectionKeyAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.InjectionKeyMappingAttribute)
             .Select(t => t.Item2)
             .ToImmutableHashSet();
+        DecorationOrdinalAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.DecorationOrdinalMappingAttribute)
+            .Select(t => t.Item2)
+            .ToImmutableHashSet();
 
         FilterImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterImplementationAggregationAttribute);
         FilterTransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.FilterTransientAbstractionAggregationAttribute);
@@ -250,6 +257,9 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterInjectionKeyAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.FilterInjectionKeyMappingAttribute)
+            .Select(t => t.Item2)
+            .ToImmutableHashSet();
+        FilterDecorationOrdinalAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.FilterDecorationOrdinalMappingAttribute)
             .Select(t => t.Item2)
             .ToImmutableHashSet();
         
@@ -871,14 +881,32 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                 ? injectionKeyChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ParseInjectionKeyChoice)
-            .OfType<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)>());
+            .Where(t => t.HasValue)
+            .Select(t => t ?? throw new ImpossibleDieException()));
         
         FilterInjectionKeyChoices = ImmutableHashSet.CreateRange(
             (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterInjectionKeyChoiceAttribute, out var filterInjectionKeyChoiceAttributes) 
                 ? filterInjectionKeyChoiceAttributes 
                 : Enumerable.Empty<AttributeData>())
             .Select(ParseInjectionKeyChoice)
-            .OfType<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)>());
+            .Where(t => t.HasValue)
+            .Select(t => t ?? throw new ImpossibleDieException()));
+
+        DecorationOrdinalChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.DecorationOrdinalChoiceAttribute, out var decorationOrdinalChoiceAttributes) 
+                ? decorationOrdinalChoiceAttributes 
+                : Enumerable.Empty<AttributeData>())
+            .Select(ParseDecorationOrdinalChoice)
+            .Where(t => t.HasValue)
+            .Select(t => t ?? throw new ImpossibleDieException()));
+
+        FilterDecorationOrdinalChoices = ImmutableHashSet.CreateRange(
+            (AttributeDictionary.TryGetValue(wellKnownTypesChoice.FilterDecorationOrdinalChoiceAttribute, out var filterDecorationOrdinalChoiceAttributes) 
+                ? filterDecorationOrdinalChoiceAttributes 
+                : Enumerable.Empty<AttributeData>())
+            .Select(ParseFilterDecorationOrdinalChoice)
+            .OfType<INamedTypeSymbol>());
+            
         
         return;
 
@@ -886,8 +914,8 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
             AttributeData injectionKeyChoiceAttribute)
         {
             if (injectionKeyChoiceAttribute.ConstructorArguments.Length < 2
-                || injectionKeyChoiceAttribute.ConstructorArguments[0].Value is not object keyValue
-                || injectionKeyChoiceAttribute.ConstructorArguments[0].Type is not {} keyType
+                || injectionKeyChoiceAttribute.ConstructorArguments[0].Value is not { } keyValue
+                || injectionKeyChoiceAttribute.ConstructorArguments[0].Type is not { } keyType
                 || injectionKeyChoiceAttribute.ConstructorArguments[1].Value is not INamedTypeSymbol implementationType
                 || !validateAttributes.ValidateImplementation(implementationType))
             {
@@ -896,6 +924,35 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
             }
 
             return (keyType, keyValue, implementationType);
+        }
+
+        (INamedTypeSymbol DecorationImplementationType, int Ordinal)? ParseDecorationOrdinalChoice(
+            AttributeData attribute)
+        {
+            if (attribute.ConstructorArguments.Length < 2
+                || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol decorationImplementationType
+                || attribute.ConstructorArguments[1].Value is not int ordinal
+                || !validateAttributes.ValidateImplementation(decorationImplementationType))
+            {
+                NotParsableAttribute(attribute);
+                return null;
+            }
+
+            return (decorationImplementationType, ordinal);
+        }
+
+        INamedTypeSymbol? ParseFilterDecorationOrdinalChoice(
+            AttributeData attribute)
+        {
+            if (attribute.ConstructorArguments.Length < 1
+                || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol filterDecorationImplementationType
+                || !validateAttributes.ValidateImplementation(filterDecorationImplementationType))
+            {
+                NotParsableAttribute(attribute);
+                return null;
+            }
+
+            return filterDecorationImplementationType;
         }
     }
 
@@ -991,8 +1048,10 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol)> ImplementationChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> ImplementationCollectionChoices { get; }
     public IImmutableSet<INamedTypeSymbol> InjectionKeyAttributeTypes { get; }
-
     public IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> InjectionKeyChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> DecorationOrdinalAttributeTypes { get; }
+    public IImmutableSet<(INamedTypeSymbol, int)> DecorationOrdinalChoices { get; }
+    
     public IImmutableSet<INamedTypeSymbol> FilterImplementation { get; }
     public IImmutableSet<INamedTypeSymbol> FilterTransientAbstraction { get; }
     public IImmutableSet<INamedTypeSymbol> FilterSyncTransientAbstraction { get; }
@@ -1024,4 +1083,6 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
     public IImmutableSet<INamedTypeSymbol> FilterImplementationCollectionChoices { get; }
     public IImmutableSet<INamedTypeSymbol> FilterInjectionKeyAttributeTypes { get; }
     public IImmutableSet<(ITypeSymbol KeyType, object KeyValue, INamedTypeSymbol ImplementationType)> FilterInjectionKeyChoices { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterDecorationOrdinalAttributeTypes { get; }
+    public IImmutableSet<INamedTypeSymbol> FilterDecorationOrdinalChoices { get; }
 }

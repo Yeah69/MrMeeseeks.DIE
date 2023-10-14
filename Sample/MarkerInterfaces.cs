@@ -25,6 +25,7 @@ using MrMeeseeks.DIE.Sample;
 [assembly:Initializer(typeof(IValueTaskInitializer), nameof(IValueTaskInitializer.InitializeAsync))]
 
 [assembly:InjectionKeyMapping(typeof(KeyAttribute))]
+[assembly:DecorationOrdinalMapping(typeof(DecorationOrdinalAttribute))]
 
 [assembly:AllImplementationsAggregation]
 
@@ -61,4 +62,12 @@ public class KeyAttribute : Attribute
     public KeyAttribute(object key) => Key = key;
 
     public object Key { get; }
+}
+
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public class DecorationOrdinalAttribute : Attribute
+{
+    public DecorationOrdinalAttribute(int ordinal) => Ordinal = ordinal;
+
+    public int Ordinal { get; }
 }

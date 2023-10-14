@@ -47,7 +47,7 @@ internal class DependencyC1 : IInterface
 }
 
 [CreateFunction(typeof(IReadOnlyDictionary<Key, IReadOnlyList<IInterface>>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     private Container() {}
 }

@@ -67,7 +67,7 @@ internal interface ICheckTypeProperties
     IMethodSymbol? GetConstructorChoiceFor(INamedTypeSymbol implementationType);
     
     bool ShouldBeDecorated(INamedTypeSymbol interfaceType);
-    IReadOnlyList<INamedTypeSymbol> GetSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType);
+    IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType);
 
     INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey);
     IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey);
@@ -88,6 +88,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     
     private readonly IDictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = 
         new Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>>();
+    private readonly IDictionary<INamedTypeSymbol, int> _decorationToOrdinal;
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
@@ -139,6 +140,23 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     implementationType.OriginalDefinition, 
                     new Dictionary<ITypeSymbol, ISet<object>>{{keyType, new HashSet<object>{keyValue}}});
         }
+        
+        _decorationToOrdinal = currentlyConsideredTypes.DecoratorTypes
+            .SelectMany(d => d.GetAttributes().Select(a => (d, a)))
+            .Select(t =>
+            {
+                var (decorator, attribute) = t;
+                if (!currentlyConsideredTypes.DecorationOrdinalAttributeTypes.Any(a =>
+                        CustomSymbolEqualityComparer.Default.Equals(a, attribute.AttributeClass)))
+                    return ((INamedTypeSymbol DecorationImplementationType, int Ordinal)?)null;
+                return (
+                    DecorationImplementationType: decorator,
+                    Ordinal: attribute.ConstructorArguments[0].Value is int ordinal ? ordinal : 0);
+            })
+            .Where(t => t is not null)
+            .Select(t => t ?? throw new MsMeeseeks.DIE.ImpossibleDieException())
+            .Concat(currentlyConsideredTypes.DecorationOrdinalChoices)
+            .ToDictionary(t => t.DecorationImplementationType, t => t.Ordinal);
     }
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
@@ -227,7 +245,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     
     public bool ShouldBeDecorated(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.InterfaceToDecorators.ContainsKey(interfaceType.UnboundIfGeneric());
 
-    public IReadOnlyList<INamedTypeSymbol> GetSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
+    public IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
     {
         IEnumerable<INamedTypeSymbol> sequence = Array.Empty<INamedTypeSymbol>();
         bool found = false;
@@ -246,9 +264,9 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             }
         }
         
-        if (!found && _currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators)
-                 && allDecorators.Count == 1)
-            sequence = allDecorators;
+        if (!found && _currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators))
+            sequence = allDecorators
+                .OrderBy(d => _decorationToOrdinal.TryGetValue(d, out var ordinal) ? ordinal : 0);
         
         return sequence
             .Select(imp =>

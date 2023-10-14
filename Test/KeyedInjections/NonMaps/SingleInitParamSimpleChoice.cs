@@ -39,7 +39,7 @@ internal class Root
 [InjectionKeyChoice(Key.C, typeof(DependencyC))]
 [Initializer(typeof(Root), nameof(Root.Initialize))]
 [CreateFunction(typeof(Root), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     private Container() {}
 }

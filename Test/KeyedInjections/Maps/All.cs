@@ -98,7 +98,7 @@ internal class Root
 }
 
 [CreateFunction(typeof(Root), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     private Container() {}
 }

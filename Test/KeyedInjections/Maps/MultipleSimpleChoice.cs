@@ -47,7 +47,7 @@ internal class DependencyC1 : IInterface
 [InjectionKeyChoice(Key.C, typeof(DependencyC0))]
 [InjectionKeyChoice(Key.C, typeof(DependencyC1))]
 [CreateFunction(typeof(IReadOnlyDictionary<Key, IReadOnlyList<IInterface>>), "Create")]
-internal partial class Container
+internal sealed partial class Container
 {
     private Container() {}
 }

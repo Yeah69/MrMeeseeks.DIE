@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
@@ -19,17 +20,17 @@ internal interface IInterface
 {
 }
 
-[Key(Key.A)]
+[InjectionKey(Key.A)]
 internal class DependencyA : IInterface
 {
 }
 
-[Key(Key.B)]
+[InjectionKey(Key.B)]
 internal class DependencyB : IInterface
 {
 }
 
-[Key(Key.C)]
+[InjectionKey(Key.C)]
 internal class DependencyC : IInterface
 {
 }
@@ -38,19 +39,19 @@ internal interface IAsyncInterface
 {
 }
 
-[Key(Key.A)]
+[InjectionKey(Key.A)]
 internal class AsyncDependencyA : IAsyncInterface, ITaskInitializer
 {
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
-[Key(Key.B)]
+[InjectionKey(Key.B)]
 internal class AsyncDependencyB : IAsyncInterface, IValueTaskInitializer
 {
     public async ValueTask InitializeAsync() => await Task.Yield();
 }
 
-[Key(Key.C)]
+[InjectionKey(Key.C)]
 internal class AsyncDependencyC : IAsyncInterface, ITaskInitializer
 {
     public Task InitializeAsync() => Task.CompletedTask;

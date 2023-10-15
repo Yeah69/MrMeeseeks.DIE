@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Decorator.Ordinal.NotConfigured;

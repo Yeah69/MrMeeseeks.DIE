@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
@@ -15,24 +16,24 @@ internal interface IInterface
 {
 }
 
-[Key(Key.A)]
+[InjectionKey(Key.A)]
 internal class DependencyA : IInterface
 {
 }
 
-[Key(Key.B)]
+[InjectionKey(Key.B)]
 internal class DependencyB : IInterface
 {
 }
 
-[Key(Key.C)]
+[InjectionKey(Key.C)]
 internal class DependencyC : IInterface
 {
 }
 
 internal class Root
 {
-    public Root([Key(Key.B)] IInterface dependency) => Dependency = dependency;
+    public Root([InjectionKey(Key.B)] IInterface dependency) => Dependency = dependency;
 
     public IInterface Dependency { get; }
 }

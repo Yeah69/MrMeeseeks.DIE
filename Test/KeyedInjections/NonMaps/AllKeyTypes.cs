@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
@@ -15,21 +16,21 @@ internal interface IInterface
 {
 }
 
-[Key(Key.A)]
-[Key(Byte)]
-[Key(SByte)]
-[Key(Short)]
-[Key(UShort)]
-[Key(Int)]
-[Key(UInt)]
-[Key(Long)]
-[Key(ULong)]
-[Key(Char)]
-[Key(Float)]
-[Key(Double)]
-[Key(String)]
-[Key(Bool)]
-[Key(typeof(DependencyA))]
+[InjectionKey(Key.A)]
+[InjectionKey(Byte)]
+[InjectionKey(SByte)]
+[InjectionKey(Short)]
+[InjectionKey(UShort)]
+[InjectionKey(Int)]
+[InjectionKey(UInt)]
+[InjectionKey(Long)]
+[InjectionKey(ULong)]
+[InjectionKey(Char)]
+[InjectionKey(Float)]
+[InjectionKey(Double)]
+[InjectionKey(String)]
+[InjectionKey(Bool)]
+[InjectionKey(typeof(DependencyA))]
 internal class DependencyA : IInterface
 {
     internal const byte Byte = 0;
@@ -47,21 +48,21 @@ internal class DependencyA : IInterface
     internal const bool Bool = true;
 }
 
-[Key(Key.B)]
-[Key(Byte)]
-[Key(SByte)]
-[Key(Short)]
-[Key(UShort)]
-[Key(Int)]
-[Key(UInt)]
-[Key(Long)]
-[Key(ULong)]
-[Key(Char)]
-[Key(Float)]
-[Key(Double)]
-[Key(String)]
-[Key(Bool)]
-[Key(typeof(DependencyB))]
+[InjectionKey(Key.B)]
+[InjectionKey(Byte)]
+[InjectionKey(SByte)]
+[InjectionKey(Short)]
+[InjectionKey(UShort)]
+[InjectionKey(Int)]
+[InjectionKey(UInt)]
+[InjectionKey(Long)]
+[InjectionKey(ULong)]
+[InjectionKey(Char)]
+[InjectionKey(Float)]
+[InjectionKey(Double)]
+[InjectionKey(String)]
+[InjectionKey(Bool)]
+[InjectionKey(typeof(DependencyB))]
 internal class DependencyB : IInterface
 {
     internal const byte Byte = 12;
@@ -80,21 +81,21 @@ internal class DependencyB : IInterface
 }
 
 
-[Key(Key.C)]
-[Key(Byte)]
-[Key(SByte)]
-[Key(Short)]
-[Key(UShort)]
-[Key(Int)]
-[Key(UInt)]
-[Key(Long)]
-[Key(ULong)]
-[Key(Char)]
-[Key(Float)]
-[Key(Double)]
-[Key(String)]
-[Key(Bool)]
-[Key(typeof(DependencyC))]
+[InjectionKey(Key.C)]
+[InjectionKey(Byte)]
+[InjectionKey(SByte)]
+[InjectionKey(Short)]
+[InjectionKey(UShort)]
+[InjectionKey(Int)]
+[InjectionKey(UInt)]
+[InjectionKey(Long)]
+[InjectionKey(ULong)]
+[InjectionKey(Char)]
+[InjectionKey(Float)]
+[InjectionKey(Double)]
+[InjectionKey(String)]
+[InjectionKey(Bool)]
+[InjectionKey(typeof(DependencyC))]
 internal class DependencyC : IInterface
 {
     internal const byte Byte = 24;
@@ -114,49 +115,49 @@ internal class DependencyC : IInterface
 
 internal class Root
 {
-    [Key(Key.B)]
+    [InjectionKey(Key.B)]
     public required IInterface DependencyEnum { get; init; }
     
-    [Key(DependencyB.Byte)]
+    [InjectionKey(DependencyB.Byte)]
     public required IInterface DependencyByte { get; init; }
     
-    [Key(DependencyB.SByte)]
+    [InjectionKey(DependencyB.SByte)]
     public required IInterface DependencySByte { get; init; }
 
-    [Key(DependencyB.Short)]
+    [InjectionKey(DependencyB.Short)]
     public required IInterface DependencyShort { get; init; }
 
-    [Key(DependencyB.UShort)]
+    [InjectionKey(DependencyB.UShort)]
     public required IInterface DependencyUShort { get; init; }
 
-    [Key(DependencyB.Int)]
+    [InjectionKey(DependencyB.Int)]
     public required IInterface DependencyInt { get; init; }
 
-    [Key(DependencyB.UInt)]
+    [InjectionKey(DependencyB.UInt)]
     public required IInterface DependencyUInt { get; init; }
 
-    [Key(DependencyB.Long)]
+    [InjectionKey(DependencyB.Long)]
     public required IInterface DependencyLong { get; init; }
 
-    [Key(DependencyB.ULong)]
+    [InjectionKey(DependencyB.ULong)]
     public required IInterface DependencyULong { get; init; }
 
-    [Key(DependencyB.Char)]
+    [InjectionKey(DependencyB.Char)]
     public required IInterface DependencyChar { get; init; }
 
-    [Key(DependencyB.Float)]
+    [InjectionKey(DependencyB.Float)]
     public required IInterface DependencyFloat { get; init; }
 
-    [Key(DependencyB.Double)]
+    [InjectionKey(DependencyB.Double)]
     public required IInterface DependencyDouble { get; init; }
 
-    [Key(DependencyB.String)]
+    [InjectionKey(DependencyB.String)]
     public required IInterface DependencyString { get; init; }
 
-    [Key(DependencyB.Bool)]
+    [InjectionKey(DependencyB.Bool)]
     public required IInterface DependencyBool { get; init; }
 
-    [Key(typeof(DependencyB))]
+    [InjectionKey(typeof(DependencyB))]
     public required IInterface DependencyType { get; init; }
 }
 

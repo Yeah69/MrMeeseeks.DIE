@@ -1,53 +1,42 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
+internal enum Key
+{
+    A,
+    B,
+    C
+}
+
 internal interface IInterface
 {
-    IInterface Decorated { get; }
 }
 
-internal class DecoratorH : IInterface, IDecorator<IInterface>
-{
-    public required IInterface Decorated { get; internal init; }
-}
-
-internal class DecoratorE : IInterface, IDecorator<IInterface>
-{
-    public required IInterface Decorated { get; internal init; }
-}
-
-internal class DecoratorUh : IInterface, IDecorator<IInterface>
-{
-    public required IInterface Decorated { get; internal init; }
-}
-
-internal class DecoratorY : IInterface, IDecorator<IInterface>
-{
-    public required IInterface Decorated { get; internal init; }
-}
-
-[DecorationOrdinal(2)]
-internal class DecoratorA : IInterface, IDecorator<IInterface>
-{
-    public required IInterface Decorated { get; internal init; }
-}
-
-internal class Dependency : IInterface
-{
-    public IInterface Decorated => this;
-}
-
-[DecorationOrdinalChoice(typeof(DecoratorH), -1)]
-[DecorationOrdinalChoice(typeof(DecoratorE), 3)]
-[DecorationOrdinalChoice(typeof(DecoratorY), 23)]
-[DecorationOrdinalChoice(typeof(DecoratorUh), 69)]
-[CreateFunction(typeof(IInterface), "Create")]
-internal abstract class ContainerBase
+[InjectionKey(Key.A)]
+internal class DependencyA : IInterface
 {
 }
 
-internal sealed partial class Container : ContainerBase
+[InjectionKey(Key.B)]
+internal class DependencyB : IInterface
+{
+}
+
+[InjectionKey(Key.C)]
+internal class DependencyC : IInterface
+{
+}
+
+internal class Root
+{
+    [InjectionKey(Key.B)]
+    internal required IInterface Dependency { get; init; }
+}
+
+[CreateFunction(typeof(Root), "Create")]
+internal sealed partial class Container
 {
     private Container() {}
 }

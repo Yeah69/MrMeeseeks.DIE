@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using System;
+using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace

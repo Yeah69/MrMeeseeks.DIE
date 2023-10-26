@@ -46,8 +46,8 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
                 do
                 {
                     i = stack.Pop();
-                    cycleStack = cycleStack.Push(current.Description);
-                } while (i != current && stack.Any());
+                    cycleStack = cycleStack.Push(i.Description);
+                } while (i != current && stack.Count != 0);
                 
                 _localDiagLogger.Error(ErrorLogData.CircularReferenceAmongFactories(cycleStack), Location.None);
                 throw new FunctionCycleDieException(cycleStack);

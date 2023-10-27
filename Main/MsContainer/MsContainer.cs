@@ -56,6 +56,9 @@ internal sealed partial class MsContainer
     private WellKnownTypesMiscellaneous DIE_Factory_WellKnownTypesMiscellaneous() => 
         WellKnownTypesMiscellaneous.Create(DIE_Factory_Compilation);
 
+    private WellKnownTypesMapping DIE_Factory_WellKnownTypesMapping() => 
+        WellKnownTypesMapping.Create(DIE_Factory_Compilation);
+
     [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ScopeCheckTypeProperties))]
     [CustomScopeForRootTypes(typeof(ScopeNodeRoot))]

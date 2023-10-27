@@ -210,6 +210,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         var wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
         var wellKnownTypesChoice = containerWideContext.WellKnownTypesChoice;
         var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
+        var wellKnownTypesMapping = containerWideContext.WellKnownTypesMapping;
         
         Implementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
         TransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);
@@ -233,7 +234,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         InjectionKeyAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.InjectionKeyMappingAttribute)
             .Select(t => t.Item2)
             .ToImmutableHashSet();
-        DecorationOrdinalAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.DecorationOrdinalMappingAttribute)
+        DecorationOrdinalAttributeTypes = GetTypesFromAttribute(wellKnownTypesMapping.DecorationOrdinalMappingAttribute)
             .Select(t => t.Item2)
             .ToImmutableHashSet();
 
@@ -256,10 +257,10 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         FilterScopeInstanceImplementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.FilterScopeInstanceImplementationAggregationAttribute);
         FilterTransientScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
         FilterScopeRootImplementation = ImmutableHashSet<INamedTypeSymbol>.Empty;
-        FilterInjectionKeyAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.FilterInjectionKeyMappingAttribute)
+        FilterInjectionKeyAttributeTypes = GetTypesFromAttribute(wellKnownTypesMapping.FilterInjectionKeyMappingAttribute)
             .Select(t => t.Item2)
             .ToImmutableHashSet();
-        FilterDecorationOrdinalAttributeTypes = GetTypesFromAttribute(wellKnownTypesMiscellaneous.FilterDecorationOrdinalMappingAttribute)
+        FilterDecorationOrdinalAttributeTypes = GetTypesFromAttribute(wellKnownTypesMapping.FilterDecorationOrdinalMappingAttribute)
             .Select(t => t.Item2)
             .ToImmutableHashSet();
         

@@ -71,6 +71,7 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<string>> PropertyChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> InterceptorChoices { get; }
     
 }
 
@@ -439,6 +440,20 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         
         DecorationOrdinalChoices = decorationOrdinalChoices;
         
+        var interceptorChoices = 
+            new Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>(CustomSymbolEqualityComparer.Default);
+        
+        foreach (var types in typesFromAttributes)
+        {
+            foreach (var type in types.FilterInterceptorChoices)
+                interceptorChoices.Remove(type.UnboundIfGeneric());
+
+            foreach (var (type, choice) in types.InterceptorChoices)
+                interceptorChoices[type.UnboundIfGeneric()] = choice;
+        }
+        
+        InterceptorChoices = interceptorChoices;
+        
         return;
 
         IImmutableSet<INamedTypeSymbol> GetSetOfTypesWithProperties(
@@ -501,6 +516,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<string>> PropertyChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> InterceptorChoices { get; }
 
     private class DecoratorSequenceMap
     {
@@ -513,7 +529,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             _map.Remove(decoratedType);
 
         public bool Any => 
-            _map.Any();
+            _map.Count != 0;
 
         public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => 
             _map;

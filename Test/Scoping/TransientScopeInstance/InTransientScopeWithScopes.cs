@@ -24,14 +24,9 @@ internal interface ITransientScopeChild
     bool Disposed { get; }
 }
 
-internal class TransientScopeChild : ITransientScopeChild, IScopeRoot, IDisposable
+internal class TransientScopeChild(IInterface transientScopeInstance) : ITransientScopeChild, IScopeRoot, IDisposable
 {
-    public TransientScopeChild(IInterface transientScopeInstance)
-    {
-        TransientScopeInstance = transientScopeInstance;
-    }
-
-    public IInterface TransientScopeInstance { get; }
+    public IInterface TransientScopeInstance { get; } = transientScopeInstance;
     public bool Disposed { get; private set; }
 
     public void Dispose()
@@ -40,21 +35,15 @@ internal class TransientScopeChild : ITransientScopeChild, IScopeRoot, IDisposab
     }
 }
 
-internal class TransientScopeWithScopes : ITransientScopeRoot
+internal class TransientScopeWithScopes(IDisposable scopeDisposal, ITransientScopeChild a, ITransientScopeChild b)
+    : ITransientScopeRoot
 {
-    private readonly IDisposable _scopeDisposal;
+    public ITransientScopeChild A { get; } = a;
+    public ITransientScopeChild B { get; } = b;
 
-    public TransientScopeWithScopes(IDisposable scopeDisposal, ITransientScopeChild a, ITransientScopeChild b)
-    {
-        _scopeDisposal = scopeDisposal;
-        A = a;
-        B = b;
-    }
-    public ITransientScopeChild A { get; }
-    public ITransientScopeChild B { get; }
     public void CleanUp()
     {
-        _scopeDisposal.Dispose();
+        scopeDisposal.Dispose();
     }
 }
 

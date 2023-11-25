@@ -21,12 +21,9 @@ internal class BasisB : IInterface
     public IReadOnlyList<IInterface> Composites => new List<IInterface> { this };
 }
 
-internal class Composite : IInterface, IComposite<IInterface>
+internal class Composite(IReadOnlyList<IInterface> composites) : IInterface, IComposite<IInterface>
 {
-    public Composite(IReadOnlyList<IInterface> composites) => 
-        Composites = composites;
-
-    public IReadOnlyList<IInterface> Composites { get; }
+    public IReadOnlyList<IInterface> Composites { get; } = composites;
 }
 
 [CreateFunction(typeof(IInterface), "CreateDep")]

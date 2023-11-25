@@ -6,15 +6,8 @@ internal interface IPlainFunctionCallNode : IFunctionCallNode
 {
 }
 
-internal partial class PlainFunctionCallNode : FunctionCallNode, IPlainFunctionCallNode
-{
-    public PlainFunctionCallNode(
-        string? ownerReference,
+internal partial class PlainFunctionCallNode(string? ownerReference,
         IFunctionNode calledFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
-        
         IReferenceGenerator referenceGenerator)
-        : base(ownerReference, calledFunction, parameters, referenceGenerator)
-    {
-    }
-}
+    : FunctionCallNode(ownerReference, calledFunction, parameters, referenceGenerator), IPlainFunctionCallNode;

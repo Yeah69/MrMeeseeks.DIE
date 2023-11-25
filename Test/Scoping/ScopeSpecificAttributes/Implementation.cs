@@ -13,18 +13,14 @@ internal class DependencyTransientScope : IDependency {}
 
 internal class DependencyScope : IDependency {}
 
-internal class TransientScope : ITransientScopeRoot
+internal class TransientScope(IDependency dependency) : ITransientScopeRoot
 {
-    public TransientScope(IDependency dependency) => Dependency = dependency;
-
-    public IDependency Dependency { get; }
+    public IDependency Dependency { get; } = dependency;
 }
 
-internal class Scope : IScopeRoot
+internal class Scope(IDependency dependency) : IScopeRoot
 {
-    public Scope(IDependency dependency) => Dependency = dependency;
-
-    public IDependency Dependency { get; }
+    public IDependency Dependency { get; } = dependency;
 }
 
 [CreateFunction(typeof(IDependency), "Create0")]

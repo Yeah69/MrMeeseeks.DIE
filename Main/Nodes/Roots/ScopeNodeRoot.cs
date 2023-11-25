@@ -8,13 +8,7 @@ internal interface IScopeNodeRoot
     IScopeNode Scope { get; }
 }
 
-internal class ScopeNodeRoot : IScopeNodeRoot, ITransientScopeRoot
+internal class ScopeNodeRoot(IScopeNode scope) : IScopeNodeRoot, ITransientScopeRoot
 {
-    public IScopeNode Scope { get; }
-
-    public ScopeNodeRoot(
-        IScopeNode scope)
-    {
-        Scope = scope;
-    }
+    public IScopeNode Scope { get; } = scope;
 }

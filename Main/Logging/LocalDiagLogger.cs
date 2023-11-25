@@ -10,14 +10,14 @@ internal interface ILocalDiagLogger
 
 internal class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
 {
-    private readonly IFunctionLevelLogMessageEnhancer _messageEnhancer;
+    private readonly ILogEnhancer _logEnhancer;
     private readonly IDiagLogger _diagLogger;
 
     internal LocalDiagLogger(
-        IFunctionLevelLogMessageEnhancer messageEnhancer,
+        ILogEnhancer logEnhancer,
         IDiagLogger diagLogger)
     {
-        _messageEnhancer = messageEnhancer;
+        _logEnhancer = logEnhancer;
         _diagLogger = diagLogger;
     }
 
@@ -28,7 +28,7 @@ internal class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
         _diagLogger.Log(Diagnostic.Create(new DiagnosticDescriptor(
                 CreateId(data),
                 data.Title,
-                _messageEnhancer.Enhance(data.Message),
+                _logEnhancer.Enhance(data.Message),
                 "Warning",
                 DiagnosticSeverity.Warning,
                 true),
@@ -38,7 +38,7 @@ internal class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
         _diagLogger.Error(Diagnostic.Create(new DiagnosticDescriptor(
                 CreateId(data),
                 data.Title,
-                _messageEnhancer.Enhance(data.Message),
+                _logEnhancer.Enhance(data.Message),
                 "Error",
                 DiagnosticSeverity.Error,
                 true),

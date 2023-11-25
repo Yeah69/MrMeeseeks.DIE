@@ -23,14 +23,9 @@ internal class DependencyB : IInterface
 {
 }
 
-internal class Instance : ITransientScopeInstance
+internal class Instance(IInterface inner) : ITransientScopeInstance
 {
-    public IInterface Inner { get; }
-
-    public Instance(IInterface inner)
-    {
-        Inner = inner;
-    }
+    public IInterface Inner { get; } = inner;
 }
 
 internal class TransientScopeRoot0 : ITransientScopeRoot

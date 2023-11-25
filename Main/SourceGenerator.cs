@@ -1,5 +1,5 @@
-﻿using MrMeeseeks.DIE.Contexts;
-using MrMeeseeks.DIE.Utility;
+﻿using System.Threading;
+using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE;
 
@@ -13,30 +13,20 @@ public class SourceGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
+        var executeLevelContainer = ExecuteLevelContainer.DIE_CreateContainer(context);
         try
         {
-            var wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
-            var rangeUtility = new RangeUtility(
-                new ContainerWideContext(
-                    WellKnownTypes.Create(context.Compilation),
-                    WellKnownTypesAggregation.Create(context.Compilation),
-                    WellKnownTypesChoice.Create(context.Compilation),
-                    WellKnownTypesCollections.Create(context.Compilation), 
-                    wellKnownTypesMiscellaneous,
-                    WellKnownTypesMapping.Create(context.Compilation)));
-        
-            new ExecuteImpl(
-                context,
-                rangeUtility,
-                ContainerInfoFactory)
-                .Execute();
-                
-            IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => 
-                new ContainerInfo(type, wellKnownTypesMiscellaneous, rangeUtility);
+            var execute = executeLevelContainer.Create();
+            execute.Execute();
         }
         catch (ValidationDieException)
         {
             // nothing to do here
+        }
+        finally
+        {
+            var disposeAsync = executeLevelContainer.DisposeAsync();
+            SpinWait.SpinUntil(() => disposeAsync.IsCompleted);
         }
     }
 }

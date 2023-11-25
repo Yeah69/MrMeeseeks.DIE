@@ -8,12 +8,7 @@ internal interface IMultiFunctionNodeRoot
     IMultiFunctionNode Function { get; }
 }
 
-internal class MultiFunctionNodeRoot : IMultiFunctionNodeRoot, IScopeRoot
+internal class MultiFunctionNodeRoot(IMultiFunctionNode function) : IMultiFunctionNodeRoot, IScopeRoot
 {
-    public MultiFunctionNodeRoot(IMultiFunctionNode function)
-    {
-        Function = function;
-    }
-    
-    public IMultiFunctionNode Function { get; }
+    public IMultiFunctionNode Function { get; } = function;
 }

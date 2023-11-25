@@ -18,17 +18,11 @@ internal class Dependency : IInterface, ITransientScopeInstance, IDisposable
     public void Dispose() => IsDisposed = true;
 }
 
-internal class TransientScope : ITransientScopeRoot
+internal class TransientScope(IDisposable scopeDisposal, IInterface dependency) : ITransientScopeRoot
 {
-    private readonly IDisposable _scopeDisposal;
-    public IInterface Dependency { get; }
-    public TransientScope(IDisposable scopeDisposal, IInterface dependency)
-    {
-        _scopeDisposal = scopeDisposal;
-        Dependency = dependency;
-    }
+    public IInterface Dependency { get; } = dependency;
 
-    public void Cleanup() => _scopeDisposal.Dispose();
+    public void Cleanup() => scopeDisposal.Dispose();
 }
 
 [CreateFunction(typeof(TransientScope), "Create")]

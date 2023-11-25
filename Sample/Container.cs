@@ -20,7 +20,7 @@ internal class DependencyA : IInterface
 }
 
 [InjectionKey(Key.B)]
-internal class DependencyB : IInterface
+internal class DependencyB : IInterface, IContainerInstance
 {
 }
 

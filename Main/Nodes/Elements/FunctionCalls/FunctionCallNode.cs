@@ -11,36 +11,24 @@ internal interface IFunctionCallNode : IElementNode, IAwaitableNode
     IFunctionNode CalledFunction { get; }
 }
 
-internal abstract class FunctionCallNode : IFunctionCallNode
-{
-    private readonly IFunctionNode _calledFunction;
-
-    public FunctionCallNode(
-        string? ownerReference,
+internal abstract class FunctionCallNode(string? ownerReference,
         IFunctionNode calledFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
-        
         IReferenceGenerator referenceGenerator)
-    {
-        _calledFunction = calledFunction;
-        OwnerReference = ownerReference;
-        Parameters = parameters;
-        FunctionName = calledFunction.Name;
-        Reference = referenceGenerator.Generate("functionCallResult");
-    }
-
+    : IFunctionCallNode
+{
     public virtual void Build(PassedContext passedContext) { }
 
     public abstract void Accept(INodeVisitor nodeVisitor);
 
     public string TypeFullName => 
-        _calledFunction.AsyncTypeFullName 
-        ?? _calledFunction.ReturnedTypeFullName;
-    public string Reference { get; }
-    public string FunctionName { get; }
-    public virtual string? OwnerReference { get; }
-    public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
-    public IFunctionNode CalledFunction => _calledFunction;
+        calledFunction.AsyncTypeFullName 
+        ?? calledFunction.ReturnedTypeFullName;
+    public string Reference { get; } = referenceGenerator.Generate("functionCallResult");
+    public string FunctionName { get; } = calledFunction.Name;
+    public virtual string? OwnerReference { get; } = ownerReference;
+    public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; } = parameters;
+    public IFunctionNode CalledFunction => calledFunction;
 
-    public bool Awaited => _calledFunction.SynchronicityDecision is not SynchronicityDecision.Sync;
+    public bool Awaited => calledFunction.SynchronicityDecision is not SynchronicityDecision.Sync;
 }

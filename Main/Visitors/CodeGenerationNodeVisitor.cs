@@ -19,18 +19,11 @@ internal interface ICodeGenerationVisitor : INodeVisitor
     string GenerateContainerFile();
 }
 
-internal class CodeGenerationVisitor : ICodeGenerationVisitor
+internal class CodeGenerationVisitor(IContainerWideContext containerWideContext) : ICodeGenerationVisitor
 {
     private readonly StringBuilder _code = new();
-    private readonly WellKnownTypes _wellKnownTypes;
-    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
-
-    public CodeGenerationVisitor(
-        IContainerWideContext containerWideContext)
-    {
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
-    }
+    private readonly WellKnownTypes _wellKnownTypes = containerWideContext.WellKnownTypes;
+    private readonly WellKnownTypesCollections _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
 
     public void VisitIContainerNode(IContainerNode container)
     {

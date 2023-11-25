@@ -27,28 +27,22 @@ public abstract class DieException : Exception
     public abstract DieExceptionKind Kind { get; }
 }
 
-public class ImplementationCycleDieException : DieException
+public class ImplementationCycleDieException(IImmutableStack<INamedTypeSymbol> cycle) : DieException
 {
-    public ImplementationCycleDieException(IImmutableStack<INamedTypeSymbol> cycle) => Cycle = cycle;
-
     public override DieExceptionKind Kind => DieExceptionKind.ImplementationCycle;
-    public IImmutableStack<INamedTypeSymbol> Cycle { get; }
+    public IImmutableStack<INamedTypeSymbol> Cycle { get; } = cycle;
 }
 
-public class FunctionCycleDieException : DieException
+public class FunctionCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) : DieException
 {
-    public FunctionCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
-
     public override DieExceptionKind Kind => DieExceptionKind.FunctionCycle;
-    public IImmutableStack<string> Cycle { get; }
+    public IImmutableStack<string> Cycle { get; } = cycleFunctionDescriptions;
 }
 
-public class InitializedInstanceCycleDieException : DieException
+public class InitializedInstanceCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) : DieException
 {
-    public InitializedInstanceCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
-
     public override DieExceptionKind Kind => DieExceptionKind.InitializedInstanceCycle;
-    public IImmutableStack<string> Cycle { get; }
+    public IImmutableStack<string> Cycle { get; } = cycleFunctionDescriptions;
 }
 
 public class ValidationDieException : DieException
@@ -56,22 +50,17 @@ public class ValidationDieException : DieException
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
 }
 
-public class ResolutionDieException : DieException
+public class ResolutionDieException(string errorMessage) : DieException
 {
-    public string ErrorMessage { get; }
-    public ResolutionDieException(string errorMessage)
-    {
-        ErrorMessage = errorMessage;
-    }
+    public string ErrorMessage { get; } = errorMessage;
 
     public override DieExceptionKind Kind => DieExceptionKind.Resolution;
 }
 
-public class CompilationDieException : DieException
+public class CompilationDieException(Diagnostic diagnostic) : DieException
 {
-    public Diagnostic Diagnostic { get; }
+    public Diagnostic Diagnostic { get; } = diagnostic;
 
-    public CompilationDieException(Diagnostic diagnostic) => Diagnostic = diagnostic;
     public override DieExceptionKind Kind => DieExceptionKind.Compilation;
 }
 

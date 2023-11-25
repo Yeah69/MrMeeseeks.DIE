@@ -11,40 +11,36 @@ internal interface ISingleFunctionNode : IFunctionNode
     IElementNode ReturnedElement { get; }
 }
 
-internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISingleFunctionNode
-{
-    public SingleFunctionNodeBase(
-        // parameters
-        Accessibility? accessibility,
+internal abstract class SingleFunctionNodeBase(Accessibility? accessibility,
         ITypeSymbol typeSymbol,
         IReadOnlyList<ITypeSymbol> parameters,
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IRangeNode parentRange,
-        IContainerNode parentContainer,
-        
-        // dependencies
-        Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
-        Func<(string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        IContainerWideContext containerWideContext)
-        : base(
-            accessibility, 
-            typeSymbol, 
-            parameters, 
-            closureParameters, 
-            parentContainer, 
-            parentRange,
-            parameterNodeFactory,
+        IContainerNode parentContainer, Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
+        Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode>
             plainFunctionCallNodeFactory,
-            asyncFunctionCallNodeFactory,
-            scopeCallNodeFactory,
-            transientScopeCallNodeFactory,
-            containerWideContext)
-    {
-        ReturnedTypeNameNotWrapped = typeSymbol.Name;
-    }
+        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>,
+            IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
+        Func<(string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>,
+            IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode
+            ?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        IContainerWideContext containerWideContext)
+    : ReturningFunctionNodeBase(accessibility,
+        typeSymbol,
+        parameters,
+        closureParameters,
+        parentContainer,
+        parentRange,
+        parameterNodeFactory,
+        plainFunctionCallNodeFactory,
+        asyncFunctionCallNodeFactory,
+        scopeCallNodeFactory,
+        transientScopeCallNodeFactory,
+        containerWideContext), ISingleFunctionNode
+{
+    // parameters
+    // dependencies
 
     protected abstract IElementNodeMapperBase GetMapper();
 
@@ -58,5 +54,5 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
     }
 
     public IElementNode ReturnedElement { get; private set; } = null!;
-    public override string ReturnedTypeNameNotWrapped { get; }
+    public override string ReturnedTypeNameNotWrapped { get; } = typeSymbol.Name;
 }

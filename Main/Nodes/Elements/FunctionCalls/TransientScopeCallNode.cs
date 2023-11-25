@@ -15,38 +15,23 @@ internal interface ITransientScopeCallNode : IFunctionCallNode
     IFunctionCallNode? Initialization { get; }
 }
 
-internal partial class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNode
-{
-    private readonly ITransientScopeNode _scope;
-
-    public TransientScopeCallNode(
-        string containerParameter, 
+internal partial class TransientScopeCallNode(string containerParameter,
         ITransientScopeNode scope,
         IContainerNode parentContainer,
         IRangeNode callingRange,
         IFunctionNode calledFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
         IFunctionCallNode? initialization,
-        
-        IReferenceGenerator referenceGenerator) 
-        : base(null, calledFunction, parameters, referenceGenerator)
-    {
-        _scope = scope;
-        ContainerParameter = containerParameter;
-        Initialization = initialization;
-        TransientScopeFullName = scope.FullName;
-        TransientScopeReference = referenceGenerator.Generate("transientScopeRoot");
-        ContainerReference = callingRange.ContainerReference;
-        TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
-    }
-
+        IReferenceGenerator referenceGenerator)
+    : FunctionCallNode(null, calledFunction, parameters, referenceGenerator), ITransientScopeCallNode
+{
     public override string OwnerReference => TransientScopeReference;
 
-    public string ContainerParameter { get; }
-    public string? ContainerReference { get; }
-    public string TransientScopeFullName { get; }
-    public string TransientScopeReference { get; }
-    public DisposalType DisposalType => _scope.DisposalType;
-    public string TransientScopeDisposalReference { get; }
-    public IFunctionCallNode? Initialization { get; }
+    public string ContainerParameter { get; } = containerParameter;
+    public string? ContainerReference { get; } = callingRange.ContainerReference;
+    public string TransientScopeFullName { get; } = scope.FullName;
+    public string TransientScopeReference { get; } = referenceGenerator.Generate("transientScopeRoot");
+    public DisposalType DisposalType => scope.DisposalType;
+    public string TransientScopeDisposalReference { get; } = parentContainer.TransientScopeDisposalReference;
+    public IFunctionCallNode? Initialization { get; } = initialization;
 }

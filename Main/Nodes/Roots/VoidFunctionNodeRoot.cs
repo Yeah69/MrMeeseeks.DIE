@@ -8,12 +8,7 @@ internal interface IVoidFunctionNodeRoot
     IVoidFunctionNode Function { get; }
 }
 
-internal class VoidFunctionNodeRoot : IVoidFunctionNodeRoot, IScopeRoot
+internal class VoidFunctionNodeRoot(IVoidFunctionNode function) : IVoidFunctionNodeRoot, IScopeRoot
 {
-    public VoidFunctionNodeRoot(IVoidFunctionNode function)
-    {
-        Function = function;
-    }
-    
-    public IVoidFunctionNode Function { get; }
+    public IVoidFunctionNode Function { get; } = function;
 }

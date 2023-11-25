@@ -8,12 +8,7 @@ internal interface ILocalFunctionNodeRoot
     ILocalFunctionNode Function { get; }
 }
 
-internal class LocalFunctionNodeRoot : ILocalFunctionNodeRoot, IScopeRoot
+internal class LocalFunctionNodeRoot(ILocalFunctionNode function) : ILocalFunctionNodeRoot, IScopeRoot
 {
-    public LocalFunctionNodeRoot(ILocalFunctionNode function)
-    {
-        Function = function;
-    }
-    
-    public ILocalFunctionNode Function { get; }
+    public ILocalFunctionNode Function { get; } = function;
 }

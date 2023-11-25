@@ -11,15 +11,15 @@ namespace MrMeeseeks.DIE.MsContainer;
 
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
-[ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancerForRanges))]
+[DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
 [CreateFunction(typeof(IExecuteContainer), "Create")]
-internal sealed partial class MsContainer
+internal sealed partial class ContainerLevelContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
     private readonly Compilation DIE_Factory_Compilation;
     private readonly IContainerInfo DIE_Factory_ContainerInfo;
 
-    private MsContainer(
+    private ContainerLevelContainer(
         GeneratorExecutionContext context, 
         IContainerInfo dieFactoryContainerInfo)
     {
@@ -88,90 +88,68 @@ internal sealed partial class MsContainer
     }
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(CreateFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_CreateFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_CreateFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateScopeFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(CreateScopeFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_CreateScopeFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_CreateScopeFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(CreateTransientScopeFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(CreateTransientScopeFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_CreateTransientScopeFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_CreateTransientScopeFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(EntryFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(EntryFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_EntryFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_EntryFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(LocalFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(LocalFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_LocalFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_LocalFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(RangedInstanceFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_RangedInstanceFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_RangedInstanceFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(RangedInstanceInterfaceFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(RangedInstanceInterfaceFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_RangedInstanceInterfaceFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_RangedInstanceInterfaceFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(MultiFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(MultiFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_MultiFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_MultiFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(VoidFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(VoidFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_VoidFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_VoidFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(MultiKeyValueFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(MultiKeyValueFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_MultiKeyValueFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_MultiKeyValueFunctionNodeRoot;
 
     [ImplementationChoice(typeof(IFunctionNode), typeof(MultiKeyValueMultiFunctionNode))]
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
     [CustomScopeForRootTypes(typeof(MultiKeyValueMultiFunctionNodeRoot))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private sealed partial class DIE_Scope_MultiKeyValueMultiFunctionNodeRoot
-    {
-    }
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
+    private sealed partial class DIE_Scope_MultiKeyValueMultiFunctionNodeRoot;
 }

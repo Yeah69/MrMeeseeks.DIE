@@ -8,13 +8,7 @@ internal interface ITransientScopeNodeRoot
     ITransientScopeNode TransientScope { get; }
 }
 
-internal class TransientScopeNodeRoot : ITransientScopeNodeRoot, ITransientScopeRoot
+internal class TransientScopeNodeRoot(ITransientScopeNode transientScope) : ITransientScopeNodeRoot, ITransientScopeRoot
 {
-    public ITransientScopeNode TransientScope { get; }
-
-    public TransientScopeNodeRoot(
-        ITransientScopeNode transientScope)
-    {
-        TransientScope = transientScope;
-    }
+    public ITransientScopeNode TransientScope { get; } = transientScope;
 }

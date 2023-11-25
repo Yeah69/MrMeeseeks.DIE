@@ -21,11 +21,9 @@ internal class DependencyB : IInterface
 {
 }
 
-internal class Root
+internal class Root([InjectionKey(Key.A)] IReadOnlyList<IInterface> dependencies)
 {
-    public Root([InjectionKey(Key.A)] IReadOnlyList<IInterface> dependencies) => Dependencies = dependencies;
-
-    public IReadOnlyList<IInterface> Dependencies { get; }
+    public IReadOnlyList<IInterface> Dependencies { get; } = dependencies;
 }
 
 [CreateFunction(typeof(Root), "Create")]

@@ -8,12 +8,7 @@ internal interface ICreateFunctionNodeRoot
     ICreateFunctionNode Function { get; }
 }
 
-internal class CreateFunctionNodeRoot : ICreateFunctionNodeRoot, IScopeRoot
+internal class CreateFunctionNodeRoot(ICreateFunctionNode function) : ICreateFunctionNodeRoot, IScopeRoot
 {
-    public CreateFunctionNodeRoot(ICreateFunctionNode function)
-    {
-        Function = function;
-    }
-    
-    public ICreateFunctionNode Function { get; }
+    public ICreateFunctionNode Function { get; } = function;
 }

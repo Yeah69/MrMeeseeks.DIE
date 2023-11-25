@@ -12,14 +12,9 @@ internal interface IRangeUtility
     IReadOnlyList<ISymbol> GetEffectiveMembers(INamedTypeSymbol rangeType);
 }
 
-internal class RangeUtility : IRangeUtility
+internal class RangeUtility(IContainerWideContext transientScopeWideContext) : IRangeUtility
 {
-    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
-
-    public RangeUtility(IContainerWideContext transientScopeWideContext)
-    {
-        _wellKnownTypesMiscellaneous = transientScopeWideContext.WellKnownTypesMiscellaneous;
-    }
+    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous = transientScopeWideContext.WellKnownTypesMiscellaneous;
 
     public bool IsAContainer(INamedTypeSymbol rangeType) =>
         rangeType is { IsAbstract: false, ContainingType: null } 

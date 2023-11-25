@@ -8,6 +8,7 @@ internal static class Constants
     internal const string PublicKeyword = "public";
     internal const string InternalKeyword = "internal";
     internal const string PrivateKeyword = "private";
+    internal const string DescriptionsNamespace = $"MrMeeseeks.{DieAbbreviation}.Descriptions";
     
     // Ranges
     internal const string ScopeName = "Scope";

@@ -5,21 +5,17 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ValueTuple.NonSyntaxVariant;
 
-internal class Wrapper
-{
-    public Wrapper(
+internal class Wrapper(ValueTuple<int, int, int, int, int, int, int, 
         ValueTuple<int, int, int, int, int, int, int, 
-                ValueTuple<int, int, int, int, int, int, int, 
-                    ValueTuple<int, int, int, int, int, int, int,
-                        ValueTuple<int, int, int, int, int>>>>
-            dependency) =>
-        Dependency = dependency;
-
+            ValueTuple<int, int, int, int, int, int, int,
+                ValueTuple<int, int, int, int, int>>>>
+    dependency)
+{
     public ValueTuple<int, int, int, int, int, int, int, 
             ValueTuple<int, int, int, int, int, int, int, 
                 ValueTuple<int, int, int, int, int, int, int,
                     ValueTuple<int, int, int, int, int>>>>
-        Dependency { get; }
+        Dependency { get; } = dependency;
 }
 
 [CreateFunction(typeof(Wrapper), "Create")]

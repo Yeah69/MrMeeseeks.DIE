@@ -12,24 +12,16 @@ internal interface IInterface
     IInterface Decorated { get; }
 }
 
-internal class DecoratorA : IInterface, IDecorator<IInterface>
+internal class DecoratorA(IInterface decorated) : IInterface, IDecorator<IInterface>
 {
     public IReadOnlyList<IInterface> Composites => Decorated.Composites;
-    public IInterface Decorated { get; }
-
-    public DecoratorA(
-        IInterface decorated) =>
-        Decorated = decorated;
+    public IInterface Decorated { get; } = decorated;
 }
 
-internal class DecoratorB : IInterface, IDecorator<IInterface>
+internal class DecoratorB(IInterface decorated) : IInterface, IDecorator<IInterface>
 {
     public IReadOnlyList<IInterface> Composites => Decorated.Composites;
-    public IInterface Decorated { get; }
-
-    public DecoratorB(
-        IInterface decorated) =>
-        Decorated = decorated;
+    public IInterface Decorated { get; } = decorated;
 }
 
 internal class BasisA : IInterface
@@ -44,12 +36,9 @@ internal class BasisB : IInterface
     public IInterface Decorated => this;
 }
 
-internal class Composite : IInterface, IComposite<IInterface>
+internal class Composite(IReadOnlyList<IInterface> composites) : IInterface, IComposite<IInterface>
 {
-    public Composite(IReadOnlyList<IInterface> composites) => 
-        Composites = composites;
-
-    public IReadOnlyList<IInterface> Composites { get; }
+    public IReadOnlyList<IInterface> Composites { get; } = composites;
     public IInterface Decorated => this;
 }
 

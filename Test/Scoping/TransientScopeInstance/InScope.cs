@@ -9,10 +9,9 @@ internal interface IInterface {}
 
 internal class Dependency : IInterface, ITransientScopeInstance {}
 
-internal class ScopeRoot : IScopeRoot
+internal class ScopeRoot(IInterface dependency) : IScopeRoot
 {
-    public IInterface Dependency { get; }
-    public ScopeRoot(IInterface dependency) => Dependency = dependency;
+    public IInterface Dependency { get; } = dependency;
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]

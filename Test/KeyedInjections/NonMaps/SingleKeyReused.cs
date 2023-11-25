@@ -30,11 +30,9 @@ internal class DependencyB : IInterface
 {
 }
 
-internal class Root
+internal class Root([InjectionKey(Key.A)] IInterface? dependency)
 {
-    public Root([InjectionKey(Key.A)] IInterface? dependency) => Dependency = dependency;
-
-    public IInterface? Dependency { get; }
+    public IInterface? Dependency { get; } = dependency;
 }
 
 [CreateFunction(typeof(Root), "Create")]

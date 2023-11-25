@@ -9,16 +9,14 @@ internal interface IInterface {}
 
 internal class Dependency : IInterface, ITransientScopeInstance {}
 
-internal class ScopeRoot : IScopeRoot
+internal class ScopeRoot(IInterface dependency) : IScopeRoot
 {
-    public IInterface Dependency { get; }
-    public ScopeRoot(IInterface dependency) => Dependency = dependency;
+    public IInterface Dependency { get; } = dependency;
 }
 
-internal class ScopeWithTransientScopeInstanceAbove : IScopeRoot
+internal class ScopeWithTransientScopeInstanceAbove(ScopeRoot innerScope) : IScopeRoot
 {
-    public ScopeRoot InnerScope { get; }
-    public ScopeWithTransientScopeInstanceAbove(ScopeRoot innerScope) => InnerScope = innerScope;
+    public ScopeRoot InnerScope { get; } = innerScope;
 }
 
 [CreateFunction(typeof(ScopeWithTransientScopeInstanceAbove), "Create")]

@@ -8,12 +8,7 @@ internal interface IEntryFunctionNodeRoot
     IEntryFunctionNode Function { get; }
 }
 
-internal class EntryFunctionNodeRoot : IEntryFunctionNodeRoot, IScopeRoot
+internal class EntryFunctionNodeRoot(IEntryFunctionNode function) : IEntryFunctionNodeRoot, IScopeRoot
 {
-    public EntryFunctionNodeRoot(IEntryFunctionNode function)
-    {
-        Function = function;
-    }
-    
-    public IEntryFunctionNode Function { get; }
+    public IEntryFunctionNode Function { get; } = function;
 }

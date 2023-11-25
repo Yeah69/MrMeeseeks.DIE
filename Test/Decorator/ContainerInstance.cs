@@ -21,12 +21,9 @@ internal class DependencyB : IInterface, IContainerInstance
     public IInterface Decorated => this;
 }
 
-internal class Decorator : IInterface, IDecorator<IInterface>
+internal class Decorator(IInterface decoratedContainerInstance) : IInterface, IDecorator<IInterface>
 {
-    public Decorator(IInterface decoratedContainerInstance) => 
-        Decorated = decoratedContainerInstance;
-
-    public IInterface Decorated { get; }
+    public IInterface Decorated { get; } = decoratedContainerInstance;
 }
 
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]

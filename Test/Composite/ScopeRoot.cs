@@ -16,32 +16,23 @@ internal interface IDependency { }
 
 internal class Dependency : IDependency, IScopeInstance { }
 
-internal class BasisA : IInterface, IScopeRoot
+internal class BasisA(IDependency dependency) : IInterface, IScopeRoot
 {
-    public BasisA(IDependency dependency) => Dependency = dependency;
-
     public IReadOnlyList<IInterface> Composites => new List<IInterface> { this };
-    public IDependency Dependency { get; }
+    public IDependency Dependency { get; } = dependency;
 }
 
-internal class BasisB : IInterface
+internal class BasisB(IDependency dependency) : IInterface
 {
-    public BasisB(IDependency dependency) => Dependency = dependency;
-
     public IReadOnlyList<IInterface> Composites => new List<IInterface> { this };
-    public IDependency Dependency { get; }
+    public IDependency Dependency { get; } = dependency;
 }
 
-internal class Composite : IInterface, IComposite<IInterface>
+internal class Composite(IReadOnlyList<IInterface> composites, IDependency dependency)
+    : IInterface, IComposite<IInterface>
 {
-    public Composite(IReadOnlyList<IInterface> composites, IDependency dependency)
-    {
-        Composites = composites;
-        Dependency = dependency;
-    }
-
-    public IReadOnlyList<IInterface> Composites { get; }
-    public IDependency Dependency { get; }
+    public IReadOnlyList<IInterface> Composites { get; } = composites;
+    public IDependency Dependency { get; } = dependency;
 }
 
 [CreateFunction(typeof(IInterface), "CreateDep")]

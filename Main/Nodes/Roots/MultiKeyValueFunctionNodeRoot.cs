@@ -8,12 +8,8 @@ internal interface IMultiKeyValueFunctionNodeRoot
     IMultiKeyValueFunctionNode Function { get; }
 }
 
-internal class MultiKeyValueFunctionNodeRoot : IMultiKeyValueFunctionNodeRoot, IScopeRoot
+internal class MultiKeyValueFunctionNodeRoot(IMultiKeyValueFunctionNode function) : IMultiKeyValueFunctionNodeRoot,
+    IScopeRoot
 {
-    public MultiKeyValueFunctionNodeRoot(IMultiKeyValueFunctionNode function)
-    {
-        Function = function;
-    }
-    
-    public IMultiKeyValueFunctionNode Function { get; }
+    public IMultiKeyValueFunctionNode Function { get; } = function;
 }

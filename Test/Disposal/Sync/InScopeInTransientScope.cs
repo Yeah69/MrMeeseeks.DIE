@@ -13,11 +13,9 @@ internal class Dependency :  IDisposable
     public void Dispose() => IsDisposed = true;
 }
 
-internal class ScopeRoot : IScopeRoot
+internal class ScopeRoot(Dependency dependency) : IScopeRoot
 {
-    public ScopeRoot(Dependency dependency) => Dependency = dependency;
-
-    internal Dependency Dependency { get; }
+    internal Dependency Dependency { get; } = dependency;
 }
 
 internal class TransientScopeRoot : ITransientScopeRoot

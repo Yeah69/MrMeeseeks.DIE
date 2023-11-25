@@ -14,28 +14,18 @@ internal interface IContainerWideContext
     WellKnownTypesMapping WellKnownTypesMapping { get; }
 }
 
-internal class ContainerWideContext : IContainerWideContext, IContainerInstance
-{
-    public ContainerWideContext(
-        WellKnownTypes wellKnownTypes, 
-        WellKnownTypesAggregation wellKnownTypesAggregation, 
+internal class ContainerWideContext(WellKnownTypes wellKnownTypes,
+        WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
-        WellKnownTypesCollections wellKnownTypesCollections, 
+        WellKnownTypesCollections wellKnownTypesCollections,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         WellKnownTypesMapping wellKnownTypesMapping)
-    {
-        WellKnownTypes = wellKnownTypes;
-        WellKnownTypesAggregation = wellKnownTypesAggregation;
-        WellKnownTypesChoice = wellKnownTypesChoice;
-        WellKnownTypesCollections = wellKnownTypesCollections;
-        WellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
-        WellKnownTypesMapping = wellKnownTypesMapping;
-    }
-
-    public WellKnownTypes WellKnownTypes { get; }
-    public WellKnownTypesAggregation WellKnownTypesAggregation { get; }
-    public WellKnownTypesChoice WellKnownTypesChoice { get; }
-    public WellKnownTypesCollections WellKnownTypesCollections { get; }
-    public WellKnownTypesMiscellaneous WellKnownTypesMiscellaneous { get; }
-    public WellKnownTypesMapping WellKnownTypesMapping { get; }
+    : IContainerWideContext, IContainerInstance
+{
+    public WellKnownTypes WellKnownTypes { get; } = wellKnownTypes;
+    public WellKnownTypesAggregation WellKnownTypesAggregation { get; } = wellKnownTypesAggregation;
+    public WellKnownTypesChoice WellKnownTypesChoice { get; } = wellKnownTypesChoice;
+    public WellKnownTypesCollections WellKnownTypesCollections { get; } = wellKnownTypesCollections;
+    public WellKnownTypesMiscellaneous WellKnownTypesMiscellaneous { get; } = wellKnownTypesMiscellaneous;
+    public WellKnownTypesMapping WellKnownTypesMapping { get; } = wellKnownTypesMapping;
 }

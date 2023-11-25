@@ -5,15 +5,11 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ValueTuple.NonSyntaxVariantSingleItem;
 
-internal class Wrapper
+internal class Wrapper(ValueTuple<int>
+    dependency)
 {
-    public Wrapper(
-        ValueTuple<int>
-            dependency) =>
-        Dependency = dependency;
-
     public ValueTuple<int>
-        Dependency { get; }
+        Dependency { get; } = dependency;
 }
 
 [CreateFunction(typeof(Wrapper), "Create")]

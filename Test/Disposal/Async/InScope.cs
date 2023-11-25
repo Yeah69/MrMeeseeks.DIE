@@ -18,11 +18,9 @@ internal class Dependency :  IAsyncDisposable
     }
 }
 
-internal class ScopeRoot : IScopeRoot
+internal class ScopeRoot(Dependency dependency) : IScopeRoot
 {
-    public ScopeRoot(Dependency dependency) => Dependency = dependency;
-
-    internal Dependency Dependency { get; }
+    internal Dependency Dependency { get; } = dependency;
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]

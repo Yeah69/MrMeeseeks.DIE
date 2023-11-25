@@ -9,15 +9,9 @@ internal interface IInjectablePropertyExtractor
     IEnumerable<IPropertySymbol> GetInjectableProperties(INamedTypeSymbol implementationType);
 }
 
-internal class InjectablePropertyExtractor : IInjectablePropertyExtractor, IContainerInstance
+internal class InjectablePropertyExtractor(ICheckInternalsVisible checkInternalsVisible) : IInjectablePropertyExtractor,
+    IContainerInstance
 {
-    private readonly ICheckInternalsVisible _checkInternalsVisible;
-
-    public InjectablePropertyExtractor(ICheckInternalsVisible checkInternalsVisible)
-    {
-        _checkInternalsVisible = checkInternalsVisible;
-    }
-
     public IEnumerable<IPropertySymbol> GetInjectableProperties(INamedTypeSymbol implementationType) =>
         implementationType
             .AllBaseTypesAndSelf()
@@ -28,5 +22,5 @@ internal class InjectablePropertyExtractor : IInjectablePropertyExtractor, ICont
             // Check whether property is accessible
             .Where(p => p.SetMethod is { DeclaredAccessibility: Accessibility.Public }
                         || p.SetMethod is { DeclaredAccessibility: Accessibility.Internal } &&
-                        _checkInternalsVisible.Check(p.SetMethod));
+                        checkInternalsVisible.Check(p.SetMethod));
 }

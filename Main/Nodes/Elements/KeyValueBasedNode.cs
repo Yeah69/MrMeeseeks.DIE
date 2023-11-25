@@ -48,119 +48,105 @@ internal interface IKeyValueBasedNode : IElementNode
     IFunctionCallNode EnumerableCall { get; }
 }
 
-internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
-{
-    private readonly INamedTypeSymbol _mapType;
-    private readonly IRangeNode _parentRange;
-    private readonly IFunctionNode _parentFunction;
-    private readonly IReferenceGenerator _referenceGenerator;
-    private readonly ICheckIterableTypes _checkIterableTypes;
-    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
-
-    public KeyValueBasedBasedNode(
-        // parameters
-        INamedTypeSymbol mapType,
-        
-        // dependencies
+internal partial class KeyValueBasedBasedNode(INamedTypeSymbol mapType,
         ITransientScopeWideContext transientScopeWideContext,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext,
         ICheckIterableTypes checkIterableTypes)
-    {
-        _mapType = mapType;
-        _parentRange = transientScopeWideContext.Range;
-        _parentFunction = parentFunction;
-        _referenceGenerator = referenceGenerator;
-        _checkIterableTypes = checkIterableTypes;
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
-    }
+    : IKeyValueBasedNode
+{
+    private readonly IRangeNode _parentRange = transientScopeWideContext.Range;
+    private readonly WellKnownTypesCollections _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
+
+    // parameters
+    // dependencies
 
     public void Build(PassedContext passedContext)
     {
-        var isIEnumerable = CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1);
-        var isIAsyncEnumerable = CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1);
+        var isIEnumerable = CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1);
+        var isIAsyncEnumerable = CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1);
         
         var keyType = isIEnumerable || isIAsyncEnumerable
-            ? ((INamedTypeSymbol) _mapType.TypeArguments[0]).TypeArguments[0]
-            : _mapType.TypeArguments[0];
+            ? ((INamedTypeSymbol) mapType.TypeArguments[0]).TypeArguments[0]
+            : mapType.TypeArguments[0];
         
         var valueType = isIEnumerable || isIAsyncEnumerable
-            ? ((INamedTypeSymbol) _mapType.TypeArguments[0]).TypeArguments[1]
-            : _mapType.TypeArguments[1];
+            ? ((INamedTypeSymbol) mapType.TypeArguments[0]).TypeArguments[1]
+            : mapType.TypeArguments[1];
         
         var keyValuePairType = _wellKnownTypesCollections.KeyValuePair2.Construct(keyType, valueType);
         
-        var isMulti = _checkIterableTypes.MapTypeHasPluralItemType(_mapType);
+        var isMulti = checkIterableTypes.MapTypeHasPluralItemType(mapType);
 
         if (isIEnumerable)
             Type = KeyValueBasedType.SingleIEnumerable;
         if (isIAsyncEnumerable)
             Type = KeyValueBasedType.SingleIAsyncEnumerable;
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IDictionary2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.IDictionary2))
         {
             var mapType = _wellKnownTypesCollections.IDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleIDictionary;
             MapData = new SimpleMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType));
+                referenceGenerator.Generate(mapType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyDictionary2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.IReadOnlyDictionary2))
         {
             var mapType = _wellKnownTypesCollections.IReadOnlyDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleIReadOnlyDictionary;
             MapData = new SimpleMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType));
+                referenceGenerator.Generate(mapType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.Dictionary2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.Dictionary2))
         {
             var mapType = _wellKnownTypesCollections.Dictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleDictionary;
             MapData = new SimpleMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType));
+                referenceGenerator.Generate(mapType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyDictionary2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.ReadOnlyDictionary2))
         {
             var mapType = _wellKnownTypesCollections.ReadOnlyDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleReadOnlyDictionary;
             MapData = new SimpleMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType));
+                referenceGenerator.Generate(mapType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.SortedDictionary2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.SortedDictionary2))
         {
             var mapType = _wellKnownTypesCollections.SortedDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleSortedDictionary;
             MapData = new SimpleMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType));
+                referenceGenerator.Generate(mapType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.SortedList2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.SortedList2))
         {
             var mapType = _wellKnownTypesCollections.SortedList2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleSortedList;
             MapData = new SimpleMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType));
+                referenceGenerator.Generate(mapType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableDictionary2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableDictionary2))
         {
             var mapType = _wellKnownTypesCollections.ImmutableDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleImmutableDictionary;
             MapData = new ImmutableMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType),
+                referenceGenerator.Generate(mapType),
                 _wellKnownTypesCollections.ImmutableDictionary.FullName());
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedDictionary2))
+        if (CustomSymbolEqualityComparer.Default.Equals(mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedDictionary2))
         {
             var mapType = _wellKnownTypesCollections.ImmutableSortedDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleImmutableSortedDictionary;
             MapData = new ImmutableMapData(
                 mapType.FullName(), 
-                _referenceGenerator.Generate(mapType),
+                referenceGenerator.Generate(mapType),
                 _wellKnownTypesCollections.ImmutableSortedDictionary.FullName());
         }
         
@@ -168,8 +154,8 @@ internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
             ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(keyValuePairType)
             : _wellKnownTypesCollections.IEnumerable1.Construct(keyValuePairType);
         EnumerableCall = isMulti 
-            ? _parentRange.BuildEnumerableKeyValueMultiCall(enumerableType, _parentFunction)
-            : _parentRange.BuildEnumerableKeyValueCall(enumerableType, _parentFunction);
+            ? _parentRange.BuildEnumerableKeyValueMultiCall(enumerableType, parentFunction)
+            : _parentRange.BuildEnumerableKeyValueCall(enumerableType, parentFunction);
     }
 
     public string TypeFullName => Type != KeyValueBasedType.SingleIEnumerable && Type != KeyValueBasedType.SingleIAsyncEnumerable && MapData is not null

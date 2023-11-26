@@ -18,12 +18,15 @@ internal sealed partial class ContainerLevelContainer
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
     private readonly Compilation DIE_Factory_Compilation;
     private readonly IContainerInfo DIE_Factory_ContainerInfo;
+    private readonly IInvocationTypeManager DIE_Factory_InvocationTypeManager;
 
     private ContainerLevelContainer(
         GeneratorExecutionContext context, 
-        IContainerInfo dieFactoryContainerInfo)
+        IContainerInfo dieFactoryContainerInfo,
+        IInvocationTypeManager invocationTypeManager)
     {
         DIE_Factory_ContainerInfo = dieFactoryContainerInfo;
+        DIE_Factory_InvocationTypeManager = invocationTypeManager;
         DIE_Factory_Compilation = context.Compilation;
         DIE_Factory_GeneratorExecutionContext = context;
     }

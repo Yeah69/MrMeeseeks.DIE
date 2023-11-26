@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Logging;
 
 // ReSharper disable InconsistentNaming
@@ -19,9 +20,14 @@ internal sealed partial class ExecuteLevelContainer
         DIE_Factory_GeneratorExecutionContext = context;
     }
 
-    private ContainerLevelContainer DIE_Factory_ContainerLevelContainer(IContainerInfo containerInfo)
+    private ContainerLevelContainer DIE_Factory_ContainerLevelContainer(
+        IContainerInfo containerInfo, 
+        IInvocationTypeManager invocationTypeManager)
     {
-        var container = ContainerLevelContainer.DIE_CreateContainer(DIE_Factory_GeneratorExecutionContext, containerInfo);
+        var container = ContainerLevelContainer.DIE_CreateContainer(
+            DIE_Factory_GeneratorExecutionContext, 
+            containerInfo,
+            invocationTypeManager);
         DIE_AddForDisposalAsync(container);
         return container;
     }

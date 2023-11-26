@@ -1,5 +1,6 @@
 
 
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.Contexts;

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Descriptions;
 using MrMeeseeks.DIE.Validation.Configuration;
@@ -24,7 +23,7 @@ internal class InvocationTypeManager : IInvocationTypeManager, IContainerInstanc
     private readonly Dictionary<INamedTypeSymbol, IMethodDescriptionNode> _methodDescriptionNodes;
     
     internal InvocationTypeManager(
-        IContainerWideContext containerWideContext,
+        WellKnownTypesMapping wellKnownTypesMapping,
         IValidateInvocationDescriptionMappingAttributes validateInvocationDescriptionMappingAttributes,
         IValidateTypeDescriptionMappingAttributes validateTypeDescriptionMappingAttributes,
         IValidateMethodDescriptionMappingAttributes validateMethodDescriptionMappingAttributes,
@@ -33,8 +32,6 @@ internal class InvocationTypeManager : IInvocationTypeManager, IContainerInstanc
         Func<INamedTypeSymbol, ITypeDescriptionNode> typeDescriptionNodeFactory,
         Func<INamedTypeSymbol, IMethodDescriptionNode> methodDescriptionNodeFactory)
     {
-        var wellKnownTypesMapping = containerWideContext.WellKnownTypesMapping;
-        
         var methodDescriptionMappingAttributes = GetAttributes(wellKnownTypesMapping.MethodDescriptionMappingAttribute);
         var typeDescriptionMappingAttributes = GetAttributes(wellKnownTypesMapping.TypeDescriptionMappingAttribute);
         var invocationDescriptionMappingAttributes = GetAttributes(wellKnownTypesMapping.InvocationDescriptionMappingAttribute);

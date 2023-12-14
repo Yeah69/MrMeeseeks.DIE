@@ -3,7 +3,7 @@ using MrMeeseeks.DIE.Nodes.Descriptions;
 using MrMeeseeks.DIE.Validation.Configuration;
 using MrMeeseeks.SourceGeneratorUtility;
 
-namespace MrMeeseeks.DIE.Configuration;
+namespace MrMeeseeks.DIE.Interceptors;
 
 internal interface IInvocationTypeManager
 {

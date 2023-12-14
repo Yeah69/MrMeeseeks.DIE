@@ -26,3 +26,24 @@ using MrMeeseeks.DIE.UserUtility;
 [assembly:DecorationOrdinalMapping(typeof(DecorationOrdinalAttribute))]
 
 [assembly:AllImplementationsAggregation]
+
+[assembly:InvocationDescriptionMapping(typeof(IInvocationDescription))]
+[assembly:TypeDescriptionMapping(typeof(ITypeDescription))]
+[assembly:MethodDescriptionMapping(typeof(IMethodDescription))]
+
+internal interface IInvocationDescription
+{
+    ITypeDescription TargetType { get; }
+    IMethodDescription TargetMethod { get; }
+}
+
+internal interface ITypeDescription
+{
+    string FullName { get; }
+    string Name { get; }
+}
+
+internal interface IMethodDescription
+{
+    string Name { get; }
+}

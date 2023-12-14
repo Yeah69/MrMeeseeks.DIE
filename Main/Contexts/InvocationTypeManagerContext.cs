@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Interceptors;
 
 namespace MrMeeseeks.DIE.Contexts;
 

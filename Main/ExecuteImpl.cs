@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using MrMeeseeks.DIE.Interceptors;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
 

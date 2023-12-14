@@ -1,5 +1,6 @@
 ﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Interceptors;
 using MrMeeseeks.DIE.Logging;
 
 // ReSharper disable InconsistentNaming

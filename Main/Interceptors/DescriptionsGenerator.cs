@@ -1,9 +1,8 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Descriptions;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
-namespace MrMeeseeks.DIE;
+namespace MrMeeseeks.DIE.Interceptors;
 
 internal interface IDescriptionsGenerator
 {

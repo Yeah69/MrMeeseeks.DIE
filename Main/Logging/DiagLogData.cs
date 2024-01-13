@@ -130,7 +130,7 @@ internal static class ErrorLogData
         new(66,
             2,
             "Impossible Exception",
-            $"You've run into an exception which should be impossible. Please make a issue at https://github.com/Yeah69/MrMeeseeks.DIE/issues/new with code hint \"{code.ToString()}\".",
+            $"You've run into an exception which should be impossible. Please create an issue - if none exists for this code hint yet - at https://github.com/Yeah69/MrMeeseeks.DIE/issues/new with code hint \"{code.ToString()}\".",
             DieExceptionKind.Impossible);
     
     internal static DiagLogData CompilationError(string message) =>

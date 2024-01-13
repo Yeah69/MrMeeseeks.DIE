@@ -424,20 +424,11 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
 
     private void VisitISingleFunctionNode(ISingleFunctionNode singleFunction, bool doDisposedChecks)
     {
-        var accessibility = singleFunction is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
-            ? $"{SyntaxFacts.GetText(acc)} "  
-            : "";
-        var asyncModifier = singleFunction.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
-            ? "async "
-            : "";
-        var explicitInterfaceFullName = singleFunction.ExplicitInterfaceFullName is { } interfaceName
-            ? $"{interfaceName}."
-            : "";
-        var parameter = string.Join(",", singleFunction.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($$"""
-{{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{singleFunction.ReturnedTypeFullName}} {{singleFunction.Name}}({{parameter}})
+{{GenerateMethodDeclaration(singleFunction)}}
 {
 """);
+        
         if (doDisposedChecks)
             ObjectDisposedCheck(
                 singleFunction.DisposedPropertyReference, 
@@ -540,7 +531,10 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
         var typeFullName = functionCallNode.TypeFullName;
-        var call = $"{owner}{functionCallNode.FunctionName}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
+        var typeParameters = functionCallNode.TypeParameters.Any()
+            ? $"<{string.Join(", ", functionCallNode.TypeParameters.Select(p => p.Name))}>"
+            : "";
+        var call = $"{owner}{functionCallNode.FunctionName}{typeParameters}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
         call = functionCallNode.Transformation switch
         {
             AsyncFunctionCallTransformation.ValueTaskFromValueTask => call,
@@ -558,7 +552,10 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
         var typeFullName = functionCallNode.TypeFullName;
-        var call = $"{owner}{functionCallNode.FunctionName}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
+        var typeParameters = functionCallNode.TypeParameters.Any()
+            ? $"<{string.Join(", ", functionCallNode.TypeParameters.Select(p => p.Name))}>"
+            : "";
+        var call = $"{owner}{functionCallNode.FunctionName}{typeParameters}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
         call = functionCallNode.Awaited ? $"(await {call})" : call;
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
     }
@@ -790,21 +787,11 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
 
     private void VisitIMultiFunctionNodeBase(IMultiFunctionNodeBase multiFunctionNodeBase)
     {
-        var accessibility = multiFunctionNodeBase is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
-            ? $"{SyntaxFacts.GetText(acc)} "  
-            : "";
-        var asyncModifier = multiFunctionNodeBase.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
-                            || multiFunctionNodeBase.IsAsyncEnumerable
-            ? "async "
-            : "";
-        var explicitInterfaceFullName = multiFunctionNodeBase.ExplicitInterfaceFullName is { } interfaceName
-            ? $"{interfaceName}."
-            : "";
-        var parameter = string.Join(",", multiFunctionNodeBase.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($$"""
-{{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{multiFunctionNodeBase.ReturnedTypeFullName}} {{multiFunctionNodeBase.Name}}({{parameter}})
+{{GenerateMethodDeclaration(multiFunctionNodeBase)}}
 {
 """);
+        
         ObjectDisposedCheck(
             multiFunctionNodeBase.DisposedPropertyReference, 
             multiFunctionNodeBase.RangeFullName, 
@@ -910,18 +897,8 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
 
     public void VisitIVoidFunctionNode(IVoidFunctionNode voidFunctionNode)
     {
-        var accessibility = voidFunctionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
-            ? $"{SyntaxFacts.GetText(acc)} "  
-            : "";
-        var asyncModifier = voidFunctionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
-            ? "async "
-            : "";
-        var explicitInterfaceFullName = voidFunctionNode.ExplicitInterfaceFullName is { } interfaceName
-            ? $"{interfaceName}."
-            : "";
-        var parameter = string.Join(",", voidFunctionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
         _code.AppendLine($$"""
-{{accessibility}}{{asyncModifier}}{{explicitInterfaceFullName}}{{voidFunctionNode.ReturnedTypeFullName}} {{voidFunctionNode.Name}}({{parameter}})
+{{GenerateMethodDeclaration(voidFunctionNode)}}
 {
 """);
         foreach (var (functionCallNode, initializedInstanceNode) in voidFunctionNode.Initializations)
@@ -1004,4 +981,52 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         string rangeFullName,
         string returnTypeFullName) => _code.AppendLine(
         $"if ({disposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(\"{rangeFullName}\", $\"[DIE] This scope \\\"{rangeFullName}\\\" is already disposed, so it can't create a \\\"{returnTypeFullName}\\\" instance anymore.\");");
+
+    private static string GenerateMethodDeclaration(IFunctionNode functionNode)
+    {
+        var accessibility = functionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
+            ? $"{SyntaxFacts.GetText(acc)} "  
+            : "";
+        var asyncModifier = 
+            functionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask 
+            || functionNode is IMultiFunctionNodeBase { IsAsyncEnumerable: true } 
+            ? "async "
+            : "";
+        var explicitInterfaceFullName = functionNode.ExplicitInterfaceFullName is { } interfaceName
+            ? $"{interfaceName}."
+            : "";
+        var typeParameters = "";
+        var typeParametersConstraints = "";
+        if (functionNode is IReturningFunctionNode returningFunctionNode && returningFunctionNode.TypeParameters.Any())
+        {
+            typeParameters = $"<{string.Join(", ", returningFunctionNode.TypeParameters.Select(p => p.Name))}>";
+            typeParametersConstraints = string.Join("", returningFunctionNode
+                .TypeParameters
+                .Where(p => p.HasValueTypeConstraint 
+                            || p.HasReferenceTypeConstraint
+                            || p.HasNotNullConstraint 
+                            || p.HasUnmanagedTypeConstraint
+                            || p.HasConstructorConstraint
+                            || p.ConstraintTypes.Length > 0)
+                .Select(p =>
+                {
+                    var constraints = new List<string>();
+                    if (p.HasUnmanagedTypeConstraint)
+                        constraints.Add("unmanaged");
+                    else if (p.HasValueTypeConstraint)
+                        constraints.Add("struct");
+                    else if (p.HasReferenceTypeConstraint)
+                        constraints.Add($"class{(p.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "?" : "")}");
+                    else if (p.HasNotNullConstraint)
+                        constraints.Add("notnull");
+                    if (p.HasConstructorConstraint)
+                        constraints.Add("new()");
+                    constraints.AddRange(p.ConstraintTypes.Select((t, i) => t.WithNullableAnnotation(p.ConstraintNullableAnnotations[i]).FullName()));
+                    return $"{Environment.NewLine}where {p.Name} : {string.Join(", ", constraints)}";
+                }));
+        }
+        
+        var parameters = string.Join(",", functionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
+        return $"{accessibility}{asyncModifier}{explicitInterfaceFullName}{functionNode.ReturnedTypeFullName} {functionNode.Name}{typeParameters}({parameters}){typeParametersConstraints}";
+    }
 }

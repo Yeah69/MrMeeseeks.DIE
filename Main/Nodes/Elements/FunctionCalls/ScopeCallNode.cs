@@ -25,11 +25,13 @@ internal partial class ScopeCallNode : FunctionCallNode, IScopeCallNode
         IScopeNode scope,
         IRangeNode callingRange,
         IFunctionNode calledFunction, 
+        ITypeSymbol callSideType,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters, 
+        IReadOnlyList<ITypeSymbol> typeParameters,
         IFunctionCallNode? initialization,
         
         IReferenceGenerator referenceGenerator) 
-        : base(null, calledFunction, parameters, referenceGenerator)
+        : base(null, calledFunction, callSideType, parameters, typeParameters, referenceGenerator)
     {
         _scope = scope;
         _callingRange = callingRange;

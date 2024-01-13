@@ -12,13 +12,14 @@ internal interface IFuncNode : IDelegateBaseNode
 internal partial class FuncNode : DelegateBaseNode, IFuncNode
 {
     internal FuncNode(
-        INamedTypeSymbol funcType,
+        (INamedTypeSymbol Outer, INamedTypeSymbol Inner) delegateTypes,
         ILocalFunctionNode function,
+        IReadOnlyList<ITypeSymbol> typeParameters,
         
         ILocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator) 
-        : base(funcType, function, localDiagLogger, parentContainer, referenceGenerator)
+        : base(delegateTypes, function, typeParameters, localDiagLogger, parentContainer, referenceGenerator)
     {
     }
 }

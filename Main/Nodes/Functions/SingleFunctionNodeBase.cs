@@ -1,8 +1,10 @@
 using MrMeeseeks.DIE.Contexts;
+using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -24,10 +26,11 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         
         // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
-        Func<(string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
+        Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext)
         : base(
             accessibility, 
@@ -41,6 +44,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
+            typeParameterUtility,
             containerWideContext)
     {
         ReturnedTypeNameNotWrapped = typeSymbol.Name;

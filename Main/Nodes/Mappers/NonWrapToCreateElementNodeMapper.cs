@@ -27,6 +27,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         ILocalDiagLogger localDiagLogger,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext,
         ICheckIterableTypes checkIterableTypes, 
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory, 
@@ -35,9 +36,9 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
         Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleNode> valueTupleNodeFactory, 
         Func<INamedTypeSymbol, IElementNodeMapperBase, IValueTupleSyntaxNode> valueTupleSyntaxNodeFactory, 
         Func<INamedTypeSymbol, IElementNodeMapperBase, ITupleNode> tupleNodeFactory, 
-        Func<INamedTypeSymbol, ILocalFunctionNode, ILazyNode> lazyNodeFactory, 
-        Func<INamedTypeSymbol, ILocalFunctionNode, IThreadLocalNode> threadLocalNodeFactory,
-        Func<INamedTypeSymbol, ILocalFunctionNode, IFuncNode> funcNodeFactory, 
+        Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, ILazyNode> lazyNodeFactory, 
+        Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, IThreadLocalNode> threadLocalNodeFactory,
+        Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, IFuncNode> funcNodeFactory, 
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
         Func<INamedTypeSymbol, IKeyValueBasedNode> keyValueBasedNodeFactory,
         Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory, 
@@ -52,6 +53,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             parentContainer, 
             transientScopeWideContext, 
             localDiagLogger, 
+            typeParameterUtility,
             containerWideContext, 
             checkIterableTypes,
             factoryFieldNodeFactory, 
@@ -73,7 +75,7 @@ internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWra
             localFunctionNodeFactory,
             overridingElementNodeMapperFactory)
     {
-        this._parentRange = parentRange;
+        _parentRange = parentRange;
         Next = parentElementNodeMapper;
     }
 

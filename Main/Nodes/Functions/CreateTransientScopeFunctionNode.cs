@@ -4,6 +4,7 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
@@ -29,11 +30,12 @@ internal partial class CreateTransientScopeFunctionNode : SingleFunctionNodeBase
         IReferenceGenerator referenceGenerator, 
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper> transientScopeDisposalElementNodeMapperFactory,
-        Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
-        Func<(string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
+        Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
@@ -47,12 +49,13 @@ internal partial class CreateTransientScopeFunctionNode : SingleFunctionNodeBase
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
+            typeParameterUtility,
             containerWideContext)
     {
         _typeSymbol = typeSymbol;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _transientScopeDisposalElementNodeMapperFactory = transientScopeDisposalElementNodeMapperFactory;
-        Name = referenceGenerator.Generate("Create", typeSymbol);
+        Name = referenceGenerator.Generate("Create", _typeSymbol);
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 

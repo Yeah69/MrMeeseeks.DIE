@@ -8,6 +8,8 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -71,6 +73,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         IReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
         Lazy<ITransientScopeInterfaceNode> lazyTransientScopeInterfaceNode,
@@ -90,6 +93,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
             containerInfoContext.ContainerInfo.ContainerType,
             userDefinedElementsFactory((containerInfoContext.ContainerInfo.ContainerType, containerInfoContext.ContainerInfo.ContainerType)), 
             mapperDataToFunctionKeyTypeConverter,
+            typeParameterUtility,
             containerWideContext,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
@@ -154,7 +158,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)
         {
             var functionNode = _entryFunctionNodeFactory(
-                typeSymbol,
+                TypeParameterUtility.ReplaceTypeParametersByCustom(typeSymbol.OriginalDefinitionIfUnbound()),
                 methodNamePrefix,
                 parameterTypes)
                 .Function;

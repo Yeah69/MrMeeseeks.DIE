@@ -67,12 +67,18 @@ internal interface ICheckTypeProperties
     IMethodSymbol? GetConstructorChoiceFor(INamedTypeSymbol implementationType);
     
     bool ShouldBeDecorated(INamedTypeSymbol interfaceType);
-    IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType);
+    IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
+        INamedTypeSymbol implementationType);
 
-    INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey);
-    IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey);
-    IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType);
-    IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType);
+    INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type,
+        InjectionKey? injectionKey);
+    IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,
+        InjectionKey? injectionKey);
+    IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol,
+        ITypeSymbol keyType);
+    IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(
+        INamedTypeSymbol typeSymbol,
+        ITypeSymbol keyType);
     (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType);
     IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType);
 
@@ -86,9 +92,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     
-    private readonly IDictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = 
-        new Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>>();
-    private readonly IDictionary<INamedTypeSymbol, int> _decorationToOrdinal;
+    private readonly Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = new();
+    private readonly Dictionary<INamedTypeSymbol, int> _decorationToOrdinal;
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
@@ -208,10 +213,10 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             true,
             true,
             false);
-        if (implementations.Count != 1)
-            return null;
-
-        return implementations[0];
+        
+        var list = implementations.Take(2).ToList();
+        
+        return list.Count != 1 ? null : list[0];
     }
 
     public IMethodSymbol? GetConstructorChoiceFor(INamedTypeSymbol implementationType)
@@ -245,7 +250,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     
     public bool ShouldBeDecorated(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.InterfaceToDecorators.ContainsKey(interfaceType.UnboundIfGeneric());
 
-    public IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
+    public IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
+        INamedTypeSymbol implementationType)
     {
         IEnumerable<INamedTypeSymbol> sequence = Array.Empty<INamedTypeSymbol>();
         bool found = false;
@@ -277,15 +283,17 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     true,
                     false,
                     true);
-                if (implementations.Count != 1)
-                    return null;
-                return implementations[0];
+                
+                var list = implementations.Take(2).ToList();
+                
+                return list.Count != 1 ? null : list[0];
             })
             .OfType<INamedTypeSymbol>()
             .ToList();
     }
 
-    public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey)
+    public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type,
+        InjectionKey? injectionKey)
     {
         var choice =
             _currentlyConsideredTypes.ImplementationChoices.TryGetValue(type.UnboundIfGeneric(), out var choice0)
@@ -301,14 +309,15 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             var possibleChoices = FilterByInjectionKey(
                 GetClosedImplementations(
                     type, 
-                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, choice), 
+                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, choice),
                     true, 
                     false, 
                     false), 
                 injectionKey);
-            return possibleChoices.Count == 1
-                ? possibleChoices.FirstOrDefault()
-                : null;
+            
+            var list = possibleChoices.Take(2).ToList();
+            
+            return list.Count == 1 ? list[0] : null;
         }
 
         if (type is { TypeKind: not TypeKind.Interface, IsAbstract: false, IsStatic: false })
@@ -325,9 +334,10 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     false,
                     false),
                 injectionKey);
-            return possibleConcreteTypeImplementations.Count == 1
-                ? possibleConcreteTypeImplementations.FirstOrDefault()
-                : null;
+            
+            var list = possibleConcreteTypeImplementations.Take(2).ToList();
+            
+            return list.Count == 1 ? list[0] : null;
         }
 
         var possibleImplementations = _currentlyConsideredTypes.ImplementationMap.TryGetValue(type.UnboundIfGeneric(), out var implementations) 
@@ -340,13 +350,14 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     false),
                 injectionKey)
             : Array.Empty<INamedTypeSymbol>();
-
-        return possibleImplementations.Count == 1
-            ? possibleImplementations.FirstOrDefault()
-            : null;
+        
+        var list2 = possibleImplementations.Take(2).ToList();
+        
+        return list2.Count == 1 ? list2[0] : null;
     }
 
-    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey)
+    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,
+        InjectionKey? injectionKey)
     {
         var isChoice =
             _currentlyConsideredTypes
@@ -374,7 +385,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     false, 
                     false, 
                     false),
-                injectionKey);
+                injectionKey).ToList();
         }
         
         return _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol.UnboundIfGeneric(),
@@ -386,14 +397,12 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     false, 
                     false, 
                     false),
-                injectionKey)
+                injectionKey).ToList()
             : Array.Empty<INamedTypeSymbol>();
-        
-        
     }
     
-    private IReadOnlyList<INamedTypeSymbol> FilterByInjectionKey(
-        IReadOnlyList<INamedTypeSymbol> possibleChoices,
+    private IEnumerable<INamedTypeSymbol> FilterByInjectionKey(
+        IEnumerable<INamedTypeSymbol> possibleChoices,
         InjectionKey? injectionKey) =>
         injectionKey is null
             ? possibleChoices
@@ -401,10 +410,10 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 .Where(c => 
                     _typeToKeyToValue.TryGetValue(c.OriginalDefinition, out var keyToValue)
                     && keyToValue.TryGetValue(injectionKey.Type, out var values)
-                    && values.Contains(injectionKey.Value))
-                .ToList();
+                    && values.Contains(injectionKey.Value));
 
-    public IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>
+    public IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(
+        INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>
         MapToImplementations(typeSymbol, null)
             .SelectMany(i => _typeToKeyToValue.TryGetValue(i.OriginalDefinition, out var keyToValue)
                 ? keyToValue.TryGetValue(keyType, out var values)
@@ -416,180 +425,146 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 g => g.Key, 
                 g => (IReadOnlyList<INamedTypeSymbol>) g.Select(t => t.Item2).ToList());
 
-    public IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType) =>
+    public IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol,
+        ITypeSymbol keyType) =>
         MapToKeyedMultipleImplementations(typeSymbol, keyType)
             .Where(kvp => kvp.Value.Count == 1)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
-
-    private IReadOnlyList<INamedTypeSymbol> GetClosedImplementations(
+    
+    private IEnumerable<INamedTypeSymbol> GetClosedImplementations(
         INamedTypeSymbol targetType,
         IImmutableSet<INamedTypeSymbol> rawImplementations,
         bool preferChoicesForOpenGenericParameters,
         bool chooseComposite,
         bool chooseDecorator)
     {
-        var targetClosedGenericParameters = targetType
-            .TypeArguments
-            .OfType<INamedTypeSymbol>()
-            .ToImmutableArray();
         var unboundTargetType = targetType.UnboundIfGeneric();
-        var isTargetGeneric = targetType.IsGenericType;
-        if (isTargetGeneric && targetType.TypeArguments.Any(tp => tp is not INamedTypeSymbol))
-        {
-            // Target type at this point should only have closed generic parameters
-            _localDiagLogger.Error(
-                ErrorLogData.ImpossibleException(new Guid("94B3BC00-9D37-4991-A66A-DDDF7C8402B6")),
-                Location.None);
-            throw new ImpossibleDieException(); 
-        }
-
-        var ret = new List<INamedTypeSymbol>();
         foreach (var implementation in rawImplementations)
         {
             var unboundImplementation = implementation.UnboundIfGeneric();
             var originalImplementation = implementation.OriginalDefinitionIfUnbound();
-
-            if (!implementation.IsGenericType || implementation.TypeArguments.All(ta => ta is INamedTypeSymbol and not IErrorTypeSymbol))
+            
+            var isCompositeImplementation = _currentlyConsideredTypes.CompositeTypes.Contains(unboundImplementation);
+            if (chooseComposite && !isCompositeImplementation || !chooseComposite && isCompositeImplementation)
+                continue;
+            var isDecoratorImplementation = _currentlyConsideredTypes.DecoratorTypes.Contains(unboundImplementation);
+            if (chooseDecorator && !isDecoratorImplementation || !chooseDecorator && isDecoratorImplementation)
+                continue;
+            if (!chooseComposite 
+                && !chooseDecorator 
+                && !_currentlyConsideredTypes.AllConsideredImplementations.Contains(unboundImplementation))
+                continue;
+            if (!implementation.IsGenericType)
             {
-                if (originalImplementation.AllDerivedTypesAndSelf()
-                    .FirstOrDefault(t =>
-                        CustomSymbolEqualityComparer.Default.Equals(t, targetType)) is { })
-                    AddImplementation(ret, implementation);
+                if (implementation
+                        .AllDerivedTypesAndSelf()
+                        .FirstOrDefault(t => CustomSymbolEqualityComparer.Default.Equals(t, targetType)) 
+                    is not null)
+                {
+                    yield return implementation;
+                }
                 continue;
             }
 
-            if (originalImplementation.AllDerivedTypesAndSelf()
-                    .FirstOrDefault(t =>
-                        CustomSymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), unboundTargetType)) is { } implementationsTarget)
+            if (originalImplementation.TypeArguments.OfType<IErrorTypeSymbol>().Any())
             {
-                var newTypeArguments = originalImplementation.TypeArguments
-                    .Select(ta => ta switch
-                    {
-                        INamedTypeSymbol nts => nts,
-                        ITypeParameterSymbol tps => ForTypeParameterSymbol(tps),
-                        _ => ta
-                    })
-                    .ToArray();
+                // Ignore implementations with error type arguments
+                continue;
+            }
+            
+            var constructedFromImplementation = originalImplementation.ConstructedFrom;
 
-                ITypeSymbol ForTypeParameterSymbol(ITypeParameterSymbol tps)
+            if (constructedFromImplementation.AllDerivedTypesAndSelf()
+                    .FirstOrDefault(t =>
+                        CustomSymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), unboundTargetType))
+                is not { } constructedFromTarget)
+            {
+                continue;
+            }
+            
+            var typeArguments = new ITypeSymbol[implementation.TypeArguments.Length];
+            
+            var queue = ImmutableQueue.Create<(int Index, IImmutableSet<INamedTypeSymbol>)>();
+
+            for (var i = 0; i < constructedFromImplementation.TypeArguments.Length; i++)
+            {
+                if (constructedFromTarget.TypeArguments.IndexOf(constructedFromImplementation.TypeArguments[i], CustomSymbolEqualityComparer.Default)
+                    is var index and >= 0)
                 {
-                    if (implementationsTarget
-                            .TypeArguments
-                            .IndexOf(tps, CustomSymbolEqualityComparer.Default) is var index and >= 0)
-                        return targetClosedGenericParameters[index];
-
-                    if (preferChoicesForOpenGenericParameters)
-                    {
-                        if (_currentlyConsideredTypes.GenericParameterChoices.TryGetValue(
-                                (unboundImplementation, tps), out var choice))
-                            return choice;
-                        if (_currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
-                                (unboundImplementation, tps), out var substitutes)
-                            && substitutes.Count == 1)
-                            return substitutes[0];
-                    }
-
-                    return tps;
+                    typeArguments[i] = targetType.TypeArguments[index];
+                    continue;
                 }
 
+                queue = queue.Enqueue((i, GetSubstitutes(i, constructedFromImplementation, unboundImplementation)));
+            }
+            
+            if (queue.IsEmpty)
+            {
+                var constructed = implementation.ConstructedFrom.Construct(typeArguments);
+                if (constructed.AllDerivedTypesAndSelf().FirstOrDefault(i => CustomSymbolEqualityComparer.Default.Equals(i, targetType)) is not null)
+                    yield return constructed;
+                continue;
+            }
+            
+            foreach (var closedImplementation in GetAllSubstituteCombinations(queue))
+            {
+                if (closedImplementation.AllDerivedTypesAndSelf().FirstOrDefault(i => CustomSymbolEqualityComparer.Default.Equals(i, targetType)) is not null)
+                    yield return closedImplementation;
+            }
 
-                if (newTypeArguments.Length == originalImplementation.TypeArguments.Length 
-                    && newTypeArguments.All(ta => ta is INamedTypeSymbol))
-                {
-                    var closedImplementation = originalImplementation.Construct(newTypeArguments);
-                    if (closedImplementation
-                        .AllDerivedTypesAndSelf()
-                        .Any(t => CustomSymbolEqualityComparer.Default.Equals(targetType, t)))
-                    {
-                        AddImplementation(ret, closedImplementation);
-                    }
-                }
-                else if (newTypeArguments.Length == originalImplementation.TypeArguments.Length 
-                         && newTypeArguments.All(ta => ta is INamedTypeSymbol or ITypeParameterSymbol))
-                {
-                    var openTypeParameters = newTypeArguments.OfType<ITypeParameterSymbol>().ToImmutableArray();
-                    var queue = ImmutableQueue.CreateRange(openTypeParameters
-                        .Select(tp =>
-                        {
-                            IImmutableSet<INamedTypeSymbol> substitutes = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-                                CustomSymbolEqualityComparer.Default,
-                                _currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
-                                    (unboundImplementation, tp), out var subs)
-                                    ? subs
-                                    : Array.Empty<INamedTypeSymbol>());
-                            if (_currentlyConsideredTypes.GenericParameterChoices.TryGetValue(
-                                    (unboundImplementation, tp), out var choice))
-                                substitutes = substitutes.Add(choice);
-                            return (tp, substitutes);
-                        }));
-                    if (queue.All(t => t.substitutes.Count > 0))
-                    {
-                        foreach (var combination in GetAllSubstituteCombinations(queue, ImmutableDictionary<ITypeParameterSymbol, INamedTypeSymbol>.Empty))
-                        {
-                            var veryNewTypeArguments = newTypeArguments
-                                .Select(ta => ta switch
-                                {
-                                    INamedTypeSymbol nts => nts,
-                                    ITypeParameterSymbol tps => combination.TryGetValue(tps, out var sub) ? sub : tps,
-                                    _ => ta
-                                })
-                                .ToArray();
-                            if (veryNewTypeArguments.Length == originalImplementation.TypeArguments.Length 
-                                && veryNewTypeArguments.All(ta => ta is INamedTypeSymbol))
-                            {
-                                var closedImplementation = originalImplementation.Construct(veryNewTypeArguments);
-                                if (closedImplementation
-                                    .AllDerivedTypesAndSelf()
-                                    .Any(t => CustomSymbolEqualityComparer.Default.Equals(targetType, t)))
-                                {
-                                    AddImplementation(ret, closedImplementation);
-                                }
-                            }
-                        }
+            continue;
 
-                        IEnumerable<IImmutableDictionary<ITypeParameterSymbol, INamedTypeSymbol>> GetAllSubstituteCombinations(
-                                IImmutableQueue<(ITypeParameterSymbol, IImmutableSet<INamedTypeSymbol>)> currentSubstituteQueue,
-                                IImmutableDictionary<ITypeParameterSymbol, INamedTypeSymbol> currentCombination)
+            IEnumerable<INamedTypeSymbol> GetAllSubstituteCombinations(
+                IImmutableQueue<(int Index, IImmutableSet<INamedTypeSymbol> Substitutes)> currentSubstituteQueue)
+            {
+                if (currentSubstituteQueue.IsEmpty)
+                    yield return implementation.ConstructedFrom.Construct(typeArguments);
+                else
+                {
+                    currentSubstituteQueue = currentSubstituteQueue.Dequeue(out var tuple);
+                    foreach (var substitute in tuple.Substitutes)
+                    {
+                        typeArguments[tuple.Index] = substitute;
+                        foreach (var closedImplementation in GetAllSubstituteCombinations(currentSubstituteQueue))
                         {
-                            if (currentSubstituteQueue.IsEmpty)
-                                yield return currentCombination;
-                            else
-                            {
-                                currentSubstituteQueue = currentSubstituteQueue.Dequeue(out var tuple);
-                                foreach (var substitute in tuple.Item2)
-                                {
-                                    var newCurrentCombination = currentCombination.Add(tuple.Item1, substitute);
-                                    foreach (var combination in GetAllSubstituteCombinations(currentSubstituteQueue, newCurrentCombination))
-                                    {
-                                        yield return combination;
-                                    }
-                                }
-                            }
+                            yield return closedImplementation;
                         }
                     }
                 }
             }
-        }
-
-        return ret;
-
-        void AddImplementation(IList<INamedTypeSymbol> implementations, INamedTypeSymbol added)
-        {
-            var unbound = added.UnboundIfGeneric();
-            if (chooseComposite 
-                && !chooseDecorator 
-                && _currentlyConsideredTypes.CompositeTypes.Contains(unbound))
-                implementations.Add(added);
-            if (!chooseComposite 
-                && chooseDecorator 
-                && _currentlyConsideredTypes.DecoratorTypes.Contains(unbound))
-                implementations.Add(added);
-            if (!chooseComposite && !chooseDecorator
-                && !_currentlyConsideredTypes.DecoratorTypes.Contains(unbound) 
-                && !_currentlyConsideredTypes.CompositeTypes.Contains(unbound)
-                && _currentlyConsideredTypes.AllConsideredImplementations.Contains(unbound)
-                )
-                implementations.Add(added);
+            
+            IImmutableSet<INamedTypeSymbol> GetSubstitutes(
+                int i,
+                INamedTypeSymbol constructedFromImpl,
+                INamedTypeSymbol unboundImpl)
+            {
+                if (preferChoicesForOpenGenericParameters)
+                {
+                    if (_currentlyConsideredTypes.GenericParameterChoices.TryGetValue(
+                            (unboundImpl, constructedFromImpl.TypeParameters[i]), out var choice0))
+                    {
+                        return ImmutableHashSet.Create(choice0);
+                    }
+                    if (_currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
+                                 (unboundImpl, constructedFromImpl.TypeParameters[i]),
+                                 out var subs0)
+                             && subs0.Count == 1)
+                    {
+                        return ImmutableHashSet.Create(subs0[0]);
+                    }
+                }
+                IImmutableSet<INamedTypeSymbol> substitutes1 = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
+                    CustomSymbolEqualityComparer.Default,
+                    _currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
+                        (unboundImpl, constructedFromImpl.TypeParameters[i]), out var subs1)
+                        ? subs1
+                        : Array.Empty<INamedTypeSymbol>());
+                if (_currentlyConsideredTypes.GenericParameterChoices.TryGetValue(
+                        (unboundImpl, constructedFromImpl.TypeParameters[i]), out var choice1))
+                    substitutes1 = substitutes1.Add(choice1);
+            
+                return substitutes1;
+            }
         }
     }
 
@@ -597,11 +572,17 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     {
         if (_currentlyConsideredTypes.ImplementationToInitializer.TryGetValue(implementationType.UnboundIfGeneric(), out var tuple))
         {
-            return CustomSymbolEqualityComparer.Default.Equals(
-                tuple.Item1.UnboundIfGeneric(), 
-                implementationType.UnboundIfGeneric()) 
-                ? (implementationType, tuple.Item2) 
-                : tuple;
+            var abstractionType = implementationType
+                .AllDerivedTypesAndSelf()
+                .FirstOrDefault(t => CustomSymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), tuple.Item1.UnboundIfGeneric()));
+
+            var initializerMethod = implementationType
+                .AllDerivedTypesAndSelf()
+                .SelectMany(t => t.GetMembers(tuple.Item2.Name))
+                .OfType<IMethodSymbol>()
+                .FirstOrDefault(m => CustomSymbolEqualityComparer.Default.Equals(m.OriginalDefinition, tuple.Item2.OriginalDefinition));
+            
+            return abstractionType is not null && initializerMethod is not null ? (abstractionType, initializerMethod) : null;
         }
         return null;
     }

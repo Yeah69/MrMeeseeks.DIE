@@ -11,6 +11,7 @@ internal interface IContainerWideContext
     WellKnownTypesChoice WellKnownTypesChoice { get; }
     WellKnownTypesCollections WellKnownTypesCollections { get; }
     WellKnownTypesMiscellaneous WellKnownTypesMiscellaneous { get; }
+    Compilation Compilation { get; }
 }
 
 internal class ContainerWideContext : IContainerWideContext, IContainerInstance
@@ -20,13 +21,15 @@ internal class ContainerWideContext : IContainerWideContext, IContainerInstance
         WellKnownTypesAggregation wellKnownTypesAggregation, 
         WellKnownTypesChoice wellKnownTypesChoice,
         WellKnownTypesCollections wellKnownTypesCollections, 
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
+        Compilation compilation)
     {
         WellKnownTypes = wellKnownTypes;
         WellKnownTypesAggregation = wellKnownTypesAggregation;
         WellKnownTypesChoice = wellKnownTypesChoice;
         WellKnownTypesCollections = wellKnownTypesCollections;
         WellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+        Compilation = compilation;
     }
 
     public WellKnownTypes WellKnownTypes { get; }
@@ -34,4 +37,5 @@ internal class ContainerWideContext : IContainerWideContext, IContainerInstance
     public WellKnownTypesChoice WellKnownTypesChoice { get; }
     public WellKnownTypesCollections WellKnownTypesCollections { get; }
     public WellKnownTypesMiscellaneous WellKnownTypesMiscellaneous { get; }
+    public Compilation Compilation { get; }
 }

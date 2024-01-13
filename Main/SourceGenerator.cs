@@ -22,7 +22,8 @@ public class SourceGenerator : ISourceGenerator
                     WellKnownTypesAggregation.Create(context.Compilation),
                     WellKnownTypesChoice.Create(context.Compilation),
                     WellKnownTypesCollections.Create(context.Compilation), 
-                    wellKnownTypesMiscellaneous));
+                    wellKnownTypesMiscellaneous,
+                    context.Compilation));
         
             new ExecuteImpl(
                 context,

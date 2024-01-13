@@ -9,7 +9,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IMultiFunctionNodeBase : IFunctionNode
+internal interface IMultiFunctionNodeBase : IReturningFunctionNode
 {
     IReadOnlyList<IElementNode> ReturnedElements { get; }
     bool IsAsyncEnumerable { get; }
@@ -21,7 +21,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
 
-    internal MultiFunctionNodeBase(
+    protected MultiFunctionNodeBase(
         // parameters
         INamedTypeSymbol enumerableType,
         IReadOnlyList<ITypeSymbol> parameters,
@@ -30,12 +30,13 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         
         // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        Func<string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
-        Func<(string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
-        Func<string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
+        Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
+        Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private, 
@@ -49,6 +50,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
+            typeParameterUtility,
             containerWideContext)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;

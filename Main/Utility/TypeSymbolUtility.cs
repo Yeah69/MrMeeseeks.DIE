@@ -11,18 +11,18 @@ internal static class TypeSymbolUtility
             && type is INamedTypeSymbol namedType)
             return GetUnwrappedType(namedType.TypeArguments.First(), wellKnownTypes);
 
-        if (type.TypeKind == TypeKind.Delegate 
-            && type.FullName().StartsWith("global::System.Func<")
-            && type is INamedTypeSymbol func)
+        if (IsFuncDelegate(type) && type is INamedTypeSymbol func)
             return GetUnwrappedType(func.TypeArguments.Last(), wellKnownTypes);
 
         return type;
     }
     internal static bool IsWrapType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
-        IsWrapTypeOfSingleGenericType(type, wellKnownTypes)
-        || type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<");
+        IsWrapTypeOfSingleGenericType(type, wellKnownTypes) || IsFuncDelegate(type);
 
-    private static bool IsWrapTypeOfSingleGenericType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
+    internal static bool IsFuncDelegate(ITypeSymbol type) =>
+        type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<");
+
+    internal static bool IsWrapTypeOfSingleGenericType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
         CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)

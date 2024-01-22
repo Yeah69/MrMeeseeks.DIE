@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+using Xunit;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Sample;
+// ReSharper disable once CheckNamespace
+namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.WithConstraints;
 
 internal interface IInterface {}
 
@@ -68,22 +69,15 @@ internal sealed partial class Container
     private Container() {}
 }
 
-/*
-
-internal interface IInterface<T0> {} 
-
-internal class Dependency1<T0> : IInterface<T0> where T0 : class
+public class Tests
 {
+    [Fact]
+    public void Test()
+    {
+        using var container = Container.DIE_CreateContainer();
+        var instance = container.Create<int, string, string?, int, byte, int, Class, Class?, Class, Class?>();
+        Assert.IsType<DependencyHolder<int, string, string?, int, byte, int, Class, Class?, Class, Class?>>(instance);
+        var interfaceInstance = container.CreateInterface<int, string, string?, int, byte, int, Class, Class?, Class, Class?>();
+        Assert.IsType<DependencyHolder<int, string, string?, int, byte, int, Class, Class?, Class, Class?>>(interfaceInstance);
+    }
 }
-
-internal class Proxy<T>
-{
-    internal Proxy(IReadOnlyList<IInterface<T>> _) {}
-}
-
-[CreateFunction(typeof(Proxy<>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
-//*/

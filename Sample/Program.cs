@@ -1,5 +1,10 @@
 ﻿using System;
-using System.ComponentModel;
+using System.Collections.Generic;
+
+internal class Foo<T0, T1> where T1 : IList<T0>
+{
+    
+}
 
 internal class Program
 {

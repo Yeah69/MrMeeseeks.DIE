@@ -28,14 +28,15 @@ internal interface IContainerCheckTypeProperties : ICheckTypeProperties
 {
 }
 
-internal class ContainerCheckTypeProperties : CheckTypeProperties, IContainerCheckTypeProperties, IContainerInstance
+internal sealed class ContainerCheckTypeProperties : CheckTypeProperties, IContainerCheckTypeProperties, IContainerInstance
 {
     internal ContainerCheckTypeProperties(
         IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
         IInjectablePropertyExtractor injectablePropertyExtractor,
         IContainerWideContext containerWideContext,
+        ITypeParameterUtility typeParameterUtility,
         ILocalDiagLogger localDiagLogger) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, localDiagLogger)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, typeParameterUtility, localDiagLogger)
     {
     }
 }
@@ -44,15 +45,16 @@ internal interface IScopeCheckTypeProperties : ICheckTypeProperties
 {
 }
 
-internal class ScopeCheckTypeProperties : CheckTypeProperties, IScopeCheckTypeProperties, ITransientScopeInstance
+internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeCheckTypeProperties, ITransientScopeInstance
 {
     internal ScopeCheckTypeProperties(
         IScopeCurrentlyConsideredTypes currentlyConsideredTypes, 
         
         IInjectablePropertyExtractor injectablePropertyExtractor,
         IContainerWideContext containerWideContext,
+        ITypeParameterUtility typeParameterUtility,
         ILocalDiagLogger localDiagLogger) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, localDiagLogger)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, typeParameterUtility, localDiagLogger)
     {
     }
 }
@@ -89,6 +91,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
+    private readonly ITypeParameterUtility _typeParameterUtility;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     
@@ -99,10 +102,12 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         ICurrentlyConsideredTypes currentlyConsideredTypes,
         IInjectablePropertyExtractor injectablePropertyExtractor,
         IContainerWideContext containerWideContext,
+        ITypeParameterUtility typeParameterUtility,
         ILocalDiagLogger localDiagLogger)
     {
         _currentlyConsideredTypes = currentlyConsideredTypes;
         _injectablePropertyExtractor = injectablePropertyExtractor;
+        _typeParameterUtility = typeParameterUtility;
         _localDiagLogger = localDiagLogger;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
 
@@ -501,6 +506,10 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             if (queue.IsEmpty)
             {
                 var constructed = implementation.ConstructedFrom.Construct(typeArguments);
+                
+                if (!_typeParameterUtility.CheckLegitimacyOfTypeArguments(constructed))
+                    continue;
+                
                 if (constructed.AllDerivedTypesAndSelf().FirstOrDefault(i => CustomSymbolEqualityComparer.Default.Equals(i, targetType)) is not null)
                     yield return constructed;
                 continue;
@@ -508,11 +517,16 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             
             foreach (var closedImplementation in GetAllSubstituteCombinations(queue))
             {
+                if (!_typeParameterUtility.CheckLegitimacyOfTypeArguments(closedImplementation))
+                    continue;
+                
                 if (closedImplementation.AllDerivedTypesAndSelf().FirstOrDefault(i => CustomSymbolEqualityComparer.Default.Equals(i, targetType)) is not null)
                     yield return closedImplementation;
             }
 
             continue;
+            
+            
 
             IEnumerable<INamedTypeSymbol> GetAllSubstituteCombinations(
                 IImmutableQueue<(int Index, IImmutableSet<INamedTypeSymbol> Substitutes)> currentSubstituteQueue)

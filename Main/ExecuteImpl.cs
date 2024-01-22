@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using System.Reflection.Metadata;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;

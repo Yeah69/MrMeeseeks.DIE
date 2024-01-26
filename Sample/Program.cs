@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-
-internal class Foo<T0, T1> where T1 : IList<T0>
-{
-    
-}
+using MrMeeseeks.DIE.Sample;
 
 internal class Program
 {
@@ -12,8 +7,8 @@ internal class Program
     {
         try
         {
-            //using var container = Container.DIE_CreateContainer();
-            //var asdf = container.Create<int, string, double>();
+            using var container = Container.DIE_CreateContainer(); 
+            var asdf = container.Create<InnerClass<InnerInterface<int>>, int>();
             Console.WriteLine("Hello, World!");
         }
         catch (Exception)

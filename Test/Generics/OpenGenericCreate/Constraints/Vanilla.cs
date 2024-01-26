@@ -1,9 +1,8 @@
-using System;
 using Xunit;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.WithConstraintsDelegates;
+namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.Constraints.Vanilla;
 
 internal interface IInterface {}
 
@@ -27,16 +26,16 @@ internal interface IInterface<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>
     where T8 : IInterface
     where T9 : IInterface?
 {
-    Func<IInterface<T0>> DependencyStruct { get; }
-    Func<IInterface<T1>> DependencyClass { get; }
-    Func<IInterface<T2>> DependencyNullableClass { get; }
-    Func<IInterface<T3>> DependencyNotNull { get; }
-    Func<IInterface<T4>> DependencyUnmanaged { get; }
-    Func<IInterface<T5>> DependencyNew { get; }
-    Func<IInterface<T6>> DependencyConcreteClass { get; }
-    Func<IInterface<T7>> DependencyNullableConcreteClass { get; }
-    Func<IInterface<T8>> DependencyInterface { get; }
-    Func<IInterface<T9>> DependencyNullableInterface { get; }
+    IInterface<T0> DependencyStruct { get; }
+    IInterface<T1> DependencyClass { get; }
+    IInterface<T2> DependencyNullableClass { get; }
+    IInterface<T3> DependencyNotNull { get; }
+    IInterface<T4> DependencyUnmanaged { get; }
+    IInterface<T5> DependencyNew { get; }
+    IInterface<T6> DependencyConcreteClass { get; }
+    IInterface<T7> DependencyNullableConcreteClass { get; }
+    IInterface<T8> DependencyInterface { get; }
+    IInterface<T9> DependencyNullableInterface { get; }
 }
 
 internal class DependencyHolder<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInterface<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> 
@@ -51,16 +50,16 @@ internal class DependencyHolder<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInter
     where T8 : IInterface
     where T9 : IInterface?
 {
-    public required Func<IInterface<T0>> DependencyStruct { get; init; }
-    public required Func<IInterface<T1>> DependencyClass { get; init; }
-    public required Func<IInterface<T2>> DependencyNullableClass { get; init; }
-    public required Func<IInterface<T3>> DependencyNotNull { get; init; }
-    public required Func<IInterface<T4>> DependencyUnmanaged { get; init; }
-    public required Func<IInterface<T5>> DependencyNew { get; init; }
-    public required Func<IInterface<T6>> DependencyConcreteClass { get; init; }
-    public required Func<IInterface<T7>> DependencyNullableConcreteClass { get; init; }
-    public required Func<IInterface<T8>> DependencyInterface { get; init; }
-    public required Func<IInterface<T9>> DependencyNullableInterface { get; init; }
+    public required IInterface<T0> DependencyStruct { get; init; }
+    public required IInterface<T1> DependencyClass { get; init; }
+    public required IInterface<T2> DependencyNullableClass { get; init; }
+    public required IInterface<T3> DependencyNotNull { get; init; }
+    public required IInterface<T4> DependencyUnmanaged { get; init; }
+    public required IInterface<T5> DependencyNew { get; init; }
+    public required IInterface<T6> DependencyConcreteClass { get; init; }
+    public required IInterface<T7> DependencyNullableConcreteClass { get; init; }
+    public required IInterface<T8> DependencyInterface { get; init; }
+    public required IInterface<T9> DependencyNullableInterface { get; init; }
 }
 
 [CreateFunction(typeof(DependencyHolder<,,,,,,,,,>), "Create")]

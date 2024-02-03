@@ -168,11 +168,11 @@ internal class TypeParameterUtility : ITypeParameterUtility
             else if (tp.HasReferenceTypeConstraint)
                 constraints.Add(
                     $"class{(tp.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "?" : "")}");
-            else if (tp.HasNotNullConstraint)
+            if (tp.HasNotNullConstraint)
                 constraints.Add("notnull");
+            constraints.AddRange(tp.ConstraintTypes.Select(GetTypeConstraintString));
             if (tp.HasConstructorConstraint)
                 constraints.Add("new()");
-            constraints.AddRange(tp.ConstraintTypes.Select(GetTypeConstraintString));
             return constraints.Any() ? $" where {name} : {string.Join(", ", constraints)}" : "";
 
             string GetTypeConstraintString(ITypeSymbol t)
@@ -189,15 +189,8 @@ internal class TypeParameterUtility : ITypeParameterUtility
                     case IFunctionPointerTypeSymbol:
                         throw new ArgumentException("Function pointer can't be used as type constraint.", nameof(t));
                     case INamedTypeSymbol namedTypeSymbol:
-                        var withoutTypeParameters = namedTypeSymbol.ToDisplayString(new SymbolDisplayFormat(
-                            SymbolDisplayGlobalNamespaceStyle.Included,
-                            SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-                            SymbolDisplayGenericsOptions.None,
-                            SymbolDisplayMemberOptions.IncludeRef,
-                            parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut |
-                                              SymbolDisplayParameterOptions.IncludeType,
-                            miscellaneousOptions: SymbolDisplayMiscellaneousOptions
-                                .IncludeNullableReferenceTypeModifier));
+                        var withoutTypeParameters = 
+                            namedTypeSymbol.ToDisplayString(SymbolDisplayFormatPicks.FullNameExceptTypeParameters);
                         var typeParameters = namedTypeSymbol.TypeArguments.Any()
                             ? $"<{string.Join(", ", namedTypeSymbol.TypeArguments.Select(GetTypeConstraintString))}>"
                             : "";
@@ -403,7 +396,13 @@ internal class TypeParameterUtility : ITypeParameterUtility
                             return true;
 
                             string FullyQualifiedName(INamedTypeSymbol type) =>
-                                type.ToDisplayString(new SymbolDisplayFormat(SymbolDisplayGlobalNamespaceStyle.Included, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces, SymbolDisplayGenericsOptions.None, SymbolDisplayMemberOptions.IncludeRef, parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeType, miscellaneousOptions: SymbolDisplayMiscellaneousOptions.None));
+                                type.ToDisplayString(new SymbolDisplayFormat(
+                                    SymbolDisplayGlobalNamespaceStyle.Included, 
+                                    SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+                                    SymbolDisplayGenericsOptions.None, 
+                                    SymbolDisplayMemberOptions.IncludeRef, 
+                                    parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeType, 
+                                    miscellaneousOptions: SymbolDisplayMiscellaneousOptions.None));
                         case IPointerTypeSymbol constraintPointer:
                             if (argument is not IPointerTypeSymbol argumentPointer)
                                 return false;

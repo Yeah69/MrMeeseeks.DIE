@@ -28,7 +28,7 @@ public class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var instance = await container.Create().ConfigureAwait(false);
+        var instance = await container.Create();
         Assert.True(instance.IsInitialized);
     }
 }

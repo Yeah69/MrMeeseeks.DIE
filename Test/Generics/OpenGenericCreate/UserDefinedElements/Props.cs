@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using Xunit;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Sample;
+// ReSharper disable once CheckNamespace
+namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.UserDefinedElements.Props;
 
 internal class Class<TVanilla, TExactMatch, TMoreStrict>
     where TExactMatch : struct 
@@ -30,4 +33,13 @@ internal sealed partial class Container
         ListMoreStrict = new List<TLessStrict>();
     }
 }
-//*/
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        using var container = Container.DIE_CreateContainer();
+        var instance = container.Create<int, DateTime, List<int>>();
+    }
+}

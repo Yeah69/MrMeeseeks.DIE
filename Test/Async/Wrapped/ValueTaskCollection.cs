@@ -18,7 +18,7 @@ internal class DependencyA : ITaskInitializer, IInterface
     
     async Task ITaskInitializer.InitializeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 }
@@ -29,7 +29,7 @@ internal class DependencyB : IValueTaskInitializer, IInterface
     
     async ValueTask IValueTaskInitializer.InitializeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 }
@@ -64,6 +64,6 @@ public class Tests
         var instance = container.Create();
         Assert.Equal(4, instance.Count);
         foreach (var task in instance)
-            Assert.True((await task.ConfigureAwait(false)).IsInitialized);
+            Assert.True((await task).IsInitialized);
     }
 }

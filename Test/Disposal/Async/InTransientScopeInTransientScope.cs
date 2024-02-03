@@ -13,7 +13,7 @@ internal class Dependency :  IAsyncDisposable
     
     public async ValueTask DisposeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsDisposed = true;
     }
 }
@@ -59,10 +59,10 @@ public class Tests
         var transientScopeRoot = container.Create();
         Assert.False(transientScopeRoot.TransientScopeRootInner.Dependency.IsDisposed);
         Assert.False(transientScopeRoot.Dependency.IsDisposed);
-        await transientScopeRoot.Cleanup().ConfigureAwait(false);
+        await transientScopeRoot.Cleanup();
         Assert.False(transientScopeRoot.TransientScopeRootInner.Dependency.IsDisposed);
         Assert.True(transientScopeRoot.Dependency.IsDisposed);
-        await container.DisposeAsync().ConfigureAwait(false);
+        await container.DisposeAsync();
         Assert.True(transientScopeRoot.TransientScopeRootInner.Dependency.IsDisposed);
         Assert.True(transientScopeRoot.Dependency.IsDisposed);
     }

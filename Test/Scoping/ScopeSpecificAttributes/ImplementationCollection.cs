@@ -69,7 +69,7 @@ public class Tests
     {
         using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create1();
-        Assert.Equal(1, dependencies.Dependencies.Count);
+        Assert.Single(dependencies.Dependencies);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyTransientScope));
     }
     [Fact]
@@ -77,7 +77,7 @@ public class Tests
     {
         using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create2();
-        Assert.Equal(1, dependencies.Dependencies.Count);
+        Assert.Single(dependencies.Dependencies);
         Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyScope));
     }
 }

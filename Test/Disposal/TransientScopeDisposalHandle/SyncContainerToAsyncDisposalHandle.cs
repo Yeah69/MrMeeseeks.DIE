@@ -44,7 +44,7 @@ public class Tests
         using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
         Assert.False(transientScopeRoot.Dependency.IsDisposed);
-        await transientScopeRoot.Cleanup().ConfigureAwait(false);
+        await transientScopeRoot.Cleanup();
         Assert.True(transientScopeRoot.Dependency.IsDisposed);
     }
 }

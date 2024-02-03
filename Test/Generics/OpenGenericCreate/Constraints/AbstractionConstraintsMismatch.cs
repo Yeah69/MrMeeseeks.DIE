@@ -39,7 +39,7 @@ public class Tests
     {
         using var container = Container.DIE_CreateContainer();
         var instance = container.Create<int>();
-        Assert.Equal(1, instance.Dependencies.Count);
+        Assert.Single(instance.Dependencies);
         Assert.IsType<DependencyControlGroup<int>>(instance.Dependencies[0]);
     }
 }

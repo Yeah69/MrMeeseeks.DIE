@@ -111,14 +111,8 @@ public sealed class MatchTypeParametersSymbolEqualityComparer : IEqualityCompare
                         return $"delegate*<{string.Join(",", functionPointerTypeSymbol.Signature.Parameters.Select(ps => Inner(ps.Type)))},{
                                     (functionPointerTypeSymbol.Signature.ReturnsVoid ? "void" : Inner(functionPointerTypeSymbol.Signature.ReturnType))}>";
                     case INamedTypeSymbol namedTypeSymbol:
-                        var withoutTypeParameters = namedTypeSymbol.ToDisplayString(new SymbolDisplayFormat(
-                            SymbolDisplayGlobalNamespaceStyle.Included,
-                            SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-                            SymbolDisplayGenericsOptions.None,
-                            SymbolDisplayMemberOptions.IncludeRef,
-                            parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut |
-                                              SymbolDisplayParameterOptions.IncludeType,
-                            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier));
+                        var withoutTypeParameters = 
+                            namedTypeSymbol.ToDisplayString(SymbolDisplayFormatPicks.FullNameExceptTypeParameters);
                         return $"{withoutTypeParameters}<{string.Join(",", namedTypeSymbol.TypeArguments.Select(Inner))}>";
                     case IPointerTypeSymbol pointerTypeSymbol:
                         return $"{Inner(pointerTypeSymbol.PointedAtType)}*";

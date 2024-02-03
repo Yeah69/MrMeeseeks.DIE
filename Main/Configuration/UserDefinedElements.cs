@@ -2,8 +2,9 @@ using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
-namespace MrMeeseeks.DIE;
+namespace MrMeeseeks.DIE.Configuration;
 
 internal interface IUserDefinedElements
 {
@@ -155,7 +156,7 @@ internal class UserDefinedElements : IUserDefinedElements
             {
                 var injectionMethodCandidates = dieMembers
                 .Where(s => s.Name.StartsWith(prefix))
-                .Where(s => s is IMethodSymbol { ReturnsVoid: true, Arity: 0, IsConditional: false, MethodKind: MethodKind.Ordinary } method
+                .Where(s => s is IMethodSymbol { ReturnsVoid: true, IsConditional: false, MethodKind: MethodKind.Ordinary } method
                             && method.Parameters.Any(p => p.RefKind == RefKind.Out))
                 .OfType<IMethodSymbol>()
                 .Select(m =>
@@ -239,11 +240,11 @@ internal class UserDefinedElements : IUserDefinedElements
     public IMethodSymbol? AddForDisposal { get; }
     public IMethodSymbol? AddForDisposalAsync { get; }
     public IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type) => 
-        _constructorParametersInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+        _constructorParametersInjectionMethods.TryGetValue(type.UnboundIfGeneric(), out var ret) ? ret : null;
 
     public IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type) =>
-        _propertiesInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+        _propertiesInjectionMethods.TryGetValue(type.UnboundIfGeneric(), out var ret) ? ret : null;
 
     public IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type) => 
-        _initializerParametersInjectionMethods.TryGetValue(type, out var ret) ? ret : null;
+        _initializerParametersInjectionMethods.TryGetValue(type.UnboundIfGeneric(), out var ret) ? ret : null;
 }

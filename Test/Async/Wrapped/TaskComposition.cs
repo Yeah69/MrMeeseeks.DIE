@@ -18,7 +18,7 @@ internal class DependencyA : ITaskInitializer, IInterface
     
     async Task ITaskInitializer.InitializeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 }
@@ -29,7 +29,7 @@ internal class DependencyB : IValueTaskInitializer, IInterface
     
     async ValueTask IValueTaskInitializer.InitializeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 }
@@ -59,8 +59,8 @@ internal class Composite : ITaskInitializer, IInterface, IComposite<IInterface>
 
     public async Task InitializeAsync()
     {
-        await Task.WhenAll(_composition).ConfigureAwait(false);
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.WhenAll(_composition);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 
@@ -80,7 +80,7 @@ public class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var instance = await container.Create().ConfigureAwait(false);
+        var instance = await container.Create();
         Assert.IsType<Composite>(instance);
         Assert.Equal(4, ((Composite) instance).Count);
         Assert.True(instance.IsInitialized);

@@ -14,7 +14,7 @@ internal class DependencyA : IInterface, ITaskInitializer
     
     async Task ITaskInitializer.InitializeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 }
@@ -84,6 +84,6 @@ public class Tests
         await using var container = Container.DIE_CreateContainer();
         var instance0 = container.Create0();
         var _ = container.Create1();
-        Assert.True((((await instance0.ConfigureAwait(false)).Dependency).Inner as DependencyA)?.IsInitialized);
+        Assert.True((((await instance0).Dependency).Inner as DependencyA)?.IsInitialized);
     }
 }

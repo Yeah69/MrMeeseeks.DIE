@@ -39,7 +39,7 @@ public class Tests
         await using var container = Container.DIE_CreateContainer();
         await using var instance = container.Create();
         Assert.False(instance.IsDisposed);
-        await container.DisposeAsync().ConfigureAwait(false);
+        await container.DisposeAsync();
         Assert.False(instance.IsDisposed);
     }
 }

@@ -12,7 +12,7 @@ internal class Dependency :  IAsyncDisposable
     
     public async ValueTask DisposeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsDisposed = true;
     }
 }
@@ -31,7 +31,7 @@ public class Tests
         await using var container = Container.DIE_CreateContainer();
         var dependency = container.Create();
         Assert.False(dependency.IsDisposed);
-        await container.DisposeAsync().ConfigureAwait(false);
+        await container.DisposeAsync();
         Assert.True(dependency.IsDisposed);
     }
 }

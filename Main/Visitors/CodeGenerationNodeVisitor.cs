@@ -757,8 +757,11 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         {
             foreach (var (_, element, _) in userDefinedInjection.Parameters)
                 VisitIElementNode(element);
+            var generics = userDefinedInjection.TypeParameters.Count > 0
+                ? $"<{string.Join(", ", userDefinedInjection.TypeParameters)}>"
+                : "";
             _code.AppendLine(
-                $"{userDefinedInjection.Name}({string.Join(", ", userDefinedInjection.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {(p.IsOut ? "out var " : "")} {p.Element.Reference}"))});");
+                $"{userDefinedInjection.Name}{generics}({string.Join(", ", userDefinedInjection.Parameters.Select(p => $"{p.Name.PrefixAtIfKeyword()}: {(p.IsOut ? "out var " : "")} {p.Element.Reference}"))});");
         }
     }
 
@@ -1017,11 +1020,11 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
                         constraints.Add("struct");
                     else if (p.HasReferenceTypeConstraint)
                         constraints.Add($"class{(p.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "?" : "")}");
-                    else if (p.HasNotNullConstraint)
+                    if (p.HasNotNullConstraint)
                         constraints.Add("notnull");
+                    constraints.AddRange(p.ConstraintTypes.Select((t, i) => t.WithNullableAnnotation(p.ConstraintNullableAnnotations[i]).FullName()));
                     if (p.HasConstructorConstraint)
                         constraints.Add("new()");
-                    constraints.AddRange(p.ConstraintTypes.Select((t, i) => t.WithNullableAnnotation(p.ConstraintNullableAnnotations[i]).FullName()));
                     return $"{Environment.NewLine}where {p.Name} : {string.Join(", ", constraints)}";
                 }));
         }

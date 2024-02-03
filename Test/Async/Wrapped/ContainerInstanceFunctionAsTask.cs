@@ -13,7 +13,7 @@ internal class Dependency : ITaskInitializer, IContainerInstance
     
     async Task ITaskInitializer.InitializeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 }
@@ -31,6 +31,6 @@ public class Tests
     {
         await using var container = Container.DIE_CreateContainer();
         var instance = container.Create();
-        Assert.True((await instance.ConfigureAwait(false)).IsInitialized);
+        Assert.True((await instance).IsInitialized);
     }
 }

@@ -95,6 +95,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
             mapperDataToFunctionKeyTypeConverter,
             typeParameterUtility,
             containerWideContext,
+            referenceGenerator,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             multiKeyValueFunctionNodeFactory,
@@ -181,6 +182,12 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         
         foreach (var call in asyncCallNodes)
             call.AdjustToCurrentCalledFunctionSynchronicity();
+        
+        AdjustRangedInstancesIfGeneric();
+        foreach (var scope in Scopes)
+            scope.AdjustRangedInstancesIfGeneric();
+        foreach (var transientScope in TransientScopes)
+            transientScope.AdjustRangedInstancesIfGeneric();
         
         _functionCycleTracker.DetectCycle(this);
         

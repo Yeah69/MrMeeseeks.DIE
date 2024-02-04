@@ -21,13 +21,16 @@ internal interface ICodeGenerationVisitor : INodeVisitor
 
 internal class CodeGenerationVisitor : ICodeGenerationVisitor
 {
+    private readonly IReferenceGenerator _referenceGenerator;
     private readonly StringBuilder _code = new();
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     public CodeGenerationVisitor(
-        IContainerWideContext containerWideContext)
+        IContainerWideContext containerWideContext,
+        IReferenceGenerator referenceGenerator)
     {
+        _referenceGenerator = referenceGenerator;
         _wellKnownTypes = containerWideContext.WellKnownTypes;
         _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
     }
@@ -207,6 +210,9 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         
         foreach (var createFunctionNode in rangeNode.CreateFunctions)
             VisitICreateFunctionNodeBase(createFunctionNode);
+        
+        if (rangeNode.HasGenericRangeInstanceFunctionGroups)
+            _code.AppendLine($"private readonly {_wellKnownTypes.ConcurrentDictionaryOfRuntimeTypeHandleToObject.FullName()} {rangeNode.RangedInstanceStorageFieldName} = new {_wellKnownTypes.ConcurrentDictionaryOfRuntimeTypeHandleToObject.FullName()}();");
 
         foreach (var rangedInstanceFunctionGroup in rangeNode.RangedInstanceFunctionGroups)
             VisitIRangedInstanceFunctionGroupNode(rangedInstanceFunctionGroup);
@@ -466,47 +472,105 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
 
     public void VisitIRangedInstanceFunctionGroupNode(IRangedInstanceFunctionGroupNode rangedInstanceFunctionGroupNode)
     {
-        var isRefType = rangedInstanceFunctionGroupNode.IsCreatedForStructs is null;
-        _code.AppendLine($$"""
-private {{rangedInstanceFunctionGroupNode.TypeFullName}}{{(isRefType ? "?" : "")}} {{rangedInstanceFunctionGroupNode.FieldReference}};
+        if (rangedInstanceFunctionGroupNode.IsOpenGeneric)
+            Generic();
+        else if (rangedInstanceFunctionGroupNode.IsCreatedForStructs is null)
+            RefLike();
+        else
+            Struct();
+
+        void Generic()
+        {
+            _code.AppendLine(
+                $$"""
+                  private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
+                  """);
+            var typeHandleField = _referenceGenerator.Generate("typeHandle");
+
+            foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
+            {
+                _code.AppendLine(GenerateMethodDeclaration(overload));
+                
+                var instance0 = _referenceGenerator.Generate("instance");
+                var instance1 = _referenceGenerator.Generate("instance");
+                
+                var isAsync =
+                    overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
+                _code.AppendLine($$"""
+{
+var {{typeHandleField}} = typeof({{overload.ReturnedElement.TypeFullName}}).TypeHandle;
+if ({{rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance0}}) && {{instance0}} is {{overload.ReturnedElement.TypeFullName}} {{instance1}}) return {{instance1}};
+{{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
+try
+{
+""");
+                
+                ObjectDisposedCheck(
+                    overload.DisposedPropertyReference, 
+                    overload.RangeFullName, 
+                    overload.ReturnedTypeFullName);
+                
+                var instance2 = _referenceGenerator.Generate("instance");
+                var instance3 = _referenceGenerator.Generate("instance");
+                _code.AppendLine(
+                    $"if ({rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}.TryGetValue({typeHandleField}, out {_wellKnownTypes.Object.FullName()}? {instance2}) && {instance2} is {overload.ReturnedElement.TypeFullName} {instance3}) return {instance3};");
+                
+                VisitIElementNode(overload.ReturnedElement);
+
+                _code.AppendLine($"{rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}[{typeHandleField}] = {overload.ReturnedElement.Reference};");
+                
+                ObjectDisposedCheck(
+                    overload.DisposedPropertyReference, 
+                    overload.RangeFullName, 
+                    overload.ReturnedTypeFullName);
+                
+                _code.AppendLine($$"""
+return {{overload.ReturnedElement.Reference}};
+}
+finally
+{
+{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
+}
+""");
+                foreach (var localFunction in overload.LocalFunctions)
+                    VisitISingleFunctionNode(localFunction, true);
+                _code.AppendLine("}");
+            }
+        }
+
+        void RefLike()
+        {
+            _code.AppendLine($$"""
+private {{rangedInstanceFunctionGroupNode.TypeFullName}}? {{rangedInstanceFunctionGroupNode.FieldReference}};
 private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
 """);
 
-        if (!isRefType) _code.AppendLine($"private bool {rangedInstanceFunctionGroupNode.IsCreatedForStructs};");
+            foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
+            {
+                _code.AppendLine(GenerateMethodDeclaration(overload));
 
-        foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
-        {
-            var isAsync =
-                overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
-            var parameters = string.Join(", ",
-                overload.Parameters.Select(p => $"{p.Node.TypeFullName} {p.Node.Reference}"));
-            _code.AppendLine(rangedInstanceFunctionGroupNode.Level == ScopeLevel.TransientScope && overload.ExplicitInterfaceFullName is {} explicitInterfaceFullName
-                ? $"{(isAsync ? "async " : "")}{overload.ReturnedTypeFullName} {explicitInterfaceFullName}.{overload.Name}({parameters})"
-                : $"{Constants.PrivateKeyword} {(isAsync ? "async " : "")}{overload.ReturnedTypeFullName} {overload.Name}({parameters})");
-
-            var checkAndReturnAlreadyCreatedInstance = isRefType
-                ? $"if (!object.ReferenceEquals({rangedInstanceFunctionGroupNode.FieldReference}, null)) return {rangedInstanceFunctionGroupNode.FieldReference};"
-                : $"if ({rangedInstanceFunctionGroupNode.IsCreatedForStructs}) return {rangedInstanceFunctionGroupNode.FieldReference};";
-            
-            _code.AppendLine($$"""
+                var checkAndReturnAlreadyCreatedInstance = $"if (!{_wellKnownTypes.Object.FullName()}.ReferenceEquals({rangedInstanceFunctionGroupNode.FieldReference}, null)) return {rangedInstanceFunctionGroupNode.FieldReference};";
+                
+                var isAsync =
+                    overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
+                _code.AppendLine($$"""
 {
 {{checkAndReturnAlreadyCreatedInstance}}
 {{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
 try
 {
 """);
-            
-            ObjectDisposedCheck(
-                overload.DisposedPropertyReference, 
-                overload.RangeFullName, 
-                overload.ReturnedTypeFullName);
-            _code.AppendLine(checkAndReturnAlreadyCreatedInstance);
-            
-            VisitIElementNode(overload.ReturnedElement);
+                
+                ObjectDisposedCheck(
+                    overload.DisposedPropertyReference, 
+                    overload.RangeFullName, 
+                    overload.ReturnedTypeFullName);
+                _code.AppendLine(checkAndReturnAlreadyCreatedInstance);
+                
+                VisitIElementNode(overload.ReturnedElement);
 
-            _code.AppendLine($"{rangedInstanceFunctionGroupNode.FieldReference} = {overload.ReturnedElement.Reference};");
-            if (!isRefType) _code.AppendLine($"{rangedInstanceFunctionGroupNode.IsCreatedForStructs} = true;");
-            _code.AppendLine($$"""
+                _code.AppendLine($$"""
+{{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
 }
 finally
 {
@@ -514,16 +578,71 @@ finally
 }
 """);
             
-            ObjectDisposedCheck(
-                overload.DisposedPropertyReference, 
-                overload.RangeFullName, 
-                overload.ReturnedTypeFullName);
-            _code.AppendLine($$"""
+                ObjectDisposedCheck(
+                    overload.DisposedPropertyReference, 
+                    overload.RangeFullName, 
+                    overload.ReturnedTypeFullName);
+                _code.AppendLine($$"""
 return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReference}};
 """);
-            foreach (var localFunction in overload.LocalFunctions)
-                VisitISingleFunctionNode(localFunction, true);
-            _code.AppendLine("}");
+                foreach (var localFunction in overload.LocalFunctions)
+                    VisitISingleFunctionNode(localFunction, true);
+                _code.AppendLine("}");
+            }
+        }
+
+        void Struct()
+        {
+            _code.AppendLine($$"""
+private {{rangedInstanceFunctionGroupNode.TypeFullName}} {{rangedInstanceFunctionGroupNode.FieldReference}};
+private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
+""");
+
+            _code.AppendLine($"private bool {rangedInstanceFunctionGroupNode.IsCreatedForStructs};");
+
+            foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
+            {
+                _code.AppendLine(GenerateMethodDeclaration(overload));
+
+                var checkAndReturnAlreadyCreatedInstance = $"if ({rangedInstanceFunctionGroupNode.IsCreatedForStructs}) return {rangedInstanceFunctionGroupNode.FieldReference};";
+                
+                var isAsync =
+                    overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
+                _code.AppendLine($$"""
+{
+{{checkAndReturnAlreadyCreatedInstance}}
+{{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
+try
+{
+""");
+            
+                ObjectDisposedCheck(
+                    overload.DisposedPropertyReference, 
+                    overload.RangeFullName, 
+                    overload.ReturnedTypeFullName);
+                _code.AppendLine(checkAndReturnAlreadyCreatedInstance);
+                
+                VisitIElementNode(overload.ReturnedElement);
+
+                _code.AppendLine($$"""
+{{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
+{{rangedInstanceFunctionGroupNode.IsCreatedForStructs}} = true;
+}
+finally
+{
+{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
+}
+""");
+            
+                ObjectDisposedCheck(
+                    overload.DisposedPropertyReference, 
+                    overload.RangeFullName, 
+                    overload.ReturnedTypeFullName);
+                _code.AppendLine($"return {Constants.ThisKeyword}.{rangedInstanceFunctionGroupNode.FieldReference};");
+                foreach (var localFunction in overload.LocalFunctions)
+                    VisitISingleFunctionNode(localFunction, true);
+                _code.AppendLine("}");
+            }
         }
     }
 
@@ -1030,6 +1149,6 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         }
         
         var parameters = string.Join(",", functionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
-        return $"{accessibility}{asyncModifier}{explicitInterfaceFullName}{functionNode.ReturnedTypeFullName} {functionNode.Name}{typeParameters}({parameters}){typeParametersConstraints}";
+        return $"{accessibility}{asyncModifier}{functionNode.ReturnedTypeFullName} {explicitInterfaceFullName}{functionNode.Name}{typeParameters}({parameters}){typeParametersConstraints}";
     }
 }

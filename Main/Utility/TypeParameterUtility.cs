@@ -10,6 +10,7 @@ internal interface ITypeParameterUtility
     ITypeSymbol ReplaceTypeParametersByCustom(ITypeSymbol baseType);
     IReadOnlyList<ITypeParameterSymbol> ExtractTypeParameters(ITypeSymbol baseType);
     bool CheckLegitimacyOfTypeArguments(INamedTypeSymbol type);
+    bool ContainsOpenTypeParameters(ITypeSymbol type);
 }
 
 internal class TypeParameterUtility : ITypeParameterUtility
@@ -420,6 +421,30 @@ internal class TypeParameterUtility : ITypeParameterUtility
             }
 
             return true;
+        }
+    }
+
+    public bool ContainsOpenTypeParameters(ITypeSymbol type)
+    {
+        switch (type)
+        {
+            case IArrayTypeSymbol arrayTypeSymbol:
+                return ContainsOpenTypeParameters(arrayTypeSymbol.ElementType);
+            case IDynamicTypeSymbol:
+                return false;
+            case IErrorTypeSymbol:
+                return false;
+            case IFunctionPointerTypeSymbol functionPointerTypeSymbol:
+                return functionPointerTypeSymbol.Signature.Parameters.Any(p => ContainsOpenTypeParameters(p.Type))
+                    || functionPointerTypeSymbol.Signature.TypeArguments.Any(ContainsOpenTypeParameters);
+            case INamedTypeSymbol namedTypeSymbol:
+                return namedTypeSymbol.TypeArguments.Any(ContainsOpenTypeParameters);
+            case IPointerTypeSymbol pointerTypeSymbol:
+                return ContainsOpenTypeParameters(pointerTypeSymbol.PointedAtType);
+            case ITypeParameterSymbol:
+                return true;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(type));
         }
     }
 }

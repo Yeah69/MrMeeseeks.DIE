@@ -1,4 +1,5 @@
 ﻿using System;
+using MrMeeseeks.DIE.Sample;
 
 internal interface IInterface<T0> {}
 
@@ -10,8 +11,8 @@ internal class Program
     {
         try
         {
-            //using var container = Container.DIE_CreateContainer(); 
-            //var asdf = container.Create<int>();
+            using var container = Container.DIE_CreateContainer(); 
+            var asdf = container.Create();
             Console.WriteLine("Hello, World!");
         }
         catch (Exception)

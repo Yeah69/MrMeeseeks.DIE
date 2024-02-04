@@ -1,33 +1,43 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Class<TVanilla, TExactMatch, TMoreStrict>
-    where TExactMatch : struct 
-    where TMoreStrict : class, IList<TVanilla>, new()
+internal class Dependency : IContainerInstance
 {
-    internal required IList<TVanilla> ListVanilla { get; init; }
-    internal required IList<TExactMatch> ListExactMatch { get; init; }
-    internal required IList<TMoreStrict> ListMoreStrict { get; init; }
+    // ReSharper disable once UnusedParameter.Local
+    internal Dependency(Func<Dependency> inner) {}
 }
 
-[CreateFunction(typeof(Class<,,>), "Create")]
+[CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
     private Container() {}
+}
 
-    [UserDefinedPropertiesInjection(typeof(Class<,,>))]
-    private void DIE_Props<TVanilla, TExactMatch, TLessStrict>(
-        out IList<TVanilla> ListVanilla,
-        out IList<TExactMatch> ListExactMatch,
-        out IList<TLessStrict> ListMoreStrict)
-        where TExactMatch : struct 
-        where TLessStrict : class
-    {
-        ListVanilla = new List<TVanilla>();
-        ListExactMatch = new List<TExactMatch>();
-        ListMoreStrict = new List<TLessStrict>();
-    }
+/*internal class Class<T> : IContainerInstance
+{
+}
+
+internal class Class0<T>
+{
+    internal Class0() {}
+}
+
+internal class Parent<T>
+{
+    public required Func<Class<IList<T>>> Class00 { get; init; }
+    public required Class<IList<int>> Class { get; init; }
+    public required Class<string> Class0 { get; init; }
+    public required Class<IList<T>> Class1 { get; init; }
+    
+}
+
+[CreateFunction(typeof(Parent<>), "Create")]
+internal sealed partial class Container
+{
+    private Container() {}
 }
 //*/

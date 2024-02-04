@@ -42,6 +42,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
             mapperDataToFunctionKeyTypeConverter,
             typeParameterUtility,
             containerWideContext,
+            referenceGenerator,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             multiKeyValueFunctionNodeFactory,

@@ -164,7 +164,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     Ordinal: attribute.ConstructorArguments[0].Value is int ordinal ? ordinal : 0);
             })
             .Where(t => t is not null)
-            .Select(t => t ?? throw new MsMeeseeks.DIE.ImpossibleDieException())
+            .Select(t => t ?? throw new ImpossibleDieException())
             .Concat(currentlyConsideredTypes.DecorationOrdinalChoices)
             .ToDictionary(t => t.DecorationImplementationType, t => t.Ordinal);
     }

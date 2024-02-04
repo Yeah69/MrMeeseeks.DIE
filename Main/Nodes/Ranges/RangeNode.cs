@@ -40,6 +40,9 @@ internal interface IRangeNode : INode
     IFunctionCallNode BuildEnumerableKeyValueMultiCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IEnumerable<ICreateFunctionNodeBase> CreateFunctions { get; }
     IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups { get; }
+    bool HasGenericRangeInstanceFunctionGroups { get; }
+    string RangedInstanceStorageFieldName { get; }
+    void AdjustRangedInstancesIfGeneric();
     IEnumerable<IMultiFunctionNodeBase> MultiFunctions { get; }
     IEnumerable<IVoidFunctionNode> InitializationFunctions { get; }
     IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
@@ -53,6 +56,7 @@ internal abstract class RangeNode : IRangeNode
 {
     private readonly IMapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
     protected readonly ITypeParameterUtility TypeParameterUtility;
+    private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> _multiKeyValueFunctionNodeFactory;
@@ -158,6 +162,29 @@ internal abstract class RangeNode : IRangeNode
     public IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups =>
         _rangedInstanceFunctionGroupNodes.Values;
 
+    public bool HasGenericRangeInstanceFunctionGroups => _rangedInstanceFunctionGroupNodes
+        .Values
+        .Any(g => g.IsOpenGeneric);
+
+    private string? _rangedInstanceStorageFieldName;
+    public string RangedInstanceStorageFieldName => _rangedInstanceStorageFieldName ??= _referenceGenerator.Generate("rangedInstanceStorage");
+
+    public void AdjustRangedInstancesIfGeneric()
+    {
+        var groupedByUnbound = _rangedInstanceFunctionGroupNodes.GroupBy(kvp => kvp.Key is INamedTypeSymbol namedTypeSymbol
+            ? namedTypeSymbol.UnboundIfGeneric()
+            : kvp.Key);
+
+        foreach (var group in groupedByUnbound)
+        {
+            if (group.Any(kvp => kvp.Value.IsOpenGeneric))
+            {
+                foreach (var kvp in group)
+                    kvp.Value.OverrideIsOpenGenericToTrue();
+            }
+        }
+    }
+
     public IEnumerable<IMultiFunctionNodeBase> MultiFunctions => _multiFunctions
         .Values
         .SelectMany(l => l)
@@ -176,6 +203,7 @@ internal abstract class RangeNode : IRangeNode
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext,
+        IReferenceGenerator referenceGenerator,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
@@ -187,6 +215,7 @@ internal abstract class RangeNode : IRangeNode
     {
         _mapperDataToFunctionKeyTypeConverter = mapperDataToFunctionKeyTypeConverter;
         TypeParameterUtility = typeParameterUtility;
+        _referenceGenerator = referenceGenerator;
         _createFunctionNodeFactory = createFunctionNodeFactory;
         _multiFunctionNodeFactory = multiFunctionNodeFactory;
         _multiKeyValueFunctionNodeFactory = multiKeyValueFunctionNodeFactory;

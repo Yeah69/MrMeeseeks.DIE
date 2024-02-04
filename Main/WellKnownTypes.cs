@@ -18,6 +18,7 @@ internal record WellKnownTypes(
     INamedTypeSymbol ConcurrentBagOfAsyncDisposable,
     INamedTypeSymbol ConcurrentDictionaryOfSyncDisposable,
     INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,
+    INamedTypeSymbol ConcurrentDictionaryOfRuntimeTypeHandleToObject,
     INamedTypeSymbol Exception,
     INamedTypeSymbol AggregateException,
     INamedTypeSymbol SemaphoreSlim,
@@ -33,7 +34,9 @@ internal record WellKnownTypes(
         var iAsyncDisposable = compilation.GetTypeByMetadataNameOrThrow("System.IAsyncDisposable");
         var concurrentBag = compilation.GetTypeByMetadataNameOrThrow("System.Collections.Concurrent.ConcurrentBag`1");
         var concurrentDictionary2= compilation.GetTypeByMetadataNameOrThrow("System.Collections.Concurrent.ConcurrentDictionary`2");
-
+        var runtimeTypeHandle = compilation.GetTypeByMetadataNameOrThrow("System.RuntimeTypeHandle");
+        var @object = compilation.GetTypeByMetadataNameOrThrow("System.Object");
+        
         return new WellKnownTypes(
             IDisposable: iDisposable,
             IAsyncDisposable: iAsyncDisposable,
@@ -48,6 +51,7 @@ internal record WellKnownTypes(
             ConcurrentBagOfAsyncDisposable: concurrentBag.Construct(iAsyncDisposable),
             ConcurrentDictionaryOfSyncDisposable: concurrentDictionary2.Construct(iDisposable, iDisposable),
             ConcurrentDictionaryOfAsyncDisposable: concurrentDictionary2.Construct(iAsyncDisposable, iAsyncDisposable),
+            ConcurrentDictionaryOfRuntimeTypeHandleToObject: concurrentDictionary2.Construct(runtimeTypeHandle, @object),
             Exception: compilation.GetTypeByMetadataNameOrThrow("System.Exception"),
             AggregateException: compilation.GetTypeByMetadataNameOrThrow("System.AggregateException"),
             SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
@@ -55,6 +59,6 @@ internal record WellKnownTypes(
             Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"),
             String: compilation.GetTypeByMetadataNameOrThrow("System.String"),
             Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"),
-            Object: compilation.GetTypeByMetadataNameOrThrow("System.Object"));
+            Object: @object);
     }
 }

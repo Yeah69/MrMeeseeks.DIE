@@ -134,7 +134,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _synchronicityCheckedAlready = true;
         if (SynchronicityDecision == SynchronicityDecision.AsyncValueTask) return; 
         SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-        AsyncTypeFullName = GetAsyncTypeFullName();
         ReturnedTypeFullName = GetReturnedTypeFullName();
         OnBecameAsync();
         foreach (var callingFunction in _callingFunctions)
@@ -142,8 +141,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
     }
 
     protected virtual bool SuppressAsync => false;
-
-    public string? AsyncTypeFullName { get; private set; }
     public string RangeFullName { get; }
     public string DisposedPropertyReference { get; }
 

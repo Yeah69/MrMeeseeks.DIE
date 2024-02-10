@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
 using MrMeeseeks.DIE.UserUtility;
 
-namespace MrMeeseeks.DIE.Sample;
+// ReSharper disable once CheckNamespace
+namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.KeyedInjections;
 
 internal enum KeyValues { A, B, C }
 
@@ -29,4 +31,23 @@ internal class Root<TA, TB>
 internal sealed partial class Container
 {
     private Container() {}
+}
+
+public class Tests
+{
+    [Fact]
+    public void Test()
+    {
+        using var container = Container.DIE_CreateContainer();
+        var root = container.Create<int, string>();
+        
+        Assert.IsType<DependencyA<int>>(root.DependencyA);
+        Assert.IsType<DependencyB<string>>(root.DependencyB);
+        Assert.IsType<DependencyA<int>>(root.AllDependenciesA[KeyValues.A]);
+        Assert.IsType<DependencyB<int>>(root.AllDependenciesA[KeyValues.B]);
+        Assert.IsType<DependencyC<int>>(root.AllDependenciesA[KeyValues.C]);
+        Assert.IsType<DependencyA<string>>(root.AllDependenciesB[KeyValues.A]);
+        Assert.IsType<DependencyB<string>>(root.AllDependenciesB[KeyValues.B]);
+        Assert.IsType<DependencyC<string>>(root.AllDependenciesB[KeyValues.C]);
+    }
 }

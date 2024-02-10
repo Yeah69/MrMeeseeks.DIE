@@ -24,7 +24,6 @@ internal interface IFunctionNode : INode
     void RegisterUsedInitializedInstance(IInitializedInstanceNode initializedInstance);
     void CheckSynchronicity();
     void ForceToAsync();
-    string? AsyncTypeFullName { get; }
     string RangeFullName { get; }
     string DisposedPropertyReference { get; }
     IReadOnlyList<ILocalFunctionNode> LocalFunctions { get; }

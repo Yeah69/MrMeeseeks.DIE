@@ -21,7 +21,6 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
         if (method is
             {
                 DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
-                Arity: 0,
                 CallingConvention: SignatureCallingConvention.Default,
                 IsConditional: false,
                 IsVararg: false,
@@ -38,11 +37,6 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
         if (method.DeclaredAccessibility != Accessibility.Private && method.DeclaredAccessibility != Accessibility.Protected)
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be private or protected."),
-                method.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (method.Arity != 0)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(method, rangeType, containerType, "Has to have an arity of zero."),
                 method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.CallingConvention != SignatureCallingConvention.Default)

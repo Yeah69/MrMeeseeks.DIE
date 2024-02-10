@@ -13,7 +13,7 @@ internal class Dependency : ITaskInitializer
     
     async Task ITaskInitializer.InitializeAsync()
     {
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(500);
         IsInitialized = true;
     }
 }
@@ -39,7 +39,7 @@ public class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var root = await container.Create().ConfigureAwait(false);
+        var root = await container.Create();
         Assert.True(root.Dep.IsInitialized);
     }
 }

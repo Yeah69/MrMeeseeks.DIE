@@ -30,6 +30,7 @@ internal partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeIns
         IScopeManager scopeManager,
         IUserDefinedElements userDefinedElements,
         IReferenceGenerator referenceGenerator,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
@@ -46,7 +47,8 @@ internal partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeIns
             parentContainer,
             scopeManager,
             userDefinedElements, 
-            referenceGenerator, 
+            referenceGenerator,
+            typeParameterUtility,
             containerWideContext,
             mapperDataToFunctionKeyTypeConverter,
             createFunctionNodeFactory,  
@@ -75,17 +77,26 @@ internal partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeIns
             type,
             callingFunction);
 
-    public IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction) =>
-        FunctionResolutionUtility.GetOrCreateFunctionCall(
+    public IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter,
+        INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction)
+    {
+        return FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
             callingFunction,
             _createFunctions,
             () => _createScopeFunctionNodeFactory(
-                type,
-                callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
+                    (INamedTypeSymbol) TypeParameterUtility.ReplaceTypeParametersByCustom(type),
+                    callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
-            f => f.CreateScopeCall(containerParameter, transientScopeInterfaceParameter, callingRange, callingFunction, this));
+            f => f.CreateScopeCall(
+                type, 
+                containerParameter, 
+                transientScopeInterfaceParameter, 
+                callingRange, 
+                callingFunction,
+                this, TypeParameterUtility.ExtractTypeParameters(type)));
+    }
 
     public string TransientScopeInterfaceFullName { get; }
     public string TransientScopeInterfaceReference { get; }

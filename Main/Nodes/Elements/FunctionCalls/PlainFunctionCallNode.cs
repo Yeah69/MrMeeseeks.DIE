@@ -11,10 +11,12 @@ internal partial class PlainFunctionCallNode : FunctionCallNode, IPlainFunctionC
     public PlainFunctionCallNode(
         string? ownerReference,
         IFunctionNode calledFunction,
+        ITypeSymbol callSideType,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
+        IReadOnlyList<ITypeSymbol> typeParameters,
         
         IReferenceGenerator referenceGenerator)
-        : base(ownerReference, calledFunction, parameters, referenceGenerator)
+        : base(ownerReference, calledFunction, callSideType, parameters, typeParameters, referenceGenerator)
     {
     }
 }

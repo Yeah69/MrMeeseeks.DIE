@@ -30,6 +30,7 @@ internal partial class AsyncFunctionCallNode : IAsyncFunctionCallNode
         SynchronicityDecision synchronicityDecision,
         IFunctionNode calledFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
+        IReadOnlyList<ITypeSymbol> typeParameters,
         
         IReferenceGenerator referenceGenerator,
         IContainerWideContext containerWideContext)
@@ -37,6 +38,7 @@ internal partial class AsyncFunctionCallNode : IAsyncFunctionCallNode
         OwnerReference = ownerReference;
         FunctionName = calledFunction.Name;
         Parameters = parameters;
+        TypeParameters = typeParameters;
         SynchronicityDecision = synchronicityDecision;
         _calledFunction = calledFunction;
         Transformation = synchronicityDecision is SynchronicityDecision.AsyncValueTask
@@ -74,6 +76,7 @@ internal partial class AsyncFunctionCallNode : IAsyncFunctionCallNode
     public string? OwnerReference { get; }
     public string FunctionName { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
+    public IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     public IFunctionNode CalledFunction => _calledFunction;
     public bool Awaited { get; } = false;
 }

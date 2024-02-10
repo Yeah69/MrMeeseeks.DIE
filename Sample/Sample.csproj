@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 
     <RootNamespace>MrMeeseeks.DIE.Sample</RootNamespace>
     <AssemblyName>MrMeeseeks.DIE.Sample</AssemblyName>
@@ -17,7 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MrMeeseeks.DIE" Version="3.0.1" />
+    <PackageReference Include="MrMeeseeks.DIE" Version="3.0.3-alpha.0.6" />
     <PackageReference Include="MrMeeseeks.DIE.UserUtility" Version="3.0.0" />
   </ItemGroup>
 

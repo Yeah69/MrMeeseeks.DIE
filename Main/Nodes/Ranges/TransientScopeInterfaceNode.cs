@@ -20,6 +20,7 @@ internal interface ITransientScopeInterfaceNode : INode
 internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
 {
     private readonly IContainerNode _container;
+    private readonly ITypeParameterUtility _typeParameterUtility;
     private readonly Dictionary<ITypeSymbol, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Collection<IRangeNode> _ranges = new();
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceInterfaceFunctionNodeRoot> _rangedInstanceInterfaceFunctionNodeFactory;
@@ -28,10 +29,12 @@ internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNod
         IContainerNode container,
         
         IReferenceGenerator referenceGenerator,
+        ITypeParameterUtility typeParameterUtility,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceInterfaceFunctionNodeRoot> rangedInstanceInterfaceFunctionNodeFactory)
     {
         _container = container;
-        
+        _typeParameterUtility = typeParameterUtility;
+
         _rangedInstanceInterfaceFunctionNodeFactory = rangedInstanceInterfaceFunctionNodeFactory;
         Name = referenceGenerator.Generate("ITransientScope");
         FullName = $"{container.FullName}.{Name}";
@@ -57,7 +60,7 @@ internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNod
                     interfaceFunction.AddConsideredRange(range);
                 return interfaceFunction;
             },
-            f => f.CreateCall(ownerReference, callingFunction));
+            f => f.CreateCall(type, ownerReference, callingFunction, _typeParameterUtility.ExtractTypeParameters(type)));
 
     public IEnumerable<IRangedInstanceInterfaceFunctionNode> Functions => _interfaceFunctions.Values.SelectMany(x => x);
 

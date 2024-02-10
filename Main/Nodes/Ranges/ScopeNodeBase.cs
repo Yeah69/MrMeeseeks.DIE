@@ -5,6 +5,7 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Mappers;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -23,6 +24,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         IScopeManager scopeManager,
         IUserDefinedElements userDefinedElements,
         IReferenceGenerator referenceGenerator,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
@@ -38,7 +40,9 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
             scopeInfo.ScopeType,
             userDefinedElements, 
             mapperDataToFunctionKeyTypeConverter,
+            typeParameterUtility,
             containerWideContext,
+            referenceGenerator,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,
             multiKeyValueFunctionNodeFactory,

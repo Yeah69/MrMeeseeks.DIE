@@ -29,6 +29,6 @@ public class Tests
     {
         await using var container = Container.DIE_CreateContainer();
         var wrapper = container.Create();
-        Assert.Equal("Yeah", await wrapper.Property.ConfigureAwait(false));
+        Assert.Equal("Yeah", await wrapper.Property);
     }
 }

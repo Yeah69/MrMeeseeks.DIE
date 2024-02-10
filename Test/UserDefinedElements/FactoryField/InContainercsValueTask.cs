@@ -28,7 +28,7 @@ public class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var wrapper = await container.Create().ConfigureAwait(false);
+        var wrapper = await container.Create();
         Assert.Equal("Yeah", wrapper.Property);
     }
 }

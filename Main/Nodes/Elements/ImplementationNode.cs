@@ -31,7 +31,8 @@ internal partial class ImplementationNode : IImplementationNode
 {
     internal record UserDefinedInjection(
         string Name, 
-        IReadOnlyList<(string Name, IElementNode Element, bool IsOut)> Parameters);
+        IReadOnlyList<(string Name, IElementNode Element, bool IsOut)> Parameters,
+        IReadOnlyList<string> TypeParameters);
 
     internal record Initialization(
         string TypeFullName,
@@ -42,6 +43,7 @@ internal partial class ImplementationNode : IImplementationNode
     private readonly INamedTypeSymbol _implementationType;
     private readonly IMethodSymbol _constructor;
     private readonly IFunctionNode _parentFunction;
+    private readonly IContainerNode _parentContainer;
     private readonly IRangeNode _parentRange;
     private readonly IElementNodeMapperBase _elementNodeMapper;
     private readonly ICheckTypeProperties _checkTypeProperties;
@@ -61,6 +63,7 @@ internal partial class ImplementationNode : IImplementationNode
         
         // dependencies
         IFunctionNode parentFunction,
+        IContainerNode parentContainer,
         IElementNodeMapperBase elementNodeMapper,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
@@ -70,6 +73,7 @@ internal partial class ImplementationNode : IImplementationNode
         _implementationType = implementationType;
         _constructor = constructor;
         _parentFunction = parentFunction;
+        _parentContainer = parentContainer;
         _parentRange = transientScopeWideContext.Range;
         _elementNodeMapper = elementNodeMapper;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
@@ -113,8 +117,14 @@ internal partial class ImplementationNode : IImplementationNode
             ImplementationStack = passedContext.ImplementationStack.Push(_implementationType)
         };
         
-        var (userDefinedInjectionConstructor, outParamsConstructor) = GetUserDefinedInjection(_userDefinedElements.GetConstructorParametersInjectionFor(_implementationType));
-        var (userDefinedInjectionProperties, outParamsProperties) = GetUserDefinedInjection(_userDefinedElements.GetPropertiesInjectionFor(_implementationType));
+        var (userDefinedInjectionConstructor, outParamsConstructor) = 
+            GetUserDefinedInjection(
+                _userDefinedElements.GetConstructorParametersInjectionFor(_implementationType),
+                name => _constructor.Parameters.FirstOrDefault(p => p.Name == name)?.Type);
+        var (userDefinedInjectionProperties, outParamsProperties) = 
+            GetUserDefinedInjection(
+                _userDefinedElements.GetPropertiesInjectionFor(_implementationType),
+                name => _implementationType.GetMembers().OfType<IPropertySymbol>().FirstOrDefault(p => p.Name == name)?.Type);
 
         UserDefinedInjectionConstructor = userDefinedInjectionConstructor;
         UserDefinedInjectionProperties = userDefinedInjectionProperties;
@@ -146,7 +156,10 @@ internal partial class ImplementationNode : IImplementationNode
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })
         {
-            var (userDefinedInjectionInitializer, outParamsInitializer) = GetUserDefinedInjection(_userDefinedElements.GetInitializerParametersInjectionFor(_implementationType));
+            var (userDefinedInjectionInitializer, outParamsInitializer) =
+                GetUserDefinedInjection(
+                    _userDefinedElements.GetInitializerParametersInjectionFor(_implementationType),
+                    name => initializerMethod.Parameters.FirstOrDefault(p => p.Name == name)?.Type);
 
             var initializerParameters = initializerMethod.Parameters
                 .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsInitializer)))
@@ -184,11 +197,14 @@ internal partial class ImplementationNode : IImplementationNode
                 _localDiagLogger.Warning(WarningLogData.ImplementationHasMultipleInjectionsOfSameTypeWarning(
                     $"Implementation has multiple injections of same type \"{type.FullName()}\": {string.Join(", ", sameTypeInjections.Select(t => t.Item2))}"),
                     _implementationType.Locations.FirstOrDefault() ?? Location.None);
-            
+        return;
 
-        (UserDefinedInjection? UserdefinedInjection, IReadOnlyDictionary<string, IElementNode>) GetUserDefinedInjection(IMethodSymbol? method)
+
+        (UserDefinedInjection? UserdefinedInjection, IReadOnlyDictionary<string, IElementNode>) GetUserDefinedInjection(
+            IMethodSymbol? method,
+            Func<string, ITypeSymbol?> typeOfMemberSelector)
         {
-            if (method is not { }) return (null, new Dictionary<string, IElementNode>());
+            if (method is null) return (null, new Dictionary<string, IElementNode>());
             var injectionParameters = method
                 .Parameters
                 .Select(p =>
@@ -200,8 +216,141 @@ internal partial class ImplementationNode : IImplementationNode
                     return (p.Type, p.Name, Element: element, IsOut: isOut);
                 })
                 .ToArray();
+            
+            var typeParametersMap = new Dictionary<ITypeParameterSymbol, ITypeParameterSymbol>();
+            foreach (var valueTuple in injectionParameters.Where(ip => ip.IsOut))
+            {
+                var (type, name, _, _) = valueTuple;
+
+                if (typeOfMemberSelector(name) is not { } at)
+                {
+                    _localDiagLogger.Warning(
+                        WarningLogData.ValidationUserDefinedElement(
+                            method,
+                            _parentRange,
+                            _parentContainer,
+                            $"User-defined injection name mismatch. An element called \"{name}\" couldn't be found."),
+                        method.Locations.FirstOrDefault() ?? Location.None);
+                    continue;
+                }
+                
+                if (!CheckTypeMatches(type, at))
+                    _localDiagLogger.Error(
+                        ErrorLogData.ValidationUserDefinedElement(
+                            method,
+                            _parentRange,
+                            _parentContainer,
+                            $"User-defined injection type mismatch for \"{name}\". Expected \"{type.FullName()}\", but found \"{at.FullName()}\""),
+                        method.Locations.FirstOrDefault() ?? Location.None);
+
+                bool CheckTypeMatches(ITypeSymbol userDefinedType, ITypeSymbol actualType)
+                {
+                    switch (userDefinedType)
+                    {
+                        case IArrayTypeSymbol userDefinedArray:
+                            return actualType is IArrayTypeSymbol actualArray 
+                                   && CheckTypeMatches(userDefinedArray.ElementType, actualArray.ElementType);
+                        case IDynamicTypeSymbol:
+                            return actualType is IDynamicTypeSymbol;
+                        case IErrorTypeSymbol:
+                            return false;
+                        case IFunctionPointerTypeSymbol userDefinedFunctionPointer:
+                            if (actualType is not IFunctionPointerTypeSymbol actualFunctionPointer)
+                                return false;
+                            return userDefinedFunctionPointer.Signature.Parameters.Length != actualFunctionPointer.Signature.Parameters.Length
+                                   && (userDefinedFunctionPointer.Signature.ReturnsVoid && actualFunctionPointer.Signature.ReturnsVoid
+                                       || CheckTypeMatches(userDefinedFunctionPointer.Signature.ReturnType, actualFunctionPointer.Signature.ReturnType))
+                                   && userDefinedFunctionPointer.Signature.Parameters.Select(p => p.Type)
+                                       .Zip(actualFunctionPointer.Signature.Parameters.Select(p => p.Type), CheckTypeMatches)
+                                       .All(b => b);
+                        case INamedTypeSymbol userDefinedNamedType:
+                            if (actualType is not INamedTypeSymbol actualNamedType)
+                                return false;
+                            if (userDefinedNamedType.Arity != actualNamedType.Arity
+                                || userDefinedNamedType.ToDisplayString(SymbolDisplayFormatPicks.FullNameExceptTypeParameters) 
+                                != actualNamedType.ToDisplayString(SymbolDisplayFormatPicks.FullNameExceptTypeParameters))
+                                return false;
+                            return userDefinedNamedType.TypeArguments.Zip(actualNamedType.TypeArguments, CheckTypeMatches)
+                                .All(b => b);
+                        case IPointerTypeSymbol userDefinedPointer:
+                            return actualType is IPointerTypeSymbol actualPointer 
+                                   && CheckTypeMatches(userDefinedPointer.PointedAtType, actualPointer.PointedAtType);
+                        case ITypeParameterSymbol userDefinedTypeParameter:
+                            if (actualType is not ITypeParameterSymbol actualTypeParameter)
+                                return false;
+                            if (typeParametersMap.TryGetValue(userDefinedTypeParameter, out var foundActualTypeParameter))
+                                return SymbolEqualityComparer.Default.Equals(foundActualTypeParameter, actualTypeParameter);
+                        
+                            typeParametersMap[userDefinedTypeParameter] = actualTypeParameter;
+                            
+                            if (userDefinedTypeParameter.HasValueTypeConstraint && !actualTypeParameter.HasValueTypeConstraint)
+                                return false;
+                            
+                            if (userDefinedTypeParameter.HasReferenceTypeConstraint && !actualTypeParameter.HasReferenceTypeConstraint)
+                                return false;
+                            
+                            if (userDefinedTypeParameter.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated 
+                                && actualTypeParameter.ReferenceTypeConstraintNullableAnnotation != NullableAnnotation.Annotated)
+                                return false;
+                            
+                            if (userDefinedTypeParameter.HasNotNullConstraint && !actualTypeParameter.HasNotNullConstraint)
+                                return false;
+                            
+                            if (userDefinedTypeParameter.HasUnmanagedTypeConstraint && !actualTypeParameter.HasUnmanagedTypeConstraint)
+                                return false;
+                            
+                            if (userDefinedTypeParameter.HasConstructorConstraint && !actualTypeParameter.HasConstructorConstraint)
+                                return false;
+                            
+                            if (userDefinedTypeParameter.ConstraintTypes.Length > actualTypeParameter.ConstraintTypes.Length)
+                                return false;
+                        
+                            for (int u = 0; u < userDefinedTypeParameter.ConstraintTypes.Length; u++)
+                            {
+                                var check = false;
+                                for (int a = 0; a < actualTypeParameter.ConstraintTypes.Length; a++)
+                                {
+                                    if (CheckTypeMatches(userDefinedTypeParameter.ConstraintTypes[u], actualTypeParameter.ConstraintTypes[a])
+                                        && (userDefinedTypeParameter.ConstraintNullableAnnotations[u] != NullableAnnotation.Annotated || actualTypeParameter.ConstraintNullableAnnotations[a] == NullableAnnotation.Annotated))
+                                    {
+                                        check = true;
+                                        break;
+                                    }
+                                }
+                                if (!check) 
+                                    return false;
+                            }
+                        
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(userDefinedType));
+                    }
+
+                    return true;
+                }
+            }
+
+            var unassignedTypeParameters = method.TypeParameters.Where(tp => !typeParametersMap.ContainsKey(tp)).ToArray();
+            
+            if (unassignedTypeParameters.Length != 0)
+                _localDiagLogger.Error(
+                    ErrorLogData.ValidationUserDefinedElement(
+                        method,
+                        _parentRange,
+                        _parentContainer,
+                        $"Unassigned type parameters: {string.Join(", ", unassignedTypeParameters.Select(tp => tp.FullName()))}"),
+                    method.Locations.FirstOrDefault() ?? Location.None);
+
+            var typeParameters = method.TypeParameters.Select(tp => typeParametersMap.TryGetValue(tp, out var actualTypeParameter)
+                    ? actualTypeParameter.Name
+                    : "")
+                .ToArray();
+
             return (
-                new UserDefinedInjection(method.Name, injectionParameters.Select(ip => (ip.Name, ip.Element, ip.IsOut)).ToArray()),
+                new UserDefinedInjection(
+                    method.Name, 
+                    injectionParameters.Select(ip => (ip.Name, ip.Element, ip.IsOut)).ToArray(),
+                    typeParameters),
                 injectionParameters.Where(ip => ip.IsOut).ToDictionary(ip => ip.Name, ip => ip.Element));
         }
 

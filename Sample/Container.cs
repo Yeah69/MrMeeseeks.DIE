@@ -1,41 +1,31 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System.Collections.Generic;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal enum Key
+internal enum KeyValues { A, B, C }
+
+internal interface IInterface<T> { }
+
+[InjectionKey(KeyValues.A)]
+internal class DependencyA<T> : IInterface<T> { }
+internal class DependencyB<T> : IInterface<T> { }
+[InjectionKey(KeyValues.C)]
+internal class DependencyC<T> : IInterface<T> { }
+
+internal class Root<TA, TB>
 {
-    A,
-    B,
-    C
+    [InjectionKey(KeyValues.A)]
+    internal required IInterface<TA> DependencyA { get; init; }
+    [InjectionKey(KeyValues.B)]
+    internal required IInterface<TB> DependencyB { get; init; }
+    internal required IReadOnlyDictionary<KeyValues, IInterface<TA>> AllDependenciesA { get; init; }
+    internal required IReadOnlyDictionary<KeyValues, IInterface<TB>> AllDependenciesB { get; init; }
 }
 
-internal interface IInterface
-{
-}
-
-[InjectionKey(Key.A)]
-internal class DependencyA : IInterface
-{
-}
-
-[InjectionKey(Key.B)]
-internal class DependencyB : IInterface
-{
-}
-
-[InjectionKey(Key.C)]
-internal class DependencyC : IInterface
-{
-}
-
-internal class Root
-{
-    [InjectionKey(Key.B)]
-    internal required IInterface Dependency { get; init; }
-}
-
-[CreateFunction(typeof(Root), "Create")]
+[InjectionKeyChoice(KeyValues.B, typeof(DependencyB<>))]
+[CreateFunction(typeof(Root<,>), "Create")]
 internal sealed partial class Container
 {
     private Container() {}

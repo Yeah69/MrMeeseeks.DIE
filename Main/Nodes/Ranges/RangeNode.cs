@@ -9,6 +9,7 @@ using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
@@ -39,6 +40,9 @@ internal interface IRangeNode : INode
     IFunctionCallNode BuildEnumerableKeyValueMultiCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IEnumerable<ICreateFunctionNodeBase> CreateFunctions { get; }
     IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups { get; }
+    bool HasGenericRangeInstanceFunctionGroups { get; }
+    string RangedInstanceStorageFieldName { get; }
+    void AdjustRangedInstancesIfGeneric();
     IEnumerable<IMultiFunctionNodeBase> MultiFunctions { get; }
     IEnumerable<IVoidFunctionNode> InitializationFunctions { get; }
     IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
@@ -51,22 +55,25 @@ internal interface IRangeNode : INode
 internal abstract class RangeNode : IRangeNode
 {
     private readonly IMapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
+    protected readonly ITypeParameterUtility TypeParameterUtility;
+    private readonly IReferenceGenerator _referenceGenerator;
     private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> _multiKeyValueFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> _multiKeyValueMultiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
     protected readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> VoidFunctionNodeFactory;
-    protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
-    private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNodeBase>> _multiFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
+    protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
+    private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNodeBase>> _multiFunctions = new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
     private readonly Dictionary<ITypeSymbol, Dictionary<object, Dictionary<ITypeSymbol, List<IMultiFunctionNodeBase>>>> _keyedMultiFunctions = 
-        new(CustomSymbolEqualityComparer.IncludeNullability);
+        new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
 
-    private readonly Dictionary<ITypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new(CustomSymbolEqualityComparer.IncludeNullability);
+    private readonly Dictionary<ITypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
 
     protected readonly List<IVoidFunctionNode> _initializationFunctions = new();
 
     protected readonly Dictionary<INamedTypeSymbol, IInitializedInstanceNode> InitializedInstanceNodesMap = new(CustomSymbolEqualityComparer.IncludeNullability);
+    private readonly INamedTypeSymbol _objectType;
 
     public abstract string FullName { get; }
     public string Name { get; }
@@ -84,8 +91,9 @@ internal abstract class RangeNode : IRangeNode
             ? BuildEnumerableCall(type, callingFunction, injectionKey)
             : BuildEnumerableCall(type, callingFunction);
 
-    private IFunctionCallNode BuildEnumerableCall(INamedTypeSymbol type, IFunctionNode callingFunction) =>
-        FunctionResolutionUtility.GetOrCreateFunctionCall(
+    private IFunctionCallNode BuildEnumerableCall(INamedTypeSymbol type, IFunctionNode callingFunction)
+    {
+        return FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
             callingFunction,
             _multiFunctions,
@@ -94,7 +102,8 @@ internal abstract class RangeNode : IRangeNode
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
-            f => f.CreateCall(null, callingFunction));
+            f => f.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
+    }
 
     private IFunctionCallNode BuildEnumerableCall(INamedTypeSymbol type, IFunctionNode callingFunction, InjectionKey injectionKey)
     {
@@ -117,11 +126,12 @@ internal abstract class RangeNode : IRangeNode
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, injectionKey)),
-            f => f.CreateCall(null, callingFunction));
+            f => f.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
     }
 
-    public IFunctionCallNode BuildEnumerableKeyValueCall(INamedTypeSymbol type, IFunctionNode callingFunction) =>
-        FunctionResolutionUtility.GetOrCreateFunctionCall(
+    public IFunctionCallNode BuildEnumerableKeyValueCall(INamedTypeSymbol type, IFunctionNode callingFunction)
+    {
+        return FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
             callingFunction,
             _multiFunctions,
@@ -130,10 +140,12 @@ internal abstract class RangeNode : IRangeNode
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
-            f => f.CreateCall(null, callingFunction));
+            f => f.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
+    }
 
-    public IFunctionCallNode BuildEnumerableKeyValueMultiCall(INamedTypeSymbol type, IFunctionNode callingFunction) =>
-        FunctionResolutionUtility.GetOrCreateFunctionCall(
+    public IFunctionCallNode BuildEnumerableKeyValueMultiCall(INamedTypeSymbol type, IFunctionNode callingFunction)
+    {
+        return FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
             callingFunction,
             _multiFunctions,
@@ -142,12 +154,36 @@ internal abstract class RangeNode : IRangeNode
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
-            f => f.CreateCall(null, callingFunction));
+            f => f.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
+    }
 
     public IEnumerable<ICreateFunctionNodeBase> CreateFunctions => _createFunctions.Values.SelectMany(l => l);
 
     public IEnumerable<IRangedInstanceFunctionGroupNode> RangedInstanceFunctionGroups =>
         _rangedInstanceFunctionGroupNodes.Values;
+
+    public bool HasGenericRangeInstanceFunctionGroups => _rangedInstanceFunctionGroupNodes
+        .Values
+        .Any(g => g.IsOpenGeneric);
+
+    private string? _rangedInstanceStorageFieldName;
+    public string RangedInstanceStorageFieldName => _rangedInstanceStorageFieldName ??= _referenceGenerator.Generate("rangedInstanceStorage");
+
+    public void AdjustRangedInstancesIfGeneric()
+    {
+        var groupedByUnbound = _rangedInstanceFunctionGroupNodes.GroupBy(kvp => kvp.Key is INamedTypeSymbol namedTypeSymbol
+            ? namedTypeSymbol.UnboundIfGeneric()
+            : kvp.Key);
+
+        foreach (var group in groupedByUnbound)
+        {
+            if (group.Any(kvp => kvp.Value.IsOpenGeneric))
+            {
+                foreach (var kvp in group)
+                    kvp.Value.OverrideIsOpenGenericToTrue();
+            }
+        }
+    }
 
     public IEnumerable<IMultiFunctionNodeBase> MultiFunctions => _multiFunctions
         .Values
@@ -165,7 +201,9 @@ internal abstract class RangeNode : IRangeNode
         INamedTypeSymbol? rangeType,
         IUserDefinedElements userDefinedElements,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        ITypeParameterUtility typeParameterUtility,
         IContainerWideContext containerWideContext,
+        IReferenceGenerator referenceGenerator,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
@@ -176,6 +214,8 @@ internal abstract class RangeNode : IRangeNode
         Func<INamedTypeSymbol, IInitializedInstanceNode> initializedInstanceNodeFactory)
     {
         _mapperDataToFunctionKeyTypeConverter = mapperDataToFunctionKeyTypeConverter;
+        TypeParameterUtility = typeParameterUtility;
+        _referenceGenerator = referenceGenerator;
         _createFunctionNodeFactory = createFunctionNodeFactory;
         _multiFunctionNodeFactory = multiFunctionNodeFactory;
         _multiKeyValueFunctionNodeFactory = multiKeyValueFunctionNodeFactory;
@@ -197,6 +237,8 @@ internal abstract class RangeNode : IRangeNode
             AddForDisposalAsync = userDefinedElements.AddForDisposalAsync;
             DisposalHandling.RegisterAsyncDisposal();
         }
+
+        _objectType = containerWideContext.WellKnownTypes.Object;
         
         if (rangeType is { })
         {
@@ -237,11 +279,11 @@ internal abstract class RangeNode : IRangeNode
             _createFunctions,
             () => _createFunctionNodeFactory(
                     new VanillaMapperData(),
-                    type,
+                    TypeParameterUtility.ReplaceTypeParametersByCustom(type),
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
-            f => f.CreateCall(null, callingFunction));
+            f => f.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
 
     public IAsyncFunctionCallNode BuildAsyncCreateCall(
         MapperData mapperData, 
@@ -254,11 +296,11 @@ internal abstract class RangeNode : IRangeNode
             _createFunctions,
             () => _createFunctionNodeFactory(
                     mapperData,
-                    type,
+                    TypeParameterUtility.ReplaceTypeParametersByCustom(type),
                     callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
-            f => f.CreateAsyncCall(type, null, synchronicity, callingFunction));
+            f => f.CreateAsyncCall(type, null, synchronicity, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
 
     public IFunctionCallNode BuildInitializationCall(IFunctionNode callingFunction)
     {
@@ -271,7 +313,7 @@ internal abstract class RangeNode : IRangeNode
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)));
 
-        return voidFunction.CreateCall(null, callingFunction);
+        return voidFunction.CreateCall(_objectType, null, callingFunction, Array.Empty<ITypeSymbol>());
     }
 
     public void CycleDetectionAndReorderingOfInitializedInstances()
@@ -293,16 +335,17 @@ internal abstract class RangeNode : IRangeNode
 
     protected IFunctionCallNode BuildRangedInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction, ScopeLevel level)
     {
-        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(type, out var rangedInstanceFunctionGroupNode))
+        var preparedType = TypeParameterUtility.ReplaceTypeParametersByCustom(type);
+        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(preparedType, out var rangedInstanceFunctionGroupNode))
         {
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 level,
                 type)
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
-            _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
+            _rangedInstanceFunctionGroupNodes[preparedType] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
-        return function.CreateCall(ownerReference, callingFunction);
+        return function.CreateCall(type, ownerReference, callingFunction, TypeParameterUtility.ExtractTypeParameters(type));
     }
 
     public abstract IFunctionCallNode BuildContainerInstanceCall(
@@ -317,16 +360,17 @@ internal abstract class RangeNode : IRangeNode
         INamedTypeSymbol type, 
         IFunctionNode callingFunction)
     {
-        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(type, out var rangedInstanceFunctionGroupNode))
+        var unbound = type.UnboundIfGeneric();
+        if (!_rangedInstanceFunctionGroupNodes.TryGetValue(unbound, out var rangedInstanceFunctionGroupNode))
         {
             rangedInstanceFunctionGroupNode = _rangedInstanceFunctionGroupNodeFactory(
                 ScopeLevel.TransientScope,
                 type)
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
-            _rangedInstanceFunctionGroupNodes[type] = rangedInstanceFunctionGroupNode;
+            _rangedInstanceFunctionGroupNodes[unbound] = rangedInstanceFunctionGroupNode;
         }
         var function = rangedInstanceFunctionGroupNode.BuildFunction(callingFunction);
-        function.CreateCall(null, callingFunction);
+        function.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type));
         return function;
     }
 

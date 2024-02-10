@@ -18,16 +18,17 @@ internal partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNode
     private readonly IRangeNode _parentRange;
 
     internal ThreadLocalNode(
-        INamedTypeSymbol threadLocalType,
+        (INamedTypeSymbol Outer, INamedTypeSymbol Inner) delegateTypes,
         ILocalFunctionNode function,
+        IReadOnlyList<ITypeSymbol> typeParameters,
         
         ILocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator) 
-        : base(threadLocalType, function, localDiagLogger, parentContainer, referenceGenerator)
+        : base(delegateTypes, function, typeParameters, localDiagLogger, parentContainer, referenceGenerator)
     {
-        _threadLocalType = threadLocalType;
+        _threadLocalType = delegateTypes.Inner;
         _parentRange = transientScopeWideContext.Range;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
     }

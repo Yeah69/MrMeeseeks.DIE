@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -80,11 +81,25 @@ internal static class ErrorLogData
         ISymbol userDefinedElement, 
         INamedTypeSymbol parentRange,
         INamedTypeSymbol parentContainer,
+        string specification) =>
+        ValidationUserDefinedElementInner(userDefinedElement, parentRange.Name, parentContainer.Name, specification);
+
+    internal static DiagLogData ValidationUserDefinedElement(
+        ISymbol userDefinedElement, 
+        IRangeNode parentRange,
+        IContainerNode parentContainer,
+        string specification) =>
+        ValidationUserDefinedElementInner(userDefinedElement, parentRange.Name, parentContainer.Name, specification);
+
+    internal static DiagLogData ValidationUserDefinedElementInner(
+        ISymbol userDefinedElement, 
+        string parentRange,
+        string parentContainer,
         string specification)
     {
-        var rangeDescription = CustomSymbolEqualityComparer.Default.Equals(parentRange, parentContainer)
-            ? $"parent-Container \"{parentContainer.Name}\""
-            : $"Range \"{parentRange.Name}\" in parent-Container \"{parentContainer.Name}\"";
+        var rangeDescription = Equals(parentRange, parentContainer)
+            ? $"parent-Container \"{parentContainer}\""
+            : $"Range \"{parentRange}\" in parent-Container \"{parentContainer}\"";
         return new(67,
             3,
             "Validation (User-Defined Element)",
@@ -130,7 +145,7 @@ internal static class ErrorLogData
         new(66,
             2,
             "Impossible Exception",
-            $"You've run into an exception which should be impossible. Please make a issue at https://github.com/Yeah69/MrMeeseeks.DIE/issues/new with code hint \"{code.ToString()}\".",
+            $"You've run into an exception which should be impossible. Please create an issue - if none exists for this code hint yet - at https://github.com/Yeah69/MrMeeseeks.DIE/issues/new with code hint \"{code.ToString()}\".",
             DieExceptionKind.Impossible);
     
     internal static DiagLogData CompilationError(string message) =>
@@ -210,6 +225,29 @@ internal static class WarningLogData
             "Validation (Configuration Attribute)",
             $"The configuration attribute \"{attributeData.AttributeClass?.Name}\" (of \"{rangeDescription}\") isn't validly defined: {specification}",
             null);
+    }
+
+    internal static DiagLogData ValidationUserDefinedElement(
+        ISymbol userDefinedElement, 
+        IRangeNode parentRange,
+        IContainerNode parentContainer,
+        string specification) =>
+        ValidationUserDefinedElementInner(userDefinedElement, parentRange.Name, parentContainer.Name, specification);
+
+    internal static DiagLogData ValidationUserDefinedElementInner(
+        ISymbol userDefinedElement, 
+        string parentRange,
+        string parentContainer,
+        string specification)
+    {
+        var rangeDescription = Equals(parentRange, parentContainer)
+            ? $"parent-Container \"{parentContainer}\""
+            : $"Range \"{parentRange}\" in parent-Container \"{parentContainer}\"";
+        return new(71,
+            1,
+            "Validation (User-Defined Element)",
+            $"The user-defined element \"{userDefinedElement.Name}\" (of \"{rangeDescription}\") isn't validly defined: {specification}",
+            DieExceptionKind.Validation);
     }
     
     internal static DiagLogData Logging(string message) =>

@@ -6,7 +6,6 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Collection.Injection.IEnumerable;
 
 internal interface IInterface {}
-
 internal class ClassA : IInterface {}
 
 internal class ClassB : IInterface {}
@@ -14,10 +13,7 @@ internal class ClassB : IInterface {}
 internal class ClassC : IInterface {}
 
 [CreateFunction(typeof(IEnumerable<IInterface>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

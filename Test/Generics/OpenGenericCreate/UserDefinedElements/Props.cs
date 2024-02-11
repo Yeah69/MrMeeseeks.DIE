@@ -18,7 +18,6 @@ internal class Class<TVanilla, TExactMatch, TMoreStrict>
 [CreateFunction(typeof(Class<,,>), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
 
     [UserDefinedPropertiesInjection(typeof(Class<,,>))]
     private void DIE_Props<TVanilla, TExactMatch, TLessStrict>(

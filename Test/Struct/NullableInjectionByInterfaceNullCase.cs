@@ -18,10 +18,7 @@ internal class Root
 
 [FilterImplementationAggregation(typeof(Dependency))]
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

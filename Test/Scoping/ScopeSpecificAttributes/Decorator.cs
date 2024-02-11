@@ -100,7 +100,7 @@ internal class ScopeRoot : IScopeRoot
 [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(ContainerDecorator))]
 internal sealed partial class Container
 {
-    private Container() {}
+    
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(TransientScopeDecorator))]
     private sealed partial class DIE_DefaultTransientScope

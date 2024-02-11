@@ -20,7 +20,7 @@ internal class OtherDependency : IValueTaskInitializer
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
     
     [UserDefinedPropertiesInjection(typeof(Dependency))]
     // ReSharper disable once InconsistentNaming

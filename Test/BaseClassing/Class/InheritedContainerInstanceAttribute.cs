@@ -7,15 +7,10 @@ namespace MrMeeseeks.DIE.Test.BaseClassing.Class.InheritedContainerInstanceAttri
 internal class Class {}
 
 [ContainerInstanceImplementationAggregation(typeof(Class))]
-internal abstract class ContainerBase
-{
-}
+internal abstract class ContainerBase { }
 
 [CreateFunction(typeof(Class), "Create")]
-internal sealed partial class Container : ContainerBase
-{
-    private Container() {}
-}
+internal sealed partial class Container : ContainerBase { }
 
 public class Tests
 {

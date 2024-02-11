@@ -31,7 +31,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
     
     // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope

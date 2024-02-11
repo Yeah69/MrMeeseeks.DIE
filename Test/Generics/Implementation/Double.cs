@@ -9,10 +9,7 @@ internal class Class<T0, T1> {}
 // ReSharper restore UnusedTypeParameter
 
 [CreateFunction(typeof(Class<int, string>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

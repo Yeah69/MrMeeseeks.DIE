@@ -7,14 +7,9 @@ namespace MrMeeseeks.DIE.Test.BaseClassing.Class.InheritedCreateFunctionAttribut
 internal class Class {}
 
 [CreateFunction(typeof(Class), "Create")]
-internal abstract class ContainerBase
-{
-}
+internal abstract class ContainerBase { }
 
-internal sealed partial class Container : ContainerBase
-{
-    private Container() {}
-}
+internal sealed partial class Container : ContainerBase { }
 
 public class Tests
 {

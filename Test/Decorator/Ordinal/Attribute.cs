@@ -44,10 +44,7 @@ internal class Dependency : IInterface
 [DecorationOrdinalChoice(typeof(DecoratorY), 23)]
 [DecorationOrdinalChoice(typeof(DecoratorUh), 69)]
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

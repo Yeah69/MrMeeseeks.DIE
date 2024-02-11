@@ -15,10 +15,7 @@ internal class SubClassC : IInterface {}
 
 [ImplementationCollectionChoice(typeof(IInterface), typeof(SubClassA), typeof(SubClassB))]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

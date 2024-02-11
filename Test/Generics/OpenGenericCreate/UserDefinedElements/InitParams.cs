@@ -20,7 +20,6 @@ internal class Class<TVanilla, TExactMatch, TMoreStrict>
 [CreateFunction(typeof(Class<,,>), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
 
     [UserDefinedInitializerParametersInjection(typeof(Class<,,>))]
     private void DIE_InitParams<TVanilla, TExactMatch, TLessStrict>(

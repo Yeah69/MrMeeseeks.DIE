@@ -24,7 +24,7 @@ internal class ScopeWithTransientScopeInstanceAbove : IScopeRoot
 [CreateFunction(typeof(ScopeWithTransientScopeInstanceAbove), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

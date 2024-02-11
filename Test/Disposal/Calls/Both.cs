@@ -25,10 +25,7 @@ internal class Dependency :  IDisposable, IAsyncDisposable
 }
 
 [CreateFunction(typeof(Dependency), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

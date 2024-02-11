@@ -14,10 +14,7 @@ internal class ClassB : IInterface {}
 internal class ClassC : IInterface {}
 
 [CreateFunction(typeof(IReadOnlyCollection<IInterface>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

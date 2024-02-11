@@ -29,7 +29,6 @@ internal sealed partial class Container
 
     private int DIE_Factory_Counter() => _i++;
     
-    private Container() {}
 }
 
 public class Tests

@@ -11,25 +11,15 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Collection.Injection.All;
 
-internal interface IInterface
-{
-}
+internal interface IInterface { }
 
-internal class DependencyA : IInterface
-{
-}
+internal class DependencyA : IInterface { }
 
-internal class DependencyB : IInterface
-{
-}
+internal class DependencyB : IInterface { }
 
-internal class DependencyC : IInterface
-{
-}
+internal class DependencyC : IInterface { }
 
-internal interface IAsyncInterface
-{
-}
+internal interface IAsyncInterface { }
 
 internal class AsyncDependencyA : IAsyncInterface, ITaskInitializer
 {
@@ -144,10 +134,7 @@ internal class Root
 }
 
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

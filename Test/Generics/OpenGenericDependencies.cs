@@ -15,10 +15,7 @@ internal class DependencyHolder<T0>
 
 [PropertyChoice(typeof(DependencyHolder<>), nameof(DependencyHolder<int>.Dependency))]
 [CreateFunction(typeof(DependencyHolder<int>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

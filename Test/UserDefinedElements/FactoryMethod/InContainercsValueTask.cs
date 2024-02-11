@@ -21,7 +21,7 @@ internal sealed partial class Container
         return "Yeah";
     }
 
-    private Container() {}
+    
 }
 
 public class Tests

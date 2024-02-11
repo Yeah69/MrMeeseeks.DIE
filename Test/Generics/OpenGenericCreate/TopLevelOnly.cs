@@ -10,22 +10,15 @@ internal interface IInterface<T0> {}
 
 internal interface IInterface<T0, T1, T2, T3, T4> {}
 
-internal class Class<T0> : IInterface<T0>
-{
-}
+internal class Class<T0> : IInterface<T0> { }
 
-internal class Class<T0, T1, T2, T3, T4> : IInterface<T0, T1, T2, T3, T4>
-{
-}
+internal class Class<T0, T1, T2, T3, T4> : IInterface<T0, T1, T2, T3, T4> { }
 
 [CreateFunction(typeof(Class<>), "Create")]
 [CreateFunction(typeof(Class<,,,,>), "CreateMulti")]
 [CreateFunction(typeof(IInterface<>), "CreateInterface")]
 [CreateFunction(typeof(IInterface<,,,,>), "CreateInterfaceMulti")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

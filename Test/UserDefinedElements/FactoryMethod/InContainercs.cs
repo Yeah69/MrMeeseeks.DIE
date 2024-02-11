@@ -16,7 +16,7 @@ internal sealed partial class Container
 {
     private string DIE_Factory_Yeah() => "Yeah";
     
-    private Container() {}
+    
 }
 
 public class Tests

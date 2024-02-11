@@ -13,7 +13,7 @@ internal sealed partial class Container
     // ReSharper disable once InconsistentNaming
     private string DIE_Factory_Path => "C:\\Yeah.txt";
     
-    private Container() {}
+    
 
     private FileInfo DIE_Factory(string path) => new (path);
 }

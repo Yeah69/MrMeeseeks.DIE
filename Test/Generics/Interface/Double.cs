@@ -11,10 +11,7 @@ internal interface IInterface<T0, T1> {}
 internal class Class<T0, T1> : IInterface<T0, T1> {}
 
 [CreateFunction(typeof(IInterface<int, string>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

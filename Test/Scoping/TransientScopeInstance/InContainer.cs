@@ -12,7 +12,7 @@ internal class Dependency : IInterface, ITransientScopeInstance {}
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

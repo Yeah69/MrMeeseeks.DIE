@@ -19,10 +19,7 @@ internal class Dependency : ITaskInitializer, IContainerInstance
 }
 
 [CreateFunction(typeof(ValueTask<Dependency>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

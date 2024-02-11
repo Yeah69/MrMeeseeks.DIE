@@ -14,10 +14,7 @@ internal interface IInterface<T, T0> where T :  InnerClass<InnerInterface<T0>>, 
 internal class Class<T, T0> : IInterface<T, T0> where T : InnerClass<InnerInterface<T0>> {}
 
 [CreateFunction(typeof(IInterface<,>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

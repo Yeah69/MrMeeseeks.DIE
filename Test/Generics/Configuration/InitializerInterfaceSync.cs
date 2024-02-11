@@ -17,10 +17,7 @@ internal class Dependency<T0> : IInitializer
 }
 
 [CreateFunction(typeof(Dependency<int>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

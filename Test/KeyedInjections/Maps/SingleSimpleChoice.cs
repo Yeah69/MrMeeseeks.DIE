@@ -12,30 +12,19 @@ internal enum Key
     C
 }
 
-internal interface IInterface
-{
-}
+internal interface IInterface { }
 
-internal class DependencyA : IInterface
-{
-}
+internal class DependencyA : IInterface { }
 
-internal class DependencyB : IInterface
-{
-}
+internal class DependencyB : IInterface { }
 
-internal class DependencyC : IInterface
-{
-}
+internal class DependencyC : IInterface { }
 
 [InjectionKeyChoice(Key.A, typeof(DependencyA))]
 [InjectionKeyChoice(Key.B, typeof(DependencyB))]
 [InjectionKeyChoice(Key.C, typeof(DependencyC))]
 [CreateFunction(typeof(IReadOnlyDictionary<Key, IInterface>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

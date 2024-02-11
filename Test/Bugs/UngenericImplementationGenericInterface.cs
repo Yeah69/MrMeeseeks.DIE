@@ -14,10 +14,7 @@ internal class DependencyB : IInterface<string> {}
 internal class DependencyC : IInterface<long> {}
 
 [CreateFunction(typeof(IInterface<string>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

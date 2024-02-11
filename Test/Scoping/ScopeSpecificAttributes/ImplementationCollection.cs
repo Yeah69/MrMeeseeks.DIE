@@ -33,7 +33,7 @@ internal class Scope : IScopeRoot
 [CreateFunction(typeof(Scope), "Create2")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
     
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyScope))]

@@ -49,7 +49,6 @@ internal class ScopeRoot1 : IScopeRoot
 [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface))]
 internal sealed partial class Container
 {
-    private Container() {}
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
     [CustomScopeForRootTypes(typeof(ScopeRoot0))]

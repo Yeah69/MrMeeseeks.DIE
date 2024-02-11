@@ -15,10 +15,7 @@ internal class SubClassC : Class {}
 
 [ImplementationCollectionChoice(typeof(Class), typeof(SubClassA), typeof(SubClassB))]
 [CreateFunction(typeof(IReadOnlyList<Class>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

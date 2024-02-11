@@ -17,7 +17,7 @@ internal class Dependency
 [CreateFunction(typeof(ParameterDependency), "CreateParameter")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

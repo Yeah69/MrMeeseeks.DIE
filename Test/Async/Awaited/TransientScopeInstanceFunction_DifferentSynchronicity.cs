@@ -19,9 +19,7 @@ internal class DependencyA : IInterface, ITaskInitializer
     }
 }
 
-internal class DependencyB : IInterface
-{
-}
+internal class DependencyB : IInterface { }
 
 internal class Instance : ITransientScopeInstance
 {
@@ -57,23 +55,15 @@ internal class TransientScopeRoot1 : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeRoot1), "Create1")]
 internal sealed partial class Container
 {
-    private Container() {}
-    
     [CustomScopeForRootTypes(typeof(TransientScopeRoot0))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_TransientScope0
-    {
-        
-    }
+    private sealed partial class DIE_TransientScope0 { }
     
     [FilterImplementationAggregation(typeof(DependencyA))]
     [ImplementationAggregation(typeof(DependencyB))]
     [CustomScopeForRootTypes(typeof(TransientScopeRoot1))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_TransientScope1
-    {
-        
-    }
+    private sealed partial class DIE_TransientScope1 { }
 }
 
 public class Tests

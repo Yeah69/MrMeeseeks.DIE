@@ -7,10 +7,7 @@ namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.InternalsVisibleTo;
 
 [ConstructorChoice(typeof(Parent.ClassToo))]
 [CreateFunction(typeof(Parent.ClassToo), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

@@ -18,7 +18,7 @@ internal sealed partial class Container
     // ReSharper disable once InconsistentNaming
     private readonly ValueTask<string> DIE_Factory_Yeah = new ("Yeah");
     
-    private Container() {}
+    
 }
 
 public class Tests

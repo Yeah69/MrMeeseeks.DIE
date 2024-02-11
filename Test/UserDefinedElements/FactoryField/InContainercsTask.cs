@@ -18,7 +18,7 @@ internal sealed partial class Container
     // ReSharper disable once InconsistentNaming
     private readonly Task<string> DIE_Factory_Yeah = Task.FromResult("Yeah");
     
-    private Container() {}
+    
 }
 
 public class Tests

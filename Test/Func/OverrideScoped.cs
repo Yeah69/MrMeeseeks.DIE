@@ -42,7 +42,7 @@ internal sealed partial class Container
     // ReSharper disable once UnusedMember.Local
     private int DIE_Factory_int => 0;
     
-    private Container() {}
+    
 }
 
 public class Tests

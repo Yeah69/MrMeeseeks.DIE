@@ -8,10 +8,7 @@ namespace MrMeeseeks.DIE.Test.Generics.Implementation.Single;
 internal class Class<T0> {}
 
 [CreateFunction(typeof(Class<int>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

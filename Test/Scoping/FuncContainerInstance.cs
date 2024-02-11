@@ -11,7 +11,7 @@ internal class Dependency : IContainerInstance {}
 [CreateFunction(typeof(Func<string, Dependency>), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

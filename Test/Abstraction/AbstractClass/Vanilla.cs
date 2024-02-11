@@ -12,10 +12,7 @@ internal class SubClassB : Class {}
 
 [ImplementationChoice(typeof(Class), typeof(SubClassA))]
 [CreateFunction(typeof(Class), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

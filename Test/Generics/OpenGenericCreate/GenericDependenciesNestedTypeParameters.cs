@@ -48,10 +48,7 @@ internal class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
 [Initializer(typeof(DependencyHolder<,,>), "Initialize")]
 [CreateFunction(typeof(DependencyHolder<,,>), "Create")]
 [CreateFunction(typeof(IInterface<,,>), "CreateInterface")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

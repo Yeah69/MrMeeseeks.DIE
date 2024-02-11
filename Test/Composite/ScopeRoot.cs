@@ -46,10 +46,7 @@ internal class Composite : IInterface, IComposite<IInterface>
 
 [CreateFunction(typeof(IInterface), "CreateDep")]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "CreateCollection")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

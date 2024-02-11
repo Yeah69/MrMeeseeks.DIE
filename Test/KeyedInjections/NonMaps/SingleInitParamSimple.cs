@@ -12,24 +12,16 @@ internal enum Key
     C
 }
 
-internal interface IInterface
-{
-}
+internal interface IInterface { }
 
 [InjectionKey(Key.A)]
-internal class DependencyA : IInterface
-{
-}
+internal class DependencyA : IInterface { }
 
 [InjectionKey(Key.B)]
-internal class DependencyB : IInterface
-{
-}
+internal class DependencyB : IInterface { }
 
 [InjectionKey(Key.C)]
-internal class DependencyC : IInterface
-{
-}
+internal class DependencyC : IInterface { }
 
 internal class Root
 {
@@ -40,10 +32,7 @@ internal class Root
 
 [Initializer(typeof(Root), nameof(Root.Initialize))]
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

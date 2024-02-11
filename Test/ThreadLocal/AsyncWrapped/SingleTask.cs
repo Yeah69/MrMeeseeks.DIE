@@ -25,7 +25,7 @@ internal class OuterDependency
 [CreateFunction(typeof(ThreadLocal<Task<OuterDependency>>), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

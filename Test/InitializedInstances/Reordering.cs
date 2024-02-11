@@ -16,9 +16,7 @@ internal class DependencyB
     internal DependencyB(DependencyC c) {}
 }
 
-internal class DependencyC
-{
-}
+internal class DependencyC { }
 
 internal class Root : IScopeRoot
 {
@@ -28,7 +26,6 @@ internal class Root : IScopeRoot
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
     
     [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
     // ReSharper disable once InconsistentNaming

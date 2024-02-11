@@ -23,10 +23,7 @@ internal class OuterDependency
 }
 
 [CreateFunction(typeof(Lazy<ValueTask<Task<ValueTask<Task<OuterDependency>>>>>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

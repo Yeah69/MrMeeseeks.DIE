@@ -34,7 +34,7 @@ internal class Scope : IScopeRoot
 [FilterImplementationAggregation(typeof(DependencyTransientScope))]
 internal sealed partial class Container
 {
-    private Container() {}
+    
     
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [ImplementationAggregation(typeof(DependencyTransientScope))]

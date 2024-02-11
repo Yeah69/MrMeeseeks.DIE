@@ -29,7 +29,7 @@ internal class Parent
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

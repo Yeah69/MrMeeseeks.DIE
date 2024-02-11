@@ -28,10 +28,7 @@ internal class ScopeRoot : IScopeRoot
 }
 
 [CreateFunction(typeof(ValueTask<ScopeRoot>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

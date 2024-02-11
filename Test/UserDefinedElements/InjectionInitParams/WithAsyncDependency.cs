@@ -23,7 +23,7 @@ internal class OtherDependency : IValueTaskInitializer
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
     
     [UserDefinedInitializerParametersInjection(typeof(Dependency))]
     private void DIE_InitParams_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;

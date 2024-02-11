@@ -61,7 +61,7 @@ internal class TransientScopeWithScopes : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeWithScopes), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

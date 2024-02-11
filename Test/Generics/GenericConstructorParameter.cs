@@ -16,10 +16,7 @@ internal class DependencyHolder<T0>
 }
 
 [CreateFunction(typeof(DependencyHolder<Dependency>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

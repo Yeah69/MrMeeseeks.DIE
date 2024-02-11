@@ -28,10 +28,7 @@ internal class Root<TA, TB>
 
 [InjectionKeyChoice(KeyValues.B, typeof(DependencyB<>))]
 [CreateFunction(typeof(Root<,>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

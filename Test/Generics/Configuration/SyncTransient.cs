@@ -23,10 +23,7 @@ internal class Class<T0> : ISyncTransient, IDisposable
 }
 
 [CreateFunction(typeof(Class<int>), "Create")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

@@ -35,7 +35,6 @@ internal class Root : IScopeRoot
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
     
     [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
     // ReSharper disable once InconsistentNaming

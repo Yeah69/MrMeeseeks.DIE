@@ -9,10 +9,7 @@ internal class Class {}
 [CreateFunction(typeof(Class), "Create")]
 internal interface IContainerBase { }
 
-internal sealed partial class Container : IContainerBase
-{
-    private Container() {}
-}
+internal sealed partial class Container : IContainerBase { }
 
 public class Tests
 {

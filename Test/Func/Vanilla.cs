@@ -11,7 +11,7 @@ internal class Dependency{}
 [CreateFunction(typeof(Func<DateTime, IList<object>, Dependency>), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
+    
 }
 
 public class Tests

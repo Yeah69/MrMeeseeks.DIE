@@ -10,9 +10,7 @@ internal class Class : IInterface {}
 
 internal interface IInterface<T0> {}
 
-internal class Dependency<T0> : IInterface<T0>
-{
-}
+internal class Dependency<T0> : IInterface<T0> { }
 
 internal interface IInterface<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> 
     where T0 : struct
@@ -64,10 +62,7 @@ internal class DependencyHolder<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInter
 
 [CreateFunction(typeof(DependencyHolder<,,,,,,,,,>), "Create")]
 [CreateFunction(typeof(IInterface<,,,,,,,,,>), "CreateInterface")]
-internal sealed partial class Container
-{
-    private Container() {}
-}
+internal sealed partial class Container { }
 
 public class Tests
 {

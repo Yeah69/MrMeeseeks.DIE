@@ -23,7 +23,7 @@ internal partial class CreateContainerFunctionNode : ICreateContainerFunctionNod
 
     internal CreateContainerFunctionNode(
         // parameters
-        IMethodSymbol constructor,
+        IMethodSymbol? constructor, // Container can have no user-defined constructors (null then; in which case it will be treated like an empty constructor)
         IVoidFunctionNode? initializationFunction,
         
         // dependencies
@@ -35,7 +35,8 @@ internal partial class CreateContainerFunctionNode : ICreateContainerFunctionNod
         Name = containerInfoContext.ContainerInfo.Name;
         ContainerTypeFullName = containerInfoContext.ContainerInfo.FullName;
         ContainerReference = referenceGenerator.Generate(containerInfoContext.ContainerInfo.ContainerType);
-        Parameters = constructor.Parameters.Select(ps => (ps.Type.FullName(), ps.Name)).ToList();
+        Parameters = constructor?.Parameters.Select(ps => (ps.Type.FullName(), ps.Name)).ToList()
+            ?? new List<(string, string)>();
         InitializationFunctionName = initializationFunction?.Name;
         _containerType = containerInfoContext.ContainerInfo.ContainerType;
         _wellKnownTypes = containerWideContext.WellKnownTypes;

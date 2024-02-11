@@ -48,6 +48,9 @@ namespace {{container.Namespace}}
 sealed partial class {{container.Name}} : {{container.TransientScopeInterface.FullName}}{{disposableImplementation}}
 {
 """);
+        if (container.GenerateEmptyConstructor) 
+            _code.AppendLine($"private {container.Name}() {{ }}");
+        
         foreach (var containerCreateContainerFunction in container.CreateContainerFunctions)
             VisitICreateContainerFunctionNode(containerCreateContainerFunction);
 

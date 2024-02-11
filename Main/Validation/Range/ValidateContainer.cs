@@ -57,18 +57,11 @@ internal class ValidateContainer : ValidateRange, IValidateContainer
     {
         base.Validate(rangeType, containerType);
         
-        if (!rangeType.InstanceConstructors.Any())
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(
-                    rangeType,
-                    rangeType,
-                    "The container class has to have at least one constructor."), 
-                rangeType.Locations.FirstOrDefault() ?? Location.None);
-            
-        
         foreach (var instanceConstructor in rangeType
                      .InstanceConstructors
-                     .Where(instanceConstructor => instanceConstructor.DeclaredAccessibility != Accessibility.Private))
+                     .Where(instanceConstructor => 
+                         !instanceConstructor.IsImplicitlyDeclared 
+                         && instanceConstructor.DeclaredAccessibility != Accessibility.Private))
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(
                     rangeType, 

@@ -502,20 +502,12 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
 
-    private class DecoratorSequenceMap
+    private sealed class DecoratorSequenceMap
     {
         private readonly Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> _map = new(CustomSymbolEqualityComparer.Default);
-
-        public void Add(INamedTypeSymbol decoratedType, IReadOnlyList<INamedTypeSymbol> decoratorSequence) => 
-            _map[decoratedType] = decoratorSequence;
-
-        public void Remove(INamedTypeSymbol decoratedType) =>
-            _map.Remove(decoratedType);
-
-        public bool Any => 
-            _map.Any();
-
-        public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => 
-            _map;
+        public void Add(INamedTypeSymbol decoratedType, IReadOnlyList<INamedTypeSymbol> decoratorSequence) => _map[decoratedType] = decoratorSequence;
+        public void Remove(INamedTypeSymbol decoratedType) => _map.Remove(decoratedType);
+        public bool Any => _map.Count != 0;
+        public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => _map;
     }
 }

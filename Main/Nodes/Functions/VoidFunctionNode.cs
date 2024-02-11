@@ -127,7 +127,7 @@ internal partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, I
             HashSet<IInitializedInstanceNode> cf = new();
             Stack<IInitializedInstanceNode> s = new();
 
-            while (roots.Any() && roots.Dequeue() is {} next)
+            while (roots.Count != 0 && roots.Dequeue() is {} next)
                 DetectCycleInner(
                     next, 
                     v, 

@@ -25,6 +25,10 @@ internal enum ExecutionPhase
 public abstract class DieException : Exception
 {
     public abstract DieExceptionKind Kind { get; }
+
+    protected DieException() { }
+    protected DieException(string message) : base(message) { }
+    protected DieException(string message, Exception innerException) : base(message, innerException) { }
 }
 
 public class ImplementationCycleDieException : DieException
@@ -54,6 +58,10 @@ public class InitializedInstanceCycleDieException : DieException
 public class ValidationDieException : DieException
 {
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
+
+    public ValidationDieException() { }
+    public ValidationDieException(string message) : base(message) { }
+    public ValidationDieException(string message, Exception innerException) : base(message, innerException) { }
 }
 
 public class ResolutionDieException : DieException
@@ -78,4 +86,8 @@ public class CompilationDieException : DieException
 public class ImpossibleDieException : DieException
 {
     public override DieExceptionKind Kind => DieExceptionKind.Impossible;
+    
+    public ImpossibleDieException() { }
+    public ImpossibleDieException(string message) : base(message) { }
+    public ImpossibleDieException(string message, Exception innerException) : base(message, innerException) { }
 }

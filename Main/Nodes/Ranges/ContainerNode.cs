@@ -26,6 +26,7 @@ internal interface IContainerNode : IRangeNode
     string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
     IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; }
+    bool GenerateEmptyConstructor { get; }
 
     void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode);
 }
@@ -39,7 +40,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
-    private readonly Func<IMethodSymbol, IVoidFunctionNode?, ICreateContainerFunctionNode> _creatContainerFunctionNodeFactory;
+    private readonly Func<IMethodSymbol?, IVoidFunctionNode?, ICreateContainerFunctionNode> _creatContainerFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = new();
     private readonly Lazy<IScopeManager> _lazyScopeManager;
     private readonly Lazy<DisposalType> _lazyDisposalType;
@@ -64,6 +65,8 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         BuildRangedInstanceCall(ownerReference, type, callingFunction, ScopeLevel.Container);
 
     public IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; private set; } = null!;
+    public bool GenerateEmptyConstructor { get; }
+
     public void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode) => 
         _delegateBaseNodes.Add(delegateBaseNode);
 
@@ -87,7 +90,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> voidFunctionNodeFactory, 
         Func<IDisposalHandlingNode> disposalHandlingNodeFactory,
         Func<INamedTypeSymbol, IInitializedInstanceNode> initializedInstanceNodeFactory,
-        Func<IMethodSymbol, IVoidFunctionNode?, ICreateContainerFunctionNode> creatContainerFunctionNodeFactory)
+        Func<IMethodSymbol?, IVoidFunctionNode?, ICreateContainerFunctionNode> creatContainerFunctionNodeFactory)
         : base (
             containerInfoContext.ContainerInfo.Name, 
             containerInfoContext.ContainerInfo.ContainerType,
@@ -128,6 +131,8 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
         TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");
+        
+        GenerateEmptyConstructor = !_containerInfo.ContainerType.InstanceConstructors.Any(ic => !ic.IsImplicitlyDeclared);
     }
 
     protected override IScopeManager ScopeManager => _lazyScopeManager.Value;
@@ -145,14 +150,18 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null))
             : null;
         
-        if (initializedInstancesFunction is {})
+        if (initializedInstancesFunction is not null)
             _initializationFunctions.Add(initializedInstancesFunction);
-
-        CreateContainerFunctions = _containerInfo
-            .ContainerType
-            .InstanceConstructors
-            .Select(ic => _creatContainerFunctionNodeFactory(ic, initializedInstancesFunction))
+        
+        var userDefinedConstructors = _containerInfo.ContainerType.InstanceConstructors
+            .Where(ic => !ic.IsImplicitlyDeclared)
             .ToList();
+        
+        CreateContainerFunctions = userDefinedConstructors.Count != 0 
+            ? userDefinedConstructors
+                .Select(ic => _creatContainerFunctionNodeFactory(ic, initializedInstancesFunction))
+                .ToList()
+            : new List<ICreateContainerFunctionNode>{ _creatContainerFunctionNodeFactory(null, initializedInstancesFunction) };
 
         TransientScopeInterface.RegisterRange(this);
         base.Build(passedContext);
@@ -168,7 +177,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
         }
 
         var asyncCallNodes = new List<IAsyncFunctionCallNode>();
-        while (BuildQueue.Any() && BuildQueue.Dequeue() is { } buildJob)
+        while (BuildQueue.Count != 0 && BuildQueue.Dequeue() is { } buildJob)
         {
             buildJob.Node.Build(buildJob.PassedContext);
             if (buildJob.Node is IAsyncFunctionCallNode call)
@@ -177,7 +186,7 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
 
         _currentExecutionPhaseSetter.Value = ExecutionPhase.ResolutionValidation;
         
-        while (AsyncCheckQueue.Any() && AsyncCheckQueue.Dequeue() is { } function)
+        while (AsyncCheckQueue.Count != 0 && AsyncCheckQueue.Dequeue() is { } function)
             function.CheckSynchronicity();
         
         foreach (var call in asyncCallNodes)

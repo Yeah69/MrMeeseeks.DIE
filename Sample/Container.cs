@@ -28,5 +28,4 @@ internal class Root<TA, TB>
 [CreateFunction(typeof(Root<,>), "Create")]
 internal sealed partial class Container
 {
-    private Container() {}
 }

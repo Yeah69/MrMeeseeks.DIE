@@ -2,31 +2,31 @@
 
 namespace MrMeeseeks.DIE;
 
-internal record WellKnownTypes(
+internal sealed record WellKnownTypes(
     // ReSharper disable InconsistentNaming
-    INamedTypeSymbol IDisposable,
-    INamedTypeSymbol IAsyncDisposable,
+    INamedTypeSymbol IDisposable, // .NET Standard 2.0
+    INamedTypeSymbol IAsyncDisposable, // .NET Standard 2.1
     // ReSharper restore InconsistentNaming
-    INamedTypeSymbol Lazy1,
-    INamedTypeSymbol ThreadLocal1,
-    INamedTypeSymbol ValueTask,
-    INamedTypeSymbol ValueTask1,
-    INamedTypeSymbol Task,
-    INamedTypeSymbol Task1,
-    INamedTypeSymbol ObjectDisposedException,
-    INamedTypeSymbol ConcurrentBagOfSyncDisposable,
-    INamedTypeSymbol ConcurrentBagOfAsyncDisposable,
-    INamedTypeSymbol ConcurrentDictionaryOfSyncDisposable,
-    INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,
-    INamedTypeSymbol ConcurrentDictionaryOfRuntimeTypeHandleToObject,
-    INamedTypeSymbol Exception,
-    INamedTypeSymbol AggregateException,
-    INamedTypeSymbol SemaphoreSlim,
-    INamedTypeSymbol InternalsVisibleToAttribute,
-    INamedTypeSymbol Nullable1,
-    INamedTypeSymbol String,
-    INamedTypeSymbol Type,
-    INamedTypeSymbol Object)
+    INamedTypeSymbol Lazy1,  // .NET Standard 2.0
+    INamedTypeSymbol ThreadLocal1, // .NET Standard 2.0
+    INamedTypeSymbol ValueTask, // .NET Standard 2.1
+    INamedTypeSymbol ValueTask1, // .NET Standard 2.1
+    INamedTypeSymbol Task, // .NET Standard 2.0
+    INamedTypeSymbol Task1, // .NET Standard 2.0
+    INamedTypeSymbol ObjectDisposedException, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentBagOfSyncDisposable, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentBagOfAsyncDisposable, // .NET Standard 2.1
+    INamedTypeSymbol ConcurrentDictionaryOfSyncDisposable, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentDictionaryOfAsyncDisposable,  // .NET Standard 2.1
+    INamedTypeSymbol ConcurrentDictionaryOfRuntimeTypeHandleToObject, // .NET Standard 2.0
+    INamedTypeSymbol Exception, // .NET Standard 2.0
+    INamedTypeSymbol AggregateException, // .NET Standard 2.0
+    INamedTypeSymbol SemaphoreSlim, // .NET Standard 2.0
+    INamedTypeSymbol InternalsVisibleToAttribute, // .NET Standard 2.0
+    INamedTypeSymbol Nullable1, // .NET Standard 2.0
+    INamedTypeSymbol String, // .NET Standard 2.0
+    INamedTypeSymbol Type, // .NET Standard 2.0
+    INamedTypeSymbol Object) // .NET Standard 2.0
 {
     internal static WellKnownTypes Create(Compilation compilation)
     {

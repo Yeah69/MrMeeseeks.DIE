@@ -8,7 +8,7 @@ internal interface ICreateTransientScopeFunctionNodeRoot
     ICreateTransientScopeFunctionNode Function { get; }
 }
 
-internal class CreateTransientScopeFunctionNodeRoot : ICreateTransientScopeFunctionNodeRoot, IScopeRoot
+internal sealed class CreateTransientScopeFunctionNodeRoot : ICreateTransientScopeFunctionNodeRoot, IScopeRoot
 {
     public CreateTransientScopeFunctionNodeRoot(ICreateTransientScopeFunctionNode function)
     {

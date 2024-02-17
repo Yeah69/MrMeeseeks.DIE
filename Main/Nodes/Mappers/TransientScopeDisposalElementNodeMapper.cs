@@ -16,7 +16,7 @@ internal interface ITransientScopeDisposalElementNodeMapper : IElementNodeMapper
 {
 }
 
-internal class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper
+internal sealed class TransientScopeDisposalElementNodeMapper : ElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper
 {
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<INamedTypeSymbol, ITransientScopeDisposalTriggerNode> _transientScopeDisposalTriggerNodeFactory;

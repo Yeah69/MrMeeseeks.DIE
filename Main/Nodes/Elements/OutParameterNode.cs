@@ -6,7 +6,7 @@ internal interface IOutParameterNode : IElementNode
 {
 }
 
-internal partial class OutParameterNode : IOutParameterNode
+internal sealed partial class OutParameterNode : IOutParameterNode
 {
     internal OutParameterNode(
         ITypeSymbol type,

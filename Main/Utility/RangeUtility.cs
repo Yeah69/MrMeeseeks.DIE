@@ -12,7 +12,7 @@ internal interface IRangeUtility
     IReadOnlyList<ISymbol> GetEffectiveMembers(INamedTypeSymbol rangeType);
 }
 
-internal class RangeUtility : IRangeUtility
+internal sealed class RangeUtility : IRangeUtility
 {
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 

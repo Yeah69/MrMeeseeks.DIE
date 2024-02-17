@@ -14,7 +14,7 @@ internal interface IRangedInstanceFunctionGroupNode : IRangedInstanceFunctionGro
     IEnumerable<IRangedInstanceFunctionNode> Overloads { get; }
 }
 
-internal partial class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNodeBase, IRangedInstanceFunctionGroupNode
+internal sealed partial class RangedInstanceFunctionGroupNode : RangedInstanceFunctionGroupNodeBase, IRangedInstanceFunctionGroupNode
 {
     private readonly INamedTypeSymbol _type;
     private readonly IContainerNode _parentContainer;

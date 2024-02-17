@@ -3,7 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
-internal record WellKnownTypesChoice(
+internal sealed record WellKnownTypesChoice(
     INamedTypeSymbol GenericParameterSubstitutesChoiceAttribute,
     INamedTypeSymbol GenericParameterChoiceAttribute,
     INamedTypeSymbol DecoratorSequenceChoiceAttribute,

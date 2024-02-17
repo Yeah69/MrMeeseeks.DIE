@@ -6,7 +6,7 @@ internal interface IScopeInfo
     INamedTypeSymbol? ScopeType { get; }
 }
 
-internal class ScopeInfo : IScopeInfo
+internal sealed class ScopeInfo : IScopeInfo
 {
     internal ScopeInfo(
         string name,

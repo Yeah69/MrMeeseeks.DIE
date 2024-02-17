@@ -9,7 +9,7 @@ internal interface IContainerInfoContext
     IContainerInfo ContainerInfo { get; }
 }
 
-internal class ContainerInfoContext : IContainerInfoContext, IContainerInstance
+internal sealed class ContainerInfoContext : IContainerInfoContext, IContainerInstance
 {
     public ContainerInfoContext(
         IContainerInfo containerInfo)

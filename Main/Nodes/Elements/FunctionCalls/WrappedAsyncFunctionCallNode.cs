@@ -14,17 +14,17 @@ internal enum AsyncFunctionCallTransformation
     TaskFromSync
 }
 
-internal interface IAsyncFunctionCallNode : IFunctionCallNode
+internal interface IWrappedAsyncFunctionCallNode : IFunctionCallNode
 {
     AsyncFunctionCallTransformation Transformation { get; }
     void AdjustToCurrentCalledFunctionSynchronicity();
 }
 
-internal partial class AsyncFunctionCallNode : IAsyncFunctionCallNode
+internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFunctionCallNode
 {
     private readonly IFunctionNode _calledFunction;
 
-    public AsyncFunctionCallNode(
+    public WrappedAsyncFunctionCallNode(
         ITypeSymbol wrappedType,
         string? ownerReference,
         SynchronicityDecision synchronicityDecision,
@@ -78,5 +78,5 @@ internal partial class AsyncFunctionCallNode : IAsyncFunctionCallNode
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
     public IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     public IFunctionNode CalledFunction => _calledFunction;
-    public bool Awaited { get; } = false;
+    public bool Awaited => false; // never awaited, because it's a wrapped async function call
 }

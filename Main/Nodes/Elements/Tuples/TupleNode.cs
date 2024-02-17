@@ -8,7 +8,7 @@ internal interface ITupleNode : IElementNode
     IReadOnlyList<(string Name, IElementNode Node)> Parameters { get; }
 }
 
-internal partial class TupleNode : ITupleNode
+internal sealed partial class TupleNode : ITupleNode
 {
     private readonly INamedTypeSymbol _tupleType;
     private readonly IElementNodeMapperBase _elementNodeMapper;

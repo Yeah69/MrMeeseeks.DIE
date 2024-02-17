@@ -45,18 +45,18 @@ internal interface ICollectionData
     string CollectionReference { get; }
 }
 
-internal record SimpleCollectionData(
+internal sealed record SimpleCollectionData(
     string CollectionTypeFullName, 
     string CollectionReference) 
     : ICollectionData;
 
-internal record ReadOnlyInterfaceCollectionData(
+internal sealed record ReadOnlyInterfaceCollectionData(
         string CollectionTypeFullName, 
         string CollectionReference,
         string ConcreteCollectionTypeFullName) 
     : ICollectionData;
 
-internal record ImmutableCollectionData(
+internal sealed record ImmutableCollectionData(
         string CollectionTypeFullName, 
         string CollectionReference,
         string ImmutableUngenericTypeFullName) 
@@ -69,7 +69,7 @@ internal interface IEnumerableBasedNode : IElementNode
     IFunctionCallNode EnumerableCall { get; }
 }
 
-internal partial class EnumerableBasedNode : IEnumerableBasedNode
+internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
 {
     private readonly ITypeSymbol _collectionType;
     private readonly IRangeNode _parentRange;

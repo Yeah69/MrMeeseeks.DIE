@@ -3,7 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
-internal record WellKnownTypesMiscellaneous(
+internal sealed record WellKnownTypesMiscellaneous(
     INamedTypeSymbol InitializerAttribute,
     INamedTypeSymbol FilterInitializerAttribute,
     INamedTypeSymbol CustomScopeForRootTypesAttribute,

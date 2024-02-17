@@ -14,7 +14,7 @@ internal interface IMultiKeyValueFunctionNode : IMultiFunctionNodeBase
 {
 }
 
-internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMultiKeyValueFunctionNode, IScopeInstance
+internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMultiKeyValueFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
     private readonly ILocalDiagLogger _localDiagLogger;
@@ -34,7 +34,7 @@ internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMulti
         ILocalDiagLogger localDiagLogger,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
@@ -66,7 +66,7 @@ internal partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMulti
         Name = referenceGenerator.Generate("CreateMultiKeyValue", _enumerableType);
     }
 
-    private IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
+    private static IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
         mapper.Map(itemType, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
     
     public override void Build(PassedContext passedContext)

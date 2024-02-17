@@ -10,7 +10,7 @@ internal interface IDiagLogger
     void Log(Diagnostic diagnostic);
 }
 
-internal class DiagLogger : IDiagLogger, IContainerInstance
+internal sealed class DiagLogger : IDiagLogger, IContainerInstance
 {
     private readonly bool _ignoreErrors;
     private readonly GeneratorExecutionContext _context;

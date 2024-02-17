@@ -31,9 +31,9 @@ internal interface IContainerNode : IRangeNode
     void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode);
 }
 
-internal record BuildJob(INode Node, PassedContext PassedContext);
+internal sealed record BuildJob(INode Node, PassedContext PassedContext);
 
-internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInstance
+internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IFunctionCycleTracker _functionCycleTracker;
@@ -176,11 +176,11 @@ internal partial class ContainerNode : RangeNode, IContainerNode, IContainerInst
             BuildQueue.Enqueue(new(functionNode, passedContext));
         }
 
-        var asyncCallNodes = new List<IAsyncFunctionCallNode>();
+        var asyncCallNodes = new List<IWrappedAsyncFunctionCallNode>();
         while (BuildQueue.Count != 0 && BuildQueue.Dequeue() is { } buildJob)
         {
             buildJob.Node.Build(buildJob.PassedContext);
-            if (buildJob.Node is IAsyncFunctionCallNode call)
+            if (buildJob.Node is IWrappedAsyncFunctionCallNode call)
                 asyncCallNodes.Add(call);
         }
 

@@ -12,7 +12,7 @@ internal interface ITransientScopeDisposalTriggerNode : IElementNode
     void CheckSynchronicity();
 }
 
-internal partial class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTriggerNode
+internal sealed partial class TransientScopeDisposalTriggerNode : ITransientScopeDisposalTriggerNode
 {
     private readonly bool _disposalHookIsSync;
     private readonly IContainerNode _parentContainer;

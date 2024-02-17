@@ -6,7 +6,7 @@ internal interface IParameterNode : IElementNode
 {
 }
 
-internal partial class ParameterNode : IParameterNode
+internal sealed partial class ParameterNode : IParameterNode
 {
     internal ParameterNode(
         ITypeSymbol type, 

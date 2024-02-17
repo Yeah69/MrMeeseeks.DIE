@@ -8,7 +8,7 @@ internal interface ICreateScopeFunctionNodeRoot
     ICreateScopeFunctionNode Function { get; }
 }
 
-internal class CreateScopeFunctionNodeRoot : ICreateScopeFunctionNodeRoot, IScopeRoot
+internal sealed class CreateScopeFunctionNodeRoot : ICreateScopeFunctionNodeRoot, IScopeRoot
 {
     public CreateScopeFunctionNodeRoot(ICreateScopeFunctionNode function)
     {

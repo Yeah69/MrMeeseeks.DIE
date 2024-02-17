@@ -13,7 +13,7 @@ internal interface ITypeParameterUtility
     bool ContainsOpenTypeParameters(ITypeSymbol type);
 }
 
-internal class TypeParameterUtility : ITypeParameterUtility
+internal sealed class TypeParameterUtility : ITypeParameterUtility
 {
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Compilation _compilation;
@@ -174,7 +174,7 @@ internal class TypeParameterUtility : ITypeParameterUtility
             constraints.AddRange(tp.ConstraintTypes.Select(GetTypeConstraintString));
             if (tp.HasConstructorConstraint)
                 constraints.Add("new()");
-            return constraints.Any() ? $" where {name} : {string.Join(", ", constraints)}" : "";
+            return constraints.Count > 0 ? $" where {name} : {string.Join(", ", constraints)}" : "";
 
             string GetTypeConstraintString(ITypeSymbol t)
             {

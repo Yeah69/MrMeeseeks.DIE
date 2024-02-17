@@ -11,7 +11,7 @@ internal interface IContainerDieExceptionGenerator
     void Generate(Exception? exception);
 }
 
-internal class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
+internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
 {
     private readonly GeneratorExecutionContext _context;
     private readonly IDiagLogger _diagLogger;

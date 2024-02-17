@@ -16,7 +16,7 @@ internal interface IScopeManager
     IEnumerable<ITransientScopeNode> TransientScopes { get; }
 }
 
-internal class ScopeManager : IScopeManager, IContainerInstance
+internal sealed class ScopeManager : IScopeManager, IContainerInstance
 {
     private readonly IContainerNode _container;
     private readonly ITransientScopeInterfaceNode _transientScopeInterface;
@@ -25,10 +25,10 @@ internal class ScopeManager : IScopeManager, IContainerInstance
     private readonly Func<string, INamedTypeSymbol?, ITransientScopeNodeRoot> _transientScopeFactory;
     private readonly Lazy<IScopeNode> _defaultScope;
     private readonly Lazy<ITransientScopeNode> _defaultTransientScope;
-    private readonly IDictionary<INamedTypeSymbol, IScopeNode> _customScopes;
-    private readonly IDictionary<INamedTypeSymbol, ITransientScopeNode> _customTransientScopes;
-    private readonly IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> _transientScopeRootTypeToScopeType;
-    private readonly IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> _scopeRootTypeToScopeType;
+    private readonly Dictionary<INamedTypeSymbol, IScopeNode> _customScopes;
+    private readonly Dictionary<INamedTypeSymbol, ITransientScopeNode> _customTransientScopes;
+    private readonly Dictionary<INamedTypeSymbol, INamedTypeSymbol> _transientScopeRootTypeToScopeType;
+    private readonly Dictionary<INamedTypeSymbol, INamedTypeSymbol> _scopeRootTypeToScopeType;
 
     public ScopeManager(
         IContainerInfoContext containerInfoContext,
@@ -69,7 +69,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         _transientScopeRootTypeToScopeType = containerInfo
             .ContainerType
             .GetTypeMembers()
-            .Where(nts => nts.Name.StartsWith(Constants.CustomTransientScopeName))
+            .Where(nts => nts.Name.StartsWith(Constants.CustomTransientScopeName, StringComparison.Ordinal))
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
@@ -95,7 +95,7 @@ internal class ScopeManager : IScopeManager, IContainerInstance
         _scopeRootTypeToScopeType = containerInfo
             .ContainerType
             .GetTypeMembers()
-            .Where(nts => nts.Name.StartsWith(Constants.CustomScopeName))
+            .Where(nts => nts.Name.StartsWith(Constants.CustomScopeName, StringComparison.Ordinal))
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,

@@ -15,7 +15,7 @@ internal interface IExecuteContainer
     void Execute();
 }
 
-internal class ExecuteContainer : IExecuteContainer
+internal sealed class ExecuteContainer : IExecuteContainer
 {
     private readonly bool _errorDescriptionInsteadOfBuildFailure;
     private readonly GeneratorExecutionContext _context;

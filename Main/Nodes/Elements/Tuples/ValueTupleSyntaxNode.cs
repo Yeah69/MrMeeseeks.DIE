@@ -8,7 +8,7 @@ internal interface IValueTupleSyntaxNode : IElementNode
     IReadOnlyList<IElementNode> Items { get; }
 }
 
-internal partial class ValueTupleSyntaxNode : IValueTupleSyntaxNode
+internal sealed partial class ValueTupleSyntaxNode : IValueTupleSyntaxNode
 {
     private readonly INamedTypeSymbol _valueTupleType;
     private readonly IElementNodeMapperBase _elementNodeMapper;
@@ -34,7 +34,7 @@ internal partial class ValueTupleSyntaxNode : IValueTupleSyntaxNode
         {
             foreach (var typeArgument in valueTupleType.TypeArguments)
             {
-                if (typeArgument.FullName().StartsWith("(") && typeArgument.FullName().EndsWith(")") &&
+                if (typeArgument.FullName().StartsWith("(", StringComparison.Ordinal) && typeArgument.FullName().EndsWith(")", StringComparison.Ordinal) &&
                     typeArgument is INamedTypeSymbol nextSyntaxValueTupleType)
                 {
                     foreach (var typeSymbol in GetTypeArguments(nextSyntaxValueTupleType))

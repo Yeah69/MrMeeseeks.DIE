@@ -7,7 +7,7 @@ internal interface IFactoryPropertyNode : IFactoryNodeBase
 {
 }
 
-internal partial class FactoryPropertyNode : FactoryNodeBase, IFactoryPropertyNode
+internal sealed partial class FactoryPropertyNode : FactoryNodeBase, IFactoryPropertyNode
 {
     internal FactoryPropertyNode(
         IPropertySymbol propertySymbol, 

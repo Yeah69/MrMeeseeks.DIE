@@ -2,7 +2,7 @@
 
 namespace MrMeeseeks.DIE;
 
-internal record WellKnownTypesCollections(
+internal sealed record WellKnownTypesCollections(
     // ReSharper disable InconsistentNaming
     INamedTypeSymbol IEnumerable1,
     INamedTypeSymbol IAsyncEnumerable1,

@@ -28,8 +28,8 @@ internal abstract class RangedInstanceFunctionGroupNodeBase : IRangedInstanceFun
         TypeFullName = type.FullName();
         var label = Level.ToString();
         FieldReference =
-            referenceGenerator.Generate($"_{label.ToLower()}InstanceField", type);
-        LockReference = referenceGenerator.Generate($"_{label.ToLower()}InstanceLock");
+            referenceGenerator.Generate($"_{label.ToLowerInvariant()}InstanceField", type);
+        LockReference = referenceGenerator.Generate($"_{label.ToLowerInvariant()}InstanceLock");
         IsCreatedForStructs = type.IsValueType ? referenceGenerator.Generate("isCreated") : null;
     }
 

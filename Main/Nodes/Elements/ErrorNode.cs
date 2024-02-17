@@ -7,7 +7,7 @@ internal interface IErrorNode : IElementNode
     string Message { get; }
 }
 
-internal partial class ErrorNode : IErrorNode
+internal sealed partial class ErrorNode : IErrorNode
 {
     private readonly ITypeSymbol _currentType;
     private readonly ILocalDiagLogger _localDiagLogger;

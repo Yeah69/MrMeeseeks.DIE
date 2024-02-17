@@ -18,7 +18,7 @@ internal interface IResolutionGraphAnalyticsNodeVisitor : INodeVisitor
     
 }
 
-internal class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNodeVisitor
+internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNodeVisitor
 {
     private readonly IImmutableSet<INode>? _relevantNodes;
     private readonly IPaths _paths;
@@ -193,9 +193,7 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
         foreach (var localFunction in element.LocalFunctions)
             VisitISingleFunctionNode(localFunction);
         
-        _code.AppendLine($$"""
-}
-""");
+        _code.AppendLine("}");
         _currentReference = previousReference;
         
         _currentFunctionNode = previousFunctionNode;
@@ -208,8 +206,8 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
             case IPlainFunctionCallNode createCallNode:
                 VisitIPlainFunctionCallNode(createCallNode);
                 break;
-            case IAsyncFunctionCallNode asyncFunctionCallNode:
-                VisitIAsyncFunctionCallNode(asyncFunctionCallNode);
+            case IWrappedAsyncFunctionCallNode asyncFunctionCallNode:
+                VisitIWrappedAsyncFunctionCallNode(asyncFunctionCallNode);
                 break;
             case IScopeCallNode scopeCallNode:
                 VisitIScopeCallNode(scopeCallNode);
@@ -314,7 +312,7 @@ object "Transient Scope Disposal Hook" as {{reference}}
     {
     }
 
-    public void VisitIAsyncFunctionCallNode(IAsyncFunctionCallNode element) => 
+    public void VisitIWrappedAsyncFunctionCallNode(IWrappedAsyncFunctionCallNode element) => 
         VisitIFunctionCallNode(element);
 
     public void VisitINullNode(INullNode element)

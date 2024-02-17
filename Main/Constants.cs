@@ -30,4 +30,6 @@ internal static class Constants
     internal const string CreateFunctionSuffix = "";
     internal const string CreateFunctionSuffixAsync = "Async";
     internal const string CreateFunctionSuffixValueAsync = "ValueAsync";
+
+    internal const string IAsyncDisposableDisposeAsync = "DisposeAsync"; // Needed because .NET Standard 2.0 doesn't have IAsyncDisposable
 }

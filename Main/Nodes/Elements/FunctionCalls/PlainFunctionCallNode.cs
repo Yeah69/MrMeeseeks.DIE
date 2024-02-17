@@ -6,7 +6,7 @@ internal interface IPlainFunctionCallNode : IFunctionCallNode
 {
 }
 
-internal partial class PlainFunctionCallNode : FunctionCallNode, IPlainFunctionCallNode
+internal sealed partial class PlainFunctionCallNode : FunctionCallNode, IPlainFunctionCallNode
 {
     public PlainFunctionCallNode(
         string? ownerReference,

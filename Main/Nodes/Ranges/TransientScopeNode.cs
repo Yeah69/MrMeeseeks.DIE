@@ -18,7 +18,7 @@ internal interface ITransientScopeNode : IScopeNodeBase
     ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction);
 }
 
-internal partial class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransientScopeInstance
+internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransientScopeInstance
 {
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateTransientScopeFunctionNodeRoot> _createTransientScopeFunctionNodeFactory;
 

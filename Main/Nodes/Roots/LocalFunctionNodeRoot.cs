@@ -8,7 +8,7 @@ internal interface ILocalFunctionNodeRoot
     ILocalFunctionNode Function { get; }
 }
 
-internal class LocalFunctionNodeRoot : ILocalFunctionNodeRoot, IScopeRoot
+internal sealed class LocalFunctionNodeRoot : ILocalFunctionNodeRoot, IScopeRoot
 {
     public LocalFunctionNodeRoot(ILocalFunctionNode function)
     {

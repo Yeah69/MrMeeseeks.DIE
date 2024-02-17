@@ -15,7 +15,7 @@ internal interface INonWrapToCreateElementNodeMapper : IElementNodeMapperBase
 {
 }
 
-internal class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWrapToCreateElementNodeMapper
+internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWrapToCreateElementNodeMapper
 {
     private readonly IRangeNode _parentRange;
 

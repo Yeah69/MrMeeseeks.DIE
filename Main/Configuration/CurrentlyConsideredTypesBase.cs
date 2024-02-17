@@ -9,7 +9,7 @@ internal interface IContainerCurrentlyConsideredTypes : ICurrentlyConsideredType
 {
 }
 
-internal class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IContainerCurrentlyConsideredTypes, IContainerInstance
+internal sealed class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IContainerCurrentlyConsideredTypes, IContainerInstance
 {
     internal ContainerCurrentlyConsideredTypes(
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
@@ -28,7 +28,7 @@ internal interface IScopeCurrentlyConsideredTypes : ICurrentlyConsideredTypes
 {
 }
 
-internal class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IScopeCurrentlyConsideredTypes, ITransientScopeInstance
+internal sealed class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IScopeCurrentlyConsideredTypes, ITransientScopeInstance
 {
     internal ScopeCurrentlyConsideredTypes(
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,

@@ -4,16 +4,16 @@ namespace MrMeeseeks.DIE.Nodes.Mappers;
 
 internal abstract record MapperData;
 
-internal record VanillaMapperData : MapperData;
-internal record OverridingMapperData(ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> Override) : MapperData;
-internal record OverridingWithDecorationMapperData((INamedTypeSymbol, INamedTypeSymbol) Override) : MapperData;
+internal sealed record VanillaMapperData : MapperData;
+internal sealed record OverridingMapperData(ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> Override) : MapperData;
+internal sealed record OverridingWithDecorationMapperData((INamedTypeSymbol, INamedTypeSymbol) Override) : MapperData;
 
 internal interface IMapperDataToFunctionKeyTypeConverter
 {
     ITypeSymbol Convert(MapperData data, ITypeSymbol initialKey);
 }
 
-internal class MapperDataToFunctionKeyTypeConverter : IMapperDataToFunctionKeyTypeConverter
+internal sealed class MapperDataToFunctionKeyTypeConverter : IMapperDataToFunctionKeyTypeConverter
 {
     public ITypeSymbol Convert(MapperData data, ITypeSymbol initialKey)
     {

@@ -9,7 +9,7 @@ internal interface IFunctionLevelLogMessageEnhancer
     string Enhance(string message);
 }
 
-internal class FunctionLevelLogMessageEnhancer : IFunctionLevelLogMessageEnhancer, IScopeInstance
+internal sealed class FunctionLevelLogMessageEnhancer : IFunctionLevelLogMessageEnhancer, IScopeInstance
 {
     private readonly IRangeLevelLogMessageEnhancer _parentEnhancer;
     private readonly Lazy<string> _prefix;
@@ -26,7 +26,7 @@ internal class FunctionLevelLogMessageEnhancer : IFunctionLevelLogMessageEnhance
         _parentEnhancer.Enhance($"{_prefix.Value} {message}");
 }
 
-internal class FunctionLevelLogMessageEnhancerForRanges : IFunctionLevelLogMessageEnhancer, IScopeInstance
+internal sealed class FunctionLevelLogMessageEnhancerForRanges : IFunctionLevelLogMessageEnhancer, IScopeInstance
 {
     private readonly IRangeLevelLogMessageEnhancer _parentEnhancer;
 

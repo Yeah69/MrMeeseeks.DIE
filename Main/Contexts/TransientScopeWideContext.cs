@@ -11,7 +11,7 @@ internal interface ITransientScopeWideContext
     ICheckTypeProperties CheckTypeProperties { get; }
 }
 
-internal class TransientScopeWideContext : ITransientScopeWideContext, ITransientScopeInstance
+internal sealed class TransientScopeWideContext : ITransientScopeWideContext, ITransientScopeInstance
 {
     public IRangeNode Range { get; }
     public IUserDefinedElements UserDefinedElements { get; }

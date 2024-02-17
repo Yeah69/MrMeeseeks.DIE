@@ -9,7 +9,7 @@ internal interface IFactoryFunctionNode : IFactoryNodeBase
     IReadOnlyList<(string Name, IElementNode Element)> Parameters { get; }
 }
 
-internal partial class FactoryFunctionNode : FactoryNodeBase, IFactoryFunctionNode
+internal sealed partial class FactoryFunctionNode : FactoryNodeBase, IFactoryFunctionNode
 {
     private readonly IMethodSymbol _methodSymbol;
     private readonly IElementNodeMapperBase _elementNodeMapperBase;

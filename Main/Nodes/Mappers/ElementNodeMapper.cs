@@ -15,7 +15,7 @@ internal interface IElementNodeMapper : IElementNodeMapperBase
 {
 }
 
-internal class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
+internal sealed class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMapper
 {
     public ElementNodeMapper(
         IFunctionNode parentFunction, 

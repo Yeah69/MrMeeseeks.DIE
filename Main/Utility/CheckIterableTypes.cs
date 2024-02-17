@@ -10,7 +10,7 @@ internal interface ICheckIterableTypes
     bool MapTypeHasPluralItemType(INamedTypeSymbol mapType);
 }
 
-internal class CheckIterableTypes : ICheckIterableTypes
+internal sealed class CheckIterableTypes : ICheckIterableTypes
 {
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 

@@ -9,7 +9,7 @@ internal interface IPaths
     string AnalyticsResolutionGraph(string containerName);
 }
 
-internal class Paths : IPaths
+internal sealed class Paths : IPaths
 {
     internal Paths(GeneratorExecutionContext context)
     {

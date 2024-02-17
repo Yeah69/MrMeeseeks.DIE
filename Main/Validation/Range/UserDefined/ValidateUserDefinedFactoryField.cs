@@ -7,7 +7,7 @@ internal interface IValidateUserDefinedFactoryField
     void Validate(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
 }
 
-internal class ValidateUserDefinedFactoryField : IValidateUserDefinedFactoryField
+internal sealed class ValidateUserDefinedFactoryField : IValidateUserDefinedFactoryField
 {
     private readonly ILocalDiagLogger _localDiagLogger;
 

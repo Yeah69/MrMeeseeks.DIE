@@ -16,7 +16,7 @@ internal interface IOverridingElementNodeMapper : IElementNodeMapperBase
 {
 }
 
-internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingElementNodeMapper
+internal sealed class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingElementNodeMapper
 {
     private readonly ImmutableQueue<(INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType)> _override;
     private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
@@ -88,7 +88,7 @@ internal class OverridingElementNodeMapper : ElementNodeMapperBase, IOverridingE
 
     public override IElementNode Map(ITypeSymbol type, PassedContext passedContext)
     {
-        if (_override.Any() 
+        if (!_override.IsEmpty
             && type is INamedTypeSymbol abstraction 
             && CustomSymbolEqualityComparer.Default.Equals(_override.Peek().InterfaceType, type))
         {

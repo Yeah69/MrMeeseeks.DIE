@@ -31,7 +31,7 @@ internal interface IFunctionNode : INode
     string? ExplicitInterfaceFullName { get; }
 
     IFunctionCallNode CreateCall(ITypeSymbol callSideType, string? ownerReference, IFunctionNode callingFunction, IReadOnlyList<ITypeSymbol> typeParameters);
-    IAsyncFunctionCallNode CreateAsyncCall(ITypeSymbol wrappedType, string? ownerReference, SynchronicityDecision synchronicity, IFunctionNode callingFunction, IReadOnlyList<ITypeSymbol> typeParameters);
+    IWrappedAsyncFunctionCallNode CreateAsyncCall(ITypeSymbol wrappedType, string? ownerReference, SynchronicityDecision synchronicity, IFunctionNode callingFunction, IReadOnlyList<ITypeSymbol> typeParameters);
     IScopeCallNode CreateScopeCall(ITypeSymbol callSideType, string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scopeNode, IReadOnlyList<ITypeSymbol> typeParameters);
     ITransientScopeCallNode CreateTransientScopeCall(ITypeSymbol callSideType, string containerParameter, IRangeNode callingRange, IFunctionNode callingFunction, ITransientScopeNode scopeNode, IReadOnlyList<ITypeSymbol> typeParameters);
     bool CheckIfReturnedType(ITypeSymbol type);

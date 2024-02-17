@@ -9,7 +9,7 @@ internal interface IGeneratorConfiguration
     bool ErrorDescriptionInsteadOfBuildFailure { get; }
 }
 
-internal class GeneratorConfiguration : IGeneratorConfiguration, IContainerInstance
+internal sealed class GeneratorConfiguration : IGeneratorConfiguration, IContainerInstance
 {
     public GeneratorConfiguration(
         GeneratorExecutionContext context,

@@ -8,7 +8,7 @@ internal interface IRangedInstanceInterfaceFunctionNodeRoot
     IRangedInstanceInterfaceFunctionNode Function { get; }
 }
 
-internal class RangedInstanceInterfaceFunctionNodeRoot : IRangedInstanceInterfaceFunctionNodeRoot, IScopeRoot
+internal sealed class RangedInstanceInterfaceFunctionNodeRoot : IRangedInstanceInterfaceFunctionNodeRoot, IScopeRoot
 {
     public RangedInstanceInterfaceFunctionNodeRoot(IRangedInstanceInterfaceFunctionNode function)
     {

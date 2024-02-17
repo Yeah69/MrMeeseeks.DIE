@@ -18,14 +18,14 @@ internal interface IUserDefinedElements
     IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type);
 }
 
-internal class UserDefinedElements : IUserDefinedElements
+internal sealed class UserDefinedElements : IUserDefinedElements
 {
-    private readonly IReadOnlyDictionary<ITypeSymbol, IFieldSymbol> _typeToField;
-    private readonly IReadOnlyDictionary<ITypeSymbol, IPropertySymbol> _typeToProperty;
-    private readonly IReadOnlyDictionary<ITypeSymbol, IMethodSymbol> _typeToMethod;
-    private readonly IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> _constructorParametersInjectionMethods;
-    private readonly IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> _propertiesInjectionMethods;
-    private readonly IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> _initializerParametersInjectionMethods;
+    private readonly Dictionary<ITypeSymbol, IFieldSymbol> _typeToField;
+    private readonly Dictionary<ITypeSymbol, IPropertySymbol> _typeToProperty;
+    private readonly Dictionary<ITypeSymbol, IMethodSymbol> _typeToMethod;
+    private readonly Dictionary<INamedTypeSymbol, IMethodSymbol> _constructorParametersInjectionMethods;
+    private readonly Dictionary<INamedTypeSymbol, IMethodSymbol> _propertiesInjectionMethods;
+    private readonly Dictionary<INamedTypeSymbol, IMethodSymbol> _initializerParametersInjectionMethods;
 
     public UserDefinedElements(
         // parameter
@@ -39,12 +39,12 @@ internal class UserDefinedElements : IUserDefinedElements
         if (types.Range is { } range)
         {
             var dieMembers = rangeUtility.GetEffectiveMembers(range) 
-                .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_"))
+                .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_", StringComparison.Ordinal))
                 .ToList();
 
             var wellKnownTypes = containerWideContext.WellKnownTypes;
             var nonValidFactoryMembers = dieMembers
-                .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory)
+                .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory, StringComparison.Ordinal)
                             && s is IFieldSymbol or IPropertySymbol or IMethodSymbol)
                 .GroupBy(s =>
                 {
@@ -93,7 +93,7 @@ internal class UserDefinedElements : IUserDefinedElements
             else
             {
                 _typeToField = dieMembers
-                    .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
+                    .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory, StringComparison.Ordinal))
                     .OfType<IFieldSymbol>()
                     .ToDictionary<IFieldSymbol, ITypeSymbol, IFieldSymbol>(
                         fs => GetAsyncUnwrappedType(fs.Type, wellKnownTypes), 
@@ -101,7 +101,7 @@ internal class UserDefinedElements : IUserDefinedElements
                         CustomSymbolEqualityComparer.IncludeNullability);
             
                 _typeToProperty = dieMembers
-                    .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
+                    .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory, StringComparison.Ordinal))
                     .Where(s => s is IPropertySymbol { GetMethod: { } })
                     .OfType<IPropertySymbol>()
                     .ToDictionary<IPropertySymbol, ITypeSymbol, IPropertySymbol>(
@@ -110,7 +110,7 @@ internal class UserDefinedElements : IUserDefinedElements
                         CustomSymbolEqualityComparer.IncludeNullability);
             
                 _typeToMethod = dieMembers
-                    .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory))
+                    .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory, StringComparison.Ordinal))
                     .Where(s => s is IMethodSymbol { ReturnsVoid: false, Arity: 0, IsConditional: false, MethodKind: MethodKind.Ordinary })
                     .OfType<IMethodSymbol>()
                     .ToDictionary<IMethodSymbol, ITypeSymbol, IMethodSymbol>(
@@ -152,10 +152,10 @@ internal class UserDefinedElements : IUserDefinedElements
             
             _initializerParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedInitParams, wellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute);
 
-            IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
+            Dictionary<INamedTypeSymbol, IMethodSymbol> GetInjectionMethods(string prefix, INamedTypeSymbol attributeType)
             {
                 var injectionMethodCandidates = dieMembers
-                .Where(s => s.Name.StartsWith(prefix))
+                .Where(s => s.Name.StartsWith(prefix, StringComparison.Ordinal))
                 .Where(s => s is IMethodSymbol { ReturnsVoid: true, IsConditional: false, MethodKind: MethodKind.Ordinary } method
                             && method.Parameters.Any(p => p.RefKind == RefKind.Out))
                 .OfType<IMethodSymbol>()

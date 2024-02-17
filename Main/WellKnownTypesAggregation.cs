@@ -3,7 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
-internal record WellKnownTypesAggregation(
+internal sealed record WellKnownTypesAggregation(
     INamedTypeSymbol ImplementationAggregationAttribute,
     INamedTypeSymbol TransientAbstractionAggregationAttribute,
     INamedTypeSymbol SyncTransientAbstractionAggregationAttribute,

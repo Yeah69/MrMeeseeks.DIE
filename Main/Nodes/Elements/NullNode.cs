@@ -7,7 +7,7 @@ internal interface INullNode : IElementNode
     
 }
 
-internal partial class NullNode : INullNode
+internal sealed partial class NullNode : INullNode
 {
     internal NullNode(
         ITypeSymbol nullableType,

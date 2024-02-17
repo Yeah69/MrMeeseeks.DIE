@@ -10,7 +10,7 @@ internal interface IValidateTransientScope : IValidateScopeBase
 {
 }
 
-internal class ValidateTransientScope : ValidateScopeBase, IValidateTransientScope
+internal sealed class ValidateTransientScope : ValidateScopeBase, IValidateTransientScope
 {
     internal ValidateTransientScope(
         IValidateUserDefinedAddForDisposalSync validateUserDefinedAddForDisposalSync,

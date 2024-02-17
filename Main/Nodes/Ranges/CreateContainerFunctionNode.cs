@@ -15,7 +15,7 @@ internal interface ICreateContainerFunctionNode : INode
     string ReturnTypeFullName { get; }
 }
 
-internal partial class CreateContainerFunctionNode : ICreateContainerFunctionNode
+internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunctionNode
 {
     private readonly IVoidFunctionNode? _initializationFunction;
     private readonly INamedTypeSymbol _containerType;

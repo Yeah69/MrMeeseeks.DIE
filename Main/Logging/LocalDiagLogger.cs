@@ -1,3 +1,4 @@
+using System.Globalization;
 using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.Logging;
@@ -8,7 +9,7 @@ internal interface ILocalDiagLogger
     void Error(DiagLogData data, Location location);
 }
 
-internal class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
+internal sealed class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
 {
     private readonly IFunctionLevelLogMessageEnhancer _messageEnhancer;
     private readonly IDiagLogger _diagLogger;
@@ -21,8 +22,8 @@ internal class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
         _diagLogger = diagLogger;
     }
 
-    private string CreateId(DiagLogData data) =>
-        $"{Constants.DieAbbreviation}_{data.MajorNumber.ToString().PadLeft(2, '0')}_{data.MinorNumber.ToString().PadLeft(2, '0')}";
+    private static string CreateId(DiagLogData data) =>
+        $"{Constants.DieAbbreviation}_{data.MajorNumber.ToString(CultureInfo.InvariantCulture.NumberFormat).PadLeft(2, '0')}_{data.MinorNumber.ToString(CultureInfo.InvariantCulture.NumberFormat).PadLeft(2, '0')}";
 
     public void Warning(DiagLogData data, Location location) =>
         _diagLogger.Log(Diagnostic.Create(new DiagnosticDescriptor(

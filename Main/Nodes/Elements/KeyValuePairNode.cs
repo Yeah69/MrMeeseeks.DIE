@@ -9,7 +9,7 @@ internal interface IKeyValuePairNode : IElementNode
     IElementNode Value { get; }
 }
 
-internal partial class KeyValuePairNode : IKeyValuePairNode
+internal sealed partial class KeyValuePairNode : IKeyValuePairNode
 {
     internal KeyValuePairNode(
         // parameters

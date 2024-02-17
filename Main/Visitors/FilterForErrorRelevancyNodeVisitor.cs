@@ -14,7 +14,7 @@ internal interface IFilterForErrorRelevancyNodeVisitor : INodeVisitor
     IImmutableSet<INode> ErrorRelevantNodes { get; }
 }
 
-internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNodeVisitor
+internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNodeVisitor
 {
     private readonly HashSet<INode> _errorRelevantNodes = new();
     
@@ -111,8 +111,8 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
             case IPlainFunctionCallNode createCallNode:
                 VisitIPlainFunctionCallNode(createCallNode);
                 break;
-            case IAsyncFunctionCallNode asyncFunctionCallNode:
-                VisitIAsyncFunctionCallNode(asyncFunctionCallNode);
+            case IWrappedAsyncFunctionCallNode asyncFunctionCallNode:
+                VisitIWrappedAsyncFunctionCallNode(asyncFunctionCallNode);
                 break;
             case IScopeCallNode scopeCallNode:
                 VisitIScopeCallNode(scopeCallNode);
@@ -199,7 +199,7 @@ internal class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNode
     {
     }
 
-    public void VisitIAsyncFunctionCallNode(IAsyncFunctionCallNode element) {}
+    public void VisitIWrappedAsyncFunctionCallNode(IWrappedAsyncFunctionCallNode element) {}
 
     public void VisitINullNode(INullNode element)
     {

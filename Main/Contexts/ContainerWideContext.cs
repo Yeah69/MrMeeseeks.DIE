@@ -14,7 +14,7 @@ internal interface IContainerWideContext
     Compilation Compilation { get; }
 }
 
-internal class ContainerWideContext : IContainerWideContext, IContainerInstance
+internal sealed class ContainerWideContext : IContainerWideContext, IContainerInstance
 {
     public ContainerWideContext(
         WellKnownTypes wellKnownTypes, 

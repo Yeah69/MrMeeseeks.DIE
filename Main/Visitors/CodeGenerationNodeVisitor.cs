@@ -19,7 +19,7 @@ internal interface ICodeGenerationVisitor : INodeVisitor
     string GenerateContainerFile();
 }
 
-internal class CodeGenerationVisitor : ICodeGenerationVisitor
+internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 {
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly StringBuilder _code = new();
@@ -649,7 +649,7 @@ finally
         }
     }
 
-    public void VisitIAsyncFunctionCallNode(IAsyncFunctionCallNode functionCallNode)
+    public void VisitIWrappedAsyncFunctionCallNode(IWrappedAsyncFunctionCallNode functionCallNode)
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
         var typeFullName = functionCallNode.TypeFullName;
@@ -763,8 +763,8 @@ finally
             case IPlainFunctionCallNode createCallNode:
                 VisitIPlainFunctionCallNode(createCallNode);
                 break;
-            case IAsyncFunctionCallNode asyncFunctionCallNode:
-                VisitIAsyncFunctionCallNode(asyncFunctionCallNode);
+            case IWrappedAsyncFunctionCallNode asyncFunctionCallNode:
+                VisitIWrappedAsyncFunctionCallNode(asyncFunctionCallNode);
                 break;
             case IScopeCallNode scopeCallNode:
                 VisitIScopeCallNode(scopeCallNode);

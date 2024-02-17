@@ -8,7 +8,7 @@ internal interface IValidateUserDefinedInitializerParametersInjectionMethod : IV
     
 }
 
-internal class ValidateUserDefinedInitializerParametersInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedInitializerParametersInjectionMethod
+internal sealed class ValidateUserDefinedInitializerParametersInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedInitializerParametersInjectionMethod
 {
     internal ValidateUserDefinedInitializerParametersInjectionMethod(
         IContainerWideContext containerWideContext,

@@ -9,7 +9,7 @@ internal interface IFuncNode : IDelegateBaseNode
     
 }
 
-internal partial class FuncNode : DelegateBaseNode, IFuncNode
+internal sealed partial class FuncNode : DelegateBaseNode, IFuncNode
 {
     internal FuncNode(
         (INamedTypeSymbol Outer, INamedTypeSymbol Inner) delegateTypes,

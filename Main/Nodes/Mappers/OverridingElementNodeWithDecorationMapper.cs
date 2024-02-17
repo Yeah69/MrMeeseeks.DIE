@@ -16,7 +16,7 @@ internal interface IOverridingElementNodeWithDecorationMapper : IElementNodeMapp
 {
 }
 
-internal class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase, IOverridingElementNodeWithDecorationMapper
+internal sealed class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase, IOverridingElementNodeWithDecorationMapper
 {
     private readonly (INamedTypeSymbol InterfaceType, INamedTypeSymbol ImplementationType) _override;
 

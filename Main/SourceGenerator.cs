@@ -25,11 +25,11 @@ public class SourceGenerator : ISourceGenerator
                     wellKnownTypesMiscellaneous,
                     context.Compilation));
         
-            new ExecuteImpl(
+            var execute = new ExecuteImpl(
                 context,
                 rangeUtility,
-                ContainerInfoFactory)
-                .Execute();
+                ContainerInfoFactory);
+            execute.Execute();
                 
             IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => 
                 new ContainerInfo(type, wellKnownTypesMiscellaneous, rangeUtility);

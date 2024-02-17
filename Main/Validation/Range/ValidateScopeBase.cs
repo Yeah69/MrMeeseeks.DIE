@@ -80,7 +80,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
                 ValidationErrorDiagnostic(rangeType, containerType, "Has to be declared private."),
                 rangeType.Locations.FirstOrDefault() ?? Location.None);
         
-        if (rangeType.Name != DefaultScopeName && !rangeType.Name.StartsWith(CustomScopeName))
+        if (rangeType.Name != DefaultScopeName && !rangeType.Name.StartsWith(CustomScopeName, StringComparison.Ordinal))
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(rangeType, containerType, $"{ScopeName}'s name hast to be either \"{DefaultScopeName}\" if it is the default {ScopeName} or start with \"{CustomScopeName}\" if it is a custom {ScopeName}."),
                 rangeType.Locations.FirstOrDefault() ?? Location.None);
@@ -96,7 +96,7 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
                 rangeType.Locations.FirstOrDefault() ?? Location.None);
 
         var isDefault = rangeType.Name == DefaultScopeName;
-        var isCustom = rangeType.Name.StartsWith(CustomScopeName);
+        var isCustom = rangeType.Name.StartsWith(CustomScopeName, StringComparison.Ordinal);
 
         if (isDefault)
         {

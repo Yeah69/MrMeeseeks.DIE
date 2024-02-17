@@ -10,7 +10,7 @@ internal interface IAnalyticsFlags
     bool ErrorFilteredResolutionGraph { get; }
 }
 
-internal class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
+internal sealed class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
 {
     private readonly Configuration.Attributes.Analytics? _analytics;
     

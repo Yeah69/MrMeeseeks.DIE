@@ -26,7 +26,7 @@ internal interface IElementNodeMapperBase
     IElementNode MapToOutParameter(ITypeSymbol type, PassedContext passedContext);
 }
 
-internal record ImplementationMappingConfiguration(
+internal sealed record ImplementationMappingConfiguration(
     bool CheckForScopeRoot,
     bool CheckForRangedInstance,
     bool CheckForInitializedInstance);
@@ -150,15 +150,15 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             && type is INamedTypeSymbol task)
             return ParentRange.BuildAsyncCreateCall(GetMapperDataForAsyncWrapping(), task.TypeArguments[0], SynchronicityDecision.AsyncTask, ParentFunction);
 
-        if (type.FullName().StartsWith("global::System.ValueTuple<") && type is INamedTypeSymbol valueTupleType)
+        if (type.FullName().StartsWith("global::System.ValueTuple<", StringComparison.Ordinal) && type is INamedTypeSymbol valueTupleType)
             return _valueTupleNodeFactory(valueTupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
         
-        if (type.FullName().StartsWith("(") && type.FullName().EndsWith(")") && type is INamedTypeSymbol syntaxValueTupleType)
+        if (type.FullName().StartsWith("(", StringComparison.Ordinal) && type.FullName().EndsWith(")", StringComparison.Ordinal) && type is INamedTypeSymbol syntaxValueTupleType)
             return _valueTupleSyntaxNodeFactory(syntaxValueTupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
 
-        if (type.FullName().StartsWith("global::System.Tuple<") && type is INamedTypeSymbol tupleType)
+        if (type.FullName().StartsWith("global::System.Tuple<", StringComparison.Ordinal) && type is INamedTypeSymbol tupleType)
             return _tupleNodeFactory(tupleType, NextForWraps)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
 
@@ -185,7 +185,7 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         }
 
         if (type.TypeKind == TypeKind.Delegate 
-            && type.FullName().StartsWith("global::System.Func<")
+            && type.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal)
             && type is INamedTypeSymbol funcType)
         {
             return CreateDelegateNode(

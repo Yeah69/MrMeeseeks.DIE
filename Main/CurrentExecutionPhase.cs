@@ -12,7 +12,7 @@ internal interface ICurrentExecutionPhaseSetter
     ExecutionPhase Value { set; }
 }
 
-internal class CurrentExecutionPhase : ICurrentExecutionPhase, ICurrentExecutionPhaseSetter, IContainerInstance
+internal sealed class CurrentExecutionPhase : ICurrentExecutionPhase, ICurrentExecutionPhaseSetter, IContainerInstance
 {
     public ExecutionPhase Value { get; set; } = ExecutionPhase.ContainerValidation;
 }

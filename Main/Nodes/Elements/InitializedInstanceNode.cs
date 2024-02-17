@@ -11,7 +11,7 @@ internal interface IInitializedInstanceNode : IElementNode
     IFunctionCallNode BuildCall(IRangeNode range, IFunctionNode callingFunction);
 }
 
-internal partial class InitializedInstanceNode : IInitializedInstanceNode
+internal sealed partial class InitializedInstanceNode : IInitializedInstanceNode
 {
     private readonly INamedTypeSymbol _type;
 

@@ -15,7 +15,7 @@ internal interface ITransientScopeCallNode : IFunctionCallNode
     IFunctionCallNode? Initialization { get; }
 }
 
-internal partial class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNode
+internal sealed partial class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNode
 {
     private readonly ITransientScopeNode _scope;
 

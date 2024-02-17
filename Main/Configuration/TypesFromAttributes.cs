@@ -80,7 +80,7 @@ internal interface ITypesFromAttributesBase
 
 internal interface IAssemblyTypesFromAttributes : ITypesFromAttributesBase {}
 
-internal class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAssemblyTypesFromAttributes, IContainerInstance
+internal sealed class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAssemblyTypesFromAttributes, IContainerInstance
 {
     internal AssemblyTypesFromAttributes(
         Compilation compilation,
@@ -117,7 +117,7 @@ internal class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAssemblyT
 
 internal interface IContainerTypesFromAttributes : ITypesFromAttributesBase {}
 
-internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContainerTypesFromAttributes, IContainerInstance
+internal sealed class ContainerTypesFromAttributes : TypesFromAttributesBase, IContainerTypesFromAttributes, IContainerInstance
 {
     internal ContainerTypesFromAttributes(
         ILocalDiagLogger localDiagLogger,
@@ -155,7 +155,7 @@ internal class ContainerTypesFromAttributes : TypesFromAttributesBase, IContaine
 
 internal interface IScopeTypesFromAttributes : ITypesFromAttributesBase {}
 
-internal class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFromAttributes, ITransientScopeInstance
+internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFromAttributes, ITransientScopeInstance
 {
     internal ScopeTypesFromAttributes(
         // parameter
@@ -956,7 +956,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         }
     }
 
-    private IReadOnlyDictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
+    private Dictionary<ISymbol?, IGrouping<ISymbol?, AttributeData>> AttributeDictionary { get; }
     
     protected IImmutableSet<INamedTypeSymbol> GetAbstractionTypesFromAttribute(
         INamedTypeSymbol attribute)

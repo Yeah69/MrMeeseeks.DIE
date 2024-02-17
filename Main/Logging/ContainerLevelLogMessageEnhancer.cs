@@ -9,7 +9,7 @@ internal interface IContainerLevelLogMessageEnhancer
     string Enhance(string message);
 }
 
-internal class ContainerLevelLogMessageEnhancer : IContainerLevelLogMessageEnhancer, IContainerInstance
+internal sealed class ContainerLevelLogMessageEnhancer : IContainerLevelLogMessageEnhancer, IContainerInstance
 {
     private readonly ICurrentExecutionPhase _currentExecutionPhase;
     private readonly Lazy<string> _containerPart;

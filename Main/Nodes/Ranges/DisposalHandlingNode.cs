@@ -18,7 +18,7 @@ internal interface IDisposalHandlingNode
     string RegisterAsyncDisposal();
 }
 
-internal class DisposalHandlingNode : IDisposalHandlingNode
+internal sealed class DisposalHandlingNode : IDisposalHandlingNode
 {
     private bool _syncCollectionUsed;
     private bool _asyncCollectionUsed;

@@ -17,7 +17,7 @@ internal interface ITransientScopeInterfaceNode : INode
     void RegisterRange(IRangeNode range);
 }
 
-internal partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
+internal sealed partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
 {
     private readonly IContainerNode _container;
     private readonly ITypeParameterUtility _typeParameterUtility;

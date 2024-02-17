@@ -9,7 +9,7 @@ internal interface IFunctionCycleTracker
     void DetectCycle(IContainerNode containerNode);
 }
 
-internal class FunctionCycleTracker : IFunctionCycleTracker
+internal sealed class FunctionCycleTracker : IFunctionCycleTracker
 {
     private readonly ILocalDiagLogger _localDiagLogger;
 
@@ -24,7 +24,7 @@ internal class FunctionCycleTracker : IFunctionCycleTracker
         HashSet<IFunctionNode> cf = new();
         Stack<IFunctionNode> s = new();
 
-        while (roots.Any() && roots.Dequeue() is {} next)
+        while (roots.Count != 0 && roots.Dequeue() is {} next)
             DetectCycleInner(
                 next, 
                 v, 

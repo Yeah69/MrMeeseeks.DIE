@@ -5,7 +5,7 @@ internal interface IReusedNode : IElementNode
     IElementNode Inner { get; }
 }
 
-internal partial class ReusedNode : IReusedNode
+internal sealed partial class ReusedNode : IReusedNode
 {
     internal ReusedNode(
         IElementNode innerNode) =>

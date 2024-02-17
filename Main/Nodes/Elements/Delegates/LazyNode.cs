@@ -8,7 +8,7 @@ internal interface ILazyNode : IDelegateBaseNode
 {
 }
 
-internal partial class LazyNode : DelegateBaseNode, ILazyNode
+internal sealed partial class LazyNode : DelegateBaseNode, ILazyNode
 {
     internal LazyNode(
         (INamedTypeSymbol Outer, INamedTypeSymbol Inner) delegateTypes,

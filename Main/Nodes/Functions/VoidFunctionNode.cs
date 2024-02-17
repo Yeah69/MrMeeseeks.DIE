@@ -15,7 +15,7 @@ internal interface IVoidFunctionNode : IFunctionNode
     void ReorderOrDetectCycle();
 }
 
-internal partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeInstance
+internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeInstance
 {
     private readonly IReadOnlyList<IInitializedInstanceNode> _initializedInstanceNodes;
     private readonly ILocalDiagLogger _localDiagLogger;
@@ -33,7 +33,7 @@ internal partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, I
         ILocalDiagLogger localDiagLogger,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
-        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
+        Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         IContainerWideContext containerWideContext)
@@ -150,7 +150,7 @@ internal partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, I
                     {
                         i = stack.Pop();
                         cycleStack = cycleStack.Push(i.TypeFullName);
-                    } while (i != current && stack.Any());
+                    } while (i != current && stack.Count != 0);
                     
                     _localDiagLogger.Error(
                         ErrorLogData.CircularReferenceAmongInitializedInstances(cycleStack),

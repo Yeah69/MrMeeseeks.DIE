@@ -5,7 +5,7 @@ internal interface IMapperFactory
     IElementNodeMapperBase Create(MapperData data);
 }
 
-internal class MapperFactory : IMapperFactory
+internal sealed class MapperFactory : IMapperFactory
 {
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;

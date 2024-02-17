@@ -11,7 +11,7 @@ internal interface IThreadLocalNode : IDelegateBaseNode
     string? SyncDisposalCollectionReference { get; }
 }
 
-internal partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNode
+internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNode
 {
     private readonly INamedTypeSymbol _threadLocalType;
     private readonly ICheckTypeProperties _checkTypeProperties;

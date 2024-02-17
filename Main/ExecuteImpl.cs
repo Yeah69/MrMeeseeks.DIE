@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;
@@ -9,7 +8,7 @@ internal interface IExecute
     void Execute();
 }
 
-internal class ExecuteImpl : IExecute
+internal sealed class ExecuteImpl : IExecute
 {
     private readonly GeneratorExecutionContext _context;
     private readonly IRangeUtility _rangeUtility;

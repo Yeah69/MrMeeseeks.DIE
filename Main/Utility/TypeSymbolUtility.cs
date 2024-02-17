@@ -20,7 +20,7 @@ internal static class TypeSymbolUtility
         IsWrapTypeOfSingleGenericType(type, wellKnownTypes) || IsFuncDelegate(type);
 
     internal static bool IsFuncDelegate(ITypeSymbol type) =>
-        type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<");
+        type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal);
 
     internal static bool IsWrapTypeOfSingleGenericType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
         CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)

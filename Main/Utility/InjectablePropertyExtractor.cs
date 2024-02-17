@@ -9,7 +9,7 @@ internal interface IInjectablePropertyExtractor
     IEnumerable<IPropertySymbol> GetInjectableProperties(INamedTypeSymbol implementationType);
 }
 
-internal class InjectablePropertyExtractor : IInjectablePropertyExtractor, IContainerInstance
+internal sealed class InjectablePropertyExtractor : IInjectablePropertyExtractor, IContainerInstance
 {
     private readonly ICheckInternalsVisible _checkInternalsVisible;
 

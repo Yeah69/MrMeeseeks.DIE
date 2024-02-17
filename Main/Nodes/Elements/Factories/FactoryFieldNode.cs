@@ -7,7 +7,7 @@ internal interface IFactoryFieldNode : IFactoryNodeBase
 {
 }
 
-internal partial class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
+internal sealed partial class FactoryFieldNode : FactoryNodeBase,  IFactoryFieldNode
 {
     internal FactoryFieldNode(
         IFieldSymbol fieldSymbol, 

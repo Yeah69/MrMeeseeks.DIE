@@ -10,7 +10,7 @@ internal interface IValidateUserDefinedAddForDisposalSync : IValidateUserDefined
     
 }
 
-internal class ValidateUserDefinedAddForDisposalSync : ValidateUserDefinedAddForDisposalBase,
+internal sealed class ValidateUserDefinedAddForDisposalSync : ValidateUserDefinedAddForDisposalBase,
     IValidateUserDefinedAddForDisposalSync
 {
     internal ValidateUserDefinedAddForDisposalSync(
@@ -27,7 +27,7 @@ internal interface IValidateUserDefinedAddForDisposalAsync : IValidateUserDefine
     
 }
 
-internal class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefinedAddForDisposalBase,
+internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefinedAddForDisposalBase,
     IValidateUserDefinedAddForDisposalAsync
 {
     internal ValidateUserDefinedAddForDisposalAsync(

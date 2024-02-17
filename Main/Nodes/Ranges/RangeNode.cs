@@ -25,7 +25,7 @@ internal interface IRangeNode : INode
     IEnumerable<IInitializedInstanceNode> InitializedInstances { get; }
 
     IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction);
-    IAsyncFunctionCallNode BuildAsyncCreateCall(
+    IWrappedAsyncFunctionCallNode BuildAsyncCreateCall(
         MapperData mapperData, 
         ITypeSymbol type,
         SynchronicityDecision synchronicity, 
@@ -285,7 +285,7 @@ internal abstract class RangeNode : IRangeNode
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
             f => f.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
 
-    public IAsyncFunctionCallNode BuildAsyncCreateCall(
+    public IWrappedAsyncFunctionCallNode BuildAsyncCreateCall(
         MapperData mapperData, 
         ITypeSymbol type, 
         SynchronicityDecision synchronicity,

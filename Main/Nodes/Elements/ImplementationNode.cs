@@ -27,14 +27,14 @@ internal interface IImplementationNode : IElementNode, IAwaitableNode
     string ImplementationTypeFullName { get; }
 }
 
-internal partial class ImplementationNode : IImplementationNode
+internal sealed partial class ImplementationNode : IImplementationNode
 {
-    internal record UserDefinedInjection(
+    internal sealed record UserDefinedInjection(
         string Name, 
         IReadOnlyList<(string Name, IElementNode Element, bool IsOut)> Parameters,
         IReadOnlyList<string> TypeParameters);
 
-    internal record Initialization(
+    internal sealed record Initialization(
         string TypeFullName,
         string MethodName,
         UserDefinedInjection? UserDefinedInjection,

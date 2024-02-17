@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Threading;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
@@ -13,7 +14,7 @@ internal interface IReferenceGenerator
     string Generate(string hardcodedName);
 }
 
-internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
+internal sealed class ReferenceGenerator : IReferenceGenerator, IScopeInstance
 {
     private int _i = -1;
     private readonly int _j;
@@ -33,10 +34,10 @@ internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
         switch (type)
         {
             case INamedTypeSymbol namedTypeSymbol:
-                baseName = $"{char.ToLower(namedTypeSymbol.Name[0]).ToString()}{namedTypeSymbol.Name.Substring(1)}";
+                baseName = $"{char.ToLower(namedTypeSymbol.Name[0], CultureInfo.InvariantCulture).ToString()}{namedTypeSymbol.Name.Substring(1)}";
                 break;
             case IArrayTypeSymbol { ElementType: { } elementType }:
-                baseName = $"{char.ToLower(elementType.Name[0]).ToString()}{elementType.Name.Substring(1)}Array";
+                baseName = $"{char.ToLower(elementType.Name[0], CultureInfo.InvariantCulture).ToString()}{elementType.Name.Substring(1)}Array";
                 break;
             default:
                 _localDiagLogger.Warning(WarningLogData.EmptyReferenceNameWarning(
@@ -59,7 +60,7 @@ internal class ReferenceGenerator : IReferenceGenerator, IScopeInstance
         GenerateInner(string.Empty, hardcodedName, string.Empty);
     
     private string GenerateInner(string prefix, string inner, string suffix) => 
-        $"{prefix}{inner}{suffix}_{_j.ToString()}_{(Interlocked.Increment(ref _i)).ToString()}";
+        $"{prefix}{inner}{suffix}_{_j.ToString(CultureInfo.InvariantCulture.NumberFormat)}_{Interlocked.Increment(ref _i).ToString(CultureInfo.InvariantCulture.NumberFormat)}";
 }
     
 internal interface IReferenceGeneratorCounter
@@ -67,7 +68,7 @@ internal interface IReferenceGeneratorCounter
     int GetCount();
 }
 
-internal class ReferenceGeneratorCounter : IReferenceGeneratorCounter, IContainerInstance
+internal sealed class ReferenceGeneratorCounter : IReferenceGeneratorCounter, IContainerInstance
 {
     private int _j = -1;
 

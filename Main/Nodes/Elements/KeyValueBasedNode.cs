@@ -30,12 +30,12 @@ internal interface IMapData
     string MapReference { get; }
 }
 
-internal record SimpleMapData(
+internal sealed record SimpleMapData(
         string MapTypeFullName, 
         string MapReference) 
     : IMapData;
 
-internal record ImmutableMapData(
+internal sealed record ImmutableMapData(
         string MapTypeFullName, 
         string MapReference,
         string ImmutableUngenericTypeFullName) 
@@ -48,7 +48,7 @@ internal interface IKeyValueBasedNode : IElementNode
     IFunctionCallNode EnumerableCall { get; }
 }
 
-internal partial class KeyValueBasedBasedNode : IKeyValueBasedNode
+internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
 {
     private readonly INamedTypeSymbol _mapType;
     private readonly IRangeNode _parentRange;

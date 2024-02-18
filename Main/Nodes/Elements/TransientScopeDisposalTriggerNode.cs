@@ -44,8 +44,9 @@ internal sealed partial class TransientScopeDisposalTriggerNode : ITransientScop
     public void CheckSynchronicity()
     {
         if (_disposalHookIsSync 
-            && !_parentContainer.DisposalType.HasFlag(DisposalType.Sync)
-            && _parentContainer.DisposalType != DisposalType.None)
+            && _wellKnownTypes.IAsyncDisposable is not null
+            && _parentContainer.DisposalType != DisposalType.None
+            && !_parentContainer.DisposalType.HasFlag(DisposalType.Sync))
             _localDiagLogger.Error(ErrorLogData.SyncDisposalInAsyncContainerCompilationError(
                 $"When container disposal is async-only, then transient scope disposal hooks of type \"{_wellKnownTypes.IDisposable.FullName()}\" aren't allowed. Please use the \"{_wellKnownTypes.IAsyncDisposable.FullName()}\" type instead."),
                 Location.None);

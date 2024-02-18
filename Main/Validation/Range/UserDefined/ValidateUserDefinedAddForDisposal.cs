@@ -5,13 +5,11 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
-internal interface IValidateUserDefinedAddForDisposalSync : IValidateUserDefinedAddForDisposalBase
-{
-    
-}
+internal interface IValidateUserDefinedAddForDisposalSync : IValidateUserDefinedAddForDisposalBase { }
 
-internal sealed class ValidateUserDefinedAddForDisposalSync : ValidateUserDefinedAddForDisposalBase,
-    IValidateUserDefinedAddForDisposalSync
+internal sealed class ValidateUserDefinedAddForDisposalSync 
+    : ValidateUserDefinedAddForDisposalBase, 
+        IValidateUserDefinedAddForDisposalSync
 {
     internal ValidateUserDefinedAddForDisposalSync(
         IContainerWideContext containerWideContext,
@@ -19,13 +17,10 @@ internal sealed class ValidateUserDefinedAddForDisposalSync : ValidateUserDefine
         : base(localDiagLogger) => 
         DisposableType = containerWideContext.WellKnownTypes.IDisposable;
 
-    protected override INamedTypeSymbol DisposableType { get; }
+    protected override INamedTypeSymbol? DisposableType { get; }
 }
 
-internal interface IValidateUserDefinedAddForDisposalAsync : IValidateUserDefinedAddForDisposalBase
-{
-    
-}
+internal interface IValidateUserDefinedAddForDisposalAsync : IValidateUserDefinedAddForDisposalBase { }
 
 internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefinedAddForDisposalBase,
     IValidateUserDefinedAddForDisposalAsync
@@ -36,13 +31,10 @@ internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefin
         : base(localDiagLogger) => 
         DisposableType = containerWideContext.WellKnownTypes.IAsyncDisposable;
 
-    protected override INamedTypeSymbol DisposableType { get; }
+    protected override INamedTypeSymbol? DisposableType { get; }
 }
 
-internal interface IValidateUserDefinedAddForDisposalBase : IValidateUserDefinedMethod
-{
-    
-}
+internal interface IValidateUserDefinedAddForDisposalBase : IValidateUserDefinedMethod { }
 
 internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefinedMethod, IValidateUserDefinedAddForDisposalBase
 {
@@ -51,33 +43,11 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
         : base(localDiagLogger)
     {
     }
-    protected abstract INamedTypeSymbol DisposableType { get; }
+    protected abstract INamedTypeSymbol? DisposableType { get; }
 
     public override void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
         base.Validate(method, rangeType, containerType);
-
-        if (method is
-            {
-                DeclaredAccessibility: Accessibility.Private or Accessibility.Protected, 
-                ReturnsVoid: true,
-                IsPartialDefinition: true,
-                Parameters.Length: 1,
-                MethodKind: MethodKind.Ordinary,
-                CanBeReferencedByName: true
-            }
-            && method.Parameters[0] is
-            {
-                IsDiscard: false,
-                IsOptional: false,
-                IsParams: false,
-                IsThis: false,
-                RefKind: RefKind.None,
-                HasExplicitDefaultValue: false
-            }
-            && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
-        {
-        }
 
         if (method.DeclaredAccessibility != Accessibility.Private && method.DeclaredAccessibility != Accessibility.Protected)
             LocalDiagLogger.Error(
@@ -94,7 +64,11 @@ internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefi
                 ValidationErrorDiagnostic(method, rangeType, containerType, "User-defined part has to have the partial definition only."),
                 method.Locations.FirstOrDefault() ?? Location.None);
         
-        if (method.Parameters.Length != 1 || !CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
+        if (DisposableType is null)
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(method, rangeType, containerType, "Disposal type \"System.IAsyncDisposable\" isn't available."),
+                method.Locations.FirstOrDefault() ?? Location.None);
+        else if (method.Parameters.Length != 1 || !CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, DisposableType))
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(method, rangeType, containerType, $"Has to have a single parameter which is of type \"{DisposableType.FullName()}\"."),
                 method.Locations.FirstOrDefault() ?? Location.None);

@@ -226,13 +226,13 @@ internal abstract class RangeNode : IRangeNode
 
         DisposalHandling = disposalHandlingNodeFactory();
 
-        if (userDefinedElements.AddForDisposal is { })
+        if (userDefinedElements.AddForDisposal is not null)
         {
             AddForDisposal = userDefinedElements.AddForDisposal;
             DisposalHandling.RegisterSyncDisposal();
         }
 
-        if (userDefinedElements.AddForDisposalAsync is { })
+        if (userDefinedElements.AddForDisposalAsync is not null)
         {
             AddForDisposalAsync = userDefinedElements.AddForDisposalAsync;
             DisposalHandling.RegisterAsyncDisposal();
@@ -240,7 +240,7 @@ internal abstract class RangeNode : IRangeNode
 
         _objectType = containerWideContext.WellKnownTypes.Object;
         
-        if (rangeType is { })
+        if (rangeType is not null)
         {
             var types = rangeType
                 .GetAttributes()

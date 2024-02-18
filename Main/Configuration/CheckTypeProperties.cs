@@ -176,7 +176,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 
         var ret = DisposalType.None;
         
-        if (implementationType.AllInterfaces.Contains(_wellKnownTypes.IAsyncDisposable)
+        if (_wellKnownTypes.IAsyncDisposable is not null 
+            && implementationType.AllInterfaces.Contains(_wellKnownTypes.IAsyncDisposable)
             && !_currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
             ret |= DisposalType.Async;
         
@@ -378,10 +379,10 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         {
             var set = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
                 CustomSymbolEqualityComparer.Default,
-                isCollectionChoice && choiceCollection is {}
+                isCollectionChoice && choiceCollection is not null
                     ? choiceCollection
                     : Enumerable.Empty<INamedTypeSymbol>());
-            if (isChoice && choice is {})
+            if (isChoice && choice is not null)
                 set = set.Add(choice);
             return FilterByInjectionKey(
                 GetClosedImplementations(

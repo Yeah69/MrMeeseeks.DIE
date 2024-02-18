@@ -11,11 +11,11 @@ internal interface IDisposalHandlingNode
     string AggregateExceptionReference { get; }
     string AggregateExceptionItemReference { get; }
     string SyncCollectionReference { get; }
-    string AsyncCollectionReference { get; }
+    string? AsyncCollectionReference { get; }
     bool HasSyncDisposables { get; }
     bool HasAsyncDisposables { get; }
     string RegisterSyncDisposal();
-    string RegisterAsyncDisposal();
+    string? RegisterAsyncDisposal();
 }
 
 internal sealed class DisposalHandlingNode : IDisposalHandlingNode
@@ -23,7 +23,7 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
     private bool _syncCollectionUsed;
     private bool _asyncCollectionUsed;
     private readonly string _syncCollection;
-    private readonly string _asyncCollection;
+    private readonly string? _asyncCollection;
     
     public DisposalHandlingNode(
         IReferenceGenerator referenceGenerator,
@@ -37,7 +37,9 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
         AggregateExceptionReference = referenceGenerator.Generate(wellKnownTypes.AggregateException);
         AggregateExceptionItemReference = referenceGenerator.Generate("exceptionToAggregate");
         _syncCollection = referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfSyncDisposable);
-        _asyncCollection = referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfAsyncDisposable);
+        _asyncCollection = wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null 
+            ? referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfAsyncDisposable) 
+            : null;
     }
 
     public string DisposedFieldReference { get; }
@@ -47,7 +49,7 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
     public string AggregateExceptionReference { get; }
     public string AggregateExceptionItemReference { get; }
     public string SyncCollectionReference => _syncCollection;
-    public string AsyncCollectionReference => _asyncCollection;
+    public string? AsyncCollectionReference => _asyncCollection;
     public bool HasSyncDisposables => _syncCollectionUsed;
     public bool HasAsyncDisposables => _asyncCollectionUsed;
 
@@ -57,9 +59,11 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
         return _syncCollection;
     }
 
-    public string RegisterAsyncDisposal()
+    public string? RegisterAsyncDisposal()
     {
-        _asyncCollectionUsed = true;
+        if (_asyncCollection is null)
+            _asyncCollectionUsed = true;
+        
         return _asyncCollection;
     }
 }

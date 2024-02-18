@@ -102,7 +102,7 @@ internal sealed class UserDefinedElements : IUserDefinedElements
             
                 _typeToProperty = dieMembers
                     .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory, StringComparison.Ordinal))
-                    .Where(s => s is IPropertySymbol { GetMethod: { } })
+                    .Where(s => s is IPropertySymbol { GetMethod: not null })
                     .OfType<IPropertySymbol>()
                     .ToDictionary<IPropertySymbol, ITypeSymbol, IPropertySymbol>(
                         ps => GetAsyncUnwrappedType(ps.Type, wellKnownTypes), 
@@ -132,18 +132,20 @@ internal sealed class UserDefinedElements : IUserDefinedElements
                 .OfType<IMethodSymbol>()
                 .FirstOrDefault();
             
-            AddForDisposalAsync = dieMembers
-                .Where(s => s is IMethodSymbol
-                {
-                    DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
-                    Arity: 0,
-                    ReturnsVoid: true,
-                    IsPartialDefinition: true,
-                    Name: Constants.UserDefinedAddForDisposalAsync,
-                    Parameters.Length: 1
-                } method && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IAsyncDisposable))
-                .OfType<IMethodSymbol>()
-                .FirstOrDefault();
+            AddForDisposalAsync = containerWideContext.WellKnownTypes.IAsyncDisposable is not null 
+                ? dieMembers
+                    .Where(s => s is IMethodSymbol
+                    {
+                        DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
+                        Arity: 0,
+                        ReturnsVoid: true,
+                        IsPartialDefinition: true,
+                        Name: Constants.UserDefinedAddForDisposalAsync,
+                        Parameters.Length: 1
+                    } method && CustomSymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, wellKnownTypes.IAsyncDisposable))
+                    .OfType<IMethodSymbol>()
+                    .FirstOrDefault()
+                : null;
 
             var wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
             _constructorParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedConstrParams, wellKnownTypesMiscellaneous.UserDefinedConstructorParametersInjectionAttribute);
@@ -172,7 +174,7 @@ internal sealed class UserDefinedElements : IUserDefinedElements
                         .OfType<INamedTypeSymbol>()
                         .FirstOrDefault();
 
-                    return type is { } ? (type, m) : ((INamedTypeSymbol, IMethodSymbol)?) null;
+                    return type is not null ? (type, m) : ((INamedTypeSymbol, IMethodSymbol)?) null;
                 })
                 .OfType<(INamedTypeSymbol, IMethodSymbol)>()
                 .ToImmutableArray();

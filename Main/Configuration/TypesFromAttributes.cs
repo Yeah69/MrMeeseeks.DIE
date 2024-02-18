@@ -392,7 +392,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                     .OfType<INamedTypeSymbol>()
                     .ToList();
 
-                if (implementationType is { })
+                if (implementationType is not null)
                 {
                     implementationType = implementationType.OriginalDefinitionIfUnbound();
 
@@ -404,7 +404,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                                 (pLeft, pRight) => CustomSymbolEqualityComparer.Default.Equals(pLeft, pRight))
                             .All(b => b));
 
-                    if (constructorChoice is { })
+                    if (constructorChoice is not null)
                     {
                         return (implementationType, constructorChoice);
                     }
@@ -512,7 +512,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                     .OfType<IMethodSymbol>()
                     .FirstOrDefault();
 
-                if (initializationMethod is { })
+                if (initializationMethod is not null)
                 {
                     if (!initializationMethod.ReturnsVoid
                         && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)

@@ -37,17 +37,13 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
     public void VisitIContainerNode(IContainerNode container)
     {
-        var disposableImplementation = container.DisposalType.HasFlag(DisposalType.Async)
-            ? $" , {_wellKnownTypes.IAsyncDisposable.FullName()}"
-            : $" , {_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}";
-
         _code.AppendLine($$"""
-#nullable enable
-namespace {{container.Namespace}}
-{
-sealed partial class {{container.Name}} : {{container.TransientScopeInterface.FullName}}{{disposableImplementation}}
-{
-""");
+            #nullable enable
+            namespace {{container.Namespace}}
+            {
+            sealed partial class {{container.Name}} : {{container.TransientScopeInterface.FullName}} , {{GenerateDisposalInterfaceAssignments(container.DisposalType)}}
+            {
+            """);
         if (container.GenerateEmptyConstructor) 
             _code.AppendLine($"private {container.Name}() {{ }}");
         
@@ -59,7 +55,7 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
 
         GenerateRangeNodeContent(container);
         
-        var dictionaryTypeName = container.DisposalType.HasFlag(DisposalType.Async)
+        var dictionaryTypeName = _wellKnownTypes.ConcurrentDictionaryOfAsyncDisposable is not null && container.DisposalType.HasFlag(DisposalType.Async)
             ? _wellKnownTypes.ConcurrentDictionaryOfAsyncDisposable.FullName()
             : _wellKnownTypes.ConcurrentDictionaryOfSyncDisposable.FullName();
 
@@ -75,10 +71,10 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
             VisitITransientScopeNode(transientScope);
         
         _code.AppendLine("""
-}
-}
-#nullable disable
-""");
+            }
+            }
+            #nullable disable
+            """);
     }
 
     public void VisitICreateContainerFunctionNode(ICreateContainerFunctionNode createContainerFunction)
@@ -91,24 +87,24 @@ sealed partial class {{container.Name}} : {{container.TransientScopeInterface.Fu
             : "";
         
         _code.AppendLine($$"""
-public static {{asyncPrefix}}{{createContainerFunction.ReturnTypeFullName}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", createContainerFunction.Parameters.Select(p => $"{p.TypeFullName} {p.Reference.PrefixAtIfKeyword()}"))}})
-{
-{{createContainerFunction.ContainerTypeFullName}} {{createContainerFunction.ContainerReference}} = new {{createContainerFunction.ContainerTypeFullName}}({{string.Join(", ", createContainerFunction.Parameters.Select(p => $"{p.Reference.PrefixAtIfKeyword()}: {p.Reference.PrefixAtIfKeyword()}"))}});
-""");
+            public static {{asyncPrefix}}{{createContainerFunction.ReturnTypeFullName}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", createContainerFunction.Parameters.Select(p => $"{p.TypeFullName} {p.Reference.PrefixAtIfKeyword()}"))}})
+            {
+            {{createContainerFunction.ContainerTypeFullName}} {{createContainerFunction.ContainerReference}} = new {{createContainerFunction.ContainerTypeFullName}}({{string.Join(", ", createContainerFunction.Parameters.Select(p => $"{p.Reference.PrefixAtIfKeyword()}: {p.Reference.PrefixAtIfKeyword()}"))}});
+            """);
         if (createContainerFunction.InitializationFunctionName is { } initializationFunctionName)
             _code.AppendLine($"{awaitPrefix}{createContainerFunction.ContainerReference}.{initializationFunctionName}();");
         _code.AppendLine($$"""
-return {{createContainerFunction.ContainerReference}};
-}
-""");
+            return {{createContainerFunction.ContainerReference}};
+            }
+            """);
     }
 
     public void VisitITransientScopeInterfaceNode(ITransientScopeInterfaceNode transientScopeInterface)
     {
         _code.AppendLine($$"""
-private interface {{transientScopeInterface.Name}}
-{
-""");
+            private interface {{transientScopeInterface.Name}}
+            {
+            """);
         foreach (var rangedInstanceInterfaceFunctionNode in transientScopeInterface.Functions)
             VisitIRangedInstanceInterfaceFunctionNode(rangedInstanceInterfaceFunctionNode);
         
@@ -117,21 +113,17 @@ private interface {{transientScopeInterface.Name}}
 
     public void VisitIScopeNode(IScopeNode scope)
     {
-        var disposableImplementation = scope.DisposalType.HasFlag(DisposalType.Async) 
-            ? $" : {_wellKnownTypes.IAsyncDisposable.FullName()}" 
-            : $" : {_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}";
-        
         _code.AppendLine($$"""
-private sealed partial class {{scope.Name}}{{disposableImplementation}}
-{
-private readonly {{scope.ContainerFullName}} {{scope.ContainerReference}};
-private readonly {{scope.TransientScopeInterfaceFullName}} {{scope.TransientScopeInterfaceReference}};
-internal {{scope.Name}}({{scope.ContainerFullName}} {{scope.ContainerParameterReference}}, {{scope.TransientScopeInterfaceFullName}} {{scope.TransientScopeInterfaceParameterReference}})
-{
-{{scope.ContainerReference}} = {{scope.ContainerParameterReference}};
-{{scope.TransientScopeInterfaceReference}} = {{scope.TransientScopeInterfaceParameterReference}};
-}
-""");
+            private sealed partial class {{scope.Name}} : {{GenerateDisposalInterfaceAssignments(scope.DisposalType)}}
+            {
+            private readonly {{scope.ContainerFullName}} {{scope.ContainerReference}};
+            private readonly {{scope.TransientScopeInterfaceFullName}} {{scope.TransientScopeInterfaceReference}};
+            internal {{scope.Name}}({{scope.ContainerFullName}} {{scope.ContainerParameterReference}}, {{scope.TransientScopeInterfaceFullName}} {{scope.TransientScopeInterfaceParameterReference}})
+            {
+            {{scope.ContainerReference}} = {{scope.ContainerParameterReference}};
+            {{scope.TransientScopeInterfaceReference}} = {{scope.TransientScopeInterfaceParameterReference}};
+            }
+            """);
 
         GenerateRangeNodeContent(scope);
 
@@ -140,30 +132,34 @@ internal {{scope.Name}}({{scope.ContainerFullName}} {{scope.ContainerParameterRe
 
     public void VisitITransientScopeNode(ITransientScopeNode transientScope)
     {
-        var disposableImplementation = transientScope.DisposalType.HasFlag(DisposalType.Async) 
-            ? $", {_wellKnownTypes.IAsyncDisposable.FullName()}" 
-            : $", {_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}";
-        
         _code.AppendLine($$"""
-private sealed partial class {{transientScope.Name}} : {{transientScope.TransientScopeInterfaceName}}{{disposableImplementation}}
-{
-private readonly {{transientScope.ContainerFullName}} {{transientScope.ContainerReference}};
-internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transientScope.ContainerParameterReference}})
-{
-{{transientScope.ContainerReference}} = {{transientScope.ContainerParameterReference}};
-}
-""");
+            private sealed partial class {{transientScope.Name}} : {{transientScope.TransientScopeInterfaceName}}, {{GenerateDisposalInterfaceAssignments(transientScope.DisposalType)}}
+            {
+            private readonly {{transientScope.ContainerFullName}} {{transientScope.ContainerReference}};
+            internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transientScope.ContainerParameterReference}})
+            {
+            {{transientScope.ContainerReference}} = {{transientScope.ContainerParameterReference}};
+            }
+            """);
 
         GenerateRangeNodeContent(transientScope);
 
         _code.AppendLine("}");
     }
+    
+    private string GenerateDisposalInterfaceAssignments(DisposalType disposalType) =>
+        (_wellKnownTypes.IAsyncDisposable, disposalType.HasFlag(DisposalType.Async)) switch
+        {
+            (null, _) => $"{_wellKnownTypes.IDisposable.FullName()}",
+            (_, true) => $"{_wellKnownTypes.IAsyncDisposable.FullName()}",
+            (_, false) => $"{_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}"
+        };
 
     public void VisitIScopeCallNode(IScopeCallNode scopeCall)
     {
         _code.AppendLine(
             $"{scopeCall.ScopeFullName} {scopeCall.ScopeReference} = new {scopeCall.ScopeFullName}({scopeCall.ContainerParameter}, {scopeCall.TransientScopeInterfaceParameter});");
-        if (scopeCall.DisposalType.HasFlag(DisposalType.Async))
+        if (scopeCall.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null)
             _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {scopeCall.ScopeReference});");
         else if (scopeCall.DisposalType.HasFlag(DisposalType.Sync))
             _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {scopeCall.ScopeReference});");
@@ -177,7 +173,7 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
             $"{transientScopeCall.TransientScopeFullName} {transientScopeCall.TransientScopeReference} = new {transientScopeCall.TransientScopeFullName}({transientScopeCall.ContainerParameter});");
         if (transientScopeCall.DisposalType is not DisposalType.None)
         {
-            var disposalType = transientScopeCall.DisposalType.HasFlag(DisposalType.Async) 
+            var disposalType = transientScopeCall.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null
                 ? _wellKnownTypes.IAsyncDisposable.FullName()
                 : _wellKnownTypes.IDisposable.FullName();
             var owner = transientScopeCall.ContainerReference is { } containerReference
@@ -244,7 +240,8 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
                 "disposable",
                 syncCollectionReference);
 
-        if (rangeNode is { AddForDisposalAsync: { } addForDisposalAsync, DisposalHandling.AsyncCollectionReference: { } asyncCollectionReference })
+        if (rangeNode is { AddForDisposalAsync: { } addForDisposalAsync, DisposalHandling.AsyncCollectionReference: { } asyncCollectionReference }
+            && _wellKnownTypes.IAsyncDisposable is not null)
             GenerateAddForDisposal(
                 addForDisposalAsync,
                 Constants.UserDefinedAddForDisposalAsync,
@@ -297,24 +294,25 @@ internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transien
         IRangeNode range)
     {
         var disposalHandling = range.DisposalHandling;
+        
+        if (_wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null)
+            _code.AppendLine($"private {_wellKnownTypes.ConcurrentBagOfAsyncDisposable.FullName()} {disposalHandling.AsyncCollectionReference} = new {_wellKnownTypes.ConcurrentBagOfAsyncDisposable.FullName()}();");
 
         _code.AppendLine($$"""
-private {{_wellKnownTypes.ConcurrentBagOfAsyncDisposable.FullName()}} {{disposalHandling.AsyncCollectionReference}} = new {{_wellKnownTypes.ConcurrentBagOfAsyncDisposable.FullName()}}();
-private {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{disposalHandling.SyncCollectionReference}} = new {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}}();
-private int {{disposalHandling.DisposedFieldReference}} = 0;
-private bool {{disposalHandling.DisposedPropertyReference}} => {{disposalHandling.DisposedFieldReference}} != 0;
-""");
+            private {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{disposalHandling.SyncCollectionReference}} = new {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}}();
+            private int {{disposalHandling.DisposedFieldReference}} = 0;
+            private bool {{disposalHandling.DisposedPropertyReference}} => {{disposalHandling.DisposedFieldReference}} != 0;
+            """);
         
         // Async part
         
-        GenerateDisposalFunctionInner(DisposalType.Async);
+        if (range.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null)
+            GenerateDisposalFunctionInner(DisposalType.Async);
         
         // Sync part
 
-        if (!range.DisposalType.HasFlag(DisposalType.Async))
-        {
+        if (!range.DisposalType.HasFlag(DisposalType.Async) || _wellKnownTypes.IAsyncDisposable is null)
             GenerateDisposalFunctionInner(DisposalType.Sync);
-        }
 
         void GenerateDisposalFunctionInner(DisposalType type)
         {
@@ -337,20 +335,20 @@ private bool {{disposalHandling.DisposedPropertyReference}} => {{disposalHandlin
             var listOfExceptionsFullName = _wellKnownTypesCollections.List1.Construct(_wellKnownTypes.Exception).FullName();
 
             _code.AppendLine($$"""
-public {{returnType}} Dispose{{functionNameSuffix}}()
-{
-var {{disposalHandling.DisposedLocalReference}} = global::System.Threading.Interlocked.Exchange(ref {{disposalHandling.DisposedFieldReference}}, 1);
-if ({{disposalHandling.DisposedLocalReference}} != 0) return;
-{{listOfExceptionsFullName}} {{disposalHandling.AggregateExceptionReference}} = new {{listOfExceptionsFullName}}();
-""");
+                public {{returnType}} Dispose{{functionNameSuffix}}()
+                {
+                var {{disposalHandling.DisposedLocalReference}} = global::System.Threading.Interlocked.Exchange(ref {{disposalHandling.DisposedFieldReference}}, 1);
+                if ({{disposalHandling.DisposedLocalReference}} != 0) return;
+                {{listOfExceptionsFullName}} {{disposalHandling.AggregateExceptionReference}} = new {{listOfExceptionsFullName}}();
+                """);
 
             foreach (var rangedInstanceFunctionGroup in range.RangedInstanceFunctionGroups)
                 _code.AppendLine($"{awaitPrefix}{rangedInstanceFunctionGroup.LockReference}.Wait{functionNameSuffix}();");
 
             _code.AppendLine("""
-try
-{
-""");
+                try
+                {
+                """);
 
             switch (range)
             {
@@ -360,27 +358,27 @@ try
                         ? $"await {elementName}.DisposeAsync();"
                         : $"({elementName} as {_wellKnownTypes.IDisposable.FullName()})?.Dispose();";
                     _code.AppendLine($$"""
-while ({{container.TransientScopeDisposalReference}}.Count > 0)
-{
-var {{elementName}} = {{_wellKnownTypesCollections.Enumerable}}.FirstOrDefault({{container.TransientScopeDisposalReference}}.Keys);
-if ({{elementName}} is not null && {{container.TransientScopeDisposalReference}}.TryRemove({{elementName}}, out _))
-{
-try
-{
-{{asyncTransientScopeDisposalInstruction}}
-}
-catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
-{
-// catch and aggregate so other disposals are triggered
-{{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
-}
-}
-}
-{{container.TransientScopeDisposalReference}}.Clear();
-""");
+                        while ({{container.TransientScopeDisposalReference}}.Count > 0)
+                        {
+                        var {{elementName}} = {{_wellKnownTypesCollections.Enumerable}}.FirstOrDefault({{container.TransientScopeDisposalReference}}.Keys);
+                        if ({{elementName}} is not null && {{container.TransientScopeDisposalReference}}.TryRemove({{elementName}}, out _))
+                        {
+                        try
+                        {
+                        {{asyncTransientScopeDisposalInstruction}}
+                        }
+                        catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
+                        {
+                        // catch and aggregate so other disposals are triggered
+                        {{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
+                        }
+                        }
+                        }
+                        {{container.TransientScopeDisposalReference}}.Clear();
+                        """);
                     break;
                 case ITransientScopeNode transientScope:
-                    var disposalType = transientScope.DisposalType.HasFlag(DisposalType.Async) 
+                    var disposalType = transientScope.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null
                         ? _wellKnownTypes.IAsyncDisposable.FullName() 
                         : _wellKnownTypes.IDisposable.FullName();
 
@@ -390,53 +388,53 @@ catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExcep
             }
 
             _code.AppendLine($$"""
-while({{disposalHandling.AsyncCollectionReference}}.Count > 0 && {{disposalHandling.AsyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
-{
-try
-{
-{{asyncDisposalInstruction}}
-}
-catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
-{
-// catch and aggregate so other disposals are triggered
-{{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
-}
-}
-while({{disposalHandling.SyncCollectionReference}}.Count > 0 && {{disposalHandling.SyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
-{
-try
-{
-{{disposalHandling.DisposableLocalReference}}.Dispose();
-}
-catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
-{
-// catch and aggregate so other disposals are triggered
-{{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
-}
-}
-}
-finally
-{
-""");
+                while({{disposalHandling.AsyncCollectionReference}}.Count > 0 && {{disposalHandling.AsyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
+                {
+                try
+                {
+                {{asyncDisposalInstruction}}
+                }
+                catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
+                {
+                // catch and aggregate so other disposals are triggered
+                {{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
+                }
+                }
+                while({{disposalHandling.SyncCollectionReference}}.Count > 0 && {{disposalHandling.SyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
+                {
+                try
+                {
+                {{disposalHandling.DisposableLocalReference}}.Dispose();
+                }
+                catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
+                {
+                // catch and aggregate so other disposals are triggered
+                {{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
+                }
+                }
+                }
+                finally
+                {
+                """);
 
             foreach (var rangedInstanceFunctionGroup in range.RangedInstanceFunctionGroups)
                 _code.AppendLine($"{rangedInstanceFunctionGroup.LockReference}.Release();");
 
             _code.AppendLine($$"""
-}
-if ({{disposalHandling.AggregateExceptionReference}}.Count == 1) throw {{disposalHandling.AggregateExceptionReference}}[0];
-else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {{_wellKnownTypes.AggregateException}}({{disposalHandling.AggregateExceptionReference}});
-}
-""");
+                }
+                if ({{disposalHandling.AggregateExceptionReference}}.Count == 1) throw {{disposalHandling.AggregateExceptionReference}}[0];
+                else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {{_wellKnownTypes.AggregateException}}({{disposalHandling.AggregateExceptionReference}});
+                }
+                """);
         }
     }
 
     private void VisitISingleFunctionNode(ISingleFunctionNode singleFunction, bool doDisposedChecks)
     {
         _code.AppendLine($$"""
-{{GenerateMethodDeclaration(singleFunction)}}
-{
-""");
+            {{GenerateMethodDeclaration(singleFunction)}}
+            {
+            """);
         
         if (doDisposedChecks)
             ObjectDisposedCheck(
@@ -484,10 +482,9 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
 
         void Generic()
         {
-            _code.AppendLine(
-                $$"""
-                  private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
-                  """);
+            _code.AppendLine($$"""
+               private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
+               """);
             var typeHandleField = _referenceGenerator.Generate("typeHandle");
 
             foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
@@ -500,13 +497,13 @@ else if ({{disposalHandling.AggregateExceptionReference}}.Count > 1) throw new {
                 var isAsync =
                     overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
                 _code.AppendLine($$"""
-{
-var {{typeHandleField}} = typeof({{overload.ReturnedElement.TypeFullName}}).TypeHandle;
-if ({{rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance0}}) && {{instance0}} is {{overload.ReturnedElement.TypeFullName}} {{instance1}}) return {{instance1}};
-{{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
-try
-{
-""");
+                    {
+                    var {{typeHandleField}} = typeof({{overload.ReturnedElement.TypeFullName}}).TypeHandle;
+                    if ({{rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance0}}) && {{instance0}} is {{overload.ReturnedElement.TypeFullName}} {{instance1}}) return {{instance1}};
+                    {{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
+                    try
+                    {
+                    """);
                 
                 ObjectDisposedCheck(
                     overload.DisposedPropertyReference, 
@@ -528,13 +525,13 @@ try
                     overload.ReturnedTypeFullName);
                 
                 _code.AppendLine($$"""
-return {{overload.ReturnedElement.Reference}};
-}
-finally
-{
-{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
-}
-""");
+                    return {{overload.ReturnedElement.Reference}};
+                    }
+                    finally
+                    {
+                    {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
+                    }
+                    """);
                 foreach (var localFunction in overload.LocalFunctions)
                     VisitISingleFunctionNode(localFunction, true);
                 _code.AppendLine("}");
@@ -544,9 +541,9 @@ finally
         void RefLike()
         {
             _code.AppendLine($$"""
-private {{rangedInstanceFunctionGroupNode.TypeFullName}}? {{rangedInstanceFunctionGroupNode.FieldReference}};
-private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
-""");
+                private {{rangedInstanceFunctionGroupNode.TypeFullName}}? {{rangedInstanceFunctionGroupNode.FieldReference}};
+                private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
+                """);
 
             foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
             {
@@ -557,12 +554,12 @@ private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGro
                 var isAsync =
                     overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
                 _code.AppendLine($$"""
-{
-{{checkAndReturnAlreadyCreatedInstance}}
-{{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
-try
-{
-""");
+                    {
+                    {{checkAndReturnAlreadyCreatedInstance}}
+                    {{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
+                    try
+                    {
+                    """);
                 
                 ObjectDisposedCheck(
                     overload.DisposedPropertyReference, 
@@ -573,21 +570,19 @@ try
                 VisitIElementNode(overload.ReturnedElement);
 
                 _code.AppendLine($$"""
-{{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
-}
-finally
-{
-{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
-}
-""");
+                    {{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
+                    }
+                    finally
+                    {
+                    {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
+                    }
+                    """);
             
                 ObjectDisposedCheck(
                     overload.DisposedPropertyReference, 
                     overload.RangeFullName, 
                     overload.ReturnedTypeFullName);
-                _code.AppendLine($$"""
-return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReference}};
-""");
+                _code.AppendLine($"return {Constants.ThisKeyword}.{rangedInstanceFunctionGroupNode.FieldReference};");
                 foreach (var localFunction in overload.LocalFunctions)
                     VisitISingleFunctionNode(localFunction, true);
                 _code.AppendLine("}");
@@ -597,9 +592,9 @@ return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReferenc
         void Struct()
         {
             _code.AppendLine($$"""
-private {{rangedInstanceFunctionGroupNode.TypeFullName}} {{rangedInstanceFunctionGroupNode.FieldReference}};
-private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
-""");
+                private {{rangedInstanceFunctionGroupNode.TypeFullName}} {{rangedInstanceFunctionGroupNode.FieldReference}};
+                private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
+                """);
 
             _code.AppendLine($"private bool {rangedInstanceFunctionGroupNode.IsCreatedForStructs};");
 
@@ -612,12 +607,12 @@ private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{rangedInstanceFunctionGro
                 var isAsync =
                     overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
                 _code.AppendLine($$"""
-{
-{{checkAndReturnAlreadyCreatedInstance}}
-{{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
-try
-{
-""");
+                    {
+                    {{checkAndReturnAlreadyCreatedInstance}}
+                    {{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
+                    try
+                    {
+                    """);
             
                 ObjectDisposedCheck(
                     overload.DisposedPropertyReference, 
@@ -628,14 +623,14 @@ try
                 VisitIElementNode(overload.ReturnedElement);
 
                 _code.AppendLine($$"""
-{{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
-{{rangedInstanceFunctionGroupNode.IsCreatedForStructs}} = true;
-}
-finally
-{
-{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
-}
-""");
+                    {{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
+                    {{rangedInstanceFunctionGroupNode.IsCreatedForStructs}} = true;
+                    }
+                    finally
+                    {
+                    {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
+                    }
+                    """);
             
                 ObjectDisposedCheck(
                     overload.DisposedPropertyReference, 
@@ -831,9 +826,9 @@ finally
 
     public void VisitIImplementationNode(IImplementationNode implementationNode)
     {
-        if (implementationNode.UserDefinedInjectionConstructor is {})
+        if (implementationNode.UserDefinedInjectionConstructor is not null)
             ProcessUserDefinedInjection(implementationNode.UserDefinedInjectionConstructor);
-        if (implementationNode.UserDefinedInjectionProperties is {})
+        if (implementationNode.UserDefinedInjectionProperties is not null)
             ProcessUserDefinedInjection(implementationNode.UserDefinedInjectionProperties);
         foreach (var (_, element) in implementationNode.ConstructorParameters)
             VisitIElementNode(element);
@@ -853,13 +848,13 @@ finally
         if (implementationNode.SyncDisposalCollectionReference is {} syncDisposalCollectionReference)
             _code.AppendLine(
                 $"{syncDisposalCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {implementationNode.Reference});");
-        if (implementationNode.AsyncDisposalCollectionReference is {} asyncDisposalCollectionReference)
+        if (implementationNode.AsyncDisposalCollectionReference is {} asyncDisposalCollectionReference && _wellKnownTypes.IAsyncDisposable is not null)
             _code.AppendLine(
                 $"{asyncDisposalCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {implementationNode.Reference});");
 
         if (implementationNode.Initializer is {} init)
         {
-            if (init.UserDefinedInjection is {})
+            if (init.UserDefinedInjection is not null)
                 ProcessUserDefinedInjection(init.UserDefinedInjection);
             foreach (var (_, element) in init.Parameters)
                 VisitIElementNode(element);
@@ -913,9 +908,9 @@ finally
     private void VisitIMultiFunctionNodeBase(IMultiFunctionNodeBase multiFunctionNodeBase)
     {
         _code.AppendLine($$"""
-{{GenerateMethodDeclaration(multiFunctionNodeBase)}}
-{
-""");
+            {{GenerateMethodDeclaration(multiFunctionNodeBase)}}
+            {
+            """);
         
         ObjectDisposedCheck(
             multiFunctionNodeBase.DisposedPropertyReference, 
@@ -1023,9 +1018,9 @@ finally
     public void VisitIVoidFunctionNode(IVoidFunctionNode voidFunctionNode)
     {
         _code.AppendLine($$"""
-{{GenerateMethodDeclaration(voidFunctionNode)}}
-{
-""");
+            {{GenerateMethodDeclaration(voidFunctionNode)}}
+            {
+            """);
         foreach (var (functionCallNode, initializedInstanceNode) in voidFunctionNode.Initializations)
         {
             VisitIElementNode(functionCallNode);

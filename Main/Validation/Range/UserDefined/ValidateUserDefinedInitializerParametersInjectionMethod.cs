@@ -3,10 +3,7 @@ using MrMeeseeks.DIE.Logging;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
-internal interface IValidateUserDefinedInitializerParametersInjectionMethod : IValidateUserDefinedInjectionMethod
-{
-    
-}
+internal interface IValidateUserDefinedInitializerParametersInjectionMethod : IValidateUserDefinedInjectionMethod;
 
 internal sealed class ValidateUserDefinedInitializerParametersInjectionMethod : ValidateUserDefinedInjectionMethod, IValidateUserDefinedInitializerParametersInjectionMethod
 {

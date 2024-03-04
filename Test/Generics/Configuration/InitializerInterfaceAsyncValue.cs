@@ -19,7 +19,7 @@ internal class Dependency<T0> : IValueTaskInitializer
 }
 
 [CreateFunction(typeof(Dependency<int>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

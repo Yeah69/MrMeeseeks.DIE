@@ -1,6 +1,3 @@
 namespace MrMeeseeks.DIE.TestNotInternalsVisibleToChild;
 
-public class AssemblyInfo
-{
-    
-}
+public class AssemblyInfo;

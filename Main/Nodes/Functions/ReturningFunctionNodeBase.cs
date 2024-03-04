@@ -8,9 +8,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IReturningFunctionNode : IFunctionNode
-{
-}
+internal interface IReturningFunctionNode : IFunctionNode;
 
 internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturningFunctionNode
 {
@@ -52,16 +50,21 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         TypeParameters = typeParameterUtility.ExtractTypeParameters(typeSymbol);
     }
 
-    protected override string GetAsyncTypeFullName() => TypeSymbol is INamedTypeSymbol namedTypeSymbol
-        ? namedTypeSymbol.OriginalDefinitionIfUnbound().FullName() 
-        : TypeSymbol.FullName();
-
-    protected override string GetReturnedTypeFullName()
+    protected override void AdjustToAsync()
     {
         var symbol = TypeSymbol is INamedTypeSymbol namedTypeSymbol
             ? namedTypeSymbol.OriginalDefinitionIfUnbound()
             : TypeSymbol;
-        return WellKnownTypes.ValueTask1.Construct(symbol).FullName();
+        if (WellKnownTypes.ValueTask1 is not null)
+        {
+            SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
+            ReturnedTypeFullName =  WellKnownTypes.ValueTask1.Construct(symbol).FullName();
+        }
+        else
+        {
+            SynchronicityDecision = SynchronicityDecision.AsyncTask;
+            ReturnedTypeFullName =  WellKnownTypes.Task1.Construct(symbol).FullName();
+        }
     }
 
     public override bool CheckIfReturnedType(ITypeSymbol type) => 

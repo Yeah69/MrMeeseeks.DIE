@@ -9,7 +9,7 @@ internal record Dependency;
 internal record Implementation(Dependency Dependency);
 
 [CreateFunction(typeof(Implementation), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

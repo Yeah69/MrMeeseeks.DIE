@@ -4,10 +4,10 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Struct.NoExplicitConstructor;
 
-internal struct Dependency {}
+internal struct Dependency;
 
 [CreateFunction(typeof(Dependency), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

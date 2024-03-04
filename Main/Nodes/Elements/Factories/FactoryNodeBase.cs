@@ -30,7 +30,7 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         Reference = referenceGenerator.Generate(referenceType);
         TypeFullName = referenceType.FullName();
         
-        if ((CustomSymbolEqualityComparer.IncludeNullability.Equals(referenceType.OriginalDefinition, wellKnownTypes.ValueTask1)
+        if ((wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.IncludeNullability.Equals(referenceType.OriginalDefinition, wellKnownTypes.ValueTask1)
              || CustomSymbolEqualityComparer.IncludeNullability.Equals(referenceType.OriginalDefinition, wellKnownTypes.Task1))
             && referenceType is INamedTypeSymbol namedReferenceType)
         {

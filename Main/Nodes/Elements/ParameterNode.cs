@@ -2,9 +2,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
-internal interface IParameterNode : IElementNode
-{
-}
+internal interface IParameterNode : IElementNode;
 
 internal sealed partial class ParameterNode : IParameterNode
 {

@@ -5,15 +5,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.TransientScopeInstance.InContainer;
 
-internal interface IInterface {}
+internal interface IInterface;
 
-internal class Dependency : IInterface, ITransientScopeInstance {}
+internal class Dependency : IInterface, ITransientScopeInstance;
 
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container
-{
-    
-}
+internal sealed partial class Container;
 
 public class Tests
 {

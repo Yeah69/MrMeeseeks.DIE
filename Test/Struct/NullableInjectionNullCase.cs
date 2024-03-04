@@ -5,7 +5,7 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Struct.NullableInjectionNullCase;
 
-internal struct Dependency {}
+internal struct Dependency;
 
 internal class Root
 {
@@ -16,7 +16,7 @@ internal class Root
 
 [FilterImplementationAggregation(typeof(Dependency))]
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

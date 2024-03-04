@@ -68,7 +68,7 @@ internal class Parent
 [CreateFunction(typeof(Parent), "Create")]
 [DecoratorSequenceChoice(typeof(IInterfaceA), typeof(Dependency), typeof(DecoratorAA), typeof(DecoratorAB))]
 [DecoratorSequenceChoice(typeof(IInterfaceB), typeof(Dependency), typeof(DecoratorBA), typeof(DecoratorBB))]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

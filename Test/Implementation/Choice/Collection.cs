@@ -5,15 +5,15 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Implementation.Choice.Collection;
 
-internal class Class {}
+internal class Class;
 
-internal class SubClassA : Class {}
+internal class SubClassA : Class;
 
-internal class SubClassB : Class {}
+internal class SubClassB : Class;
 
 [ImplementationCollectionChoice(typeof(Class), typeof(SubClassA), typeof(SubClassB))]
 [CreateFunction(typeof(IReadOnlyList<Class>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

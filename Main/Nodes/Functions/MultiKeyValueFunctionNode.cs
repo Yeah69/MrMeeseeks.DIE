@@ -10,9 +10,7 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IMultiKeyValueFunctionNode : IMultiFunctionNodeBase
-{
-}
+internal interface IMultiKeyValueFunctionNode : IMultiFunctionNodeBase;
 
 internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMultiKeyValueFunctionNode, IScopeInstance
 {

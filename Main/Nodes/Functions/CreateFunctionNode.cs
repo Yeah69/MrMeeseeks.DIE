@@ -9,13 +9,9 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface ICreateFunctionNodeBase : ISingleFunctionNode
-{
-}
+internal interface ICreateFunctionNodeBase : ISingleFunctionNode;
 
-internal interface ICreateFunctionNode : ICreateFunctionNodeBase
-{
-}
+internal interface ICreateFunctionNode : ICreateFunctionNodeBase;
 
 internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICreateFunctionNode, IScopeInstance
 {

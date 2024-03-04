@@ -2,7 +2,7 @@
 // ReSharper disable UnusedParameter.Local
 namespace MrMeeseeks.DIE.TestInternalsVisibleToChild.Internal;
 
-internal interface IClass {}
+internal interface IClass;
 
 internal class Class : IClass
 {
@@ -16,7 +16,7 @@ internal class Class : IClass
     }
 }
 
-internal interface IClassToo {}
+internal interface IClassToo;
 
 internal class ClassToo : IClassToo
 {
@@ -32,7 +32,7 @@ internal class ClassToo : IClassToo
 }
 
 // ReSharper disable UnusedTypeParameter
-internal interface IClass<T0, T1> {}
+internal interface IClass<T0, T1>;
 // ReSharper restore UnusedTypeParameter
 
 internal class Class<T0, T1> : IClass<T0, T1>

@@ -17,7 +17,7 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
 {
     private readonly INamedTypeSymbol _type;
     private readonly IContainerNode _parentContainer;
-    private readonly List<IRangedInstanceFunctionNode> _implementations = new(); 
+    private readonly List<IRangedInstanceFunctionNode> _implementations = []; 
     
     public RangedInstanceInterfaceFunctionNode(
         // parameters

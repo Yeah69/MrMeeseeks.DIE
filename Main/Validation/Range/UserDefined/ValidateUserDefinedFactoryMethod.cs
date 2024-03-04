@@ -2,10 +2,7 @@ using MrMeeseeks.DIE.Logging;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
-internal interface IValidateUserDefinedFactoryMethod : IValidateUserDefinedMethod
-{
-    
-}
+internal interface IValidateUserDefinedFactoryMethod : IValidateUserDefinedMethod;
 
 internal sealed class ValidateUserDefinedFactoryMethod : ValidateUserDefinedMethod, IValidateUserDefinedFactoryMethod
 {

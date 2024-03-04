@@ -24,7 +24,7 @@ internal class Decorator : IInterface, IDecorator<IInterface>
 }
 
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

@@ -5,9 +5,9 @@ using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Struct.NullableInjectionByInterface;
 
-internal interface IInterface {}
+internal interface IInterface;
 
-internal struct Dependency : IInterface {}
+internal struct Dependency : IInterface;
 
 internal class Root
 {
@@ -17,7 +17,7 @@ internal class Root
 }
 
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

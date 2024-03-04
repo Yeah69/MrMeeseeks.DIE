@@ -4,7 +4,4 @@ using System.Runtime.CompilerServices;
 
 namespace MrMeeseeks.DIE.TestInternalsVisibleToChild;
 
-public class AssemblyInfo
-{
-    
-}
+public class AssemblyInfo;

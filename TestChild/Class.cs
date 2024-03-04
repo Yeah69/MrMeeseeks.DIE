@@ -1,6 +1,6 @@
 ﻿namespace MrMeeseeks.DIE.TestChild;
 
-public interface IClass {}
+public interface IClass;
 
 public class Class : IClass
 {
@@ -16,7 +16,7 @@ public class Class : IClass
     }
 }
 
-public interface IClassToo {}
+public interface IClassToo;
 
 public class ClassToo : IClassToo
 {

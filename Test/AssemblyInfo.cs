@@ -22,4 +22,4 @@ using MrMeeseeks.DIE.UserUtility;
 
 [assembly:ErrorDescriptionInsteadOfBuildFailure]
 
-[assembly:Analytics(Analytics.ResolutionGraph)]
+//[assembly:Analytics(Analytics.ResolutionGraph)]

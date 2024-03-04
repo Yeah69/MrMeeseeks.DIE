@@ -147,12 +147,25 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         _code.AppendLine("}");
     }
     
-    private string GenerateDisposalInterfaceAssignments(DisposalType disposalType) =>
-        (_wellKnownTypes.IAsyncDisposable, disposalType.HasFlag(DisposalType.Async)) switch
+    private string GenerateDisposalInterfaceAssignments(DisposalType rangeDisposalType) =>
+        GetGeneratedDisposalTypes(rangeDisposalType) switch
         {
-            (null, _) => $"{_wellKnownTypes.IDisposable.FullName()}",
-            (_, true) => $"{_wellKnownTypes.IAsyncDisposable.FullName()}",
-            (_, false) => $"{_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}"
+            DisposalType.Sync | DisposalType.Async when _wellKnownTypes.IAsyncDisposable is not null => 
+                $"{_wellKnownTypes.IAsyncDisposable.FullName()}, {_wellKnownTypes.IDisposable.FullName()}",
+            DisposalType.Async when _wellKnownTypes.IAsyncDisposable is not null => 
+                $"{_wellKnownTypes.IAsyncDisposable.FullName()}",
+            DisposalType.Sync => $"{_wellKnownTypes.IDisposable.FullName()}",
+            _ => ""
+        };
+    
+    // The actually generated disposal handling isn't only depending on the disposal type of the range,
+    // but also on the availability of the IAsyncDisposable interface.
+    private DisposalType GetGeneratedDisposalTypes(DisposalType rangeDisposalType) =>
+        (_wellKnownTypes.IAsyncDisposable is null || _wellKnownTypes.ValueTask is null, rangeDisposalType.HasFlag(DisposalType.Async)) switch
+        {
+            (true, _) => DisposalType.Sync,
+            (false, true) => DisposalType.Async,
+            (false, false) => DisposalType.Sync | DisposalType.Async
         };
 
     public void VisitIScopeCallNode(IScopeCallNode scopeCall)
@@ -304,14 +317,16 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             private bool {{disposalHandling.DisposedPropertyReference}} => {{disposalHandling.DisposedFieldReference}} != 0;
             """);
         
+        var actualDisposalTypes = GetGeneratedDisposalTypes(range.DisposalType);
+        
         // Async part
         
-        if (range.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null)
+        if (actualDisposalTypes.HasFlag(DisposalType.Async))
             GenerateDisposalFunctionInner(DisposalType.Async);
         
         // Sync part
 
-        if (!range.DisposalType.HasFlag(DisposalType.Async) || _wellKnownTypes.IAsyncDisposable is null)
+        if (actualDisposalTypes.HasFlag(DisposalType.Sync))
             GenerateDisposalFunctionInner(DisposalType.Sync);
 
         void GenerateDisposalFunctionInner(DisposalType type)
@@ -321,7 +336,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                 : "";
             
             var returnType = type is DisposalType.Async
-                ? $"async {_wellKnownTypes.ValueTask.FullName()}"
+                ? $"async {_wellKnownTypes.ValueTask?.FullName()}" // won't be async if ValueTask is not available
                 : "void";
             
             var awaitPrefix = type is DisposalType.Async
@@ -387,35 +402,42 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                     break;
             }
 
-            _code.AppendLine($$"""
-                while({{disposalHandling.AsyncCollectionReference}}.Count > 0 && {{disposalHandling.AsyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
-                {
-                try
-                {
-                {{asyncDisposalInstruction}}
-                }
-                catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
-                {
-                // catch and aggregate so other disposals are triggered
-                {{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
-                }
-                }
-                while({{disposalHandling.SyncCollectionReference}}.Count > 0 && {{disposalHandling.SyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
-                {
-                try
-                {
-                {{disposalHandling.DisposableLocalReference}}.Dispose();
-                }
-                catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
-                {
-                // catch and aggregate so other disposals are triggered
-                {{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
-                }
-                }
-                }
-                finally
-                {
-                """);
+            if (disposalHandling.AsyncCollectionReference is not null)
+            {
+                _code.AppendLine(
+                    $$"""
+                      while({{disposalHandling.AsyncCollectionReference}}.Count > 0 && {{disposalHandling.AsyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
+                      {
+                      try
+                      {
+                      {{asyncDisposalInstruction}}
+                      }
+                      catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
+                      {
+                      // catch and aggregate so other disposals are triggered
+                      {{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
+                      }
+                      }
+                      """);
+            }
+            _code.AppendLine(
+                $$"""
+                  while({{disposalHandling.SyncCollectionReference}}.Count > 0 && {{disposalHandling.SyncCollectionReference}}.TryTake(out var {{disposalHandling.DisposableLocalReference}}))
+                  {
+                  try
+                  {
+                  {{disposalHandling.DisposableLocalReference}}.Dispose();
+                  }
+                  catch({{_wellKnownTypes.Exception.FullName()}} {{disposalHandling.AggregateExceptionItemReference}})
+                  {
+                  // catch and aggregate so other disposals are triggered
+                  {{disposalHandling.AggregateExceptionReference}}.Add({{disposalHandling.AggregateExceptionItemReference}});
+                  }
+                  }
+                  }
+                  finally
+                  {
+                  """);
 
             foreach (var rangedInstanceFunctionGroup in range.RangedInstanceFunctionGroups)
                 _code.AppendLine($"{rangedInstanceFunctionGroup.LockReference}.Release();");

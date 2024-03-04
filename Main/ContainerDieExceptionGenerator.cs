@@ -62,7 +62,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
             public {{listOfKinds.FullName()}} ExceptionKinds_0_0 { get; } = new {{listOfKinds.FullName()}}() { {{string.Join(", ", _diagLogger.ErrorKinds.Select(k => $"{_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{k.ToString()}"))}} };
             public string ExceptionToString_0_1 => @"{{exception?.ToString() ?? "no exception"}}";
             public void Dispose(){}
-            public {{_wellKnownTypes.ValueTask.FullName()}} DisposeAsync() => new {{_wellKnownTypes.ValueTask.FullName()}}();
+            {{(_wellKnownTypes.ValueTask is not null ? $"public {_wellKnownTypes.ValueTask.FullName()} DisposeAsync() => new {_wellKnownTypes.ValueTask.FullName()}();" : "")}}
             }
             }
             #nullable disable

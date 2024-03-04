@@ -7,10 +7,10 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol IDisposable, // .NET Standard 2.0
     INamedTypeSymbol? IAsyncDisposable, // .NET Standard 2.1
     // ReSharper restore InconsistentNaming
-    INamedTypeSymbol Lazy1,  // .NET Standard 2.0
+    INamedTypeSymbol Lazy1, // .NET Standard 2.0
     INamedTypeSymbol ThreadLocal1, // .NET Standard 2.0
-    INamedTypeSymbol ValueTask, // .NET Standard 2.1
-    INamedTypeSymbol ValueTask1, // .NET Standard 2.1
+    INamedTypeSymbol? ValueTask, // .NET Standard 2.1
+    INamedTypeSymbol? ValueTask1, // .NET Standard 2.1
     INamedTypeSymbol Task, // .NET Standard 2.0
     INamedTypeSymbol Task1, // .NET Standard 2.0
     INamedTypeSymbol ObjectDisposedException, // .NET Standard 2.0
@@ -40,8 +40,8 @@ internal sealed record WellKnownTypes(
             IAsyncDisposable: iAsyncDisposable,
             Lazy1: compilation.GetTypeByMetadataNameOrThrow("System.Lazy`1"),
             ThreadLocal1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.ThreadLocal`1"),
-            ValueTask: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.ValueTask"),
-            ValueTask1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.ValueTask`1"),
+            ValueTask: compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask"),
+            ValueTask1: compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1"),
             Task: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task"),
             Task1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task`1"),
             ObjectDisposedException: compilation.GetTypeByMetadataNameOrThrow("System.ObjectDisposedException"),

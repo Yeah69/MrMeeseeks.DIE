@@ -38,10 +38,7 @@ internal sealed partial class Container
     
     [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_DefaultScope
-    {
-        
-    }
+    private sealed partial class DIE_DefaultScope;
 }
 
 public class Tests

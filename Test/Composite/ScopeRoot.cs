@@ -12,9 +12,9 @@ internal interface IInterface
     IDependency Dependency { get; }
 }
 
-internal interface IDependency { }
+internal interface IDependency;
 
-internal class Dependency : IDependency, IScopeInstance { }
+internal class Dependency : IDependency, IScopeInstance;
 
 internal class BasisA : IInterface, IScopeRoot
 {
@@ -46,7 +46,7 @@ internal class Composite : IInterface, IComposite<IInterface>
 
 [CreateFunction(typeof(IInterface), "CreateDep")]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "CreateCollection")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

@@ -4,12 +4,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.BaseClassing.Interface.InheritedCreateFunctionAttribute;
 
-internal class Class {}
+internal class Class;
 
 [CreateFunction(typeof(Class), "Create")]
-internal interface IContainerBase { }
+internal interface IContainerBase;
 
-internal sealed partial class Container : IContainerBase { }
+internal sealed partial class Container : IContainerBase;
 
 public class Tests
 {

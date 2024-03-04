@@ -8,18 +8,18 @@ namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.KeyedInjectionsMultiple
 
 internal enum KeyValues { A, B, C }
 
-internal interface IInterface<T> { }
+internal interface IInterface<T>;
 
 [InjectionKey(KeyValues.A)]
-internal class DependencyA0<T> : IInterface<T> { }
+internal class DependencyA0<T> : IInterface<T>;
 [InjectionKey(KeyValues.A)]
-internal class DependencyA1<T> : IInterface<T> { }
-internal class DependencyB0<T> : IInterface<T> { }
-internal class DependencyB1<T> : IInterface<T> { }
+internal class DependencyA1<T> : IInterface<T>;
+internal class DependencyB0<T> : IInterface<T>;
+internal class DependencyB1<T> : IInterface<T>;
 [InjectionKey(KeyValues.C)]
-internal class DependencyC0<T> : IInterface<T> { }
+internal class DependencyC0<T> : IInterface<T>;
 [InjectionKey(KeyValues.C)]
-internal class DependencyC1<T> : IInterface<T> { }
+internal class DependencyC1<T> : IInterface<T>;
 
 internal class Root<TA, TB>
 {
@@ -34,7 +34,7 @@ internal class Root<TA, TB>
 [InjectionKeyChoice(KeyValues.B, typeof(DependencyB0<>))]
 [InjectionKeyChoice(KeyValues.B, typeof(DependencyB1<>))]
 [CreateFunction(typeof(Root<,>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

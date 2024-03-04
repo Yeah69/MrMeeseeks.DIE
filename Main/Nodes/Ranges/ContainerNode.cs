@@ -41,10 +41,10 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
     private readonly Func<IMethodSymbol?, IVoidFunctionNode?, ICreateContainerFunctionNode> _creatContainerFunctionNodeFactory;
-    private readonly List<IEntryFunctionNode> _rootFunctions = new();
+    private readonly List<IEntryFunctionNode> _rootFunctions = [];
     private readonly Lazy<IScopeManager> _lazyScopeManager;
     private readonly Lazy<DisposalType> _lazyDisposalType;
-    private readonly List<IDelegateBaseNode> _delegateBaseNodes = new();
+    private readonly List<IDelegateBaseNode> _delegateBaseNodes = [];
 
     public override string FullName { get; }
     public override DisposalType DisposalType => _lazyDisposalType.Value;
@@ -161,7 +161,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
             ? userDefinedConstructors
                 .Select(ic => _creatContainerFunctionNodeFactory(ic, initializedInstancesFunction))
                 .ToList()
-            : new List<ICreateContainerFunctionNode>{ _creatContainerFunctionNodeFactory(null, initializedInstancesFunction) };
+            : [_creatContainerFunctionNodeFactory(null, initializedInstancesFunction)];
 
         TransientScopeInterface.RegisterRange(this);
         base.Build(passedContext);

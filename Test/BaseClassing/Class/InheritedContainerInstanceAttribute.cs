@@ -4,13 +4,13 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.BaseClassing.Class.InheritedContainerInstanceAttribute;
 
-internal class Class {}
+internal class Class;
 
 [ContainerInstanceImplementationAggregation(typeof(Class))]
-internal abstract class ContainerBase { }
+internal abstract class ContainerBase;
 
 [CreateFunction(typeof(Class), "Create")]
-internal sealed partial class Container : ContainerBase { }
+internal sealed partial class Container : ContainerBase;
 
 public class Tests
 {

@@ -79,7 +79,8 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
     public void Build(PassedContext passedContext)
     {
         var isIEnumerable = CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1);
-        var isIAsyncEnumerable = CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1);
+        var isIAsyncEnumerable = _wellKnownTypesCollections.IAsyncEnumerable1 is not null 
+                                 && CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1);
         
         var keyType = isIEnumerable || isIAsyncEnumerable
             ? ((INamedTypeSymbol) _mapType.TypeArguments[0]).TypeArguments[0]
@@ -145,7 +146,9 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
                 mapType.FullName(), 
                 _referenceGenerator.Generate(mapType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableDictionary2))
+        if (_wellKnownTypesCollections.ImmutableDictionary2 is not null 
+            && _wellKnownTypesCollections.ImmutableDictionary is not null
+            && CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableDictionary2))
         {
             var mapType = _wellKnownTypesCollections.ImmutableDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleImmutableDictionary;
@@ -154,7 +157,9 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
                 _referenceGenerator.Generate(mapType),
                 _wellKnownTypesCollections.ImmutableDictionary.FullName());
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedDictionary2))
+        if (_wellKnownTypesCollections.ImmutableSortedDictionary2 is not null 
+            && _wellKnownTypesCollections.ImmutableSortedDictionary is not null
+            && CustomSymbolEqualityComparer.Default.Equals(_mapType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedDictionary2))
         {
             var mapType = _wellKnownTypesCollections.ImmutableSortedDictionary2.Construct(keyType, valueType);
             Type = KeyValueBasedType.SingleImmutableSortedDictionary;
@@ -164,7 +169,7 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
                 _wellKnownTypesCollections.ImmutableSortedDictionary.FullName());
         }
         
-        var enumerableType = Type == KeyValueBasedType.SingleIAsyncEnumerable 
+        var enumerableType = Type == KeyValueBasedType.SingleIAsyncEnumerable && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
             ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(keyValuePairType)
             : _wellKnownTypesCollections.IEnumerable1.Construct(keyValuePairType);
         EnumerableCall = isMulti 

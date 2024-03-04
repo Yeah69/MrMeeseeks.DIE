@@ -4,13 +4,13 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Implementation.Choice.SingleInCollection;
 
-internal class Class {}
+internal class Class;
 
-internal class SubClass : Class {}
+internal class SubClass : Class;
 
 [ImplementationCollectionChoice(typeof(Class), typeof(SubClass))]
 [CreateFunction(typeof(Class), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

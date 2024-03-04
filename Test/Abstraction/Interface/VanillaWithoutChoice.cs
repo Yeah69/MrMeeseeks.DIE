@@ -4,12 +4,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Abstraction.Interface.VanillaWithoutChoice;
 
-internal interface IInterface {}
+internal interface IInterface;
 
-internal class SubClass : IInterface {}
+internal class SubClass : IInterface;
 
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

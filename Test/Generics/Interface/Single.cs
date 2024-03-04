@@ -5,12 +5,12 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Interface.Single;
 
 // ReSharper disable once UnusedTypeParameter
-internal interface IInterface<T0> {}
+internal interface IInterface<T0>;
 
-internal class Class<T0> : IInterface<T0> {}
+internal class Class<T0> : IInterface<T0>;
 
 [CreateFunction(typeof(IInterface<int>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

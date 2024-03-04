@@ -4,14 +4,14 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Choice.Single;
 
-internal interface IInterface {}
+internal interface IInterface;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Class<T0> : IInterface {}
+internal class Class<T0> : IInterface;
 
 [GenericParameterChoice(typeof(Class<>), "T0", typeof(int))]
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

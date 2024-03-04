@@ -55,6 +55,6 @@ internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunc
         && synchronicityDecision != SynchronicityDecision.Sync;
 
     public string ReturnTypeFullName => InitializationAwaited
-        ? _wellKnownTypes.ValueTask1.Construct(_containerType).FullName()
+        ? (_wellKnownTypes.ValueTask1 ?? _wellKnownTypes.Task1).Construct(_containerType).FullName()
         : ContainerTypeFullName;
 }

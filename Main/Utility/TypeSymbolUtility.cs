@@ -23,7 +23,7 @@ internal static class TypeSymbolUtility
         type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal);
 
     internal static bool IsWrapTypeOfSingleGenericType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
-        CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
+        wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ThreadLocal1);

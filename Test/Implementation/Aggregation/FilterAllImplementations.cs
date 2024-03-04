@@ -4,16 +4,16 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.FilterAllImplementations;
 
-internal interface IInterface { }
+internal interface IInterface;
 
-internal class DependencyA : IInterface {}
+internal class DependencyA : IInterface;
 
-internal class DependencyB : IInterface {}
+internal class DependencyB : IInterface;
 
 [FilterAllImplementationsAggregation]
 [ImplementationAggregation(typeof(DependencyB))]
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

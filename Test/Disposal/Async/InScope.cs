@@ -26,7 +26,7 @@ internal class ScopeRoot : IScopeRoot
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

@@ -8,7 +8,6 @@
     <AssemblyName>MrMeeseeks.DIE.Sample</AssemblyName>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
-    <LangVersion>11</LangVersion>
     <RestoreAdditionalProjectSources>../_SupportPackages</RestoreAdditionalProjectSources>
   </PropertyGroup>
 

@@ -6,13 +6,10 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.FuncContainerInstance;
 
-internal class Dependency : IContainerInstance {}
+internal class Dependency : IContainerInstance;
 
 [CreateFunction(typeof(Func<string, Dependency>), "Create")]
-internal sealed partial class Container
-{
-    
-}
+internal sealed partial class Container;
 
 public class Tests
 {

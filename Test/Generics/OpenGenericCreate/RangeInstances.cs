@@ -5,12 +5,12 @@ using MrMeeseeks.DIE.UserUtility;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.RangedInstances;
 
-internal class Class<T> : IContainerInstance { }
+internal class Class<T> : IContainerInstance;
 
 [CreateFunction(typeof(Class<>), "Create")]
 [CreateFunction(typeof(Class<int>), "CreateInt")]
 [CreateFunction(typeof(Class<string>), "CreateString")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

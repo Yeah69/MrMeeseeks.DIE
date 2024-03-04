@@ -5,28 +5,28 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.Constraints.TopLevelConstraintsMatch;
 
-internal interface IInterface {}
-internal class BaseClass : IInterface {}
-internal interface IInterfaceStruct<T0> { }
-internal interface IInterfaceClass<T1> { }
-internal interface IInterfaceNullableClass<T2> { }
-internal interface IInterfaceNotNull<T3> { }
-internal interface IInterfaceUnmanaged<T4> { }
-internal interface IInterfaceNew<T5> { }
-internal interface IInterfaceBaseClass<T6> { }
-internal interface IInterfaceNullableBaseClass<T7> { }
-internal interface IInterfaceInterface<T8> { }
-internal interface IInterfaceNullableInterface<T9> { }
-internal class DependencyStruct<T0> : IInterfaceStruct<T0> where T0 : struct { }
-internal class DependencyClass<T1> : IInterfaceClass<T1> where T1 : class { }
-internal class DependencyNullableClass<T2> : IInterfaceNullableClass<T2> where T2 : class? { }
-internal class DependencyNotNull<T3> : IInterfaceNotNull<T3> where T3 : notnull { }
-internal class DependencyUnmanaged<T4> : IInterfaceUnmanaged<T4> where T4 : unmanaged { }
-internal class DependencyNew<T5> : IInterfaceNew<T5> where T5 : new() { }
-internal class DependencyBaseClass<T6> : IInterfaceBaseClass<T6> where T6 : BaseClass { }
-internal class DependencyNullableBaseClass<T7> : IInterfaceNullableBaseClass<T7> where T7 : BaseClass? { }
-internal class DependencyInterface<T8> : IInterfaceInterface<T8> where T8 : IInterface { }
-internal class DependencyNullableInterface<T9> : IInterfaceNullableInterface<T9> where T9 : IInterface? { }
+internal interface IInterface;
+internal class BaseClass : IInterface;
+internal interface IInterfaceStruct<T0>;
+internal interface IInterfaceClass<T1>;
+internal interface IInterfaceNullableClass<T2>;
+internal interface IInterfaceNotNull<T3>;
+internal interface IInterfaceUnmanaged<T4>;
+internal interface IInterfaceNew<T5>;
+internal interface IInterfaceBaseClass<T6>;
+internal interface IInterfaceNullableBaseClass<T7>;
+internal interface IInterfaceInterface<T8>;
+internal interface IInterfaceNullableInterface<T9>;
+internal class DependencyStruct<T0> : IInterfaceStruct<T0> where T0 : struct;
+internal class DependencyClass<T1> : IInterfaceClass<T1> where T1 : class;
+internal class DependencyNullableClass<T2> : IInterfaceNullableClass<T2> where T2 : class?;
+internal class DependencyNotNull<T3> : IInterfaceNotNull<T3> where T3 : notnull;
+internal class DependencyUnmanaged<T4> : IInterfaceUnmanaged<T4> where T4 : unmanaged;
+internal class DependencyNew<T5> : IInterfaceNew<T5> where T5 : new();
+internal class DependencyBaseClass<T6> : IInterfaceBaseClass<T6> where T6 : BaseClass;
+internal class DependencyNullableBaseClass<T7> : IInterfaceNullableBaseClass<T7> where T7 : BaseClass?;
+internal class DependencyInterface<T8> : IInterfaceInterface<T8> where T8 : IInterface;
+internal class DependencyNullableInterface<T9> : IInterfaceNullableInterface<T9> where T9 : IInterface?;
 
 internal class Proxy<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> 
     where T0 : struct
@@ -53,7 +53,7 @@ internal class Proxy<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>
 }
 
 [CreateFunction(typeof(Proxy<,,,,,,,,,>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

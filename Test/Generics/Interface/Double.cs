@@ -5,13 +5,13 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Interface.Double;
 
 // ReSharper disable UnusedTypeParameter
-internal interface IInterface<T0, T1> {}
+internal interface IInterface<T0, T1>;
 // ReSharper restore UnusedTypeParameter
 
-internal class Class<T0, T1> : IInterface<T0, T1> {}
+internal class Class<T0, T1> : IInterface<T0, T1>;
 
 [CreateFunction(typeof(IInterface<int, string>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

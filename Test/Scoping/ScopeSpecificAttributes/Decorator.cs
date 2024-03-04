@@ -103,30 +103,18 @@ internal sealed partial class Container
     
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(TransientScopeDecorator))]
-    private sealed partial class DIE_DefaultTransientScope
-    {
-        
-    }
+    private sealed partial class DIE_DefaultTransientScope;
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(TransientScopeSpecificDecorator))]
     [CustomScopeForRootTypes(typeof(TransientScopeRootSpecific))]
-    private sealed partial class DIE_TransientScope_A
-    {
-        
-    }
+    private sealed partial class DIE_TransientScope_A;
 
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(ScopeDecorator))]
-    private sealed partial class DIE_DefaultScope
-    {
-        
-    }
+    private sealed partial class DIE_DefaultScope;
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(ScopeSpecificDecorator))]
     [CustomScopeForRootTypes(typeof(ScopeRootSpecific))]
-    private sealed partial class DIE_Scope_A
-    {
-        
-    }
+    private sealed partial class DIE_Scope_A;
 }
 
 public class Tests

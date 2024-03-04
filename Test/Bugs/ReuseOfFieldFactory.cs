@@ -4,9 +4,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
 
-internal interface IInterface {}
+internal interface IInterface;
 
-internal class Dependency : IInterface {}
+internal class Dependency : IInterface;
 
 internal class DependencyHolder
 {

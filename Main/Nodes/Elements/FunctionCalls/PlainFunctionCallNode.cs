@@ -2,9 +2,7 @@ using MrMeeseeks.DIE.Nodes.Functions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 
-internal interface IPlainFunctionCallNode : IFunctionCallNode
-{
-}
+internal interface IPlainFunctionCallNode : IFunctionCallNode;
 
 internal sealed partial class PlainFunctionCallNode : FunctionCallNode, IPlainFunctionCallNode
 {

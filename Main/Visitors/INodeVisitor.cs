@@ -5,6 +5,4 @@ using MrMeeseeks.Visitor;
 namespace MrMeeseeks.DIE.Visitors;
 
 [VisitorInterface(typeof(INode))]
-internal partial interface INodeVisitor
-{
-}
+internal partial interface INodeVisitor;

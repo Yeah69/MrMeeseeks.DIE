@@ -16,7 +16,7 @@ internal class DependencyB
     internal DependencyB(DependencyC c) {}
 }
 
-internal class DependencyC { }
+internal class DependencyC;
 
 internal class Root : IScopeRoot
 {
@@ -29,10 +29,7 @@ internal sealed partial class Container
     
     [InitializedInstances(typeof(DependencyA), typeof(DependencyB), typeof(DependencyC))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_DefaultScope
-    {
-        
-    }
+    private sealed partial class DIE_DefaultScope;
 }
 
 public class Tests

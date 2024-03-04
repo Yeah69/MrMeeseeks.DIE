@@ -59,7 +59,7 @@ internal abstract class ValidateRange : IValidateRange
 
     protected abstract DiagLogData ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification);
 
-    protected DiagLogData ValidationErrorDiagnosticBase(INamedTypeSymbol baseType, INamedTypeSymbol rangeType, string specification) => 
+    protected static DiagLogData ValidationErrorDiagnosticBase(INamedTypeSymbol baseType, INamedTypeSymbol rangeType, string specification) => 
         ErrorLogData.ValidationBaseClass(baseType, rangeType, specification);
     
     private void LogError(INamedTypeSymbol rangeType, INamedTypeSymbol containerType, string specification) =>

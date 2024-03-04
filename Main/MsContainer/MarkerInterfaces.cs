@@ -16,24 +16,23 @@ using MrMeeseeks.DIE.MsContainer;
 [assembly:CompositeAbstractionAggregation(typeof(IComposite<>))]
 [assembly:Initializer(typeof(IInitializer), nameof(IInitializer.Initialize))]
 [assembly:Initializer(typeof(ITaskInitializer), nameof(ITaskInitializer.InitializeAsync))]
-[assembly:Initializer(typeof(IValueTaskInitializer), nameof(IValueTaskInitializer.InitializeAsync))]
 
 [assembly:AllImplementationsAggregation]
 
 namespace MrMeeseeks.DIE.MsContainer;
 
-internal interface IContainerInstance { }
-internal interface ITransientScopeInstance { }
-internal interface IScopeInstance { }
-internal interface ITransientScopeRoot { }
-internal interface IScopeRoot { }
-internal interface ITransient { }
-internal interface ISyncTransient { }
-internal interface IAsyncTransient { }
+internal interface IContainerInstance;
+internal interface ITransientScopeInstance;
+internal interface IScopeInstance;
+internal interface ITransientScopeRoot;
+internal interface IScopeRoot;
+internal interface ITransient;
+internal interface ISyncTransient;
+internal interface IAsyncTransient;
 // ReSharper disable once UnusedTypeParameter
-internal interface IDecorator<T> { }
+internal interface IDecorator<T>;
 // ReSharper disable once UnusedTypeParameter
-internal interface IComposite<T> { }
+internal interface IComposite<T>;
 internal interface IInitializer
 {
     void Initialize();
@@ -41,8 +40,4 @@ internal interface IInitializer
 internal interface ITaskInitializer
 {
     Task InitializeAsync();
-}
-internal interface IValueTaskInitializer
-{
-    ValueTask InitializeAsync();
 }

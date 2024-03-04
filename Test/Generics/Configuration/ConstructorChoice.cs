@@ -4,11 +4,11 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.ConstructorChoiceFoo;
 
-internal interface IInterface {}
+internal interface IInterface;
 
-internal class DependencyA : IInterface { }
+internal class DependencyA : IInterface;
 
-internal class DependencyB : IInterface { }
+internal class DependencyB : IInterface;
 
 // ReSharper disable once UnusedTypeParameter
 internal class Implementation<T0>
@@ -22,7 +22,7 @@ internal class Implementation<T0>
 
 [ConstructorChoice(typeof(Implementation<>), typeof(DependencyB))]
 [CreateFunction(typeof(Implementation<int>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

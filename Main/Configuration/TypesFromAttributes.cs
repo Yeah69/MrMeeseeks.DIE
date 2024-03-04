@@ -78,7 +78,7 @@ internal interface ITypesFromAttributesBase
     IImmutableSet<INamedTypeSymbol> FilterDecorationOrdinalChoices { get; }
 }
 
-internal interface IAssemblyTypesFromAttributes : ITypesFromAttributesBase {}
+internal interface IAssemblyTypesFromAttributes : ITypesFromAttributesBase;
 
 internal sealed class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAssemblyTypesFromAttributes, IContainerInstance
 {
@@ -115,7 +115,7 @@ internal sealed class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAs
     }
 }
 
-internal interface IContainerTypesFromAttributes : ITypesFromAttributesBase {}
+internal interface IContainerTypesFromAttributes : ITypesFromAttributesBase;
 
 internal sealed class ContainerTypesFromAttributes : TypesFromAttributesBase, IContainerTypesFromAttributes, IContainerInstance
 {
@@ -153,7 +153,7 @@ internal sealed class ContainerTypesFromAttributes : TypesFromAttributesBase, IC
     }
 }
 
-internal interface IScopeTypesFromAttributes : ITypesFromAttributesBase {}
+internal interface IScopeTypesFromAttributes : ITypesFromAttributesBase;
 
 internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScopeTypesFromAttributes, ITransientScopeInstance
 {
@@ -515,14 +515,14 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                 if (initializationMethod is not null)
                 {
                     if (!initializationMethod.ReturnsVoid
-                        && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask)
+                        && (wellKnownTypes.ValueTask is null || !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.ValueTask))
                         && !CustomSymbolEqualityComparer.Default.Equals(initializationMethod.ReturnType, wellKnownTypes.Task))
                     {
                         localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
                             ad,
                             _rangeType,
                             _containerType,
-                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), \"{wellKnownTypes.ValueTask.FullName()}\", or \"{wellKnownTypes.Task.FullName()}\"."),
+                            $"If method \"{methodName}\" on \"{type.FullName()}\" is to be used as initialize method, then it should return either nothing (void), {(wellKnownTypes.ValueTask is not null ? $"\"{wellKnownTypes.ValueTask.FullName()}\", " : "")}or \"{wellKnownTypes.Task.FullName()}\"."),
                             ad.GetLocation());
                         return null;
                     }

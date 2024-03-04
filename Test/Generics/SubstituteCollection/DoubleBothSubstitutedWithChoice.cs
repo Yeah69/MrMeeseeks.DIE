@@ -5,10 +5,10 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.SubstituteCollection.BothSubstitutedWithChoice;
 
-internal interface IInterface {}
+internal interface IInterface;
 
 // ReSharper disable UnusedTypeParameter
-internal class Class<T0, T1> : IInterface {}
+internal class Class<T0, T1> : IInterface;
 // ReSharper restore UnusedTypeParameter
 
 [GenericParameterSubstitutesChoice(typeof(Class<,>), "T0", typeof(bool))]
@@ -16,7 +16,7 @@ internal class Class<T0, T1> : IInterface {}
 [GenericParameterChoice(typeof(Class<,>), "T0", typeof(byte))]
 [GenericParameterChoice(typeof(Class<,>), "T1", typeof(string))]
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

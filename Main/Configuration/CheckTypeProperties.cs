@@ -24,9 +24,7 @@ internal enum DisposalType
     Async = 2
 }
 
-internal interface IContainerCheckTypeProperties : ICheckTypeProperties
-{
-}
+internal interface IContainerCheckTypeProperties : ICheckTypeProperties;
 
 internal sealed class ContainerCheckTypeProperties : CheckTypeProperties, IContainerCheckTypeProperties, IContainerInstance
 {
@@ -41,9 +39,7 @@ internal sealed class ContainerCheckTypeProperties : CheckTypeProperties, IConta
     }
 }
 
-internal interface IScopeCheckTypeProperties : ICheckTypeProperties
-{
-}
+internal interface IScopeCheckTypeProperties : ICheckTypeProperties;
 
 internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeCheckTypeProperties, ITransientScopeInstance
 {

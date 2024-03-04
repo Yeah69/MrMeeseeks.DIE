@@ -5,7 +5,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
-internal interface IValidateUserDefinedAddForDisposalSync : IValidateUserDefinedAddForDisposalBase { }
+internal interface IValidateUserDefinedAddForDisposalSync : IValidateUserDefinedAddForDisposalBase;
 
 internal sealed class ValidateUserDefinedAddForDisposalSync 
     : ValidateUserDefinedAddForDisposalBase, 
@@ -20,7 +20,7 @@ internal sealed class ValidateUserDefinedAddForDisposalSync
     protected override INamedTypeSymbol? DisposableType { get; }
 }
 
-internal interface IValidateUserDefinedAddForDisposalAsync : IValidateUserDefinedAddForDisposalBase { }
+internal interface IValidateUserDefinedAddForDisposalAsync : IValidateUserDefinedAddForDisposalBase;
 
 internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefinedAddForDisposalBase,
     IValidateUserDefinedAddForDisposalAsync
@@ -34,7 +34,7 @@ internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefin
     protected override INamedTypeSymbol? DisposableType { get; }
 }
 
-internal interface IValidateUserDefinedAddForDisposalBase : IValidateUserDefinedMethod { }
+internal interface IValidateUserDefinedAddForDisposalBase : IValidateUserDefinedMethod;
 
 internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefinedMethod, IValidateUserDefinedAddForDisposalBase
 {

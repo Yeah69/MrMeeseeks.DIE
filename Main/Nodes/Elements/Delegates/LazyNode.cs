@@ -4,9 +4,7 @@ using MrMeeseeks.DIE.Nodes.Ranges;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Delegates;
 
-internal interface ILazyNode : IDelegateBaseNode
-{
-}
+internal interface ILazyNode : IDelegateBaseNode;
 
 internal sealed partial class LazyNode : DelegateBaseNode, ILazyNode
 {

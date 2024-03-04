@@ -8,9 +8,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range;
 
-internal interface IValidateScopeBase : IValidateRange
-{
-}
+internal interface IValidateScopeBase : IValidateRange;
 
 internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
 {

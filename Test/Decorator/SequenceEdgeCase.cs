@@ -53,18 +53,12 @@ internal sealed partial class Container
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
     [CustomScopeForRootTypes(typeof(ScopeRoot0))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_Scope_0
-    {
-        
-    }
+    private sealed partial class DIE_Scope_0;
     
     [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA))]
     [CustomScopeForRootTypes(typeof(ScopeRoot1))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_Scope_1
-    {
-        
-    }
+    private sealed partial class DIE_Scope_1;
 }
 
 public class Tests

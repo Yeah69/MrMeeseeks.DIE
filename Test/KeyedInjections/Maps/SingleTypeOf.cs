@@ -7,19 +7,19 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.KeyedInjections.Maps.SingleTypeOf;
 
-internal interface IInterface { }
+internal interface IInterface;
 
 [InjectionKey(typeof(DependencyA))]
-internal class DependencyA : IInterface { }
+internal class DependencyA : IInterface;
 
 [InjectionKey(typeof(DependencyB))]
-internal class DependencyB : IInterface { }
+internal class DependencyB : IInterface;
 
 [InjectionKey(typeof(DependencyC))]
-internal class DependencyC : IInterface { }
+internal class DependencyC : IInterface;
 
 [CreateFunction(typeof(IReadOnlyDictionary<Type, IInterface>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

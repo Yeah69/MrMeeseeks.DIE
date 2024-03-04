@@ -9,9 +9,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Validation.Range;
 
-internal interface IValidateContainer : IValidateRange
-{
-}
+internal interface IValidateContainer : IValidateRange;
 
 internal sealed class ValidateContainer : ValidateRange, IValidateContainer
 {

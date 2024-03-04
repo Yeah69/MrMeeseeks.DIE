@@ -209,7 +209,7 @@ internal sealed class UserDefinedElements : IUserDefinedElements
             
             static ITypeSymbol GetAsyncUnwrappedType(ITypeSymbol type, WellKnownTypes wellKnownTypes)
             {
-                if ((CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
+                if ((wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
                      || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1))
                     && type is INamedTypeSymbol namedType)
                     return namedType.TypeArguments.First();

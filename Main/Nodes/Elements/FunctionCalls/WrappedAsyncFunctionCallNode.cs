@@ -46,7 +46,9 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
             : AsyncFunctionCallTransformation.TaskFromTask;
 
         var asyncType = synchronicityDecision is SynchronicityDecision.AsyncValueTask
-            ? containerWideContext.WellKnownTypes.ValueTask1.Construct(wrappedType)
+            ? containerWideContext.WellKnownTypes.ValueTask1 is not null 
+                ? containerWideContext.WellKnownTypes.ValueTask1.Construct(wrappedType)
+                : throw new InvalidOperationException("ValueTask1 is not available")
             : containerWideContext.WellKnownTypes.Task1.Construct(wrappedType);
         Reference = referenceGenerator.Generate(asyncType);
         TypeFullName = asyncType.FullName();

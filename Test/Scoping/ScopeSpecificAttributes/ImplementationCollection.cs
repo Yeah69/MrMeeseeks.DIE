@@ -6,13 +6,13 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.ImplementationCollection;
 
-internal interface IDependency {}
+internal interface IDependency;
 
-internal class DependencyContainer : IDependency {}
+internal class DependencyContainer : IDependency;
 
-internal class DependencyTransientScope : IDependency {}
+internal class DependencyTransientScope : IDependency;
 
-internal class DependencyScope : IDependency {}
+internal class DependencyScope : IDependency;
 
 internal class TransientScope : ITransientScopeRoot
 {
@@ -38,18 +38,12 @@ internal sealed partial class Container
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyScope))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_DefaultTransientScope
-    {
-        
-    }
+    private sealed partial class DIE_DefaultTransientScope;
 
     [FilterImplementationAggregation(typeof(DependencyContainer))]
     [FilterImplementationAggregation(typeof(DependencyTransientScope))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_DefaultScope
-    {
-        
-    }
+    private sealed partial class DIE_DefaultScope;
 }
 public class Tests
 {

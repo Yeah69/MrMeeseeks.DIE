@@ -5,9 +5,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
-internal interface IContainerCurrentlyConsideredTypes : ICurrentlyConsideredTypes
-{
-}
+internal interface IContainerCurrentlyConsideredTypes : ICurrentlyConsideredTypes;
 
 internal sealed class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IContainerCurrentlyConsideredTypes, IContainerInstance
 {
@@ -24,9 +22,7 @@ internal sealed class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTyp
     }
 }
 
-internal interface IScopeCurrentlyConsideredTypes : ICurrentlyConsideredTypes
-{
-}
+internal interface IScopeCurrentlyConsideredTypes : ICurrentlyConsideredTypes;
 
 internal sealed class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBase, IScopeCurrentlyConsideredTypes, ITransientScopeInstance
 {
@@ -508,6 +504,6 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         public void Add(INamedTypeSymbol decoratedType, IReadOnlyList<INamedTypeSymbol> decoratorSequence) => _map[decoratedType] = decoratorSequence;
         public void Remove(INamedTypeSymbol decoratedType) => _map.Remove(decoratedType);
         public bool Any => _map.Count != 0;
-        public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => _map;
+        public Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => _map;
     }
 }

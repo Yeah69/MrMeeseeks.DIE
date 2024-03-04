@@ -4,10 +4,10 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Implementation.ArrayType;
 
-internal class Dependency {}
+internal class Dependency;
 
 [CreateFunction(typeof(Dependency[]), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

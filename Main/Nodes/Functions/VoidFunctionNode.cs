@@ -65,12 +65,19 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             .ToList();
     }
 
-    protected override string GetAsyncTypeFullName() => "void";
-
-    protected override string GetReturnedTypeFullName() =>
-        SynchronicityDecision == SynchronicityDecision.AsyncValueTask 
-            ? WellKnownTypes.ValueTask.FullName()
-            : WellKnownTypes.Task.FullName();
+    protected override void AdjustToAsync()
+    {
+        if (WellKnownTypes.ValueTask is not null)
+        {
+            SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
+            ReturnedTypeFullName = WellKnownTypes.ValueTask.FullName();
+        }
+        else
+        {
+            SynchronicityDecision = SynchronicityDecision.AsyncTask;
+            ReturnedTypeFullName = WellKnownTypes.Task.FullName();
+        }
+    }
 
     public override bool CheckIfReturnedType(ITypeSymbol type) => false;
 
@@ -123,8 +130,8 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         void DetectCycle()
         {
             Queue<IInitializedInstanceNode> roots = new(Initializations.Select(i => i.Item2));
-            HashSet<IInitializedInstanceNode> v = new();
-            HashSet<IInitializedInstanceNode> cf = new();
+            HashSet<IInitializedInstanceNode> v = [];
+            HashSet<IInitializedInstanceNode> cf = [];
             Stack<IInitializedInstanceNode> s = new();
 
             while (roots.Count != 0 && roots.Dequeue() is {} next)

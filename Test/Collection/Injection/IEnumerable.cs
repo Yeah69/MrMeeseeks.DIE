@@ -5,15 +5,15 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Collection.Injection.IEnumerable;
 
-internal interface IInterface {}
-internal class ClassA : IInterface {}
+internal interface IInterface;
+internal class ClassA : IInterface;
 
-internal class ClassB : IInterface {}
+internal class ClassB : IInterface;
 
-internal class ClassC : IInterface {}
+internal class ClassC : IInterface;
 
 [CreateFunction(typeof(IEnumerable<IInterface>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

@@ -50,7 +50,7 @@ internal class DependencyD : IInterface
 }
 
 [CreateFunction(typeof(IReadOnlyList<Task<IInterface>>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

@@ -19,7 +19,7 @@ internal abstract class RangeBase
 
 internal sealed partial class Container : RangeBase
 {
-    private sealed partial class DIE_DefaultScope : RangeBase { }
+    private sealed partial class DIE_DefaultScope : RangeBase;
 }
 
 public class Tests

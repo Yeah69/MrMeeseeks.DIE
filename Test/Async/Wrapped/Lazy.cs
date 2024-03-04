@@ -19,7 +19,7 @@ internal class Dependency : ITaskInitializer
 }
 
 [CreateFunction(typeof(Lazy<Task<Dependency>>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

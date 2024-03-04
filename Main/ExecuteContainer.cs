@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Analytics;

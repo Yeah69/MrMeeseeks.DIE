@@ -2,10 +2,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
-internal interface INullNode : IElementNode
-{
-    
-}
+internal interface INullNode : IElementNode;
 
 internal sealed partial class NullNode : INullNode
 {

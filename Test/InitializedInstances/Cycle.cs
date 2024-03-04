@@ -34,10 +34,7 @@ internal sealed partial class Container
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Local
     // ReSharper disable once PartialTypeWithSinglePart
-    private sealed partial class DIE_DefaultScope
-    {
-        
-    }
+    private sealed partial class DIE_DefaultScope;
 }
 
 public class Tests

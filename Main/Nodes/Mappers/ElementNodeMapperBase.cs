@@ -142,7 +142,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
             return _factoryFunctionNodeFactory(method, Next)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
 
-        if (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
+        if (WellKnownTypes.ValueTask1 is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, WellKnownTypes.ValueTask1)
             && type is INamedTypeSymbol valueTask)
             return ParentRange.BuildAsyncCreateCall(GetMapperDataForAsyncWrapping(), valueTask.TypeArguments[0], SynchronicityDecision.AsyncValueTask, ParentFunction);
 

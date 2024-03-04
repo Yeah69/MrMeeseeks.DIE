@@ -7,7 +7,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Collection.Injection.IAsyncEnumerable;
 
-internal interface IInterface {}
+internal interface IInterface;
 
 internal class ClassA : IInterface, IValueTaskInitializer
 {
@@ -19,10 +19,10 @@ internal class ClassB : IInterface, ITaskInitializer
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
-internal class ClassC : IInterface {}
+internal class ClassC : IInterface;
 
 [CreateFunction(typeof(IAsyncEnumerable<IInterface>), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

@@ -98,7 +98,8 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
         
         if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IEnumerable1))
             Type = EnumerableBasedType.IEnumerable;
-        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1))
+        if (_wellKnownTypesCollections.IAsyncEnumerable1 is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.IAsyncEnumerable1))
             Type = EnumerableBasedType.IAsyncEnumerable;
         if (_collectionType is IArrayTypeSymbol)
         {
@@ -231,7 +232,8 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
                 collectionType.FullName(), 
                 _referenceGenerator.Generate(collectionType));
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1))
+        if (_wellKnownTypesCollections.ImmutableArray1 is not null && _wellKnownTypesCollections.ImmutableArray is not null
+            && CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableArray1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableArray1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableArray;
@@ -240,7 +242,8 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableArray.FullName());
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1))
+        if (_wellKnownTypesCollections.ImmutableHashSet1 is not null && _wellKnownTypesCollections.ImmutableHashSet is not null
+            && CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableHashSet1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableHashSet1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableHashSet;
@@ -249,7 +252,8 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableHashSet.FullName());
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1))
+        if (_wellKnownTypesCollections.ImmutableList1 is not null && _wellKnownTypesCollections.ImmutableList is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableList1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableList1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableList;
@@ -258,7 +262,8 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableList.FullName());
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1))
+        if (_wellKnownTypesCollections.ImmutableQueue1 is not null && _wellKnownTypesCollections.ImmutableQueue is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableQueue1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableQueue1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableQueue;
@@ -267,7 +272,8 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableQueue.FullName());
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1))
+        if (_wellKnownTypesCollections.ImmutableSortedSet1 is not null && _wellKnownTypesCollections.ImmutableSortedSet is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableSortedSet1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableSortedSet1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableSortedSet;
@@ -276,7 +282,8 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
                 _referenceGenerator.Generate(collectionType),
                 _wellKnownTypesCollections.ImmutableSortedSet.FullName());
         }
-        if (CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
+        if (_wellKnownTypesCollections.ImmutableStack1 is not null && _wellKnownTypesCollections.ImmutableStack is not null
+            && CustomSymbolEqualityComparer.Default.Equals(_collectionType.OriginalDefinition, _wellKnownTypesCollections.ImmutableStack1))
         {
             var collectionType = _wellKnownTypesCollections.ImmutableStack1.Construct(collectionsInnerType);
             Type = EnumerableBasedType.ImmutableStack;
@@ -286,7 +293,7 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
                 _wellKnownTypesCollections.ImmutableStack.FullName());
         }
         
-        var enumerableType = Type == EnumerableBasedType.IAsyncEnumerable 
+        var enumerableType = Type == EnumerableBasedType.IAsyncEnumerable && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
             ? _wellKnownTypesCollections.IAsyncEnumerable1.Construct(collectionsInnerType)
             : _wellKnownTypesCollections.IEnumerable1.Construct(collectionsInnerType);
         EnumerableCall = _parentRange.BuildEnumerableCall(enumerableType, _parentFunction, passedContext);

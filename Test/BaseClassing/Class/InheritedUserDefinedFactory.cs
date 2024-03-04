@@ -10,7 +10,7 @@ internal abstract class ContainerBase
 }
 
 [CreateFunction(typeof(int), "Create")]
-internal sealed partial class Container : ContainerBase { }
+internal sealed partial class Container : ContainerBase;
 
 public class Tests
 {

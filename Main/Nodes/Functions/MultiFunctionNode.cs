@@ -9,9 +9,7 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IMultiFunctionNode : IMultiFunctionNodeBase
-{
-}
+internal interface IMultiFunctionNode : IMultiFunctionNodeBase;
 
 internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunctionNode, IScopeInstance
 {

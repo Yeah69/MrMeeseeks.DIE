@@ -5,14 +5,11 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.InitializedInstances.AsReturnedType;
 
-internal class Dependency { }
+internal class Dependency;
 
 [InitializedInstances(typeof(Dependency))]
 [CreateFunction(typeof(Dependency), "Create")]
-internal sealed partial class Container
-{
-    
-}
+internal sealed partial class Container;
 
 public class Tests
 {

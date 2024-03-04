@@ -4,12 +4,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Abstraction.AbstractClass.VanillaWithoutChoice;
 
-internal abstract class Class {}
+internal abstract class Class;
 
-internal class SubClass : Class {}
+internal class SubClass : Class;
 
 [CreateFunction(typeof(Class), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

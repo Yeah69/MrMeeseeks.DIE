@@ -6,7 +6,7 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.ScopeInstance;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Class<T0> : ITransientScopeInstance { }
+internal class Class<T0> : ITransientScopeInstance;
 
 internal class ScopeRoot : ITransientScopeRoot
 {
@@ -23,7 +23,7 @@ internal class ScopeRoot : ITransientScopeRoot
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

@@ -58,10 +58,12 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
 
         ItemTypeFullName = CollectionUtility.GetCollectionsInnerType(enumerableType).FullName();
 
-        SuppressAsync =
-            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
+        SuppressAsync = 
+            containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1 is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
         IsAsyncEnumerable =
-            CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
+            containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1 is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
 
         ReturnedTypeNameNotWrapped = enumerableType.Name;
     }

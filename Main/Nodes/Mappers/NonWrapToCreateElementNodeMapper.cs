@@ -11,9 +11,7 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
-internal interface INonWrapToCreateElementNodeMapper : IElementNodeMapperBase
-{
-}
+internal interface INonWrapToCreateElementNodeMapper : IElementNodeMapperBase;
 
 internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, INonWrapToCreateElementNodeMapper
 {

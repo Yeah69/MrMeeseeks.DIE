@@ -3,9 +3,7 @@ using MrMeeseeks.DIE.Nodes.Functions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Factories;
 
-internal interface IFactoryPropertyNode : IFactoryNodeBase
-{
-}
+internal interface IFactoryPropertyNode : IFactoryNodeBase;
 
 internal sealed partial class FactoryPropertyNode : FactoryNodeBase, IFactoryPropertyNode
 {

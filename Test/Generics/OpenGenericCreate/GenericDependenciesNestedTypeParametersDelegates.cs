@@ -7,9 +7,9 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.GenericDependenciesNestedTypeParametersDelegates;
 
-internal interface IInterface<T1, T0> {}
+internal interface IInterface<T1, T0>;
 
-internal class Dependency<T0, T1> : IInterface<T0, T1> {}
+internal class Dependency<T0, T1> : IInterface<T0, T1>;
 
 internal interface IInterface<T3, T4, T5>
 {
@@ -52,7 +52,7 @@ internal class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
 [Initializer(typeof(DependencyHolder<,,>), "Initialize")]
 [CreateFunction(typeof(DependencyHolder<,,>), "Create")]
 [CreateFunction(typeof(IInterface<,,>), "CreateInterface")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 public class Tests
 {
     [Fact]

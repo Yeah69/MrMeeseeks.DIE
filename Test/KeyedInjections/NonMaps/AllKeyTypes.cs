@@ -12,7 +12,7 @@ internal enum Key
     C
 }
 
-internal interface IInterface { }
+internal interface IInterface;
 
 [InjectionKey(Key.A)]
 [InjectionKey(Byte)]
@@ -160,7 +160,7 @@ internal class Root
 }
 
 [CreateFunction(typeof(Root), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

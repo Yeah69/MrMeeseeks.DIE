@@ -4,57 +4,57 @@ namespace MrMeeseeks.DIE;
 
 internal sealed record WellKnownTypesCollections(
     // ReSharper disable InconsistentNaming
-    INamedTypeSymbol IEnumerable1,
-    INamedTypeSymbol IAsyncEnumerable1,
+    INamedTypeSymbol IEnumerable1, // .NET Standard 2.0
+    INamedTypeSymbol? IAsyncEnumerable1, // .NET Standard 2.1
     // ReSharper restore InconsistentNaming
-    INamedTypeSymbol ArraySegment1,
-    INamedTypeSymbol Enumerable,
+    INamedTypeSymbol ArraySegment1, // .NET Standard 2.0
+    INamedTypeSymbol Enumerable, // .NET Standard 2.0
     // ReSharper disable InconsistentNaming
-    INamedTypeSymbol IList1,
-    INamedTypeSymbol ICollection1,
-    INamedTypeSymbol IReadOnlyCollection1,
+    INamedTypeSymbol IList1, // .NET Standard 2.0
+    INamedTypeSymbol ICollection1, // .NET Standard 2.0
+    INamedTypeSymbol IReadOnlyCollection1, // .NET Standard 2.0
     // ReSharper restore InconsistentNaming
-    INamedTypeSymbol ReadOnlyCollection1,
+    INamedTypeSymbol ReadOnlyCollection1, // .NET Standard 2.0
     // ReSharper disable once InconsistentNaming
-    INamedTypeSymbol IReadOnlyList1,
-    INamedTypeSymbol ConcurrentBag1,
-    INamedTypeSymbol ConcurrentQueue1,
-    INamedTypeSymbol ConcurrentStack1,
-    INamedTypeSymbol HashSet1,
-    INamedTypeSymbol LinkedList1,
-    INamedTypeSymbol List1,
-    INamedTypeSymbol Queue1,
-    INamedTypeSymbol SortedSet1,
-    INamedTypeSymbol Stack1,
-    INamedTypeSymbol ImmutableArray1,
-    INamedTypeSymbol ImmutableArray,
-    INamedTypeSymbol ImmutableHashSet1,
-    INamedTypeSymbol ImmutableHashSet,
-    INamedTypeSymbol ImmutableList1,
-    INamedTypeSymbol ImmutableList,
-    INamedTypeSymbol ImmutableQueue1,
-    INamedTypeSymbol ImmutableQueue,
-    INamedTypeSymbol ImmutableSortedSet1,
-    INamedTypeSymbol ImmutableSortedSet,
-    INamedTypeSymbol ImmutableStack1,
-    INamedTypeSymbol ImmutableStack,
-    INamedTypeSymbol KeyValuePair2,
-    INamedTypeSymbol IDictionary2,
-    INamedTypeSymbol IReadOnlyDictionary2,
-    INamedTypeSymbol Dictionary2,
-    INamedTypeSymbol ReadOnlyDictionary2,
-    INamedTypeSymbol SortedDictionary2,
-    INamedTypeSymbol SortedList2,
-    INamedTypeSymbol ImmutableDictionary2,
-    INamedTypeSymbol ImmutableDictionary,
-    INamedTypeSymbol ImmutableSortedDictionary2,
-    INamedTypeSymbol ImmutableSortedDictionary)
+    INamedTypeSymbol IReadOnlyList1, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentBag1, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentQueue1, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentStack1, // .NET Standard 2.0
+    INamedTypeSymbol HashSet1, // .NET Standard 2.0
+    INamedTypeSymbol LinkedList1, // .NET Standard 2.0
+    INamedTypeSymbol List1, // .NET Standard 2.0
+    INamedTypeSymbol Queue1, // .NET Standard 2.0
+    INamedTypeSymbol SortedSet1, // .NET Standard 2.0
+    INamedTypeSymbol Stack1, // .NET Standard 2.0
+    INamedTypeSymbol? ImmutableArray1, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableArray, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableHashSet1, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableHashSet, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableList1, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableList, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableQueue1, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableQueue, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableSortedSet1, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableSortedSet, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableStack1, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableStack, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol KeyValuePair2, // .NET Standard 2.0
+    INamedTypeSymbol IDictionary2, // .NET Standard 2.0
+    INamedTypeSymbol IReadOnlyDictionary2, // .NET Standard 2.0
+    INamedTypeSymbol Dictionary2, // .NET Standard 2.0
+    INamedTypeSymbol ReadOnlyDictionary2, // .NET Standard 2.0
+    INamedTypeSymbol SortedDictionary2, // .NET Standard 2.0
+    INamedTypeSymbol SortedList2, // .NET Standard 2.0
+    INamedTypeSymbol? ImmutableDictionary2, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableDictionary, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableSortedDictionary2, // None (nuget: System.Collections.Immutable)
+    INamedTypeSymbol? ImmutableSortedDictionary) // None (nuget: System.Collections.Immutable)
 {
     internal static WellKnownTypesCollections Create(Compilation compilation)
     {
         return new WellKnownTypesCollections(
             IEnumerable1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IEnumerable`1"),
-            IAsyncEnumerable1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IAsyncEnumerable`1"),
+            IAsyncEnumerable1: compilation.GetTypeByMetadataName("System.Collections.Generic.IAsyncEnumerable`1"),
             ArraySegment1: compilation.GetTypeByMetadataNameOrThrow("System.ArraySegment`1"),
             Enumerable: compilation.GetTypeByMetadataNameOrThrow("System.Linq.Enumerable"),
             IList1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IList`1"),
@@ -71,18 +71,18 @@ internal sealed record WellKnownTypesCollections(
             Queue1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.Queue`1"),
             SortedSet1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.SortedSet`1"),
             Stack1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.Stack`1"),
-            ImmutableArray1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableArray`1"),
-            ImmutableArray: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableArray"),
-            ImmutableHashSet1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableHashSet`1"),
-            ImmutableHashSet: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableHashSet"),
-            ImmutableList1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableList`1"),
-            ImmutableList: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableList"),
-            ImmutableQueue1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableQueue`1"),
-            ImmutableQueue: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableQueue"),
-            ImmutableSortedSet1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedSet`1"),
-            ImmutableSortedSet: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedSet"),
-            ImmutableStack1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableStack`1"),
-            ImmutableStack: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableStack"),
+            ImmutableArray1: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableArray`1"),
+            ImmutableArray: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableArray"),
+            ImmutableHashSet1: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableHashSet`1"),
+            ImmutableHashSet: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableHashSet"),
+            ImmutableList1: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableList`1"),
+            ImmutableList: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableList"),
+            ImmutableQueue1: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableQueue`1"),
+            ImmutableQueue: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableQueue"),
+            ImmutableSortedSet1: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableSortedSet`1"),
+            ImmutableSortedSet: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableSortedSet"),
+            ImmutableStack1: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableStack`1"),
+            ImmutableStack: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableStack"),
             KeyValuePair2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.KeyValuePair`2"),
             IDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IDictionary`2"),
             IReadOnlyDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IReadOnlyDictionary`2"),
@@ -90,9 +90,9 @@ internal sealed record WellKnownTypesCollections(
             ReadOnlyDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.ObjectModel.ReadOnlyDictionary`2"),
             SortedDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.SortedDictionary`2"),
             SortedList2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.SortedList`2"),
-            ImmutableDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableDictionary`2"),
-            ImmutableDictionary: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableDictionary"),
-            ImmutableSortedDictionary2: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedDictionary`2"),
-            ImmutableSortedDictionary: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Immutable.ImmutableSortedDictionary"));
+            ImmutableDictionary2: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableDictionary`2"),
+            ImmutableDictionary: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableDictionary"),
+            ImmutableSortedDictionary2: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableSortedDictionary`2"),
+            ImmutableSortedDictionary: compilation.GetTypeByMetadataName("System.Collections.Immutable.ImmutableSortedDictionary"));
     }
 }

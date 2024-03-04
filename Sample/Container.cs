@@ -6,13 +6,13 @@ namespace MrMeeseeks.DIE.Sample;
 
 internal enum KeyValues { A, B, C }
 
-internal interface IInterface<T> { }
+internal interface IInterface<T>;
 
 [InjectionKey(KeyValues.A)]
-internal class DependencyA<T> : IInterface<T> { }
-internal class DependencyB<T> : IInterface<T> { }
+internal class DependencyA<T> : IInterface<T>;
+internal class DependencyB<T> : IInterface<T>;
 [InjectionKey(KeyValues.C)]
-internal class DependencyC<T> : IInterface<T> { }
+internal class DependencyC<T> : IInterface<T>;
 
 internal class Root<TA, TB>
 {
@@ -26,6 +26,4 @@ internal class Root<TA, TB>
 
 [InjectionKeyChoice(KeyValues.B, typeof(DependencyB<>))]
 [CreateFunction(typeof(Root<,>), "Create")]
-internal sealed partial class Container
-{
-}
+internal sealed partial class Container;

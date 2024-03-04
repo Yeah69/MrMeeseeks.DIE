@@ -4,15 +4,15 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Abstraction.Interface.SingleInCollection;
 
-internal interface IInterface {}
+internal interface IInterface;
 
-internal class SubClassA : IInterface {}
+internal class SubClassA : IInterface;
 
-internal class SubClassB : IInterface {}
+internal class SubClassB : IInterface;
 
 [ImplementationCollectionChoice(typeof(IInterface), typeof(SubClassA))]
 [CreateFunction(typeof(IInterface), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

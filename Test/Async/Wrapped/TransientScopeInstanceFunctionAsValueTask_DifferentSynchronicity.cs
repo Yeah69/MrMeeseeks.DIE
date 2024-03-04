@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.TransientScopeInstanceFunctionAsValueTask_DifferentSynchronicity;
 
-internal interface IInterface {}
+internal interface IInterface;
 
 internal class DependencyA : IInterface, ITaskInitializer
 {
@@ -19,7 +19,7 @@ internal class DependencyA : IInterface, ITaskInitializer
     }
 }
 
-internal class DependencyB : IInterface { }
+internal class DependencyB : IInterface;
 
 internal class Instance : ITransientScopeInstance
 {
@@ -54,13 +54,13 @@ internal sealed partial class Container
 {
     [CustomScopeForRootTypes(typeof(TransientScopeRoot0))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_TransientScope0 { }
+    private sealed partial class DIE_TransientScope0;
     
     [FilterImplementationAggregation(typeof(DependencyA))]
     [ImplementationAggregation(typeof(DependencyB))]
     [CustomScopeForRootTypes(typeof(TransientScopeRoot1))]
     // ReSharper disable once InconsistentNaming
-    private sealed partial class DIE_TransientScope1 { }
+    private sealed partial class DIE_TransientScope1;
 }
 
 public class Tests

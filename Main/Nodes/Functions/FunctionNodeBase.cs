@@ -16,10 +16,10 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> _scopeCallNodeFactory;
     private readonly Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> _transientScopeCallNodeFactory;
     protected readonly WellKnownTypes WellKnownTypes;
-    private readonly List<IAwaitableNode> _awaitableNodes = new();
-    private readonly List<ILocalFunctionNode> _localFunctions = new();
-    private readonly List<IFunctionNode> _callingFunctions = new();
-    private readonly List<IInitializedInstanceNode> _usedInitializedInstances = new();
+    private readonly List<IAwaitableNode> _awaitableNodes = [];
+    private readonly List<ILocalFunctionNode> _localFunctions = [];
+    private readonly List<IFunctionNode> _callingFunctions = [];
+    private readonly List<IInitializedInstanceNode> _usedInitializedInstances = [];
 
     private readonly Dictionary<ITypeSymbol, IReusedNode> _reusedNodes =
         new(CustomSymbolEqualityComparer.IncludeNullability);
@@ -95,7 +95,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public string Description => 
         $"{ReturnedTypeFullName} {RangeFullName}.{Name}({string.Join(", ", Parameters.Select(p => $"{p.Node.TypeFullName} {p.Node.Reference}"))})";
 
-    public HashSet<IFunctionNode> CalledFunctions { get; } = new ();
+    public HashSet<IFunctionNode> CalledFunctions { get; } = [];
 
     public IEnumerable<IFunctionNode> CalledFunctionsOfSameRange =>
         CalledFunctions.Where(cf => Equals(cf.RangeFullName, RangeFullName));
@@ -124,17 +124,15 @@ internal abstract class FunctionNodeBase : IFunctionNode
             ForceToAsync();
     }
 
-    protected abstract string GetAsyncTypeFullName();
-
-    protected abstract string GetReturnedTypeFullName();
+    protected abstract void AdjustToAsync();
 
     public void ForceToAsync()
     {
         if (SuppressAsync) return;
         _synchronicityCheckedAlready = true;
-        if (SynchronicityDecision == SynchronicityDecision.AsyncValueTask) return; 
-        SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-        ReturnedTypeFullName = GetReturnedTypeFullName();
+        if (SynchronicityDecision is SynchronicityDecision.AsyncValueTask or SynchronicityDecision.AsyncTask) 
+            return; // Already async
+        AdjustToAsync();
         OnBecameAsync();
         foreach (var callingFunction in _callingFunctions)
             _parentContainer.AsyncCheckQueue.Enqueue(callingFunction);
@@ -257,7 +255,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public IReadOnlyList<ILocalFunctionNode> LocalFunctions => _localFunctions;
 
     public Accessibility? Accessibility { get; }
-    public SynchronicityDecision SynchronicityDecision { get; private set; } = SynchronicityDecision.Sync;
+    public SynchronicityDecision SynchronicityDecision { get; protected set; } = SynchronicityDecision.Sync;
     public abstract string Name { get; protected set; }
     public string ReturnedTypeFullName { get; protected set; } = "";
     public abstract string ReturnedTypeNameNotWrapped { get; }

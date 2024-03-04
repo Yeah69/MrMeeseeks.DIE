@@ -4,16 +4,16 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Abstraction.AbstractClass.WithSingleInCollection;
 
-internal abstract class Class {}
+internal abstract class Class;
 
-internal class SubClassA : Class {}
+internal class SubClassA : Class;
 
-internal class SubClassB : Class {}
+internal class SubClassB : Class;
 
 [ImplementationChoice(typeof(Class), typeof(SubClassA))]
 [ImplementationCollectionChoice(typeof(Class), typeof(SubClassB))]
 [CreateFunction(typeof(Class), "Create")]
-internal sealed partial class Container { }
+internal sealed partial class Container;
 
 public class Tests
 {

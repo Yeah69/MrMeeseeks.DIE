@@ -38,10 +38,7 @@ internal class Parent
 }
 
 [CreateFunction(typeof(Parent), "Create")]
-internal sealed partial class Container
-{
-    
-}
+internal sealed partial class Container;
 
 public class Tests
 {

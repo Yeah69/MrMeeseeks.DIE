@@ -6,9 +6,7 @@ using MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 namespace MrMeeseeks.DIE.Validation.Range;
 
-internal interface IValidateTransientScope : IValidateScopeBase
-{
-}
+internal interface IValidateTransientScope : IValidateScopeBase;
 
 internal sealed class ValidateTransientScope : ValidateScopeBase, IValidateTransientScope
 {

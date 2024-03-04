@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.WithArrayParameter;
 
-internal class ParameterDependency {}
+internal class ParameterDependency;
 
 internal class Dependency
 {
@@ -15,10 +15,7 @@ internal class Dependency
 
 [CreateFunction(typeof(Func<ParameterDependency[], Dependency>), "Create")]
 [CreateFunction(typeof(ParameterDependency), "CreateParameter")]
-internal sealed partial class Container
-{
-    
-}
+internal sealed partial class Container;
 
 public class Tests
 {

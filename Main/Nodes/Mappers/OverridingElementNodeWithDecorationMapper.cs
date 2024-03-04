@@ -12,9 +12,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Mappers;
 
-internal interface IOverridingElementNodeWithDecorationMapper : IElementNodeMapperBase
-{
-}
+internal interface IOverridingElementNodeWithDecorationMapper : IElementNodeMapperBase;
 
 internal sealed class OverridingElementNodeWithDecorationMapper : ElementNodeMapperBase, IOverridingElementNodeWithDecorationMapper
 {

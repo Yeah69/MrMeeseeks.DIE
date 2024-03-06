@@ -242,7 +242,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                     VisitIMultiKeyValueMultiFunctionNode(multiKeyValueMultiFunctionNode);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(multiFunctionNodeBase));
+                    throw new ArgumentOutOfRangeException(nameof(rangeNode), $"Unknown multi function node type: {multiFunctionNodeBase.GetType().FullName}");
             }
         
         if (rangeNode is { AddForDisposal: { } addForDisposal, DisposalHandling.SyncCollectionReference: { } syncCollectionReference })
@@ -682,7 +682,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             AsyncFunctionCallTransformation.TaskFromValueTask => $"{call}.AsTask()",
             AsyncFunctionCallTransformation.TaskFromTask => call,
             AsyncFunctionCallTransformation.TaskFromSync => $"{_wellKnownTypes.Task}.FromResult({call})",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(functionCallNode), $"Switch in DIE type {nameof(CodeGenerationVisitor)} is not exhaustive.")
         };
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
     }

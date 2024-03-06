@@ -19,27 +19,6 @@ internal abstract class ValidateUserDefinedInjectionMethod : ValidateUserDefined
     public override void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
         base.Validate(method, rangeType, containerType);
-
-        if (method is
-            {
-                Parameters.Length: > 0,
-                IsPartialDefinition: false,
-                ReturnsVoid: true,
-                MethodKind: MethodKind.Ordinary,
-                CanBeReferencedByName: true
-            }
-            && method.Parameters.All(p => p is
-            {
-                IsDiscard: false,
-                IsOptional: false,
-                IsParams: false,
-                IsThis: false,
-                RefKind: RefKind.None or RefKind.Out,
-                HasExplicitDefaultValue: false
-            })
-            && method.Parameters.Any(p => p.RefKind == RefKind.Out))
-        {
-        }
         
         if (!method.Parameters.Any(p => p.RefKind == RefKind.Out))
             LocalDiagLogger.Error(

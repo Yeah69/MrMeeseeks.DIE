@@ -18,22 +18,6 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
 
     public virtual void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
-        if (method is
-            {
-                DeclaredAccessibility: Accessibility.Private or Accessibility.Protected,
-                CallingConvention: SignatureCallingConvention.Default,
-                IsConditional: false,
-                IsVararg: false,
-                IsExtensionMethod: false,
-                IsGenericMethod: false,
-                IsInitOnly: false,
-                IsStatic: false,
-                IsImplicitlyDeclared: false
-            })
-        {
-            return;
-        }
-        
         if (method.DeclaredAccessibility != Accessibility.Private && method.DeclaredAccessibility != Accessibility.Protected)
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(method, rangeType, containerType, "Has to be private or protected."),
@@ -62,11 +46,6 @@ internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
         if (method.IsInitOnly)
             LocalDiagLogger.Error(
                 ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be an init method."),
-                method.Locations.FirstOrDefault() ?? Location.None);
-        
-        if (method.IsStatic)
-            LocalDiagLogger.Error(
-                ValidationErrorDiagnostic(method, rangeType, containerType, "Isn't allowed to be static."),
                 method.Locations.FirstOrDefault() ?? Location.None);
         
         if (method.IsImplicitlyDeclared)

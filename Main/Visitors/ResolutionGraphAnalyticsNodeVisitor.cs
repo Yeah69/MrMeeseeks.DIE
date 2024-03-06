@@ -164,7 +164,7 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
                     VisitIMultiKeyValueMultiFunctionNode(multiKeyValueMultiFunctionNode);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(multiFunctionBase));
+                    throw new ArgumentOutOfRangeException(nameof(element), $"Unknown type {element.GetType()}");
             }
     }
 

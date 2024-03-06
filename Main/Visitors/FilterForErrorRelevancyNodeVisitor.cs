@@ -88,7 +88,7 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
                     VisitIMultiKeyValueMultiFunctionNode(multiKeyValueMultiFunctionNode);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(multiFunctionBase));
+                    throw new ArgumentOutOfRangeException(nameof(element), $"Unknown type {element.GetType()}");
             }
     }
 

@@ -169,7 +169,7 @@ internal abstract class ValidateRange : IValidateRange
             if (type.IsVirtual) log("Has to be non-virtual.");
             if (type.IsAnonymousType) log("Has to be non-anonymous.");
             if (type.IsTupleType) log("Has to be no tuple type.");
-            if (type.IsReadOnly) log("Has to be non-read-only.");;
+            if (type.IsReadOnly) log("Has to be non-read-only.");
             if (type.IsImplicitlyDeclared) log("Has to be non-implicitly-declared.");
             if (type.IsNativeIntegerType) log("Has to be no native integer type.");
             if (type.MightContainExtensionMethods) log("Isn't allowed to contain extension methods.");

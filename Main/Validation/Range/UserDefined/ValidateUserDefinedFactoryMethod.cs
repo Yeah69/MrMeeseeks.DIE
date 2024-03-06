@@ -15,24 +15,6 @@ internal sealed class ValidateUserDefinedFactoryMethod : ValidateUserDefinedMeth
     public override void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
         base.Validate(method, rangeType, containerType);
-
-        if (method is
-            {
-                IsPartialDefinition: false,
-                ReturnsVoid: false,
-                MethodKind: MethodKind.Ordinary or MethodKind.PropertyGet
-            }
-            && method.Parameters.All(p => p is
-            {
-                IsDiscard: false,
-                IsOptional: false,
-                IsParams: false,
-                IsThis: false,
-                RefKind: RefKind.None,
-                HasExplicitDefaultValue: false
-            }))
-        {
-        }
         
         if (method.IsPartialDefinition)
             LocalDiagLogger.Error(

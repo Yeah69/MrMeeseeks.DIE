@@ -21,9 +21,8 @@ internal sealed class MapperFactory : IMapperFactory
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;
     }
 
-    public IElementNodeMapperBase Create(MapperData data)
-    {
-        return data switch
+    public IElementNodeMapperBase Create(MapperData data) =>
+        data switch
         {
             VanillaMapperData => _typeToElementNodeMapperFactory(),
             OverridingMapperData overriding =>
@@ -32,7 +31,6 @@ internal sealed class MapperFactory : IMapperFactory
                 _overridingElementNodeWithDecorationMapperFactory(
                     _typeToElementNodeMapperFactory(),
                     overridingWithDecoration.Override),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(data), $"Switch in DIE type {nameof(MapperFactory)} is not exhaustive.")
         };
-    }
 }

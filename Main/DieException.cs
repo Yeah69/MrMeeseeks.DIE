@@ -31,56 +31,43 @@ public abstract class DieException : Exception
     protected DieException(string message, Exception innerException) : base(message, innerException) { }
 }
 
-public class ImplementationCycleDieException : DieException
+#pragma warning disable CA1032 // This exception class needs to be initiliazed with a cycle. The standard exception constructors would not be suitable for this class.
+public sealed class ImplementationCycleDieException : DieException
+#pragma warning restore CA1032
 {
-    public ImplementationCycleDieException(IImmutableStack<INamedTypeSymbol> cycle) => Cycle = cycle;
-
     public override DieExceptionKind Kind => DieExceptionKind.ImplementationCycle;
     public IImmutableStack<INamedTypeSymbol> Cycle { get; }
+    
+    public ImplementationCycleDieException(IImmutableStack<INamedTypeSymbol> cycle) => Cycle = cycle;
 }
 
-public class FunctionCycleDieException : DieException
+#pragma warning disable CA1032 // This exception class needs to be initiliazed with a cycle. The standard exception constructors would not be suitable for this class.
+public sealed class FunctionCycleDieException : DieException
+#pragma warning restore CA1032
 {
-    public FunctionCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
-
     public override DieExceptionKind Kind => DieExceptionKind.FunctionCycle;
     public IImmutableStack<string> Cycle { get; }
+    
+    public FunctionCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
 }
 
+#pragma warning disable CA1032 // This exception class needs to be initiliazed with a cycle. The standard exception constructors would not be suitable for this class.
 public class InitializedInstanceCycleDieException : DieException
+#pragma warning restore CA1032
 {
-    public InitializedInstanceCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
-
     public override DieExceptionKind Kind => DieExceptionKind.InitializedInstanceCycle;
     public IImmutableStack<string> Cycle { get; }
+    
+    public InitializedInstanceCycleDieException(IImmutableStack<string> cycleFunctionDescriptions) => Cycle = cycleFunctionDescriptions;
 }
 
-public class ValidationDieException : DieException
+public sealed class ValidationDieException : DieException
 {
     public override DieExceptionKind Kind => DieExceptionKind.Validation;
 
     public ValidationDieException() { }
     public ValidationDieException(string message) : base(message) { }
     public ValidationDieException(string message, Exception innerException) : base(message, innerException) { }
-}
-
-public class ResolutionDieException : DieException
-{
-    public string ErrorMessage { get; }
-    public ResolutionDieException(string errorMessage)
-    {
-        ErrorMessage = errorMessage;
-    }
-
-    public override DieExceptionKind Kind => DieExceptionKind.Resolution;
-}
-
-public class CompilationDieException : DieException
-{
-    public Diagnostic Diagnostic { get; }
-
-    public CompilationDieException(Diagnostic diagnostic) => Diagnostic = diagnostic;
-    public override DieExceptionKind Kind => DieExceptionKind.Compilation;
 }
 
 public class ImpossibleDieException : DieException

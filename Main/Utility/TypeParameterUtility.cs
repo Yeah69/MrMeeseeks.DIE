@@ -154,7 +154,7 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility
         var newCompilation = _compilation.AddSyntaxTrees(syntaxTree);
 
         var newType = newCompilation.GetTypeByMetadataName($"N.C`{extractedToGrownNames.Count}") ??
-                      throw new Exception("Impossible: Didn't found type for type parameter growing.");
+                      throw new ImpossibleDieException("Impossible: Didn't found type for type parameter growing.");
         return extractedOpenTypeParameters
             .Zip(newType.TypeParameters, (l, r) => (l, r))
             .ToDictionary(t => t.l, t => t.r);

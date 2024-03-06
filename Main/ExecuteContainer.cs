@@ -111,7 +111,9 @@ internal sealed class ExecuteContainer : IExecuteContainer
         {
             ErrorExit(dieException, _containerNode);
         }
+#pragma warning disable CA1031 // In this case we want to catch all exceptions to have a chance to gracefully exit the code generation process
         catch (Exception exception)
+#pragma warning restore CA1031
         {
             _localDiagLogger.Error(
                 ErrorLogData.UnexpectedException(exception), 

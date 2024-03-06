@@ -55,7 +55,7 @@ public class Tests
     [Fact]
     public async Task Test()
     {
-        await using var container = Container.DIE_CreateContainer();
+        var container = Container.DIE_CreateContainer();
         var instance = container.Create();
         await container.DisposeAsync();
         Assert.True(instance.Dependency.IsDisposed);

@@ -61,7 +61,7 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
 
     public string? RegisterAsyncDisposal()
     {
-        if (_asyncCollection is null)
+        if (_asyncCollection is not null)
             _asyncCollectionUsed = true;
         
         return _asyncCollection;

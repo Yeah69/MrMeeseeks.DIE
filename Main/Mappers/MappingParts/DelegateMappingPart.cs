@@ -64,7 +64,8 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                        lazyType.TypeArguments.SingleOrDefault(), 
                        Array.Empty<ITypeSymbol>(), 
                        _lazyNodeFactory, 
-                       "Lazy");
+                       "Lazy",
+                       true);
         }
 
         if (CustomSymbolEqualityComparer.Default.Equals(data.Type.OriginalDefinition, _wellKnownTypes.ThreadLocal1)
@@ -76,7 +77,8 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                        threadLocalType.TypeArguments.SingleOrDefault(), 
                        Array.Empty<ITypeSymbol>(), 
                        _threadLocalNodeFactory, 
-                       "ThreadLocal");
+                       "ThreadLocal",
+                       true);
         }
 
         if (data.Type.TypeKind == TypeKind.Delegate 
@@ -89,7 +91,8 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                        funcType.TypeArguments.LastOrDefault(), 
                        funcType.TypeArguments.Take(funcType.TypeArguments.Length - 1).ToArray(), 
                        _funcNodeFactory, 
-                       "Func");
+                       "Func",
+                       false);
         }
 
         return null;
@@ -99,7 +102,8 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
             ITypeSymbol? returnType, 
             IReadOnlyList<ITypeSymbol> lambdaParameters,
             Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, TElementNode> factory,
-            string logLabel)
+            string logLabel,
+            bool passOverrides)
             where TElementNode : IElementNode
         {
             if (returnType is null)
@@ -114,7 +118,9 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
             var function = _localFunctionNodeFactory(
                     returnTypeForFunction,
                     lambdaParameters,
-                    _parentFunction.Overrides)
+                    passOverrides 
+                        ? _parentFunction.Overrides 
+                        : ImmutableDictionary<ITypeSymbol, IParameterNode>.Empty)
                 .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, data.PassedContext);
             _parentFunction.AddLocalFunction(function);

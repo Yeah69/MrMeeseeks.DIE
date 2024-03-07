@@ -34,7 +34,8 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             enumerableType, 
             parameters, 
@@ -48,11 +49,12 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
             typeToElementNodeMapperFactory,
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes,
+            wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
         Name = referenceGenerator.Generate("CreateMulti", _enumerableType);
     }
 

@@ -36,7 +36,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal, 
             parameters, 
@@ -48,7 +48,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            containerWideContext)
+            wellKnownTypes)
     {
         _initializedInstanceNodes = initializedInstanceNodes;
         _localDiagLogger = localDiagLogger;

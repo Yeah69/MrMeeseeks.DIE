@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
@@ -22,6 +23,7 @@ internal sealed record WellKnownTypesChoice(
     INamedTypeSymbol FilterImplementationCollectionChoiceAttribute,
     INamedTypeSymbol FilterInjectionKeyChoiceAttribute,
     INamedTypeSymbol FilterDecorationOrdinalChoiceAttribute)
+    : IContainerInstance
 {
     internal static WellKnownTypesChoice Create(Compilation compilation) => new (
         ImplementationChoiceAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(ImplementationChoiceAttribute).FullName ?? ""),

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -40,14 +39,14 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes)
     {
         _parentContainer = parentContainer;
         _plainFunctionCallNodeFactory = plainFunctionCallNodeFactory;
         _asyncFunctionCallNodeFactory = asyncFunctionCallNodeFactory;
         _scopeCallNodeFactory = scopeCallNodeFactory;
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
-        WellKnownTypes = containerWideContext.WellKnownTypes;
+        WellKnownTypes = wellKnownTypes;
         Parameters = parameters.Select(p=> (p, parameterNodeFactory(p)
             .EnqueueBuildJobTo(parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)))).ToList();
         Accessibility = accessibility;

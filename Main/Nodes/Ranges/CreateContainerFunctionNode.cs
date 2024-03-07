@@ -27,7 +27,7 @@ internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunc
         IVoidFunctionNode? initializationFunction,
         
         // dependencies
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         IReferenceGenerator referenceGenerator,
         IContainerInfoContext containerInfoContext)
     {
@@ -39,7 +39,7 @@ internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunc
             ?? new List<(string, string)>();
         InitializationFunctionName = initializationFunction?.Name;
         _containerType = containerInfoContext.ContainerInfo.ContainerType;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
     }
     
     public void Build(PassedContext passedContext) { }

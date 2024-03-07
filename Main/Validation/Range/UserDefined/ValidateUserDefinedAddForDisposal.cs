@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -12,10 +11,10 @@ internal sealed class ValidateUserDefinedAddForDisposalSync
         IValidateUserDefinedAddForDisposalSync
 {
     internal ValidateUserDefinedAddForDisposalSync(
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         ILocalDiagLogger localDiagLogger)
         : base(localDiagLogger) => 
-        DisposableType = containerWideContext.WellKnownTypes.IDisposable;
+        DisposableType = wellKnownTypes.IDisposable;
 
     protected override INamedTypeSymbol? DisposableType { get; }
 }
@@ -26,10 +25,10 @@ internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefin
     IValidateUserDefinedAddForDisposalAsync
 {
     internal ValidateUserDefinedAddForDisposalAsync(
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         ILocalDiagLogger localDiagLogger)
         : base(localDiagLogger) => 
-        DisposableType = containerWideContext.WellKnownTypes.IAsyncDisposable;
+        DisposableType = wellKnownTypes.IAsyncDisposable;
 
     protected override INamedTypeSymbol? DisposableType { get; }
 }

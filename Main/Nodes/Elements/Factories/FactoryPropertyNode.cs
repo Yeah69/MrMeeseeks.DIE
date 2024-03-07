@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Factories;
@@ -12,8 +11,8 @@ internal sealed partial class FactoryPropertyNode : FactoryNodeBase, IFactoryPro
         
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        IContainerWideContext containerWideContext) 
-        : base(propertySymbol.Type, propertySymbol, parentFunction, referenceGenerator, containerWideContext)
+        WellKnownTypes wellKnownTypes) 
+        : base(propertySymbol.Type, propertySymbol, parentFunction, referenceGenerator, wellKnownTypes)
     {
     }
 }

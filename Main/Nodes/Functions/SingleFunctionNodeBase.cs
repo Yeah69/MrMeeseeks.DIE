@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -30,7 +29,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes)
         : base(
             accessibility, 
             typeSymbol, 
@@ -44,7 +43,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes)
     {
         ReturnedTypeNameNotWrapped = typeSymbol.Name;
     }

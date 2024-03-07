@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -30,7 +29,7 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes)
         : base(
             accessibility,
             parameters,
@@ -43,7 +42,7 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            containerWideContext)
+            wellKnownTypes)
     {
         TypeSymbol = typeSymbol;
         ReturnedTypeFullName = TypeSymbol.FullName();

@@ -65,7 +65,7 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
         ITransientScopeWideContext transientScopeWideContext,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        IContainerWideContext containerWideContext,
+        WellKnownTypesCollections wellKnownTypesCollections,
         ICheckIterableTypes checkIterableTypes)
     {
         _mapType = mapType;
@@ -73,7 +73,7 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
         _parentFunction = parentFunction;
         _referenceGenerator = referenceGenerator;
         _checkIterableTypes = checkIterableTypes;
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
     }
 
     public void Build(PassedContext passedContext)

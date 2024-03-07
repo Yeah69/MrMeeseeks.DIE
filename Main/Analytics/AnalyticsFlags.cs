@@ -16,7 +16,7 @@ internal sealed class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
     
     internal AnalyticsFlags(
         IContainerInfoContext containerInfoContext,
-        IContainerWideContext containerWideContext,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         GeneratorExecutionContext context)
     {
         var attributeData = containerInfoContext.ContainerInfo.ContainerType
@@ -29,7 +29,7 @@ internal sealed class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
             : null;
         
         bool CheckAttribute(AttributeData ad) =>
-            CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, containerWideContext.WellKnownTypesMiscellaneous.AnalyticsAttribute) 
+            CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, wellKnownTypesMiscellaneous.AnalyticsAttribute) 
             && ad.ConstructorArguments.Length == 1 
             && ad.ConstructorArguments[0].Value is int;
     }

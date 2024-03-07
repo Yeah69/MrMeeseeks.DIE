@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Utility;
@@ -14,9 +13,10 @@ internal sealed class CheckIterableTypes : ICheckIterableTypes
 {
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
-    internal CheckIterableTypes(IContainerWideContext containerWideContext)
+    internal CheckIterableTypes(
+        WellKnownTypesCollections wellKnownTypesCollections)
     {
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
     }
     
     public bool IsCollectionType(ITypeSymbol type) =>

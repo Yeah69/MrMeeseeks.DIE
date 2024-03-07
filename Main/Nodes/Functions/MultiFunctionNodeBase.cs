@@ -37,7 +37,8 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private, 
             enumerableType, 
@@ -51,7 +52,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;
@@ -59,11 +60,11 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         ItemTypeFullName = CollectionUtility.GetCollectionsInnerType(enumerableType).FullName();
 
         SuppressAsync = 
-            containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1 is not null 
-            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
+            wellKnownTypesCollections.IAsyncEnumerable1 is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
         IsAsyncEnumerable =
-            containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1 is not null 
-            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, containerWideContext.WellKnownTypesCollections.IAsyncEnumerable1);
+            wellKnownTypesCollections.IAsyncEnumerable1 is not null 
+            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
 
         ReturnedTypeNameNotWrapped = enumerableType.Name;
     }

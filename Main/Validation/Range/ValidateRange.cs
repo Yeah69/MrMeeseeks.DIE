@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
@@ -39,7 +38,8 @@ internal abstract class ValidateRange : IValidateRange
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ILocalDiagLogger localDiagLogger,
         IRangeUtility rangeUtility)
     {
@@ -53,8 +53,8 @@ internal abstract class ValidateRange : IValidateRange
         _validateAttributes = validateAttributes;
         LocalDiagLogger = localDiagLogger;
         _rangeUtility = rangeUtility;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
-        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
+        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
     }
 
     protected abstract DiagLogData ValidationErrorDiagnostic(INamedTypeSymbol rangeType, INamedTypeSymbol container, string specification);

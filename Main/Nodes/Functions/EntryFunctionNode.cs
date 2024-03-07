@@ -26,7 +26,7 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
         ITransientScopeWideContext transientScopeWideContext,
         IContainerNode parentContainer, 
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -47,7 +47,7 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;

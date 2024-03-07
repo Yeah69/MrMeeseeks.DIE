@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
@@ -19,7 +18,9 @@ internal sealed class ValidateScope : ValidateScopeBase, IValidateScope
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesAggregation wellKnownTypesAggregation,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ILocalDiagLogger localDiagLogger,
         IRangeUtility rangeUtility) 
         : base(
@@ -31,7 +32,9 @@ internal sealed class ValidateScope : ValidateScopeBase, IValidateScope
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             validateAttributes,
-            containerWideContext,
+            wellKnownTypes,
+            wellKnownTypesAggregation,
+            wellKnownTypesMiscellaneous,
             localDiagLogger,
             rangeUtility)
     {

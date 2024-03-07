@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -26,13 +25,14 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
-    public CodeGenerationVisitor(
-        IContainerWideContext containerWideContext,
+    internal CodeGenerationVisitor(
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections,
         IReferenceGenerator referenceGenerator)
     {
         _referenceGenerator = referenceGenerator;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
+        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
     }
 
     public void VisitIContainerNode(IContainerNode container)

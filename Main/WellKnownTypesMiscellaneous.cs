@@ -1,4 +1,5 @@
 ﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
@@ -19,6 +20,7 @@ internal sealed record WellKnownTypesMiscellaneous(
     INamedTypeSymbol DecorationOrdinalMappingAttribute,
     INamedTypeSymbol FilterDecorationOrdinalMappingAttribute,
     INamedTypeSymbol DieExceptionKind)
+    : IContainerInstance
 {
     internal static WellKnownTypesMiscellaneous Create(Compilation compilation) => new (
         InitializerAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InitializerAttribute).FullName ?? ""),

@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -202,7 +201,8 @@ internal abstract class RangeNode : IRangeNode
         IUserDefinedElements userDefinedElements,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IReferenceGenerator referenceGenerator,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
@@ -238,7 +238,7 @@ internal abstract class RangeNode : IRangeNode
             DisposalHandling.RegisterAsyncDisposal();
         }
 
-        _objectType = containerWideContext.WellKnownTypes.Object;
+        _objectType = wellKnownTypes.Object;
         
         if (rangeType is not null)
         {
@@ -246,7 +246,7 @@ internal abstract class RangeNode : IRangeNode
                 .GetAttributes()
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        containerWideContext.WellKnownTypesMiscellaneous.InitializedInstancesAttribute))
+                        wellKnownTypesMiscellaneous.InitializedInstancesAttribute))
                 .Where(ad =>
                     ad is { ConstructorArguments.Length: 1 } &&
                     ad.ConstructorArguments[0].Kind == TypedConstantKind.Array)

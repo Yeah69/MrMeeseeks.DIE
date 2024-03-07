@@ -39,7 +39,8 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> keyValuePairNodeFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             enumerableType, 
             parameters, 
@@ -53,13 +54,14 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
             typeToElementNodeMapperFactory,
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes,
+            wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;
         _localDiagLogger = localDiagLogger;
         _keyValuePairNodeFactory = keyValuePairNodeFactory;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
 
         Name = referenceGenerator.Generate("CreateMultiKeyValue", _enumerableType);
     }

@@ -9,6 +9,7 @@ using MrMeeseeks.DIE.Nodes.Roots;
 
 namespace MrMeeseeks.DIE.MsContainer;
 
+//[ContainerInstanceImplementationAggregation(typeof(Compilation))]
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
 [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancerForRanges))]
@@ -33,7 +34,7 @@ internal sealed partial class MsContainer
         types = (DIE_Factory_ContainerInfo.ContainerType, DIE_Factory_ContainerInfo.ContainerType);
 
     [UserDefinedConstructorParametersInjection(typeof(ScopeInfo))]
-    private void DIE_ConstrParams_ScopeInfo(
+    private static void DIE_ConstrParams_ScopeInfo(
         out string name,
         out INamedTypeSymbol? scopeType)
     {
@@ -63,7 +64,7 @@ internal sealed partial class MsContainer
     private sealed partial class DIE_TransientScope_ScopeNodeRoot
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
-        private void DIE_ConstrParams_UserDefinedElements(
+        private static void DIE_ConstrParams_UserDefinedElements(
             IContainerInfoContext containerInfoContext,
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
@@ -77,7 +78,7 @@ internal sealed partial class MsContainer
     private sealed partial class DIE_TransientScope_TransientScopeNodeRoot
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
-        private void DIE_ConstrParams_UserDefinedElements(
+        private static void DIE_ConstrParams_UserDefinedElements(
             IContainerInfoContext containerInfoContext,
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 

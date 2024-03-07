@@ -83,13 +83,13 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
         ITransientScopeWideContext transientScopeWideContext,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        IContainerWideContext containerWideContext)
+        WellKnownTypesCollections wellKnownTypesCollections)
     {
         _collectionType = collectionType;
         _parentRange = transientScopeWideContext.Range;
         _parentFunction = parentFunction;
         _referenceGenerator = referenceGenerator;
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
     }
 
     public void Build(PassedContext passedContext)

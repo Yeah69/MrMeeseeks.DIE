@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
@@ -29,7 +28,8 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ILocalDiagLogger localDiagLogger,
         IRangeUtility rangeUtility) 
         : base(
@@ -41,14 +41,15 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             validateAttributes,
-            containerWideContext,
+            wellKnownTypes,
+            wellKnownTypesMiscellaneous,
             localDiagLogger,
             rangeUtility)
     {
         _validateTransientScopeFactory = validateTransientScopeFactory;
         _validateScopeFactory = validateScopeFactory;
         _rangeUtility = rangeUtility;
-        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
     }
 
     public override void Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)

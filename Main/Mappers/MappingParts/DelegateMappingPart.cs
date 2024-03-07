@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -32,7 +31,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
         IContainerNode parentContainer, 
         IFunctionNode parentFunction, 
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, ILazyNode> lazyNodeFactory,
         Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, IThreadLocalNode> threadLocalNodeFactory, 
@@ -49,7 +48,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
         _typeParameterUtility = typeParameterUtility;
         _userDefinedElementsMappingPart = userDefinedElementsMappingPart;
         _parentFunction = parentFunction;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
     }
 
     public IElementNode? Map(MappingPartData data)
@@ -64,8 +63,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                        lazyType.TypeArguments.SingleOrDefault(), 
                        Array.Empty<ITypeSymbol>(), 
                        _lazyNodeFactory, 
-                       "Lazy",
-                       true);
+                       "Lazy");
         }
 
         if (CustomSymbolEqualityComparer.Default.Equals(data.Type.OriginalDefinition, _wellKnownTypes.ThreadLocal1)
@@ -77,8 +75,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                        threadLocalType.TypeArguments.SingleOrDefault(), 
                        Array.Empty<ITypeSymbol>(), 
                        _threadLocalNodeFactory, 
-                       "ThreadLocal",
-                       true);
+                       "ThreadLocal");
         }
 
         if (data.Type.TypeKind == TypeKind.Delegate 
@@ -91,8 +88,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                        funcType.TypeArguments.LastOrDefault(), 
                        funcType.TypeArguments.Take(funcType.TypeArguments.Length - 1).ToArray(), 
                        _funcNodeFactory, 
-                       "Func",
-                       false);
+                       "Func");
         }
 
         return null;
@@ -102,8 +98,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
             ITypeSymbol? returnType, 
             IReadOnlyList<ITypeSymbol> lambdaParameters,
             Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, TElementNode> factory,
-            string logLabel,
-            bool passOverrides)
+            string logLabel)
             where TElementNode : IElementNode
         {
             if (returnType is null)
@@ -118,9 +113,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
             var function = _localFunctionNodeFactory(
                     returnTypeForFunction,
                     lambdaParameters,
-                    passOverrides 
-                        ? _parentFunction.Overrides 
-                        : ImmutableDictionary<ITypeSymbol, IParameterNode>.Empty)
+                    _parentFunction.Overrides)
                 .Function
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, data.PassedContext);
             _parentFunction.AddLocalFunction(function);

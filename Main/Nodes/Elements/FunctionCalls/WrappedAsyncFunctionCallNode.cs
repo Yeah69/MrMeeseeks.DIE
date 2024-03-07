@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -33,7 +32,7 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
         IReadOnlyList<ITypeSymbol> typeParameters,
         
         IReferenceGenerator referenceGenerator,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes)
     {
         OwnerReference = ownerReference;
         FunctionName = calledFunction.Name;
@@ -46,10 +45,10 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
             : AsyncFunctionCallTransformation.TaskFromTask;
 
         var asyncType = synchronicityDecision is SynchronicityDecision.AsyncValueTask
-            ? containerWideContext.WellKnownTypes.ValueTask1 is not null 
-                ? containerWideContext.WellKnownTypes.ValueTask1.Construct(wrappedType)
+            ? wellKnownTypes.ValueTask1 is not null 
+                ? wellKnownTypes.ValueTask1.Construct(wrappedType)
                 : throw new InvalidOperationException("ValueTask1 is not available")
-            : containerWideContext.WellKnownTypes.Task1.Construct(wrappedType);
+            : wellKnownTypes.Task1.Construct(wrappedType);
         Reference = referenceGenerator.Generate(asyncType);
         TypeFullName = asyncType.FullName();
     }

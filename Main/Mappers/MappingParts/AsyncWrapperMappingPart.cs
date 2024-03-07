@@ -19,13 +19,13 @@ internal sealed class AsyncWrapperMappingPart : IAsyncWrapperMappingPart, IScope
     internal AsyncWrapperMappingPart(
         IFunctionNode parentFunction,
         ITransientScopeWideContext transientScopeWideContext,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart)
     {
         _parentFunction = parentFunction;
         _userDefinedElementsMappingPart = userDefinedElementsMappingPart;
         _parentRange = transientScopeWideContext.Range;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
     }
     
     public IElementNode? Map(MappingPartData data)

@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.MsContainer;
@@ -31,7 +30,8 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientS
         IUserDefinedElements userDefinedElements,
         IReferenceGenerator referenceGenerator,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
@@ -49,7 +49,8 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientS
             userDefinedElements, 
             referenceGenerator,
             typeParameterUtility,
-            containerWideContext,
+            wellKnownTypes,
+            wellKnownTypesMiscellaneous,
             mapperDataToFunctionKeyTypeConverter,
             createFunctionNodeFactory,  
             multiFunctionNodeFactory,

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes;
@@ -31,10 +30,10 @@ internal sealed class ContainerCheckTypeProperties : CheckTypeProperties, IConta
     internal ContainerCheckTypeProperties(
         IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
         IInjectablePropertyExtractor injectablePropertyExtractor,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         ITypeParameterUtility typeParameterUtility,
         ILocalDiagLogger localDiagLogger) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, typeParameterUtility, localDiagLogger)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility, localDiagLogger)
     {
     }
 }
@@ -47,10 +46,10 @@ internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeChec
         IScopeCurrentlyConsideredTypes currentlyConsideredTypes, 
         
         IInjectablePropertyExtractor injectablePropertyExtractor,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         ITypeParameterUtility typeParameterUtility,
         ILocalDiagLogger localDiagLogger) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, containerWideContext, typeParameterUtility, localDiagLogger)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility, localDiagLogger)
     {
     }
 }
@@ -97,7 +96,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
         IInjectablePropertyExtractor injectablePropertyExtractor,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         ITypeParameterUtility typeParameterUtility,
         ILocalDiagLogger localDiagLogger)
     {
@@ -105,7 +104,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         _injectablePropertyExtractor = injectablePropertyExtractor;
         _typeParameterUtility = typeParameterUtility;
         _localDiagLogger = localDiagLogger;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
 
         var injectionKeyMappings = currentlyConsideredTypes.AllConsideredImplementations
             .SelectMany(i => i.GetAttributes().Select(a => (i, a)))

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -16,9 +15,10 @@ internal sealed class RangeUtility : IRangeUtility
 {
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
-    public RangeUtility(IContainerWideContext transientScopeWideContext)
+    internal RangeUtility(
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
-        _wellKnownTypesMiscellaneous = transientScopeWideContext.WellKnownTypesMiscellaneous;
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
     }
 
     public bool IsAContainer(INamedTypeSymbol rangeType) =>

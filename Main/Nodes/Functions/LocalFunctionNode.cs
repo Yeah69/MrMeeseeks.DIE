@@ -33,7 +33,7 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext) 
+        WellKnownTypes wellKnownTypes) 
         : base(
             null,
             typeSymbol, 
@@ -47,7 +47,7 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;

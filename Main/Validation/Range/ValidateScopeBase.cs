@@ -1,4 +1,4 @@
-using MrMeeseeks.DIE.Contexts;
+
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Validation.Attributes;
@@ -24,7 +24,9 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesAggregation wellKnownTypesAggregation,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ILocalDiagLogger localDiagLogger,
         IRangeUtility rangeUtility) 
         : base(
@@ -36,13 +38,13 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
             validateUserDefinedFactoryMethod,
             validateUserDefinedFactoryField,
             validateAttributes,
-            containerWideContext,
+            wellKnownTypes,
+            wellKnownTypesMiscellaneous,
             localDiagLogger,
             rangeUtility)
     {
-        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
 
-        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
         _notAllowedAttributeTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
             CustomSymbolEqualityComparer.Default,
             wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute,

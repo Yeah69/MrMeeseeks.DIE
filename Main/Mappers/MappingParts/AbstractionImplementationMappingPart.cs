@@ -29,7 +29,7 @@ internal interface IAbstractionImplementationMappingPart : IMappingPart
         IElementNodeMapperBase current);
 }
 
-internal class AbstractionImplementationMappingPart : IAbstractionImplementationMappingPart, IScopeInstance
+internal sealed class AbstractionImplementationMappingPart : IAbstractionImplementationMappingPart, IScopeInstance
 {
     private readonly IContainerNode _parentContainer;
     private readonly IRangeNode _parentRange;
@@ -49,7 +49,7 @@ internal class AbstractionImplementationMappingPart : IAbstractionImplementation
         ITransientScopeWideContext transientScopeWideContext,
         IFunctionNode parentFunction,
         ILocalDiagLogger localDiagLogger,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, INullNode> nullNodeFactory, 
@@ -68,7 +68,7 @@ internal class AbstractionImplementationMappingPart : IAbstractionImplementation
         _implementationNodeFactory = implementationNodeFactory;
         _reusedNodeFactory = reusedNodeFactory;
         _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
     }
 
     public IElementNode? Map(MappingPartData data)

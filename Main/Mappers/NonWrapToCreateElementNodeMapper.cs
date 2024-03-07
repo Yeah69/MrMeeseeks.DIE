@@ -22,7 +22,7 @@ internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, 
         IFunctionNode parentFunction,
         IContainerNode parentContainer,
         ITransientScopeWideContext transientScopeWideContext,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         IOverridesMappingPart overridesMappingPart,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         IAsyncWrapperMappingPart asyncWrapperMappingPart,
@@ -47,7 +47,7 @@ internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, 
         _parentFunction = parentFunction;
         _parentRange = transientScopeWideContext.Range;
         Next = parentElementNodeMapper;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
     }
 
     protected override IElementNodeMapperBase NextForWraps => this;

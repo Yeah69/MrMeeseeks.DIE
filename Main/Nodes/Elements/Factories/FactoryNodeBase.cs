@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -22,10 +21,9 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes)
     {
         _parentFunction = parentFunction;
-        var wellKnownTypes = containerWideContext.WellKnownTypes;
         Name = symbol.Name;
         Reference = referenceGenerator.Generate(referenceType);
         TypeFullName = referenceType.FullName();

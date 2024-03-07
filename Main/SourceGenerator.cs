@@ -16,14 +16,7 @@ public class SourceGenerator : ISourceGenerator
         try
         {
             var wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
-            var rangeUtility = new RangeUtility(
-                new ContainerWideContext(
-                    WellKnownTypes.Create(context.Compilation),
-                    WellKnownTypesAggregation.Create(context.Compilation),
-                    WellKnownTypesChoice.Create(context.Compilation),
-                    WellKnownTypesCollections.Create(context.Compilation), 
-                    wellKnownTypesMiscellaneous,
-                    context.Compilation));
+            var rangeUtility = new RangeUtility(wellKnownTypesMiscellaneous);
         
             var execute = new ExecuteImpl(
                 context,

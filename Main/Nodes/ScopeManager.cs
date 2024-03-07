@@ -36,7 +36,7 @@ internal sealed class ScopeManager : IScopeManager, IContainerInstance
         ITransientScopeInterfaceNode transientScopeInterface,
         Func<string, INamedTypeSymbol?, IScopeNodeRoot> scopeFactory,
         Func<string, INamedTypeSymbol?, ITransientScopeNodeRoot> transientScopeFactory,
-        IContainerWideContext containerWideContext)
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         var containerInfo = containerInfoContext.ContainerInfo;
         _container = container;
@@ -73,7 +73,7 @@ internal sealed class ScopeManager : IScopeManager, IContainerInstance
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        containerWideContext.WellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
+                        wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch
@@ -99,7 +99,7 @@ internal sealed class ScopeManager : IScopeManager, IContainerInstance
             .SelectMany(nts => nts.GetAttributes()
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
-                        containerWideContext.WellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
+                        wellKnownTypesMiscellaneous.CustomScopeForRootTypesAttribute))
                 .SelectMany(ad => ad
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch

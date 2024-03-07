@@ -86,16 +86,21 @@ internal sealed class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAs
         Compilation compilation,
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext) 
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesAggregation wellKnownTypesAggregation,
+        WellKnownTypesChoice wellKnownTypesChoice,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous) 
         : base(
             compilation.Assembly.GetAttributes(), 
             null,
             null,
             localDiagLogger,
-            validateAttributes, 
-            containerWideContext)
+            validateAttributes,
+            wellKnownTypes,
+            wellKnownTypesAggregation,
+            wellKnownTypesChoice,
+            wellKnownTypesMiscellaneous)
     {
-        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
         ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
         TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
         TransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
@@ -123,17 +128,22 @@ internal sealed class ContainerTypesFromAttributes : TypesFromAttributesBase, IC
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerInfoContext containerInfoContext,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesAggregation wellKnownTypesAggregation,
+        WellKnownTypesChoice wellKnownTypesChoice,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IRangeUtility rangeUtility) 
         : base(
             rangeUtility.GetRangeAttributes(containerInfoContext.ContainerInfo.ContainerType), 
             containerInfoContext.ContainerInfo.ContainerType,
             containerInfoContext.ContainerInfo.ContainerType, 
             localDiagLogger,
-            validateAttributes, 
-            containerWideContext)
+            validateAttributes,
+            wellKnownTypes,
+            wellKnownTypesAggregation,
+            wellKnownTypesChoice,
+            wellKnownTypesMiscellaneous)
     {
-        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
         ContainerInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute);
         TransientScopeInstanceAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute);
         TransientScopeRootAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute);
@@ -165,7 +175,10 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
         IContainerInfoContext containerInfoContext,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesAggregation wellKnownTypesAggregation,
+        WellKnownTypesChoice wellKnownTypesChoice,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IRangeUtility rangeUtility)
         : base(
             scopeInfo.ScopeType is not null 
@@ -175,7 +188,10 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
             containerInfoContext.ContainerInfo.ContainerType,
             localDiagLogger,
             validateAttributes,
-            containerWideContext)
+            wellKnownTypes,
+            wellKnownTypesAggregation,
+            wellKnownTypesChoice,
+            wellKnownTypesMiscellaneous)
     {
     }
 }
@@ -196,7 +212,10 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         // dependencies
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        IContainerWideContext containerWideContext)
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesAggregation wellKnownTypesAggregation,
+        WellKnownTypesChoice wellKnownTypesChoice,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         _rangeType = rangeType;
         _containerType = containerType;
@@ -205,11 +224,6 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         AttributeDictionary = attributeData
             .GroupBy(ad => ad.AttributeClass, CustomSymbolEqualityComparer.Default)
             .ToDictionary(g => g.Key, g => g, CustomSymbolEqualityComparer.Default);
-
-        var wellKnownTypes = containerWideContext.WellKnownTypes;
-        var wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
-        var wellKnownTypesChoice = containerWideContext.WellKnownTypesChoice;
-        var wellKnownTypesAggregation = containerWideContext.WellKnownTypesAggregation;
         
         Implementation = GetImplementationTypesFromAttribute(wellKnownTypesAggregation.ImplementationAggregationAttribute);
         TransientAbstraction = GetAbstractionTypesFromAttribute(wellKnownTypesAggregation.TransientAbstractionAggregationAttribute);

@@ -34,7 +34,7 @@ internal sealed partial class CreateTransientScopeFunctionNode : SingleFunctionN
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext) 
+        WellKnownTypes wellKnownTypes) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
             typeSymbol, 
@@ -48,7 +48,7 @@ internal sealed partial class CreateTransientScopeFunctionNode : SingleFunctionN
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes)
     {
         _typeSymbol = typeSymbol;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;

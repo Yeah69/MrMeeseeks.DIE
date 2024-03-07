@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Functions;
 
@@ -21,8 +20,8 @@ internal sealed partial class FactoryFunctionNode : FactoryNodeBase, IFactoryFun
         
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
-        IContainerWideContext containerWideContext) 
-        : base(methodSymbol.ReturnType, methodSymbol, parentFunction, referenceGenerator, containerWideContext)
+        WellKnownTypes wellKnownTypes) 
+        : base(methodSymbol.ReturnType, methodSymbol, parentFunction, referenceGenerator, wellKnownTypes)
     {
         _methodSymbol = methodSymbol;
         _elementNodeMapperBase = elementNodeMapperBase;

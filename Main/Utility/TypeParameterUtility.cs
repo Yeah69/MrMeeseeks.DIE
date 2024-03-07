@@ -21,11 +21,12 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility
 
     internal TypeParameterUtility(
         IReferenceGenerator referenceGenerator,
+        WellKnownTypes wellKnownTypes,
         IContainerWideContext containerWideContext)
     {
         _referenceGenerator = referenceGenerator;
         _compilation = containerWideContext.Compilation;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
     }
 
     public ITypeSymbol ReplaceTypeParametersByCustom(ITypeSymbol baseType)

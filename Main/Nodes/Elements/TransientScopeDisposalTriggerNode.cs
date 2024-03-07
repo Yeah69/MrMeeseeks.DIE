@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -22,14 +21,14 @@ internal sealed partial class TransientScopeDisposalTriggerNode : ITransientScop
     public TransientScopeDisposalTriggerNode(
         INamedTypeSymbol disposableType,
         
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
         IContainerNode parentContainer,
         ILocalDiagLogger localDiagLogger,
         IReferenceGenerator referenceGenerator)
     {
         _parentContainer = parentContainer;
         _localDiagLogger = localDiagLogger;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
         TypeFullName = disposableType.FullName();
         Reference = referenceGenerator.Generate(disposableType);
         _disposalHookIsSync = CustomSymbolEqualityComparer.Default.Equals(

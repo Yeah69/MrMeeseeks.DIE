@@ -8,7 +8,7 @@ internal interface IMappingPart
     IElementNode? Map(MappingPartData data);
 }
 
-internal record MappingPartData(
+internal sealed record MappingPartData(
     ITypeSymbol Type,
     PassedContext PassedContext,
     IElementNodeMapperBase Next,

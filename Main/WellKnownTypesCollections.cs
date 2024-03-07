@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.SourceGeneratorUtility.Extensions;
+﻿using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
@@ -49,6 +50,7 @@ internal sealed record WellKnownTypesCollections(
     INamedTypeSymbol? ImmutableDictionary, // None (nuget: System.Collections.Immutable)
     INamedTypeSymbol? ImmutableSortedDictionary2, // None (nuget: System.Collections.Immutable)
     INamedTypeSymbol? ImmutableSortedDictionary) // None (nuget: System.Collections.Immutable)
+    : IContainerInstance
 {
     internal static WellKnownTypesCollections Create(Compilation compilation)
     {

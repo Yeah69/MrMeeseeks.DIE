@@ -35,7 +35,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         ITypeParameterUtility typeParameterUtility,
-        IContainerWideContext containerWideContext) 
+        WellKnownTypes wellKnownTypes) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             typeSymbol, 
@@ -49,7 +49,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
             typeParameterUtility,
-            containerWideContext)
+            wellKnownTypes)
     {
         _mapperData = mapperData;
         _mapperFactory = mapperFactory;

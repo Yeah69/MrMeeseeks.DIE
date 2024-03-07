@@ -23,14 +23,16 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
         IContainerInfoContext containerInfoContext,
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IDiagLogger diagLogger)
     {
         _context = context;
         _diagLogger = diagLogger;
-        _wellKnownTypes = containerWideContext.WellKnownTypes;
-        _wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
-        _wellKnownTypesCollections = containerWideContext.WellKnownTypesCollections;
+        _wellKnownTypes = wellKnownTypes;
+        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
+        _wellKnownTypesCollections = wellKnownTypesCollections;
         _containerType = containerInfoContext.ContainerInfo.ContainerType;
     }
 

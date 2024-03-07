@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
@@ -33,7 +32,8 @@ internal sealed class UserDefinedElements : IUserDefinedElements, ITransientScop
         (INamedTypeSymbol? Range, INamedTypeSymbol Container) types,
 
         // dependencies
-        IContainerWideContext containerWideContext,
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ILocalDiagLogger localDiagLogger,
         IRangeUtility rangeUtility)
     {
@@ -43,7 +43,6 @@ internal sealed class UserDefinedElements : IUserDefinedElements, ITransientScop
                 .Where(s => s.Name.StartsWith($"{Constants.DieAbbreviation}_", StringComparison.Ordinal))
                 .ToList();
 
-            var wellKnownTypes = containerWideContext.WellKnownTypes;
             var nonValidFactoryMembers = dieMembers
                 .Where(s => s.Name.StartsWith(Constants.UserDefinedFactory, StringComparison.Ordinal)
                             && s is IFieldSymbol or IPropertySymbol or IMethodSymbol)
@@ -133,7 +132,7 @@ internal sealed class UserDefinedElements : IUserDefinedElements, ITransientScop
                 .OfType<IMethodSymbol>()
                 .FirstOrDefault();
             
-            AddForDisposalAsync = containerWideContext.WellKnownTypes.IAsyncDisposable is not null 
+            AddForDisposalAsync = wellKnownTypes.IAsyncDisposable is not null 
                 ? dieMembers
                     .Where(s => s is IMethodSymbol
                     {
@@ -148,7 +147,6 @@ internal sealed class UserDefinedElements : IUserDefinedElements, ITransientScop
                     .FirstOrDefault()
                 : null;
 
-            var wellKnownTypesMiscellaneous = containerWideContext.WellKnownTypesMiscellaneous;
             _constructorParametersInjectionMethods = GetInjectionMethods(Constants.UserDefinedConstrParams, wellKnownTypesMiscellaneous.UserDefinedConstructorParametersInjectionAttribute);
             
             _propertiesInjectionMethods = GetInjectionMethods(Constants.UserDefinedProps, wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute);

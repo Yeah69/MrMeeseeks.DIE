@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.SourceGeneratorUtility.Extensions;
+﻿using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
@@ -25,6 +26,7 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol Nullable1, // .NET Standard 2.0
     INamedTypeSymbol Type, // .NET Standard 2.0
     INamedTypeSymbol Object) // .NET Standard 2.0
+    : IContainerInstance
 {
     internal static WellKnownTypes Create(Compilation compilation)
     {

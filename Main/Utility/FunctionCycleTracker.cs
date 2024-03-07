@@ -2,7 +2,7 @@ using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 
-namespace MrMeeseeks.DIE.Nodes;
+namespace MrMeeseeks.DIE.Utility;
 
 internal interface IFunctionCycleTracker
 {

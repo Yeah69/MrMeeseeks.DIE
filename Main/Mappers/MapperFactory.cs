@@ -1,4 +1,4 @@
-namespace MrMeeseeks.DIE.Nodes.Mappers;
+namespace MrMeeseeks.DIE.Mappers;
 
 internal interface IMapperFactory
 {

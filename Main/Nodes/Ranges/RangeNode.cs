@@ -201,6 +201,7 @@ internal abstract class RangeNode : IRangeNode
         IUserDefinedElements userDefinedElements,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         ITypeParameterUtility typeParameterUtility,
+        IRangeUtility rangeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IReferenceGenerator referenceGenerator,
@@ -242,8 +243,7 @@ internal abstract class RangeNode : IRangeNode
         
         if (rangeType is not null)
         {
-            var types = rangeType
-                .GetAttributes()
+            var types = rangeUtility.GetRangeAttributes(rangeType)
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
                         wellKnownTypesMiscellaneous.InitializedInstancesAttribute))

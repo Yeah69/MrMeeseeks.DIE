@@ -20,12 +20,12 @@ internal sealed class UserDefinedElementsMappingPart : IUserDefinedElementsMappi
     
     internal UserDefinedElementsMappingPart(
         IContainerNode parentContainer,
-        ITransientScopeWideContext transientScopeWideContext,
+        IUserDefinedElements userDefinedElements,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory,
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory)
     {
-        _userDefinedElements = transientScopeWideContext.UserDefinedElements;
+        _userDefinedElements = userDefinedElements;
         _parentContainer = parentContainer;
         _factoryFieldNodeFactory = factoryFieldNodeFactory;
         _factoryPropertyNodeFactory = factoryPropertyNodeFactory;

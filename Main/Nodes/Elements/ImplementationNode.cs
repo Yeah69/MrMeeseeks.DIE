@@ -65,6 +65,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         IFunctionNode parentFunction,
         IContainerNode parentContainer,
         IElementNodeMapperBase elementNodeMapper,
+        IUserDefinedElements userDefinedElements,
         ITransientScopeWideContext transientScopeWideContext,
         IReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
@@ -77,7 +78,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         _parentRange = transientScopeWideContext.Range;
         _elementNodeMapper = elementNodeMapper;
         _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
-        _userDefinedElements = transientScopeWideContext.UserDefinedElements;
+        _userDefinedElements = userDefinedElements;
         _referenceGenerator = referenceGenerator;
         _localDiagLogger = localDiagLogger;
         _injectablePropertyExtractor = injectablePropertyExtractor;

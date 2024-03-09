@@ -33,7 +33,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="MrMeeseeks.Visitor" Version="1.1.0" PrivateAssets="all" />
-    <PackageReference Include="MsMeeseeks.DIE" Version="3.0.0-alpha.6" PrivateAssets="all" />
+    <PackageReference Include="MsMeeseeks.DIE" Version="3.0.0-alpha.7" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" PrivateAssets="all" />
     
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />

@@ -1,34 +1,29 @@
 using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Func.OverrideCombination;
+namespace MrMeeseeks.DIE.Test.Func.OverrideTransitive;
 
 internal class Dependency
 {
     public int ValueInt { get; }
-    public string ValueString { get; }
 
     internal Dependency(
-        int valueInt,
-        string valueString)
+        int valueInt)
     {
         ValueInt = valueInt;
-        ValueString = valueString;
     }
 }
 
-internal class Parent0
+internal class Parent0 : ITransientScopeRoot
 {
     public Dependency Dependency { get; }
     
-    // Overrides in DIE are only applied until the next Func-injection
-    // So if the previous int-override is required in the next Func-injection, it has to be manually passed
     internal Parent0(
-        int valueInt,
-        Func<int, string, Dependency> fac) =>
-        Dependency = fac(valueInt, "1");
+        Dependency dependency) =>
+        Dependency = dependency;
 }
 
 internal class Parent1
@@ -52,6 +47,5 @@ public class Tests
         var parent = container.Create();
         Assert.IsType<Parent1>(parent);
         Assert.Equal(2, parent.Dependency.ValueInt);
-        Assert.Equal("1", parent.Dependency.ValueString);
     }
 }

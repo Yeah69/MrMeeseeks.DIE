@@ -18,10 +18,10 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
     private readonly MapperData _mapperData;
     private readonly IMapperFactory _mapperFactory;
 
-    public CreateFunctionNode(
+    internal CreateFunctionNode(
         // parameters
         MapperData mapperData,
-        ITypeSymbol typeSymbol, 
+        ITypeSymbol typeSymbol,
         IReadOnlyList<ITypeSymbol> parameters,
         
         // dependencies

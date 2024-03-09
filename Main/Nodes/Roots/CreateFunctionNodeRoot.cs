@@ -10,7 +10,8 @@ internal interface ICreateFunctionNodeRoot
 
 internal sealed class CreateFunctionNodeRoot : ICreateFunctionNodeRoot, IScopeRoot
 {
-    public CreateFunctionNodeRoot(ICreateFunctionNode function)
+    internal CreateFunctionNodeRoot(
+        ICreateFunctionNode function)
     {
         Function = function;
     }

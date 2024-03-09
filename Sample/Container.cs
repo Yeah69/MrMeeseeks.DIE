@@ -1,17 +1,37 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Dependency : IContainerInstance;
-
-[CreateFunction(typeof(Dependency), "Create")]
-internal sealed partial class Container
+internal class Dependency : IScopeInstance
 {
-    public Dependency? FromFactory { get; private set; }
-    private Dependency DIE_Factory()
+    public int ValueInt { get; }
+
+    internal Dependency(
+        int valueInt)
     {
-        FromFactory = new();
-        return FromFactory;
+        ValueInt = valueInt;
     }
 }
+
+internal class Parent0 : IScopeRoot
+{
+    public Dependency Dependency { get; }
+    
+    internal Parent0(
+        Dependency dependency) =>
+        Dependency = dependency;
+}
+
+internal class Parent1
+{
+    public Dependency Dependency { get; }
+    
+    internal Parent1(
+        Func<int, Parent0> fac) =>
+        Dependency = fac(2).Dependency;
+}
+
+[CreateFunction(typeof(Func<int, Parent1>), "Create")]
+internal sealed partial class Container;

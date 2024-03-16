@@ -7,6 +7,10 @@
     "Main_Test": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "..\\Test\\Test.csproj"
+    },
+    "Main_Test_NetStandard": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\Test.NetStandard\\Test.NetStandard.csproj"
     }
   }
 }

@@ -1,37 +1,49 @@
 ﻿using System;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class Dependency : IScopeInstance
+internal class Dependency : IAsyncDisposable
 {
-    public int ValueInt { get; }
+    internal bool IsDisposed { get; private set; }
 
-    internal Dependency(
-        int valueInt)
+    public ValueTask DisposeAsync()
     {
-        ValueInt = valueInt;
+        IsDisposed = true;
+        return new ValueTask(Task.CompletedTask);
     }
 }
 
-internal class Parent0 : IScopeRoot
+internal class TransientScopeRoot : ITransientScopeRoot
 {
     public Dependency Dependency { get; }
-    
-    internal Parent0(
-        Dependency dependency) =>
+
+    internal TransientScopeRoot(Dependency dependency)
+    {
         Dependency = dependency;
+    }
 }
 
-internal class Parent1
+[CreateFunction(typeof(TransientScopeRoot), "Create")]
+internal sealed partial class Container
 {
-    public Dependency Dependency { get; }
     
-    internal Parent1(
-        Func<int, Parent0> fac) =>
-        Dependency = fac(2).Dependency;
-}
+    // ReSharper disable once InconsistentNaming
+    private sealed partial class DIE_DefaultTransientScope
+    {
+        // ReSharper disable once InconsistentNaming
+        private Dependency DIE_Factory_Dependency
+        {
+            get
+            {
+                var dependency = new Dependency();
+                DIE_AddForDisposalAsync(dependency);
+                return dependency;
+            }
+        }
 
-[CreateFunction(typeof(Func<int, Parent1>), "Create")]
-internal sealed partial class Container;
+        private partial void DIE_AddForDisposalAsync(IAsyncDisposable asyncDisposable);
+    }
+}

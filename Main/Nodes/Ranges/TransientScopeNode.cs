@@ -14,7 +14,12 @@ internal interface ITransientScopeNode : IScopeNodeBase
 {
     string TransientScopeInterfaceName { get; }
     string TransientScopeDisposalReference { get; }
-    ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction);
+    ITransientScopeCallNode BuildTransientScopeCallFunction(
+        string containerParameter,
+        INamedTypeSymbol type,
+        IRangeNode callingRange,
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase transientScopeImplementationMapper);
 }
 
 internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransientScopeInstance
@@ -29,6 +34,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
         IReferenceGenerator referenceGenerator,
         ITypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
+        IRequiredKeywordUtility requiredKeywordUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
@@ -49,6 +55,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
             referenceGenerator,
             typeParameterUtility,
             rangeUtility,
+            requiredKeywordUtility,
             wellKnownTypes,
             wellKnownTypesMiscellaneous,
             mapperDataToFunctionKeyTypeConverter,
@@ -78,7 +85,12 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
     public string TransientScopeInterfaceName { get; }
     public string TransientScopeDisposalReference { get; }
 
-    public ITransientScopeCallNode BuildTransientScopeCallFunction(string containerParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction)
+    public ITransientScopeCallNode BuildTransientScopeCallFunction(
+        string containerParameter,
+        INamedTypeSymbol type,
+        IRangeNode callingRange,
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase transientScopeImplementationMapper)
     {
         return FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
@@ -95,6 +107,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
                 callingRange, 
                 callingFunction, 
                 this,
-                TypeParameterUtility.ExtractTypeParameters(type)));
+                TypeParameterUtility.ExtractTypeParameters(type),
+                transientScopeImplementationMapper));
     }
 }

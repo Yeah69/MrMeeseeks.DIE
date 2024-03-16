@@ -26,6 +26,8 @@ internal sealed class OverridingElementNodeMapper : ElementNodeMapperBase, IOver
         ICollectionMappingPart collectionMappingPart,
         IAbstractionImplementationMappingPart abstractionImplementationMappingPart,
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
+        Func<string, (string Name, IElementNode Element)[], IImplicitScopeImplementationNode> implicitScopeImplementationNodeFactory,
+        Func<string, IReferenceNode> referenceNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
         Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory) 
         : base(
@@ -38,6 +40,8 @@ internal sealed class OverridingElementNodeMapper : ElementNodeMapperBase, IOver
             collectionMappingPart,
             abstractionImplementationMappingPart,
             outParameterNodeFactory,
+            implicitScopeImplementationNodeFactory,
+            referenceNodeFactory,
             errorNodeFactory)
     {
         Next = parentElementNodeMapper;

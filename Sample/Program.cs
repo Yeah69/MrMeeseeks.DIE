@@ -7,8 +7,8 @@ internal class Program
     {
         try
         {
-            using var container = Container.DIE_CreateContainer(); 
-            var asdf = container.Create()(3);
+            //using var container = Container.DIE_CreateContainer(); 
+            //var asdf = container.Create()(3);
             Console.WriteLine("Hello, World!");
         }
         catch (Exception)

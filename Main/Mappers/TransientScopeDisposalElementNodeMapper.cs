@@ -26,6 +26,8 @@ internal sealed class TransientScopeDisposalElementNodeMapper : ElementNodeMappe
         ICollectionMappingPart collectionMappingPart,
         IAbstractionImplementationMappingPart abstractionImplementationMappingPart,
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
+        Func<string, (string Name, IElementNode Element)[], IImplicitScopeImplementationNode> implicitScopeImplementationNodeFactory,
+        Func<string, IReferenceNode> referenceNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
         Func<INamedTypeSymbol, ITransientScopeDisposalTriggerNode> transientScopeDisposalTriggerNodeFactory) 
         : base(
@@ -38,6 +40,8 @@ internal sealed class TransientScopeDisposalElementNodeMapper : ElementNodeMappe
             collectionMappingPart,
             abstractionImplementationMappingPart,
             outParameterNodeFactory,
+            implicitScopeImplementationNodeFactory,
+            referenceNodeFactory,
             errorNodeFactory)
     {
         _wellKnownTypes = wellKnownTypes;

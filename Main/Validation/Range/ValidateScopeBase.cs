@@ -97,6 +97,14 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
 
         var isDefault = rangeType.Name == DefaultScopeName;
         var isCustom = rangeType.Name.StartsWith(CustomScopeName, StringComparison.Ordinal);
+        
+        if (rangeType.InstanceConstructors.Length > 1 
+            || rangeType.InstanceConstructors.Length == 1 
+            && !rangeType.InstanceConstructors[0].IsImplicitlyDeclared 
+            && rangeType.InstanceConstructors[0].DeclaredAccessibility != Accessibility.Internal)
+            LocalDiagLogger.Error(
+                ValidationErrorDiagnostic(rangeType, containerType, "(Transient) Scope can have at most one constructor which needs to be 'internal'."),
+                rangeType.Locations.FirstOrDefault() ?? Location.None);
 
         if (isDefault)
         {

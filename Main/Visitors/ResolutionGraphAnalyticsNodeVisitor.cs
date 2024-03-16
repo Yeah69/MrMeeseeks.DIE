@@ -266,6 +266,12 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
             case IKeyValuePairNode keyValuePairNode:
                 VisitIKeyValuePairNode(keyValuePairNode);
                 break;
+            case IReferenceNode referenceNode:
+                VisitIReferenceNode(referenceNode);
+                break;
+            case IImplicitScopeImplementationNode implicitScopeImplementationNode:
+                VisitIImplicitScopeImplementationNode(implicitScopeImplementationNode);
+                break;
         }
     }
 
@@ -449,6 +455,11 @@ map "({{string.Join(", ", element.Items.Select(i => i.TypeFullName))}})" as {{re
     public void VisitIFuncNode(IFuncNode element) => 
         VisitIDelegateBaseNode(element);
 
+    public void VisitIImplicitScopeImplementationNode(IImplicitScopeImplementationNode element)
+    {
+        // ToDo
+    }
+
     public void VisitILazyNode(ILazyNode element) => 
         VisitIDelegateBaseNode(element);
 
@@ -494,6 +505,11 @@ map "Tuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFullNam
             
             _currentReference = previousReference;
         }
+    }
+
+    public void VisitIReferenceNode(IReferenceNode element)
+    {
+        // ToDo
     }
 
     public void VisitIErrorNode(IErrorNode element)

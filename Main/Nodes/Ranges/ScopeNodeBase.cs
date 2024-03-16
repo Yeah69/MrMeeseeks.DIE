@@ -11,8 +11,9 @@ namespace MrMeeseeks.DIE.Nodes.Ranges;
 
 internal interface IScopeNodeBase : IRangeNode
 {
+    INamedTypeSymbol? ImplementationType { get; }
     string ContainerFullName { get; }
-    string ContainerParameterReference { get; }
+    bool GenerateEmptyConstructor { get; }
 }
 
 internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
@@ -25,6 +26,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         IReferenceGenerator referenceGenerator,
         ITypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
+        IRequiredKeywordUtility requiredKeywordUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
@@ -59,8 +61,12 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         ScopeManager = scopeManager;
         FullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{scopeInfo.Name}";
         ContainerFullName = parentContainer.FullName;
-        ContainerReference = referenceGenerator.Generate("_container");
-        ContainerParameterReference = referenceGenerator.Generate("container");
+        ContainerReference = referenceGenerator.Generate("Container");
+        ImplementationType = scopeInfo.ScopeType;
+        
+        GenerateEmptyConstructor =
+            scopeInfo.ScopeType is null || scopeInfo.ScopeType.InstanceConstructors.Any(ic => ic.IsImplicitlyDeclared);
+        requiredKeywordUtility.SetRequiredKeywordAsRequired();
     }
 
     protected override IScopeManager ScopeManager { get; }
@@ -72,7 +78,8 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
 
     public override string FullName { get; }
     public override DisposalType DisposalType => ParentContainer.DisposalType;
+    public INamedTypeSymbol? ImplementationType { get; }
     public string ContainerFullName { get; }
+    public bool GenerateEmptyConstructor { get; }
     public override string ContainerReference { get; }
-    public string ContainerParameterReference { get; }
 }

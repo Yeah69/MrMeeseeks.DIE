@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -30,10 +31,34 @@ internal interface IFunctionNode : INode
     void AddLocalFunction(ILocalFunctionNode function);
     string? ExplicitInterfaceFullName { get; }
 
-    IFunctionCallNode CreateCall(ITypeSymbol callSideType, string? ownerReference, IFunctionNode callingFunction, IReadOnlyList<ITypeSymbol> typeParameters);
-    IWrappedAsyncFunctionCallNode CreateAsyncCall(ITypeSymbol wrappedType, string? ownerReference, SynchronicityDecision synchronicity, IFunctionNode callingFunction, IReadOnlyList<ITypeSymbol> typeParameters);
-    IScopeCallNode CreateScopeCall(ITypeSymbol callSideType, string containerParameter, string transientScopeInterfaceParameter, IRangeNode callingRange, IFunctionNode callingFunction, IScopeNode scopeNode, IReadOnlyList<ITypeSymbol> typeParameters);
-    ITransientScopeCallNode CreateTransientScopeCall(ITypeSymbol callSideType, string containerParameter, IRangeNode callingRange, IFunctionNode callingFunction, ITransientScopeNode scopeNode, IReadOnlyList<ITypeSymbol> typeParameters);
+    IFunctionCallNode CreateCall(
+        ITypeSymbol callSideType,
+        string? ownerReference,
+        IFunctionNode callingFunction,
+        IReadOnlyList<ITypeSymbol> typeParameters);
+    IWrappedAsyncFunctionCallNode CreateAsyncCall(
+        ITypeSymbol wrappedType,
+        string? ownerReference,
+        SynchronicityDecision synchronicity,
+        IFunctionNode callingFunction,
+        IReadOnlyList<ITypeSymbol> typeParameters);
+    IScopeCallNode CreateScopeCall(
+        ITypeSymbol callSideType, 
+        string containerParameter, 
+        string transientScopeInterfaceParameter, 
+        IRangeNode callingRange, 
+        IFunctionNode callingFunction, 
+        IScopeNode scopeNode, 
+        IReadOnlyList<ITypeSymbol> typeParameters,
+        IElementNodeMapperBase scopeImplementationMapper);
+    ITransientScopeCallNode CreateTransientScopeCall(
+        ITypeSymbol callSideType,
+        string containerParameter,
+        IRangeNode callingRange,
+        IFunctionNode callingFunction,
+        ITransientScopeNode scopeNode,
+        IReadOnlyList<ITypeSymbol> typeParameters,
+        IElementNodeMapperBase transientScopeImplementationMapper);
     bool CheckIfReturnedType(ITypeSymbol type);
 
     bool TryGetReusedNode(ITypeSymbol type, out IReusedNode? reusedNode);

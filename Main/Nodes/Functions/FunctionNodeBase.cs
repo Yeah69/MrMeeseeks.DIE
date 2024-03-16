@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -12,8 +13,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly IContainerNode _parentContainer;
     private readonly Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode> _plainFunctionCallNodeFactory;
     private readonly Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> _asyncFunctionCallNodeFactory;
-    private readonly Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> _scopeCallNodeFactory;
-    private readonly Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> _transientScopeCallNodeFactory;
+    private readonly Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ScopeCallNodeOuterMapperParam, IScopeCallNode> _scopeCallNodeFactory;
+    private readonly Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ScopeCallNodeOuterMapperParam, ITransientScopeCallNode> _transientScopeCallNodeFactory;
     protected readonly WellKnownTypes WellKnownTypes;
     private readonly List<IAwaitableNode> _awaitableNodes = [];
     private readonly List<ILocalFunctionNode> _localFunctions = [];
@@ -37,8 +38,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
-        Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, IScopeCallNode> scopeCallNodeFactory,
-        Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ITransientScopeCallNode> transientScopeCallNodeFactory,
+        Func<ITypeSymbol, (string, string), IScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ScopeCallNodeOuterMapperParam, IScopeCallNode> scopeCallNodeFactory,
+        Func<ITypeSymbol, string, ITransientScopeNode, IRangeNode, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IFunctionCallNode?, ScopeCallNodeOuterMapperParam, ITransientScopeCallNode> transientScopeCallNodeFactory,
         WellKnownTypes wellKnownTypes)
     {
         _parentContainer = parentContainer;
@@ -190,7 +191,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
         IRangeNode callingRange, 
         IFunctionNode callingFunction,
         IScopeNode scope, 
-        IReadOnlyList<ITypeSymbol> typeParameters)
+        IReadOnlyList<ITypeSymbol> typeParameters,
+        IElementNodeMapperBase scopeImplementationMapper)
     {
         var call = _scopeCallNodeFactory(
                 callSideType,
@@ -199,7 +201,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 callingRange,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 typeParameters,
-                scope.InitializedInstances.Any() ? scope.BuildInitializationCall(callingFunction) : null)
+                scope.InitializedInstances.Any() ? scope.BuildInitializationCall(callingFunction) : null,
+                new ScopeCallNodeOuterMapperParam(scopeImplementationMapper))
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
@@ -215,7 +218,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
         IRangeNode callingRange,
         IFunctionNode callingFunction,
         ITransientScopeNode transientScopeNode,
-        IReadOnlyList<ITypeSymbol> typeParameters)
+        IReadOnlyList<ITypeSymbol> typeParameters,
+        IElementNodeMapperBase transientScopeImplementationMapper)
     {
         var call = _transientScopeCallNodeFactory(
                 callSideType,
@@ -224,7 +228,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 callingRange,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 typeParameters,
-                transientScopeNode.InitializedInstances.Any() ? transientScopeNode.BuildInitializationCall(callingFunction) : null)
+                transientScopeNode.InitializedInstances.Any() ? transientScopeNode.BuildInitializationCall(callingFunction) : null,
+                new ScopeCallNodeOuterMapperParam(transientScopeImplementationMapper))
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);

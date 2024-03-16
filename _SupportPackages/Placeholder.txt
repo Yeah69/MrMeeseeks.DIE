@@ -1,3 +1,0 @@
-This file is only there, so that a _SupportPackages folder exists in the repo.
-
-This folder is used for local development and therefore would be cumbersome to delete before release and re-create after again.

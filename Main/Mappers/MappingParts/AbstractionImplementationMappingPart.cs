@@ -27,6 +27,12 @@ internal interface IAbstractionImplementationMappingPart : IMappingPart
         PassedContext passedContext,
         IElementNodeMapperBase mapper,
         IElementNodeMapperBase current);
+    
+    IElementNode ForScopeWithImplementationType(
+        INamedTypeSymbol implementationType,
+        (string Name, string Reference)[] additionalProperties,
+        PassedContext passedContext,
+        IElementNodeMapperBase nextMapper); 
 }
 
 internal sealed class AbstractionImplementationMappingPart : IAbstractionImplementationMappingPart, IScopeInstance
@@ -37,8 +43,9 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IUserDefinedElementsMappingPart _userDefinedElementsMappingPart;
-    private readonly Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
+    private readonly Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol?, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
     private readonly Func<IElementNode, IReusedNode> _reusedNodeFactory;
+    private readonly Func<string, IReferenceNode> _referenceNodeFactory;
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, INullNode> _nullNodeFactory;
     private readonly WellKnownTypes _wellKnownTypes;
@@ -53,8 +60,9 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,
         Func<ITypeSymbol, INullNode> nullNodeFactory, 
-        Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
+        Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol?, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
         Func<IElementNode, IReusedNode> reusedNodeFactory,
+        Func<string, IReferenceNode> referenceNodeFactory,
         Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory)
     {
         _parentContainer = parentContainer;
@@ -67,6 +75,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         _nullNodeFactory = nullNodeFactory;
         _implementationNodeFactory = implementationNodeFactory;
         _reusedNodeFactory = reusedNodeFactory;
+        _referenceNodeFactory = referenceNodeFactory;
         _overridingElementNodeMapperFactory = overridingElementNodeMapperFactory;
         _wellKnownTypes = wellKnownTypes;
     }
@@ -133,7 +142,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         IElementNodeMapperBase nextMapper) =>
         SwitchImplementation(config, abstractionType, implementationType, passedContext, nextMapper, null);
 
-    public IElementNode SwitchImplementation(
+    private IElementNode SwitchImplementation(
         ImplementationMappingConfiguration config,
         INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType, 
@@ -153,8 +162,8 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         {
             var ret = _checkTypeProperties.ShouldBeScopeRoot(implementationType) switch
             {
-                ScopeLevel.TransientScope => _parentRange.BuildTransientScopeCall(implementationType, _parentFunction),
-                ScopeLevel.Scope => _parentRange.BuildScopeCall(implementationType, _parentFunction),
+                ScopeLevel.TransientScope => _parentRange.BuildTransientScopeCall(implementationType, _parentFunction, nextMapper),
+                ScopeLevel.Scope => _parentRange.BuildScopeCall(implementationType, _parentFunction, nextMapper),
                 _ => (IElementNode?) null
             };
             if (ret is not null)
@@ -263,5 +272,28 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
             
         var overridingMapper = _overridingElementNodeMapperFactory(current, decoratorTypes);
         return overridingMapper.Map(interfaceType, passedContext);
+    }
+
+    public IElementNode ForScopeWithImplementationType(
+        INamedTypeSymbol implementationType,
+        (string Name, string Reference)[] additionalProperties, 
+        PassedContext passedContext,
+        IElementNodeMapperBase nextMapper)
+    {
+        var implementationNode = _implementationNodeFactory(
+                null,
+                implementationType,
+                _checkTypeProperties.GetConstructorChoiceFor(implementationType),
+                nextMapper)
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
+
+        var addProps = additionalProperties
+            .Select(p => (p.Name, Element: (IElementNode) _referenceNodeFactory(p.Reference)
+                .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext)))
+            .ToArray();
+        
+        implementationNode.AppendAdditionalProperties(addProps);
+
+        return implementationNode;
     }
 }

@@ -174,6 +174,12 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
             case IKeyValuePairNode keyValuePairNode:
                 VisitIKeyValuePairNode(keyValuePairNode);
                 break;
+            case IReferenceNode referenceNode:
+                VisitIReferenceNode(referenceNode);
+                break;
+            case IImplicitScopeImplementationNode implicitScopeImplementationNode:
+                VisitIImplicitScopeImplementationNode(implicitScopeImplementationNode);
+                break;
         }
     }
 
@@ -200,6 +206,11 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
     }
 
     public void VisitIWrappedAsyncFunctionCallNode(IWrappedAsyncFunctionCallNode element) {}
+
+    public void VisitIImplicitScopeImplementationNode(IImplicitScopeImplementationNode element)
+    {
+        // Nothing to do here
+    }
 
     public void VisitINullNode(INullNode element)
     {
@@ -337,6 +348,11 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
 
     public void VisitILocalFunctionNode(ILocalFunctionNode element) =>
         VisitISingleFunctionNode(element);
+
+    public void VisitIReferenceNode(IReferenceNode element)
+    {
+        // Nothing to do here
+    }
 
     public void VisitIVoidFunctionNode(IVoidFunctionNode element)
     {

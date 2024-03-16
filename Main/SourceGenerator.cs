@@ -1,5 +1,4 @@
-﻿using MrMeeseeks.DIE.Contexts;
-using MrMeeseeks.DIE.Utility;
+﻿using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;
 
@@ -17,10 +16,12 @@ public class SourceGenerator : ISourceGenerator
         {
             var wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
             var rangeUtility = new RangeUtility(wellKnownTypesMiscellaneous);
-        
+            var requiredKeywordUtility = new RequiredKeywordUtility(wellKnownTypesMiscellaneous);
+
             var execute = new ExecuteImpl(
                 context,
                 rangeUtility,
+                requiredKeywordUtility,
                 ContainerInfoFactory);
             execute.Execute();
                 

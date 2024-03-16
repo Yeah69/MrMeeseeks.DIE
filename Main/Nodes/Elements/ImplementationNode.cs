@@ -25,6 +25,8 @@ internal interface IImplementationNode : IElementNode, IAwaitableNode
     string? AsyncTypeFullName { get; }
     
     string ImplementationTypeFullName { get; }
+    
+    void AppendAdditionalProperties((string Name, IElementNode Element)[] properties);
 }
 
 internal sealed partial class ImplementationNode : IImplementationNode
@@ -41,7 +43,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         IReadOnlyList<(string Name, IElementNode Element)> Parameters);
     
     private readonly INamedTypeSymbol _implementationType;
-    private readonly IMethodSymbol _constructor;
+    private readonly IMethodSymbol? _constructor;
     private readonly IFunctionNode _parentFunction;
     private readonly IContainerNode _parentContainer;
     private readonly IRangeNode _parentRange;
@@ -52,14 +54,15 @@ internal sealed partial class ImplementationNode : IImplementationNode
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
 
-    private readonly List<(string Name, IElementNode Element)> _constructorParameters = new ();
-    private readonly List<(string Name, IElementNode Element)> _properties = new ();
+    private readonly List<(string Name, IElementNode Element)> _constructorParameters = new();
+    private readonly List<(string Name, IElementNode Element)> _properties = new();
+    private (string Name, IElementNode Element)[] _additionalProperties = Array.Empty<(string Name, IElementNode Element)>();
 
     internal ImplementationNode(
         // parameters
         INamedTypeSymbol? abstractionType,
         INamedTypeSymbol implementationType,
-        IMethodSymbol constructor,
+        IMethodSymbol? constructor, // assume empty constructor if null
         
         // dependencies
         IFunctionNode parentFunction,
@@ -121,7 +124,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         var (userDefinedInjectionConstructor, outParamsConstructor) = 
             GetUserDefinedInjection(
                 _userDefinedElements.GetConstructorParametersInjectionFor(_implementationType),
-                name => _constructor.Parameters.FirstOrDefault(p => p.Name == name)?.Type);
+                name => _constructor?.Parameters.FirstOrDefault(p => p.Name == name)?.Type);
         var (userDefinedInjectionProperties, outParamsProperties) = 
             GetUserDefinedInjection(
                 _userDefinedElements.GetPropertiesInjectionFor(_implementationType),
@@ -130,8 +133,9 @@ internal sealed partial class ImplementationNode : IImplementationNode
         UserDefinedInjectionConstructor = userDefinedInjectionConstructor;
         UserDefinedInjectionProperties = userDefinedInjectionProperties;
         
-        _constructorParameters.AddRange(_constructor.Parameters
-            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsConstructor))));
+        _constructorParameters.AddRange(_constructor
+            ?.Parameters
+            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsConstructor))) ?? Enumerable.Empty<(string, IElementNode)>());
 
         IReadOnlyList<IPropertySymbol> properties;
         if (_checkTypeProperties.GetPropertyChoicesFor(_implementationType) is { } propertyChoice)
@@ -149,11 +153,11 @@ internal sealed partial class ImplementationNode : IImplementationNode
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsProperties))));
 
         var injectionsAnalysisGathering = _constructor
-            .Parameters
+            ?.Parameters
             .Select(ps => (ps.Type, $"\"{ps.Name}\" (constructor parameter)"))
             .Concat(properties
                 .Select(ps => (ps.Type, $"\"{ps.Name}\" (property)")))
-            .ToList();
+            .ToList() ?? new List<(ITypeSymbol, string)>();
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })
         {
@@ -376,7 +380,8 @@ internal sealed partial class ImplementationNode : IImplementationNode
     public UserDefinedInjection? UserDefinedInjectionConstructor { get; private set; }
     public IReadOnlyList<(string Name, IElementNode Element)> ConstructorParameters => _constructorParameters;
     public UserDefinedInjection? UserDefinedInjectionProperties { get; private set; }
-    public IReadOnlyList<(string Name, IElementNode Element)> Properties => _properties;
+    public IReadOnlyList<(string Name, IElementNode Element)> Properties => 
+        _properties.Concat(_additionalProperties).ToList();
     public Initialization? Initializer 
     {
         get;
@@ -390,4 +395,6 @@ internal sealed partial class ImplementationNode : IImplementationNode
     public string? AsyncReference { get; private set; }
     public string? AsyncTypeFullName { get; private set; }
     public string ImplementationTypeFullName { get; }
+    public void AppendAdditionalProperties((string Name, IElementNode Element)[] properties) => 
+        _additionalProperties = properties;
 }

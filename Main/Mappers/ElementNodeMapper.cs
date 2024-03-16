@@ -18,6 +18,8 @@ internal sealed class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMap
         ICollectionMappingPart collectionMappingPart,
         IAbstractionImplementationMappingPart abstractionImplementationMappingPart,
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
+        Func<string, (string Name, IElementNode Element)[], IImplicitScopeImplementationNode> implicitScopeImplementationNodeFactory,
+        Func<string, IReferenceNode> referenceNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory) 
         : base(
             parentContainer,
@@ -29,6 +31,8 @@ internal sealed class ElementNodeMapper : ElementNodeMapperBase, IElementNodeMap
             collectionMappingPart,
             abstractionImplementationMappingPart,
             outParameterNodeFactory,
+            implicitScopeImplementationNodeFactory,
+            referenceNodeFactory,
             errorNodeFactory)
     {
     }

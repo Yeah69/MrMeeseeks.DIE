@@ -116,14 +116,12 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         _code.AppendLine($$"""
             private sealed partial class {{scope.Name}} : {{GenerateDisposalInterfaceAssignments(scope.DisposalType)}}
             {
-            private readonly {{scope.ContainerFullName}} {{scope.ContainerReference}};
-            private readonly {{scope.TransientScopeInterfaceFullName}} {{scope.TransientScopeInterfaceReference}};
-            internal {{scope.Name}}({{scope.ContainerFullName}} {{scope.ContainerParameterReference}}, {{scope.TransientScopeInterfaceFullName}} {{scope.TransientScopeInterfaceParameterReference}})
-            {
-            {{scope.ContainerReference}} = {{scope.ContainerParameterReference}};
-            {{scope.TransientScopeInterfaceReference}} = {{scope.TransientScopeInterfaceParameterReference}};
-            }
+            internal required {{scope.ContainerFullName}} {{scope.ContainerReference}} { private get; init; }
+            internal required {{scope.TransientScopeInterfaceFullName}} {{scope.TransientScopeInterfaceReference}} { private get; init; }
             """);
+        
+        if (scope.GenerateEmptyConstructor)
+            _code.AppendLine($"internal {scope.Name}() {{ }}");
 
         GenerateRangeNodeContent(scope);
 
@@ -135,12 +133,11 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         _code.AppendLine($$"""
             private sealed partial class {{transientScope.Name}} : {{transientScope.TransientScopeInterfaceName}}, {{GenerateDisposalInterfaceAssignments(transientScope.DisposalType)}}
             {
-            private readonly {{transientScope.ContainerFullName}} {{transientScope.ContainerReference}};
-            internal {{transientScope.Name}}({{transientScope.ContainerFullName}} {{transientScope.ContainerParameterReference}})
-            {
-            {{transientScope.ContainerReference}} = {{transientScope.ContainerParameterReference}};
-            }
+            internal required {{transientScope.ContainerFullName}} {{transientScope.ContainerReference}} { private get; init; }
             """);
+        
+        if (transientScope.GenerateEmptyConstructor)
+            _code.AppendLine($"internal {transientScope.Name}() {{ }}");
 
         GenerateRangeNodeContent(transientScope);
 
@@ -170,20 +167,18 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
     public void VisitIScopeCallNode(IScopeCallNode scopeCall)
     {
-        _code.AppendLine(
-            $"{scopeCall.ScopeFullName} {scopeCall.ScopeReference} = new {scopeCall.ScopeFullName}({scopeCall.ContainerParameter}, {scopeCall.TransientScopeInterfaceParameter});");
+        VisitIElementNode(scopeCall.ScopeConstruction);
         if (scopeCall.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null)
-            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {scopeCall.ScopeReference});");
+            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {scopeCall.ScopeConstruction.Reference});");
         else if (scopeCall.DisposalType.HasFlag(DisposalType.Sync))
-            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {scopeCall.ScopeReference});");
-        GenerateInitialization(scopeCall.Initialization, scopeCall.ScopeReference);
+            _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {scopeCall.ScopeConstruction.Reference});");
+        GenerateInitialization(scopeCall.Initialization, scopeCall.ScopeConstruction.Reference);
         VisitIFunctionCallNode(scopeCall);
     }
 
     public void VisitITransientScopeCallNode(ITransientScopeCallNode transientScopeCall)
     {
-        _code.AppendLine(
-            $"{transientScopeCall.TransientScopeFullName} {transientScopeCall.TransientScopeReference} = new {transientScopeCall.TransientScopeFullName}({transientScopeCall.ContainerParameter});");
+        VisitIElementNode(transientScopeCall.ScopeConstruction);
         if (transientScopeCall.DisposalType is not DisposalType.None)
         {
             var disposalType = transientScopeCall.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null
@@ -193,10 +188,15 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                 ? $"{containerReference}."
                 : "";
             _code
-                .AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference}[{transientScopeCall.TransientScopeReference}] = ({disposalType}) {transientScopeCall.TransientScopeReference};");
+                .AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference}[{transientScopeCall.ScopeConstruction.Reference}] = ({disposalType}) {transientScopeCall.ScopeConstruction.Reference};");
         }
-        GenerateInitialization(transientScopeCall.Initialization, transientScopeCall.TransientScopeReference);
+        GenerateInitialization(transientScopeCall.Initialization, transientScopeCall.ScopeConstruction.Reference);
         VisitIFunctionCallNode(transientScopeCall);
+    }
+
+    public void VisitIReferenceNode(IReferenceNode element)
+    {
+        // Nothing to do here. This element just gets referenced elsewhere.
     }
 
     private void GenerateInitialization(IFunctionCallNode? maybeInitialization, string ownerReference)
@@ -736,6 +736,13 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     public void VisitIFuncNode(IFuncNode funcNode) =>
         _code.AppendLine($"{funcNode.TypeFullName} {funcNode.Reference} = {funcNode.MethodGroup};");
 
+    public void VisitIImplicitScopeImplementationNode(IImplicitScopeImplementationNode element)
+    {
+        foreach (var (_, subElement) in element.Properties)
+            VisitIElementNode(subElement);
+        _code.AppendLine($"{element.TypeFullName} {element.Reference} = new {element.TypeFullName}() {{ {string.Join(", ", element.Properties.Select(t => $"{t.Name} = {t.Element.Reference}"))} }};");
+    }
+
     public void VisitILazyNode(ILazyNode lazyNode) => 
         _code.AppendLine($"{lazyNode.TypeFullName} {lazyNode.Reference} = new {lazyNode.TypeFullName}({lazyNode.MethodGroup});");
     
@@ -842,6 +849,12 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                 break;
             case IKeyValuePairNode keyValuePairNode:
                 VisitIKeyValuePairNode(keyValuePairNode);
+                break;
+            case IReferenceNode referenceNode:
+                VisitIReferenceNode(referenceNode);
+                break;
+            case IImplicitScopeImplementationNode implicitScopeImplementationNode:
+                VisitIImplicitScopeImplementationNode(implicitScopeImplementationNode);
                 break;
         }
     }

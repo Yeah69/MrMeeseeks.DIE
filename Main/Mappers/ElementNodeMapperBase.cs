@@ -15,6 +15,13 @@ internal interface IElementNodeMapperBase
         INamedTypeSymbol implementationType,
         PassedContext passedContext);
     IElementNode MapToOutParameter(ITypeSymbol type, PassedContext passedContext);
+    IElementNode MapToScopeWithImplementationType(
+        INamedTypeSymbol type,
+        (string Name, string Reference)[] additionalProperties,
+        PassedContext passedContext);
+    
+    IElementNode MapToImplicitScope(
+        string typeFullName, (string Name, string Reference)[] properties, PassedContext passedContext);
 }
 
 internal sealed record ImplementationMappingConfiguration(
@@ -33,6 +40,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
     private readonly ICollectionMappingPart _collectionMappingPart;
     private readonly IAbstractionImplementationMappingPart _abstractionImplementationMappingPart;
     private readonly Func<ITypeSymbol, IOutParameterNode> _outParameterNodeFactory;
+    private readonly Func<string, (string Name, IElementNode Element)[], IImplicitScopeImplementationNode> _implicitScopeImplementationNodeFactory;
+    private readonly Func<string, IReferenceNode> _referenceNodeFactory;
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
     
     internal ElementNodeMapperBase(
@@ -45,6 +54,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         ICollectionMappingPart collectionMappingPart,
         IAbstractionImplementationMappingPart abstractionImplementationMappingPart,
         Func<ITypeSymbol, IOutParameterNode> outParameterNodeFactory,
+        Func<string, (string Name, IElementNode Element)[], IImplicitScopeImplementationNode> implicitScopeImplementationNodeFactory,
+        Func<string, IReferenceNode> referenceNodeFactory,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory)
     {
         _parentContainer = parentContainer;
@@ -56,6 +67,8 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
         _collectionMappingPart = collectionMappingPart;
         _abstractionImplementationMappingPart = abstractionImplementationMappingPart;
         _outParameterNodeFactory = outParameterNodeFactory;
+        _implicitScopeImplementationNodeFactory = implicitScopeImplementationNodeFactory;
+        _referenceNodeFactory = referenceNodeFactory;
         _errorNodeFactory = errorNodeFactory;
     }
     
@@ -109,6 +122,26 @@ internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
 
     public IElementNode MapToOutParameter(ITypeSymbol type, PassedContext passedContext) => 
         _outParameterNodeFactory(type)
+            .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
+
+    public IElementNode MapToScopeWithImplementationType(
+        INamedTypeSymbol type, 
+        (string Name, string Reference)[] additionalProperties, 
+        PassedContext passedContext) =>
+        _abstractionImplementationMappingPart.ForScopeWithImplementationType(
+            type,
+            additionalProperties,
+            passedContext,
+            this);
+
+    public IElementNode MapToImplicitScope(
+        string typeFullName,
+        (string Name, string Reference)[] properties,
+        PassedContext passedContext) =>
+        _implicitScopeImplementationNodeFactory(typeFullName,
+                properties.Select(t => (t.Name,
+                    Element: (IElementNode)_referenceNodeFactory(t.Reference)
+                        .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext))).ToArray())
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
 
     protected IElementNode SwitchImplementation(

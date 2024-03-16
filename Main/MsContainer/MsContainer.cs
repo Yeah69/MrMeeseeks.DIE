@@ -5,6 +5,8 @@ using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.DIE.Utility;
+
 // ReSharper disable InconsistentNaming
 
 namespace MrMeeseeks.DIE.MsContainer;
@@ -19,12 +21,15 @@ internal sealed partial class MsContainer
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
     private readonly Compilation DIE_Factory_Compilation;
     private readonly IContainerInfo DIE_Factory_ContainerInfo;
+    private readonly RequiredKeywordUtility DIE_Factory_RequiredKeywordUtility;
 
     private MsContainer(
         GeneratorExecutionContext context, 
-        IContainerInfo dieFactoryContainerInfo)
+        IContainerInfo dieFactoryContainerInfo,
+        RequiredKeywordUtility dieFactoryRequiredKeywordUtility)
     {
         DIE_Factory_ContainerInfo = dieFactoryContainerInfo;
+        DIE_Factory_RequiredKeywordUtility = dieFactoryRequiredKeywordUtility;
         DIE_Factory_Compilation = context.Compilation;
         DIE_Factory_GeneratorExecutionContext = context;
     }

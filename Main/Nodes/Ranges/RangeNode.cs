@@ -29,7 +29,10 @@ internal interface IRangeNode : INode
         ITypeSymbol type,
         SynchronicityDecision synchronicity, 
         IFunctionNode callingFunction);
-    ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
+    ITransientScopeCallNode BuildTransientScopeCall(
+        INamedTypeSymbol type, 
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase transientScopeImplementationMapper);
     IFunctionCallNode BuildContainerInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IFunctionCallNode BuildTransientScopeInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction);
     IRangedInstanceFunctionNode BuildTransientScopeFunction(INamedTypeSymbol type, IFunctionNode callingFunction);
@@ -44,7 +47,10 @@ internal interface IRangeNode : INode
     void AdjustRangedInstancesIfGeneric();
     IEnumerable<IMultiFunctionNodeBase> MultiFunctions { get; }
     IEnumerable<IVoidFunctionNode> InitializationFunctions { get; }
-    IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction);
+    IScopeCallNode BuildScopeCall(
+        INamedTypeSymbol type, 
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase scopeImplementationMapper);
     IInitializedInstanceNode? GetInitializedNode(INamedTypeSymbol type);
     IFunctionCallNode BuildInitializationCall(IFunctionNode callingFunction);
 
@@ -322,11 +328,23 @@ internal abstract class RangeNode : IRangeNode
             initializationFunction.ReorderOrDetectCycle();
     }
 
-    public ITransientScopeCallNode BuildTransientScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 
-        ScopeManager.GetTransientScope(type).BuildTransientScopeCallFunction(ContainerParameterForScope, type, this, callingFunction);
+    public ITransientScopeCallNode BuildTransientScopeCall(
+        INamedTypeSymbol type, 
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase transientScopeImplementationMapper) => 
+        ScopeManager.GetTransientScope(type).BuildTransientScopeCallFunction(ContainerParameterForScope, type, this, callingFunction, transientScopeImplementationMapper);
 
-    public IScopeCallNode BuildScopeCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 
-        ScopeManager.GetScope(type).BuildScopeCallFunction(ContainerParameterForScope, TransientScopeInterfaceParameterForScope, type, this, callingFunction);
+    public IScopeCallNode BuildScopeCall(
+        INamedTypeSymbol type, 
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase scopeImplementationMapper) => 
+        ScopeManager.GetScope(type)
+            .BuildScopeCallFunction(ContainerParameterForScope,
+                TransientScopeInterfaceParameterForScope,
+                type,
+                this,
+                callingFunction,
+                scopeImplementationMapper);
 
     public IInitializedInstanceNode? GetInitializedNode(INamedTypeSymbol type) => 
         InitializedInstanceNodesMap.TryGetValue(type, out var initializedInstanceNode) 

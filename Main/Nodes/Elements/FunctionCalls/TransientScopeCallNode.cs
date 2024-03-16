@@ -1,25 +1,17 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 
-internal interface ITransientScopeCallNode : IFunctionCallNode
+internal interface ITransientScopeCallNode : IScopeCallNodeBase
 {
-    string ContainerParameter { get; }
     string? ContainerReference { get; }
-    string TransientScopeFullName { get; }
-    string TransientScopeReference { get; }
-    DisposalType DisposalType { get; }
     string TransientScopeDisposalReference { get; }
-    IFunctionCallNode? Initialization { get; }
 }
 
-internal sealed partial class TransientScopeCallNode : FunctionCallNode, ITransientScopeCallNode
+internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITransientScopeCallNode
 {
-    private readonly ITransientScopeNode _scope;
-
-    public TransientScopeCallNode(
+    internal TransientScopeCallNode(
         string containerParameter, 
         ITransientScopeNode scope,
         IContainerNode parentContainer,
@@ -29,26 +21,26 @@ internal sealed partial class TransientScopeCallNode : FunctionCallNode, ITransi
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
         IReadOnlyList<ITypeSymbol> typeParameters,
         IFunctionCallNode? initialization,
+        ScopeCallNodeOuterMapperParam outerMapperParam,
         
         IReferenceGenerator referenceGenerator) 
-        : base(null, calledFunction, callSideType, parameters, typeParameters, referenceGenerator)
+        : base(
+            callSideType,
+            scope,
+            parameters,
+            typeParameters,
+            initialization,
+            outerMapperParam,
+            calledFunction,
+            referenceGenerator)
     {
-        _scope = scope;
-        ContainerParameter = containerParameter;
-        Initialization = initialization;
-        TransientScopeFullName = scope.FullName;
-        TransientScopeReference = referenceGenerator.Generate("transientScopeRoot");
         ContainerReference = callingRange.ContainerReference;
         TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
+        AdditionalPropertiesForConstruction = [(scope.ContainerReference ?? "", containerParameter)];
     }
 
-    public override string OwnerReference => TransientScopeReference;
+    protected override (string Name, string Reference)[] AdditionalPropertiesForConstruction { get; }
 
-    public string ContainerParameter { get; }
     public string? ContainerReference { get; }
-    public string TransientScopeFullName { get; }
-    public string TransientScopeReference { get; }
-    public DisposalType DisposalType => _scope.DisposalType;
     public string TransientScopeDisposalReference { get; }
-    public IFunctionCallNode? Initialization { get; }
 }

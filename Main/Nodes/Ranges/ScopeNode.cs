@@ -14,8 +14,13 @@ internal interface IScopeNode : IScopeNodeBase
 {
     string TransientScopeInterfaceFullName { get; }
     string TransientScopeInterfaceReference { get; }
-    string TransientScopeInterfaceParameterReference { get; }
-    IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter, INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction);
+    IScopeCallNode BuildScopeCallFunction(
+        string containerParameter,
+        string transientScopeInterfaceParameter,
+        INamedTypeSymbol type,
+        IRangeNode callingRange,
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase scopeImplementationMapper);
 }
 
 internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeInstance
@@ -31,6 +36,7 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientS
         IReferenceGenerator referenceGenerator,
         ITypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
+        IRequiredKeywordUtility requiredKeywordUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
@@ -51,6 +57,7 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientS
             referenceGenerator,
             typeParameterUtility,
             rangeUtility,
+            requiredKeywordUtility,
             wellKnownTypes,
             wellKnownTypesMiscellaneous,
             mapperDataToFunctionKeyTypeConverter,
@@ -65,8 +72,7 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientS
     {
         _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
         TransientScopeInterfaceFullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{transientScopeInterfaceNode.Name}";
-        TransientScopeInterfaceReference = referenceGenerator.Generate("_transientScope");
-        TransientScopeInterfaceParameterReference = referenceGenerator.Generate("transientScope");
+        TransientScopeInterfaceReference = referenceGenerator.Generate("TransientScope");
     }
     protected override string ContainerParameterForScope => ContainerReference;
     protected override string TransientScopeInterfaceParameterForScope => TransientScopeInterfaceReference;
@@ -80,8 +86,13 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientS
             type,
             callingFunction);
 
-    public IScopeCallNode BuildScopeCallFunction(string containerParameter, string transientScopeInterfaceParameter,
-        INamedTypeSymbol type, IRangeNode callingRange, IFunctionNode callingFunction)
+    public IScopeCallNode BuildScopeCallFunction(
+        string containerParameter,
+        string transientScopeInterfaceParameter,
+        INamedTypeSymbol type,
+        IRangeNode callingRange,
+        IFunctionNode callingFunction,
+        IElementNodeMapperBase scopeImplementationMapper)
     {
         return FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
@@ -98,10 +109,10 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientS
                 transientScopeInterfaceParameter, 
                 callingRange, 
                 callingFunction,
-                this, TypeParameterUtility.ExtractTypeParameters(type)));
+                this, TypeParameterUtility.ExtractTypeParameters(type),
+                scopeImplementationMapper));
     }
 
     public string TransientScopeInterfaceFullName { get; }
     public string TransientScopeInterfaceReference { get; }
-    public string TransientScopeInterfaceParameterReference { get; }
 }

@@ -18,7 +18,7 @@ public class SourceGenerator : ISourceGenerator
         {
             var wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
             var rangeUtility = new RangeUtility(wellKnownTypesMiscellaneous);
-            var requiredKeywordUtility = new RequiredKeywordUtility(new ContainerWideContext(context.Compilation), new CheckInternalsVisible(context));
+            var requiredKeywordUtility = new RequiredKeywordUtility(context, new CheckInternalsVisible(context));
 
             var execute = new ExecuteImpl(
                 context,

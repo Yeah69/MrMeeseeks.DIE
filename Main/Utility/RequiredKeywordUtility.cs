@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
@@ -17,10 +16,10 @@ internal sealed class RequiredKeywordUtility : IRequiredKeywordUtility, IContain
     private bool _isRequiredKeywordRequired;
 
     internal RequiredKeywordUtility(
-        IContainerWideContext containerWideContext,
+        GeneratorExecutionContext generatorExecutionContext,
         ICheckInternalsVisible checkInternalsVisible)
     {
-        _compilation = containerWideContext.Compilation;
+        _compilation = generatorExecutionContext.Compilation;
         _checkInternalsVisible = checkInternalsVisible;
     }
 

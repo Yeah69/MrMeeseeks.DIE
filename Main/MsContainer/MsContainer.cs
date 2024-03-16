@@ -11,7 +11,7 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.MsContainer;
 
-//[ContainerInstanceImplementationAggregation(typeof(Compilation))]
+[ContainerInstanceImplementationAggregation(typeof(GeneratorExecutionContext))]
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
 [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancerForRanges))]

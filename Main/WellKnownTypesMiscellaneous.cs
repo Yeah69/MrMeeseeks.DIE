@@ -19,14 +19,10 @@ internal sealed record WellKnownTypesMiscellaneous(
     INamedTypeSymbol FilterInjectionKeyMappingAttribute,
     INamedTypeSymbol DecorationOrdinalMappingAttribute,
     INamedTypeSymbol FilterDecorationOrdinalMappingAttribute,
-    INamedTypeSymbol DieExceptionKind,
-    INamedTypeSymbol? IsExternalInit,
-    INamedTypeSymbol? RequiredMemberAttribute,
-    INamedTypeSymbol? CompilerFeatureRequiredAttribute,
-    INamedTypeSymbol? SetsRequiredMembersAttribute)
+    INamedTypeSymbol DieExceptionKind)
     : IContainerInstance
 {
-    internal static WellKnownTypesMiscellaneous Create(Compilation compilation) => new (
+    internal static WellKnownTypesMiscellaneous Create(Compilation compilation) => new(
         InitializerAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InitializerAttribute).FullName ?? ""),
         FilterInitializerAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInitializerAttribute).FullName ?? ""),
         CustomScopeForRootTypesAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(CustomScopeForRootTypesAttribute).FullName ?? ""),
@@ -41,9 +37,5 @@ internal sealed record WellKnownTypesMiscellaneous(
         FilterInjectionKeyMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInjectionKeyMappingAttribute).FullName ?? ""),
         DecorationOrdinalMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(DecorationOrdinalMappingAttribute).FullName ?? ""),
         FilterDecorationOrdinalMappingAttribute:  compilation.GetTypeByMetadataNameOrThrow(typeof(FilterDecorationOrdinalMappingAttribute).FullName ?? ""),
-        DieExceptionKind: compilation.GetTypeByMetadataNameOrThrow(typeof(DieExceptionKind).FullName ?? ""),
-        IsExternalInit: compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.IsExternalInit"),
-        RequiredMemberAttribute: compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.RequiredMemberAttribute"),
-        CompilerFeatureRequiredAttribute: compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute"),
-        SetsRequiredMembersAttribute: compilation.GetTypeByMetadataName("System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute"));
+        DieExceptionKind: compilation.GetTypeByMetadataNameOrThrow(typeof(DieExceptionKind).FullName ?? ""));
 }

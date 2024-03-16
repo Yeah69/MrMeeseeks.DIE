@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Functions;
@@ -67,9 +66,10 @@ internal sealed partial class ImplementationNode : IImplementationNode
         // dependencies
         IFunctionNode parentFunction,
         IContainerNode parentContainer,
+        IRangeNode parentRange,
         IElementNodeMapperBase elementNodeMapper,
         IUserDefinedElements userDefinedElements,
-        ITransientScopeWideContext transientScopeWideContext,
+        ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
         IInjectablePropertyExtractor injectablePropertyExtractor)
@@ -78,9 +78,9 @@ internal sealed partial class ImplementationNode : IImplementationNode
         _constructor = constructor;
         _parentFunction = parentFunction;
         _parentContainer = parentContainer;
-        _parentRange = transientScopeWideContext.Range;
+        _parentRange = parentRange;
         _elementNodeMapper = elementNodeMapper;
-        _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
+        _checkTypeProperties = checkTypeProperties;
         _userDefinedElements = userDefinedElements;
         _referenceGenerator = referenceGenerator;
         _localDiagLogger = localDiagLogger;

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -16,14 +15,14 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> _nonWrapToCreateElementNodeMapperFactory;
 
-    public EntryFunctionNode(
+    internal EntryFunctionNode(
         // parameters
         ITypeSymbol typeSymbol, 
         string prefix, 
         IReadOnlyList<ITypeSymbol> parameters,
         
         // dependencies
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         IContainerNode parentContainer, 
         ITypeParameterUtility typeParameterUtility,
         WellKnownTypes wellKnownTypes,
@@ -39,7 +38,7 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
             typeSymbol, 
             parameters,
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
-            transientScopeWideContext.Range, 
+            parentRange, 
             parentContainer, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,

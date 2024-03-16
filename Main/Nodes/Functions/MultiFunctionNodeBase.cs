@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -26,7 +25,6 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         INamedTypeSymbol enumerableType,
         IReadOnlyList<ITypeSymbol> parameters,
         IContainerNode parentContainer,
-        ITransientScopeWideContext transientScopeWideContext,
         
         // dependencies
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
@@ -37,6 +35,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         ITypeParameterUtility typeParameterUtility,
+        IRangeNode parentRange,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
@@ -45,7 +44,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             parameters, 
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
-            transientScopeWideContext.Range,
+            parentRange, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,

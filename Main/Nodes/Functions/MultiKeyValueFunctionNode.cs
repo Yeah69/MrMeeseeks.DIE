@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.MsContainer;
@@ -27,7 +26,7 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         
         // dependencies
         IContainerNode parentContainer,
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         IReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
@@ -39,13 +38,13 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> keyValuePairNodeFactory,
         ITypeParameterUtility typeParameterUtility,
+        ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             enumerableType, 
             parameters, 
             parentContainer, 
-            transientScopeWideContext,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
@@ -54,13 +53,14 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
             typeToElementNodeMapperFactory,
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
+            parentRange,
             wellKnownTypes,
             wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;
         _localDiagLogger = localDiagLogger;
         _keyValuePairNodeFactory = keyValuePairNodeFactory;
-        _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
+        _checkTypeProperties = checkTypeProperties;
         _wellKnownTypes = wellKnownTypes;
 
         Name = referenceGenerator.Generate("CreateMultiKeyValue", _enumerableType);

@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
@@ -52,8 +51,9 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
     private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
 
     internal AbstractionImplementationMappingPart(
-        IContainerNode parentContainer, 
-        ITransientScopeWideContext transientScopeWideContext,
+        IContainerNode parentContainer,
+        IRangeNode parentRange,
+        ICheckTypeProperties checkTypeProperties,
         IFunctionNode parentFunction,
         ILocalDiagLogger localDiagLogger,
         WellKnownTypes wellKnownTypes,
@@ -66,9 +66,9 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory)
     {
         _parentContainer = parentContainer;
-        _parentRange = transientScopeWideContext.Range;
+        _parentRange = parentRange;
         _parentFunction = parentFunction;
-        _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
+        _checkTypeProperties = checkTypeProperties;
         _localDiagLogger = localDiagLogger;
         _userDefinedElementsMappingPart = userDefinedElementsMappingPart;
         _errorNodeFactory = errorNodeFactory;

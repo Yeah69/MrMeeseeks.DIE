@@ -5,7 +5,7 @@ internal interface IImplicitScopeImplementationNode : IElementNode
     IReadOnlyList<(string Name, IElementNode Element)> Properties { get; }
 }
 
-internal partial class ImplicitScopeImplementationNode : IImplicitScopeImplementationNode
+internal sealed partial class ImplicitScopeImplementationNode : IImplicitScopeImplementationNode
 {
     internal ImplicitScopeImplementationNode(
         string typeFullName,

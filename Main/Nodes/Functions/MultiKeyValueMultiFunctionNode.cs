@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.MsContainer;
@@ -28,7 +27,7 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         
         // dependencies
         IContainerNode parentContainer,
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         IReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
@@ -40,13 +39,13 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> keyValuePairNodeFactory,
         ITypeParameterUtility typeParameterUtility,
+        ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             enumerableType, 
             parameters, 
             parentContainer, 
-            transientScopeWideContext,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
@@ -55,6 +54,7 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
             typeToElementNodeMapperFactory,
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
+            parentRange,
             wellKnownTypes,
             wellKnownTypesCollections)
     {
@@ -62,7 +62,7 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         _localDiagLogger = localDiagLogger;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _keyValuePairNodeFactory = keyValuePairNodeFactory;
-        _checkTypeProperties = transientScopeWideContext.CheckTypeProperties;
+        _checkTypeProperties = checkTypeProperties;
         _wellKnownTypes = wellKnownTypes;
 
         Name = referenceGenerator.Generate("CreateMultiKeyValue", _enumerableType);

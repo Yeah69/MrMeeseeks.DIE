@@ -2,7 +2,7 @@ namespace MrMeeseeks.DIE.Nodes.Elements;
 
 internal interface IReferenceNode : IElementNode;
 
-internal partial class ReferenceNode : IReferenceNode
+internal sealed partial class ReferenceNode : IReferenceNode
 {
     internal ReferenceNode(string reference) => Reference = reference;
 

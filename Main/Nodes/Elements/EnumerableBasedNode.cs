@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -77,16 +76,16 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
-    public EnumerableBasedNode(
+    internal EnumerableBasedNode(
         ITypeSymbol collectionType,
         
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         IFunctionNode parentFunction,
         IReferenceGenerator referenceGenerator,
         WellKnownTypesCollections wellKnownTypesCollections)
     {
         _collectionType = collectionType;
-        _parentRange = transientScopeWideContext.Range;
+        _parentRange = parentRange;
         _parentFunction = parentFunction;
         _referenceGenerator = referenceGenerator;
         _wellKnownTypesCollections = wellKnownTypesCollections;

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Functions;
@@ -18,13 +17,13 @@ internal sealed class AsyncWrapperMappingPart : IAsyncWrapperMappingPart, IScope
 
     internal AsyncWrapperMappingPart(
         IFunctionNode parentFunction,
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         WellKnownTypes wellKnownTypes,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart)
     {
         _parentFunction = parentFunction;
         _userDefinedElementsMappingPart = userDefinedElementsMappingPart;
-        _parentRange = transientScopeWideContext.Range;
+        _parentRange = parentRange;
         _wellKnownTypes = wellKnownTypes;
     }
     

@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -27,7 +26,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         IReadOnlyList<ITypeSymbol> parameters,
         
         // dependencies
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         IContainerNode parentContainer,
         IReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
@@ -42,7 +41,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             parameters, 
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
-            transientScopeWideContext.Range,
+            parentRange, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
@@ -52,7 +51,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
     {
         _initializedInstanceNodes = initializedInstanceNodes;
         _localDiagLogger = localDiagLogger;
-        _parentRange = transientScopeWideContext.Range;
+        _parentRange = parentRange;
         ReturnedTypeFullName = "void";
         Name = referenceGenerator.Generate("Initialize");
     }

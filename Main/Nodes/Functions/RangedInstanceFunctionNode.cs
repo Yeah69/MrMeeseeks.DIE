@@ -1,5 +1,4 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -32,7 +31,7 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
         IReadOnlyList<ITypeSymbol> parameters,
         
         // dependencies
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
@@ -48,7 +47,7 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
             type, 
             parameters,
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
-            transientScopeWideContext.Range, 
+            parentRange, 
             parentContainer, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,

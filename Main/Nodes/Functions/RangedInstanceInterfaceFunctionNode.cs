@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -26,7 +25,7 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
         
         // dependencies
         IContainerNode parentContainer,
-        ITransientScopeWideContext transientScopeWideContext,
+        IRangeNode parentRange,
         IReferenceGenerator referenceGenerator, 
         Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -41,7 +40,7 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
             parameters,
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
-            transientScopeWideContext.Range,
+            parentRange, 
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,

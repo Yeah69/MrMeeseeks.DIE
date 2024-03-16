@@ -1,5 +1,4 @@
-﻿using MrMeeseeks.DIE.Contexts;
-using MrMeeseeks.DIE.Utility;
+﻿using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
@@ -27,8 +26,8 @@ public class SourceGenerator : ISourceGenerator
                 ContainerInfoFactory);
             execute.Execute();
                 
-            IContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => 
-                new ContainerInfo(type, wellKnownTypesMiscellaneous, rangeUtility);
+            ContainerInfo ContainerInfoFactory(INamedTypeSymbol type) => 
+                new(type, wellKnownTypesMiscellaneous, rangeUtility);
         }
         catch (ValidationDieException)
         {

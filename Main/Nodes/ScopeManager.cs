@@ -1,5 +1,4 @@
 using System.Threading;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -31,14 +30,13 @@ internal sealed class ScopeManager : IScopeManager, IContainerInstance
     private readonly Dictionary<INamedTypeSymbol, INamedTypeSymbol> _scopeRootTypeToScopeType;
 
     public ScopeManager(
-        IContainerInfoContext containerInfoContext,
+        IContainerInfo containerInfo,
         IContainerNode container,
         ITransientScopeInterfaceNode transientScopeInterface,
         Func<string, INamedTypeSymbol?, IScopeNodeRoot> scopeFactory,
         Func<string, INamedTypeSymbol?, ITransientScopeNodeRoot> transientScopeFactory,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
-        var containerInfo = containerInfoContext.ContainerInfo;
         _container = container;
         _transientScopeInterface = transientScopeInterface;
         _scopeFactory = scopeFactory;

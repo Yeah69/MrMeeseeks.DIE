@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -22,7 +21,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
 
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
-        IContainerInfoContext containerInfoContext,
+        IContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
@@ -33,7 +32,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
         _wellKnownTypes = wellKnownTypes;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
         _wellKnownTypesCollections = wellKnownTypesCollections;
-        _containerType = containerInfoContext.ContainerInfo.ContainerType;
+        _containerType = containerInfo.ContainerType;
     }
 
     public void Generate(Exception? exception)

@@ -1,6 +1,5 @@
 using System.IO;
 using System.Threading;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -19,7 +18,7 @@ internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnal
 {
     private readonly IImmutableSet<INode>? _relevantNodes;
     private readonly IPaths _paths;
-    private readonly IContainerInfoContext _containerInfoContext;
+    private readonly IContainerInfo _containerInfo;
     private readonly string _dirPath;
     private readonly StringBuilder _code = new();
     private readonly StringBuilder _relations = new();
@@ -34,11 +33,11 @@ internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnal
 
         // dependencies
         IPaths paths,
-        IContainerInfoContext containerInfoContext)
+        IContainerInfo containerInfo)
     {
         _relevantNodes = relevantNodes;
         _paths = paths;
-        _containerInfoContext = containerInfoContext;
+        _containerInfo = containerInfo;
         _dirPath = paths.Analytics;
     }
     
@@ -132,7 +131,7 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
         
         if (!Directory.Exists(_dirPath))
             Directory.CreateDirectory(_dirPath);
-        var fileNamePart = $"{_containerInfoContext.ContainerInfo.Namespace}{_containerInfoContext.ContainerInfo.Name}";
+        var fileNamePart = $"{_containerInfo.Namespace}{_containerInfo.Name}";
         File.WriteAllText(
             _relevantNodes is null 
                 ? _paths.AnalyticsResolutionGraph(fileNamePart) 

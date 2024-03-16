@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -13,7 +14,7 @@ internal interface IContainerInfo
     IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)> CreateFunctionData { get; }
 }
 
-internal sealed class ContainerInfo : IContainerInfo
+internal sealed class ContainerInfo : IContainerInfo, IContainerInstance
 {
     internal ContainerInfo(
         // parameters

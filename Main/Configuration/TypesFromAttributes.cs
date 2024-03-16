@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
@@ -127,16 +126,16 @@ internal sealed class ContainerTypesFromAttributes : TypesFromAttributesBase, IC
     internal ContainerTypesFromAttributes(
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        IContainerInfoContext containerInfoContext,
+        IContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IRangeUtility rangeUtility) 
         : base(
-            rangeUtility.GetRangeAttributes(containerInfoContext.ContainerInfo.ContainerType), 
-            containerInfoContext.ContainerInfo.ContainerType,
-            containerInfoContext.ContainerInfo.ContainerType, 
+            rangeUtility.GetRangeAttributes(containerInfo.ContainerType), 
+            containerInfo.ContainerType,
+            containerInfo.ContainerType, 
             localDiagLogger,
             validateAttributes,
             wellKnownTypes,
@@ -174,7 +173,7 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
         // dependencies
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        IContainerInfoContext containerInfoContext,
+        IContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
@@ -185,7 +184,7 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
                 ? rangeUtility.GetRangeAttributes(scopeInfo.ScopeType) 
                 : Array.Empty<AttributeData>(),
             scopeInfo.ScopeType,
-            containerInfoContext.ContainerInfo.ContainerType,
+            containerInfo.ContainerType,
             localDiagLogger,
             validateAttributes,
             wellKnownTypes,

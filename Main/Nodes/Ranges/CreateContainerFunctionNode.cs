@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -29,16 +28,16 @@ internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunc
         // dependencies
         WellKnownTypes wellKnownTypes,
         IReferenceGenerator referenceGenerator,
-        IContainerInfoContext containerInfoContext)
+        IContainerInfo containerInfo)
     {
         _initializationFunction = initializationFunction;
-        Name = containerInfoContext.ContainerInfo.Name;
-        ContainerTypeFullName = containerInfoContext.ContainerInfo.FullName;
-        ContainerReference = referenceGenerator.Generate(containerInfoContext.ContainerInfo.ContainerType);
+        Name = containerInfo.Name;
+        ContainerTypeFullName = containerInfo.FullName;
+        ContainerReference = referenceGenerator.Generate(containerInfo.ContainerType);
         Parameters = constructor?.Parameters.Select(ps => (ps.Type.FullName(), ps.Name)).ToList()
             ?? new List<(string, string)>();
         InitializationFunctionName = initializationFunction?.Name;
-        _containerType = containerInfoContext.ContainerInfo.ContainerType;
+        _containerType = containerInfo.ContainerType;
         _wellKnownTypes = wellKnownTypes;
     }
     

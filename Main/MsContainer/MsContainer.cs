@@ -1,6 +1,5 @@
 ﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -20,12 +19,12 @@ internal sealed partial class MsContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
     private readonly Compilation DIE_Factory_Compilation;
-    private readonly IContainerInfo DIE_Factory_ContainerInfo;
+    private readonly ContainerInfo DIE_Factory_ContainerInfo;
     private readonly RequiredKeywordUtility DIE_Factory_RequiredKeywordUtility;
 
     private MsContainer(
         GeneratorExecutionContext context, 
-        IContainerInfo dieFactoryContainerInfo,
+        ContainerInfo dieFactoryContainerInfo,
         RequiredKeywordUtility dieFactoryRequiredKeywordUtility)
     {
         DIE_Factory_ContainerInfo = dieFactoryContainerInfo;
@@ -70,10 +69,10 @@ internal sealed partial class MsContainer
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
         private static void DIE_ConstrParams_UserDefinedElements(
-            IContainerInfoContext containerInfoContext,
+            IContainerInfo containerInfo,
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
-            types = (scopeInfo.ScopeType, containerInfoContext.ContainerInfo.ContainerType);
+            types = (scopeInfo.ScopeType, containerInfo.ContainerType);
     }
 
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
@@ -84,10 +83,10 @@ internal sealed partial class MsContainer
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
         private static void DIE_ConstrParams_UserDefinedElements(
-            IContainerInfoContext containerInfoContext,
+            IContainerInfo containerInfo,
             IScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
-            types = (scopeInfo.ScopeType, containerInfoContext.ContainerInfo.ContainerType);
+            types = (scopeInfo.ScopeType, containerInfo.ContainerType);
     }
 
     private abstract class ScopeBase

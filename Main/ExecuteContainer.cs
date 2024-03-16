@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Analytics;
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -38,7 +37,7 @@ internal sealed class ExecuteContainer : IExecuteContainer
         ICodeGenerationVisitor codeGenerationVisitor,
         IValidateContainer validateContainer,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
-        IContainerInfoContext containerInfoContext,
+        IContainerInfo containerInfo,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
         ILocalDiagLogger localDiagLogger,
         IAnalyticsFlags analyticsFlags,
@@ -58,7 +57,7 @@ internal sealed class ExecuteContainer : IExecuteContainer
         _resolutionGraphAnalyticsNodeVisitorFactory = resolutionGraphAnalyticsNodeVisitorFactory;
         _filterForErrorRelevancyNodeVisitor = filterForErrorRelevancyNodeVisitor;
         _diagLogger = diagLogger;
-        _containerInfo = containerInfoContext.ContainerInfo;
+        _containerInfo = containerInfo;
     }
 
     public void Execute()

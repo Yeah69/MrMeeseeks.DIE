@@ -15,13 +15,13 @@ internal sealed class ExecuteImpl : IExecute
     private readonly GeneratorExecutionContext _context;
     private readonly IRangeUtility _rangeUtility;
     private readonly RequiredKeywordUtility _requiredKeywordUtility;
-    private readonly Func<INamedTypeSymbol, IContainerInfo> _containerInfoFactory;
+    private readonly Func<INamedTypeSymbol, ContainerInfo> _containerInfoFactory;
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
         IRangeUtility rangeUtility,
         RequiredKeywordUtility requiredKeywordUtility,
-        Func<INamedTypeSymbol, IContainerInfo> containerInfoFactory)
+        Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory)
     {
         _context = context;
         _rangeUtility = rangeUtility;

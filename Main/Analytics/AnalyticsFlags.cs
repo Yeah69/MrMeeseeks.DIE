@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Contexts;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
@@ -15,11 +14,11 @@ internal sealed class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
     private readonly Configuration.Attributes.Analytics? _analytics;
     
     internal AnalyticsFlags(
-        IContainerInfoContext containerInfoContext,
+        IContainerInfo containerInfo,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         GeneratorExecutionContext context)
     {
-        var attributeData = containerInfoContext.ContainerInfo.ContainerType
+        var attributeData = containerInfo.ContainerType
             .GetAttributes()
             .FirstOrDefault(CheckAttribute) 
             ?? context.Compilation.Assembly.GetAttributes().FirstOrDefault(CheckAttribute);

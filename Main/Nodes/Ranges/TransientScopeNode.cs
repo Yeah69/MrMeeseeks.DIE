@@ -22,7 +22,7 @@ internal interface ITransientScopeNode : IScopeNodeBase
         IElementNodeMapperBase transientScopeImplementationMapper);
 }
 
-internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, ITransientScopeInstance
+internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, IScopeInstance
 {
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateTransientScopeFunctionNodeRoot> _createTransientScopeFunctionNodeFactory;
 

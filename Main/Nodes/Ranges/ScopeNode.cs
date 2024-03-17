@@ -23,7 +23,7 @@ internal interface IScopeNode : IScopeNodeBase
         IElementNodeMapperBase scopeImplementationMapper);
 }
 
-internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, ITransientScopeInstance
+internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, IScopeInstance
 {
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateScopeFunctionNodeRoot> _createScopeFunctionNodeFactory;
 

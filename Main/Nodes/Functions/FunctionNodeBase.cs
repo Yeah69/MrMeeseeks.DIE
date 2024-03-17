@@ -31,10 +31,10 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Accessibility? accessibility,
         IReadOnlyList<ITypeSymbol> parameters,
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
-        IContainerNode parentContainer,
-        IRangeNode parentRange,
         
         // dependencies
+        IContainerNode parentContainer,
+        IRangeNode parentRange,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<ITypeSymbol, string?, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<ITypeSymbol, string?, SynchronicityDecision, IReadOnlyList<(IParameterNode, IParameterNode)>, IReadOnlyList<ITypeSymbol>, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -82,6 +82,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
         RangeFullName = parentRange.FullName;
         DisposedPropertyReference = parentRange.DisposalHandling.DisposedPropertyReference;
+        ResolutionCounterReference = parentRange.ResolutionCounterReference;
     }
 
     public virtual void Build(PassedContext passedContext) =>
@@ -141,6 +142,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
     protected virtual bool SuppressAsync => false;
     public string RangeFullName { get; }
     public string DisposedPropertyReference { get; }
+
+    public string ResolutionCounterReference { get; }
 
     public IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,

@@ -22,6 +22,7 @@ internal interface IRangeNode : INode
     IMethodSymbol? AddForDisposalAsync { get; }
     string? ContainerReference { get; }
     IEnumerable<IInitializedInstanceNode> InitializedInstances { get; }
+    string ResolutionCounterReference { get; }
 
     IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction);
     IWrappedAsyncFunctionCallNode BuildAsyncCreateCall(
@@ -89,6 +90,7 @@ internal abstract class RangeNode : IRangeNode
     public abstract string? ContainerReference { get; }
 
     public IEnumerable<IInitializedInstanceNode> InitializedInstances => InitializedInstanceNodesMap.Values;
+    public string ResolutionCounterReference { get; }
 
     public IFunctionCallNode BuildEnumerableCall(INamedTypeSymbol type, IFunctionNode callingFunction,
         PassedContext passedContext) =>
@@ -264,6 +266,8 @@ internal abstract class RangeNode : IRangeNode
             foreach (var type in types)
                 InitializedInstanceNodesMap[type] = initializedInstanceNodeFactory(type);
         }
+        
+        ResolutionCounterReference = referenceGenerator.Generate("resolutionCounter");
     }
     
     protected abstract IScopeManager ScopeManager { get; }

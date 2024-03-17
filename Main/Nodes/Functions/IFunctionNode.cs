@@ -30,6 +30,7 @@ internal interface IFunctionNode : INode
     IReadOnlyList<ILocalFunctionNode> LocalFunctions { get; }
     void AddLocalFunction(ILocalFunctionNode function);
     string? ExplicitInterfaceFullName { get; }
+    string ResolutionCounterReference { get; }
 
     IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,

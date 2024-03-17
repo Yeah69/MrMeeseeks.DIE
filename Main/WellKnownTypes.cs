@@ -14,6 +14,7 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol? ValueTask1, // .NET Standard 2.1
     INamedTypeSymbol Task, // .NET Standard 2.0
     INamedTypeSymbol Task1, // .NET Standard 2.0
+    INamedTypeSymbol SpinWait, // .NET Standard 2.0
     INamedTypeSymbol ObjectDisposedException, // .NET Standard 2.0
     INamedTypeSymbol ConcurrentBagOfSyncDisposable, // .NET Standard 2.0
     INamedTypeSymbol? ConcurrentBagOfAsyncDisposable, // .NET Standard 2.1
@@ -23,7 +24,9 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol Exception, // .NET Standard 2.0
     INamedTypeSymbol AggregateException, // .NET Standard 2.0
     INamedTypeSymbol SemaphoreSlim, // .NET Standard 2.0
+    INamedTypeSymbol Int32, // .NET Standard 2.0
     INamedTypeSymbol Nullable1, // .NET Standard 2.0
+    INamedTypeSymbol Interlocked, // .NET Standard 2.0
     INamedTypeSymbol Type, // .NET Standard 2.0
     INamedTypeSymbol Object) // .NET Standard 2.0
     : IContainerInstance
@@ -46,6 +49,7 @@ internal sealed record WellKnownTypes(
             ValueTask1: compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1"),
             Task: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task"),
             Task1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task`1"),
+            SpinWait: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SpinWait"),
             ObjectDisposedException: compilation.GetTypeByMetadataNameOrThrow("System.ObjectDisposedException"),
             ConcurrentBagOfSyncDisposable: concurrentBag.Construct(iDisposable),
             ConcurrentBagOfAsyncDisposable: iAsyncDisposable is not null ? concurrentBag.Construct(iAsyncDisposable) : null,
@@ -55,7 +59,9 @@ internal sealed record WellKnownTypes(
             Exception: compilation.GetTypeByMetadataNameOrThrow("System.Exception"),
             AggregateException: compilation.GetTypeByMetadataNameOrThrow("System.AggregateException"),
             SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
+            Int32: compilation.GetTypeByMetadataNameOrThrow("System.Int32"),
             Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"),
+            Interlocked: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Interlocked"),
             Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"),
             Object: @object);
     }

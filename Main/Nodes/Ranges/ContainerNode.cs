@@ -22,6 +22,7 @@ internal interface IContainerNode : IRangeNode
     IEnumerable<ITransientScopeNode> TransientScopes { get; }
     ITransientScopeInterfaceNode TransientScopeInterface { get; }
     string TransientScopeDisposalReference { get; }
+    string TransientScopeDisposalReference_Old { get; }
     string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
     IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; }
@@ -55,6 +56,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
     public IEnumerable<ITransientScopeNode> TransientScopes => ScopeManager.TransientScopes;
     public ITransientScopeInterfaceNode TransientScopeInterface => _lazyTransientScopeInterfaceNode.Value;
     public string TransientScopeDisposalReference { get; }
+    public string TransientScopeDisposalReference_Old { get; }
     public string TransientScopeDisposalElement { get; }
 
     public IFunctionCallNode BuildContainerInstanceCall(
@@ -77,6 +79,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         ITypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
+        ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
@@ -99,6 +102,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
             mapperDataToFunctionKeyTypeConverter,
             typeParameterUtility,
             rangeUtility,
+            checkTypeProperties,
             wellKnownTypes,
             wellKnownTypesMiscellaneous,
             referenceGenerator,
@@ -133,6 +137,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
             }));
         
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
+        TransientScopeDisposalReference_Old = referenceGenerator.Generate("transientScopeDisposal");
         TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");
         
         GenerateEmptyConstructor = !_containerInfo.ContainerType.InstanceConstructors.Any(ic => !ic.IsImplicitlyDeclared);

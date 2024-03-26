@@ -37,3 +37,9 @@ internal sealed class FunctionLevelLogMessageEnhancerForRanges : IFunctionLevelL
     public string Enhance(string message) => 
         _parentEnhancer.Enhance(message);
 }
+
+internal sealed class FunctionLevelLogMessageEnhancerForSourceGenerator : IFunctionLevelLogMessageEnhancer, IScopeInstance
+{
+    public string Enhance(string message) => 
+        $"[{Constants.DieAbbreviation}] {message}";
+}

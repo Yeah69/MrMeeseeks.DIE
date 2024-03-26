@@ -172,11 +172,11 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         var ret = DisposalType.None;
         
         if (_wellKnownTypes.IAsyncDisposable is not null 
-            && implementationType.AllInterfaces.Contains(_wellKnownTypes.IAsyncDisposable)
+            && implementationType.OriginalDefinitionIfUnbound().AllInterfaces.Contains(_wellKnownTypes.IAsyncDisposable)
             && !_currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
             ret |= DisposalType.Async;
         
-        if (implementationType.AllInterfaces.Contains(_wellKnownTypes.IDisposable)
+        if (implementationType.OriginalDefinitionIfUnbound().AllInterfaces.Contains(_wellKnownTypes.IDisposable)
             && !_currentlyConsideredTypes.SyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
             ret |= DisposalType.Sync;
         

@@ -10,6 +10,7 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Elements.Tuples;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -26,15 +27,18 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     private readonly StringBuilder _code = new();
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
+    private readonly ISingularDisposeFunctionUtility _singularDisposeFunctionUtility;
 
     internal CodeGenerationVisitor(
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
+        ISingularDisposeFunctionUtility singularDisposeFunctionUtility,
         IReferenceGenerator referenceGenerator)
     {
         _referenceGenerator = referenceGenerator;
         _wellKnownTypes = wellKnownTypes;
         _wellKnownTypesCollections = wellKnownTypesCollections;
+        _singularDisposeFunctionUtility = singularDisposeFunctionUtility;
     }
 
     public void VisitIContainerNode(IContainerNode container)
@@ -62,7 +66,10 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             : _wellKnownTypes.ConcurrentDictionaryOfSyncDisposable.FullName();
 
         _code.AppendLine(
-            $"private {dictionaryTypeName} {container.TransientScopeDisposalReference} = new {dictionaryTypeName}();");
+            $"""
+             private {_wellKnownTypes.ListOfObject.FullName()} {container.TransientScopeDisposalReference} = new {_wellKnownTypes.ListOfObject.FullName()}();
+             private {dictionaryTypeName} {container.TransientScopeDisposalReference_Old} = new {dictionaryTypeName}();
+             """);
         
         VisitITransientScopeInterfaceNode(container.TransientScopeInterface);
         
@@ -170,6 +177,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     public void VisitIScopeCallNode(IScopeCallNode scopeCall)
     {
         VisitIElementNode(scopeCall.ScopeConstruction);
+        _code.AppendLine($"{scopeCall.SubDisposalReference}.{nameof(List<object>.Add)}({scopeCall.ScopeConstruction.Reference});");
         if (scopeCall.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null)
             _code.AppendLine($"{scopeCall.DisposableCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {scopeCall.ScopeConstruction.Reference});");
         else if (scopeCall.DisposalType.HasFlag(DisposalType.Sync))
@@ -181,16 +189,17 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     public void VisitITransientScopeCallNode(ITransientScopeCallNode transientScopeCall)
     {
         VisitIElementNode(transientScopeCall.ScopeConstruction);
+        var owner = transientScopeCall.ContainerReference is { } containerReference
+            ? $"{containerReference}."
+            : "";
+        _code.AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference}.{nameof(List<object>.Add)}({transientScopeCall.ScopeConstruction.Reference});");
         if (transientScopeCall.DisposalType is not DisposalType.None)
         {
             var disposalType = transientScopeCall.DisposalType.HasFlag(DisposalType.Async) && _wellKnownTypes.IAsyncDisposable is not null
                 ? _wellKnownTypes.IAsyncDisposable.FullName()
                 : _wellKnownTypes.IDisposable.FullName();
-            var owner = transientScopeCall.ContainerReference is { } containerReference
-                ? $"{containerReference}."
-                : "";
             _code
-                .AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference}[{transientScopeCall.ScopeConstruction.Reference}] = ({disposalType}) {transientScopeCall.ScopeConstruction.Reference};");
+                .AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference_Old}[{transientScopeCall.ScopeConstruction.Reference}] = ({disposalType}) {transientScopeCall.ScopeConstruction.Reference};");
         }
         GenerateInitialization(transientScopeCall.Initialization, transientScopeCall.ScopeConstruction.Reference);
         VisitIFunctionCallNode(transientScopeCall);
@@ -216,7 +225,11 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
     private void GenerateRangeNodeContent(IRangeNode rangeNode)
     {
-        _code.AppendLine($"private {_wellKnownTypes.Int32.FullName()} {rangeNode.ResolutionCounterReference};");
+        _code.AppendLine(
+            $$"""
+              private {{_wellKnownTypes.Int32.FullName()}} {{rangeNode.ResolutionCounterReference}};
+              private {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{rangeNode.DisposalHandling.CollectionReference}} = new {{_wellKnownTypes.ListOfListOfObject.FullName()}}();
+              """);
         foreach (var initializedInstance in rangeNode.InitializedInstances)
             VisitIInitializedInstanceNode(initializedInstance);
         
@@ -331,6 +344,95 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
         if (actualDisposalTypes.HasFlag(DisposalType.Sync))
             GenerateDisposalFunctionInner(DisposalType.Sync);
+        
+        _code.AppendLine(
+            $$"""
+              public void {{nameof(IDisposable.Dispose)}}()
+              {
+                  {{_singularDisposeFunctionUtility.AggregateExceptionRoutineFullyQualified}}(Inner());
+                  return;
+                  
+                  {{_wellKnownTypes.IEnumerableOfException}} Inner() 
+                  {
+                      for (var i = {{range.DisposalHandling.CollectionReference}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
+                      {
+                          foreach (var exception in {{range.DisposeChunkMethodName}}({{range.DisposalHandling.CollectionReference}}[i]))
+                          {
+                              yield return exception;
+                          }
+                      }
+                  }
+              }
+              """);
+        
+        if (_wellKnownTypes.ValueTask is not null
+            && _wellKnownTypes.IAsyncDisposable is not null
+            && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
+            && _wellKnownTypes.IAsyncEnumerableOfException is not null)
+        {
+            _code.AppendLine(
+                $$"""
+                  public {{_wellKnownTypes.ValueTask.FullName()}} {{Constants.IAsyncDisposableDisposeAsync}}()
+                  {
+                      return {{_singularDisposeFunctionUtility.AggregateExceptionRoutineAsyncFullyQualified}}(Inner());
+                      
+                      async {{_wellKnownTypes.IAsyncEnumerableOfException}} Inner()
+                      {
+                          for (var i = {{range.DisposalHandling.CollectionReference}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
+                          {
+                              await foreach (var exception in {{range.DisposeChunkAsyncMethodName}}({{range.DisposalHandling.CollectionReference}}[i]))
+                              {
+                                  yield return exception;
+                              }
+                          }
+                      }
+                  }
+                  """);
+        }
+
+        var disposalMap = range.GetDisposalTypeToTypeFullNames();
+        var asyncDisposal = disposalMap.TryGetValue(DisposalType.Async, out var listAsync) ? listAsync : [];
+        var syncDisposal = disposalMap.TryGetValue(DisposalType.Sync, out var listSync) ? listSync : [];
+
+        if (asyncDisposal.Count > 0 || syncDisposal.Count > 0)
+        {
+            GenerateDisposeChunk();
+
+            if (_wellKnownTypes.ValueTask is not null
+                && _wellKnownTypes.IAsyncDisposable is not null
+                && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
+                && _wellKnownTypes.IAsyncEnumerableOfException is not null)
+            {
+                GenerateDisposeChunkAsyncEnumerable();
+            }
+        }
+        else
+        {
+            _code.AppendLine(
+                $$"""
+                  private static {{_wellKnownTypes.IEnumerableOfException.FullName()}} {{range.DisposeChunkMethodName}}({{_wellKnownTypes.ListOfObject.FullName()}} disposables)
+                  {
+                      yield break;
+                  }
+                  """);
+            
+            if (_wellKnownTypes.ValueTask is not null
+                && _wellKnownTypes.IAsyncDisposable is not null
+                && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
+                && _wellKnownTypes.IAsyncEnumerableOfException is not null)
+                _code.AppendLine(
+                    $$"""
+                      private static async {{_wellKnownTypes.IAsyncEnumerableOfException.FullName()}} {{range.DisposeChunkAsyncMethodName}}({{_wellKnownTypes.ListOfObject.FullName()}} disposables)
+                      {
+                          await {{_wellKnownTypes.Task.FullName()}}.{{nameof(Task.Yield)}}();
+                          yield break;
+                      }
+                      """);
+        }
+        
+ 
+        
+        return;
 
         void GenerateDisposalFunctionInner(DisposalType type)
         {
@@ -354,7 +456,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
             _code.AppendLine(
                 $$"""
-                  public {{returnType}} Dispose{{functionNameSuffix}}()
+                  public {{returnType}} AsdfDispose{{functionNameSuffix}}()
                   {
                   var {{disposalHandling.DisposedLocalReference}} = {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Exchange)}}(ref {{disposalHandling.DisposedFieldReference}}, 1);
                   if ({{disposalHandling.DisposedLocalReference}} != 0) return;
@@ -371,10 +473,10 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                         ? $"await {elementName}.DisposeAsync();"
                         : $"({elementName} as {_wellKnownTypes.IDisposable.FullName()})?.Dispose();";
                     _code.AppendLine($$"""
-                        while ({{container.TransientScopeDisposalReference}}.Count > 0)
+                        while ({{container.TransientScopeDisposalReference_Old}}.Count > 0)
                         {
-                        var {{elementName}} = {{_wellKnownTypesCollections.Enumerable}}.FirstOrDefault({{container.TransientScopeDisposalReference}}.Keys);
-                        if ({{elementName}} is not null && {{container.TransientScopeDisposalReference}}.TryRemove({{elementName}}, out _))
+                        var {{elementName}} = {{_wellKnownTypesCollections.Enumerable}}.FirstOrDefault({{container.TransientScopeDisposalReference_Old}}.Keys);
+                        if ({{elementName}} is not null && {{container.TransientScopeDisposalReference_Old}}.TryRemove({{elementName}}, out _))
                         {
                         try
                         {
@@ -387,7 +489,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                         }
                         }
                         }
-                        {{container.TransientScopeDisposalReference}}.Clear();
+                        {{container.TransientScopeDisposalReference_Old}}.Clear();
                         """);
                     break;
                 case ITransientScopeNode transientScope:
@@ -396,7 +498,11 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                         : _wellKnownTypes.IDisposable.FullName();
 
                     _code.AppendLine(
-                        $"{transientScope.ContainerReference}.{transientScope.TransientScopeDisposalReference}.TryRemove(({disposalType}) this, out _);");
+                        $$"""
+                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.Remove)}}(this);
+                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.TrimExcess)}}();
+                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference_Old}}.TryRemove(({{disposalType}}) this, out _);
+                          """);
                     break;
             }
 
@@ -437,14 +543,130 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                   }
                   """);
         }
+
+        void GenerateDisposeChunk()
+        {
+            _code.AppendLine(
+                $$"""
+                  private static {{_wellKnownTypes.IEnumerableOfException.FullName()}} {{range.DisposeChunkMethodName}}({{_wellKnownTypes.ListOfObject.FullName()}} disposables)
+                  {
+                      for (var i = disposables.{{nameof(List<object>.Count)}} - 1; i >= 0; i--)
+                      {
+                  """);
+            
+            if (asyncDisposal.Concat(syncDisposal).Any(t => t.IsUnboundGenericType))
+                _code.AppendLine($"{_wellKnownTypes.Type.FullName()} genericTypeDefinition = disposables[i].{nameof(Type.GetType)}().{nameof(Type.GetGenericTypeDefinition)}();");
+            
+            if (asyncDisposal.Count > 0
+                && _wellKnownTypes.IAsyncDisposable is not null
+                && _singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified is not null)
+            {
+                var clause = string.Join(" || ", asyncDisposal.Select(d => d.IsUnboundGenericType 
+                    ? $"genericTypeDefinition == typeof({d.FullName()})" 
+                    : $"disposables[i] is {d.FullName()}"));
+                _code.AppendLine(
+                    $$"""
+                      if ({{clause}})
+                      {
+                          if (disposables[i] is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && {{_singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception}} exception)
+                          {
+                              yield return exception;
+                          }
+                      }
+                      """);
+            }
+            
+            if (syncDisposal.Count > 0)
+            {
+                var clause = string.Join(" || ", syncDisposal.Select(d => d.IsUnboundGenericType 
+                    ? $"genericTypeDefinition == typeof({d.FullName()})" 
+                    : $"disposables[i] is {d.FullName()}"));
+                _code.AppendLine(
+                    $$"""
+                      if ({{clause}})
+                      {
+                          if (disposables[i] is {{_wellKnownTypes.IDisposable.FullName()}} syncDisposable && {{_singularDisposeFunctionUtility.DisposeFullyQualified}}(syncDisposable) is {{_wellKnownTypes.Exception}} exception)
+                          {
+                              yield return exception;
+                          }
+                      }
+                      """);
+            }
+
+            _code.AppendLine(
+                """
+                    }
+                }
+                """);
+        }
+
+        void GenerateDisposeChunkAsyncEnumerable()
+        {
+            _code.AppendLine(
+                $$"""
+                  private static async {{_wellKnownTypes.IAsyncEnumerableOfException?.FullName()}} {{range.DisposeChunkAsyncMethodName}}({{_wellKnownTypes.ListOfObject.FullName()}} disposables)
+                  {
+                      await {{_wellKnownTypes.Task.FullName()}}.{{nameof(Task.Yield)}}();
+                      for (var i = disposables.{{nameof(List<object>.Count)}} - 1; i >= 0; i--)
+                      {
+                  """);
+            
+            if (asyncDisposal.Concat(syncDisposal).Any(t => t.IsUnboundGenericType))
+                _code.AppendLine($"{_wellKnownTypes.Type.FullName()} genericTypeDefinition = disposables[i].{nameof(Type.GetType)}().{nameof(Type.GetGenericTypeDefinition)}();");
+            
+            if (asyncDisposal.Count > 0
+                && _wellKnownTypes.IAsyncDisposable is not null
+                && _singularDisposeFunctionUtility.DisposeAsyncFullyQualified is not null)
+            {
+                var clause = string.Join(" || ", asyncDisposal.Select(d => d.IsUnboundGenericType 
+                    ? $"genericTypeDefinition == typeof({d.FullName()})" 
+                    : $"disposables[i] is {d.FullName()}"));
+                _code.AppendLine(
+                    $$"""
+                      if ({{clause}})
+                      {
+                          if (disposables[i] is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && await {{_singularDisposeFunctionUtility.DisposeAsyncFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception}} exception)
+                          {
+                              yield return exception;
+                          }
+                      }
+                      """);
+            }
+            
+            if (syncDisposal.Count > 0)
+            {
+                var clause = string.Join(" || ", syncDisposal.Select(d => d.IsUnboundGenericType 
+                    ? $"genericTypeDefinition == typeof({d.FullName()})" 
+                    : $"disposables[i] is {d.FullName()}"));
+                _code.AppendLine(
+                    $$"""
+                      if ({{clause}})
+                      {
+                          if (disposables[i] is {{_wellKnownTypes.IDisposable.FullName()}} syncDisposable && {{_singularDisposeFunctionUtility.DisposeFullyQualified}}(syncDisposable) is {{_wellKnownTypes.Exception}} exception)
+                          {
+                              yield return exception;
+                          }
+                      }
+                      """);
+            }
+
+            _code.AppendLine(
+                """
+                    }
+                }
+                """);
+        }
     }
 
     private void VisitISingleFunctionNode(ISingleFunctionNode singleFunction, bool isUserFacingFunction)
     {
-        _code.AppendLine($$"""
-            {{GenerateMethodDeclaration(singleFunction)}}
-            {
-            """);
+        _code.AppendLine(
+            $$"""
+              {{GenerateMethodDeclaration(singleFunction)}}
+              {
+              """);
+        
+        VisitIElementNode(singleFunction.SubDisposalNode);
 
         if (isUserFacingFunction)
         {
@@ -467,6 +689,13 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                 singleFunction.DisposedPropertyReference, 
                 singleFunction.RangeFullName, 
                 singleFunction.ReturnedTypeFullName);
+
+        if (!singleFunction.IsSubDisposalAsParameter)
+        {
+            _code.AppendLine(
+                $"{singleFunction.DisposalCollectionReference}.{nameof(List<List<object>>.Add)}({singleFunction.SubDisposalNode.Reference});");
+        }
+        
         _code.AppendLine($"return {singleFunction.ReturnedElement.Reference};");
         
         if (isUserFacingFunction)
@@ -504,7 +733,12 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
     public void VisitIRangedInstanceInterfaceFunctionNode(IRangedInstanceInterfaceFunctionNode rangedInstanceInterfaceFunctionNode)
     {
-        var parameter = string.Join(",", rangedInstanceInterfaceFunctionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
+        var parameter = string.Join(
+            ",",
+            rangedInstanceInterfaceFunctionNode
+                .Parameters
+                .Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}")
+                .AppendIf($"{rangedInstanceInterfaceFunctionNode.SubDisposalNode.TypeFullName} {rangedInstanceInterfaceFunctionNode.SubDisposalNode.Reference}", rangedInstanceInterfaceFunctionNode.IsSubDisposalAsParameter));
         _code.AppendLine($"{rangedInstanceInterfaceFunctionNode.ReturnedTypeFullName} {rangedInstanceInterfaceFunctionNode.Name}({parameter});");
     }
 
@@ -662,14 +896,23 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         }
     }
 
+    public void VisitIInitialSubDisposalNode(IInitialSubDisposalNode element) => 
+        _code.AppendLine($"{element.TypeFullName} {element.Reference} = new {element.TypeFullName}();");
+
     public void VisitIWrappedAsyncFunctionCallNode(IWrappedAsyncFunctionCallNode functionCallNode)
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
         var typeFullName = functionCallNode.TypeFullName;
+        var parameters = string.Join(", ", functionCallNode
+            .Parameters
+            .Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}")
+            .AppendIf(
+                $"{functionCallNode.SubDisposalParameter?.Called.Reference}: {functionCallNode.SubDisposalParameter?.Calling.Reference}",
+                functionCallNode.SubDisposalParameter is not null));
         var typeParameters = functionCallNode.TypeParameters.Any()
             ? $"<{string.Join(", ", functionCallNode.TypeParameters.Select(p => p.Name))}>"
             : "";
-        var call = $"{owner}{functionCallNode.FunctionName}{typeParameters}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
+        var call = $"{owner}{functionCallNode.FunctionName}{typeParameters}({parameters})";
         call = functionCallNode.Transformation switch
         {
             AsyncFunctionCallTransformation.ValueTaskFromValueTask => call,
@@ -687,10 +930,16 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     {
         var owner = functionCallNode.OwnerReference is { } ownerReference ? $"{ownerReference}." : ""; 
         var typeFullName = functionCallNode.TypeFullName;
+        var parameters = string.Join(", ", functionCallNode
+            .Parameters
+            .Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}")
+            .AppendIf(
+                $"{functionCallNode.SubDisposalParameter?.Called.Reference}: {functionCallNode.SubDisposalParameter?.Calling.Reference}",
+                functionCallNode.SubDisposalParameter is not null));
         var typeParameters = functionCallNode.TypeParameters.Any()
             ? $"<{string.Join(", ", functionCallNode.TypeParameters.Select(p => p.Name))}>"
             : "";
-        var call = $"{owner}{functionCallNode.FunctionName}{typeParameters}({string.Join(", ", functionCallNode.Parameters.Select(p => $"{p.Item1.Reference.PrefixAtIfKeyword()}: {p.Item2.Reference}"))})";
+        var call = $"{owner}{functionCallNode.FunctionName}{typeParameters}({parameters})";
         call = functionCallNode.Awaited ? $"(await {call})" : call;
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");
     }
@@ -852,6 +1101,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             case IImplicitScopeImplementationNode implicitScopeImplementationNode:
                 VisitIImplicitScopeImplementationNode(implicitScopeImplementationNode);
                 break;
+            case IInitialSubDisposalNode initialSubDisposalNode:
+                VisitIInitialSubDisposalNode(initialSubDisposalNode);
+                break;
         }
     }
 
@@ -875,7 +1127,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             : $"({implementationNode.TypeFullName}) ";
         _code.AppendLine(
             $"{implementationNode.TypeFullName} {implementationNode.Reference} = {cast}new {implementationNode.ConstructorCallName}({constructorParameters}){objectInitializerParameter};");
-        
+
+        if (implementationNode.AggregateForDisposal) 
+            _code.AppendLine($"{implementationNode.SubDisposalReference}.{nameof(List<object>.Add)}({implementationNode.Reference});");
         if (implementationNode.SyncDisposalCollectionReference is {} syncDisposalCollectionReference)
             _code.AppendLine(
                 $"{syncDisposalCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {implementationNode.Reference});");
@@ -1044,11 +1298,36 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             {{GenerateMethodDeclaration(voidFunctionNode)}}
             {
             """);
+        
+        VisitIElementNode(voidFunctionNode.SubDisposalNode);
+        _code.AppendLine(
+            $$"""
+              try
+              {
+              {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Increment)}}(ref {{voidFunctionNode.ResolutionCounterReference}});
+              """);
+        
         foreach (var (functionCallNode, initializedInstanceNode) in voidFunctionNode.Initializations)
         {
             VisitIElementNode(functionCallNode);
             _code.AppendLine($"{initializedInstanceNode.Reference} = {functionCallNode.Reference};");
         }
+
+        if (!voidFunctionNode.IsSubDisposalAsParameter)
+        {
+            _code.AppendLine(
+                $"{voidFunctionNode.DisposalCollectionReference}.{nameof(List<List<object>>.Add)}({voidFunctionNode.SubDisposalNode.Reference});");
+        }
+        
+        
+        _code.AppendLine(
+            $$"""
+              }
+              finally
+              {
+              {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Decrement)}}(ref {{voidFunctionNode.ResolutionCounterReference}});
+              }
+              """);
             
         foreach (var localFunction in voidFunctionNode.LocalFunctions)
             VisitILocalFunctionNode(localFunction);
@@ -1163,7 +1442,10 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                 }));
         }
         
-        var parameters = string.Join(",", functionNode.Parameters.Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}"));
+        var parameters = string.Join(",", functionNode
+            .Parameters
+            .Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}")
+            .AppendIf($"{functionNode.SubDisposalNode.TypeFullName} {functionNode.SubDisposalNode.Reference}", functionNode.IsSubDisposalAsParameter));
         return $"{accessibility}{asyncModifier}{functionNode.ReturnedTypeFullName} {explicitInterfaceFullName}{functionNode.Name}{typeParameters}({parameters}){typeParametersConstraints}";
     }
 }

@@ -6,43 +6,49 @@ namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 internal interface IScopeCallNode : IScopeCallNodeBase
 {
     string? DisposableCollectionReference { get; }
+    string SubDisposalReference { get; }
 }
 
 internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
 {
     private readonly IRangeNode _callingRange;
 
-    public ScopeCallNode(
+    internal record struct Params(
+        ITypeSymbol CallSideType, 
+        string ContainerParameter,
+        string TransientScopeInterfaceParameter,
+        IScopeNode Scope,
+        IRangeNode CallingRange,
+        IFunctionNode CallingFunction,
+        IReadOnlyList<(IParameterNode, IParameterNode)> Parameters,
+        IReadOnlyList<ITypeSymbol> TypeParameters,
+        IFunctionCallNode? Initialization,
+        ScopeCallNodeOuterMapperParam OuterMapperParam);
+    internal ScopeCallNode(
         // parameters
-        ITypeSymbol callSideType,
-        (string ContainerParameter, string TransientScopeInterfaceParameter) stringParams,
-        IScopeNode scope,
-        IRangeNode callingRange,
-        IReadOnlyList<(IParameterNode, IParameterNode)> parameters, 
-        IReadOnlyList<ITypeSymbol> typeParameters,
-        IFunctionCallNode? initialization,
-        ScopeCallNodeOuterMapperParam outerMapperParam,
+        Params parameters,
         
         // dependencies
         IFunctionNode calledFunction, 
         IReferenceGenerator referenceGenerator) 
         : base(
-            callSideType,
-            scope,
-            parameters,
-            typeParameters,
-            initialization,
-            outerMapperParam,
+            parameters.CallSideType,
+            parameters.Scope,
+            parameters.Parameters,
+            parameters.TypeParameters,
+            parameters.Initialization,
+            parameters.OuterMapperParam,
             calledFunction,
             referenceGenerator)
     {
-        _callingRange = callingRange;
+        _callingRange = parameters.CallingRange;
         AdditionalPropertiesForConstruction = 
         [
-            (scope.ContainerReference ?? "", stringParams.ContainerParameter), 
-            (scope.TransientScopeInterfaceReference, stringParams.TransientScopeInterfaceParameter)
+            (parameters.Scope.ContainerReference ?? "", parameters.ContainerParameter), 
+            (parameters.Scope.TransientScopeInterfaceReference, parameters.TransientScopeInterfaceParameter)
         ];
-        callingRange.DisposalHandling.RegisterSyncDisposal();
+        parameters.CallingRange.DisposalHandling.RegisterSyncDisposal();
+        SubDisposalReference = parameters.CallingFunction.SubDisposalNode.Reference;
     }
 
     public string? DisposableCollectionReference => DisposalType switch
@@ -52,6 +58,8 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
         Configuration.DisposalType.Sync => _callingRange.DisposalHandling.SyncCollectionReference,
         _ => null
     };
+
+    public string SubDisposalReference { get; }
 
     protected override (string Name, string Reference)[] AdditionalPropertiesForConstruction { get; }
 }

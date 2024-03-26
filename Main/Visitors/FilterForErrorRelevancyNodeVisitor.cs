@@ -180,6 +180,9 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
             case IImplicitScopeImplementationNode implicitScopeImplementationNode:
                 VisitIImplicitScopeImplementationNode(implicitScopeImplementationNode);
                 break;
+            case IInitialSubDisposalNode initialSubDisposalNode:
+                VisitIInitialSubDisposalNode(initialSubDisposalNode);
+                break;
         }
     }
 
@@ -253,6 +256,8 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
     }
 
     public void VisitIFactoryFunctionNode(IFactoryFunctionNode element) {}
+
+    public void VisitIInitialSubDisposalNode(IInitialSubDisposalNode element) {}
 
     public void VisitICreateScopeFunctionNode(ICreateScopeFunctionNode element) =>
         VisitISingleFunctionNode(element);

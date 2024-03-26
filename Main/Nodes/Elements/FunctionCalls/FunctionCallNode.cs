@@ -9,6 +9,7 @@ internal interface IFunctionCallNode : IElementNode, IAwaitableNode
     string? OwnerReference { get; }
     string FunctionName { get; }
     IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
+    (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
     IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     IFunctionNode CalledFunction { get; }
 }
@@ -17,13 +18,14 @@ internal abstract class FunctionCallNode : IFunctionCallNode
 {
     private readonly IFunctionNode _calledFunction;
 
-    public FunctionCallNode(
+    protected FunctionCallNode(
         string? ownerReference,
-        IFunctionNode calledFunction,
         ITypeSymbol callSideType,
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
         IReadOnlyList<ITypeSymbol> typeParameters,
+        IElementNode? callingSubDisposal,
         
+        IFunctionNode calledFunction,
         IReferenceGenerator referenceGenerator)
     {
         _calledFunction = calledFunction;
@@ -33,6 +35,9 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         FunctionName = calledFunction.Name;
         TypeFullName = callSideType.FullName();
         Reference = referenceGenerator.Generate("functionCallResult");
+        SubDisposalParameter = callingSubDisposal is null || !calledFunction.IsSubDisposalAsParameter
+            ? null 
+            : (callingSubDisposal, calledFunction.SubDisposalNode);
     }
 
     public virtual void Build(PassedContext passedContext) { }
@@ -44,6 +49,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
     public string FunctionName { get; }
     public virtual string? OwnerReference { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
+    public (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
     public IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     public IFunctionNode CalledFunction => _calledFunction;
 

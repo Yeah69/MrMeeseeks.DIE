@@ -14,6 +14,7 @@ internal interface ITransientScopeNode : IScopeNodeBase
 {
     string TransientScopeInterfaceName { get; }
     string TransientScopeDisposalReference { get; }
+    string TransientScopeDisposalReference_Old { get; }
     ITransientScopeCallNode BuildTransientScopeCallFunction(
         string containerParameter,
         INamedTypeSymbol type,
@@ -35,6 +36,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
         ITypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
         IRequiredKeywordUtility requiredKeywordUtility,
+        ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
@@ -56,6 +58,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
             typeParameterUtility,
             rangeUtility,
             requiredKeywordUtility,
+            checkTypeProperties,
             wellKnownTypes,
             wellKnownTypesMiscellaneous,
             mapperDataToFunctionKeyTypeConverter,
@@ -71,6 +74,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
         _createTransientScopeFunctionNodeFactory = createTransientScopeFunctionNodeFactory;
         TransientScopeInterfaceName = parentContainer.TransientScopeInterface.Name;
         TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
+        TransientScopeDisposalReference_Old = parentContainer.TransientScopeDisposalReference_Old;
     }
     protected override string ContainerParameterForScope => ContainerReference;
 
@@ -84,6 +88,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
 
     public string TransientScopeInterfaceName { get; }
     public string TransientScopeDisposalReference { get; }
+    public string TransientScopeDisposalReference_Old { get; }
 
     public ITransientScopeCallNode BuildTransientScopeCallFunction(
         string containerParameter,

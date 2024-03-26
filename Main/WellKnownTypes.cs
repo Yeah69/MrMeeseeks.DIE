@@ -20,8 +20,15 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol? ConcurrentBagOfAsyncDisposable, // .NET Standard 2.1
     INamedTypeSymbol ConcurrentDictionaryOfSyncDisposable, // .NET Standard 2.0
     INamedTypeSymbol? ConcurrentDictionaryOfAsyncDisposable,  // .NET Standard 2.1
+    INamedTypeSymbol ListOfObject, // .NET Standard 2.0
+    INamedTypeSymbol ListOfListOfObject, // .NET Standard 2.0
     INamedTypeSymbol ConcurrentDictionaryOfRuntimeTypeHandleToObject, // .NET Standard 2.0
     INamedTypeSymbol Exception, // .NET Standard 2.0
+    // ReSharper disable InconsistentNaming
+    INamedTypeSymbol IEnumerableOfException, // .NET Standard 2.0
+    INamedTypeSymbol? IAsyncEnumerableOfException, // .NET Standard 2.1
+    // ReSharper restore InconsistentNaming
+    INamedTypeSymbol ListOfException, // .NET Standard 2.0
     INamedTypeSymbol AggregateException, // .NET Standard 2.0
     INamedTypeSymbol SemaphoreSlim, // .NET Standard 2.0
     INamedTypeSymbol Int32, // .NET Standard 2.0
@@ -39,6 +46,10 @@ internal sealed record WellKnownTypes(
         var concurrentDictionary2= compilation.GetTypeByMetadataNameOrThrow("System.Collections.Concurrent.ConcurrentDictionary`2");
         var runtimeTypeHandle = compilation.GetTypeByMetadataNameOrThrow("System.RuntimeTypeHandle");
         var @object = compilation.GetTypeByMetadataNameOrThrow("System.Object");
+        var list = compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.List`1");
+        var valueTask1 = compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1");
+        var enumerable1 = compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IEnumerable`1");
+        var exception = compilation.GetTypeByMetadataNameOrThrow("System.Exception");
         
         return new WellKnownTypes(
             IDisposable: iDisposable,
@@ -46,7 +57,7 @@ internal sealed record WellKnownTypes(
             Lazy1: compilation.GetTypeByMetadataNameOrThrow("System.Lazy`1"),
             ThreadLocal1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.ThreadLocal`1"),
             ValueTask: compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask"),
-            ValueTask1: compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1"),
+            ValueTask1: valueTask1,
             Task: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task"),
             Task1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task`1"),
             SpinWait: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SpinWait"),
@@ -56,7 +67,12 @@ internal sealed record WellKnownTypes(
             ConcurrentDictionaryOfSyncDisposable: concurrentDictionary2.Construct(iDisposable, iDisposable),
             ConcurrentDictionaryOfAsyncDisposable: iAsyncDisposable is not null ? concurrentDictionary2.Construct(iAsyncDisposable, iAsyncDisposable) : null,
             ConcurrentDictionaryOfRuntimeTypeHandleToObject: concurrentDictionary2.Construct(runtimeTypeHandle, @object),
-            Exception: compilation.GetTypeByMetadataNameOrThrow("System.Exception"),
+            ListOfObject: list.Construct(@object),
+            ListOfListOfObject: list.Construct(list.Construct(@object)),
+            Exception: exception,
+            IEnumerableOfException: enumerable1.Construct(exception),
+            IAsyncEnumerableOfException: compilation.GetTypeByMetadataName("System.Collections.Generic.IAsyncEnumerable`1")?.Construct(exception),
+            ListOfException: list.Construct(exception),
             AggregateException: compilation.GetTypeByMetadataNameOrThrow("System.AggregateException"),
             SemaphoreSlim: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SemaphoreSlim"),
             Int32: compilation.GetTypeByMetadataNameOrThrow("System.Int32"),

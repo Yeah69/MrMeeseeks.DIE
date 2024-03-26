@@ -15,17 +15,23 @@ internal sealed class ExecuteImpl : IExecute
     private readonly GeneratorExecutionContext _context;
     private readonly IRangeUtility _rangeUtility;
     private readonly RequiredKeywordUtility _requiredKeywordUtility;
+    private readonly SingularDisposeFunctionUtility _singularDisposeFunctionUtility;
+    private readonly ReferenceGeneratorCounter _referenceGeneratorCounter;
     private readonly Func<INamedTypeSymbol, ContainerInfo> _containerInfoFactory;
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
         IRangeUtility rangeUtility,
         RequiredKeywordUtility requiredKeywordUtility,
+        SingularDisposeFunctionUtility singularDisposeFunctionUtility,
+        ReferenceGeneratorCounter referenceGeneratorCounter,
         Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory)
     {
         _context = context;
         _rangeUtility = rangeUtility;
         _requiredKeywordUtility = requiredKeywordUtility;
+        _singularDisposeFunctionUtility = singularDisposeFunctionUtility;
+        _referenceGeneratorCounter = referenceGeneratorCounter;
         _containerInfoFactory = containerInfoFactory;
     }
 
@@ -46,7 +52,12 @@ internal sealed class ExecuteImpl : IExecute
                 .ToList();
             foreach (var containerInfo in containerInfos)
             {
-                using var msContainer = MsContainer.MsContainer.DIE_CreateContainer(_context, containerInfo, _requiredKeywordUtility);
+                using var msContainer = MsContainer.MsContainer.DIE_CreateContainer(
+                    _context, 
+                    containerInfo,
+                    _requiredKeywordUtility, 
+                    _singularDisposeFunctionUtility,
+                    _referenceGeneratorCounter);
                 var executeContainer = msContainer.Create();
                 executeContainer.Execute();
             }
@@ -64,5 +75,14 @@ internal sealed class ExecuteImpl : IExecute
             
             _context.AddSource("RequiredKeywordTypes.cs", requiredSource);
         }
+        
+        var singularDisposeFunctionSource = CSharpSyntaxTree
+            .ParseText(SourceText.From(_singularDisposeFunctionUtility.GenerateSingularDisposeFunctionsFile(), Encoding.UTF8))
+            .GetRoot()
+            .NormalizeWhitespace()
+            .SyntaxTree
+            .GetText();
+        
+        _context.AddSource($"{Constants.NamespaceForGeneratedStatics}.{_singularDisposeFunctionUtility.ClassName}.cs", singularDisposeFunctionSource);
     }
 }

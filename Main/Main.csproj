@@ -35,6 +35,10 @@
     <PackageReference Include="MrMeeseeks.Visitor" Version="1.1.0" PrivateAssets="all" />
     <PackageReference Include="MsMeeseeks.DIE" Version="3.0.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" PrivateAssets="all" />
+    <PackageReference Include="PolySharp" Version="1.14.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     
@@ -58,4 +62,12 @@
     </ItemGroup>
   </Target>
 
+  <ItemGroup>
+    <CompilerVisibleProperty Include="PolySharpExcludeGeneratedTypes"/>
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <PolySharpExcludeGeneratedTypes>System.Runtime.CompilerServices.IsExternalInit;System.Runtime.CompilerServices.RequiredMemberAttribute;System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute;System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute</PolySharpExcludeGeneratedTypes>
+  </PropertyGroup>
+  
 </Project>

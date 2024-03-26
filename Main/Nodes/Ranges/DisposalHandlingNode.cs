@@ -14,6 +14,7 @@ internal interface IDisposalHandlingNode
     bool HasAsyncDisposables { get; }
     string RegisterSyncDisposal();
     string? RegisterAsyncDisposal();
+    string CollectionReference { get; }
 }
 
 internal sealed class DisposalHandlingNode : IDisposalHandlingNode
@@ -23,7 +24,7 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
     private readonly string _syncCollection;
     private readonly string? _asyncCollection;
     
-    public DisposalHandlingNode(
+    internal DisposalHandlingNode(
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
@@ -37,6 +38,7 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
         _asyncCollection = wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null 
             ? referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfAsyncDisposable) 
             : null;
+        CollectionReference = referenceGenerator.Generate("_disposal");
     }
 
     public string DisposedFieldReference { get; }
@@ -63,4 +65,6 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
         
         return _asyncCollection;
     }
+
+    public string CollectionReference { get; }
 }

@@ -39,6 +39,7 @@ internal sealed class RequiredKeywordUtility : IRequiredKeywordUtility, IContain
         {
             code.AppendLine(
                 """
+                #nullable enable
                 namespace System.Runtime.CompilerServices
                 {
                 """);
@@ -96,6 +97,8 @@ internal sealed class RequiredKeywordUtility : IRequiredKeywordUtility, IContain
                 }
                 """);
         }
+        
+        code.AppendLine("#nullable disable");
         
         return code.ToString();
 

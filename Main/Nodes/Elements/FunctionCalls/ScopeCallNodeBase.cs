@@ -18,7 +18,7 @@ internal abstract class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
 {
     private readonly IScopeNodeBase _scope;
     private readonly IElementNodeMapperBase _scopeImplementationMapper;
-
+    
     protected ScopeCallNodeBase(
         // parameters
         ITypeSymbol callSideType,
@@ -31,7 +31,7 @@ internal abstract class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
         // dependencies
         IFunctionNode calledFunction, 
         IReferenceGenerator referenceGenerator) 
-        : base(null, calledFunction, callSideType, parameters, typeParameters, referenceGenerator)
+        : base(null, callSideType, parameters, typeParameters, null, calledFunction, referenceGenerator)
     {
         _scope = scope;
         Initialization = initialization;

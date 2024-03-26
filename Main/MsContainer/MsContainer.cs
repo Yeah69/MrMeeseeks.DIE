@@ -21,14 +21,20 @@ internal sealed partial class MsContainer
     private readonly Compilation DIE_Factory_Compilation;
     private readonly ContainerInfo DIE_Factory_ContainerInfo;
     private readonly RequiredKeywordUtility DIE_Factory_RequiredKeywordUtility;
+    private readonly SingularDisposeFunctionUtility DIE_Factory_SingularDisposeFunctionUtility;
+    private readonly ReferenceGeneratorCounter DIE_Factory_referenceGeneratorCounter;
 
     private MsContainer(
         GeneratorExecutionContext context, 
         ContainerInfo dieFactoryContainerInfo,
-        RequiredKeywordUtility dieFactoryRequiredKeywordUtility)
+        RequiredKeywordUtility dieFactoryRequiredKeywordUtility,
+        SingularDisposeFunctionUtility dieFactorySingularDisposeFunctionUtility, 
+        ReferenceGeneratorCounter dieFactoryReferenceGeneratorCounter)
     {
         DIE_Factory_ContainerInfo = dieFactoryContainerInfo;
         DIE_Factory_RequiredKeywordUtility = dieFactoryRequiredKeywordUtility;
+        DIE_Factory_SingularDisposeFunctionUtility = dieFactorySingularDisposeFunctionUtility;
+        DIE_Factory_referenceGeneratorCounter = dieFactoryReferenceGeneratorCounter;
         DIE_Factory_Compilation = context.Compilation;
         DIE_Factory_GeneratorExecutionContext = context;
     }

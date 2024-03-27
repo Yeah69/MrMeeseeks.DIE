@@ -10,6 +10,7 @@ internal interface IFunctionCallNode : IElementNode, IAwaitableNode
     string FunctionName { get; }
     IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
     (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
+    (IElementNode Calling, IElementNode Called) TransientScopeDisposalParameter { get; }
     IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     IFunctionNode CalledFunction { get; }
 }
@@ -24,6 +25,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         IReadOnlyList<(IParameterNode, IParameterNode)> parameters,
         IReadOnlyList<ITypeSymbol> typeParameters,
         IElementNode? callingSubDisposal,
+        IElementNode callingTransientScopeDisposal,
         
         IFunctionNode calledFunction,
         IReferenceGenerator referenceGenerator)
@@ -38,6 +40,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         SubDisposalParameter = callingSubDisposal is null || !calledFunction.IsSubDisposalAsParameter
             ? null 
             : (callingSubDisposal, calledFunction.SubDisposalNode);
+        TransientScopeDisposalParameter = (callingTransientScopeDisposal, calledFunction.TransientScopeDisposalNode);
     }
 
     public virtual void Build(PassedContext passedContext) { }
@@ -50,6 +53,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
     public virtual string? OwnerReference { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
     public (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
+    public (IElementNode Calling, IElementNode Called) TransientScopeDisposalParameter { get; }
     public IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     public IFunctionNode CalledFunction => _calledFunction;
 

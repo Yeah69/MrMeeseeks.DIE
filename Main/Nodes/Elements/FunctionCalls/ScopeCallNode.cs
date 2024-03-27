@@ -38,6 +38,7 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
             parameters.TypeParameters,
             parameters.Initialization,
             parameters.OuterMapperParam,
+            parameters.CallingFunction.TransientScopeDisposalNode,
             calledFunction,
             referenceGenerator)
     {

@@ -28,6 +28,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         
         // dependencies
         ISubDisposalNodeChooser subDisposalNodeChooser,
+        ITransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -47,6 +48,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             parentContainer, 
             parentRange, 
             subDisposalNodeChooser,
+            transientScopeDisposalNodeChooser,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,

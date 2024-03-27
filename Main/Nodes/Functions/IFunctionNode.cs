@@ -32,11 +32,18 @@ internal interface IFunctionNode : INode
     string? ExplicitInterfaceFullName { get; }
     string ResolutionCounterReference { get; }
     IElementNode SubDisposalNode { get; }
+    IElementNode TransientScopeDisposalNode { get; }
     /// <summary>
     /// Sub disposal is passed is either passed as parameter or initialized in the function body (in entry functions).
     /// </summary>
     bool IsSubDisposalAsParameter { get; }
+    /// <summary>
+    /// Transient scope disposal is passed is either passed as parameter or initialized in the function body (in entry functions).
+    /// </summary>
+    bool IsTransientScopeDisposalAsParameter { get; }
     string DisposalCollectionReference { get; }
+    string? ContainerReference { get; }
+    string TransientScopeDisposalReference { get; }
 
     IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,

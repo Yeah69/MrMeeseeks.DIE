@@ -17,6 +17,7 @@ internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITrans
         string ContainerParameter,
         ITransientScopeNode Scope,
         IRangeNode CallingRange,
+        IElementNode CallingTransientScopeDisposal,
         IReadOnlyList<(IParameterNode, IParameterNode)> Parameters,
         IReadOnlyList<ITypeSymbol> TypeParameters,
         IFunctionCallNode? Initialization,
@@ -34,6 +35,7 @@ internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITrans
             parameters.TypeParameters,
             parameters.Initialization,
             parameters.OuterMapperParam,
+            parameters.CallingTransientScopeDisposal,
             calledFunction,
             referenceGenerator)
     {

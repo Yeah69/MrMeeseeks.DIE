@@ -11,13 +11,22 @@ internal sealed partial class PlainFunctionCallNode : FunctionCallNode, IPlainFu
         string? OwnerReference,
         IReadOnlyList<(IParameterNode, IParameterNode)> Parameters,
         IReadOnlyList<ITypeSymbol> TypeParameters,
-        IElementNode CallingSubDisposal);
+        IElementNode CallingSubDisposal,
+        IElementNode CallingTransientScopeDisposal);
     internal PlainFunctionCallNode(
         Params parameters,
         
         IFunctionNode calledFunction,
         IReferenceGenerator referenceGenerator)
-        : base(parameters.OwnerReference, parameters.CallSideType, parameters.Parameters, parameters.TypeParameters, parameters.CallingSubDisposal, calledFunction, referenceGenerator)
+        : base(
+            parameters.OwnerReference,
+            parameters.CallSideType,
+            parameters.Parameters,
+            parameters.TypeParameters,
+            parameters.CallingSubDisposal,
+            parameters.CallingTransientScopeDisposal,
+            calledFunction,
+            referenceGenerator)
     {
     }
 }

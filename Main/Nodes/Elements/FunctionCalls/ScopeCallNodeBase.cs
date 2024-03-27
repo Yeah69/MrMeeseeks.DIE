@@ -27,11 +27,20 @@ internal abstract class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
         IReadOnlyList<ITypeSymbol> typeParameters,
         IFunctionCallNode? initialization,
         ScopeCallNodeOuterMapperParam outerMapperParam,
+        IElementNode callingTransientScopeDisposal,
         
         // dependencies
         IFunctionNode calledFunction, 
         IReferenceGenerator referenceGenerator) 
-        : base(null, callSideType, parameters, typeParameters, null, calledFunction, referenceGenerator)
+        : base(
+            null,
+            callSideType,
+            parameters,
+            typeParameters,
+            null,
+            callingTransientScopeDisposal,
+            calledFunction,
+            referenceGenerator)
     {
         _scope = scope;
         Initialization = initialization;

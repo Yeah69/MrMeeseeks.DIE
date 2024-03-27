@@ -4,38 +4,38 @@ using MrMeeseeks.DIE.Nodes.Ranges;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface ISubDisposalNodeChooser
+internal interface ITransientScopeDisposalNodeChooser
 {
-    IElementNode ChooseSubDisposalNode();
+    IElementNode ChooseTransientScopeDisposalNode();
 }
 
-internal interface IOuterFunctionSubDisposalNodeChooser : ISubDisposalNodeChooser;
+internal interface IEntryTransientScopeDisposalNodeChooser : ITransientScopeDisposalNodeChooser;
 
-internal sealed class OuterFunctionSubDisposalNodeChooser : IOuterFunctionSubDisposalNodeChooser
+internal sealed class EntryTransientScopeDisposalNodeChooser : IEntryTransientScopeDisposalNodeChooser
 {
     private readonly IContainerNode _parentContainer;
     private readonly Func<IInitialSubDisposalNode> _initialSubDisposalNodeFactory;
 
-    internal OuterFunctionSubDisposalNodeChooser(
+    internal EntryTransientScopeDisposalNodeChooser(
         IContainerNode parentContainer,
         Func<IInitialSubDisposalNode> initialSubDisposalNodeFactory)
     {
         _parentContainer = parentContainer;
         _initialSubDisposalNodeFactory = initialSubDisposalNodeFactory;
     }
-    public IElementNode ChooseSubDisposalNode() => 
+    public IElementNode ChooseTransientScopeDisposalNode() => 
         _initialSubDisposalNodeFactory().EnqueueBuildJobTo(_parentContainer.BuildQueue, PassedContext.Empty);
 }
 
-internal interface IInnerFunctionSubDisposalNodeChooser : ISubDisposalNodeChooser;
+internal interface IInnerTransientScopeDisposalNodeChooser : ITransientScopeDisposalNodeChooser;
 
-internal sealed class InnerFunctionSubDisposalNodeChooser : IInnerFunctionSubDisposalNodeChooser
+internal sealed class InnerTransientScopeDisposalNodeChooser : IInnerTransientScopeDisposalNodeChooser
 {
     private readonly IContainerNode _parentContainer;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Func<ITypeSymbol, IParameterNode> _parameterNodeFactory;
 
-    internal InnerFunctionSubDisposalNodeChooser(
+    internal InnerTransientScopeDisposalNodeChooser(
         IContainerNode parentContainer,
         WellKnownTypes wellKnownTypes,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory)
@@ -45,6 +45,6 @@ internal sealed class InnerFunctionSubDisposalNodeChooser : IInnerFunctionSubDis
         _parameterNodeFactory = parameterNodeFactory;
     }
 
-    public IElementNode ChooseSubDisposalNode() =>
+    public IElementNode ChooseTransientScopeDisposalNode() =>
         _parameterNodeFactory(_wellKnownTypes.ListOfObject).EnqueueBuildJobTo(_parentContainer.BuildQueue, PassedContext.Empty);
 }

@@ -36,6 +36,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         IContainerNode parentContainer,
         IRangeNode parentRange,
         ISubDisposalNodeChooser subDisposalNodeChooser,
+        ITransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -84,8 +85,11 @@ internal abstract class FunctionNodeBase : IFunctionNode
         RangeFullName = parentRange.FullName;
         DisposedPropertyReference = parentRange.DisposalHandling.DisposedPropertyReference;
         ResolutionCounterReference = parentRange.ResolutionCounterReference;
-        SubDisposalNode = subDisposalNodeChooser.ChooseSubDisposalNode(PassedContext.Empty);
+        SubDisposalNode = subDisposalNodeChooser.ChooseSubDisposalNode();
+        TransientScopeDisposalNode = transientScopeDisposalNodeChooser.ChooseTransientScopeDisposalNode();
         DisposalCollectionReference = parentRange.DisposalHandling.CollectionReference;
+        ContainerReference = parentRange.ContainerReference;
+        TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
     }
 
     public virtual void Build(PassedContext passedContext) =>
@@ -148,8 +152,12 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     public string ResolutionCounterReference { get; }
     public IElementNode SubDisposalNode { get; }
+    public IElementNode TransientScopeDisposalNode { get; }
     public bool IsSubDisposalAsParameter => SubDisposalNode is IParameterNode;
+    public bool IsTransientScopeDisposalAsParameter => TransientScopeDisposalNode is IParameterNode;
     public string DisposalCollectionReference { get; }
+    public string? ContainerReference { get; }
+    public string TransientScopeDisposalReference { get; }
 
     public IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,
@@ -163,7 +171,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
                     ownerReference,
                     Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                     typeParameters,
-                    callingFunction.SubDisposalNode))
+                    callingFunction.SubDisposalNode,
+                    callingFunction.TransientScopeDisposalNode))
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
@@ -187,7 +196,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
                     synchronicity,
                     Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                     typeParameters,
-                    callingFunction.SubDisposalNode))
+                    callingFunction.SubDisposalNode,
+                    callingFunction.TransientScopeDisposalNode))
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
@@ -243,6 +253,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 containerParameter,
                 transientScopeNode,
                 callingRange,
+                callingFunction.TransientScopeDisposalNode,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 typeParameters,
                 transientScopeNode.InitializedInstances.Any() ? transientScopeNode.BuildInitializationCall(callingFunction) : null,

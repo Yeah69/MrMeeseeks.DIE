@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
+using Xunit;
 
 [assembly:ContainerInstanceAbstractionAggregation(typeof(IContainerInstance))]
 [assembly:TransientScopeInstanceAbstractionAggregation(typeof(ITransientScopeInstance))]
@@ -23,3 +24,5 @@ using MrMeeseeks.DIE.UserUtility;
 [assembly:ErrorDescriptionInsteadOfBuildFailure]
 
 //[assembly:Analytics(Analytics.ResolutionGraph)]
+
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]

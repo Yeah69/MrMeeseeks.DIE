@@ -15,6 +15,7 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol Task, // .NET Standard 2.0
     INamedTypeSymbol Task1, // .NET Standard 2.0
     INamedTypeSymbol SpinWait, // .NET Standard 2.0
+    INamedTypeSymbol Thread, // .NET Standard 2.0
     INamedTypeSymbol ObjectDisposedException, // .NET Standard 2.0
     INamedTypeSymbol ConcurrentBagOfSyncDisposable, // .NET Standard 2.0
     INamedTypeSymbol? ConcurrentBagOfAsyncDisposable, // .NET Standard 2.1
@@ -61,6 +62,7 @@ internal sealed record WellKnownTypes(
             Task: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task"),
             Task1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task`1"),
             SpinWait: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SpinWait"),
+            Thread: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Thread"),
             ObjectDisposedException: compilation.GetTypeByMetadataNameOrThrow("System.ObjectDisposedException"),
             ConcurrentBagOfSyncDisposable: concurrentBag.Construct(iDisposable),
             ConcurrentBagOfAsyncDisposable: iAsyncDisposable is not null ? concurrentBag.Construct(iAsyncDisposable) : null,

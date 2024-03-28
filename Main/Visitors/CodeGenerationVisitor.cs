@@ -365,7 +365,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                   var {{disposalHandling.DisposedLocalReference}} = {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Exchange)}}(ref {{disposalHandling.DisposedFieldReference}}, 1);
                   if ({{disposalHandling.DisposedLocalReference}} != 0) return;
                   {{_wellKnownTypes.SpinWait}}.{{nameof(SpinWait.SpinUntil)}}(() => {{range.ResolutionCounterReference}} == 0);
-                  {{_singularDisposeFunctionUtility.AggregateExceptionRoutineFullyQualified}}(Inner());
+                  if ({{_singularDisposeFunctionUtility.AggregateExceptionRoutineFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
                   return;
                   
                   {{_wellKnownTypes.IEnumerableOfException}} Inner()
@@ -461,7 +461,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                   var {{disposalHandling.DisposedLocalReference}} = {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Exchange)}}(ref {{disposalHandling.DisposedFieldReference}}, 1);
                   if ({{disposalHandling.DisposedLocalReference}} != 0) return;
                   {{_wellKnownTypes.SpinWait}}.{{nameof(SpinWait.SpinUntil)}}(() => {{range.ResolutionCounterReference}} == 0);
-                  await {{_singularDisposeFunctionUtility.AggregateExceptionRoutineAsyncFullyQualified}}(Inner());
+                  if (await {{_singularDisposeFunctionUtility.AggregateExceptionRoutineAsyncFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
                   return;
 
                   async {{_wellKnownTypes.IAsyncEnumerableOfException}} Inner()
@@ -524,6 +524,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         var disposalMap = range.GetDisposalTypeToTypeFullNames();
         var asyncDisposal = disposalMap.TryGetValue(DisposalType.Async, out var listAsync) ? listAsync : [];
         var syncDisposal = disposalMap.TryGetValue(DisposalType.Sync, out var listSync) ? listSync : [];
+        
+        GenerateDisposeExceptionHandling();
+        GenerateDisposeExceptionHandlingAsync();
 
         GenerateDisposeChunk();
 
@@ -649,6 +652,84 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                   """);
         }
 
+        void GenerateDisposeExceptionHandling()
+        {
+            var transientScopeDisposableType = _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
+                ? _wellKnownTypes.IAsyncDisposable.FullName()
+                : _wellKnownTypes.IDisposable.FullName();
+            var transientScopeDisposeMethod = _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
+                ? _singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified
+                : _singularDisposeFunctionUtility.DisposeFullyQualified;
+            
+            _code.AppendLine(
+                $$"""
+                  private {{_wellKnownTypes.Exception.FullName()}} {{range.DisposeExceptionHandlingMethodName}}({{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
+                  {
+                      if ({{_singularDisposeFunctionUtility.AggregateExceptionRoutineFullyQualified}}(Inner()) is { } aggregateException)
+                          return aggregateException;
+                      else
+                          return exception;
+                          
+                      {{_wellKnownTypes.IEnumerableOfException}} Inner()
+                      {
+                         yield return exception;
+                         if (transientScopeDisposal is not null)
+                         {
+                             foreach (var transientScope in transientScopeDisposal)
+                             {
+                                if (transientScope is {{transientScopeDisposableType}} disposable && {{transientScopeDisposeMethod}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} transientException)
+                                {
+                                    yield return transientException;
+                                }
+                             }
+                         }
+                         foreach (var subException in {{range.DisposeChunkMethodName}}(subDisposal))
+                         {
+                             yield return subException;
+                         }
+                      }
+                  }
+                  """);
+        }
+
+        void GenerateDisposeExceptionHandlingAsync()
+        {
+            if (_wellKnownTypes.ValueTask is null
+                || _wellKnownTypes.IAsyncDisposable is null
+                || _wellKnownTypesCollections.IAsyncEnumerable1 is null)
+                return;
+            
+            _code.AppendLine(
+                $$"""
+                  private async {{_wellKnownTypes.TaskOfException.FullName()}} {{range.DisposeExceptionHandlingAsyncMethodName}}({{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
+                  {
+                      if (await {{_singularDisposeFunctionUtility.AggregateExceptionRoutineAsyncFullyQualified}}(Inner()) is { } aggregateException && aggregateException.InnerExceptions.Count > 1)
+                          return aggregateException;
+                      else
+                          return exception;
+                      
+                      async {{_wellKnownTypes.IAsyncEnumerableOfException}} Inner()
+                      {
+                         yield return exception;
+                         if (transientScopeDisposal is not null)
+                         {
+                             foreach (var transientScope in transientScopeDisposal)
+                             {
+                                 if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} disposable && await {{_singularDisposeFunctionUtility.DisposeAsyncFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} transientException)
+                                 {
+                                     yield return transientException;
+                                 }
+                             }
+                         }
+                         await foreach (var subException in {{range.DisposeChunkAsyncMethodName}}(subDisposal))
+                         {
+                             yield return subException;
+                         }
+                      }
+                  }
+                  """);
+        }
+
         void GenerateDisposeChunk()
         {
             _code.AppendLine(
@@ -766,7 +847,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         }
     }
 
-    private void VisitISingleFunctionNode(ISingleFunctionNode singleFunction, bool isUserFacingFunction)
+    private void VisitISingleFunctionNode(ISingleFunctionNode singleFunction)
     {
         _code.AppendLine(
             $$"""
@@ -776,8 +857,11 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         
         VisitIElementNode(singleFunction.TransientScopeDisposalNode);
         VisitIElementNode(singleFunction.SubDisposalNode);
+        
+        var handlesDisposal = 
+            !singleFunction.IsSubDisposalAsParameter || !singleFunction.IsTransientScopeDisposalAsParameter;
 
-        if (isUserFacingFunction)
+        if (handlesDisposal)
         {
             ObjectDisposedCheck(
                 singleFunction.DisposedPropertyReference, 
@@ -793,7 +877,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         
         VisitIElementNode(singleFunction.ReturnedElement);
         
-        if (isUserFacingFunction)
+        if (handlesDisposal)
             ObjectDisposedCheck(
                 singleFunction.DisposedPropertyReference, 
                 singleFunction.RangeFullName, 
@@ -816,10 +900,25 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         
         _code.AppendLine($"return {singleFunction.ReturnedElement.Reference};");
         
-        if (isUserFacingFunction)
+        if (handlesDisposal)
         {
+            var isAsync = singleFunction.SynchronicityDecision
+                    is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
+            
+            var parameters = !singleFunction.IsTransientScopeDisposalAsParameter
+                ? $"exception, {singleFunction.SubDisposalNode.Reference}, {singleFunction.TransientScopeDisposalNode.Reference}"
+                : $"exception, {singleFunction.SubDisposalNode.Reference}";
+            
+            var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
+                ? $"throw await {singleFunction.DisposeExceptionHandlingAsyncMethodName}({parameters});"
+                : $"throw {singleFunction.DisposeExceptionHandlingMethodName}({parameters});";
+    
             _code.AppendLine(
                 $$"""
+                  }
+                  catch({{_wellKnownTypes.Exception.FullName()}} exception)
+                  {
+                  {{throwLine}}
                   }
                   finally
                   {
@@ -841,9 +940,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             $"if ({disposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(\"{rangeFullName}\", $\"[DIE] This scope \\\"{rangeFullName}\\\" is already disposed, so it can't create a \\\"{returnTypeFullName}\\\" instance anymore.\");");
     }
 
-    public void VisitICreateFunctionNode(ICreateFunctionNode createFunction) => VisitISingleFunctionNode(createFunction, false);
-    public void VisitIEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitISingleFunctionNode(entryFunction, true);
-    public void VisitILocalFunctionNode(ILocalFunctionNode localFunction) => VisitISingleFunctionNode(localFunction, true);
+    public void VisitICreateFunctionNode(ICreateFunctionNode createFunction) => VisitISingleFunctionNode(createFunction);
+    public void VisitIEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitISingleFunctionNode(entryFunction);
+    public void VisitILocalFunctionNode(ILocalFunctionNode localFunction) => VisitISingleFunctionNode(localFunction);
     public void VisitIRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode)
     {
         // Nothing to do here. It's generated in "VisitRangedInstanceFunctionGroupNode"
@@ -1070,7 +1169,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     }
 
     public void VisitICreateScopeFunctionNode(ICreateScopeFunctionNode element) => 
-        VisitISingleFunctionNode(element, true);
+        VisitISingleFunctionNode(element);
 
     public void VisitIPlainFunctionCallNode(IPlainFunctionCallNode plainFunctionCallNode) => VisitIFunctionCallNode(plainFunctionCallNode);
 
@@ -1101,7 +1200,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     }
 
     public void VisitICreateTransientScopeFunctionNode(ICreateTransientScopeFunctionNode element) =>
-        VisitISingleFunctionNode(element, true);
+        VisitISingleFunctionNode(element);
 
     public void VisitIFuncNode(IFuncNode funcNode) =>
         _code.AppendLine($"{funcNode.TypeFullName} {funcNode.Reference} = {funcNode.MethodGroup};");
@@ -1455,9 +1554,23 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
                 $"{containerReference}{voidFunctionNode.TransientScopeDisposalReference}.{nameof(List<object>.AddRange)}({voidFunctionNode.TransientScopeDisposalNode.Reference});");
         }
         
+        var isAsync = voidFunctionNode.SynchronicityDecision
+            is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
         
+        var parameters = !voidFunctionNode.IsTransientScopeDisposalAsParameter
+            ? $"exception, {voidFunctionNode.SubDisposalNode.Reference}, {voidFunctionNode.TransientScopeDisposalNode.Reference}"
+            : $"exception, {voidFunctionNode.SubDisposalNode.Reference}";
+        
+        var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
+            ? $"throw await {voidFunctionNode.DisposeExceptionHandlingAsyncMethodName}({parameters});"
+            : $"throw {voidFunctionNode.DisposeExceptionHandlingMethodName}({parameters});";
+
         _code.AppendLine(
             $$"""
+              }
+              catch({{_wellKnownTypes.Exception.FullName()}} exception)
+              {
+              {{throwLine}}
               }
               finally
               {

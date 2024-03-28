@@ -137,10 +137,11 @@ internal sealed class SingularDisposeFunctionUtility : ISingularDisposeFunctionU
         
         code.AppendLine(
             $$"""
-              public static void {{_aggregateExceptionRoutine}}({{_wellKnownTypes.IEnumerableOfException.FullName()}} exceptions)
+              public static {{_wellKnownTypes.AggregateException.FullName()}}? {{_aggregateExceptionRoutine}}({{_wellKnownTypes.IEnumerableOfException.FullName()}} exceptions)
               {
                   {{_wellKnownTypes.AggregateException.FullName()}} aggregateException = new {{_wellKnownTypes.AggregateException.FullName()}}(exceptions);
-                  if (aggregateException.{{nameof(AggregateException.InnerExceptions)}}.{{nameof(ReadOnlyCollection<Exception>.Count)}} > 0) throw aggregateException;
+                  if (aggregateException.{{nameof(AggregateException.InnerExceptions)}}.{{nameof(ReadOnlyCollection<Exception>.Count)}} > 0) return aggregateException;
+                  return null;
               }
               """);
         
@@ -148,14 +149,15 @@ internal sealed class SingularDisposeFunctionUtility : ISingularDisposeFunctionU
         {
             code.AppendLine(
                 $$"""
-                  public static async {{_wellKnownTypes.ValueTask.FullName()}} {{_aggregateExceptionRoutineAsync}}({{_wellKnownTypes.IAsyncEnumerableOfException.FullName()}} exceptions)
+                  public static async {{_wellKnownTypes.TaskOfNullableAggregateException.FullName()}} {{_aggregateExceptionRoutineAsync}}({{_wellKnownTypes.IAsyncEnumerableOfException.FullName()}} exceptions)
                   {
                       {{_wellKnownTypes.ListOfException.FullName()}} aggregate = new {{_wellKnownTypes.ListOfException.FullName()}}();
                       await foreach (var exception in exceptions)
                       {
                           aggregate.{{nameof(List<Exception>.Add)}}(exception);
                       }
-                      if (aggregate.{{nameof(List<Exception>.Count)}} > 0) throw new {{_wellKnownTypes.AggregateException.FullName()}}(aggregate);
+                      if (aggregate.{{nameof(List<Exception>.Count)}} > 0) return new {{_wellKnownTypes.AggregateException.FullName()}}(aggregate);
+                      return null;
                   }
                   """);
         }

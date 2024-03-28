@@ -44,6 +44,8 @@ internal interface IFunctionNode : INode
     string DisposalCollectionReference { get; }
     string? ContainerReference { get; }
     string TransientScopeDisposalReference { get; }
+    string DisposeExceptionHandlingMethodName { get; }
+    string DisposeExceptionHandlingAsyncMethodName { get; }
 
     IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,

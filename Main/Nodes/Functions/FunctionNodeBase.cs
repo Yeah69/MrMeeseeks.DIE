@@ -90,6 +90,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
         DisposalCollectionReference = parentRange.DisposalHandling.CollectionReference;
         ContainerReference = parentRange.ContainerReference;
         TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
+        DisposeExceptionHandlingMethodName = parentRange.DisposeExceptionHandlingMethodName;
+        DisposeExceptionHandlingAsyncMethodName = parentRange.DisposeExceptionHandlingAsyncMethodName;
     }
 
     public virtual void Build(PassedContext passedContext) =>
@@ -158,6 +160,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public string DisposalCollectionReference { get; }
     public string? ContainerReference { get; }
     public string TransientScopeDisposalReference { get; }
+    public string DisposeExceptionHandlingMethodName { get; }
+    public string DisposeExceptionHandlingAsyncMethodName { get; }
 
     public IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,

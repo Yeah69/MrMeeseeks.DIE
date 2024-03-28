@@ -59,6 +59,8 @@ internal interface IRangeNode : INode
 
     string DisposeChunkMethodName { get; }
     string DisposeChunkAsyncMethodName { get; }
+    string DisposeExceptionHandlingMethodName { get; }
+    string DisposeExceptionHandlingAsyncMethodName { get; }
     void RegisterTypeForDisposal(INamedTypeSymbol type);
     IReadOnlyDictionary<DisposalType, IReadOnlyList<INamedTypeSymbol>> GetDisposalTypeToTypeFullNames();
 }
@@ -281,6 +283,8 @@ internal abstract class RangeNode : IRangeNode
         ResolutionCounterReference = referenceGenerator.Generate("resolutionCounter");
         DisposeChunkMethodName = referenceGenerator.Generate("DisposeChunk");
         DisposeChunkAsyncMethodName = referenceGenerator.Generate("DisposeChunkAsync");
+        DisposeExceptionHandlingMethodName = referenceGenerator.Generate("DisposeExceptionHandling");
+        DisposeExceptionHandlingAsyncMethodName = referenceGenerator.Generate("DisposeExceptionHandlingAsync");
     }
     
     protected abstract IScopeManager ScopeManager { get; }
@@ -347,6 +351,8 @@ internal abstract class RangeNode : IRangeNode
 
     public string DisposeChunkMethodName { get; }
     public string DisposeChunkAsyncMethodName { get; }
+    public string DisposeExceptionHandlingMethodName { get; }
+    public string DisposeExceptionHandlingAsyncMethodName { get; }
 
     public void RegisterTypeForDisposal(INamedTypeSymbol type) => 
         _aggregatedTypesForDisposal.Add(type.UnboundIfGeneric());

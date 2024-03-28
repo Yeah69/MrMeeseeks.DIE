@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -7,7 +6,6 @@ namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 
 internal interface IScopeCallNodeBase : IFunctionCallNode
 {
-    DisposalType DisposalType { get; }
     IFunctionCallNode? Initialization { get; }
     IElementNode ScopeConstruction { get; }
 }
@@ -68,5 +66,4 @@ internal abstract class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
 
     public IFunctionCallNode? Initialization { get; }
     public IElementNode ScopeConstruction { get; private set; } = null!;
-    public DisposalType DisposalType => _scope.DisposalType;
 }

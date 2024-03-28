@@ -40,8 +40,10 @@ internal sealed record WellKnownTypesCollections(
     INamedTypeSymbol? ImmutableStack1, // None (nuget: System.Collections.Immutable)
     INamedTypeSymbol? ImmutableStack, // None (nuget: System.Collections.Immutable)
     INamedTypeSymbol KeyValuePair2, // .NET Standard 2.0
+    // ReSharper disable InconsistentNaming
     INamedTypeSymbol IDictionary2, // .NET Standard 2.0
     INamedTypeSymbol IReadOnlyDictionary2, // .NET Standard 2.0
+    // ReSharper restore InconsistentNaming
     INamedTypeSymbol Dictionary2, // .NET Standard 2.0
     INamedTypeSymbol ReadOnlyDictionary2, // .NET Standard 2.0
     INamedTypeSymbol SortedDictionary2, // .NET Standard 2.0

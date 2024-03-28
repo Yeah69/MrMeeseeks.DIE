@@ -5,9 +5,6 @@ internal interface IDisposalHandlingNode
     string DisposedFieldReference { get; }
     string DisposedLocalReference { get; }
     string DisposedPropertyReference { get; }
-    string DisposableLocalReference { get; }
-    string AggregateExceptionReference { get; }
-    string AggregateExceptionItemReference { get; }
     string SyncCollectionReference { get; }
     string? AsyncCollectionReference { get; }
     bool HasSyncDisposables { get; }
@@ -31,9 +28,6 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
         DisposedFieldReference = referenceGenerator.Generate("_disposed");
         DisposedLocalReference = referenceGenerator.Generate("disposed");
         DisposedPropertyReference = referenceGenerator.Generate("Disposed");
-        DisposableLocalReference = referenceGenerator.Generate(wellKnownTypes.IDisposable);
-        AggregateExceptionReference = referenceGenerator.Generate(wellKnownTypes.AggregateException);
-        AggregateExceptionItemReference = referenceGenerator.Generate("exceptionToAggregate");
         _syncCollection = referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfSyncDisposable);
         _asyncCollection = wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null 
             ? referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfAsyncDisposable) 
@@ -44,9 +38,6 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
     public string DisposedFieldReference { get; }
     public string DisposedLocalReference { get; }
     public string DisposedPropertyReference { get; }
-    public string DisposableLocalReference { get; }
-    public string AggregateExceptionReference { get; }
-    public string AggregateExceptionItemReference { get; }
     public string SyncCollectionReference => _syncCollection;
     public string? AsyncCollectionReference => _asyncCollection;
     public bool HasSyncDisposables => _syncCollectionUsed;

@@ -22,8 +22,6 @@ internal interface IContainerNode : IRangeNode
     IEnumerable<ITransientScopeNode> TransientScopes { get; }
     ITransientScopeInterfaceNode TransientScopeInterface { get; }
     string TransientScopeDisposalReference { get; }
-    string TransientScopeDisposalReference_Old { get; }
-    string TransientScopeDisposalElement { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
     IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; }
     bool GenerateEmptyConstructor { get; }
@@ -43,11 +41,9 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
     private readonly Func<IMethodSymbol?, IVoidFunctionNode?, ICreateContainerFunctionNode> _creatContainerFunctionNodeFactory;
     private readonly List<IEntryFunctionNode> _rootFunctions = [];
     private readonly Lazy<IScopeManager> _lazyScopeManager;
-    private readonly Lazy<DisposalType> _lazyDisposalType;
     private readonly List<IDelegateBaseNode> _delegateBaseNodes = [];
 
     public override string FullName { get; }
-    public override DisposalType DisposalType => _lazyDisposalType.Value;
     public string Namespace { get; }
     public Queue<BuildJob> BuildQueue { get; } = new();
     public Queue<IFunctionNode> AsyncCheckQueue { get; } = new();
@@ -56,8 +52,6 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
     public IEnumerable<ITransientScopeNode> TransientScopes => ScopeManager.TransientScopes;
     public ITransientScopeInterfaceNode TransientScopeInterface => _lazyTransientScopeInterfaceNode.Value;
     public string TransientScopeDisposalReference { get; }
-    public string TransientScopeDisposalReference_Old { get; }
-    public string TransientScopeDisposalElement { get; }
 
     public IFunctionCallNode BuildContainerInstanceCall(
         string? ownerReference, 
@@ -125,20 +119,8 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         FullName = _containerInfo.FullName;
         
         _lazyScopeManager = lazyScopeManager;
-        _lazyDisposalType = new(() => _lazyScopeManager.Value
-            .Scopes.Select(s => s.DisposalHandling)
-            .Concat(_lazyScopeManager.Value.TransientScopes.Select(ts => ts.DisposalHandling))
-            .Prepend(DisposalHandling)
-            .Aggregate(DisposalType.None, (agg, next) =>
-            {
-                if (next.HasSyncDisposables) agg |= DisposalType.Sync;
-                if (next.HasAsyncDisposables) agg |= DisposalType.Async;
-                return agg;
-            }));
         
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
-        TransientScopeDisposalReference_Old = referenceGenerator.Generate("transientScopeDisposal");
-        TransientScopeDisposalElement = referenceGenerator.Generate("transientScopeToDispose");
         
         GenerateEmptyConstructor = !_containerInfo.ContainerType.InstanceConstructors.Any(ic => !ic.IsImplicitlyDeclared);
     }

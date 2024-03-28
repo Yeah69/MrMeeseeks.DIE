@@ -16,7 +16,6 @@ internal interface IRangeNode : INode
 {
     string FullName { get; }
     string Name { get; }
-    DisposalType DisposalType { get; }
     IDisposalHandlingNode DisposalHandling { get; }
     IMethodSymbol? AddForDisposal { get; }
     IMethodSymbol? AddForDisposalAsync { get; }
@@ -77,6 +76,7 @@ internal abstract class RangeNode : IRangeNode
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> _multiKeyValueMultiFunctionNodeFactory;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodeFactory;
     protected readonly Func<IReadOnlyList<IInitializedInstanceNode>, IReadOnlyList<ITypeSymbol>, IVoidFunctionNodeRoot> VoidFunctionNodeFactory;
+    // ReSharper disable once InconsistentNaming
     protected readonly Dictionary<ITypeSymbol, List<ICreateFunctionNodeBase>> _createFunctions = new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
     private readonly Dictionary<ITypeSymbol, List<IMultiFunctionNodeBase>> _multiFunctions = new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
     private readonly Dictionary<ITypeSymbol, Dictionary<object, Dictionary<ITypeSymbol, List<IMultiFunctionNodeBase>>>> _keyedMultiFunctions = 
@@ -87,6 +87,7 @@ internal abstract class RangeNode : IRangeNode
 
     private readonly Dictionary<ITypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
 
+    // ReSharper disable once InconsistentNaming
     protected readonly List<IVoidFunctionNode> _initializationFunctions = new();
 
     protected readonly Dictionary<INamedTypeSymbol, IInitializedInstanceNode> InitializedInstanceNodesMap = new(CustomSymbolEqualityComparer.IncludeNullability);
@@ -94,7 +95,6 @@ internal abstract class RangeNode : IRangeNode
 
     public abstract string FullName { get; }
     public string Name { get; }
-    public abstract DisposalType DisposalType { get; }
     public IDisposalHandlingNode DisposalHandling { get; }
     public IMethodSymbol? AddForDisposal { get; }
     public IMethodSymbol? AddForDisposalAsync { get; }

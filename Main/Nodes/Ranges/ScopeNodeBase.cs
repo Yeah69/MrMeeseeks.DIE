@@ -79,7 +79,6 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         ParentContainer.BuildContainerInstanceCall(ContainerReference, type, callingFunction);
 
     public override string FullName { get; }
-    public override DisposalType DisposalType => ParentContainer.DisposalType;
     public INamedTypeSymbol? ImplementationType { get; }
     public string ContainerFullName { get; }
     public bool GenerateEmptyConstructor { get; }

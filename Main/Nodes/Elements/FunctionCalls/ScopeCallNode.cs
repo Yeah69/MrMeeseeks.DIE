@@ -5,14 +5,11 @@ namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 
 internal interface IScopeCallNode : IScopeCallNodeBase
 {
-    string? DisposableCollectionReference { get; }
     string SubDisposalReference { get; }
 }
 
 internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
 {
-    private readonly IRangeNode _callingRange;
-
     internal record struct Params(
         ITypeSymbol CallSideType, 
         string ContainerParameter,
@@ -42,7 +39,6 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
             calledFunction,
             referenceGenerator)
     {
-        _callingRange = parameters.CallingRange;
         AdditionalPropertiesForConstruction = 
         [
             (parameters.Scope.ContainerReference ?? "", parameters.ContainerParameter), 
@@ -51,14 +47,6 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
         parameters.CallingRange.DisposalHandling.RegisterSyncDisposal();
         SubDisposalReference = parameters.CallingFunction.SubDisposalNode.Reference;
     }
-
-    public string? DisposableCollectionReference => DisposalType switch
-    {
-        Configuration.DisposalType.Async | Configuration.DisposalType.Sync or Configuration.DisposalType.Async => 
-            _callingRange.DisposalHandling.AsyncCollectionReference,
-        Configuration.DisposalType.Sync => _callingRange.DisposalHandling.SyncCollectionReference,
-        _ => null
-    };
 
     public string SubDisposalReference { get; }
 

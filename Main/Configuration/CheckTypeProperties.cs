@@ -1,4 +1,3 @@
-using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Utility;
@@ -31,9 +30,8 @@ internal sealed class ContainerCheckTypeProperties : CheckTypeProperties, IConta
         IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
         IInjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
-        ITypeParameterUtility typeParameterUtility,
-        ILocalDiagLogger localDiagLogger) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility, localDiagLogger)
+        ITypeParameterUtility typeParameterUtility) 
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility)
     {
     }
 }
@@ -47,9 +45,8 @@ internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeChec
         
         IInjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
-        ITypeParameterUtility typeParameterUtility,
-        ILocalDiagLogger localDiagLogger) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility, localDiagLogger)
+        ITypeParameterUtility typeParameterUtility) 
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility)
     {
     }
 }
@@ -87,7 +84,6 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
     private readonly ITypeParameterUtility _typeParameterUtility;
-    private readonly ILocalDiagLogger _localDiagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     
     private readonly Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = new();
@@ -97,13 +93,11 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         ICurrentlyConsideredTypes currentlyConsideredTypes,
         IInjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
-        ITypeParameterUtility typeParameterUtility,
-        ILocalDiagLogger localDiagLogger)
+        ITypeParameterUtility typeParameterUtility)
     {
         _currentlyConsideredTypes = currentlyConsideredTypes;
         _injectablePropertyExtractor = injectablePropertyExtractor;
         _typeParameterUtility = typeParameterUtility;
-        _localDiagLogger = localDiagLogger;
         _wellKnownTypes = wellKnownTypes;
 
         var injectionKeyMappings = currentlyConsideredTypes.AllConsideredImplementations

@@ -7,7 +7,6 @@ internal interface ITransientScopeCallNode : IScopeCallNodeBase
 {
     string? ContainerReference { get; }
     string TransientScopeDisposalReference { get; }
-    string TransientScopeDisposalReference_Old { get; }
 }
 
 internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITransientScopeCallNode
@@ -41,7 +40,6 @@ internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITrans
     {
         ContainerReference = parameters.CallingRange.ContainerReference;
         TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
-        TransientScopeDisposalReference_Old = parentContainer.TransientScopeDisposalReference_Old;
         AdditionalPropertiesForConstruction = [(parameters.Scope.ContainerReference ?? "", parameters.ContainerParameter)];
     }
 
@@ -49,5 +47,4 @@ internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITrans
 
     public string? ContainerReference { get; }
     public string TransientScopeDisposalReference { get; }
-    public string TransientScopeDisposalReference_Old { get; }
 }

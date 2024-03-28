@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.CodeGeneration.Nodes;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Mappers;
@@ -62,6 +63,8 @@ internal interface IRangeNode : INode
     string DisposeExceptionHandlingAsyncMethodName { get; }
     void RegisterTypeForDisposal(INamedTypeSymbol type);
     IReadOnlyDictionary<DisposalType, IReadOnlyList<INamedTypeSymbol>> GetDisposalTypeToTypeFullNames();
+    INodeGenerator GetGenerator();
+    bool GenerateEmptyConstructor { get; }
 }
 
 internal abstract class RangeNode : IRangeNode
@@ -372,6 +375,9 @@ internal abstract class RangeNode : IRangeNode
             })
             .GroupBy(t => t.Item1)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.Select(t => t.Item2).ToList());
+
+    public abstract INodeGenerator GetGenerator();
+    public abstract bool GenerateEmptyConstructor { get; }
 
     public ITransientScopeCallNode BuildTransientScopeCall(
         INamedTypeSymbol type, 

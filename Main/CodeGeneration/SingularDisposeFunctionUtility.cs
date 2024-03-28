@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
-namespace MrMeeseeks.DIE.Utility;
+namespace MrMeeseeks.DIE.CodeGeneration;
 
 internal interface ISingularDisposeFunctionUtility
 {

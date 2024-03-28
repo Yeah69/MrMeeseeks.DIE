@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.CodeGeneration;
+using MrMeeseeks.DIE.CodeGeneration.Nodes;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Mappers;
@@ -25,6 +27,7 @@ internal interface IScopeNode : IScopeNodeBase
 
 internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, IScopeInstance
 {
+    private readonly Lazy<IScopeNodeGenerator> _scopeNodeGenerator;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateScopeFunctionNodeRoot> _createScopeFunctionNodeFactory;
 
     internal ScopeNode(
@@ -41,6 +44,7 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, IScopeInsta
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        Lazy<IScopeNodeGenerator> scopeNodeGenerator,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
@@ -72,12 +76,15 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, IScopeInsta
             disposalHandlingNodeFactory,
             initializedInstanceNodeFactory)
     {
+        _scopeNodeGenerator = scopeNodeGenerator;
         _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
         TransientScopeInterfaceFullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{transientScopeInterfaceNode.Name}";
         TransientScopeInterfaceReference = referenceGenerator.Generate("TransientScope");
     }
     protected override string ContainerParameterForScope => ContainerReference;
     protected override string TransientScopeInterfaceParameterForScope => TransientScopeInterfaceReference;
+
+    public override INodeGenerator GetGenerator() => _scopeNodeGenerator.Value;
 
     public override IFunctionCallNode BuildContainerInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction) => 
         ParentContainer.BuildContainerInstanceCall(ContainerReference, type, callingFunction);

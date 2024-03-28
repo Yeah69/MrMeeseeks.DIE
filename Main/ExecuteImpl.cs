@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using MrMeeseeks.DIE.CodeGeneration;
 using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;

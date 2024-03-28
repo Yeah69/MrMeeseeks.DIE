@@ -1,7 +1,7 @@
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
-namespace MrMeeseeks.DIE.Utility;
+namespace MrMeeseeks.DIE.CodeGeneration;
 
 internal interface IRequiredKeywordUtility
 {

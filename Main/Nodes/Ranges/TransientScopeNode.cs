@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.CodeGeneration;
+using MrMeeseeks.DIE.CodeGeneration.Nodes;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Mappers;
@@ -24,6 +26,7 @@ internal interface ITransientScopeNode : IScopeNodeBase
 
 internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScopeNode, IScopeInstance
 {
+    private readonly Lazy<ITransientScopeNodeGenerator> _transientScopeNodeGenerator;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateTransientScopeFunctionNodeRoot> _createTransientScopeFunctionNodeFactory;
 
     internal TransientScopeNode(
@@ -39,6 +42,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        Lazy<ITransientScopeNodeGenerator> transientScopeNodeGenerator,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
@@ -70,11 +74,14 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
             disposalHandlingNodeFactory,
             initializedInstanceNodeFactory)
     {
+        _transientScopeNodeGenerator = transientScopeNodeGenerator;
         _createTransientScopeFunctionNodeFactory = createTransientScopeFunctionNodeFactory;
         TransientScopeInterfaceName = parentContainer.TransientScopeInterface.Name;
         TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
     }
     protected override string ContainerParameterForScope => ContainerReference;
+
+    public override INodeGenerator GetGenerator() => _transientScopeNodeGenerator.Value;
 
     public override IFunctionCallNode BuildContainerInstanceCall(INamedTypeSymbol type, IFunctionNode callingFunction)
     {

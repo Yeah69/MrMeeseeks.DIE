@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.Logging;
+﻿using MrMeeseeks.DIE.CodeGeneration;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 

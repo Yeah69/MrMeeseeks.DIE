@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.CodeGeneration;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -13,7 +14,6 @@ internal interface IScopeNodeBase : IRangeNode
 {
     INamedTypeSymbol? ImplementationType { get; }
     string ContainerFullName { get; }
-    bool GenerateEmptyConstructor { get; }
 }
 
 internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
@@ -81,6 +81,6 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
     public override string FullName { get; }
     public INamedTypeSymbol? ImplementationType { get; }
     public string ContainerFullName { get; }
-    public bool GenerateEmptyConstructor { get; }
+    public override bool GenerateEmptyConstructor { get; }
     public override string ContainerReference { get; }
 }

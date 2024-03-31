@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -33,5 +34,5 @@ internal sealed partial class InitializedInstanceNode : IInitializedInstanceNode
     public bool IsReferenceType { get; }
     
     public IFunctionCallNode BuildCall(IRangeNode range, IFunctionNode callingFunction) => 
-        range.BuildCreateCall(_type, callingFunction);
+        range.BuildCreateCall(_type, callingFunction, new ImplementationMappingConfiguration(true, false, false));
 }

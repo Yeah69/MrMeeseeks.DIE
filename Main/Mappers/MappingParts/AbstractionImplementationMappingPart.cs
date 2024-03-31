@@ -150,7 +150,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         IElementNodeMapperBase nextMapper,
         MappingPartData? data)
     {
-        if (config.CheckForInitializedInstance && !_parentFunction.CheckIfReturnedType(implementationType))
+        if (config.CheckForInitializedInstance)
         {
             if (_parentRange.GetInitializedNode(implementationType) is { } initializedInstanceNode)
             {

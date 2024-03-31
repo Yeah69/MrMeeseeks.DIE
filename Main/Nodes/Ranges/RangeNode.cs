@@ -24,7 +24,7 @@ internal interface IRangeNode : INode
     IEnumerable<IInitializedInstanceNode> InitializedInstances { get; }
     string ResolutionCounterReference { get; }
 
-    IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction);
+    IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction, ImplementationMappingConfiguration? implementationMappingConfiguration = null);
     IWrappedAsyncFunctionCallNode BuildAsyncCreateCall(
         MapperData mapperData, 
         ITypeSymbol type,
@@ -73,7 +73,7 @@ internal abstract class RangeNode : IRangeNode
     protected readonly ITypeParameterUtility TypeParameterUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IReferenceGenerator _referenceGenerator;
-    private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
+    private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImplementationMappingConfiguration?, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> _multiKeyValueFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> _multiKeyValueMultiFunctionNodeFactory;
@@ -228,7 +228,7 @@ internal abstract class RangeNode : IRangeNode
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         IReferenceGenerator referenceGenerator,
-        Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateFunctionNodeRoot> createFunctionNodeFactory,
+        Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImplementationMappingConfiguration?, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueMultiFunctionNodeRoot> multiKeyValueMultiFunctionNodeFactory,
@@ -302,7 +302,7 @@ internal abstract class RangeNode : IRangeNode
 
     public abstract void Accept(INodeVisitor nodeVisitor);
 
-    public IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction) =>
+    public IFunctionCallNode BuildCreateCall(ITypeSymbol type, IFunctionNode callingFunction, ImplementationMappingConfiguration? implementationMappingConfiguration = null) =>
         FunctionResolutionUtility.GetOrCreateFunctionCall(
             type,
             callingFunction,
@@ -310,7 +310,8 @@ internal abstract class RangeNode : IRangeNode
             () => _createFunctionNodeFactory(
                     new VanillaMapperData(),
                     TypeParameterUtility.ReplaceTypeParametersByCustom(type),
-                    callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
+                    callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
+                    implementationMappingConfiguration)
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
             f => f.CreateCall(type, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
@@ -327,7 +328,8 @@ internal abstract class RangeNode : IRangeNode
             () => _createFunctionNodeFactory(
                     mapperData,
                     TypeParameterUtility.ReplaceTypeParametersByCustom(type),
-                    callingFunction.Overrides.Select(kvp => kvp.Key).ToList())
+                    callingFunction.Overrides.Select(kvp => kvp.Key).ToList(),
+                    null)
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
             f => f.CreateAsyncCall(type, null, synchronicity, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));

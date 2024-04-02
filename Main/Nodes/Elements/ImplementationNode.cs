@@ -18,8 +18,6 @@ internal interface IImplementationNode : IElementNode, IAwaitableNode
     IReadOnlyList<(string Name, IElementNode Element)> Properties { get; }
     ImplementationNode.Initialization? Initializer { get; }
     string SubDisposalReference { get; }
-    string? SyncDisposalCollectionReference { get; }
-    string? AsyncDisposalCollectionReference { get; }
     bool AggregateForDisposal { get; }
     
     string? AsyncReference { get; }
@@ -196,10 +194,6 @@ internal sealed partial class ImplementationNode : IImplementationNode
         if (disposalType is not DisposalType.None) 
             _parentRange.RegisterTypeForDisposal(_implementationType);
         AggregateForDisposal = disposalType is not DisposalType.None;
-        if (disposalType.HasFlag(DisposalType.Sync))
-            SyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterSyncDisposal();
-        if (disposalType.HasFlag(DisposalType.Async))
-            AsyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterAsyncDisposal();
         
         foreach (var sameTypeInjections in injectionsAnalysisGathering
                      .GroupBy(t => t.Type, CustomSymbolEqualityComparer.IncludeNullability)
@@ -395,9 +389,6 @@ internal sealed partial class ImplementationNode : IImplementationNode
     }
 
     public string SubDisposalReference { get; }
-
-    public string? SyncDisposalCollectionReference { get; private set; }
-    public string? AsyncDisposalCollectionReference { get; private set; }
     public bool AggregateForDisposal { get; private set; }
 
     public bool Awaited { get; private set; }

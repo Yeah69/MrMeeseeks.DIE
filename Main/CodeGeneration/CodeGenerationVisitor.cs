@@ -662,12 +662,6 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
         if (implementationNode.AggregateForDisposal) 
             _code.AppendLine($"{implementationNode.SubDisposalReference}.{nameof(List<object>.Add)}({implementationNode.Reference});");
-        if (implementationNode.SyncDisposalCollectionReference is {} syncDisposalCollectionReference)
-            _code.AppendLine(
-                $"{syncDisposalCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {implementationNode.Reference});");
-        if (implementationNode.AsyncDisposalCollectionReference is {} asyncDisposalCollectionReference && _wellKnownTypes.IAsyncDisposable is not null)
-            _code.AppendLine(
-                $"{asyncDisposalCollectionReference}.Add(({_wellKnownTypes.IAsyncDisposable.FullName()}) {implementationNode.Reference});");
 
         if (implementationNode.Initializer is {} init)
         {

@@ -44,7 +44,6 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
             (parameters.Scope.ContainerReference ?? "", parameters.ContainerParameter), 
             (parameters.Scope.TransientScopeInterfaceReference, parameters.TransientScopeInterfaceParameter)
         ];
-        parameters.CallingRange.DisposalHandling.RegisterSyncDisposal();
         SubDisposalReference = parameters.CallingFunction.SubDisposalNode.Reference;
     }
 

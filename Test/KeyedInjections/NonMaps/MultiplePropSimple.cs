@@ -22,10 +22,10 @@ internal class DependencyA0 : IInterface;
 internal class DependencyA1 : IInterface;
 
 [InjectionKey(Key.B)]
-internal class DependencyB0 : IInterface;
+internal sealed class DependencyB0 : IInterface;
 
 [InjectionKey(Key.B)]
-internal class DependencyB1 : IInterface;
+internal sealed class DependencyB1 : IInterface;
 
 [InjectionKey(Key.C)]
 internal class DependencyC0 : IInterface;
@@ -33,7 +33,7 @@ internal class DependencyC0 : IInterface;
 [InjectionKey(Key.C)]
 internal class DependencyC1 : IInterface;
 
-internal class Root
+internal sealed class Root
 {
     [InjectionKey(Key.B)]
     internal required IReadOnlyList<IInterface> Dependencies { get; init; }
@@ -42,7 +42,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

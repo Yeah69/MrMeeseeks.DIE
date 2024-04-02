@@ -21,12 +21,12 @@ internal class DependencyA0 : IInterface;
 internal class DependencyA1 : IInterface;
 
 [InjectionKey(Key.B)]
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
 [CreateFunction(typeof(IReadOnlyDictionary<Key, IInterface>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

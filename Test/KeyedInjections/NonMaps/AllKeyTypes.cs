@@ -61,7 +61,7 @@ internal class DependencyA : IInterface
 [InjectionKey(String)]
 [InjectionKey(Bool)]
 [InjectionKey(typeof(DependencyB))]
-internal class DependencyB : IInterface
+internal sealed class DependencyB : IInterface
 {
     internal const byte Byte = 12;
     internal const sbyte SByte = 13;
@@ -111,7 +111,7 @@ internal class DependencyC : IInterface
     internal const bool Bool = true;
 }
 
-internal class Root
+internal sealed class Root
 {
     [InjectionKey(Key.B)]
     public required IInterface DependencyEnum { get; init; }
@@ -162,7 +162,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

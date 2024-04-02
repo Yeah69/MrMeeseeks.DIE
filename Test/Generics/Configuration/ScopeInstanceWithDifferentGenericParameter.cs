@@ -6,9 +6,9 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.ScopeInstanceWithDifferentGenericParameter;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Class<T0> : IScopeInstance;
+internal sealed class Class<T0> : IScopeInstance;
 
-internal class ScopeRoot : IScopeRoot
+internal sealed class ScopeRoot : IScopeRoot
 {
     public Class<int> Dependency0 { get; }
     public Class<string> Dependency1 { get; }
@@ -25,7 +25,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

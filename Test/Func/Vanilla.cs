@@ -6,12 +6,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.Vanilla;
 
-internal class Dependency;
+internal sealed class Dependency;
 
 [CreateFunction(typeof(Func<DateTime, IList<object>, Dependency>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

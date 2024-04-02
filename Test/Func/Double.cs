@@ -5,9 +5,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.Double;
 
-internal class Dependency;
+internal sealed class Dependency;
 
-internal class Parent
+internal sealed class Parent
 {
     internal Parent(
         // ReSharper disable once UnusedParameter.Local
@@ -22,7 +22,7 @@ internal class Parent
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

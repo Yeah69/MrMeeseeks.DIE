@@ -10,33 +10,33 @@ internal interface IInterface
     IInterface Decorated { get; }
 }
 
-internal class Dependency : IInterface, IContainerInstance
+internal sealed class Dependency : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }
 
-internal class DecoratorA : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorA : IInterface, IDecorator<IInterface>
 {
     public IInterface Decorated { get; }
     
     internal DecoratorA(IInterface decorated) => Decorated = decorated;
 }
 
-internal class DecoratorB : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorB : IInterface, IDecorator<IInterface>
 {
     public IInterface Decorated { get; }
     
     internal DecoratorB(IInterface decorated) => Decorated = decorated;
 }
 
-internal class ScopeRoot0 : IScopeRoot
+internal sealed class ScopeRoot0 : IScopeRoot
 {
     public IInterface Decorated { get; }
 
     internal ScopeRoot0(IInterface decorated) => Decorated = decorated;
 }
 
-internal class ScopeRoot1 : IScopeRoot
+internal sealed class ScopeRoot1 : IScopeRoot
 {
     public IInterface Decorated { get; }
 
@@ -61,7 +61,7 @@ internal sealed partial class Container
     private sealed partial class DIE_Scope_1;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

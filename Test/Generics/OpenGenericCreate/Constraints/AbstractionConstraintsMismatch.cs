@@ -19,9 +19,9 @@ internal class DependencyBaseClass<T6> : IInterface<T6> where T6 : BaseClass;
 internal class DependencyNullableBaseClass<T7> : IInterface<T7> where T7 : BaseClass?;
 internal class DependencyInterface<T8> : IInterface<T8> where T8 : IInterface;
 internal class DependencyNullableInterface<T9> : IInterface<T9> where T9 : IInterface?;
-internal class DependencyControlGroup<T10> : IInterface<T10>;
+internal sealed class DependencyControlGroup<T10> : IInterface<T10>;
 
-internal class Proxy<T>
+internal sealed class Proxy<T>
 {
     internal required IReadOnlyList<IInterface<T>> Dependencies { get; init; }
 }
@@ -29,7 +29,7 @@ internal class Proxy<T>
 [CreateFunction(typeof(Proxy<>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

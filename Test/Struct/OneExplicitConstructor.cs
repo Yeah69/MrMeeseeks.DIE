@@ -4,7 +4,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Struct.OneExplicitConstructor;
 
-internal class Inner;
+internal sealed class Inner;
 
 internal struct Dependency
 {
@@ -16,7 +16,7 @@ internal struct Dependency
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

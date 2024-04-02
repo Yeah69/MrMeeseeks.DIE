@@ -12,47 +12,47 @@ internal interface IInterface
     int CheckNumber { get; }
 }
 
-internal class Implementation : IInterface
+internal sealed class Implementation : IInterface
 {
     public int CheckNumber => 1;
 }
 
-internal class ContainerDecorator : IInterface, IDecorator<IInterface>
+internal sealed class ContainerDecorator : IInterface, IDecorator<IInterface>
 {
     public int CheckNumber => 69;
     
     internal ContainerDecorator(IInterface _) {}
 }
 
-internal class ScopeDecorator : IInterface, IDecorator<IInterface>
+internal sealed class ScopeDecorator : IInterface, IDecorator<IInterface>
 {
     public int CheckNumber => 3;
     
     internal ScopeDecorator(IInterface _) {}
 }
 
-internal class ScopeSpecificDecorator : IInterface, IDecorator<IInterface>
+internal sealed class ScopeSpecificDecorator : IInterface, IDecorator<IInterface>
 {
     public int CheckNumber => 13;
     
     internal ScopeSpecificDecorator(IInterface _) {}
 }
 
-internal class TransientScopeDecorator : IInterface, IDecorator<IInterface>
+internal sealed class TransientScopeDecorator : IInterface, IDecorator<IInterface>
 {
     public int CheckNumber => 23;
     
     internal TransientScopeDecorator(IInterface _) {}
 }
 
-internal class TransientScopeSpecificDecorator : IInterface, IDecorator<IInterface>
+internal sealed class TransientScopeSpecificDecorator : IInterface, IDecorator<IInterface>
 {
     public int CheckNumber => 7;
     
     internal TransientScopeSpecificDecorator(IInterface _) {}
 }
 
-internal class TransientScopeRoot : ITransientScopeRoot
+internal sealed class TransientScopeRoot : ITransientScopeRoot
 {
     public IInterface Dep { get; }
     
@@ -62,7 +62,7 @@ internal class TransientScopeRoot : ITransientScopeRoot
     }
 }
 
-internal class TransientScopeRootSpecific : ITransientScopeRoot
+internal sealed class TransientScopeRootSpecific : ITransientScopeRoot
 {
     public IInterface Dep { get; }
     
@@ -72,7 +72,7 @@ internal class TransientScopeRootSpecific : ITransientScopeRoot
     }
 }
 
-internal class ScopeRootSpecific  : IScopeRoot
+internal sealed class ScopeRootSpecific  : IScopeRoot
 {
     public IInterface Dep { get; }
     
@@ -82,7 +82,7 @@ internal class ScopeRootSpecific  : IScopeRoot
     }
 }
 
-internal class ScopeRoot : IScopeRoot
+internal sealed class ScopeRoot : IScopeRoot
 {
     public IInterface Dep { get; }
     
@@ -117,7 +117,7 @@ internal sealed partial class Container
     private sealed partial class DIE_Scope_A;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Container()

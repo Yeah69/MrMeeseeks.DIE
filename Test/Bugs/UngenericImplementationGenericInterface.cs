@@ -9,14 +9,14 @@ internal interface IInterface<T>;
 
 internal class DependencyA : IInterface<int>;
 
-internal class DependencyB : IInterface<string>;
+internal sealed class DependencyB : IInterface<string>;
 
 internal class DependencyC : IInterface<long>;
 
 [CreateFunction(typeof(IInterface<string>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

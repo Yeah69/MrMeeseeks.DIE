@@ -17,7 +17,7 @@ internal interface IInterface;
 [InjectionKey(Key.B)]
 internal class DependencyB : IInterface;
 
-internal class Root
+internal sealed class Root
 {
     public Root([InjectionKey(Key.A)] IReadOnlyList<IInterface> dependencies) => Dependencies = dependencies;
 
@@ -27,7 +27,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

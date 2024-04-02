@@ -21,7 +21,7 @@ internal abstract class IntermediateBase : Base
     public new required string PropNewedRequired { get; init; }
 }
 
-internal class Dependency : IntermediateBase
+internal sealed class Dependency : IntermediateBase
 {
     internal Dependency() => PropProtectedInit = 9;
     public override required string PropAbstractOverriden { get; init; }
@@ -38,7 +38,7 @@ internal sealed partial class Container
     
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

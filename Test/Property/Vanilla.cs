@@ -4,9 +4,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Property.Vanilla;
 
-internal class Dependency;
+internal sealed class Dependency;
 
-internal class Wrapper
+internal sealed class Wrapper
 {
     public Dependency? Dependency { get; init; }
 }
@@ -14,7 +14,7 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

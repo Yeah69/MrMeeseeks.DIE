@@ -11,7 +11,7 @@ namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.AssemblyImplementations
 [CreateFunction(typeof(Parent.ClassToo), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

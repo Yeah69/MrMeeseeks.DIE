@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.BaseClassing.Class.AddForDisposal;
 
-internal class Dependency : IDisposable
+internal sealed class Dependency : IDisposable
 {
     internal bool IsDisposed { get; private set; }
     public void Dispose() => IsDisposed = true;
@@ -29,7 +29,7 @@ internal sealed partial class Container : ContainerBase
     protected override partial void DIE_AddForDisposal(IDisposable disposable);
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

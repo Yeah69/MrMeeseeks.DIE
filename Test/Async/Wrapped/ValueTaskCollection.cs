@@ -12,7 +12,7 @@ internal interface IInterface
     bool IsInitialized { get; }
 }
 
-internal class DependencyA : ITaskInitializer, IInterface
+internal sealed class DependencyA : ITaskInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
@@ -23,7 +23,7 @@ internal class DependencyA : ITaskInitializer, IInterface
     }
 }
 
-internal class DependencyB : IValueTaskInitializer, IInterface
+internal sealed class DependencyB : IValueTaskInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
@@ -34,7 +34,7 @@ internal class DependencyB : IValueTaskInitializer, IInterface
     }
 }
 
-internal class DependencyC : IInitializer, IInterface
+internal sealed class DependencyC : IInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
@@ -44,7 +44,7 @@ internal class DependencyC : IInitializer, IInterface
     }
 }
 
-internal class DependencyD : IInterface
+internal sealed class DependencyD : IInterface
 {
     public bool IsInitialized => true;
 }
@@ -52,7 +52,7 @@ internal class DependencyD : IInterface
 [CreateFunction(typeof(IReadOnlyList<ValueTask<IInterface>>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

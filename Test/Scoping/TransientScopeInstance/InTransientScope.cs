@@ -11,14 +11,14 @@ internal interface IInterface
     bool IsDisposed { get; }
 }
 
-internal class Dependency : IInterface, ITransientScopeInstance, IDisposable
+internal sealed class Dependency : IInterface, ITransientScopeInstance, IDisposable
 {
     public bool IsDisposed { get; private set; }
 
     public void Dispose() => IsDisposed = true;
 }
 
-internal class TransientScope : ITransientScopeRoot
+internal sealed class TransientScope : ITransientScopeRoot
 {
     private readonly IDisposable _scopeDisposal;
     public IInterface Dependency { get; }
@@ -34,7 +34,7 @@ internal class TransientScope : ITransientScopeRoot
 [CreateFunction(typeof(TransientScope), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

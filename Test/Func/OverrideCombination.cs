@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.OverrideCombination;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int ValueInt { get; }
     public string ValueString { get; }
@@ -19,7 +19,7 @@ internal class Dependency
     }
 }
 
-internal class Parent0
+internal sealed class Parent0
 {
     public Dependency Dependency { get; }
     
@@ -31,7 +31,7 @@ internal class Parent0
         Dependency = fac(valueInt, "1");
 }
 
-internal class Parent1
+internal sealed class Parent1
 {
     public Dependency Dependency { get; }
     
@@ -43,7 +43,7 @@ internal class Parent1
 [CreateFunction(typeof(Parent1), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

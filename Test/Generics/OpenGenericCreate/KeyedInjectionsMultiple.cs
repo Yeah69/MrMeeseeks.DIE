@@ -11,17 +11,17 @@ internal enum KeyValues { A, B, C }
 internal interface IInterface<T>;
 
 [InjectionKey(KeyValues.A)]
-internal class DependencyA0<T> : IInterface<T>;
+internal sealed class DependencyA0<T> : IInterface<T>;
 [InjectionKey(KeyValues.A)]
-internal class DependencyA1<T> : IInterface<T>;
-internal class DependencyB0<T> : IInterface<T>;
-internal class DependencyB1<T> : IInterface<T>;
+internal sealed class DependencyA1<T> : IInterface<T>;
+internal sealed class DependencyB0<T> : IInterface<T>;
+internal sealed class DependencyB1<T> : IInterface<T>;
 [InjectionKey(KeyValues.C)]
-internal class DependencyC0<T> : IInterface<T>;
+internal sealed class DependencyC0<T> : IInterface<T>;
 [InjectionKey(KeyValues.C)]
-internal class DependencyC1<T> : IInterface<T>;
+internal sealed class DependencyC1<T> : IInterface<T>;
 
-internal class Root<TA, TB>
+internal sealed class Root<TA, TB>
 {
     [InjectionKey(KeyValues.A)]
     internal required IReadOnlyList<IInterface<TA>> DependencyA { get; init; }
@@ -36,7 +36,7 @@ internal class Root<TA, TB>
 [CreateFunction(typeof(Root<,>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

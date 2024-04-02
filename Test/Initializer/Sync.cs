@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Initializer.Sync;
 
-internal class Dependency : IInitializer
+internal sealed class Dependency : IInitializer
 {
     public bool IsInitialized { get; private set; }
     
@@ -15,7 +15,7 @@ internal class Dependency : IInitializer
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

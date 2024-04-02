@@ -14,13 +14,13 @@ internal enum Key
 
 internal interface IInterface;
 
-internal class DependencyA : IInterface;
+internal sealed class DependencyA : IInterface;
 
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
-internal class DependencyC : IInterface;
+internal sealed class DependencyC : IInterface;
 
-internal class Root
+internal sealed class Root
 {
     internal IInterface? Dependency { get; private set; }
 
@@ -34,7 +34,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.FactoryMethod.WithParameterInScope;
 
-internal class ScopeRoot : IScopeRoot
+internal sealed class ScopeRoot : IScopeRoot
 {
     public FileInfo Property { get; }
 
@@ -27,7 +27,7 @@ internal sealed partial class Container
     }
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

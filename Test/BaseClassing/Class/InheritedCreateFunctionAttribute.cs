@@ -4,14 +4,14 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.BaseClassing.Class.InheritedCreateFunctionAttribute;
 
-internal class Class;
+internal sealed class Class;
 
 [CreateFunction(typeof(Class), "Create")]
 internal abstract class ContainerBase;
 
 internal sealed partial class Container : ContainerBase;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

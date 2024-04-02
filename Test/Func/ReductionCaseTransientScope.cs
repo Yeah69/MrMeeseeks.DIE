@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.ReductionCaseTransientScope;
 
-internal class DependencyA : ITransientScopeInstance
+internal sealed class DependencyA : ITransientScopeInstance
 {
     public int Value { get; }
     public DependencyB Dependency { get; }
@@ -21,7 +21,7 @@ internal class DependencyA : ITransientScopeInstance
 }
 
 
-internal class DependencyB : ITransientScopeInstance
+internal sealed class DependencyB : ITransientScopeInstance
 {
     private readonly Lazy<Parent> _parentFactory;
     public int Value { get; }
@@ -36,7 +36,7 @@ internal class DependencyB : ITransientScopeInstance
     }
 }
 
-internal class Parent : ITransientScopeRoot
+internal sealed class Parent : ITransientScopeRoot
 {
     public DependencyA Dependency { get; }
     
@@ -54,7 +54,7 @@ internal sealed partial class Container
     
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -6,26 +6,26 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.InitializedInstances.Awaited;
 
-internal class DependencyA : IInitializer
+internal sealed class DependencyA : IInitializer
 {
     public void Initialize()
     {
     }
 }
 
-internal class DependencyB : IValueTaskInitializer
+internal sealed class DependencyB : IValueTaskInitializer
 {
     public ValueTask InitializeAsync() => 
         new();
 }
 
-internal class DependencyC : ITaskInitializer
+internal sealed class DependencyC : ITaskInitializer
 {
     public Task InitializeAsync() => 
         Task.CompletedTask;
 }
 
-internal class Root : IScopeRoot
+internal sealed class Root : IScopeRoot
 {
     // ReSharper disable UnusedParameter.Local
     internal Root(DependencyA a, DependencyB b, DependencyC c){}
@@ -41,7 +41,7 @@ internal sealed partial class Container
     private sealed partial class DIE_DefaultScope;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

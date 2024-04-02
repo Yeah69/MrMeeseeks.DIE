@@ -6,12 +6,12 @@ namespace MrMeeseeks.DIE.Test.Abstraction.Interface.VanillaWithoutChoice;
 
 internal interface IInterface;
 
-internal class SubClass : IInterface;
+internal sealed class SubClass : IInterface;
 
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -10,9 +10,9 @@ internal interface IInterface<T0>;
 
 internal interface IInterface<T0, T1, T2, T3, T4>;
 
-internal class Class<T0> : IInterface<T0>;
+internal sealed class Class<T0> : IInterface<T0>;
 
-internal class Class<T0, T1, T2, T3, T4> : IInterface<T0, T1, T2, T3, T4>;
+internal sealed class Class<T0, T1, T2, T3, T4> : IInterface<T0, T1, T2, T3, T4>;
 
 [CreateFunction(typeof(Class<>), "Create")]
 [CreateFunction(typeof(Class<,,,,>), "CreateMulti")]
@@ -20,7 +20,7 @@ internal class Class<T0, T1, T2, T3, T4> : IInterface<T0, T1, T2, T3, T4>;
 [CreateFunction(typeof(IInterface<,,,,>), "CreateInterfaceMulti")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

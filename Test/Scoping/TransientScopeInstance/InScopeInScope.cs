@@ -7,15 +7,15 @@ namespace MrMeeseeks.DIE.Test.Scoping.TransientScopeInstance.InContainer.InScope
 
 internal interface IInterface;
 
-internal class Dependency : IInterface, ITransientScopeInstance;
+internal sealed class Dependency : IInterface, ITransientScopeInstance;
 
-internal class ScopeRoot : IScopeRoot
+internal sealed class ScopeRoot : IScopeRoot
 {
     public IInterface Dependency { get; }
     public ScopeRoot(IInterface dependency) => Dependency = dependency;
 }
 
-internal class ScopeWithTransientScopeInstanceAbove : IScopeRoot
+internal sealed class ScopeWithTransientScopeInstanceAbove : IScopeRoot
 {
     public ScopeRoot InnerScope { get; }
     public ScopeWithTransientScopeInstanceAbove(ScopeRoot innerScope) => InnerScope = innerScope;
@@ -24,7 +24,7 @@ internal class ScopeWithTransientScopeInstanceAbove : IScopeRoot
 [CreateFunction(typeof(ScopeWithTransientScopeInstanceAbove), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

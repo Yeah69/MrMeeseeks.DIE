@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.TransientScopeInstanceFunctionAsValueTask;
 
-internal class Dependency : ITaskInitializer, ITransientScopeInstance
+internal sealed class Dependency : ITaskInitializer, ITransientScopeInstance
 {
     public bool IsInitialized { get; private set; }
     
@@ -20,7 +20,7 @@ internal class Dependency : ITaskInitializer, ITransientScopeInstance
 [CreateFunction(typeof(ValueTask<Dependency>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

@@ -4,7 +4,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Initializer.WithParameters;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public bool IsInitialized { get; private set; }
 
@@ -31,7 +31,7 @@ internal sealed partial class Container
     
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

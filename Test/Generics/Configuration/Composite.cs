@@ -11,18 +11,18 @@ internal interface IInterface
     IReadOnlyList<IInterface> Implementations { get; }
 }
 
-internal class BaseA : IInterface
+internal sealed class BaseA : IInterface
 {
     public IReadOnlyList<IInterface> Implementations => new[] { this };
 }
 
-internal class BaseB : IInterface
+internal sealed class BaseB : IInterface
 {
     public IReadOnlyList<IInterface> Implementations => new[] { this };
 }
 
 // ReSharper disable once UnusedTypeParameter
-internal class Composite<T0> : IInterface, IComposite<IInterface>
+internal sealed class Composite<T0> : IInterface, IComposite<IInterface>
 {
     public IReadOnlyList<IInterface> Implementations { get; }
 
@@ -35,7 +35,7 @@ internal class Composite<T0> : IInterface, IComposite<IInterface>
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

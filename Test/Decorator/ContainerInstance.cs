@@ -11,17 +11,17 @@ internal interface IInterface
     IInterface Decorated { get; }
 }
 
-internal class DependencyA : IInterface, IContainerInstance
+internal sealed class DependencyA : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }
 
-internal class DependencyB : IInterface, IContainerInstance
+internal sealed class DependencyB : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }
 
-internal class Decorator : IInterface, IDecorator<IInterface>
+internal sealed class Decorator : IInterface, IDecorator<IInterface>
 {
     public Decorator(IInterface decoratedContainerInstance) => 
         Decorated = decoratedContainerInstance;
@@ -32,7 +32,7 @@ internal class Decorator : IInterface, IDecorator<IInterface>
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

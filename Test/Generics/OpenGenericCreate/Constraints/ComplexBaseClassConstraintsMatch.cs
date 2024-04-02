@@ -11,12 +11,12 @@ internal class InnerClass<T> : InnerInterface<T>;
 
 internal interface IInterface<T, T0> where T :  InnerClass<InnerInterface<T0>>, InnerInterface<InnerInterface<T0>>;
 
-internal class Class<T, T0> : IInterface<T, T0> where T : InnerClass<InnerInterface<T0>>;
+internal sealed class Class<T, T0> : IInterface<T, T0> where T : InnerClass<InnerInterface<T0>>;
 
 [CreateFunction(typeof(IInterface<,>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

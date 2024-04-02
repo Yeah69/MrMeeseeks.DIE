@@ -5,9 +5,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.WithArrayParameter;
 
-internal class ParameterDependency;
+internal sealed class ParameterDependency;
 
-internal class Dependency
+internal sealed class Dependency
 {
     // ReSharper disable once UnusedParameter.Local
     internal Dependency(ParameterDependency[] parameters){}
@@ -17,7 +17,7 @@ internal class Dependency
 [CreateFunction(typeof(ParameterDependency), "CreateParameter")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

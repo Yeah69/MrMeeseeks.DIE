@@ -6,19 +6,19 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ThreadLocal.Override;
 
-internal class Dependency
+internal sealed class Dependency
 {
     internal int Value { get; }
     internal Dependency(int value) => Value = value;
 }
 
-internal class Parent0
+internal sealed class Parent0
 {
     internal Dependency? Dependency { get; }
     internal Parent0(ThreadLocal<Dependency> dependency) => Dependency = dependency.Value;
 }
 
-internal class Parent1
+internal sealed class Parent1
 {
     internal Dependency? Dependency { get; }
     internal Parent1(Func<int, Parent0> fac) => Dependency = fac(23).Dependency;
@@ -27,7 +27,7 @@ internal class Parent1
 [CreateFunction(typeof(Parent1), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

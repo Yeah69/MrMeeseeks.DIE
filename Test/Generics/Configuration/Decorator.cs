@@ -10,13 +10,13 @@ internal interface IInterface
     IInterface Decorated { get; }
 }
 
-internal class Implementation : IInterface
+internal sealed class Implementation : IInterface
 {
     public IInterface Decorated => this;
 }
 
 // ReSharper disable once UnusedTypeParameter
-internal class DecoratorA<T0> : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorA<T0> : IInterface, IDecorator<IInterface>
 {
     public IInterface Decorated { get; }
 
@@ -26,7 +26,7 @@ internal class DecoratorA<T0> : IInterface, IDecorator<IInterface>
 }
 
 // ReSharper disable once UnusedTypeParameter
-internal class DecoratorB<T0> : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorB<T0> : IInterface, IDecorator<IInterface>
 {
     public IInterface Decorated { get; }
 
@@ -41,7 +41,7 @@ internal class DecoratorB<T0> : IInterface, IDecorator<IInterface>
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

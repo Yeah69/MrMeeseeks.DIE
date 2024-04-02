@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.SyncTransientWithJustTransient;
 
-internal class Managed : IDisposable
+internal sealed class Managed : IDisposable
 {
     public void Dispose()
     {
@@ -14,7 +14,7 @@ internal class Managed : IDisposable
 }
 
 // ReSharper disable once UnusedTypeParameter
-internal class Class<T0> : ITransient, IDisposable
+internal sealed class Class<T0> : ITransient, IDisposable
 {
     // ReSharper disable once UnusedParameter.Local
     internal Class(Managed _) { }
@@ -25,7 +25,7 @@ internal class Class<T0> : ITransient, IDisposable
 [CreateFunction(typeof(Class<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -7,12 +7,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.AsyncWrapped.MultipleTaskAtStart;
 
-internal class Dependency : IValueTaskInitializer
+internal sealed class Dependency : IValueTaskInitializer
 {
     public ValueTask InitializeAsync() => default;
 }
 
-internal class OuterDependency
+internal sealed class OuterDependency
 {
     internal OuterDependency(
         // ReSharper disable once UnusedParameter.Local
@@ -25,7 +25,7 @@ internal class OuterDependency
 [CreateFunction(typeof(Func<ValueTask<Task<ValueTask<Task<OuterDependency>>>>>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

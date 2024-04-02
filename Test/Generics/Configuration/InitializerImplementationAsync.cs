@@ -6,7 +6,7 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerImplementationAsync;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Dependency<T0>
+internal sealed class Dependency<T0>
 {
     internal async Task InitializeAsync()
     {
@@ -21,7 +21,7 @@ internal class Dependency<T0>
 [CreateFunction(typeof(Dependency<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

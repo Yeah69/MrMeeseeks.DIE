@@ -6,9 +6,9 @@ namespace MrMeeseeks.DIE.Test.Bugs.ReuseOfFieldFactory;
 
 internal interface IInterface;
 
-internal class Dependency : IInterface;
+internal sealed class Dependency : IInterface;
 
-internal class DependencyHolder
+internal sealed class DependencyHolder
 {
     public IInterface Dependency { get; }
     internal DependencyHolder(IInterface dependency)
@@ -30,7 +30,7 @@ internal sealed partial class Container
     }
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

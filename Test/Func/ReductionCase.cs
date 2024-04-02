@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.ReductionCase;
 
-internal class DependencyA
+internal sealed class DependencyA
 {
     public int Value { get; }
     public DependencyB Dependency { get; }
@@ -20,7 +20,7 @@ internal class DependencyA
 }
 
 
-internal class DependencyB
+internal sealed class DependencyB
 {
     private readonly Lazy<Parent> _parentFactory;
     public int Value { get; }
@@ -35,7 +35,7 @@ internal class DependencyB
     }
 }
 
-internal class Parent
+internal sealed class Parent
 {
     public DependencyA Dependency { get; }
     
@@ -53,7 +53,7 @@ internal sealed partial class Container
     
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

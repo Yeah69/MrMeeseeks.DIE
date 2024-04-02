@@ -5,17 +5,17 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.ScopeRoot;
 
-internal class ScopeInstance : IScopeInstance;
+internal sealed class ScopeInstance : IScopeInstance;
 
 // ReSharper disable once UnusedTypeParameter
-internal class ScopeRoot<T0> : IScopeRoot
+internal sealed class ScopeRoot<T0> : IScopeRoot
 {
     public ScopeInstance ScopeInstance { get; }
 
     internal ScopeRoot(ScopeInstance scopeInstance) => ScopeInstance = scopeInstance;
 }
 
-internal class Root
+internal sealed class Root
 {
     public ScopeRoot<int> ScopeRoot { get; }
     public ScopeInstance ScopeInstance { get; }
@@ -32,7 +32,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

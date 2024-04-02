@@ -8,12 +8,12 @@ namespace MrMeeseeks.DIE.Test.Generics.Interface.DoubleSwitched;
 internal interface IInterface<T0, T1>;
 // ReSharper restore UnusedTypeParameter
 
-internal class Class<T1, T0> : IInterface<T0, T1>;
+internal sealed class Class<T1, T0> : IInterface<T0, T1>;
 
 [CreateFunction(typeof(IInterface<int, string>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

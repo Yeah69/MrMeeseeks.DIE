@@ -5,12 +5,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ThreadLocal.Vanilla;
 
-internal class Dependency;
+internal sealed class Dependency;
 
 [CreateFunction(typeof(ThreadLocal<Dependency>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

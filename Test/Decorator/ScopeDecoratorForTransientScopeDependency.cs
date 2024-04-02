@@ -10,19 +10,19 @@ internal interface IInterface
     IInterface Decorated { get; }
 }
 
-internal class Dependency : IInterface, ITransientScopeInstance
+internal sealed class Dependency : IInterface, ITransientScopeInstance
 {
     public IInterface Decorated => this;
 }
 
-internal class Decorator : IInterface, IDecorator<IInterface>
+internal sealed class Decorator : IInterface, IDecorator<IInterface>
 {
     public IInterface Decorated { get; }
     
     internal Decorator(IInterface decorated) => Decorated = decorated;
 }
 
-internal class ScopeRoot : IScopeRoot
+internal sealed class ScopeRoot : IScopeRoot
 {
     public IInterface Decorated { get; }
 
@@ -32,7 +32,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

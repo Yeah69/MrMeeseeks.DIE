@@ -7,7 +7,7 @@ namespace MrMeeseeks.DIE.Test.Struct.NullableInjection;
 
 internal struct Dependency;
 
-internal class Root
+internal sealed class Root
 {
     internal Root(Dependency? dependency) => Dependency = dependency;
     
@@ -17,7 +17,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

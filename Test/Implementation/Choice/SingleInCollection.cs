@@ -6,13 +6,13 @@ namespace MrMeeseeks.DIE.Test.Implementation.Choice.SingleInCollection;
 
 internal class Class;
 
-internal class SubClass : Class;
+internal sealed class SubClass : Class;
 
 [ImplementationCollectionChoice(typeof(Class), typeof(SubClass))]
 [CreateFunction(typeof(Class), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

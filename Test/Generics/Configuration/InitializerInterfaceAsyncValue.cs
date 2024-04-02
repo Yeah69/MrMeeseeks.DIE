@@ -7,7 +7,7 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerInterfaceAsyncValue;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Dependency<T0> : IValueTaskInitializer
+internal sealed class Dependency<T0> : IValueTaskInitializer
 {
     async ValueTask IValueTaskInitializer.InitializeAsync()
     {
@@ -21,7 +21,7 @@ internal class Dependency<T0> : IValueTaskInitializer
 [CreateFunction(typeof(Dependency<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

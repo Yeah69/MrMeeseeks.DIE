@@ -6,7 +6,7 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.InitializerInterfaceSync;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Dependency<T0> : IInitializer
+internal sealed class Dependency<T0> : IInitializer
 {
     void IInitializer.Initialize()
     {
@@ -19,7 +19,7 @@ internal class Dependency<T0> : IInitializer
 [CreateFunction(typeof(Dependency<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

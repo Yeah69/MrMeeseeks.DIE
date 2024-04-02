@@ -7,7 +7,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Async.Wrapped.TaskToTask;
 
-internal class Dependency : ITaskInitializer
+internal sealed class Dependency : ITaskInitializer
 {
     public bool IsInitialized { get; private set; }
     
@@ -20,7 +20,7 @@ internal class Dependency : ITaskInitializer
 [CreateFunction(typeof(Task<Dependency>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

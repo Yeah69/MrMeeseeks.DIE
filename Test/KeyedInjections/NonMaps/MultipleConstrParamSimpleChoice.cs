@@ -15,19 +15,19 @@ internal enum Key
 
 internal interface IInterface;
 
-internal class DependencyA0 : IInterface;
+internal sealed class DependencyA0 : IInterface;
 
-internal class DependencyA1 : IInterface;
+internal sealed class DependencyA1 : IInterface;
 
-internal class DependencyB0 : IInterface;
+internal sealed class DependencyB0 : IInterface;
 
-internal class DependencyB1 : IInterface;
+internal sealed class DependencyB1 : IInterface;
 
-internal class DependencyC0 : IInterface;
+internal sealed class DependencyC0 : IInterface;
 
-internal class DependencyC1 : IInterface;
+internal sealed class DependencyC1 : IInterface;
 
-internal class Root
+internal sealed class Root
 {
     public Root([InjectionKey(Key.B)] IReadOnlyList<IInterface> dependencies) => Dependencies = dependencies;
 
@@ -43,7 +43,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

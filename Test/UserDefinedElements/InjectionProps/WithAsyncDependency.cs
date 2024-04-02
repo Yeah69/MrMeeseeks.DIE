@@ -6,12 +6,12 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.InjectionProps.WithAsyncDependency;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int Number { get; init; }
 }
 
-internal class OtherDependency : IValueTaskInitializer
+internal sealed class OtherDependency : IValueTaskInitializer
 {
     public int Number => 69;
     public ValueTask InitializeAsync() => new (Task.CompletedTask);
@@ -27,7 +27,7 @@ internal sealed partial class Container
     private void DIE_Props_Dependency(OtherDependency otherDependency, out int Number) => Number = otherDependency.Number;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

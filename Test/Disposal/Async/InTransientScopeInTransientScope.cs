@@ -7,7 +7,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Disposal.Async.InTransientScopeInTransientScope;
 
-internal class Dependency :  IAsyncDisposable
+internal sealed class Dependency :  IAsyncDisposable
 {
     public bool IsDisposed { get; private set; }
     
@@ -18,14 +18,14 @@ internal class Dependency :  IAsyncDisposable
     }
 }
 
-internal class TransientScopeRootInner : ITransientScopeRoot
+internal sealed class TransientScopeRootInner : ITransientScopeRoot
 {
     public TransientScopeRootInner(Dependency dependency) => Dependency = dependency;
 
     internal Dependency Dependency { get; }
 }
 
-internal class TransientScopeRoot : ITransientScopeRoot
+internal sealed class TransientScopeRoot : ITransientScopeRoot
 {
     public TransientScopeRootInner TransientScopeRootInner { get; }
     public Dependency Dependency { get; }
@@ -47,7 +47,7 @@ internal class TransientScopeRoot : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeRoot), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

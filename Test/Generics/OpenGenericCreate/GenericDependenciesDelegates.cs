@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.GenericDependenciesDele
 
 internal interface IInterface<T0>;
 
-internal class Dependency<T0> : IInterface<T0>;
+internal sealed class Dependency<T0> : IInterface<T0>;
 
 internal interface IInterface<T3, T4, T5>
 {
@@ -20,7 +20,7 @@ internal interface IInterface<T3, T4, T5>
     ThreadLocal<IInterface<T3>>? InterfaceInitParam { get; }
 }
 
-internal class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
+internal sealed class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
 {
     public required Lazy<Dependency<T0>> DependencyInit { get; init; }
     public Func<Dependency<T1>> DependencyConstrParam { get; }
@@ -50,7 +50,7 @@ internal class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
 [CreateFunction(typeof(DependencyHolder<,,>), "CreateConcreteType")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

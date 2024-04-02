@@ -9,7 +9,7 @@ namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.InternalsVisibleTo;
 [CreateFunction(typeof(Parent.ClassToo), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

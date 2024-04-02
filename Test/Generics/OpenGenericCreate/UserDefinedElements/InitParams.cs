@@ -6,7 +6,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.UserDefinedElements.InitParams;
 
-internal class Class<TVanilla, TExactMatch, TMoreStrict>
+internal sealed class Class<TVanilla, TExactMatch, TMoreStrict>
     where TExactMatch : struct 
     where TMoreStrict : class, IList<TVanilla>, new()
 {
@@ -35,7 +35,7 @@ internal sealed partial class Container
     }
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

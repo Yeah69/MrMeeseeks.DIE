@@ -8,14 +8,14 @@ internal interface IInterface;
 
 internal class DependencyA : IInterface;
 
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
 [FilterAllImplementationsAggregation]
 [ImplementationAggregation(typeof(DependencyB))]
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

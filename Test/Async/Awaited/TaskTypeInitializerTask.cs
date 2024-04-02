@@ -7,7 +7,7 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Async.Awaited.TaskInitializerTask;
 
 
-internal class Dependency : ITaskInitializer
+internal sealed class Dependency : ITaskInitializer
 {
     public bool IsInitialized { get; private set; }
     
@@ -21,7 +21,7 @@ internal class Dependency : ITaskInitializer
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

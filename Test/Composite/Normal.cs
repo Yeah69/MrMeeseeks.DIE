@@ -11,17 +11,17 @@ internal interface IInterface
     IReadOnlyList<IInterface> Composites { get; }
 }
 
-internal class BasisA : IInterface
+internal sealed class BasisA : IInterface
 {
     public IReadOnlyList<IInterface> Composites => new List<IInterface> { this };
 }
 
-internal class BasisB : IInterface
+internal sealed class BasisB : IInterface
 {
     public IReadOnlyList<IInterface> Composites => new List<IInterface> { this };
 }
 
-internal class Composite : IInterface, IComposite<IInterface>
+internal sealed class Composite : IInterface, IComposite<IInterface>
 {
     public Composite(IReadOnlyList<IInterface> composites) => 
         Composites = composites;
@@ -33,7 +33,7 @@ internal class Composite : IInterface, IComposite<IInterface>
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "CreateCollection")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

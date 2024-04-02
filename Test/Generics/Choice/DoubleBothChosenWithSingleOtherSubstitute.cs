@@ -7,7 +7,7 @@ namespace MrMeeseeks.DIE.Test.Generics.Choice.DoubleBothChosenWithSingleOtherSub
 internal interface IInterface;
 
 // ReSharper disable UnusedTypeParameter
-internal class Class<T0, T1> : IInterface;
+internal sealed class Class<T0, T1> : IInterface;
 // ReSharper restore UnusedTypeParameter
 
 [GenericParameterSubstitutesChoice(typeof(Class<,>), "T0", typeof(uint))]
@@ -17,7 +17,7 @@ internal class Class<T0, T1> : IInterface;
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

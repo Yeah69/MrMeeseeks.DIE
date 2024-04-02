@@ -9,7 +9,7 @@ namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate.GenericDependenciesNest
 
 internal interface IInterface<T1, T0>;
 
-internal class Dependency<T0, T1> : IInterface<T0, T1>;
+internal sealed class Dependency<T0, T1> : IInterface<T0, T1>;
 
 internal interface IInterface<T3, T4, T5>
 {
@@ -22,7 +22,7 @@ internal interface IInterface<T3, T4, T5>
     ThreadLocal<IInterface<byte, IReadOnlyDictionary<T3, T5>>>? InterfaceInitParam { get; }
 }
 
-internal class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
+internal sealed class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
 {
     public required Lazy<Dependency<IReadOnlyList<T0>, T2>> DependencyInit { get; init; }
     public Func<Dependency<string, IReadOnlySet<T1>>> DependencyConstrParam { get; }
@@ -53,7 +53,7 @@ internal class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
 [CreateFunction(typeof(DependencyHolder<,,>), "Create")]
 [CreateFunction(typeof(IInterface<,,>), "CreateInterface")]
 internal sealed partial class Container;
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE.Test.Async.Wrapped.TransientScopeInstanceFunctionAsValu
 
 internal interface IInterface;
 
-internal class DependencyA : IInterface, ITaskInitializer
+internal sealed class DependencyA : IInterface, ITaskInitializer
 {
     public bool IsInitialized { get; private set; }
     
@@ -19,9 +19,9 @@ internal class DependencyA : IInterface, ITaskInitializer
     }
 }
 
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
-internal class Instance : ITransientScopeInstance
+internal sealed class Instance : ITransientScopeInstance
 {
     public IInterface Inner { get; }
 
@@ -31,7 +31,7 @@ internal class Instance : ITransientScopeInstance
     }
 }
 
-internal class TransientScopeRoot0 : ITransientScopeRoot
+internal sealed class TransientScopeRoot0 : ITransientScopeRoot
 {
     public ValueTask<Instance> Dependency { get; }
 
@@ -41,7 +41,7 @@ internal class TransientScopeRoot0 : ITransientScopeRoot
     }
 }
 
-internal class TransientScopeRoot1 : ITransientScopeRoot
+internal sealed class TransientScopeRoot1 : ITransientScopeRoot
 {
     // ReSharper disable once UnusedParameter.Local
     internal TransientScopeRoot1(ValueTask<Instance> dependency) { }
@@ -63,7 +63,7 @@ internal sealed partial class Container
     private sealed partial class DIE_TransientScope1;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

@@ -11,7 +11,7 @@ internal class SubClass : Class;
 [CreateFunction(typeof(Class), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

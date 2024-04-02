@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Disposal.Sync.InContainer;
 
-internal class Dependency :  IDisposable
+internal sealed class Dependency :  IDisposable
 {
     public bool IsDisposed { get; private set; }
     
@@ -18,7 +18,7 @@ internal class Dependency :  IDisposable
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

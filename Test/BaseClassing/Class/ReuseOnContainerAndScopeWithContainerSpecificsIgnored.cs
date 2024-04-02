@@ -4,7 +4,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.BaseClassing.Class.ReuseOnContainerAndScopeWithContainerSpecificsIgnored;
 
-internal class ScopeRoot
+internal sealed class ScopeRoot
 {
     internal int Number { get; init; }
 }
@@ -22,7 +22,7 @@ internal sealed partial class Container : RangeBase
     private sealed partial class DIE_DefaultScope : RangeBase;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

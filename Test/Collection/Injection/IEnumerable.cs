@@ -6,16 +6,16 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Collection.Injection.IEnumerable;
 
 internal interface IInterface;
-internal class ClassA : IInterface;
+internal sealed class ClassA : IInterface;
 
-internal class ClassB : IInterface;
+internal sealed class ClassB : IInterface;
 
-internal class ClassC : IInterface;
+internal sealed class ClassC : IInterface;
 
 [CreateFunction(typeof(IEnumerable<IInterface>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

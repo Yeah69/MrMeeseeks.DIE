@@ -13,30 +13,30 @@ namespace MrMeeseeks.DIE.Test.Collection.Injection.All;
 
 internal interface IInterface;
 
-internal class DependencyA : IInterface;
+internal sealed class DependencyA : IInterface;
 
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
-internal class DependencyC : IInterface;
+internal sealed class DependencyC : IInterface;
 
 internal interface IAsyncInterface;
 
-internal class AsyncDependencyA : IAsyncInterface, ITaskInitializer
+internal sealed class AsyncDependencyA : IAsyncInterface, ITaskInitializer
 {
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
-internal class AsyncDependencyB : IAsyncInterface, IValueTaskInitializer
+internal sealed class AsyncDependencyB : IAsyncInterface, IValueTaskInitializer
 {
     public async ValueTask InitializeAsync() => await Task.Yield();
 }
 
-internal class AsyncDependencyC : IAsyncInterface, ITaskInitializer
+internal sealed class AsyncDependencyC : IAsyncInterface, ITaskInitializer
 {
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
-internal class Root
+internal sealed class Root
 {
     public required IEnumerable<IInterface> Dependency { get; init; }
     public required IAsyncEnumerable<IAsyncInterface> DependencyIAsyncEnumerable { get; init; }
@@ -136,7 +136,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

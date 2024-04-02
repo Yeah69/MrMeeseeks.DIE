@@ -7,7 +7,7 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Async.Awaited.AsyncScopeRootCallAwaited;
 
 
-internal class Dependency : ITaskInitializer
+internal sealed class Dependency : ITaskInitializer
 {
     public bool IsInitialized { get; private set; }
     
@@ -18,7 +18,7 @@ internal class Dependency : ITaskInitializer
     }
 }
 
-internal class ScopeRoot : IScopeRoot
+internal sealed class ScopeRoot : IScopeRoot
 {
     public Dependency Dep { get; }
     internal ScopeRoot(Dependency dep)
@@ -30,7 +30,7 @@ internal class ScopeRoot : IScopeRoot
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

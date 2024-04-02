@@ -9,32 +9,32 @@ internal interface IInterface
     IInterface Decorated { get; }
 }
 
-internal class DecoratorUh : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorUh : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
-internal class DecoratorY : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorY : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
-internal class DecoratorE : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorE : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
-internal class DecoratorA : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorA : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
-internal class DecoratorH : IInterface, IDecorator<IInterface>
+internal sealed class DecoratorH : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
-internal class Dependency : IInterface
+internal sealed class Dependency : IInterface
 {
     public IInterface Decorated => this;
 }
@@ -46,7 +46,7 @@ internal class Dependency : IInterface
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

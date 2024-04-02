@@ -6,13 +6,13 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.ContainerInstanceWithDifferentGenericParameter;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Class<T0> : IContainerInstance;
+internal sealed class Class<T0> : IContainerInstance;
 
 [CreateFunction(typeof(Class<int>), "Create")]
 [CreateFunction(typeof(Class<string>), "CreateString")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

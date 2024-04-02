@@ -4,7 +4,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.InjectionProps.Vanilla;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int Number { get; init; }
 }
@@ -19,7 +19,7 @@ internal sealed partial class Container
     private void DIE_Props_Dependency(out int Number) => Number = 69;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

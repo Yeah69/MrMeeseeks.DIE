@@ -10,12 +10,12 @@ internal interface IInterface<T0>;
 // ReSharper disable once UnusedTypeParameter
 internal abstract class BaseClass<T0, T1> : IInterface<T0>;
 
-internal class Class<T0> : BaseClass<T0, string>;
+internal sealed class Class<T0> : BaseClass<T0, string>;
 
 [CreateFunction(typeof(IInterface<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -16,41 +16,41 @@ internal interface IInterfaceB
     IInterfaceB DecoratedB { get; }
 }
 
-internal class Dependency : IInterfaceA, IInterfaceB
+internal sealed class Dependency : IInterfaceA, IInterfaceB
 {
     public IInterfaceA DecoratedA => this;
     public IInterfaceB DecoratedB => this;
 }
 
-internal class DecoratorAA : IInterfaceA, IDecorator<IInterfaceA>
+internal sealed class DecoratorAA : IInterfaceA, IDecorator<IInterfaceA>
 {
     public IInterfaceA DecoratedA { get; }
     
     internal DecoratorAA(IInterfaceA decorated) => DecoratedA = decorated;
 }
 
-internal class DecoratorAB : IInterfaceA, IDecorator<IInterfaceA>
+internal sealed class DecoratorAB : IInterfaceA, IDecorator<IInterfaceA>
 {
     public IInterfaceA DecoratedA { get; }
     
     internal DecoratorAB(IInterfaceA decorated) => DecoratedA = decorated;
 }
 
-internal class DecoratorBA : IInterfaceB, IDecorator<IInterfaceB>
+internal sealed class DecoratorBA : IInterfaceB, IDecorator<IInterfaceB>
 {
     public IInterfaceB DecoratedB { get; }
     
     internal DecoratorBA(IInterfaceB decorated) => DecoratedB = decorated;
 }
 
-internal class DecoratorBB : IInterfaceB, IDecorator<IInterfaceB>
+internal sealed class DecoratorBB : IInterfaceB, IDecorator<IInterfaceB>
 {
     public IInterfaceB DecoratedB { get; }
     
     internal DecoratorBB(IInterfaceB decorated) => DecoratedB = decorated;
 }
 
-internal class Parent
+internal sealed class Parent
 {
     public IInterfaceA DependencyA { get; }
     public IInterfaceB DependencyB { get; }
@@ -70,7 +70,7 @@ internal class Parent
 [DecoratorSequenceChoice(typeof(IInterfaceB), typeof(Dependency), typeof(DecoratorBA), typeof(DecoratorBB))]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

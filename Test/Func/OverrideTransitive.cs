@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.OverrideTransitive;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int ValueInt { get; }
 
@@ -17,7 +17,7 @@ internal class Dependency
     }
 }
 
-internal class Parent0 : ITransientScopeRoot
+internal sealed class Parent0 : ITransientScopeRoot
 {
     public Dependency Dependency { get; }
     
@@ -26,7 +26,7 @@ internal class Parent0 : ITransientScopeRoot
         Dependency = dependency;
 }
 
-internal class Parent1
+internal sealed class Parent1
 {
     public Dependency Dependency { get; }
     
@@ -38,7 +38,7 @@ internal class Parent1
 [CreateFunction(typeof(Parent1), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.CycleDetection.Function.Cycle.IndirectRecursionContainer;
 
-internal class Dependency : IContainerInstance
+internal sealed class Dependency : IContainerInstance
 {
     // ReSharper disable once UnusedParameter.Local
     internal Dependency(InnerDependency inner) {}
@@ -20,7 +20,7 @@ internal class InnerDependency : IContainerInstance
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.CycleDetection.Function.NoCycle.DirectRecursionContainerLazy;
 
-internal class Dependency : IContainerInstance
+internal sealed class Dependency : IContainerInstance
 {
     // ReSharper disable once UnusedParameter.Local
     internal Dependency(Lazy<Dependency> inner) {}
@@ -15,7 +15,7 @@ internal class Dependency : IContainerInstance
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

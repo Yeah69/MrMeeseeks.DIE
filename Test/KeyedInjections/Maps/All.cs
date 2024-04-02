@@ -19,35 +19,35 @@ internal enum Key
 internal interface IInterface;
 
 [InjectionKey(Key.A)]
-internal class DependencyA : IInterface;
+internal sealed class DependencyA : IInterface;
 
 [InjectionKey(Key.B)]
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
 [InjectionKey(Key.C)]
-internal class DependencyC : IInterface;
+internal sealed class DependencyC : IInterface;
 
 internal interface IAsyncInterface;
 
 [InjectionKey(Key.A)]
-internal class AsyncDependencyA : IAsyncInterface, ITaskInitializer
+internal sealed class AsyncDependencyA : IAsyncInterface, ITaskInitializer
 {
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
 [InjectionKey(Key.B)]
-internal class AsyncDependencyB : IAsyncInterface, IValueTaskInitializer
+internal sealed class AsyncDependencyB : IAsyncInterface, IValueTaskInitializer
 {
     public async ValueTask InitializeAsync() => await Task.Yield();
 }
 
 [InjectionKey(Key.C)]
-internal class AsyncDependencyC : IAsyncInterface, ITaskInitializer
+internal sealed class AsyncDependencyC : IAsyncInterface, ITaskInitializer
 {
     public Task InitializeAsync() => Task.CompletedTask;
 }
 
-internal class Root
+internal sealed class Root
 {
     public required IEnumerable<KeyValuePair<Key, IInterface>> Dependency { get; init; }
     public required IAsyncEnumerable<KeyValuePair<Key, IAsyncInterface>> DependencyIAsyncEnumerable { get; init; }
@@ -91,7 +91,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

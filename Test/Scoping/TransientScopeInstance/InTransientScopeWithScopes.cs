@@ -11,7 +11,7 @@ internal interface IInterface
     bool IsDisposed { get; }
 }
 
-internal class Dependency : IInterface, ITransientScopeInstance, IDisposable
+internal sealed class Dependency : IInterface, ITransientScopeInstance, IDisposable
 {
     public bool IsDisposed { get; private set; }
 
@@ -24,7 +24,7 @@ internal interface ITransientScopeChild
     bool Disposed { get; }
 }
 
-internal class TransientScopeChild : ITransientScopeChild, IScopeRoot, IDisposable
+internal sealed class TransientScopeChild : ITransientScopeChild, IScopeRoot, IDisposable
 {
     public TransientScopeChild(IInterface transientScopeInstance)
     {
@@ -40,7 +40,7 @@ internal class TransientScopeChild : ITransientScopeChild, IScopeRoot, IDisposab
     }
 }
 
-internal class TransientScopeWithScopes : ITransientScopeRoot
+internal sealed class TransientScopeWithScopes : ITransientScopeRoot
 {
     private readonly IDisposable _scopeDisposal;
 
@@ -61,7 +61,7 @@ internal class TransientScopeWithScopes : ITransientScopeRoot
 [CreateFunction(typeof(TransientScopeWithScopes), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

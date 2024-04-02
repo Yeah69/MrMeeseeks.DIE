@@ -9,7 +9,7 @@ internal interface IInterface;
 
 internal struct Dependency : IInterface;
 
-internal class Root
+internal sealed class Root
 {
     internal Root(IInterface? dependency) => Dependency = dependency;
     
@@ -19,7 +19,7 @@ internal class Root
 [CreateFunction(typeof(Root), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

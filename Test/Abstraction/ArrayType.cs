@@ -6,16 +6,16 @@ namespace MrMeeseeks.DIE.Test.Abstraction.ArrayType;
 
 internal interface IInterface;
 
-internal class DependencyA : IInterface;
+internal sealed class DependencyA : IInterface;
 
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
-internal class DependencyC : IInterface;
+internal sealed class DependencyC : IInterface;
 
 [CreateFunction(typeof(IInterface[]), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

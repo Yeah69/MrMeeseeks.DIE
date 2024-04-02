@@ -11,7 +11,7 @@ internal interface IInterface
     bool IsInitialized { get; }
 }
 
-internal class Dependency : ITaskInitializer, IInterface
+internal sealed class Dependency : ITaskInitializer, IInterface
 {
     public bool IsInitialized { get; private set; }
     
@@ -22,7 +22,7 @@ internal class Dependency : ITaskInitializer, IInterface
     }
 }
 
-internal class DecoratorA : IInitializer, IInterface, IDecorator<IInterface>
+internal sealed class DecoratorA : IInitializer, IInterface, IDecorator<IInterface>
 {
     private readonly Task<IInterface> _task;
     public bool IsInitialized { get; private set; }
@@ -36,7 +36,7 @@ internal class DecoratorA : IInitializer, IInterface, IDecorator<IInterface>
     }
 }
 
-internal class DecoratorB : IValueTaskInitializer, IInterface, IDecorator<IInterface>
+internal sealed class DecoratorB : IValueTaskInitializer, IInterface, IDecorator<IInterface>
 {
     public bool IsInitialized { get; private set; }
     
@@ -54,7 +54,7 @@ internal class DecoratorB : IValueTaskInitializer, IInterface, IDecorator<IInter
 [DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

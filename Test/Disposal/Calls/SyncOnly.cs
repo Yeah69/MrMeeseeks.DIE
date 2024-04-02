@@ -7,7 +7,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Disposal.Calls.Sync;
 
-internal class Dependency :  IDisposable, IAsyncDisposable, IAsyncTransient
+internal sealed class Dependency :  IDisposable, IAsyncDisposable, IAsyncTransient
 {
     public bool IsSyncDisposedCalled { get; private set; }
     
@@ -28,7 +28,7 @@ internal class Dependency :  IDisposable, IAsyncDisposable, IAsyncTransient
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

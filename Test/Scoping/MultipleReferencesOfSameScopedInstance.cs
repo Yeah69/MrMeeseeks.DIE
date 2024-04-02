@@ -6,9 +6,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Scoping.MultipleReferencesOfSameScopedInstance;
 
-internal class Dependency : IContainerInstance;
+internal sealed class Dependency : IContainerInstance;
 
-internal class Parent
+internal sealed class Parent
 {
     internal Parent(
         Dependency dependency0,
@@ -29,7 +29,7 @@ internal class Parent
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

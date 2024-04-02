@@ -5,14 +5,14 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.OverrideExistingOverride;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int Value { get; }
 
     internal Dependency(int value) => Value = value;
 }
 
-internal class Parent0
+internal sealed class Parent0
 {
     public Dependency Dependency { get; }
     
@@ -21,7 +21,7 @@ internal class Parent0
         Dependency = fac(6);
 }
 
-internal class Parent1
+internal sealed class Parent1
 {
     public Dependency Dependency { get; }
     
@@ -33,7 +33,7 @@ internal class Parent1
 [CreateFunction(typeof(Parent1), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

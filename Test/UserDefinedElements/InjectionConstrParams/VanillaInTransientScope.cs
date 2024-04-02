@@ -5,14 +5,14 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.InjectionConstrParams.VanillaInTransientScope;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int Number { get; }
 
     internal Dependency(int number) => Number = number;
 }
 
-internal class TransientScopeRoot : ITransientScopeRoot
+internal sealed class TransientScopeRoot : ITransientScopeRoot
 {
     public Dependency Dependency { get; }
 
@@ -33,7 +33,7 @@ internal sealed partial class Container
     }
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

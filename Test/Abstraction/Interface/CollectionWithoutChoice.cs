@@ -7,14 +7,14 @@ namespace MrMeeseeks.DIE.Test.Abstraction.Interface.CollectionWithoutChoice;
 
 internal interface IInterface;
 
-internal class SubClassA : IInterface;
+internal sealed class SubClassA : IInterface;
 
-internal class SubClassB : IInterface;
+internal sealed class SubClassB : IInterface;
 
 [CreateFunction(typeof(IReadOnlyList<IInterface>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

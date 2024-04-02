@@ -7,14 +7,14 @@ namespace MrMeeseeks.DIE.Test.Implementation.Choice.CollectionWithoutChoice;
 
 internal class Class;
 
-internal class SubClassA : Class;
+internal sealed class SubClassA : Class;
 
-internal class SubClassB : Class;
+internal sealed class SubClassB : Class;
 
 [CreateFunction(typeof(IReadOnlyList<Class>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

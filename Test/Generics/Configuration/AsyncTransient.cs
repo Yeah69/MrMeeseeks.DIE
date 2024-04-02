@@ -7,13 +7,13 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.Configuration.AsyncTransient;
 
-internal class Managed : IAsyncDisposable
+internal sealed class Managed : IAsyncDisposable
 {
     public ValueTask DisposeAsync() => default;
 }
 
 // ReSharper disable once UnusedTypeParameter
-internal class Class<T0> : IAsyncTransient, IAsyncDisposable
+internal sealed class Class<T0> : IAsyncTransient, IAsyncDisposable
 {
     // ReSharper disable once UnusedParameter.Local
     internal Class(Managed _) { }
@@ -28,7 +28,7 @@ internal class Class<T0> : IAsyncTransient, IAsyncDisposable
 [CreateFunction(typeof(Class<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public async Task Test()

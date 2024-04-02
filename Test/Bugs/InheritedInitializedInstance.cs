@@ -6,10 +6,10 @@ namespace MrMeeseeks.DIE.Test.Bugs.InheritedInitializedInstance;
 
 internal interface IInterface;
 
-internal class DependencyDeepClass;
-internal class DependencyClass;
-internal class DependencyDeepInterface;
-internal class DependencyInterface;
+internal sealed class DependencyDeepClass;
+internal sealed class DependencyClass;
+internal sealed class DependencyDeepInterface;
+internal sealed class DependencyInterface;
 
 [InitializedInstances(typeof(DependencyDeepInterface))]
 internal interface IContainerConfig1;
@@ -29,7 +29,7 @@ internal abstract class ContainerConfig0 : ContainerConfig1;
 [CreateFunction(typeof(DependencyInterface), "CreateInterface")]
 internal sealed partial class Container : ContainerConfig0, IContainerConfig0;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

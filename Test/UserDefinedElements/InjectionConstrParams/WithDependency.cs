@@ -4,14 +4,14 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.InjectionConstrParams.WithDependency;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int Number { get; }
 
     internal Dependency(int number) => Number = number;
 }
 
-internal class OtherDependency
+internal sealed class OtherDependency
 {
     public int Number => 69;
 }
@@ -25,7 +25,7 @@ internal sealed partial class Container
     private void DIE_ConstrParams_Dependency(OtherDependency otherDependency, out int number) => number = otherDependency.Number;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

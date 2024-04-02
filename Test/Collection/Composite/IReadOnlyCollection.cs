@@ -8,13 +8,13 @@ namespace MrMeeseeks.DIE.Test.Collection.Composite.IReadOnlyCollection;
 
 internal interface IInterface;
 
-internal class ClassA : IInterface;
+internal sealed class ClassA : IInterface;
 
-internal class ClassB : IInterface;
+internal sealed class ClassB : IInterface;
 
-internal class ClassC : IInterface;
+internal sealed class ClassC : IInterface;
 
-internal class Composite : IInterface, IComposite<IInterface>
+internal sealed class Composite : IInterface, IComposite<IInterface>
 {
     // ReSharper disable once UnusedParameter.Local
     internal Composite(IReadOnlyCollection<IInterface> _) {}
@@ -23,7 +23,7 @@ internal class Composite : IInterface, IComposite<IInterface>
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

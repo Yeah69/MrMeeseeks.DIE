@@ -8,10 +8,10 @@ internal interface IInterface;
 
 internal class DependencyA : IInterface;
 
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
 // ReSharper disable once UnusedTypeParameter
-internal class Implementation<T0>
+internal sealed class Implementation<T0>
 {
     public IInterface Dependency { get; }
 
@@ -24,7 +24,7 @@ internal class Implementation<T0>
 [CreateFunction(typeof(Implementation<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -8,20 +8,20 @@ namespace MrMeeseeks.DIE.Test.Scoping.ScopeSpecificAttributes.ImplementationColl
 
 internal interface IDependency;
 
-internal class DependencyContainer : IDependency;
+internal sealed class DependencyContainer : IDependency;
 
-internal class DependencyTransientScope : IDependency;
+internal sealed class DependencyTransientScope : IDependency;
 
-internal class DependencyScope : IDependency;
+internal sealed class DependencyScope : IDependency;
 
-internal class TransientScope : ITransientScopeRoot
+internal sealed class TransientScope : ITransientScopeRoot
 {
     public TransientScope(IReadOnlyList<IDependency> dependencies) => Dependencies = dependencies;
 
     public IReadOnlyList<IDependency> Dependencies { get; }
 }
 
-internal class Scope : IScopeRoot
+internal sealed class Scope : IScopeRoot
 {
     public Scope(IReadOnlyList<IDependency> dependencies) => Dependencies = dependencies;
 
@@ -45,7 +45,7 @@ internal sealed partial class Container
     // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope;
 }
-public class Tests
+public sealed class Tests
 {
     
     [Fact]

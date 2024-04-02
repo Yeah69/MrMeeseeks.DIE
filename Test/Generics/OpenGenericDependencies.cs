@@ -6,7 +6,7 @@ namespace MrMeeseeks.DIE.Test.Generics.OpenGenericDependencies;
 
 internal record struct Dependency<T0>(T0 _);
 
-internal class DependencyHolder<T0>
+internal sealed class DependencyHolder<T0>
 {
     public Dependency<T0> Dependency { get; set; }
     // ReSharper disable once UnusedParameter.Local
@@ -17,7 +17,7 @@ internal class DependencyHolder<T0>
 [CreateFunction(typeof(DependencyHolder<int>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -4,14 +4,14 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Record.PrimaryConstr;
 
-internal record Dependency;
+internal sealed record Dependency;
 
-internal record Implementation(Dependency Dependency);
+internal sealed record Implementation(Dependency Dependency);
 
 [CreateFunction(typeof(Implementation), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -6,7 +6,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.OverrideScoped;
 
-internal class DependencyInner
+internal sealed class DependencyInner
 {
     internal DependencyInner(
         // ReSharper disable once UnusedParameter.Local
@@ -18,7 +18,7 @@ internal class DependencyInner
     }
 }
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int Value { get; }
 
@@ -26,7 +26,7 @@ internal class Dependency
     internal Dependency(int value, Func<string, DependencyInner> fac) => Value = value;
 }
 
-internal class Parent : IScopeRoot
+internal sealed class Parent : IScopeRoot
 {
     public Dependency Dependency { get; }
     
@@ -45,7 +45,7 @@ internal sealed partial class Container
     
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

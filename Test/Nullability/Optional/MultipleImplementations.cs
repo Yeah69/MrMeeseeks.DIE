@@ -10,7 +10,7 @@ internal class Dependency0 : IDependency;
 
 internal class Dependency1 : IDependency;
 
-internal class Wrapper
+internal sealed class Wrapper
 {
     public IDependency? Dependency { get; }
 
@@ -20,7 +20,7 @@ internal class Wrapper
 [CreateFunction(typeof(Wrapper), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -14,11 +14,11 @@ internal enum Key
 
 internal interface IInterface;
 
-internal class DependencyA : IInterface;
+internal sealed class DependencyA : IInterface;
 
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
-internal class DependencyC : IInterface;
+internal sealed class DependencyC : IInterface;
 
 [InjectionKeyChoice(Key.A, typeof(DependencyA))]
 [InjectionKeyChoice(Key.B, typeof(DependencyB))]
@@ -26,7 +26,7 @@ internal class DependencyC : IInterface;
 [CreateFunction(typeof(IReadOnlyDictionary<Key, IInterface>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

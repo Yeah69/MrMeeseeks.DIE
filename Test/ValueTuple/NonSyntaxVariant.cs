@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ValueTuple.NonSyntaxVariant;
 
-internal class Wrapper
+internal sealed class Wrapper
 {
     public Wrapper(
         ValueTuple<int, int, int, int, int, int, int, 
@@ -31,7 +31,7 @@ internal sealed partial class Container
     
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

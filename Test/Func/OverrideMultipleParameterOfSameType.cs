@@ -5,14 +5,14 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Func.OverrideMultipleParameterOfSameType;
 
-internal class Dependency
+internal sealed class Dependency
 {
     public int Value { get; }
 
     internal Dependency(int value) => Value = value;
 }
 
-internal class Parent
+internal sealed class Parent
 {
     public Dependency Dependency { get; }
     
@@ -31,7 +31,7 @@ internal sealed partial class Container
     
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

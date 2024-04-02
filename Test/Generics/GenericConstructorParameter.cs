@@ -7,9 +7,9 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Generics.GenericConstructorParameter;
 
-internal record Dependency;
+internal sealed record Dependency;
 
-internal class DependencyHolder<T0>
+internal sealed class DependencyHolder<T0>
 {
     // ReSharper disable once UnusedParameter.Local
     internal DependencyHolder(T0 _) {}
@@ -18,7 +18,7 @@ internal class DependencyHolder<T0>
 [CreateFunction(typeof(DependencyHolder<Dependency>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

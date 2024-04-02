@@ -10,18 +10,18 @@ namespace MrMeeseeks.DIE.Test.KeyedInjections.Maps.SingleTypeOf;
 internal interface IInterface;
 
 [InjectionKey(typeof(DependencyA))]
-internal class DependencyA : IInterface;
+internal sealed class DependencyA : IInterface;
 
 [InjectionKey(typeof(DependencyB))]
-internal class DependencyB : IInterface;
+internal sealed class DependencyB : IInterface;
 
 [InjectionKey(typeof(DependencyC))]
-internal class DependencyC : IInterface;
+internal sealed class DependencyC : IInterface;
 
 [CreateFunction(typeof(IReadOnlyDictionary<Type, IInterface>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -4,10 +4,10 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.Record.CustomProperty;
 
-internal record Dependency;
-internal record DependencyA;
+internal sealed record Dependency;
+internal sealed record DependencyA;
 
-internal record Implementation(Dependency Dependency)
+internal sealed record Implementation(Dependency Dependency)
 {
     internal DependencyA? DependencyA { get; init; }
 }
@@ -16,7 +16,7 @@ internal record Implementation(Dependency Dependency)
 [CreateFunction(typeof(Implementation), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

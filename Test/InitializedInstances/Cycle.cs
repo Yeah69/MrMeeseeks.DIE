@@ -6,22 +6,22 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.InitializedInstances.Cycle;
 
-internal class DependencyA
+internal sealed class DependencyA
 {
     internal DependencyA(DependencyC c) {}
 }
 
-internal class DependencyB
+internal sealed class DependencyB
 {
     internal DependencyB(DependencyA a) {}
 }
 
-internal class DependencyC
+internal sealed class DependencyC
 {
     internal DependencyC(DependencyB b) {}
 }
 
-internal class Root : IScopeRoot
+internal sealed class Root : IScopeRoot
 {
     internal Root(DependencyA a, DependencyB b, DependencyC c){}
 }
@@ -37,7 +37,7 @@ internal sealed partial class Container
     private sealed partial class DIE_DefaultScope;
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

@@ -5,13 +5,13 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Generics.Implementation.Double;
 
 // ReSharper disable UnusedTypeParameter
-internal class Class<T0, T1>;
+internal sealed class Class<T0, T1>;
 // ReSharper restore UnusedTypeParameter
 
 [CreateFunction(typeof(Class<int, string>), "Create")]
 internal sealed partial class Container;
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

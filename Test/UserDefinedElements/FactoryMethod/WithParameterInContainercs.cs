@@ -16,7 +16,7 @@ internal sealed partial class Container
     private FileInfo DIE_Factory(string path) => new (path);
 }
 
-public class Tests
+public sealed class Tests
 {
     [Fact]
     public void Test()

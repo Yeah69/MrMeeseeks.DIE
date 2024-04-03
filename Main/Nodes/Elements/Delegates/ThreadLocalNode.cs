@@ -7,7 +7,7 @@ namespace MrMeeseeks.DIE.Nodes.Elements.Delegates;
 
 internal interface IThreadLocalNode : IDelegateBaseNode
 {
-    string? SyncDisposalCollectionReference { get; }
+    string? SubDisposalReference { get; }
 }
 
 internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNode
@@ -15,6 +15,7 @@ internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNo
     private readonly INamedTypeSymbol _threadLocalType;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IRangeNode _parentRange;
+    private readonly IFunctionNode _parentFunction;
 
     internal ThreadLocalNode(
         (INamedTypeSymbol Outer, INamedTypeSymbol Inner) delegateTypes,
@@ -24,12 +25,14 @@ internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNo
         ILocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         IRangeNode parentRange,
+        IFunctionNode parentFunction,
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator) 
         : base(delegateTypes, function, typeParameters, localDiagLogger, parentContainer, referenceGenerator)
     {
         _threadLocalType = delegateTypes.Inner;
         _parentRange = parentRange;
+        _parentFunction = parentFunction;
         _checkTypeProperties = checkTypeProperties;
     }
 
@@ -40,8 +43,8 @@ internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNo
         if (disposalType is not DisposalType.None && disposalType.HasFlag(DisposalType.Sync)) 
             _parentRange.RegisterTypeForDisposal(_threadLocalType);
         if (disposalType.HasFlag(DisposalType.Sync))
-            SyncDisposalCollectionReference = _parentRange.DisposalHandling.RegisterSyncDisposal();
+            SubDisposalReference = _parentFunction.SubDisposalNode.Reference;
     }
 
-    public string? SyncDisposalCollectionReference { get; private set; }
+    public string? SubDisposalReference { get; private set; }
 }

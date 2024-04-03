@@ -527,9 +527,8 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     {
         _code.AppendLine(
             $"{threadLocalNode.TypeFullName} {threadLocalNode.Reference} = new {threadLocalNode.TypeFullName}({threadLocalNode.MethodGroup}, false);");
-        if (threadLocalNode.SyncDisposalCollectionReference is {} syncDisposalCollectionReference)
-            _code.AppendLine(
-                $"{syncDisposalCollectionReference}.Add(({_wellKnownTypes.IDisposable.FullName()}) {threadLocalNode.Reference});");
+        if (threadLocalNode.SubDisposalReference is {} subDisposalReference)
+            _code.AppendLine($"{subDisposalReference}.Add({threadLocalNode.Reference});");
     }
 
     public void VisitITupleNode(ITupleNode tupleNode)

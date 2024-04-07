@@ -27,11 +27,9 @@ internal interface IFunctionNode : INode
     void CheckSynchronicity();
     void ForceToAsync();
     string RangeFullName { get; }
-    string DisposedPropertyReference { get; }
     IReadOnlyList<ILocalFunctionNode> LocalFunctions { get; }
     void AddLocalFunction(ILocalFunctionNode function);
     string? ExplicitInterfaceFullName { get; }
-    string ResolutionCounterReference { get; }
     IElementNode SubDisposalNode { get; }
     IElementNode TransientScopeDisposalNode { get; }
     /// <summary>
@@ -42,11 +40,6 @@ internal interface IFunctionNode : INode
     /// Transient scope disposal is passed is either passed as parameter or initialized in the function body (in entry functions).
     /// </summary>
     bool IsTransientScopeDisposalAsParameter { get; }
-    string DisposalCollectionReference { get; }
-    string? ContainerReference { get; }
-    string TransientScopeDisposalReference { get; }
-    string DisposeExceptionHandlingMethodName { get; }
-    string DisposeExceptionHandlingAsyncMethodName { get; }
 
     IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,
@@ -76,7 +69,6 @@ internal interface IFunctionNode : INode
         ITransientScopeNode scopeNode,
         IReadOnlyList<ITypeSymbol> typeParameters,
         IElementNodeMapperBase transientScopeImplementationMapper);
-    bool CheckIfReturnedType(ITypeSymbol type);
 
     bool TryGetReusedNode(ITypeSymbol type, out IReusedNode? reusedNode);
     void AddReusedNode(ITypeSymbol type, IReusedNode reusedNode);

@@ -87,15 +87,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Overrides = currentOverrides;
 
         RangeFullName = parentRange.FullName;
-        DisposedPropertyReference = parentRange.DisposalHandling.DisposedPropertyReference;
-        ResolutionCounterReference = parentRange.ResolutionCounterReference;
         SubDisposalNode = subDisposalNodeChooser.ChooseSubDisposalNode();
         TransientScopeDisposalNode = transientScopeDisposalNodeChooser.ChooseTransientScopeDisposalNode();
-        DisposalCollectionReference = parentRange.DisposalHandling.CollectionReference;
-        ContainerReference = parentRange.ContainerReference;
-        TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
-        DisposeExceptionHandlingMethodName = parentRange.DisposeExceptionHandlingMethodName;
-        DisposeExceptionHandlingAsyncMethodName = parentRange.DisposeExceptionHandlingAsyncMethodName;
     }
 
     public virtual void Build(PassedContext passedContext) =>
@@ -154,18 +147,10 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     protected virtual bool SuppressAsync => false;
     public string RangeFullName { get; }
-    public string DisposedPropertyReference { get; }
-
-    public string ResolutionCounterReference { get; }
     public IElementNode SubDisposalNode { get; }
     public IElementNode TransientScopeDisposalNode { get; }
     public bool IsSubDisposalAsParameter => SubDisposalNode is IParameterNode;
     public bool IsTransientScopeDisposalAsParameter => TransientScopeDisposalNode is IParameterNode;
-    public string DisposalCollectionReference { get; }
-    public string? ContainerReference { get; }
-    public string TransientScopeDisposalReference { get; }
-    public string DisposeExceptionHandlingMethodName { get; }
-    public string DisposeExceptionHandlingAsyncMethodName { get; }
 
     public IFunctionCallNode CreateCall(
         ITypeSymbol callSideType,

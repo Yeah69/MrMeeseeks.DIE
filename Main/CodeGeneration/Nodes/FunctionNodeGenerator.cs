@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Nodes.Functions;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -13,15 +14,21 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
 {
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly IFunctionNode _function;
+    private readonly IRangeNode _range;
+    private readonly IContainerNode _container;
     private readonly IReferenceGenerator _referenceGenerator;
 
     internal FunctionNodeGenerator(
         WellKnownTypes wellKnownTypes,
         IFunctionNode function, 
+        IRangeNode range,
+        IContainerNode container,
         IReferenceGenerator referenceGenerator)
     {
         _wellKnownTypes = wellKnownTypes;
         _function = function;
+        _range = range;
+        _container = container;
         _referenceGenerator = referenceGenerator;
     }
     
@@ -82,14 +89,14 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
         if (handlesDisposal)
         {
             ObjectDisposedCheck(
-                _function.DisposedPropertyReference, 
-                _function.RangeFullName, 
+                _range.DisposalHandling.DisposedPropertyReference,
+                _range.FullName, 
                 _function.ReturnedTypeFullName);
             code.AppendLine(
                 $$"""
                   try
                   {
-                  {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Increment)}}(ref {{_function.ResolutionCounterReference}});
+                  {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Increment)}}(ref {{_range.ResolutionCounterReference}});
                   """);
         }
         
@@ -120,23 +127,23 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
         
         if (handlesDisposal)
             ObjectDisposedCheck(
-                _function.DisposedPropertyReference, 
-                _function.RangeFullName, 
+                _range.DisposalHandling.DisposedPropertyReference, 
+                _range.FullName, 
                 _function.ReturnedTypeFullName);
 
         if (!_function.IsSubDisposalAsParameter)
         {
             code.AppendLine(
-                $"{_function.DisposalCollectionReference}.{nameof(List<List<object>>.Add)}({_function.SubDisposalNode.Reference});");
+                $"{_range.DisposalHandling.CollectionReference}.{nameof(List<List<object>>.Add)}({_function.SubDisposalNode.Reference});");
         }
 
         if (!_function.IsTransientScopeDisposalAsParameter)
         {
-            var containerReference = _function.ContainerReference is { } reference
+            var containerReference = _range.ContainerReference is { } reference
                 ? $"{reference}."
                 : "";
             code.AppendLine(
-                $"{containerReference}{_function.TransientScopeDisposalReference}.{nameof(List<object>.AddRange)}({_function.TransientScopeDisposalNode.Reference});");
+                $"{containerReference}{_container.TransientScopeDisposalReference}.{nameof(List<object>.AddRange)}({_function.TransientScopeDisposalNode.Reference});");
         }
         
 
@@ -171,8 +178,8 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                 : $"exception, {_function.SubDisposalNode.Reference}";
             
             var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
-                ? $"throw await {_function.DisposeExceptionHandlingAsyncMethodName}({parameters});"
-                : $"throw {_function.DisposeExceptionHandlingMethodName}({parameters});";
+                ? $"throw await {_range.DisposeExceptionHandlingAsyncMethodName}({parameters});"
+                : $"throw {_range.DisposeExceptionHandlingMethodName}({parameters});";
     
             code.AppendLine(
                 $$"""
@@ -183,7 +190,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                   }
                   finally
                   {
-                  {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Decrement)}}(ref {{_function.ResolutionCounterReference}});
+                  {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Decrement)}}(ref {{_range.ResolutionCounterReference}});
                   }
                   """);
         }

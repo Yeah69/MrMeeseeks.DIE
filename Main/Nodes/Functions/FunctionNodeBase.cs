@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.CodeGeneration.Nodes;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -11,6 +12,7 @@ namespace MrMeeseeks.DIE.Nodes.Functions;
 internal abstract class FunctionNodeBase : IFunctionNode
 {
     private readonly IContainerNode _parentContainer;
+    private readonly Lazy<IFunctionNodeGenerator> _functionNodeGenerator;
     private readonly Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> _plainFunctionCallNodeFactory;
     private readonly Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> _asyncFunctionCallNodeFactory;
     private readonly Func<ScopeCallNode.Params, IScopeCallNode> _scopeCallNodeFactory;
@@ -37,6 +39,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         IRangeNode parentRange,
         ISubDisposalNodeChooser subDisposalNodeChooser,
         ITransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -45,6 +48,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         WellKnownTypes wellKnownTypes)
     {
         _parentContainer = parentContainer;
+        _functionNodeGenerator = functionNodeGenerator;
         _plainFunctionCallNodeFactory = plainFunctionCallNodeFactory;
         _asyncFunctionCallNodeFactory = asyncFunctionCallNodeFactory;
         _scopeCallNodeFactory = scopeCallNodeFactory;
@@ -283,6 +287,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     public void AddReusedNode(ITypeSymbol type, IReusedNode reusedNode) => 
         _reusedNodes[type] = reusedNode;
+
+    public INodeGenerator GetGenerator() => _functionNodeGenerator.Value;
 
     public void AddLocalFunction(ILocalFunctionNode function) =>
         _localFunctions.Add(function);

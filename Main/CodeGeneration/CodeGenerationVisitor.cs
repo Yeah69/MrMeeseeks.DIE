@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
+﻿using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -21,21 +19,19 @@ internal interface ICodeGenerationVisitor : INodeVisitor
 {
     string GenerateContainerFile();
     void VisitICreateFunctionNodeBase(ICreateFunctionNodeBase element);
+    void VisitIElementNode(IElementNode elementNode);
 }
 
 internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 {
-    private readonly IReferenceGenerator _referenceGenerator;
     private readonly StringBuilder _code = new();
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     internal CodeGenerationVisitor(
         WellKnownTypes wellKnownTypes,
-        WellKnownTypesCollections wellKnownTypesCollections,
-        IReferenceGenerator referenceGenerator)
+        WellKnownTypesCollections wellKnownTypesCollections)
     {
-        _referenceGenerator = referenceGenerator;
         _wellKnownTypes = wellKnownTypes;
         _wellKnownTypesCollections = wellKnownTypesCollections;
     }
@@ -155,106 +151,14 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         }
     }
 
-    private void VisitISingleFunctionNode(ISingleFunctionNode singleFunction)
-    {
-        _code.AppendLine(
-            $$"""
-              {{GenerateMethodDeclaration(singleFunction)}}
-              {
-              """);
-        
-        VisitIElementNode(singleFunction.TransientScopeDisposalNode);
-        VisitIElementNode(singleFunction.SubDisposalNode);
-        
-        var handlesDisposal = 
-            !singleFunction.IsSubDisposalAsParameter || !singleFunction.IsTransientScopeDisposalAsParameter;
-
-        if (handlesDisposal)
-        {
-            ObjectDisposedCheck(
-                singleFunction.DisposedPropertyReference, 
-                singleFunction.RangeFullName, 
-                singleFunction.ReturnedTypeFullName);
-            _code.AppendLine(
-                $$"""
-                  try
-                  {
-                  {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Increment)}}(ref {{singleFunction.ResolutionCounterReference}});
-                  """);
-        }
-        
-        VisitIElementNode(singleFunction.ReturnedElement);
-        
-        if (handlesDisposal)
-            ObjectDisposedCheck(
-                singleFunction.DisposedPropertyReference, 
-                singleFunction.RangeFullName, 
-                singleFunction.ReturnedTypeFullName);
-
-        if (!singleFunction.IsSubDisposalAsParameter)
-        {
-            _code.AppendLine(
-                $"{singleFunction.DisposalCollectionReference}.{nameof(List<List<object>>.Add)}({singleFunction.SubDisposalNode.Reference});");
-        }
-
-        if (!singleFunction.IsTransientScopeDisposalAsParameter)
-        {
-            var containerReference = singleFunction.ContainerReference is { } reference
-                ? $"{reference}."
-                : "";
-            _code.AppendLine(
-                $"{containerReference}{singleFunction.TransientScopeDisposalReference}.{nameof(List<object>.AddRange)}({singleFunction.TransientScopeDisposalNode.Reference});");
-        }
-        
-        _code.AppendLine($"return {singleFunction.ReturnedElement.Reference};");
-        
-        if (handlesDisposal)
-        {
-            var isAsync = singleFunction.SynchronicityDecision
-                    is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
-            
-            var parameters = !singleFunction.IsTransientScopeDisposalAsParameter
-                ? $"exception, {singleFunction.SubDisposalNode.Reference}, {singleFunction.TransientScopeDisposalNode.Reference}"
-                : $"exception, {singleFunction.SubDisposalNode.Reference}";
-            
-            var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
-                ? $"throw await {singleFunction.DisposeExceptionHandlingAsyncMethodName}({parameters});"
-                : $"throw {singleFunction.DisposeExceptionHandlingMethodName}({parameters});";
-    
-            _code.AppendLine(
-                $$"""
-                  }
-                  catch({{_wellKnownTypes.Exception.FullName()}} exception)
-                  {
-                  {{throwLine}}
-                  }
-                  finally
-                  {
-                  {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Decrement)}}(ref {{singleFunction.ResolutionCounterReference}});
-                  }
-                  """);
-        }
-            
-        foreach (var localFunction in singleFunction.LocalFunctions)
-            VisitILocalFunctionNode(localFunction);
-        
-        _code.AppendLine("}");
-        return;
-
-        void ObjectDisposedCheck(
-            string disposedPropertyReference,
-            string rangeFullName,
-            string returnTypeFullName) => _code.AppendLine(
-            $"if ({disposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(\"{rangeFullName}\", $\"[DIE] This scope \\\"{rangeFullName}\\\" is already disposed, so it can't create a \\\"{returnTypeFullName}\\\" instance anymore.\");");
-    }
-
-    public void VisitICreateFunctionNode(ICreateFunctionNode createFunction) => VisitISingleFunctionNode(createFunction);
-    public void VisitIEntryFunctionNode(IEntryFunctionNode entryFunction) => VisitISingleFunctionNode(entryFunction);
-    public void VisitILocalFunctionNode(ILocalFunctionNode localFunction) => VisitISingleFunctionNode(localFunction);
-    public void VisitIRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode)
-    {
-        // Nothing to do here. It's generated in "VisitRangedInstanceFunctionGroupNode"
-    }
+    public void VisitICreateFunctionNode(ICreateFunctionNode createFunction) => 
+        createFunction.GetGenerator().Generate(_code, this);
+    public void VisitIEntryFunctionNode(IEntryFunctionNode entryFunction) => 
+        entryFunction.GetGenerator().Generate(_code, this);
+    public void VisitILocalFunctionNode(ILocalFunctionNode localFunction) => 
+        localFunction.GetGenerator().Generate(_code, this);
+    public void VisitIRangedInstanceFunctionNode(IRangedInstanceFunctionNode rangedInstanceFunctionNode) => 
+        rangedInstanceFunctionNode.GetGenerator().Generate(_code, this);
 
     public void VisitIRangedInstanceInterfaceFunctionNode(IRangedInstanceInterfaceFunctionNode rangedInstanceInterfaceFunctionNode)
     {
@@ -275,154 +179,27 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     public void VisitIRangedInstanceFunctionGroupNode(IRangedInstanceFunctionGroupNode rangedInstanceFunctionGroupNode)
     {
         if (rangedInstanceFunctionGroupNode.IsOpenGeneric)
-            Generic();
-        else if (rangedInstanceFunctionGroupNode.IsCreatedForStructs is null)
-            RefLike();
-        else
-            Struct();
-
-        void Generic()
-        {
             _code.AppendLine(
                 $"private {_wellKnownTypes.SemaphoreSlim.FullName()} {rangedInstanceFunctionGroupNode.LockReference} = new {_wellKnownTypes.SemaphoreSlim.FullName()}(1);");
-            var typeHandleField = _referenceGenerator.Generate("typeHandle");
-
-            foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
-            {
-                _code.AppendLine(GenerateMethodDeclaration(overload));
-                
-                var instance0 = _referenceGenerator.Generate("instance");
-                var instance1 = _referenceGenerator.Generate("instance");
-                var instance2 = _referenceGenerator.Generate("instance");
-                var instance3 = _referenceGenerator.Generate("instance");
-                
-                var isAsync =
-                    overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
-                _code.AppendLine(
-                    $$"""
-                      {
-                      var {{typeHandleField}} = typeof({{overload.ReturnedElement.TypeFullName}}).TypeHandle;
-                      if ({{rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance0}}) && {{instance0}} is {{overload.ReturnedElement.TypeFullName}} {{instance1}}) return {{instance1}};
-                      {{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
-                      try
-                      {
-                      if ({{rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance2}}) && {{instance2}} is {{overload.ReturnedElement.TypeFullName}} {{instance3}}) return {{instance3}};
-                      """);
-                
-                VisitIElementNode(overload.ReturnedElement);
-
-                _code.AppendLine(
-                    $$"""
-                      {{rangedInstanceFunctionGroupNode.RangedInstanceStorageFieldName}}[{{typeHandleField}}] = {{overload.ReturnedElement.Reference}};
-                      return {{overload.ReturnedElement.Reference}};
-                      }
-                      finally
-                      {
-                      {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}.Release();
-                      }
-                      """);
-                foreach (var localFunction in overload.LocalFunctions)
-                    VisitILocalFunctionNode(localFunction);
-                _code.AppendLine("}");
-            }
-        }
-
-        void RefLike()
-        {
+        else if (rangedInstanceFunctionGroupNode.IsCreatedForStructs is null)
             _code.AppendLine(
                 $$"""
                   private {{rangedInstanceFunctionGroupNode.TypeFullName}}? {{rangedInstanceFunctionGroupNode.FieldReference}};
                   private {{_wellKnownTypes.SemaphoreSlim.FullName()}}? {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
                   """);
-
-            foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
-            {
-                _code.AppendLine(GenerateMethodDeclaration(overload));
-
-                var checkAndReturnAlreadyCreatedInstance = $"if (!{_wellKnownTypes.Object.FullName()}.ReferenceEquals({rangedInstanceFunctionGroupNode.FieldReference}, null)) return {rangedInstanceFunctionGroupNode.FieldReference};";
-                
-                var waitLine = overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
-                    ? $"await ({Constants.ThisKeyword}.{rangedInstanceFunctionGroupNode.LockReference}?.WaitAsync() ?? {_wellKnownTypes.Task.FullName()}.{nameof(Task.CompletedTask)});"
-                    : $"{Constants.ThisKeyword}.{rangedInstanceFunctionGroupNode.LockReference}?.Wait();";
-                
-                _code.AppendLine(
-                    $$"""
-                      {
-                      {{checkAndReturnAlreadyCreatedInstance}}
-                      {{waitLine}}
-                      try
-                      {
-                      {{checkAndReturnAlreadyCreatedInstance}}
-                      """);
-                
-                VisitIElementNode(overload.ReturnedElement);
-
-                _code.AppendLine(
-                    $$"""
-                      {{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
-                      }
-                      finally
-                      {
-                      {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}?.Release();
-                      }
-                      {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}} = null;
-                      return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReference}};
-                      """);
-                
-                foreach (var localFunction in overload.LocalFunctions)
-                    VisitILocalFunctionNode(localFunction);
-                _code.AppendLine("}");
-            }
-        }
-
-        void Struct()
+        else
+            _code.AppendLine(
+                $$"""
+                  private {{rangedInstanceFunctionGroupNode.TypeFullName}} {{rangedInstanceFunctionGroupNode.FieldReference}};
+                  private {{_wellKnownTypes.SemaphoreSlim.FullName()}}? {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
+                  private bool {{rangedInstanceFunctionGroupNode.IsCreatedForStructs}};
+                  """);
+        
+        foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
         {
-            _code.AppendLine($$"""
-                private {{rangedInstanceFunctionGroupNode.TypeFullName}} {{rangedInstanceFunctionGroupNode.FieldReference}};
-                private {{_wellKnownTypes.SemaphoreSlim.FullName()}}? {{rangedInstanceFunctionGroupNode.LockReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
-                """);
-
-            _code.AppendLine($"private bool {rangedInstanceFunctionGroupNode.IsCreatedForStructs};");
-
-            foreach (var overload in rangedInstanceFunctionGroupNode.Overloads)
-            {
-                _code.AppendLine(GenerateMethodDeclaration(overload));
-
-                var checkAndReturnAlreadyCreatedInstance = $"if ({rangedInstanceFunctionGroupNode.IsCreatedForStructs}) return {rangedInstanceFunctionGroupNode.FieldReference};";
-                
-                var waitLine = overload.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask
-                    ? $"await ({Constants.ThisKeyword}.{rangedInstanceFunctionGroupNode.LockReference}?.WaitAsync() ?? {_wellKnownTypes.Task.FullName()}.{nameof(Task.CompletedTask)});"
-                    : $"{Constants.ThisKeyword}.{rangedInstanceFunctionGroupNode.LockReference}?.Wait();";
-
-                _code.AppendLine(
-                    $$"""
-                      {
-                      {{checkAndReturnAlreadyCreatedInstance}}
-                      {{waitLine}}
-                      try
-                      {
-                      {{checkAndReturnAlreadyCreatedInstance}}
-                      """);
-                
-                VisitIElementNode(overload.ReturnedElement);
-
-                _code.AppendLine(
-                    $$"""
-                      {{rangedInstanceFunctionGroupNode.FieldReference}} = {{overload.ReturnedElement.Reference}};
-                      {{rangedInstanceFunctionGroupNode.IsCreatedForStructs}} = true;
-                      }
-                      finally
-                      {
-                      {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}}?.Release();
-                      }
-                      {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.LockReference}} = null;
-                      return {{Constants.ThisKeyword}}.{{rangedInstanceFunctionGroupNode.FieldReference}};
-                      """);
-            
-                foreach (var localFunction in overload.LocalFunctions)
-                    VisitILocalFunctionNode(localFunction);
-                _code.AppendLine("}");
-            }
+            overload.Group = rangedInstanceFunctionGroupNode;
+            VisitIRangedInstanceFunctionNode(overload);
+            overload.Group = null;
         }
     }
 
@@ -439,7 +216,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             .AppendIf(
                 $"{functionCallNode.SubDisposalParameter?.Called.Reference}: {functionCallNode.SubDisposalParameter?.Calling.Reference}",
                 functionCallNode.SubDisposalParameter is not null)
-            .Append($"{functionCallNode.TransientScopeDisposalParameter.Called.Reference}: {functionCallNode.TransientScopeDisposalParameter.Calling.Reference}"));
+            .AppendIf(
+                $"{functionCallNode.TransientScopeDisposalParameter?.Called.Reference}: {functionCallNode.TransientScopeDisposalParameter?.Calling.Reference}",
+                functionCallNode.TransientScopeDisposalParameter is not null));
         var typeParameters = functionCallNode.TypeParameters.Any()
             ? $"<{string.Join(", ", functionCallNode.TypeParameters.Select(p => p.Name))}>"
             : "";
@@ -467,7 +246,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             .AppendIf(
                 $"{functionCallNode.SubDisposalParameter?.Called.Reference}: {functionCallNode.SubDisposalParameter?.Calling.Reference}",
                 functionCallNode.SubDisposalParameter is not null)
-            .Append($"{functionCallNode.TransientScopeDisposalParameter.Called.Reference}: {functionCallNode.TransientScopeDisposalParameter.Calling.Reference}"));
+            .AppendIf(
+                $"{functionCallNode.TransientScopeDisposalParameter?.Called.Reference}: {functionCallNode.TransientScopeDisposalParameter?.Calling.Reference}",
+                functionCallNode.TransientScopeDisposalParameter is not null));
         var typeParameters = functionCallNode.TypeParameters.Any()
             ? $"<{string.Join(", ", functionCallNode.TypeParameters.Select(p => p.Name))}>"
             : "";
@@ -477,7 +258,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     }
 
     public void VisitICreateScopeFunctionNode(ICreateScopeFunctionNode element) => 
-        VisitISingleFunctionNode(element);
+        element.GetGenerator().Generate(_code, this);
 
     public void VisitIPlainFunctionCallNode(IPlainFunctionCallNode plainFunctionCallNode) => VisitIFunctionCallNode(plainFunctionCallNode);
 
@@ -508,7 +289,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     }
 
     public void VisitICreateTransientScopeFunctionNode(ICreateTransientScopeFunctionNode element) =>
-        VisitISingleFunctionNode(element);
+        element.GetGenerator().Generate(_code, this);
 
     public void VisitIFuncNode(IFuncNode funcNode) =>
         _code.AppendLine($"{funcNode.TypeFullName} {funcNode.Reference} = {funcNode.MethodGroup};");
@@ -712,31 +493,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         $"{nullNode.TypeFullName} {nullNode.Reference} = ({nullNode.TypeFullName}) null;");
 
     public void VisitIMultiFunctionNode(IMultiFunctionNode multiFunctionNode) =>
-        VisitIMultiFunctionNodeBase(multiFunctionNode);
-
-    private void VisitIMultiFunctionNodeBase(IMultiFunctionNodeBase multiFunctionNodeBase)
-    {
-        _code.AppendLine($$"""
-            {{GenerateMethodDeclaration(multiFunctionNodeBase)}}
-            {
-            """);
-        
-        foreach (var returnedElement in multiFunctionNodeBase.ReturnedElements)
-        {
-            VisitIElementNode(returnedElement);
-            if (multiFunctionNodeBase.SynchronicityDecision == SynchronicityDecision.Sync)
-                _code.AppendLine($"yield return {returnedElement.Reference};");
-        }
-            
-        foreach (var localFunction in multiFunctionNodeBase.LocalFunctions)
-            VisitILocalFunctionNode(localFunction);
-        
-        _code.AppendLine(multiFunctionNodeBase.SynchronicityDecision == SynchronicityDecision.Sync
-            ? "yield break;"
-            : $"return new {multiFunctionNodeBase.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNodeBase.ReturnedElements.Select(re => re.Reference))} }};");
-        
-        _code.AppendLine("}");
-    }
+        multiFunctionNode.GetGenerator().Generate(_code, this);
 
     public void VisitIEnumerableBasedNode(IEnumerableBasedNode enumerableBasedNode)
     {
@@ -816,79 +573,14 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         _code.AppendLine($"private {initializedInstanceNode.TypeFullName} {initializedInstanceNode.Reference} = {initialValue};");
     }
 
-    public void VisitIVoidFunctionNode(IVoidFunctionNode voidFunctionNode)
-    {
-        _code.AppendLine($$"""
-            {{GenerateMethodDeclaration(voidFunctionNode)}}
-            {
-            """);
-        
-        VisitIElementNode(voidFunctionNode.SubDisposalNode);
-        VisitIElementNode(voidFunctionNode.TransientScopeDisposalNode);
-        
-        _code.AppendLine(
-            $$"""
-              try
-              {
-              {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Increment)}}(ref {{voidFunctionNode.ResolutionCounterReference}});
-              """);
-        
-        foreach (var (functionCallNode, initializedInstanceNode) in voidFunctionNode.Initializations)
-        {
-            VisitIElementNode(functionCallNode);
-            _code.AppendLine($"{initializedInstanceNode.Reference} = {functionCallNode.Reference};");
-        }
-
-        if (!voidFunctionNode.IsSubDisposalAsParameter)
-        {
-            _code.AppendLine(
-                $"{voidFunctionNode.DisposalCollectionReference}.{nameof(List<List<object>>.Add)}({voidFunctionNode.SubDisposalNode.Reference});");
-        }
-
-        if (!voidFunctionNode.IsTransientScopeDisposalAsParameter)
-        {
-            var containerReference = voidFunctionNode.ContainerReference is { } reference
-                ? $"{reference}."
-                : "";
-            _code.AppendLine(
-                $"{containerReference}{voidFunctionNode.TransientScopeDisposalReference}.{nameof(List<object>.AddRange)}({voidFunctionNode.TransientScopeDisposalNode.Reference});");
-        }
-        
-        var isAsync = voidFunctionNode.SynchronicityDecision
-            is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
-        
-        var parameters = !voidFunctionNode.IsTransientScopeDisposalAsParameter
-            ? $"exception, {voidFunctionNode.SubDisposalNode.Reference}, {voidFunctionNode.TransientScopeDisposalNode.Reference}"
-            : $"exception, {voidFunctionNode.SubDisposalNode.Reference}";
-        
-        var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
-            ? $"throw await {voidFunctionNode.DisposeExceptionHandlingAsyncMethodName}({parameters});"
-            : $"throw {voidFunctionNode.DisposeExceptionHandlingMethodName}({parameters});";
-
-        _code.AppendLine(
-            $$"""
-              }
-              catch({{_wellKnownTypes.Exception.FullName()}} exception)
-              {
-              {{throwLine}}
-              }
-              finally
-              {
-              {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Decrement)}}(ref {{voidFunctionNode.ResolutionCounterReference}});
-              }
-              """);
-            
-        foreach (var localFunction in voidFunctionNode.LocalFunctions)
-            VisitILocalFunctionNode(localFunction);
-        
-        _code.AppendLine("}");
-    }
+    public void VisitIVoidFunctionNode(IVoidFunctionNode voidFunctionNode) =>
+        voidFunctionNode.GetGenerator().Generate(_code, this);
 
     public void VisitIMultiKeyValueFunctionNode(IMultiKeyValueFunctionNode multiKeyValueFunctionNode) =>
-        VisitIMultiFunctionNodeBase(multiKeyValueFunctionNode);
+        multiKeyValueFunctionNode.GetGenerator().Generate(_code, this);
 
     public void VisitIMultiKeyValueMultiFunctionNode(IMultiKeyValueMultiFunctionNode multiKeyValueMultiFunctionNode) =>
-        VisitIMultiFunctionNodeBase(multiKeyValueMultiFunctionNode);
+        multiKeyValueMultiFunctionNode.GetGenerator().Generate(_code, this);
 
     public void VisitIKeyValueBasedNode(IKeyValueBasedNode keyValueBasedNode)
     {
@@ -937,65 +629,12 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             $"{keyValuePairNode.TypeFullName} {keyValuePairNode.Reference} = new {keyValuePairNode.TypeFullName}({keyLiteral}, {keyValuePairNode.Value.Reference});");
     }
 
-    private readonly HashSet<IReusedNode> _doneReusedNodes = new();
+    private readonly HashSet<IReusedNode> _doneReusedNodes = [];
     public void VisitIReusedNode(IReusedNode reusedNode)
     {
-        if (_doneReusedNodes.Contains(reusedNode)) return;
-        _doneReusedNodes.Add(reusedNode);
+        if (!_doneReusedNodes.Add(reusedNode)) return;
         VisitIElementNode(reusedNode.Inner);
     }
 
     public string GenerateContainerFile() => _code.ToString();
-
-    private static string GenerateMethodDeclaration(IFunctionNode functionNode)
-    {
-        var accessibility = functionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
-            ? $"{SyntaxFacts.GetText(acc)} "  
-            : "";
-        var asyncModifier = 
-            functionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask 
-            || functionNode is IMultiFunctionNodeBase { IsAsyncEnumerable: true } 
-            ? "async "
-            : "";
-        var explicitInterfaceFullName = functionNode.ExplicitInterfaceFullName is { } interfaceName
-            ? $"{interfaceName}."
-            : "";
-        var typeParameters = "";
-        var typeParametersConstraints = "";
-        if (functionNode is IReturningFunctionNode returningFunctionNode && returningFunctionNode.TypeParameters.Any())
-        {
-            typeParameters = $"<{string.Join(", ", returningFunctionNode.TypeParameters.Select(p => p.Name))}>";
-            typeParametersConstraints = string.Join("", returningFunctionNode
-                .TypeParameters
-                .Where(p => p.HasValueTypeConstraint 
-                            || p.HasReferenceTypeConstraint
-                            || p.HasNotNullConstraint 
-                            || p.HasUnmanagedTypeConstraint
-                            || p.HasConstructorConstraint
-                            || p.ConstraintTypes.Length > 0)
-                .Select(p =>
-                {
-                    var constraints = new List<string>();
-                    if (p.HasUnmanagedTypeConstraint)
-                        constraints.Add("unmanaged");
-                    else if (p.HasValueTypeConstraint)
-                        constraints.Add("struct");
-                    else if (p.HasReferenceTypeConstraint)
-                        constraints.Add($"class{(p.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "?" : "")}");
-                    if (p.HasNotNullConstraint)
-                        constraints.Add("notnull");
-                    constraints.AddRange(p.ConstraintTypes.Select((t, i) => t.WithNullableAnnotation(p.ConstraintNullableAnnotations[i]).FullName()));
-                    if (p.HasConstructorConstraint)
-                        constraints.Add("new()");
-                    return $"{Environment.NewLine}where {p.Name} : {string.Join(", ", constraints)}";
-                }));
-        }
-        
-        var parameters = string.Join(",", functionNode
-            .Parameters
-            .Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}")
-            .AppendIf($"{functionNode.SubDisposalNode.TypeFullName} {functionNode.SubDisposalNode.Reference}", functionNode.IsSubDisposalAsParameter)
-            .AppendIf($"{functionNode.TransientScopeDisposalNode.TypeFullName} {functionNode.TransientScopeDisposalNode.Reference}", functionNode.IsTransientScopeDisposalAsParameter));
-        return $"{accessibility}{asyncModifier}{functionNode.ReturnedTypeFullName} {explicitInterfaceFullName}{functionNode.Name}{typeParameters}({parameters}){typeParametersConstraints}";
-    }
 }

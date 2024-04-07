@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.CodeGeneration.Nodes;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -79,4 +80,5 @@ internal interface IFunctionNode : INode
 
     bool TryGetReusedNode(ITypeSymbol type, out IReusedNode? reusedNode);
     void AddReusedNode(ITypeSymbol type, IReusedNode reusedNode);
+    INodeGenerator GetGenerator();
 }

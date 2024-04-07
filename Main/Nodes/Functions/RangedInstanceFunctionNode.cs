@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.CodeGeneration.Nodes;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Mappers;
 using MrMeeseeks.DIE.MsContainer;
@@ -9,7 +10,10 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface IRangedInstanceFunctionNode : ISingleFunctionNode;
+internal interface IRangedInstanceFunctionNode : ISingleFunctionNode
+{
+    IRangedInstanceFunctionGroupNode? Group { get; set; }
+}
 
 internal interface IRangedInstanceFunctionNodeInitializer
 {
@@ -34,8 +38,9 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
         IRangeNode parentRange,
         IContainerNode parentContainer, 
         IReferenceGenerator referenceGenerator, 
-        IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
-        IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
+        IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
@@ -53,6 +58,7 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
@@ -86,4 +92,6 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
         Name = name;
         ExplicitInterfaceFullName = explicitInterfaceFullName;
     }
+
+    public IRangedInstanceFunctionGroupNode? Group { get; set; }
 }

@@ -17,6 +17,6 @@ public sealed class Tests
     {
         using var container = Container.DIE_CreateContainer();
         var lazy = container.Create();
-        var _ = lazy.Value;
+        _ = lazy.Value;
     }
 }

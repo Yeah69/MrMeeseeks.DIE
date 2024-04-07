@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.CodeGeneration.Nodes;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
@@ -27,8 +28,9 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
         IContainerNode parentContainer,
         IRangeNode parentRange,
         IReferenceGenerator referenceGenerator, 
-        IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
-        IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
+        IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
@@ -45,6 +47,7 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
             parentRange, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,

@@ -58,7 +58,9 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
         SubDisposalParameter = !calledFunction.IsSubDisposalAsParameter
             ? null 
             : (parameters.CallingSubDisposal, calledFunction.SubDisposalNode);
-        TransientScopeDisposalParameter = (parameters.CallingTransientScopeDisposal, calledFunction.TransientScopeDisposalNode);
+        TransientScopeDisposalParameter = !calledFunction.IsTransientScopeDisposalAsParameter
+            ? null
+            : (parameters.CallingTransientScopeDisposal, calledFunction.TransientScopeDisposalNode);
     }
 
     public void Build(PassedContext passedContext) { }
@@ -86,7 +88,7 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
     public string FunctionName { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
     public (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
-    public (IElementNode Calling, IElementNode Called) TransientScopeDisposalParameter { get; }
+    public (IElementNode Calling, IElementNode Called)? TransientScopeDisposalParameter { get; }
     public IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     public IFunctionNode CalledFunction => _calledFunction;
     public bool Awaited => false; // never awaited, because it's a wrapped async function call

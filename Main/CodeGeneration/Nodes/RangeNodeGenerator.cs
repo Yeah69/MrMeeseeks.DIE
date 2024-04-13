@@ -1,5 +1,4 @@
 using System.Threading;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -14,20 +13,20 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
 {
     private readonly IRangeNode _rangeNode;
     private readonly IContainerNode _containerNode;
-    private readonly ISingularDisposeFunctionUtility _singularDisposeFunctionUtility;
+    private readonly IDisposeUtility _disposeUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     protected RangeNodeGenerator(
         IRangeNode rangeNode,
         IContainerNode containerNode,
-        ISingularDisposeFunctionUtility singularDisposeFunctionUtility,
+        IDisposeUtility disposeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
     {
         _rangeNode = rangeNode;
         _containerNode = containerNode;
-        _singularDisposeFunctionUtility = singularDisposeFunctionUtility;
+        _disposeUtility = disposeUtility;
         _wellKnownTypes = wellKnownTypes;
         _wellKnownTypesCollections = wellKnownTypesCollections;
     }
@@ -52,7 +51,7 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
 
         code.AppendLine(
             $$"""
-              {{ClassDeclaredAccessibility}}sealed partial class {{_rangeNode.Name}} : {{InterfaceAssignment}}
+              {{ClassDeclaredAccessibility}}sealed partial class {{_rangeNode.Name}} : {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}, {{InterfaceAssignment}}
               {
               """);
         
@@ -157,344 +156,122 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
         StringBuilder code)
     {
         var disposalHandling = _rangeNode.DisposalHandling;
+
+        var disposalMap = _rangeNode.GetDisposalTypeToTypeFullNames();
+        var asyncDisposal = disposalMap.TryGetValue(DisposalType.Async, out var listAsync0) ? listAsync0 : [];
+        var syncDisposal = disposalMap.TryGetValue(DisposalType.Sync, out var listSync0) ? listSync0 : [];
+
+        var isAsyncClauseFunction = 
+            _wellKnownTypes.IAsyncDisposable is not null 
+            && _disposeUtility.DisposeSingularAsyncSyncedFullyQualified is not null
+            && _disposeUtility.DisposeSingularAsyncFullyQualified is not null;
         
+        switch (_rangeNode)
+        {
+            case IContainerNode container:
+                code.AppendLine(
+                    $"{_wellKnownTypes.Object.FullName()}[] {_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}.{_disposeUtility.DisposableRangeInterfaceData.TransientScopesPropertyName} => {_wellKnownTypesCollections.Enumerable}.{nameof(Enumerable.ToArray)}({container.TransientScopeDisposalReference});");
+                break;
+            default:
+                code.AppendLine(
+                    $"{_wellKnownTypes.Object.FullName()}[] {_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}.{_disposeUtility.DisposableRangeInterfaceData.TransientScopesPropertyName} => new {_wellKnownTypes.Object}[0];");
+                break;
+        }
+            
+        code.AppendLine(
+            $$"""
+              {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.DisposablesPropertyName}} => {{_rangeNode.DisposalHandling.CollectionReference}};
+              {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}} => {{_rangeNode.DisposalHandling.SyncCollectionReference}};
+              """);
+
+        if (_wellKnownTypes.IAsyncDisposable is not null)
+            code.AppendLine(
+                $$"""
+                  {{_wellKnownTypes.ConcurrentBagOfAsyncDisposable?.FullName()}} {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName}} => {{_rangeNode.DisposalHandling.AsyncCollectionReference}};
+                  """);
+        
+        GenerateClauseFunction(_disposeUtility.DisposableRangeInterfaceData.SyncClauseFunctionName, syncDisposal, !isAsyncClauseFunction);
+        
+        if (isAsyncClauseFunction && _disposeUtility.DisposableRangeInterfaceData.AsyncClauseFunctionName is not null)
+            GenerateClauseFunction(_disposeUtility.DisposableRangeInterfaceData.AsyncClauseFunctionName, asyncDisposal, true);
+
+
         if (_wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null)
             code.AppendLine($"private {_wellKnownTypes.ConcurrentBagOfAsyncDisposable.FullName()} {disposalHandling.AsyncCollectionReference} = new {_wellKnownTypes.ConcurrentBagOfAsyncDisposable.FullName()}();");
 
-        code.AppendLine($$"""
-            private {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{disposalHandling.SyncCollectionReference}} = new {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}}();
-            private int {{disposalHandling.DisposedFieldReference}} = 0;
-            private bool {{disposalHandling.DisposedPropertyReference}} => {{disposalHandling.DisposedFieldReference}} != 0;
-            """);
-
         code.AppendLine(
             $$"""
-              public void {{nameof(IDisposable.Dispose)}}()
-              {
-                  var {{disposalHandling.DisposedLocalReference}} = {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Exchange)}}(ref {{disposalHandling.DisposedFieldReference}}, 1);
-                  if ({{disposalHandling.DisposedLocalReference}} != 0) return;
-                  {{_wellKnownTypes.SpinWait}}.{{nameof(SpinWait.SpinUntil)}}(() => {{_rangeNode.ResolutionCounterReference}} == 0);
-                  if ({{_singularDisposeFunctionUtility.AggregateExceptionRoutineFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
-                  return;
-                  
-                  {{_wellKnownTypes.IEnumerableOfException}} Inner()
-                  {
+              private {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{disposalHandling.SyncCollectionReference}} = new {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}}();
+              private int {{disposalHandling.DisposedFieldReference}} = 0;
+              private bool {{disposalHandling.DisposedPropertyReference}} => {{disposalHandling.DisposedFieldReference}} != 0;
               """);
-        
-            switch (_rangeNode)
-            {
-                case IContainerNode container:
-                    code.AppendLine(
-                        $$"""
-                          var temp = {{container.TransientScopeDisposalReference}}.ToArray();
-                          foreach (var transientScope in temp)
-                          {
-                          """);
-                    
-                    if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
-                        code.AppendLine(
-                            $$"""
-                              if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && {{_singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                              yield return exception;
-                              """);
-                    else
-                        code.AppendLine(
-                            $$"""
-                              if (transientScope is {{_wellKnownTypes.IDisposable.FullName()}} disposable && {{_singularDisposeFunctionUtility.DisposeFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                              yield return exception;
-                              """);
-                    
-                    code.AppendLine(
-                        $$"""
-                          }
-                          {{container.TransientScopeDisposalReference}}.Clear();
-                          """);
-                    break;
-                case ITransientScopeNode transientScope:
-                    code.AppendLine(
-                        $$"""
-                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.Remove)}}(this);
-                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.TrimExcess)}}();
-                          """);
-                    break;
-            }
 
-        
-        code.AppendLine(
-            $$"""
-                      for (var i = {{_rangeNode.DisposalHandling.CollectionReference}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
-                      {
-                          foreach (var exception in {{_rangeNode.DisposeChunkMethodName}}({{_rangeNode.DisposalHandling.CollectionReference}}[i]))
-                          {
-                              yield return exception;
-                          }
-                      }
-              """);
-        
-            if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
-            {
-                code.AppendLine(
-                    $$"""
-                      foreach (var disposable in {{_rangeNode.DisposalHandling.AsyncCollectionReference}})
-                      {
-                          if ({{_singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                          {
-                              yield return exception;
-                          }
-                      }
-                      """);
-            }
-            code.AppendLine(
-                $$"""
-                  
-                          foreach (var disposable in {{_rangeNode.DisposalHandling.SyncCollectionReference}})
-                          {
-                              if ({{_singularDisposeFunctionUtility.DisposeFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                              {
-                                  yield return exception;
-                              }
-                          }
-                      }
-                  }
-                  """);
+        GenerateDisposeFunction(false);
         
         if (_wellKnownTypes.ValueTask is not null
             && _wellKnownTypes.IAsyncDisposable is not null
             && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
-            && _wellKnownTypes.IAsyncEnumerableOfException is not null)
+            && _wellKnownTypes.IAsyncEnumerableOfException is not null
+            && _disposeUtility.DisposeChunkAsyncFullyQualified is not null)
         {
-            code.AppendLine(
-                $$"""
-                  public async {{_wellKnownTypes.ValueTask.FullName()}} {{Constants.IAsyncDisposableDisposeAsync}}()
-                  {
-                  var {{disposalHandling.DisposedLocalReference}} = {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Exchange)}}(ref {{disposalHandling.DisposedFieldReference}}, 1);
-                  if ({{disposalHandling.DisposedLocalReference}} != 0) return;
-                  {{_wellKnownTypes.SpinWait}}.{{nameof(SpinWait.SpinUntil)}}(() => {{_rangeNode.ResolutionCounterReference}} == 0);
-                  if (await {{_singularDisposeFunctionUtility.AggregateExceptionRoutineAsyncFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
-                  return;
-
-                  async {{_wellKnownTypes.IAsyncEnumerableOfException}} Inner()
-                  {
-                  """);
-            
-            
-        
-            switch (_rangeNode)
-            {
-                case IContainerNode container:
-                    code.AppendLine(
-                        $$"""
-                          var temp = {{container.TransientScopeDisposalReference}}.ToArray();
-                          foreach (var transientScope in temp)
-                          {
-                          if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && await {{_singularDisposeFunctionUtility.DisposeAsyncFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                          yield return exception;
-                          }
-                          {{container.TransientScopeDisposalReference}}.Clear();
-                          """);
-                    break;
-                case ITransientScopeNode transientScope:
-                    code.AppendLine(
-                        $$"""
-                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.Remove)}}(this);
-                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.TrimExcess)}}();
-                          """);
-                    break;
-            }
-
-            code.AppendLine(
-                $$"""
-                            for (var i = {{_rangeNode.DisposalHandling.CollectionReference}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
-                            {
-                                await foreach (var exception in {{_rangeNode.DisposeChunkAsyncMethodName}}({{_rangeNode.DisposalHandling.CollectionReference}}[i]))
-                                {
-                                    yield return exception;
-                                }
-                            }
-                            foreach (var disposable in {{_rangeNode.DisposalHandling.AsyncCollectionReference}})
-                            {
-                                if ({{_singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                                {
-                                    yield return exception;
-                                }
-                            }
-                            foreach (var disposable in {{_rangeNode.DisposalHandling.SyncCollectionReference}})
-                            {
-                                if ({{_singularDisposeFunctionUtility.DisposeFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                                {
-                                    yield return exception;
-                                }
-                            }
-                        }
-                    }
-                  """);
+            GenerateDisposeFunction(true);
         }
-
-        var disposalMap = _rangeNode.GetDisposalTypeToTypeFullNames();
-        var asyncDisposal = disposalMap.TryGetValue(DisposalType.Async, out var listAsync) ? listAsync : [];
-        var syncDisposal = disposalMap.TryGetValue(DisposalType.Sync, out var listSync) ? listSync : [];
-        
-        GenerateDisposeExceptionHandling();
-        GenerateDisposeExceptionHandlingAsync();
-
-        GenerateDisposeChunk(isAsync: false);
-
-        if (_wellKnownTypes.ValueTask is not null
-            && _wellKnownTypes.IAsyncDisposable is not null
-            && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
-            && _wellKnownTypes.IAsyncEnumerableOfException is not null)
-        {
-            GenerateDisposeChunk(isAsync: true);
-        }
-        
- 
         
         return;
 
-        void GenerateDisposeExceptionHandling()
+        void GenerateDisposeFunction(bool isAsync)
         {
-            var transientScopeDisposableType = _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
-                ? _wellKnownTypes.IAsyncDisposable.FullName()
-                : _wellKnownTypes.IDisposable.FullName();
-            var transientScopeDisposeMethod = _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
-                ? _singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified
-                : _singularDisposeFunctionUtility.DisposeFullyQualified;
+            var returnTypeAndName = isAsync && _wellKnownTypes.ValueTask is not null
+                ? $"async {_wellKnownTypes.ValueTask.FullName()} {Constants.IAsyncDisposableDisposeAsync}"
+                : $"void {nameof(IDisposable.Dispose)}";
+            var awaitPrefix = isAsync ? "await " : "";
+            var utilityCallName = isAsync
+                ? _disposeUtility.DisposeAsyncFullyQualified
+                : _disposeUtility.DisposeFullyQualified;
             
             code.AppendLine(
                 $$"""
-                  private {{_wellKnownTypes.Exception.FullName()}} {{_rangeNode.DisposeExceptionHandlingMethodName}}({{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
+                  public {{returnTypeAndName}}()
                   {
-                      if ({{_singularDisposeFunctionUtility.AggregateExceptionRoutineFullyQualified}}(Inner()) is { } aggregateException)
-                          return aggregateException;
-                      else
-                          return exception;
-                          
-                      {{_wellKnownTypes.IEnumerableOfException}} Inner()
-                      {
-                         yield return exception;
-                         if (transientScopeDisposal is not null)
-                         {
-                             foreach (var transientScope in transientScopeDisposal)
-                             {
-                                if (transientScope is {{transientScopeDisposableType}} disposable && {{transientScopeDisposeMethod}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} transientException)
-                                {
-                                    yield return transientException;
-                                }
-                             }
-                         }
-                         foreach (var subException in {{_rangeNode.DisposeChunkMethodName}}(subDisposal))
-                         {
-                             yield return subException;
-                         }
-                      }
-                  }
+                      var {{disposalHandling.DisposedLocalReference}} = {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Exchange)}}(ref {{disposalHandling.DisposedFieldReference}}, 1);
+                      if ({{disposalHandling.DisposedLocalReference}} != 0) return;
+                      {{_wellKnownTypes.SpinWait}}.{{nameof(SpinWait.SpinUntil)}}(() => {{_rangeNode.ResolutionCounterReference}} == 0);
                   """);
-        }
 
-        void GenerateDisposeExceptionHandlingAsync()
-        {
-            if (_wellKnownTypes.ValueTask is null
-                || _wellKnownTypes.IAsyncDisposable is null
-                || _wellKnownTypesCollections.IAsyncEnumerable1 is null)
-                return;
-            
-            code.AppendLine(
-                $$"""
-                  private async {{_wellKnownTypes.TaskOfException.FullName()}} {{_rangeNode.DisposeExceptionHandlingAsyncMethodName}}({{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
-                  {
-                      if (await {{_singularDisposeFunctionUtility.AggregateExceptionRoutineAsyncFullyQualified}}(Inner()) is { } aggregateException && aggregateException.InnerExceptions.Count > 1)
-                          return aggregateException;
-                      else
-                          return exception;
-                      
-                      async {{_wellKnownTypes.IAsyncEnumerableOfException}} Inner()
-                      {
-                         yield return exception;
-                         if (transientScopeDisposal is not null)
-                         {
-                             foreach (var transientScope in transientScopeDisposal)
-                             {
-                                 if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} disposable && await {{_singularDisposeFunctionUtility.DisposeAsyncFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} transientException)
-                                 {
-                                     yield return transientException;
-                                 }
-                             }
-                         }
-                         await foreach (var subException in {{_rangeNode.DisposeChunkAsyncMethodName}}(subDisposal))
-                         {
-                             yield return subException;
-                         }
-                      }
-                  }
-                  """);
-        }
-
-        void GenerateDisposeChunk(bool isAsync)
-        {
-            var (asyncModifier, returnType, functionName, taskYieldLine, treatScopesAsync, asyncDisposableCall) = isAsync switch
+            switch (_rangeNode)
             {
-                true when _wellKnownTypes.IAsyncEnumerableOfException is not null => 
-                    ("async ", 
-                        _wellKnownTypes.IAsyncEnumerableOfException.FullName(), 
-                        _rangeNode.DisposeChunkAsyncMethodName,
-                        $"await {_wellKnownTypes.Task.FullName()}.{nameof(Task.Yield)}();",
-                        true,
-                        $"await {_singularDisposeFunctionUtility.DisposeAsyncFullyQualified}"),
-                false => 
-                    ("", 
-                        _wellKnownTypes.IEnumerableOfException.FullName(), 
-                        _rangeNode.DisposeChunkMethodName, 
-                        "",
-                        _wellKnownTypes.IAsyncDisposable is not null && _singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified is not null,
-                        _singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified ?? ""),
-                _ => throw new InvalidOperationException("DisposeChunkAsync shouldn't be generated if async types aren't available.")
-            };
-            
-            code.AppendLine(
-                $$"""
-                  private static {{asyncModifier}}{{returnType}} {{functionName}}({{_wellKnownTypes.ListOfObject.FullName()}} disposables)
-                  {
-                      {{taskYieldLine}}
-                      for (var i = disposables.{{nameof(List<object>.Count)}} - 1; i >= 0; i--)
-                      {
-                  """);
-            
-            if (asyncDisposal.Concat(syncDisposal).Any(t => t.IsUnboundGenericType))
-                code.AppendLine($"{_wellKnownTypes.Type.FullName()} genericTypeDefinition = disposables[i].{nameof(Type.GetType)}().{nameof(Type.GetGenericTypeDefinition)}();");
-            
-            if (_wellKnownTypes.IAsyncDisposable is not null
-                && _singularDisposeFunctionUtility.DisposeAsyncSyncedFullyQualified is not null
-                && _singularDisposeFunctionUtility.DisposeAsyncFullyQualified is not null)
-                IfClause(asyncDisposal, treatScopesAsync, _wellKnownTypes.IAsyncDisposable.FullName(), asyncDisposableCall);
-            
-            IfClause(syncDisposal, !treatScopesAsync, _wellKnownTypes.IDisposable.FullName(), _singularDisposeFunctionUtility.DisposeFullyQualified);
-
-            code.AppendLine(
-                """
-                    }
-                }
-                """);
-            return;
-
-            void IfClause(IReadOnlyList<INamedTypeSymbol> disposedTypes, bool includeScopes, string disposableType, string disposableCall)
-            {
-                var clause = string.Join(" || ", disposedTypes
-                    .Select(d => d.IsUnboundGenericType 
-                        ? $"genericTypeDefinition == typeof({d.FullName()})" 
-                        : $"disposables[i] is {d.FullName()}")
-                    .AppendIf($"disposables[i] is {_containerNode.ScopeInterface}", includeScopes));
-                if (!string.IsNullOrWhiteSpace(clause))
+                case ITransientScopeNode transientScope:
                     code.AppendLine(
                         $$"""
-                          if ({{clause}})
-                          {
-                              if (disposables[i] is {{disposableType}} disposable && {{disposableCall}}(disposable) is {{_wellKnownTypes.Exception}} exception)
-                              {
-                                  yield return exception;
-                              }
-                          }
+                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.Remove)}}(this);
+                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.TrimExcess)}}();
                           """);
+                    break;
             }
+        
+            code.AppendLine(
+                $$"""
+                      {{awaitPrefix}}{{utilityCallName}}(({{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}) {{Constants.ThisKeyword}});
+                  }
+                  """);
+        }
+
+        void GenerateClauseFunction(string clauseFunctionName, IReadOnlyList<INamedTypeSymbol> disposables, bool includeScopes)
+        {
+            var clause = string.Join(" || ", disposables
+                .Select(d => d.IsUnboundGenericType 
+                    ? $"genericTypeDefinition == typeof({d.FullName()})" 
+                    : $"disposable is {d.FullName()}")
+                .AppendIf($"disposable is {_containerNode.ScopeInterface}", includeScopes));
+
+            code.AppendLine(
+                $$"""
+                  bool {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{clauseFunctionName}}({{_wellKnownTypes.Object.FullName()}} disposable)
+                  {
+                      var genericTypeDefinition = disposable.GetType().IsGenericType ? disposable.GetType().GetGenericTypeDefinition() : null;
+                      return {{(string.IsNullOrWhiteSpace(clause) ? "false" : clause)}};
+                  }
+                  """);
         }
     }
     

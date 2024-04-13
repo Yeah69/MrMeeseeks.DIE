@@ -12,13 +12,13 @@ internal sealed class ContainerNodeGenerator : RangeNodeGenerator, IContainerNod
 
     internal ContainerNodeGenerator(
         IContainerNode containerNode,
-        ISingularDisposeFunctionUtility singularDisposeFunctionUtility,
+        IDisposeUtility disposeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections) 
         : base(
             containerNode,
             containerNode,
-            singularDisposeFunctionUtility,
+            disposeUtility,
             wellKnownTypes,
             wellKnownTypesCollections)
     {

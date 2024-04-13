@@ -16,6 +16,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
     private readonly IFunctionNode _function;
     private readonly IRangeNode _range;
     private readonly IContainerNode _container;
+    private readonly IDisposeUtility _disposeUtility;
     private readonly IReferenceGenerator _referenceGenerator;
 
     internal FunctionNodeGenerator(
@@ -23,12 +24,14 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
         IFunctionNode function, 
         IRangeNode range,
         IContainerNode container,
+        IDisposeUtility disposeUtility,
         IReferenceGenerator referenceGenerator)
     {
         _wellKnownTypes = wellKnownTypes;
         _function = function;
         _range = range;
         _container = container;
+        _disposeUtility = disposeUtility;
         _referenceGenerator = referenceGenerator;
     }
     
@@ -178,8 +181,8 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                 : $"exception, {_function.SubDisposalNode.Reference}";
             
             var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
-                ? $"throw await {_range.DisposeExceptionHandlingAsyncMethodName}({parameters});"
-                : $"throw {_range.DisposeExceptionHandlingMethodName}({parameters});";
+                ? $"throw await {_disposeUtility.DisposeExceptionHandlingAsyncFullyQualified}(({_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}) {Constants.ThisKeyword}, {parameters});"
+                : $"throw {_disposeUtility.DisposeExceptionHandlingFullyQualified}(({_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}) {Constants.ThisKeyword}, {parameters});";
     
             code.AppendLine(
                 $$"""

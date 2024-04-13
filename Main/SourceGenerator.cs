@@ -18,17 +18,19 @@ public class SourceGenerator : ISourceGenerator
         try
         {
             var wellKnownTypes = WellKnownTypes.Create(context.Compilation);
+            var wellKnownTypesCollections = WellKnownTypesCollections.Create(context.Compilation);
             var wellKnownTypesMiscellaneous = WellKnownTypesMiscellaneous.Create(context.Compilation);
             var rangeUtility = new RangeUtility(wellKnownTypesMiscellaneous);
             var requiredKeywordUtility = new RequiredKeywordUtility(context, new CheckInternalsVisible(context));
             var referenceGeneratorCounter = new ReferenceGeneratorCounter();
-            var singularDisposeFunctionUtility = new SingularDisposeFunctionUtility(
+            var singularDisposeFunctionUtility = new DisposeUtility(
                 new ReferenceGenerator(
                     referenceGeneratorCounter, 
                     new LocalDiagLogger(
                         new FunctionLevelLogMessageEnhancerForSourceGenerator(), 
                         new DiagLogger(new GeneratorConfiguration(context, wellKnownTypesMiscellaneous), context))), 
-                wellKnownTypes);
+                wellKnownTypes,
+                wellKnownTypesCollections);
 
             var execute = new ExecuteImpl(
                 context,

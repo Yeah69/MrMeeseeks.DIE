@@ -16,7 +16,7 @@ internal sealed class ExecuteImpl : IExecute
     private readonly GeneratorExecutionContext _context;
     private readonly IRangeUtility _rangeUtility;
     private readonly RequiredKeywordUtility _requiredKeywordUtility;
-    private readonly SingularDisposeFunctionUtility _singularDisposeFunctionUtility;
+    private readonly DisposeUtility _disposeUtility;
     private readonly ReferenceGeneratorCounter _referenceGeneratorCounter;
     private readonly Func<INamedTypeSymbol, ContainerInfo> _containerInfoFactory;
 
@@ -24,14 +24,14 @@ internal sealed class ExecuteImpl : IExecute
         GeneratorExecutionContext context,
         IRangeUtility rangeUtility,
         RequiredKeywordUtility requiredKeywordUtility,
-        SingularDisposeFunctionUtility singularDisposeFunctionUtility,
+        DisposeUtility disposeUtility,
         ReferenceGeneratorCounter referenceGeneratorCounter,
         Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory)
     {
         _context = context;
         _rangeUtility = rangeUtility;
         _requiredKeywordUtility = requiredKeywordUtility;
-        _singularDisposeFunctionUtility = singularDisposeFunctionUtility;
+        _disposeUtility = disposeUtility;
         _referenceGeneratorCounter = referenceGeneratorCounter;
         _containerInfoFactory = containerInfoFactory;
     }
@@ -57,7 +57,7 @@ internal sealed class ExecuteImpl : IExecute
                     _context, 
                     containerInfo,
                     _requiredKeywordUtility, 
-                    _singularDisposeFunctionUtility,
+                    _disposeUtility,
                     _referenceGeneratorCounter);
                 var executeContainer = msContainer.Create();
                 executeContainer.Execute();
@@ -77,13 +77,13 @@ internal sealed class ExecuteImpl : IExecute
             _context.AddSource("RequiredKeywordTypes.cs", requiredSource);
         }
         
-        var singularDisposeFunctionSource = CSharpSyntaxTree
-            .ParseText(SourceText.From(_singularDisposeFunctionUtility.GenerateSingularDisposeFunctionsFile(), Encoding.UTF8))
+        var disposeUtilityCode = CSharpSyntaxTree
+            .ParseText(SourceText.From(_disposeUtility.GenerateSingularDisposeFunctionsFile(), Encoding.UTF8))
             .GetRoot()
             .NormalizeWhitespace()
             .SyntaxTree
             .GetText();
         
-        _context.AddSource($"{Constants.NamespaceForGeneratedStatics}.{_singularDisposeFunctionUtility.ClassName}.cs", singularDisposeFunctionSource);
+        _context.AddSource($"{Constants.NamespaceForGeneratedStatics}.{_disposeUtility.ClassName}.cs", disposeUtilityCode);
     }
 }

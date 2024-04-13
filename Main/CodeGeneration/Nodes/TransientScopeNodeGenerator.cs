@@ -12,13 +12,13 @@ internal sealed class TransientScopeNodeGenerator : ScopeNodeBaseGenerator, ITra
     internal TransientScopeNodeGenerator(
         ITransientScopeNode transientScopeNode,
         IContainerNode containerNode,
-        ISingularDisposeFunctionUtility singularDisposeFunctionUtility,
+        IDisposeUtility disposeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections) 
         : base(
             transientScopeNode,
             containerNode,
-            singularDisposeFunctionUtility,
+            disposeUtility,
             wellKnownTypes,
             wellKnownTypesCollections)
     {

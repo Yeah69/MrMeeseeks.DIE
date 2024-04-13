@@ -12,13 +12,13 @@ internal sealed class ScopeNodeGenerator : ScopeNodeBaseGenerator, IScopeNodeGen
     internal ScopeNodeGenerator(
         IScopeNode scopeNode,
         IContainerNode containerNode,
-        ISingularDisposeFunctionUtility singularDisposeFunctionUtility,
+        IDisposeUtility disposeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             scopeNode,
             containerNode,
-            singularDisposeFunctionUtility,
+            disposeUtility,
             wellKnownTypes,
             wellKnownTypesCollections)
     {

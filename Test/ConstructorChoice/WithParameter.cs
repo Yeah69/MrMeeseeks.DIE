@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -14,9 +15,9 @@ internal sealed partial class Container;
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var fileInfo = container.Create()("C:\\Yeah.txt");
         Assert.Equal("C:\\Yeah.txt", fileInfo.FullName);
     }

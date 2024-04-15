@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
@@ -51,9 +52,9 @@ internal sealed partial class Container;
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var composite = container.CreateDep();
         foreach (var compositeComposite in composite.Composites)
         {
@@ -66,9 +67,9 @@ public sealed class Tests
     }
     
     [Fact]
-    public void TestList()
+    public async Task TestList()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var composites = container.CreateCollection();
         foreach (var compositeComposite in composites)
         {

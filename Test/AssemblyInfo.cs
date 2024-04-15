@@ -25,4 +25,4 @@ using Xunit;
 
 //[assembly:Analytics(Analytics.ResolutionGraph)]
 
-[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
+//[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
@@ -28,12 +29,21 @@ internal sealed partial class Container;
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         using var instance = container.Create();
-        Assert.False(instance.IsDisposed);
-        container.Dispose();
-        Assert.False(instance.IsDisposed);
+        try
+        {
+            Assert.False(instance.IsDisposed);
+            container.Dispose();
+        }
+        catch (SyncDisposalTriggeredException e)
+        {
+            await e.AsyncDisposal;
+            Assert.False(instance.IsDisposed);
+            return;
+        }
+        Assert.Fail();
     }
 }

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
@@ -120,37 +121,37 @@ internal sealed partial class Container
 public sealed class Tests
 {
     [Fact]
-    public void Container()
+    public async Task Container()
     {
-        using var container = Decorator.Container.DIE_CreateContainer();
+        await using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create0();
         Assert.Equal(69, instance.CheckNumber);
     }
     [Fact]
-    public void TransientScope()
+    public async Task TransientScope()
     {
-        using var container = Decorator.Container.DIE_CreateContainer();
+        await using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create1();
         Assert.Equal(23, instance.Dep.CheckNumber);
     }
     [Fact]
-    public void TransientScopeSpecific()
+    public async Task TransientScopeSpecific()
     {
-        using var container = Decorator.Container.DIE_CreateContainer();
+        await using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create2();
         Assert.Equal(7, instance.Dep.CheckNumber);
     }
     [Fact]
-    public void Scope()
+    public async Task Scope()
     {
-        using var container = Decorator.Container.DIE_CreateContainer();
+        await using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create3();
         Assert.Equal(3, instance.Dep.CheckNumber);
     }
     [Fact]
-    public void ScopeSpecific()
+    public async Task ScopeSpecific()
     {
-        using var container = Decorator.Container.DIE_CreateContainer();
+        await using var container = Decorator.Container.DIE_CreateContainer();
         var instance = container.Create4();
         Assert.Equal(13, instance.Dep.CheckNumber);
     }

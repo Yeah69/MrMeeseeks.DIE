@@ -38,7 +38,7 @@ public sealed class Tests
     [Fact]
     public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
         Assert.False(transientScopeRoot.Dependency.IsDisposed);
         await transientScopeRoot.Cleanup();

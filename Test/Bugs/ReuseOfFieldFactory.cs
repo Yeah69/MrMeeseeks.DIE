@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
@@ -33,10 +34,10 @@ internal sealed partial class Container
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
         var originalDependency = new Dependency();
-        using var container = Container.DIE_CreateContainer(originalDependency);
+        await using var container = Container.DIE_CreateContainer(originalDependency);
         var holder = container.CreateHolder();
         Assert.Same(originalDependency, holder.Dependency);
         var instance = container.CreateInterface();

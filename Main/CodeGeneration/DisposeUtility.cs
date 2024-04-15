@@ -43,6 +43,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
     private readonly string? _disposeChunkAsyncName;
     private readonly string _disposeExceptionHandlingName;
     private readonly string? _disposeExceptionHandlingAsyncName;
+    private readonly string _syncDisposalTriggeredExceptionName;
 
     internal DisposeUtility(
         IReferenceGenerator referenceGenerator,
@@ -124,18 +125,20 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
         DisposeExceptionHandlingAsyncFullyQualified = _disposeExceptionHandlingAsyncName is not null
             ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeExceptionHandlingAsyncName}"
             : null;
+        
+        _syncDisposalTriggeredExceptionName = "SyncDisposalTriggeredException";
     }
 
     public DisposalUtilityInterfaceData DisposableRangeInterfaceData { get; }
     public string DisposeFullyQualified { get; }
     public string? DisposeAsyncFullyQualified { get; }
-    public string DisposeChunkFullyQualified { get; }
+    private string DisposeChunkFullyQualified { get; }
     public string? DisposeChunkAsyncFullyQualified { get; }
     public string DisposeExceptionHandlingFullyQualified { get; }
     public string? DisposeExceptionHandlingAsyncFullyQualified { get; }
-    public string AggregateExceptionRoutineFullyQualified { get; }
+    private string AggregateExceptionRoutineFullyQualified { get; }
     public string? AggregateExceptionRoutineAsyncFullyQualified { get; }
-    public string DisposeSingularFullyQualified { get; }
+    private string DisposeSingularFullyQualified { get; }
     public string? DisposeSingularAsyncFullyQualified { get; }
     public string? DisposeSingularAsyncSyncedFullyQualified { get; }
     public string ClassName { get; }
@@ -150,24 +153,9 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
               {
               """);
         
-        code.AppendLine(
-            $$"""
-              internal interface {{_disposableRangeInterfaceName}}
-              {
-                  internal {{_wellKnownTypes.Object.FullName()}}[] {{DisposableRangeInterfaceData.TransientScopesPropertyName}} { get; }
-                  internal {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{DisposableRangeInterfaceData.DisposablesPropertyName}} { get; }
-                  internal {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}} { get; }
-                  internal bool {{DisposableRangeInterfaceData.SyncClauseFunctionName}}({{_wellKnownTypes.Object.FullName()}} disposable);
-              """);
-        if (DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName is not null)
-            code.AppendLine(
-                $"    internal {_wellKnownTypes.ConcurrentBagOfAsyncDisposable?.FullName()} {DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName} {{ get; }}");
+        GenerateDisposableRangeInterface();
         
-        if (DisposableRangeInterfaceData.AsyncClauseFunctionName is not null)
-            code.AppendLine(
-                $"internal bool {DisposableRangeInterfaceData.AsyncClauseFunctionName}({_wellKnownTypes.Object.FullName()} disposable);");
-        
-        code.AppendLine("}");
+        GenerateSyncDisposalTriggeredException();
 
         code.AppendLine(
             $$"""
@@ -177,131 +165,22 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
         
         var disposeParamReference = _referenceGenerator.Generate("disposableRange");
         
-        code.AppendLine(
-            $$"""
-              internal static void {{_disposeName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposeParamReference}})
-              {
-                  if ({{AggregateExceptionRoutineFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
-                  return;
-                  
-                  {{_wellKnownTypes.IEnumerableOfException}} Inner()
-                  {
-              """);
-        code.AppendLine(
-            $$"""
-              foreach (var transientScope in {{disposeParamReference}}.{{DisposableRangeInterfaceData.TransientScopesPropertyName}})
-              {
-              """);
-                    
-        if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
-            code.AppendLine(
-                $$"""
-                  if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && {{DisposeSingularAsyncSyncedFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                  yield return exception;
-                  """);
+        if (_disposeAsyncName is not null && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
+            GenerateSyncDisposeToException();
         else
-            code.AppendLine(
-                $$"""
-                  if (transientScope is {{_wellKnownTypes.IDisposable.FullName()}} disposable && {{DisposeSingularFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                  yield return exception;
-                  """);
-                    
-        code.AppendLine(
-            $$"""
-              }
-              """);
+            GenerateSyncDispose();
 
-        
-        code.AppendLine(
-            $$"""
-                      for (var i = {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
-                      {
-                          foreach (var exception in {{DisposeChunkFullyQualified}}(({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}}) {{disposeParamReference}}, {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}[i]))
-                          {
-                              yield return exception;
-                          }
-                      }
-              """);
-        
-        if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
-        {
-            code.AppendLine(
-                $$"""
-                   foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName}})
-                   {
-                       if ({{DisposeSingularAsyncSyncedFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                       {
-                           yield return exception;
-                       }
-                   }
-                   """);
-        }
-        code.AppendLine(
-            $$"""
-              
-                      foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}})
-                      {
-                          if ({{DisposeSingularFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                          {
-                              yield return exception;
-                          }
-                      }
-                  }
-              }
-              """);
-        
-        if (_wellKnownTypes.ValueTask is not null
-            && _wellKnownTypes.IAsyncDisposable is not null
-            && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
-            && _wellKnownTypes.IAsyncEnumerableOfException is not null
-            && DisposeChunkAsyncFullyQualified is not null)
-        {
-            code.AppendLine(
-                $$"""
-                  internal static async {{_wellKnownTypes.ValueTask.FullName()}} {{_disposeAsyncName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposeParamReference}})
-                  {
-                  if (await {{AggregateExceptionRoutineAsyncFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
-                  return;
-
-                  async {{_wellKnownTypes.IAsyncEnumerableOfException}} Inner()
-                  {
-                  foreach (var transientScope in {{disposeParamReference}}.{{DisposableRangeInterfaceData.TransientScopesPropertyName}})
-                  {
-                  if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && await {{DisposeSingularAsyncFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                  yield return exception;
-                  }
-                            for (var i = {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
-                            {
-                                await foreach (var exception in {{DisposeChunkAsyncFullyQualified}}({{disposeParamReference}}, {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}[i]))
-                                {
-                                    yield return exception;
-                                }
-                            }
-                            foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName}})
-                            {
-                                if (await {{DisposeSingularAsyncFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                                {
-                                    yield return exception;
-                                }
-                            }
-                            foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}})
-                            {
-                                if ({{DisposeSingularFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
-                                {
-                                    yield return exception;
-                                }
-                            }
-                        }
-                    }
-                  """);
-        }
+        GenerateAsyncDispose();
         
         GenerateDisposeChunk(false);
 
         if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null && _wellKnownTypes.IAsyncEnumerableOfException is not null)
             GenerateDisposeChunk(true);
         
-        GenerateDisposeExceptionHandling();
+        if (_disposeExceptionHandlingAsyncName is not null && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
+            GenerateDisposeExceptionHandlingToException();
+        else
+            GenerateDisposeExceptionHandling();
         
         if (_wellKnownTypes.ValueTask is not null && _wellKnownTypes.IAsyncDisposable is not null)
             GenerateDisposeExceptionHandlingAsync();
@@ -502,6 +381,19 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
                   """);
         }
 
+        void GenerateDisposeExceptionHandlingToException()
+        {
+            if (_disposeExceptionHandlingAsyncName is null) return;
+            
+            var disposableElementParameterReference = _referenceGenerator.Generate("disposableElement");
+            
+            code.AppendLine(
+                $$"""
+                  internal static {{_wellKnownTypes.Exception.FullName()}} {{_disposeExceptionHandlingName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null) =>
+                        throw new {{_syncDisposalTriggeredExceptionName}}({{_disposeExceptionHandlingAsyncName}}({{disposableElementParameterReference}}, exception, subDisposal, transientScopeDisposal), exception);
+                  """);
+        }
+
         void GenerateDisposeExceptionHandlingAsync()
         {
             var disposableElementParameterReference = _referenceGenerator.Generate("disposableElement");
@@ -540,6 +432,192 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
                       }
                   }
                   """);
+        }
+
+        void GenerateDisposableRangeInterface()
+        {
+            code.AppendLine(
+                $$"""
+                  internal interface {{_disposableRangeInterfaceName}}
+                  {
+                      internal {{_wellKnownTypes.Object.FullName()}}[] {{DisposableRangeInterfaceData.TransientScopesPropertyName}} { get; }
+                      internal {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{DisposableRangeInterfaceData.DisposablesPropertyName}} { get; }
+                      internal {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}} { get; }
+                      internal bool {{DisposableRangeInterfaceData.SyncClauseFunctionName}}({{_wellKnownTypes.Object.FullName()}} disposable);
+                  """);
+            if (DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName is not null)
+                code.AppendLine(
+                    $"    internal {_wellKnownTypes.ConcurrentBagOfAsyncDisposable?.FullName()} {DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName} {{ get; }}");
+        
+            if (DisposableRangeInterfaceData.AsyncClauseFunctionName is not null)
+                code.AppendLine(
+                    $"internal bool {DisposableRangeInterfaceData.AsyncClauseFunctionName}({_wellKnownTypes.Object.FullName()} disposable);");
+        
+            code.AppendLine("}");
+        }
+
+        void GenerateSyncDisposalTriggeredException()
+        {
+            if (_wellKnownTypes.IAsyncDisposable is null || _wellKnownTypes.ValueTask is null)
+                return;
+            
+            code.AppendLine(
+                $$"""
+                  internal class {{_syncDisposalTriggeredExceptionName}} : {{_wellKnownTypes.Exception.FullName()}}
+                  {
+                      internal {{_wellKnownTypes.Task.FullName()}} AsyncDisposal { get; }
+                      internal {{_wellKnownTypes.Exception.FullName()}}? Exception { get; }
+                  
+                      internal {{_syncDisposalTriggeredExceptionName}}({{_wellKnownTypes.Task.FullName()}} asyncDisposal)
+                          : base("MrMeeseeks.DIE: Sync disposal triggered where the async disposal may be necessary. Await the AsyncDisposal property to make sure the async disposal is completed.")
+                      {
+                          AsyncDisposal = asyncDisposal;
+                      }
+                  
+                      internal {{_syncDisposalTriggeredExceptionName}}({{_wellKnownTypes.Task.FullName()}} asyncDisposal, {{_wellKnownTypes.Exception.FullName()}} exception) 
+                          : base("MrMeeseeks.DIE: Sync disposal triggered where the async disposal may be necessary. Await the AsyncDisposal property to make sure the async disposal is completed.", exception)
+                      {
+                          AsyncDisposal = asyncDisposal;
+                          Exception = exception;
+                      }
+                  }
+                  """);
+        }
+
+        void GenerateSyncDispose()
+        {
+            code.AppendLine(
+                $$"""
+                  internal static void {{_disposeName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposeParamReference}})
+                  {
+                      if ({{AggregateExceptionRoutineFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
+                      return;
+                      
+                      {{_wellKnownTypes.IEnumerableOfException}} Inner()
+                      {
+                  """);
+            code.AppendLine(
+                $$"""
+                  foreach (var transientScope in {{disposeParamReference}}.{{DisposableRangeInterfaceData.TransientScopesPropertyName}})
+                  {
+                  """);
+                    
+            if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
+                code.AppendLine(
+                    $$"""
+                      if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && {{DisposeSingularAsyncSyncedFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
+                      yield return exception;
+                      """);
+            else
+                code.AppendLine(
+                    $$"""
+                      if (transientScope is {{_wellKnownTypes.IDisposable.FullName()}} disposable && {{DisposeSingularFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
+                      yield return exception;
+                      """);
+                    
+            code.AppendLine(
+                $$"""
+                  }
+                  """);
+
+        
+            code.AppendLine(
+                $$"""
+                          for (var i = {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
+                          {
+                              foreach (var exception in {{DisposeChunkFullyQualified}}(({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}}) {{disposeParamReference}}, {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}[i]))
+                              {
+                                  yield return exception;
+                              }
+                          }
+                  """);
+        
+            if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
+            {
+                code.AppendLine(
+                    $$"""
+                      foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName}})
+                      {
+                          if ({{DisposeSingularAsyncSyncedFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
+                          {
+                              yield return exception;
+                          }
+                      }
+                      """);
+            }
+            code.AppendLine(
+                $$"""
+                  
+                          foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}})
+                          {
+                              if ({{DisposeSingularFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
+                              {
+                                  yield return exception;
+                              }
+                          }
+                      }
+                  }
+                  """);
+        }
+
+        void GenerateSyncDisposeToException()
+        {
+            if (_disposeAsyncName is null) return;
+            
+            code.AppendLine(
+                $$"""
+                  internal static void {{_disposeName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposeParamReference}}) =>
+                      throw new {{_syncDisposalTriggeredExceptionName}}({{_disposeAsyncName}}({{disposeParamReference}}).AsTask());
+                  """);
+        }
+
+        void GenerateAsyncDispose()
+        {
+            if (_wellKnownTypes.ValueTask is not null
+                && _wellKnownTypes.IAsyncDisposable is not null
+                && _wellKnownTypesCollections.IAsyncEnumerable1 is not null
+                && _wellKnownTypes.IAsyncEnumerableOfException is not null
+                && DisposeChunkAsyncFullyQualified is not null)
+            {
+                code.AppendLine(
+                    $$"""
+                      internal static async {{_wellKnownTypes.ValueTask.FullName()}} {{_disposeAsyncName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposeParamReference}})
+                      {
+                      if (await {{AggregateExceptionRoutineAsyncFullyQualified}}(Inner()) is {} aggregateException) throw aggregateException;
+                      return;
+
+                      async {{_wellKnownTypes.IAsyncEnumerableOfException}} Inner()
+                      {
+                      foreach (var transientScope in {{disposeParamReference}}.{{DisposableRangeInterfaceData.TransientScopesPropertyName}})
+                      {
+                      if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && await {{DisposeSingularAsyncFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
+                      yield return exception;
+                      }
+                                for (var i = {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
+                                {
+                                    await foreach (var exception in {{DisposeChunkAsyncFullyQualified}}({{disposeParamReference}}, {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}[i]))
+                                    {
+                                        yield return exception;
+                                    }
+                                }
+                                foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName}})
+                                {
+                                    if (await {{DisposeSingularAsyncFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
+                                    {
+                                        yield return exception;
+                                    }
+                                }
+                                foreach (var disposable in {{disposeParamReference}}.{{DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}})
+                                {
+                                    if ({{DisposeSingularFullyQualified}}(disposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
+                                    {
+                                        yield return exception;
+                                    }
+                                }
+                            }
+                        }
+                      """);
+            }
         }
     }
 }

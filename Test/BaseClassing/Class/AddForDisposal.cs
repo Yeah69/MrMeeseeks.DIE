@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
@@ -32,11 +33,11 @@ internal sealed partial class Container : ContainerBase
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
         var container = Container.DIE_CreateContainer();
         var instance = container.Create();
-        container.Dispose();
+        await container.DisposeAsync();
         Assert.True(instance.IsDisposed);
     }
 }

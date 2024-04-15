@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
@@ -64,9 +65,9 @@ internal sealed partial class Container
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container0Then1 = Container.DIE_CreateContainer();
+        await using var container0Then1 = Container.DIE_CreateContainer();
 
         var _0Then1_0_2 = container0Then1.Create0().Decorated;
         var _0Then1_0_1 = _0Then1_0_2.Decorated;
@@ -90,7 +91,7 @@ public sealed class Tests
         Assert.Same(_0Then1_1_0, _0Then1_SanityCheck);
         
 
-        using var container1Then0 = Container.DIE_CreateContainer();
+        await using var container1Then0 = Container.DIE_CreateContainer();
 
         var _1Then0_1_1 = container1Then0.Create1().Decorated;
         var _1Then0_1_0 = _1Then0_1_1.Decorated;

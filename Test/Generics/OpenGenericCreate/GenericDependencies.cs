@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Xunit;
 using MrMeeseeks.DIE.Configuration.Attributes;
 
@@ -52,9 +53,9 @@ internal sealed partial class Container;
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var instance = container.Create<string, object, int>();
         Assert.IsType<DependencyHolder<string, object, int>>(instance);
         Assert.IsType<Dependency<string>>(instance.DependencyInit);

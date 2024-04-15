@@ -50,6 +50,9 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
               {
               """);
         
+        if (IsAsyncFunction(_function))
+            code.AppendLine($"await {_wellKnownTypes.Task.FullName()}.{nameof(Task.Yield)}();");
+        
         visitor.VisitIElementNode(_function.TransientScopeDisposalNode);
         visitor.VisitIElementNode(_function.SubDisposalNode);
 
@@ -246,8 +249,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             ? $"{SyntaxFacts.GetText(acc)} "  
             : "";
         var asyncModifier = 
-            functionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask 
-            || functionNode is IMultiFunctionNodeBase { IsAsyncEnumerable: true } 
+            IsAsyncFunction(functionNode)
             ? "async "
             : "";
         var explicitInterfaceFullName = functionNode.ExplicitInterfaceFullName is { } interfaceName
@@ -291,4 +293,8 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             .AppendIf($"{functionNode.TransientScopeDisposalNode.TypeFullName} {functionNode.TransientScopeDisposalNode.Reference}", functionNode.IsTransientScopeDisposalAsParameter));
         return $"{accessibility}{asyncModifier}{functionNode.ReturnedTypeFullName} {explicitInterfaceFullName}{functionNode.Name}{typeParameters}({parameters}){typeParametersConstraints}";
     }
+    
+    private static bool IsAsyncFunction(IFunctionNode functionNode) =>
+        functionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask 
+        || functionNode is IMultiFunctionNodeBase { IsAsyncEnumerable: true };
 }

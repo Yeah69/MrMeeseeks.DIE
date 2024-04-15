@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
@@ -49,29 +50,29 @@ public sealed class Tests
 {
     
     [Fact]
-    public void Container()
+    public async Task Container()
     {
-        using var container = ImplementationCollection.Container.DIE_CreateContainer();
+        await using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create0();
         Assert.Equal(3, dependencies.Count);
-        Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyContainer));
-        Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyTransientScope));
-        Assert.Contains(dependencies, d => d.GetType() == typeof(DependencyScope));
+        Assert.Contains(dependencies, d => d is DependencyContainer);
+        Assert.Contains(dependencies, d => d is DependencyTransientScope);
+        Assert.Contains(dependencies, d => d is DependencyScope);
     }
     [Fact]
-    public void TransientScope()
+    public async Task TransientScope()
     {
-        using var container = ImplementationCollection.Container.DIE_CreateContainer();
+        await using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create1();
         Assert.Single(dependencies.Dependencies);
-        Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyTransientScope));
+        Assert.Contains(dependencies.Dependencies, d => d is DependencyTransientScope);
     }
     [Fact]
-    public void Scope()
+    public async Task Scope()
     {
-        using var container = ImplementationCollection.Container.DIE_CreateContainer();
+        await using var container = ImplementationCollection.Container.DIE_CreateContainer();
         var dependencies = container.Create2();
         Assert.Single(dependencies.Dependencies);
-        Assert.Contains(dependencies.Dependencies, d => d.GetType() == typeof(DependencyScope));
+        Assert.Contains(dependencies.Dependencies, d => d is DependencyScope);
     }
 }

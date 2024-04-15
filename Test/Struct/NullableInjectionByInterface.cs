@@ -1,6 +1,7 @@
 // ReSharper disable once CheckNamespace
 
 using MrMeeseeks.DIE.Configuration.Attributes;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace MrMeeseeks.DIE.Test.Struct.NullableInjectionByInterface;
@@ -22,9 +23,9 @@ internal sealed partial class Container;
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var value = container.Create();
         Assert.IsType<Root>(value);
         Assert.True(value.Dependency is not null);

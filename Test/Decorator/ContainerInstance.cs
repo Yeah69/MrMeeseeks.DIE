@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
@@ -35,9 +36,9 @@ internal sealed partial class Container;
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var collection = container.Create();
         
         Assert.NotEqual(collection[0], collection[1]);
@@ -46,7 +47,6 @@ public sealed class Tests
         Assert.NotEqual(collection[1], collection[1].Decorated);
         Assert.IsType<Decorator>(collection[0]);
         Assert.IsType<Decorator>(collection[1]);
-        Assert.True(typeof(DependencyA) == collection[0].Decorated.GetType() && typeof(DependencyB) == collection[1].Decorated.GetType()
-            || typeof(DependencyB) == collection[0].Decorated.GetType() && typeof(DependencyA) == collection[1].Decorated.GetType());
+        Assert.True(collection[0].Decorated is DependencyA && collection[1].Decorated is DependencyB || collection[0].Decorated is DependencyB && collection[1].Decorated is DependencyA);
     }
 }

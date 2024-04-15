@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
@@ -25,9 +26,9 @@ internal sealed partial class Container : RangeBase
 public sealed class Tests
 {
     [Fact]
-    public void Test()
+    public async Task Test()
     {
-        using var container = Container.DIE_CreateContainer();
+        await using var container = Container.DIE_CreateContainer();
         var number = container.Create();
         Assert.Equal(69, number);
         var scopeRoot = container.CreateScopeRoot();

@@ -172,7 +172,8 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
 
         GenerateAsyncDispose();
         
-        GenerateDisposeChunk(false);
+        if (_wellKnownTypes.IAsyncDisposable is null)
+            GenerateDisposeChunk(false);
 
         if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null && _wellKnownTypes.IAsyncEnumerableOfException is not null)
             GenerateDisposeChunk(true);
@@ -245,15 +246,18 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
                   """);
         }
         
-        code.AppendLine(
-            $$"""
-              private static {{_wellKnownTypes.AggregateException.FullName()}}? {{_aggregateExceptionRoutine}}({{_wellKnownTypes.IEnumerableOfException.FullName()}} exceptions)
-              {
-                  {{_wellKnownTypes.AggregateException.FullName()}} aggregateException = new {{_wellKnownTypes.AggregateException.FullName()}}(exceptions);
-                  if (aggregateException.{{nameof(AggregateException.InnerExceptions)}}.{{nameof(ReadOnlyCollection<Exception>.Count)}} > 0) return aggregateException;
-                  return null;
-              }
-              """);
+        if (_disposeExceptionHandlingAsyncName is null)
+        {
+            code.AppendLine(
+                $$"""
+                  private static {{_wellKnownTypes.AggregateException.FullName()}}? {{_aggregateExceptionRoutine}}({{_wellKnownTypes.IEnumerableOfException.FullName()}} exceptions)
+                  {
+                      {{_wellKnownTypes.AggregateException.FullName()}} aggregateException = new {{_wellKnownTypes.AggregateException.FullName()}}(exceptions);
+                      if (aggregateException.{{nameof(AggregateException.InnerExceptions)}}.{{nameof(ReadOnlyCollection<Exception>.Count)}} > 0) return aggregateException;
+                      return null;
+                  }
+                  """);
+        }
         
         if (_aggregateExceptionRoutineAsync is not null && _wellKnownTypes.IAsyncEnumerableOfException is not null && _wellKnownTypes.ValueTask is not null)
         {

@@ -54,6 +54,20 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         TypeSymbol = typeSymbol;
         ReturnedTypeFullName = TypeSymbol.FullName();
         TypeParameters = typeParameterUtility.ExtractTypeParameters(typeSymbol);
+
+        if (TypeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol)
+        {
+            if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.Task1, namedTypeSymbol.OriginalDefinition))
+            {
+                SynchronicityDecision = SynchronicityDecision.AsyncTask;
+                SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncNatural;
+            }
+            else if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.ValueTask1, namedTypeSymbol.OriginalDefinition))
+            {
+                SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
+                SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncNatural;
+            }
+        }
     }
 
     protected override void AdjustToAsync()

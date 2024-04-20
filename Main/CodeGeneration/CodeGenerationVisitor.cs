@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -225,12 +226,16 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         var call = $"{owner}{functionCallNode.FunctionName}{typeParameters}({parameters})";
         call = functionCallNode.Transformation switch
         {
-            AsyncFunctionCallTransformation.ValueTaskFromValueTask => call,
+            AsyncFunctionCallTransformation.ValueTaskFromValueTask => $"new {typeFullName}({call})",
+            AsyncFunctionCallTransformation.ValueTaskFromForcedValueTask => call,
             AsyncFunctionCallTransformation.ValueTaskFromTask => $"new {typeFullName}({call})",
+            AsyncFunctionCallTransformation.ValueTaskFromForcedTask => $"new {typeFullName}({call})",
             AsyncFunctionCallTransformation.ValueTaskFromSync => $"new {typeFullName}({call})",
-            AsyncFunctionCallTransformation.TaskFromValueTask => $"{call}.AsTask()",
-            AsyncFunctionCallTransformation.TaskFromTask => call,
-            AsyncFunctionCallTransformation.TaskFromSync => $"{_wellKnownTypes.Task}.FromResult({call})",
+            AsyncFunctionCallTransformation.TaskFromValueTask => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
+            AsyncFunctionCallTransformation.TaskFromForcedValueTask => $"{call}.AsTask()",
+            AsyncFunctionCallTransformation.TaskFromTask => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
+            AsyncFunctionCallTransformation.TaskFromForcedTask => call,
+            AsyncFunctionCallTransformation.TaskFromSync => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
             _ => throw new ArgumentOutOfRangeException(nameof(functionCallNode), $"Switch in DIE type {nameof(CodeGenerationVisitor)} is not exhaustive.")
         };
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");

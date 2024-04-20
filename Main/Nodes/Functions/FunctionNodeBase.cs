@@ -137,8 +137,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
     {
         if (SuppressAsync) return;
         _synchronicityCheckedAlready = true;
-        if (SynchronicityDecision is SynchronicityDecision.AsyncValueTask or SynchronicityDecision.AsyncTask) 
-            return; // Already async
+        if (SynchronicityDecisionKind != SynchronicityDecisionKind.Sync) return; // Already async
+        SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncForced;
         AdjustToAsync();
         OnBecameAsync();
         foreach (var callingFunction in _callingFunctions)
@@ -283,6 +283,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
 
     public Accessibility? Accessibility { get; }
     public SynchronicityDecision SynchronicityDecision { get; protected set; } = SynchronicityDecision.Sync;
+    public SynchronicityDecisionKind SynchronicityDecisionKind { get; protected set; } = SynchronicityDecisionKind.Sync;
     public abstract string Name { get; protected set; }
     public string ReturnedTypeFullName { get; protected set; } = "";
     public abstract string ReturnedTypeNameNotWrapped { get; }

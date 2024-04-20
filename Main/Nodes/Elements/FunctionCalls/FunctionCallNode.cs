@@ -17,8 +17,6 @@ internal interface IFunctionCallNode : IElementNode, IAwaitableNode
 
 internal abstract class FunctionCallNode : IFunctionCallNode
 {
-    private readonly IFunctionNode _calledFunction;
-
     protected FunctionCallNode(
         string? ownerReference,
         ITypeSymbol callSideType,
@@ -30,7 +28,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         IFunctionNode calledFunction,
         IReferenceGenerator referenceGenerator)
     {
-        _calledFunction = calledFunction;
+        CalledFunction = calledFunction;
         OwnerReference = ownerReference;
         Parameters = parameters;
         TypeParameters = typeParameters;
@@ -57,7 +55,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
     public (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
     public (IElementNode Calling, IElementNode Called)? TransientScopeDisposalParameter { get; }
     public IReadOnlyList<ITypeSymbol> TypeParameters { get; }
-    public IFunctionNode CalledFunction => _calledFunction;
+    public IFunctionNode CalledFunction { get; }
 
-    public bool Awaited => _calledFunction.SynchronicityDecision is not SynchronicityDecision.Sync;
+    public bool Awaited => CalledFunction.SynchronicityDecision is not SynchronicityDecision.Sync;
 }

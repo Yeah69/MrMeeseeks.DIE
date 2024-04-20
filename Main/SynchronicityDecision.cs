@@ -6,3 +6,10 @@ internal enum SynchronicityDecision
     AsyncTask,
     AsyncValueTask
 }
+
+internal enum SynchronicityDecisionKind
+{
+    Sync,
+    AsyncNatural,
+    AsyncForced
+}

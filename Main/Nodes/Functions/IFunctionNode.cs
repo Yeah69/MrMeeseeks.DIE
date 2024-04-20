@@ -10,6 +10,7 @@ internal interface IFunctionNode : INode
 {
     Accessibility? Accessibility { get; }
     SynchronicityDecision SynchronicityDecision { get; }
+    SynchronicityDecisionKind SynchronicityDecisionKind { get; }
     string Name { get; }
     IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
     ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }

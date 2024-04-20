@@ -8,9 +8,14 @@ internal enum AsyncFunctionCallTransformation
     ValueTaskFromValueTask,
     ValueTaskFromTask,
     ValueTaskFromSync,
+    ValueTaskFromForcedTask,
+    ValueTaskFromForcedValueTask,
     TaskFromValueTask,
     TaskFromTask,
-    TaskFromSync
+    TaskFromSync,
+    TaskFromForcedTask,
+    TaskFromForcedValueTask,
+    
 }
 
 internal interface IWrappedAsyncFunctionCallNode : IFunctionCallNode
@@ -71,11 +76,23 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
     {
         Transformation = (SynchronicityDecision, _calledFunction.SynchronicityDecision) switch
         {
-            (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.AsyncValueTask) => AsyncFunctionCallTransformation.ValueTaskFromValueTask,
-            (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.AsyncTask) => AsyncFunctionCallTransformation.ValueTaskFromTask,
+            (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.AsyncValueTask) 
+                => _calledFunction.SynchronicityDecisionKind is SynchronicityDecisionKind.AsyncForced 
+                    ? AsyncFunctionCallTransformation.ValueTaskFromForcedValueTask
+                    : AsyncFunctionCallTransformation.ValueTaskFromValueTask,
+            (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.AsyncTask)
+                => _calledFunction.SynchronicityDecisionKind is SynchronicityDecisionKind.AsyncForced 
+                    ? AsyncFunctionCallTransformation.ValueTaskFromForcedTask
+                    : AsyncFunctionCallTransformation.ValueTaskFromTask,
             (SynchronicityDecision.AsyncValueTask, SynchronicityDecision.Sync) => AsyncFunctionCallTransformation.ValueTaskFromSync,
-            (SynchronicityDecision.AsyncTask, SynchronicityDecision.AsyncValueTask) => AsyncFunctionCallTransformation.TaskFromValueTask,
-            (SynchronicityDecision.AsyncTask, SynchronicityDecision.AsyncTask) => AsyncFunctionCallTransformation.TaskFromTask,
+            (SynchronicityDecision.AsyncTask, SynchronicityDecision.AsyncValueTask) 
+                => _calledFunction.SynchronicityDecisionKind is SynchronicityDecisionKind.AsyncForced 
+                    ? AsyncFunctionCallTransformation.TaskFromForcedValueTask
+                    : AsyncFunctionCallTransformation.TaskFromValueTask,
+            (SynchronicityDecision.AsyncTask, SynchronicityDecision.AsyncTask) 
+                => _calledFunction.SynchronicityDecisionKind is SynchronicityDecisionKind.AsyncForced 
+                    ? AsyncFunctionCallTransformation.TaskFromForcedTask
+                    : AsyncFunctionCallTransformation.TaskFromTask,
             (SynchronicityDecision.AsyncTask, SynchronicityDecision.Sync) => AsyncFunctionCallTransformation.TaskFromSync,
             _ => Transformation
         };

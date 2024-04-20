@@ -165,8 +165,8 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             case IRangedInstanceFunctionNode { Group: { IsOpenGeneric: false } group } rangedInstanceFunctionNode:
                 code.AppendLine($"{group.FieldReference} = {rangedInstanceFunctionNode.ReturnedElement.Reference};");
                 break;
-            case ISingleFunctionNode singleFunctionNode:
-                code.AppendLine($"return {singleFunctionNode.ReturnedElement.Reference};");
+            case ISingleFunctionNode {SynchronicityDecisionKind: var synchronicityDecisionKind  } singleFunctionNode:
+                code.AppendLine($"return {(synchronicityDecisionKind is SynchronicityDecisionKind.AsyncNatural ? "await " : "")}{singleFunctionNode.ReturnedElement.Reference};");
                 break;
             case IMultiFunctionNodeBase multiFunctionNode:
                 code.AppendLine(multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync

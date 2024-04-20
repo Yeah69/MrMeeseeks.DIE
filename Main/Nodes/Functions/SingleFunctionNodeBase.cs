@@ -7,7 +7,7 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
-internal interface ISingleFunctionNode : IFunctionNode
+internal interface ISingleFunctionNode : IReturningFunctionNode
 {
     IElementNode ReturnedElement { get; }
 }

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
+﻿using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -96,6 +95,11 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
         _wellKnownTypes.IAsyncDisposable is null || _wellKnownTypes.ValueTask is null
             ? DisposalType.Sync
             : DisposalType.Sync | DisposalType.Async;
+
+    public void VisitIInitialTransientScopeSubDisposalNode(IInitialTransientScopeSubDisposalNode element)
+    {
+        VisitIInitialSubDisposalNode(element);
+    }
 
     public void VisitIScopeCallNode(IScopeCallNode scopeCall)
     {
@@ -205,7 +209,7 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
     }
 
     public void VisitIInitialSubDisposalNode(IInitialSubDisposalNode element) => 
-        _code.AppendLine($"{element.TypeFullName} {element.Reference} = new {element.TypeFullName}();");
+        _code.AppendLine($"{element.TypeFullName} {element.Reference} = new {element.TypeFullName}({element.SubDisposalCount});");
 
     public void VisitIWrappedAsyncFunctionCallNode(IWrappedAsyncFunctionCallNode functionCallNode)
     {
@@ -418,8 +422,11 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             case IImplicitScopeImplementationNode implicitScopeImplementationNode:
                 VisitIImplicitScopeImplementationNode(implicitScopeImplementationNode);
                 break;
-            case IInitialSubDisposalNode initialSubDisposalNode:
-                VisitIInitialSubDisposalNode(initialSubDisposalNode);
+            case IInitialOrdinarySubDisposalNode initialOrdinarySubDisposalNode:
+                VisitIInitialOrdinarySubDisposalNode(initialOrdinarySubDisposalNode);
+                break;
+            case IInitialTransientScopeSubDisposalNode initialTransientScopeSubDisposalNode:
+                VisitIInitialTransientScopeSubDisposalNode(initialTransientScopeSubDisposalNode);
                 break;
         }
     }
@@ -496,6 +503,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
     public void VisitINullNode(INullNode nullNode) => _code.AppendLine(
         $"{nullNode.TypeFullName} {nullNode.Reference} = ({nullNode.TypeFullName}) null;");
+
+    public void VisitIInitialOrdinarySubDisposalNode(IInitialOrdinarySubDisposalNode element) => 
+        VisitIInitialSubDisposalNode(element);
 
     public void VisitIMultiFunctionNode(IMultiFunctionNode multiFunctionNode) =>
         multiFunctionNode.GetGenerator().Generate(_code, this);

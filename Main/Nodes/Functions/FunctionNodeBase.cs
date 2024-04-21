@@ -121,6 +121,24 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public void RegisterUsedInitializedInstance(IInitializedInstanceNode initializedInstance) => 
         _usedInitializedInstances.Add(initializedInstance);
 
+    private int _subDisposalCount;
+    public void AddOneToSubDisposalCount() => _subDisposalCount++;
+
+    public int GetSubDisposalCount() =>
+        _subDisposalCount +
+        CalledFunctions
+            .Where(f => f.IsSubDisposalAsParameter)
+            .Sum(f => f.GetSubDisposalCount());
+
+    private int _transientScopeDisposalCount;
+    public void AddOneToTransientScopeDisposalCount() => _transientScopeDisposalCount++;
+
+    public int GetTransientScopeDisposalCount() =>
+        _transientScopeDisposalCount +
+        CalledFunctions
+            .Where(f => f.IsTransientScopeDisposalAsParameter)
+            .Sum(f => f.GetTransientScopeDisposalCount());
+
     protected virtual void OnBecameAsync() {}
 
     public void CheckSynchronicity()
@@ -216,7 +234,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
                     containerParameter,
                     transientScopeInterfaceParameter,
                     scope,
-                    callingRange,
                     callingFunction,
                     Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                     typeParameters,
@@ -246,6 +263,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
                 containerParameter,
                 transientScopeNode,
                 callingRange,
+                callingFunction,
                 callingFunction.TransientScopeDisposalNode,
                 Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                 typeParameters,

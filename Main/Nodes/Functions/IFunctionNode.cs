@@ -25,6 +25,10 @@ internal interface IFunctionNode : INode
     void RegisterCalledFunction(IFunctionNode calledFunction);
     void RegisterCallingFunction(IFunctionNode callingFunction);
     void RegisterUsedInitializedInstance(IInitializedInstanceNode initializedInstance);
+    void AddOneToSubDisposalCount();
+    int GetSubDisposalCount();
+    void AddOneToTransientScopeDisposalCount();
+    int GetTransientScopeDisposalCount();
     void CheckSynchronicity();
     void ForceToAsync();
     string RangeFullName { get; }

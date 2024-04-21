@@ -271,8 +271,11 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
             case IImplicitScopeImplementationNode implicitScopeImplementationNode:
                 VisitIImplicitScopeImplementationNode(implicitScopeImplementationNode);
                 break;
-            case IInitialSubDisposalNode initialSubDisposalNode:
-                VisitIInitialSubDisposalNode(initialSubDisposalNode);
+            case IInitialOrdinarySubDisposalNode initialOrdinarySubDisposalNode:
+                VisitIInitialOrdinarySubDisposalNode(initialOrdinarySubDisposalNode);
+                break;
+            case IInitialTransientScopeSubDisposalNode initialTransientScopeSubDisposalNode:
+                VisitIInitialTransientScopeSubDisposalNode(initialTransientScopeSubDisposalNode);
                 break;
         }
     }
@@ -313,7 +316,9 @@ object "Transient Scope Disposal Hook" as {{reference}}
     public void VisitIEntryFunctionNode(IEntryFunctionNode element) =>
         VisitISingleFunctionNode(element);
 
-    public void VisitIInitialSubDisposalNode(IInitialSubDisposalNode element) {}
+    public void VisitIInitialOrdinarySubDisposalNode(IInitialOrdinarySubDisposalNode element) {}
+    
+    public void VisitIInitialTransientScopeSubDisposalNode(IInitialTransientScopeSubDisposalNode element) {}
 
     public void VisitITransientScopeInterfaceNode(ITransientScopeInterfaceNode element)
     {

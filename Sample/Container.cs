@@ -19,9 +19,14 @@ internal class Dependency<T> : IDisposable, IAsyncDisposable
     public async ValueTask DisposeAsync() => await Task.CompletedTask;
 }
 
-internal class Parent : IScopeRoot
+internal class Parent : ITransientScopeRoot
 {
     internal required Dependency<int> Dependency { get; init; }
+    internal required Dependency<int> Dependency0 { get; init; }
+    internal required Dependency<int> Dependency1 { get; init; }
+    internal required Dependency<int> Dependency2 { get; init; }
+    internal required Dependency<int> Dependency3 { get; init; }
+    internal required Dependency<int> Dependency4 { get; init; }
 }
 
 [CreateFunction(typeof(Task<Parent>), "Create")]

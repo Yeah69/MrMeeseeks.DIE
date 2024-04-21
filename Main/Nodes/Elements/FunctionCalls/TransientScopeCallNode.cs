@@ -16,6 +16,7 @@ internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITrans
         string ContainerParameter,
         ITransientScopeNode Scope,
         IRangeNode CallingRange,
+        IFunctionNode CallingFunction,
         IElementNode CallingTransientScopeDisposal,
         IReadOnlyList<(IParameterNode, IParameterNode)> Parameters,
         IReadOnlyList<ITypeSymbol> TypeParameters,
@@ -41,6 +42,7 @@ internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITrans
         ContainerReference = parameters.CallingRange.ContainerReference;
         TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
         AdditionalPropertiesForConstruction = [(parameters.Scope.ContainerReference ?? "", parameters.ContainerParameter)];
+        parameters.CallingFunction.AddOneToTransientScopeDisposalCount();
     }
 
     protected override (string Name, string Reference)[] AdditionalPropertiesForConstruction { get; }

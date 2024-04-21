@@ -14,11 +14,11 @@ internal interface IOuterFunctionSubDisposalNodeChooser : ISubDisposalNodeChoose
 internal sealed class OuterFunctionSubDisposalNodeChooser : IOuterFunctionSubDisposalNodeChooser
 {
     private readonly IContainerNode _parentContainer;
-    private readonly Func<IInitialSubDisposalNode> _initialSubDisposalNodeFactory;
+    private readonly Func<IInitialOrdinarySubDisposalNode> _initialSubDisposalNodeFactory;
 
     internal OuterFunctionSubDisposalNodeChooser(
         IContainerNode parentContainer,
-        Func<IInitialSubDisposalNode> initialSubDisposalNodeFactory)
+        Func<IInitialOrdinarySubDisposalNode> initialSubDisposalNodeFactory)
     {
         _parentContainer = parentContainer;
         _initialSubDisposalNodeFactory = initialSubDisposalNodeFactory;

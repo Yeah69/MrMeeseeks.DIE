@@ -155,7 +155,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             {
                 if (cycleFree.Contains(current))
                     return; // one of the previous roots checked this node already
-                if (visited.Contains(current))
+                if (!visited.Add(current))
                 {
                     var cycleStack = ImmutableStack.Create(current.TypeFullName);
                     IInitializedInstanceNode i;
@@ -170,7 +170,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
                         Location.None);
                     throw new InitializedInstanceCycleDieException(cycleStack);
                 }
-                visited.Add(current);
+
                 stack.Push(current);
                 foreach (var neighbor in map[current])
                     DetectCycleInner(neighbor, visited, stack, cycleFree);

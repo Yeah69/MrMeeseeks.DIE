@@ -15,7 +15,6 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
         string ContainerParameter,
         string TransientScopeInterfaceParameter,
         IScopeNode Scope,
-        IRangeNode CallingRange,
         IFunctionNode CallingFunction,
         IReadOnlyList<(IParameterNode, IParameterNode)> Parameters,
         IReadOnlyList<ITypeSymbol> TypeParameters,
@@ -45,6 +44,7 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
             (parameters.Scope.TransientScopeInterfaceReference, parameters.TransientScopeInterfaceParameter)
         ];
         SubDisposalReference = parameters.CallingFunction.SubDisposalNode.Reference;
+        parameters.CallingFunction.AddOneToSubDisposalCount();
     }
 
     public string SubDisposalReference { get; }

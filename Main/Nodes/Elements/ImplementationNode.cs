@@ -191,8 +191,11 @@ internal sealed partial class ImplementationNode : IImplementationNode
         }
 
         var disposalType = _checkTypeProperties.ShouldDisposalBeManaged(_implementationType);
-        if (disposalType is not DisposalType.None) 
+        if (disposalType is not DisposalType.None)
+        {
             _parentRange.RegisterTypeForDisposal(_implementationType);
+            _parentFunction.AddOneToSubDisposalCount();
+        }
         AggregateForDisposal = disposalType is not DisposalType.None;
         
         foreach (var sameTypeInjections in injectionsAnalysisGathering

@@ -14,11 +14,11 @@ internal interface IEntryTransientScopeDisposalNodeChooser : ITransientScopeDisp
 internal sealed class EntryTransientScopeDisposalNodeChooser : IEntryTransientScopeDisposalNodeChooser
 {
     private readonly IContainerNode _parentContainer;
-    private readonly Func<IInitialSubDisposalNode> _initialSubDisposalNodeFactory;
+    private readonly Func<IInitialTransientScopeSubDisposalNode> _initialSubDisposalNodeFactory;
 
     internal EntryTransientScopeDisposalNodeChooser(
         IContainerNode parentContainer,
-        Func<IInitialSubDisposalNode> initialSubDisposalNodeFactory)
+        Func<IInitialTransientScopeSubDisposalNode> initialSubDisposalNodeFactory)
     {
         _parentContainer = parentContainer;
         _initialSubDisposalNodeFactory = initialSubDisposalNodeFactory;

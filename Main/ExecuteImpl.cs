@@ -38,6 +38,7 @@ internal sealed class ExecuteImpl : IExecute
 
     public void Execute()
     {
+        var containersGenerated = false;
         foreach (var syntaxTree in _context.Compilation.SyntaxTrees)
         {
             var semanticModel = _context.Compilation.GetSemanticModel(syntaxTree);
@@ -61,8 +62,14 @@ internal sealed class ExecuteImpl : IExecute
                     _referenceGeneratorCounter);
                 var executeContainer = msContainer.Create();
                 executeContainer.Execute();
+                containersGenerated = true;
             }
         }
+        
+        // Generate the remaining code only if there actually are containers that were generated
+        // It can happen that this generator is executed in project where it is not needed (e.g. a test project)
+        if (!containersGenerated)
+            return;
         
         var requiredKeywordTypesFile = _requiredKeywordUtility.GenerateRequiredKeywordTypesFile();
         if (requiredKeywordTypesFile is not null)

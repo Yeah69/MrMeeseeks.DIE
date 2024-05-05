@@ -40,7 +40,7 @@ internal sealed partial class Container;
 
 public sealed class Tests
 {
-    //[Fact]
+    [Fact]
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
@@ -51,6 +51,7 @@ public sealed class Tests
         catch (SyncDisposalTriggeredException e)
         {
             await e.AsyncDisposal;
+            Assert.Equal("Yikes!", e.Exception?.Message);
             Assert.True(container.CreateDisposalTracking().DisposedObjects is [Dependency]);
             return;
         }

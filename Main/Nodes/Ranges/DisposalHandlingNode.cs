@@ -9,18 +9,13 @@ internal interface IDisposalHandlingNode
     string? AsyncCollectionReference { get; }
     bool HasSyncDisposables { get; }
     bool HasAsyncDisposables { get; }
-    string RegisterSyncDisposal();
-    string? RegisterAsyncDisposal();
+    void RegisterSyncDisposal();
+    void RegisterAsyncDisposal();
     string CollectionReference { get; }
 }
 
 internal sealed class DisposalHandlingNode : IDisposalHandlingNode
 {
-    private bool _syncCollectionUsed;
-    private bool _asyncCollectionUsed;
-    private readonly string _syncCollection;
-    private readonly string? _asyncCollection;
-    
     internal DisposalHandlingNode(
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
@@ -28,8 +23,8 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
         DisposedFieldReference = referenceGenerator.Generate("_disposed");
         DisposedLocalReference = referenceGenerator.Generate("disposed");
         DisposedPropertyReference = referenceGenerator.Generate("Disposed");
-        _syncCollection = referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfSyncDisposable);
-        _asyncCollection = wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null 
+        SyncCollectionReference = referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfSyncDisposable);
+        AsyncCollectionReference = wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null 
             ? referenceGenerator.Generate(wellKnownTypes.ConcurrentBagOfAsyncDisposable) 
             : null;
         CollectionReference = referenceGenerator.Generate("_disposal");
@@ -38,23 +33,20 @@ internal sealed class DisposalHandlingNode : IDisposalHandlingNode
     public string DisposedFieldReference { get; }
     public string DisposedLocalReference { get; }
     public string DisposedPropertyReference { get; }
-    public string SyncCollectionReference => _syncCollection;
-    public string? AsyncCollectionReference => _asyncCollection;
-    public bool HasSyncDisposables => _syncCollectionUsed;
-    public bool HasAsyncDisposables => _asyncCollectionUsed;
+    public string SyncCollectionReference { get; }
 
-    public string RegisterSyncDisposal()
-    {
-        _syncCollectionUsed = true;
-        return _syncCollection;
-    }
+    public string? AsyncCollectionReference { get; }
 
-    public string? RegisterAsyncDisposal()
+    public bool HasSyncDisposables { get; private set; }
+
+    public bool HasAsyncDisposables { get; private set; }
+
+    public void RegisterSyncDisposal() => HasSyncDisposables = true;
+
+    public void RegisterAsyncDisposal()
     {
-        if (_asyncCollection is not null)
-            _asyncCollectionUsed = true;
-        
-        return _asyncCollection;
+        if (AsyncCollectionReference is not null)
+            HasAsyncDisposables = true;
     }
 
     public string CollectionReference { get; }

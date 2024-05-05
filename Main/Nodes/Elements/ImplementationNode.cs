@@ -195,6 +195,10 @@ internal sealed partial class ImplementationNode : IImplementationNode
         {
             _parentRange.RegisterTypeForDisposal(_implementationType);
             _parentFunction.AddOneToSubDisposalCount();
+            if (disposalType.HasFlag(DisposalType.Sync))
+                _parentRange.DisposalHandling.RegisterSyncDisposal();
+            if (disposalType.HasFlag(DisposalType.Async))
+                _parentRange.DisposalHandling.RegisterAsyncDisposal();
         }
         AggregateForDisposal = disposalType is not DisposalType.None;
         

@@ -6,7 +6,7 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Disposal.ErrorCase.Vanilla;
+namespace MrMeeseeks.DIE.Test.Disposal.ErrorCase.SyncOnly.InContainerInstance;
 
 internal sealed class Dependency : IDisposable
 {
@@ -14,7 +14,7 @@ internal sealed class Dependency : IDisposable
     public void Dispose() => DisposalTracking.RegisterDisposal(this);
 }
 
-internal sealed class Parent
+internal sealed class Parent : IContainerInstance
 {
     internal Parent(Dependency _) => throw new Exception("Yikes!");
 }
@@ -40,9 +40,9 @@ public sealed class Tests
         {
             _ = container.Create();
         }
-        catch (SyncDisposalTriggeredException e)
+        catch (AggregateException e)
         {
-            await e.AsyncDisposal;
+            Assert.True(e.Flatten().InnerExceptions is [{Message: "Yikes!"}]);
             Assert.True(container.CreateDisposalTracking().DisposedObjects is [Dependency]);
             return;
         }

@@ -42,18 +42,9 @@ public sealed class Tests
     {
         await using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
-        try
-        {
-            Assert.IsType<Dependency>(transientScopeRoot.Dependency);
-            Assert.False(transientScopeRoot.Dependency.IsDisposed);
-            transientScopeRoot.Cleanup();
-        }
-        catch (SyncDisposalTriggeredException e)
-        {
-            await e.AsyncDisposal;
-            Assert.True(transientScopeRoot.Dependency.IsDisposed);
-            return;
-        }
-        Assert.Fail();
+        Assert.IsType<Dependency>(transientScopeRoot.Dependency);
+        Assert.False(transientScopeRoot.Dependency.IsDisposed);
+        transientScopeRoot.Cleanup();
+        Assert.True(transientScopeRoot.Dependency.IsDisposed);
     }
 }

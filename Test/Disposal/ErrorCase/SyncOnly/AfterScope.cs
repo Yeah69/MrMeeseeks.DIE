@@ -6,17 +6,27 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Disposal.ErrorCase.InScope;
+namespace MrMeeseeks.DIE.Test.Disposal.ErrorCase.SyncOnly.AfterScope;
 
-internal sealed class Dependency : IDisposable
+internal sealed class DisposableDependency : IDisposable
 {
     internal required DisposalTracking DisposalTracking { get; init; }
     public void Dispose() => DisposalTracking.RegisterDisposal(this);
 }
 
+internal sealed class ThrowingDependency
+{
+    internal ThrowingDependency() => throw new Exception("Yikes!");
+}
+
+internal sealed class ScopeRoot : IScopeRoot
+{
+    internal ScopeRoot(DisposableDependency _) { }
+}
+
 internal sealed class Parent : IScopeRoot
 {
-    internal Parent(Dependency _) => throw new Exception("Yikes!");
+    internal Parent(ScopeRoot _, ThrowingDependency __) {}
 }
 
 internal sealed class DisposalTracking : IContainerInstance
@@ -40,10 +50,10 @@ public sealed class Tests
         {
             _ = container.Create();
         }
-        catch (SyncDisposalTriggeredException e)
+        catch (AggregateException e)
         {
-            await e.AsyncDisposal;
-            Assert.True(container.CreateDisposalTracking().DisposedObjects is [Dependency]);
+            Assert.True(e.Flatten().InnerExceptions is [{Message: "Yikes!"}]);
+            Assert.True(container.CreateDisposalTracking().DisposedObjects is [DisposableDependency]);
             return;
         }
         Assert.Fail();

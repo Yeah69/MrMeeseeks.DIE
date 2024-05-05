@@ -161,6 +161,8 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
         var asyncDisposal = disposalMap.TryGetValue(DisposalType.Async, out var listAsync0) ? listAsync0 : [];
         var syncDisposal = disposalMap.TryGetValue(DisposalType.Sync, out var listSync0) ? listSync0 : [];
 
+        var asyncDisposablesPossible = _containerNode.AsyncDisposablesPossible;
+
         var isAsyncClauseFunction = 
             _wellKnownTypes.IAsyncDisposable is not null 
             && _disposeUtility.DisposeSingularAsyncSyncedFullyQualified is not null
@@ -190,10 +192,10 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
                   {{_wellKnownTypes.ConcurrentBagOfAsyncDisposable?.FullName()}} {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.UserDefinedAsyncDisposablesPropertyName}} => {{_rangeNode.DisposalHandling.AsyncCollectionReference}};
                   """);
         
-        GenerateClauseFunction(_disposeUtility.DisposableRangeInterfaceData.SyncClauseFunctionName, syncDisposal, !isAsyncClauseFunction);
+        GenerateClauseFunction(_disposeUtility.DisposableRangeInterfaceData.SyncClauseFunctionName, syncDisposal, !asyncDisposablesPossible);
         
         if (isAsyncClauseFunction && _disposeUtility.DisposableRangeInterfaceData.AsyncClauseFunctionName is not null)
-            GenerateClauseFunction(_disposeUtility.DisposableRangeInterfaceData.AsyncClauseFunctionName, asyncDisposal, true);
+            GenerateClauseFunction(_disposeUtility.DisposableRangeInterfaceData.AsyncClauseFunctionName, asyncDisposal, asyncDisposablesPossible);
 
 
         if (_wellKnownTypes.ConcurrentBagOfAsyncDisposable is not null)
@@ -225,9 +227,12 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
                 ? $"async {_wellKnownTypes.ValueTask.FullName()} {Constants.IAsyncDisposableDisposeAsync}"
                 : $"void {nameof(IDisposable.Dispose)}";
             var awaitPrefix = isAsync ? "await " : "";
-            var utilityCallName = isAsync
-                ? _disposeUtility.DisposeAsyncFullyQualified
-                : _disposeUtility.DisposeFullyQualified;
+            var utilityCallName = (isAsync, asyncDisposablesPossible) switch
+            {
+                (true, _) => _disposeUtility.DisposeAsyncFullyQualified,
+                (_, false) when _disposeUtility.DisposeSyncOnlyFullyQualified is {} syncOnlyName => syncOnlyName,
+                (_, true) => _disposeUtility.DisposeFullyQualified
+            };
             
             code.AppendLine(
                 $$"""

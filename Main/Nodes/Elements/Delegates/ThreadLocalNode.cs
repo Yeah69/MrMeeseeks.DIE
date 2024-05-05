@@ -39,14 +39,15 @@ internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNo
     public override void Build(PassedContext passedContext)
     {
         base.Build(passedContext);
+        
         var disposalType = _checkTypeProperties.ShouldDisposalBeManaged(_threadLocalType);
         if (disposalType is not DisposalType.None && disposalType.HasFlag(DisposalType.Sync))
         {
             _parentRange.RegisterTypeForDisposal(_threadLocalType);
             _parentFunction.AddOneToSubDisposalCount();
-        }
-        if (disposalType.HasFlag(DisposalType.Sync))
+            _parentRange.DisposalHandling.RegisterSyncDisposal();
             SubDisposalReference = _parentFunction.SubDisposalNode.Reference;
+        }
     }
 
     public string? SubDisposalReference { get; private set; }

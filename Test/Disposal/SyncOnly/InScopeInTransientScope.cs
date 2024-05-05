@@ -5,7 +5,7 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Disposal.Sync.InScopeInTransientScope;
+namespace MrMeeseeks.DIE.Test.Disposal.SyncOnly.InScopeInTransientScope;
 
 internal sealed class Dependency :  IDisposable
 {
@@ -14,17 +14,9 @@ internal sealed class Dependency :  IDisposable
     public void Dispose() => IsDisposed = true;
 }
 
-/// <summary>
-/// Makes the container mixed: sync and async disposal.
-/// </summary>
-internal sealed class DummyDependencyAsync : IAsyncDisposable
-{
-    public ValueTask DisposeAsync() => new(Task.CompletedTask);
-}
-
 internal sealed class ScopeRoot : IScopeRoot
 {
-    public ScopeRoot(Dependency dependency, DummyDependencyAsync _) => Dependency = dependency;
+    public ScopeRoot(Dependency dependency) => Dependency = dependency;
 
     internal Dependency Dependency { get; }
 }
@@ -55,17 +47,8 @@ public sealed class Tests
     {
         using var container = Container.DIE_CreateContainer();
         var dependency = container.Create();
-        try
-        {
-            Assert.False(dependency.ScopeRoot.Dependency.IsDisposed);
-            container.Dispose();
-        }
-        catch (SyncDisposalTriggeredException e)
-        {
-            await e.AsyncDisposal;
-            Assert.True(dependency.ScopeRoot.Dependency.IsDisposed);
-            return;
-        }
-        Assert.Fail();
+        Assert.False(dependency.ScopeRoot.Dependency.IsDisposed);
+        container.Dispose();
+        Assert.True(dependency.ScopeRoot.Dependency.IsDisposed);
     }
 }

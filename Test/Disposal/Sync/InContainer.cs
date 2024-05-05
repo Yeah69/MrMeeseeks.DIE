@@ -16,6 +16,15 @@ internal sealed class Dependency :  IDisposable
     }
 }
 
+/// <summary>
+/// Makes the container mixed: sync and async disposal.
+/// </summary>
+internal sealed class DummyDependencyAsync : IAsyncDisposable
+{
+    public ValueTask DisposeAsync() => new(Task.CompletedTask);
+}
+
+[CreateFunction(typeof(DummyDependencyAsync), "DummyCreate")]
 [CreateFunction(typeof(Dependency), "Create")]
 internal sealed partial class Container;
 

@@ -57,10 +57,6 @@ internal interface IRangeNode : INode
 
     void CycleDetectionAndReorderingOfInitializedInstances();
 
-    string DisposeChunkMethodName { get; }
-    string DisposeChunkAsyncMethodName { get; }
-    string DisposeExceptionHandlingMethodName { get; }
-    string DisposeExceptionHandlingAsyncMethodName { get; }
     void RegisterTypeForDisposal(INamedTypeSymbol type);
     IReadOnlyDictionary<DisposalType, IReadOnlyList<INamedTypeSymbol>> GetDisposalTypeToTypeFullNames();
     INodeGenerator GetGenerator();
@@ -271,9 +267,7 @@ internal abstract class RangeNode : IRangeNode
                 .Where(ad =>
                     CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass,
                         wellKnownTypesMiscellaneous.InitializedInstancesAttribute))
-                .Where(ad =>
-                    ad is { ConstructorArguments.Length: 1 } &&
-                    ad.ConstructorArguments[0].Kind == TypedConstantKind.Array)
+                .Where(ad => ad is { ConstructorArguments: [{ Kind: TypedConstantKind.Array }] })
                 .SelectMany(ad => ad
                     .ConstructorArguments[0]
                     .Values
@@ -284,10 +278,6 @@ internal abstract class RangeNode : IRangeNode
         }
         
         ResolutionCounterReference = referenceGenerator.Generate("resolutionCounter");
-        DisposeChunkMethodName = referenceGenerator.Generate("DisposeChunk");
-        DisposeChunkAsyncMethodName = referenceGenerator.Generate("DisposeChunkAsync");
-        DisposeExceptionHandlingMethodName = referenceGenerator.Generate("DisposeExceptionHandling");
-        DisposeExceptionHandlingAsyncMethodName = referenceGenerator.Generate("DisposeExceptionHandlingAsync");
     }
     
     protected abstract IScopeManager ScopeManager { get; }
@@ -354,29 +344,21 @@ internal abstract class RangeNode : IRangeNode
             initializationFunction.ReorderOrDetectCycle();
     }
 
-    public string DisposeChunkMethodName { get; }
-    public string DisposeChunkAsyncMethodName { get; }
-    public string DisposeExceptionHandlingMethodName { get; }
-    public string DisposeExceptionHandlingAsyncMethodName { get; }
-
     public void RegisterTypeForDisposal(INamedTypeSymbol type) => 
         _aggregatedTypesForDisposal.Add(type.UnboundIfGeneric());
 
     public IReadOnlyDictionary<DisposalType, IReadOnlyList<INamedTypeSymbol>> GetDisposalTypeToTypeFullNames() =>
         _aggregatedTypesForDisposal
-            .SelectMany<INamedTypeSymbol, (DisposalType, INamedTypeSymbol)>(t =>
-            {
-                var disposalType = _checkTypeProperties.ShouldDisposalBeManaged(t);
-                return disposalType switch
+            .SelectMany<INamedTypeSymbol, (DisposalType DisposalType, INamedTypeSymbol Disposable)>(t =>
+                _checkTypeProperties.ShouldDisposalBeManaged(t) switch
                 {
                     DisposalType.Async | DisposalType.Sync => [(DisposalType.Async, t), (DisposalType.Sync, t)],
                     DisposalType.Async => [(DisposalType.Async, t)],
                     DisposalType.Sync => [(DisposalType.Sync, t)],
                     _ => []
-                };
-            })
-            .GroupBy(t => t.Item1)
-            .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>) g.Select(t => t.Item2).ToList());
+                })
+            .GroupBy(t => t.DisposalType)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<INamedTypeSymbol>)g.Select(t => t.Disposable).ToList());
 
     public abstract INodeGenerator GetGenerator();
     public abstract bool GenerateEmptyConstructor { get; }

@@ -14,9 +14,17 @@ internal sealed class Dependency :  IDisposable
     public void Dispose() => IsDisposed = true;
 }
 
+/// <summary>
+/// Makes the container mixed: sync and async disposal.
+/// </summary>
+internal sealed class DummyDependencyAsync : IAsyncDisposable
+{
+    public ValueTask DisposeAsync() => new(Task.CompletedTask);
+}
+
 internal sealed class TransientScopeRootInner : ITransientScopeRoot
 {
-    public TransientScopeRootInner(Dependency dependency) => Dependency = dependency;
+    public TransientScopeRootInner(Dependency dependency, DummyDependencyAsync _) => Dependency = dependency;
 
     internal Dependency Dependency { get; }
 }

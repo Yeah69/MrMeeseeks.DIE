@@ -69,19 +69,10 @@ public sealed class Tests
     {
         await using var container = Container.DIE_CreateContainer();
         var transientScopeRoot = container.Create();
-        try
-        {
-            Assert.NotEqual(transientScopeRoot.A, transientScopeRoot.B);
-            Assert.Equal(transientScopeRoot.A.TransientScopeInstance, transientScopeRoot.B.TransientScopeInstance);
-            transientScopeRoot.CleanUp();
-        }
-        catch (SyncDisposalTriggeredException e)
-        {
-            await e.AsyncDisposal;
-            Assert.True(transientScopeRoot.A.Disposed);
-            Assert.True(transientScopeRoot.B.Disposed);
-            return;
-        }
-        Assert.Fail();
+        Assert.NotEqual(transientScopeRoot.A, transientScopeRoot.B);
+        Assert.Equal(transientScopeRoot.A.TransientScopeInstance, transientScopeRoot.B.TransientScopeInstance);
+        transientScopeRoot.CleanUp();
+        Assert.True(transientScopeRoot.A.Disposed);
+        Assert.True(transientScopeRoot.B.Disposed);
     }
 }

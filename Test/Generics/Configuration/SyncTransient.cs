@@ -33,17 +33,8 @@ public sealed class Tests
     {
         await using var container = Container.DIE_CreateContainer();
         using var instance = container.Create();
-        try
-        {
-            Assert.False(instance.IsDisposed);
-            container.Dispose();
-        }
-        catch (SyncDisposalTriggeredException e)
-        {
-            await e.AsyncDisposal;
-            Assert.False(instance.IsDisposed);
-            return;
-        }
-        Assert.Fail();
+        Assert.False(instance.IsDisposed);
+        container.Dispose();
+        Assert.False(instance.IsDisposed);
     }
 }

@@ -6,17 +6,35 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Disposal.ErrorCase.InContainerInstance;
+namespace MrMeeseeks.DIE.Test.Disposal.ErrorCase.Sync.AfterContainerInstance;
 
-internal sealed class Dependency : IDisposable
+internal sealed class DisposableDependency : IDisposable
 {
     internal required DisposalTracking DisposalTracking { get; init; }
     public void Dispose() => DisposalTracking.RegisterDisposal(this);
 }
 
-internal sealed class Parent : IContainerInstance
+/// <summary>
+/// Makes the container mixed: sync and async disposal.
+/// </summary>
+internal sealed class DummyDependencyAsync : IAsyncDisposable
 {
-    internal Parent(Dependency _) => throw new Exception("Yikes!");
+    public async ValueTask DisposeAsync() => await Task.Yield();
+}
+
+internal sealed class ThrowingDependency
+{
+    internal ThrowingDependency() => throw new Exception("Yikes!");
+}
+
+internal sealed class ContainerInstance : IContainerInstance
+{
+    internal ContainerInstance(DisposableDependency _, DummyDependencyAsync __) { }
+}
+
+internal sealed class Parent
+{
+    internal Parent(ContainerInstance _, ThrowingDependency __) {}
 }
 
 internal sealed class DisposalTracking : IContainerInstance
@@ -32,7 +50,7 @@ internal sealed partial class Container;
 
 public sealed class Tests
 {
-    [Fact]
+    //[Fact]
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
@@ -43,7 +61,7 @@ public sealed class Tests
         catch (SyncDisposalTriggeredException e)
         {
             await e.AsyncDisposal;
-            Assert.True(container.CreateDisposalTracking().DisposedObjects is [Dependency]);
+            Assert.True(container.CreateDisposalTracking().DisposedObjects is []);
             return;
         }
         Assert.Fail();

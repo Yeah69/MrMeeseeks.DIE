@@ -14,13 +14,20 @@ internal sealed class Dependency :  IDisposable
     public void Dispose() => IsDisposed = true;
 }
 
+/// <summary>
+/// Makes the container mixed: sync and async disposal.
+/// </summary>
+internal sealed class DummyDependencyAsync : IAsyncDisposable
+{
+    public ValueTask DisposeAsync() => new(Task.CompletedTask);
+}
+
 internal sealed class ScopeRoot : IScopeRoot
 {
-    public ScopeRoot(Dependency dependency) => Dependency = dependency;
+    public ScopeRoot(Dependency dependency, InContainer.DummyDependencyAsync _) => Dependency = dependency;
 
     internal Dependency Dependency { get; }
 }
-
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container;
 

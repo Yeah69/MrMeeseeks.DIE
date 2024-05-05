@@ -185,7 +185,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             
             var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
                 ? $"throw await {_disposeUtility.DisposeExceptionHandlingAsyncFullyQualified}(({_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}) {Constants.ThisKeyword}, {parameters});"
-                : $"throw {_disposeUtility.DisposeExceptionHandlingFullyQualified}(({_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}) {Constants.ThisKeyword}, {parameters});";
+                : $"throw {(!_container.AsyncDisposablesPossible && _disposeUtility.DisposeExceptionHandlingSyncOnlyFullyQualified is {} syncOnlyName ? syncOnlyName : _disposeUtility.DisposeExceptionHandlingFullyQualified)}(({_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}) {Constants.ThisKeyword}, {parameters});";
     
             code.AppendLine(
                 $$"""

@@ -26,6 +26,7 @@ internal interface IContainerNode : IRangeNode
     string TransientScopeDisposalReference { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
     IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; }
+    bool AsyncDisposablesPossible { get; }
 
     void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode);
 }
@@ -63,6 +64,13 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         BuildRangedInstanceCall(ownerReference, type, callingFunction, ScopeLevel.Container);
 
     public IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; private set; } = null!;
+
+    public bool AsyncDisposablesPossible =>
+        TransientScopes
+            .Concat<IRangeNode>(Scopes)
+            .Prepend(this)
+            .Any(r => r.DisposalHandling.HasAsyncDisposables);
+    
     public override bool GenerateEmptyConstructor { get; }
 
     public void RegisterDelegateBaseNode(IDelegateBaseNode delegateBaseNode) => 

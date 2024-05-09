@@ -19,6 +19,7 @@ internal sealed record WellKnownTypesMiscellaneous(
     INamedTypeSymbol FilterInjectionKeyMappingAttribute,
     INamedTypeSymbol DecorationOrdinalMappingAttribute,
     INamedTypeSymbol FilterDecorationOrdinalMappingAttribute,
+    INamedTypeSymbol GenericParameterMappingAttribute,
     INamedTypeSymbol DieExceptionKind)
     : IContainerInstance
 {
@@ -37,5 +38,6 @@ internal sealed record WellKnownTypesMiscellaneous(
         FilterInjectionKeyMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInjectionKeyMappingAttribute).FullName ?? ""),
         DecorationOrdinalMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(DecorationOrdinalMappingAttribute).FullName ?? ""),
         FilterDecorationOrdinalMappingAttribute:  compilation.GetTypeByMetadataNameOrThrow(typeof(FilterDecorationOrdinalMappingAttribute).FullName ?? ""),
+        GenericParameterMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(GenericParameterMappingAttribute).FullName ?? ""),
         DieExceptionKind: compilation.GetTypeByMetadataNameOrThrow(typeof(DieExceptionKind).FullName ?? ""));
 }

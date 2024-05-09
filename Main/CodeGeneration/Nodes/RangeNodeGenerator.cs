@@ -48,10 +48,14 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
     public void Generate(StringBuilder code, ICodeGenerationVisitor visitor)
     {
         PreClass(code);
+        
+        var genericParameters = _rangeNode is IContainerNode containerNode && containerNode.TypeParameters.Any()
+            ? $"<{string.Join(", ", containerNode.TypeParameters.Select(p => p.Name))}>"
+            : "";
 
         code.AppendLine(
             $$"""
-              {{ClassDeclaredAccessibility}}sealed partial class {{_rangeNode.Name}} : {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}, {{InterfaceAssignment}}
+              {{ClassDeclaredAccessibility}}sealed partial class {{_rangeNode.Name}}{{genericParameters}} : {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}, {{InterfaceAssignment}}
               {
               """);
         

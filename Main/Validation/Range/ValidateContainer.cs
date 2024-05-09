@@ -145,6 +145,44 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
                     location);
         }
 
+        var typeParametersWithMapping = rangeType.TypeParameters
+            .Where(tp => tp.GetAttributes().Any(ad => CustomSymbolEqualityComparer.Default.Equals(
+                ad.AttributeClass, _wellKnownTypesMiscellaneous.GenericParameterMappingAttribute)));
+
+        foreach (var typeParameter in typeParametersWithMapping)
+        {
+            var mapping = typeParameter
+                .GetAttributes()
+                .First(ad => CustomSymbolEqualityComparer.Default.Equals(
+                    ad.AttributeClass, _wellKnownTypesMiscellaneous.GenericParameterMappingAttribute));
+
+            if (mapping.ConstructorArguments.Length != 2)
+            {
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(rangeType, rangeType, $"Attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" has to have exactly two constructor arguments."),
+                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                continue;
+            }
+
+            if (mapping.ConstructorArguments[0].Value is not INamedTypeSymbol mapToType
+                || mapping.ConstructorArguments[1].Value is not string mapToTypeParameterName)
+            {
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(rangeType, rangeType, $"Attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" has to have a type and a string as constructor arguments."),
+                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                continue;
+            }
+
+            if (!mapToType.OriginalDefinition.TypeParameters.Any(tp => tp.Name == mapToTypeParameterName))
+            {
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(rangeType, rangeType, $"Type and type parameter name given to the attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" don't match. The type \"{mapToType.OriginalDefinition.FullName()}\" doesn't have a type parameter named \"{mapToTypeParameterName}\"."),
+                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+            }
+        }
+
+        return;
+
         void ValidateCustomScope(INamedTypeSymbol customScope, ISet<INamedTypeSymbol> customScopeTypesSet)
         {
             var customScopeAttributes = customScope

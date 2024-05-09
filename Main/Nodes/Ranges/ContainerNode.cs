@@ -16,6 +16,7 @@ namespace MrMeeseeks.DIE.Nodes.Ranges;
 internal interface IContainerNode : IRangeNode
 {
     string Namespace { get; }
+    IEnumerable<ITypeParameterSymbol> TypeParameters { get; }
     Queue<BuildJob> BuildQueue { get; }
     Queue<IFunctionNode> AsyncCheckQueue { get; }
     IReadOnlyList<IEntryFunctionNode> RootFunctions { get; }
@@ -48,6 +49,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
 
     public override string FullName { get; }
     public string Namespace { get; }
+    public IEnumerable<ITypeParameterSymbol> TypeParameters => _containerInfo.ContainerType.TypeParameters;
     public Queue<BuildJob> BuildQueue { get; } = new();
     public Queue<IFunctionNode> AsyncCheckQueue { get; } = new();
     public IReadOnlyList<IEntryFunctionNode> RootFunctions => _rootFunctions;

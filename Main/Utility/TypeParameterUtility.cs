@@ -1,4 +1,7 @@
 using Microsoft.CodeAnalysis.CSharp;
+using MrMeeseeks.DIE.Extensions;
+using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -12,20 +15,48 @@ internal interface ITypeParameterUtility
     bool ContainsOpenTypeParameters(ITypeSymbol type);
 }
 
-internal sealed class TypeParameterUtility : ITypeParameterUtility
+internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerInstance
 {
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly Compilation _compilation;
     private readonly WellKnownTypes _wellKnownTypes;
+    private readonly Lazy<Dictionary<ITypeParameterSymbol, (INamedTypeSymbol Type, ITypeParameterSymbol TypeParameter)>> _containerTypeParameterMappings;
 
     internal TypeParameterUtility(
+        Lazy<IContainerNode> parentContainer,
         IReferenceGenerator referenceGenerator,
         GeneratorExecutionContext generatorExecutionContext,
-        WellKnownTypes wellKnownTypes)
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         _referenceGenerator = referenceGenerator;
         _compilation = generatorExecutionContext.Compilation;
         _wellKnownTypes = wellKnownTypes;
+
+        _containerTypeParameterMappings = parentContainer
+            .Select(pc => pc.TypeParameters
+                .Where(tp => tp.GetAttributes().Any(a =>
+                    CustomSymbolEqualityComparer.Default.Equals(
+                        a.AttributeClass,
+                        wellKnownTypesMiscellaneous.GenericParameterMappingAttribute)))
+                .Select(tp =>
+                {
+                    var attribute = tp.GetAttributes().Single(a =>
+                        CustomSymbolEqualityComparer.Default.Equals(a.AttributeClass,
+                            wellKnownTypesMiscellaneous.GenericParameterMappingAttribute));
+                    var mapToType = (attribute.ConstructorArguments[0].Value as INamedTypeSymbol)?.OriginalDefinition
+                                    ?? throw new ArgumentException(
+                                        "The first argument of the attribute must be a type.");
+                    var mapToTypeParameterName = attribute.ConstructorArguments[1].Value
+                                                 ?? throw new ArgumentException(
+                                                     "The second argument of the attribute must be a string.");
+                    var mapToTypeParameter = mapToType.TypeParameters
+                                                 .FirstOrDefault(tp => tp.Name == mapToTypeParameterName.ToString())
+                                             ?? throw new ArgumentException(
+                                                 "The second argument of the attribute must be a type parameter of the first argument.");
+                    return (FromTypeParamter: tp, To: (Type: mapToType, TypeParameter: mapToTypeParameter));
+                })
+                .ToDictionary(t => t.FromTypeParamter, t => t.To));
     }
 
     public ITypeSymbol ReplaceTypeParametersByCustom(ITypeSymbol baseType)
@@ -69,8 +100,10 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility
                         "Pointer type can't be used as type constraint, directly (see 'unmanaged' constraint).",
                         nameof(type));
                 case ITypeParameterSymbol typeParameterSymbol:
-                    // This type parameter has to be contained in the dictionary, otherwise the type extraction failed
-                    return (true, typeParametersMap[typeParameterSymbol]);
+                    return _containerTypeParameterMappings.Value.TryGetValue(typeParameterSymbol.OriginalDefinition, out var tuple) 
+                        ? (true, tuple.TypeParameter) :
+                        // This type parameter has to be contained in the dictionary, otherwise the type extraction failed
+                        (true, typeParametersMap[typeParameterSymbol]);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));
             }
@@ -121,6 +154,14 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility
                     Inner(pointerTypeSymbol.PointedAtType);
                     break;
                 case ITypeParameterSymbol typeParameterSymbol:
+                    var originalTypeParameter = typeParameterSymbol.OriginalDefinition;
+                    if (_containerTypeParameterMappings.Value.ContainsKey(originalTypeParameter))
+                        break;
+                    if (_containerTypeParameterMappings.Value.Any(kvp =>
+                            CustomSymbolEqualityComparer.Default.Equals(kvp.Value.Type,
+                                originalTypeParameter.DeclaringType)
+                            && kvp.Value.TypeParameter.Name == originalTypeParameter.Name))
+                        break;
                     collectedTypeParameterSymbols.Add(typeParameterSymbol);
                     break;
                 default:
@@ -129,7 +170,7 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility
         }
     }
 
-    public IReadOnlyDictionary<ITypeParameterSymbol, ITypeParameterSymbol> GrowFor(ITypeSymbol baseType)
+    private IReadOnlyDictionary<ITypeParameterSymbol, ITypeParameterSymbol> GrowFor(ITypeSymbol baseType)
     {
         var extractedOpenTypeParameters = ExtractTypeParameters(baseType);
 
@@ -441,8 +482,8 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility
                 return namedTypeSymbol.TypeArguments.Any(ContainsOpenTypeParameters);
             case IPointerTypeSymbol pointerTypeSymbol:
                 return ContainsOpenTypeParameters(pointerTypeSymbol.PointedAtType);
-            case ITypeParameterSymbol:
-                return true;
+            case ITypeParameterSymbol typeParameterSymbol:
+                return !_containerTypeParameterMappings.Value.ContainsKey(typeParameterSymbol);
             default:
                 throw new ArgumentOutOfRangeException(nameof(type));
         }

@@ -1,3 +1,4 @@
+using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -15,13 +16,14 @@ internal interface IInitialTransientScopeSubDisposalNode : IInitialSubDisposalNo
 
 internal abstract class InitialSubDisposalNode : IInitialSubDisposalNode
 {
+    private readonly Lazy<string> _reference;
 
     protected InitialSubDisposalNode(
-        string reference,
+        Lazy<string> reference,
         WellKnownTypes wellKnownTypes)
     {
         TypeFullName = wellKnownTypes.ListOfObject.FullName();
-        Reference = reference;
+        _reference = reference;
     }
     
     public void Build(PassedContext passedContext) { }
@@ -30,7 +32,7 @@ internal abstract class InitialSubDisposalNode : IInitialSubDisposalNode
     public abstract int SubDisposalCount { get; }
 
     public string TypeFullName { get; }
-    public string Reference { get; }
+    public string Reference => _reference.Value;
 }
 
 internal sealed partial class InitialOrdinarySubDisposalNode : InitialSubDisposalNode, IInitialOrdinarySubDisposalNode
@@ -39,9 +41,9 @@ internal sealed partial class InitialOrdinarySubDisposalNode : InitialSubDisposa
 
     internal InitialOrdinarySubDisposalNode(
         Lazy<IFunctionNode> parentFunction,
-        IReferenceGenerator referenceGenerator,
+        Lazy<IReferenceGenerator> referenceGenerator,
         WellKnownTypes wellKnownTypes)
-        : base(referenceGenerator.Generate("subDisposal"), wellKnownTypes) =>
+        : base(referenceGenerator.Select(rg => rg.Generate("subDisposal")), wellKnownTypes) =>
         _parentFunction = parentFunction;
 
     public override int SubDisposalCount => _parentFunction.Value.GetSubDisposalCount();
@@ -53,9 +55,9 @@ internal sealed partial class InitialTransientScopeSubDisposalNode : InitialSubD
 
     internal InitialTransientScopeSubDisposalNode(
         Lazy<IFunctionNode> parentFunction,
-        IReferenceGenerator referenceGenerator,
+        Lazy<IReferenceGenerator> referenceGenerator,
         WellKnownTypes wellKnownTypes)
-        : base(referenceGenerator.Generate("transientScopeSubDisposal"), wellKnownTypes) =>
+        : base(referenceGenerator.Select(rg => rg.Generate("transientScopeSubDisposal")), wellKnownTypes) =>
         _parentFunction = parentFunction;
 
     public override int SubDisposalCount => _parentFunction.Value.GetTransientScopeDisposalCount();

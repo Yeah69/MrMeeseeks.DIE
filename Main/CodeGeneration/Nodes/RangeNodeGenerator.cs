@@ -231,7 +231,7 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
             {
                 (true, _) => _disposeUtility.DisposeAsyncFullyQualified,
                 (_, false) when _disposeUtility.DisposeSyncOnlyFullyQualified is {} syncOnlyName => syncOnlyName,
-                (_, true) => _disposeUtility.DisposeFullyQualified
+                _ => _disposeUtility.DisposeFullyQualified
             };
             
             code.AppendLine(

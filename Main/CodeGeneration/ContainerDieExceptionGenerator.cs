@@ -41,12 +41,16 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
             ? $"{_wellKnownTypes.IAsyncDisposable.FullName()}, "
             : "";
         
+        var genericParameters = _containerType.TypeParameters.Length == 0
+            ? ""
+            : $"<{string.Join(", ", _containerType.TypeParameters.Select(p => p.Name))}>";
+        
         var generatedContainer = new StringBuilder()
             .AppendLine($$"""
                 #nullable enable
                 namespace {{_containerType.ContainingNamespace.FullName()}}
                 {
-                partial class {{_containerType.Name}} : {{asyncDisposableBit}}{{_wellKnownTypes.IDisposable.FullName()}}
+                partial class {{_containerType.Name}}{{genericParameters}} : {{asyncDisposableBit}}{{_wellKnownTypes.IDisposable.FullName()}}
                 {
                 """);
         

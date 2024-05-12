@@ -1,6 +1,11 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Test.InitializedInstances.AsReturnedTypeFromFunc;
+using Xunit;
+// ReSharper disable once CheckNamespace
+using MrMeeseeks.DIE.Configuration.Attributes;
 
-namespace MrMeeseeks.DIE.Sample;
+// ReSharper disable once CheckNamespace
+namespace MrMeeseeks.DIE.Test.Generics.TypeParameterMapping.CustomInjections;
 
 internal sealed class Dependency<T0, T1, T2>
 {
@@ -27,4 +32,18 @@ internal sealed partial class Container<
     private void DIE_ConstrParams_Value1(out TB value1) => value1 = (TB)(object)3L;
     [UserDefinedInitializerParametersInjection(typeof(Dependency<,,>))]
     private void DIE_InitParams_Value2(out TC value2) => value2 = (TC)(object)23.0;
-}//*/
+}
+
+public sealed class Tests
+{
+    [Fact]
+    public async Task Test()
+    {
+        await using var container = Container<int, long, double>.DIE_CreateContainer();
+        var instance = container.Create();
+        Assert.IsType<Dependency<int, long, double>>(instance);
+        Assert.Equal(69, instance.Value0);
+        Assert.Equal(3L, instance.Value1);
+        Assert.Equal(23.0, instance.Value2);
+    }
+}

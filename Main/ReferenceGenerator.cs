@@ -34,10 +34,13 @@ internal sealed class ReferenceGenerator : IReferenceGenerator, IScopeInstance
         switch (type)
         {
             case INamedTypeSymbol namedTypeSymbol:
-                baseName = $"{char.ToLower(namedTypeSymbol.Name[0], CultureInfo.InvariantCulture).ToString()}{namedTypeSymbol.Name.Substring(1)}";
+                baseName = $"{char.ToLower(namedTypeSymbol.Name[0], CultureInfo.InvariantCulture).ToString()}{namedTypeSymbol.Name[1..]}";
                 break;
             case IArrayTypeSymbol { ElementType: { } elementType }:
-                baseName = $"{char.ToLower(elementType.Name[0], CultureInfo.InvariantCulture).ToString()}{elementType.Name.Substring(1)}Array";
+                baseName = $"{char.ToLower(elementType.Name[0], CultureInfo.InvariantCulture).ToString()}{elementType.Name[1..]}Array";
+                break;
+            case ITypeParameterSymbol typeParameterSymbol:
+                baseName = $"{char.ToLower(typeParameterSymbol.Name[0], CultureInfo.InvariantCulture).ToString()}{typeParameterSymbol.Name[1..]}";
                 break;
             default:
                 _localDiagLogger.Warning(WarningLogData.EmptyReferenceNameWarning(

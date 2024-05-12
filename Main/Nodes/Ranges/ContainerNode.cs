@@ -38,6 +38,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
 {
     private readonly IContainerInfo _containerInfo;
     private readonly IFunctionCycleTracker _functionCycleTracker;
+    private readonly ITypeParameterUtility _typeParameterUtility;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
@@ -125,6 +126,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
     {
         _containerInfo = containerInfo;
         _functionCycleTracker = functionCycleTracker;
+        _typeParameterUtility = typeParameterUtility;
         _currentExecutionPhaseSetter = currentExecutionPhaseSetter;
         _lazyTransientScopeInterfaceNode = lazyTransientScopeInterfaceNode;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
@@ -174,11 +176,12 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         base.Build(passedContext);
         foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)
         {
+            var actualType = _typeParameterUtility.EquipWithMappedTypeParameters(typeSymbol);
+            var customizedType = TypeParameterUtility.ReplaceTypeParametersByCustom(actualType.OriginalDefinitionIfUnbound());
             var functionNode = _entryFunctionNodeFactory(
-                TypeParameterUtility.ReplaceTypeParametersByCustom(typeSymbol.OriginalDefinitionIfUnbound()),
-                methodNamePrefix,
-                parameterTypes)
-                .Function;
+                    customizedType, 
+                    methodNamePrefix, 
+                    parameterTypes).Function;
             _rootFunctions.Add(functionNode);
             BuildQueue.Enqueue(new(functionNode, passedContext));
         }

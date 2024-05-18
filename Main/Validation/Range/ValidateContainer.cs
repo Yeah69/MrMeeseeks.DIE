@@ -14,6 +14,7 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
 {
     private readonly IValidateTransientScope _validateTransientScopeFactory;
     private readonly IValidateScope _validateScopeFactory;
+    private readonly Lazy<ITypeParameterUtility> _typeParameterUtility;
     private readonly IRangeUtility _rangeUtility;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
@@ -28,6 +29,7 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
+        Lazy<ITypeParameterUtility> typeParameterUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ILocalDiagLogger localDiagLogger,
@@ -48,6 +50,7 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
     {
         _validateTransientScopeFactory = validateTransientScopeFactory;
         _validateScopeFactory = validateScopeFactory;
+        _typeParameterUtility = typeParameterUtility;
         _rangeUtility = rangeUtility;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
     }
@@ -173,10 +176,17 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
                 continue;
             }
 
-            if (!mapToType.OriginalDefinition.TypeParameters.Any(tp => tp.Name == mapToTypeParameterName))
+            if (mapToType.OriginalDefinition.TypeParameters.FirstOrDefault(tp => tp.Name == mapToTypeParameterName)
+                is not { } mapToTypeParameter)
             {
                 LocalDiagLogger.Error(
                     ValidationErrorDiagnostic(rangeType, rangeType, $"Type and type parameter name given to the attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" don't match. The type \"{mapToType.OriginalDefinition.FullName()}\" doesn't have a type parameter named \"{mapToTypeParameterName}\"."),
+                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+            }
+            else if (!_typeParameterUtility.Value.CheckAssignability(typeParameter, mapToTypeParameter))
+            {
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(rangeType, rangeType, $"Type parameter mapping of \"{typeParameter.FullName()}\" on \"{mapToTypeParameter.FullName()}\" isn't assignable due to mismatching constraints."),
                     mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
             }
         }

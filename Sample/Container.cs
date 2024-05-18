@@ -3,6 +3,7 @@
 namespace MrMeeseeks.DIE.Sample;
 
 internal sealed class Dependency<T0, T1, T2>
+    where T0 : struct
 {
     private T1 _value1;
     private T2? _value2;
@@ -20,6 +21,7 @@ internal sealed partial class Container<
     [GenericParameterMapping(typeof(Dependency<,,>), "T0")] TA, 
     [GenericParameterMapping(typeof(Dependency<,,>), "T1")] TB,
     [GenericParameterMapping(typeof(Dependency<,,>), "T2")] TC>
+    where TA : struct
 {
     [UserDefinedPropertiesInjection(typeof(Dependency<,,>))]
     private void DIE_Props_Value0(out TA Value0) => Value0 = (TA)(object)69;

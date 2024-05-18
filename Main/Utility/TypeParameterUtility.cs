@@ -12,6 +12,7 @@ internal interface ITypeParameterUtility
     ITypeSymbol ReplaceTypeParametersByCustom(ITypeSymbol baseType);
     IReadOnlyList<ITypeParameterSymbol> ExtractTypeParameters(ITypeSymbol baseType);
     bool CheckLegitimacyOfTypeArguments(INamedTypeSymbol type);
+    bool CheckAssignability(ITypeParameterSymbol subject, ITypeParameterSymbol target);
     bool ContainsOpenTypeParameters(ITypeSymbol type);
     ITypeSymbol EquipWithMappedTypeParameters(ITypeSymbol type);
 }
@@ -261,204 +262,210 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerIn
         {
             var currentTypeArgument = typeArguments[i];
             var currentTypeParameter = originalTypeParameters[i];
-            if (!CheckLegitimacyOfSingleTypeArgument(currentTypeParameter, currentTypeArgument))
+            if (!CheckLegitimacyOfSingleTypeArgument(currentTypeParameter, currentTypeArgument, originalTypeParametersToOriginalTypeArguments))
                 return false;
         }
 
         return true;
-        
-        bool CheckLegitimacyOfSingleTypeArgument(ITypeParameterSymbol currentTypeParameter, ITypeSymbol currentTypeArgument)
+    }
+
+    public bool CheckAssignability(ITypeParameterSymbol subject, ITypeParameterSymbol target) =>
+        CheckLegitimacyOfSingleTypeArgument(target, subject, new Dictionary<ITypeParameterSymbol, ITypeSymbol>());
+
+    private bool CheckLegitimacyOfSingleTypeArgument(
+        ITypeParameterSymbol currentTypeParameter,
+        ITypeSymbol currentTypeArgument, 
+        Dictionary<ITypeParameterSymbol, ITypeSymbol> originalTypeParametersToOriginalTypeArguments)
+    {
+        if (currentTypeParameter.HasValueTypeConstraint)
         {
-            if (currentTypeParameter.HasValueTypeConstraint)
+            switch (currentTypeArgument)
             {
-                switch (currentTypeArgument)
-                {
-                    case INamedTypeSymbol namedTypeSymbol:
-                        if (!namedTypeSymbol.IsValueType)
-                            return false;
-                        break;
-                    case ITypeParameterSymbol typeParameterSymbol:
-                        if (!typeParameterSymbol.HasValueTypeConstraint)
-                            return false;
-                        break;
-                    default:
+                case INamedTypeSymbol namedTypeSymbol:
+                    if (!namedTypeSymbol.IsValueType)
                         return false;
-                }
-            }
-
-            if (currentTypeParameter.HasReferenceTypeConstraint)
-            {
-                switch (currentTypeArgument)
-                {
-                    case IArrayTypeSymbol:
-                        // All arrays are reference types
-                        break;
-                    case INamedTypeSymbol namedTypeSymbol:
-                        if (!namedTypeSymbol.IsReferenceType)
-                            return false;
-                        break;
-                    case ITypeParameterSymbol typeParameterSymbol:
-                        if (!typeParameterSymbol.HasReferenceTypeConstraint)
-                            return false;
-                        break;
-                    default:
+                    break;
+                case ITypeParameterSymbol typeParameterSymbol:
+                    if (!typeParameterSymbol.HasValueTypeConstraint)
                         return false;
-                }
+                    break;
+                default:
+                    return false;
             }
-
-            if (currentTypeParameter.HasNotNullConstraint)
-            {
-                switch (currentTypeArgument)
-                {
-                    case IArrayTypeSymbol arrayTypeSymbol:
-                        if (arrayTypeSymbol.NullableAnnotation != NullableAnnotation.NotAnnotated)
-                            return false;
-                        break;
-                    case INamedTypeSymbol namedTypeSymbol:
-                        if (namedTypeSymbol is
-                                { IsReferenceType: true, NullableAnnotation: NullableAnnotation.Annotated }
-                            && !CustomSymbolEqualityComparer.Default.Equals(namedTypeSymbol.UnboundIfGeneric(),
-                                _wellKnownTypes.Nullable1.UnboundIfGeneric()))
-                            return false;
-                        break;
-                    case ITypeParameterSymbol typeParameterSymbol:
-                        if (!typeParameterSymbol.HasNotNullConstraint)
-                            return false;
-                        break;
-                    default:
-                        return false;
-                }
-            }
-
-            if (currentTypeParameter.HasUnmanagedTypeConstraint)
-            {
-                switch (currentTypeArgument)
-                {
-                    case INamedTypeSymbol namedTypeSymbol:
-                        if (!namedTypeSymbol.IsUnmanagedType)
-                            return false;
-                        break;
-                    case ITypeParameterSymbol typeParameterSymbol:
-                        if (!typeParameterSymbol.HasUnmanagedTypeConstraint)
-                            return false;
-                        break;
-                    default:
-                        return false;
-                }
-            }
-
-            if (currentTypeParameter.HasConstructorConstraint)
-            {
-                switch (currentTypeArgument)
-                {
-                    case INamedTypeSymbol namedTypeSymbol:
-                        if (namedTypeSymbol.IsValueType
-                            || namedTypeSymbol.InstanceConstructors.Any(c => c is
-                                { Parameters.Length: 0, DeclaredAccessibility: Accessibility.Public }))
-                            return false;
-                        break;
-                    case ITypeParameterSymbol typeParameterSymbol:
-                        if (!typeParameterSymbol.HasConstructorConstraint)
-                            return false;
-                        break;
-                    default:
-                        return false;
-                }
-            }
-
-            for (int j = 0; j < currentTypeParameter.ConstraintTypes.Length; j++)
-            {
-                var constraintType = currentTypeParameter.ConstraintTypes[j];
-                var nullableAnnotation = currentTypeParameter.ConstraintNullableAnnotations[j];
-                switch (currentTypeArgument)
-                {
-                    case INamedTypeSymbol argumentNamedTypeSymbol:
-                        if (nullableAnnotation != NullableAnnotation.None &&
-                            argumentNamedTypeSymbol.NullableAnnotation != nullableAnnotation)
-                            return false;
-                        if (constraintType is not INamedTypeSymbol constraintNamedTypeSymbol)
-                            return false;
-
-                        if (!argumentNamedTypeSymbol.AllDerivedTypesAndSelf()
-                            .Any(t => Fit(constraintNamedTypeSymbol, t)))
-                            return false;
-
-                        break;
-                    case ITypeParameterSymbol argumentTypeParameterSymbol:
-                        if (!argumentTypeParameterSymbol.ConstraintTypes.Any(ct => Fit(constraintType, ct)))
-                            return false;
-                        break;
-                    default:
-                        return false;
-                }
-
-                continue;
-
-                bool Fit(ITypeSymbol constraint, ITypeSymbol argument)
-                {
-                    switch (constraint)
-                    {
-                        case IArrayTypeSymbol constraintArray:
-                            if (argument is not IArrayTypeSymbol argumentArray)
-                                return false;
-                            return Fit(constraintArray.ElementType, argumentArray.ElementType);
-                        case IDynamicTypeSymbol:
-                            return argument is IDynamicTypeSymbol;
-                        case IErrorTypeSymbol:
-                            return false;
-                        case IFunctionPointerTypeSymbol constraintFunctionPointer:
-                            if (argument is not IFunctionPointerTypeSymbol argumentFunctionPointer)
-                                return false;
-                            if (constraintFunctionPointer.Signature.ReturnsVoid != argumentFunctionPointer.Signature.ReturnsVoid
-                                || !Fit(constraintFunctionPointer.Signature.ReturnType, argumentFunctionPointer.Signature.ReturnType))
-                                return false;
-                            return constraintFunctionPointer.Signature.Parameters.Length == argumentFunctionPointer.Signature.Parameters.Length
-                                   && constraintFunctionPointer.Signature.Parameters
-                                       .Select((t, l) => Fit(t.Type, argumentFunctionPointer.Signature.Parameters[l].Type))
-                                       .All(b => b);
-                        case INamedTypeSymbol constraintNamed:
-                            if (argument is not INamedTypeSymbol argumentNamed)
-                                return false;
-                            if (constraintNamed.Arity != argumentNamed.Arity 
-                                || FullyQualifiedName(constraintNamed) != FullyQualifiedName(argumentNamed))
-                                return false;
-
-                            for (int k = 0; k < constraintNamed.TypeArguments.Length; k++)
-                            {
-                                var constraintTypeArgument = constraintNamed.TypeArguments[k];
-                                var argumentTypeArgument = argumentNamed.TypeArguments[k];
-                                if (!Fit(constraintTypeArgument, argumentTypeArgument))
-                                    return false;
-                            }
-
-                            return true;
-
-                            string FullyQualifiedName(INamedTypeSymbol type) =>
-                                type.ToDisplayString(new SymbolDisplayFormat(
-                                    SymbolDisplayGlobalNamespaceStyle.Included, 
-                                    SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-                                    SymbolDisplayGenericsOptions.None, 
-                                    SymbolDisplayMemberOptions.IncludeRef, 
-                                    parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeType, 
-                                    miscellaneousOptions: SymbolDisplayMiscellaneousOptions.None));
-                        case IPointerTypeSymbol constraintPointer:
-                            if (argument is not IPointerTypeSymbol argumentPointer)
-                                return false;
-                            return Fit(constraintPointer.PointedAtType, argumentPointer.PointedAtType);
-                        case ITypeParameterSymbol constraintTypeParameter:
-                            if (!originalTypeParametersToOriginalTypeArguments.TryGetValue(constraintTypeParameter, out var constraintNext))
-                                return false;
-                            if (constraintNext is ITypeParameterSymbol constraintNextTypeParameter)
-                                return CheckLegitimacyOfSingleTypeArgument(constraintNextTypeParameter, argument);
-                            return Fit(constraintNext, argument);
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(constraint));
-                    }
-                }
-            }
-
-            return true;
         }
+
+        if (currentTypeParameter.HasReferenceTypeConstraint)
+        {
+            switch (currentTypeArgument)
+            {
+                case IArrayTypeSymbol:
+                    // All arrays are reference types
+                    break;
+                case INamedTypeSymbol namedTypeSymbol:
+                    if (!namedTypeSymbol.IsReferenceType)
+                        return false;
+                    break;
+                case ITypeParameterSymbol typeParameterSymbol:
+                    if (!typeParameterSymbol.HasReferenceTypeConstraint)
+                        return false;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        if (currentTypeParameter.HasNotNullConstraint)
+        {
+            switch (currentTypeArgument)
+            {
+                case IArrayTypeSymbol arrayTypeSymbol:
+                    if (arrayTypeSymbol.NullableAnnotation != NullableAnnotation.NotAnnotated)
+                        return false;
+                    break;
+                case INamedTypeSymbol namedTypeSymbol:
+                    if (namedTypeSymbol is
+                            { IsReferenceType: true, NullableAnnotation: NullableAnnotation.Annotated }
+                        && !CustomSymbolEqualityComparer.Default.Equals(namedTypeSymbol.UnboundIfGeneric(),
+                            _wellKnownTypes.Nullable1.UnboundIfGeneric()))
+                        return false;
+                    break;
+                case ITypeParameterSymbol typeParameterSymbol:
+                    if (!typeParameterSymbol.HasNotNullConstraint)
+                        return false;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        if (currentTypeParameter.HasUnmanagedTypeConstraint)
+        {
+            switch (currentTypeArgument)
+            {
+                case INamedTypeSymbol namedTypeSymbol:
+                    if (!namedTypeSymbol.IsUnmanagedType)
+                        return false;
+                    break;
+                case ITypeParameterSymbol typeParameterSymbol:
+                    if (!typeParameterSymbol.HasUnmanagedTypeConstraint)
+                        return false;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        if (currentTypeParameter.HasConstructorConstraint)
+        {
+            switch (currentTypeArgument)
+            {
+                case INamedTypeSymbol namedTypeSymbol:
+                    if (namedTypeSymbol.IsValueType
+                        || namedTypeSymbol.InstanceConstructors.Any(c => c is
+                            { Parameters.Length: 0, DeclaredAccessibility: Accessibility.Public }))
+                        return false;
+                    break;
+                case ITypeParameterSymbol typeParameterSymbol:
+                    if (!typeParameterSymbol.HasConstructorConstraint)
+                        return false;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        for (int j = 0; j < currentTypeParameter.ConstraintTypes.Length; j++)
+        {
+            var constraintType = currentTypeParameter.ConstraintTypes[j];
+            var nullableAnnotation = currentTypeParameter.ConstraintNullableAnnotations[j];
+            switch (currentTypeArgument)
+            {
+                case INamedTypeSymbol argumentNamedTypeSymbol:
+                    if (nullableAnnotation != NullableAnnotation.None &&
+                        argumentNamedTypeSymbol.NullableAnnotation != nullableAnnotation)
+                        return false;
+                    if (constraintType is not INamedTypeSymbol constraintNamedTypeSymbol)
+                        return false;
+
+                    if (!argumentNamedTypeSymbol.AllDerivedTypesAndSelf()
+                        .Any(t => Fit(constraintNamedTypeSymbol, t)))
+                        return false;
+
+                    break;
+                case ITypeParameterSymbol argumentTypeParameterSymbol:
+                    if (!argumentTypeParameterSymbol.ConstraintTypes.Any(ct => Fit(constraintType, ct)))
+                        return false;
+                    break;
+                default:
+                    return false;
+            }
+
+            continue;
+
+            bool Fit(ITypeSymbol constraint, ITypeSymbol argument)
+            {
+                switch (constraint)
+                {
+                    case IArrayTypeSymbol constraintArray:
+                        if (argument is not IArrayTypeSymbol argumentArray)
+                            return false;
+                        return Fit(constraintArray.ElementType, argumentArray.ElementType);
+                    case IDynamicTypeSymbol:
+                        return argument is IDynamicTypeSymbol;
+                    case IErrorTypeSymbol:
+                        return false;
+                    case IFunctionPointerTypeSymbol constraintFunctionPointer:
+                        if (argument is not IFunctionPointerTypeSymbol argumentFunctionPointer)
+                            return false;
+                        if (constraintFunctionPointer.Signature.ReturnsVoid != argumentFunctionPointer.Signature.ReturnsVoid
+                            || !Fit(constraintFunctionPointer.Signature.ReturnType, argumentFunctionPointer.Signature.ReturnType))
+                            return false;
+                        return constraintFunctionPointer.Signature.Parameters.Length == argumentFunctionPointer.Signature.Parameters.Length
+                               && constraintFunctionPointer.Signature.Parameters
+                                   .Select((t, l) => Fit(t.Type, argumentFunctionPointer.Signature.Parameters[l].Type))
+                                   .All(b => b);
+                    case INamedTypeSymbol constraintNamed:
+                        if (argument is not INamedTypeSymbol argumentNamed)
+                            return false;
+                        if (constraintNamed.Arity != argumentNamed.Arity 
+                            || FullyQualifiedName(constraintNamed) != FullyQualifiedName(argumentNamed))
+                            return false;
+
+                        for (int k = 0; k < constraintNamed.TypeArguments.Length; k++)
+                        {
+                            var constraintTypeArgument = constraintNamed.TypeArguments[k];
+                            var argumentTypeArgument = argumentNamed.TypeArguments[k];
+                            if (!Fit(constraintTypeArgument, argumentTypeArgument))
+                                return false;
+                        }
+
+                        return true;
+
+                        string FullyQualifiedName(INamedTypeSymbol type) =>
+                            type.ToDisplayString(new SymbolDisplayFormat(
+                                SymbolDisplayGlobalNamespaceStyle.Included, 
+                                SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+                                SymbolDisplayGenericsOptions.None, 
+                                SymbolDisplayMemberOptions.IncludeRef, 
+                                parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut | SymbolDisplayParameterOptions.IncludeType, 
+                                miscellaneousOptions: SymbolDisplayMiscellaneousOptions.None));
+                    case IPointerTypeSymbol constraintPointer:
+                        if (argument is not IPointerTypeSymbol argumentPointer)
+                            return false;
+                        return Fit(constraintPointer.PointedAtType, argumentPointer.PointedAtType);
+                    case ITypeParameterSymbol constraintTypeParameter:
+                        if (!originalTypeParametersToOriginalTypeArguments.TryGetValue(constraintTypeParameter, out var constraintNext))
+                            return false;
+                        if (constraintNext is ITypeParameterSymbol constraintNextTypeParameter)
+                            return CheckLegitimacyOfSingleTypeArgument(constraintNextTypeParameter, argument, originalTypeParametersToOriginalTypeArguments);
+                        return Fit(constraintNext, argument);
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(constraint));
+                }
+            }
+        }
+
+        return true;
     }
 
     public bool ContainsOpenTypeParameters(ITypeSymbol type)

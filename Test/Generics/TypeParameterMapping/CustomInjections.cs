@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using MrMeeseeks.DIE.Test.InitializedInstances.AsReturnedTypeFromFunc;
 using Xunit;
 // ReSharper disable once CheckNamespace
 using MrMeeseeks.DIE.Configuration.Attributes;

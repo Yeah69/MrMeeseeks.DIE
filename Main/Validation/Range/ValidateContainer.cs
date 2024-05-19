@@ -1,3 +1,4 @@
+using System.IO.MemoryMappedFiles;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
@@ -116,8 +117,7 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
         foreach (var createFunctionAttribute in createFunctionAttributes)
         {
             var location = createFunctionAttribute.GetLocation();
-            if (createFunctionAttribute.ConstructorArguments.Length == 3
-                && createFunctionAttribute.ConstructorArguments[1].Value is string functionName)
+            if (createFunctionAttribute.ConstructorArguments is [_, { Value: string functionName }, _])
             {
                 switch (functionName)
                 {
@@ -151,43 +151,65 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
         var typeParametersWithMapping = rangeType.TypeParameters
             .Where(tp => tp.GetAttributes().Any(ad => CustomSymbolEqualityComparer.Default.Equals(
                 ad.AttributeClass, _wellKnownTypesMiscellaneous.GenericParameterMappingAttribute)));
+        
+        List<(ITypeParameterSymbol Container, ITypeParameterSymbol Mapped)> mappedTypeParameters = [];
 
         foreach (var typeParameter in typeParametersWithMapping)
         {
-            var mapping = typeParameter
+            var mappings = typeParameter
                 .GetAttributes()
-                .First(ad => CustomSymbolEqualityComparer.Default.Equals(
-                    ad.AttributeClass, _wellKnownTypesMiscellaneous.GenericParameterMappingAttribute));
+                .Where(ad => CustomSymbolEqualityComparer.Default.Equals(ad.AttributeClass, _wellKnownTypesMiscellaneous.GenericParameterMappingAttribute))
+                .ToArray();
 
-            if (mapping.ConstructorArguments.Length != 2)
+            foreach (var mapping in mappings)
             {
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, rangeType, $"Attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" has to have exactly two constructor arguments."),
-                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
-                continue;
-            }
+                if (mapping.ConstructorArguments.Length != 2)
+                {
+                    LocalDiagLogger.Error(
+                        ValidationErrorDiagnostic(rangeType, rangeType, $"Attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" has to have exactly two constructor arguments."),
+                        mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                    continue;
+                }
 
-            if (mapping.ConstructorArguments[0].Value is not INamedTypeSymbol mapToType
-                || mapping.ConstructorArguments[1].Value is not string mapToTypeParameterName)
-            {
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, rangeType, $"Attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" has to have a type and a string as constructor arguments."),
-                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
-                continue;
-            }
+                if (mapping.ConstructorArguments[0].Value is not INamedTypeSymbol mapToType
+                    || mapping.ConstructorArguments[1].Value is not string mapToTypeParameterName)
+                {
+                    LocalDiagLogger.Error(
+                        ValidationErrorDiagnostic(rangeType, rangeType, $"Attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" has to have a type and a string as constructor arguments."),
+                        mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                    continue;
+                }
 
-            if (mapToType.OriginalDefinition.TypeParameters.FirstOrDefault(tp => tp.Name == mapToTypeParameterName)
-                is not { } mapToTypeParameter)
-            {
-                LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, rangeType, $"Type and type parameter name given to the attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" don't match. The type \"{mapToType.OriginalDefinition.FullName()}\" doesn't have a type parameter named \"{mapToTypeParameterName}\"."),
-                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                if (mapToType.OriginalDefinition.TypeParameters.FirstOrDefault(tp => tp.Name == mapToTypeParameterName)
+                    is not { } mapToTypeParameter)
+                {
+                    LocalDiagLogger.Error(
+                        ValidationErrorDiagnostic(rangeType, rangeType, $"Type and type parameter name given to the attribute \"{_wellKnownTypesMiscellaneous.GenericParameterMappingAttribute.FullName()}\" don't match. The type \"{mapToType.OriginalDefinition.FullName()}\" doesn't have a type parameter named \"{mapToTypeParameterName}\"."),
+                        mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                    continue;
+                }
+                
+                if (!_typeParameterUtility.Value.CheckAssignability(typeParameter, mapToTypeParameter))
+                {
+                    LocalDiagLogger.Error(
+                        ValidationErrorDiagnostic(rangeType, rangeType, $"Type parameter mapping of \"{typeParameter.FullName()}\" on \"{mapToTypeParameter.FullName()}\" isn't assignable due to mismatching constraints."),
+                        mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                    continue;
+                }
+                
+                mappedTypeParameters.Add((Container: typeParameter, Mapped: mapToTypeParameter));
             }
-            else if (!_typeParameterUtility.Value.CheckAssignability(typeParameter, mapToTypeParameter))
+        }
+
+        var groupByMapped = mappedTypeParameters.GroupBy(x => x.Mapped);
+        
+        foreach (var group in groupByMapped)
+        {
+            if (group.Count() > 1)
             {
                 LocalDiagLogger.Error(
-                    ValidationErrorDiagnostic(rangeType, rangeType, $"Type parameter mapping of \"{typeParameter.FullName()}\" on \"{mapToTypeParameter.FullName()}\" isn't assignable due to mismatching constraints."),
-                    mapping.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None);
+                    ValidationErrorDiagnostic(rangeType, rangeType, $"Type parameter \"{group.Key.Name}\" of type \"{group.Key.DeclaringType?.FullName()}\" is mapped multiple times: {string.Join(", ", group.Select(t => t.Mapped.FullName()))}."),
+                    group.First().Mapped.Locations.FirstOrDefault() ?? Location.None);
             }
         }
 

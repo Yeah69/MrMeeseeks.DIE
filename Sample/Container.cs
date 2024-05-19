@@ -3,7 +3,6 @@
 namespace MrMeeseeks.DIE.Sample;
 
 internal sealed class Dependency<T0, T1, T2>
-    where T0 : struct
 {
     private T1 _value1;
     private T2? _value2;
@@ -18,15 +17,14 @@ internal sealed class Dependency<T0, T1, T2>
 [Initializer(typeof(Dependency<,,>), "Initialize")]
 [CreateFunction(typeof(Dependency<,,>), "Create")]
 internal sealed partial class Container<
-    [GenericParameterMapping(typeof(Dependency<,,>), "T0")] TA, 
-    [GenericParameterMapping(typeof(Dependency<,,>), "T1")] TB,
-    [GenericParameterMapping(typeof(Dependency<,,>), "T2")] TC>
-    where TA : struct
+    [GenericParameterMapping(typeof(Dependency<,,>), "T0")]
+    [GenericParameterMapping(typeof(Dependency<,,>), "T1")]
+    [GenericParameterMapping(typeof(Dependency<,,>), "T2")] TA>
 {
     [UserDefinedPropertiesInjection(typeof(Dependency<,,>))]
     private void DIE_Props_Value0(out TA Value0) => Value0 = (TA)(object)69;
     [UserDefinedConstructorParametersInjection(typeof(Dependency<,,>))]
-    private void DIE_ConstrParams_Value1(out TB value1) => value1 = (TB)(object)3L;
+    private void DIE_ConstrParams_Value1(out TA value1) => value1 = (TA)(object)3;
     [UserDefinedInitializerParametersInjection(typeof(Dependency<,,>))]
-    private void DIE_InitParams_Value2(out TC value2) => value2 = (TC)(object)23.0;
+    private void DIE_InitParams_Value2(out TA value2) => value2 = (TA)(object)23;
 }//*/

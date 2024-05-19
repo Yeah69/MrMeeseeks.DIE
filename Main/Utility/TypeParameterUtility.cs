@@ -41,22 +41,24 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerIn
                     CustomSymbolEqualityComparer.Default.Equals(
                         a.AttributeClass,
                         wellKnownTypesMiscellaneous.GenericParameterMappingAttribute)))
-                .Select(tp =>
-                {
-                    var attribute = tp.GetAttributes().Single(a =>
-                        CustomSymbolEqualityComparer.Default.Equals(a.AttributeClass,
-                            wellKnownTypesMiscellaneous.GenericParameterMappingAttribute));
-                    var fromType = 
-                        (attribute.ConstructorArguments[0].Value as INamedTypeSymbol)?.OriginalDefinition
-                        ?? throw new ArgumentException("The first argument of the attribute must be a type.");
-                    var fromTypeParameterName = 
-                        attribute.ConstructorArguments[1].Value
-                        ?? throw new ArgumentException("The second argument of the attribute must be a string.");
-                    var fromTypeParameter = 
-                        fromType.TypeParameters.FirstOrDefault(tp => tp.Name == fromTypeParameterName.ToString())
-                        ?? throw new ArgumentException("The second argument of the attribute must be a type parameter of the first argument.");
-                    return (From: fromTypeParameter, To: tp);
-                })
+                .SelectMany(tp => tp
+                    .GetAttributes()
+                    .Where(a => CustomSymbolEqualityComparer.Default.Equals(
+                        a.AttributeClass, 
+                        wellKnownTypesMiscellaneous.GenericParameterMappingAttribute))
+                    .Select(a =>
+                    {
+                        var fromType = 
+                            (a.ConstructorArguments[0].Value as INamedTypeSymbol)?.OriginalDefinition
+                            ?? throw new ArgumentException("The first argument of the attribute must be a type.");
+                        var fromTypeParameterName = 
+                            a.ConstructorArguments[1].Value
+                            ?? throw new ArgumentException("The second argument of the attribute must be a string.");
+                        var fromTypeParameter = 
+                            fromType.TypeParameters.FirstOrDefault(tp => tp.Name == fromTypeParameterName.ToString())
+                            ?? throw new ArgumentException("The second argument of the attribute must be a type parameter of the first argument.");
+                        return (From: fromTypeParameter, To: tp);
+                    }))
                 .ToDictionary(t => t.From, t => t.To));
     }
 

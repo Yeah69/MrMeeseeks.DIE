@@ -14,7 +14,7 @@ namespace MrMeeseeks.DIE.Nodes.Ranges;
 
 internal interface IScopeNode : IScopeNodeBase
 {
-    string TransientScopeInterfaceFullName { get; }
+    string TransientScopeInterfaceName { get; }
     string TransientScopeInterfaceReference { get; }
     IScopeCallNode BuildScopeCallFunction(
         string containerParameter,
@@ -78,7 +78,7 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, IScopeInsta
     {
         _scopeNodeGenerator = scopeNodeGenerator;
         _createScopeFunctionNodeFactory = createScopeFunctionNodeFactory;
-        TransientScopeInterfaceFullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{transientScopeInterfaceNode.Name}";
+        TransientScopeInterfaceName = transientScopeInterfaceNode.Name; // Using name instead of full name to prevent compile error as the transient scope interface is not defined before code generation
         TransientScopeInterfaceReference = referenceGenerator.Generate("TransientScope");
     }
     protected override string ContainerParameterForScope => ContainerReference;
@@ -122,6 +122,6 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, IScopeInsta
                 scopeImplementationMapper));
     }
 
-    public string TransientScopeInterfaceFullName { get; }
+    public string TransientScopeInterfaceName { get; }
     public string TransientScopeInterfaceReference { get; }
 }

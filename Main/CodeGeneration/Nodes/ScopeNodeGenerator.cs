@@ -33,7 +33,7 @@ internal sealed class ScopeNodeGenerator : ScopeNodeBaseGenerator, IScopeNodeGen
         code.AppendLine(
             $$"""
               internal required {{_scopeNode.ContainerFullName}} {{_scopeNode.ContainerReference}} { private get; init; }
-              internal required {{_scopeNode.TransientScopeInterfaceFullName}} {{_scopeNode.TransientScopeInterfaceReference}} { private get; init; }
+              internal required {{_scopeNode.TransientScopeInterfaceName}} {{_scopeNode.TransientScopeInterfaceReference}} { private get; init; }
               """);
     }
 }

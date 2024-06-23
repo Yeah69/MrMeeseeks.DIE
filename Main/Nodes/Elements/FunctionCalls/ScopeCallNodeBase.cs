@@ -57,7 +57,7 @@ internal abstract class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
                 AdditionalPropertiesForConstruction,
                 passedContext)
             : _scopeImplementationMapper.MapToImplicitScope(
-                _scope.FullName,
+                _scope.Name, // Using name instead of full name to prevent compile error as implicit scopes are not defined before code generation
                 AdditionalPropertiesForConstruction,
                 passedContext);
     }

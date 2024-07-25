@@ -13,7 +13,7 @@ namespace MrMeeseeks.DIE.MsContainer;
 [ContainerInstanceImplementationAggregation(typeof(GeneratorExecutionContext))]
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
-[ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancerForRanges))]
+[DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
 [CreateFunction(typeof(IExecuteContainer), "Create")]
 internal sealed partial class MsContainer
 {
@@ -90,7 +90,7 @@ internal sealed partial class MsContainer
     [CustomScopeForRootTypes(typeof(TransientScopeNodeRoot))]
     private sealed partial class DIE_TransientScope_TransientScopeNodeRoot : TransientScopeBase;
 
-    [ImplementationChoice(typeof(IFunctionLevelLogMessageEnhancer), typeof(FunctionLevelLogMessageEnhancer))]
+    [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
     private abstract class ScopeBase : ScopeObject
     {
         protected readonly IRangeNode DIE_Factory_parentRange;

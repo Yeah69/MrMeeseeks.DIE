@@ -134,6 +134,13 @@ internal static class ErrorLogData
             message,
             DieExceptionKind.Validation);
     
+    internal static DiagLogData ValidationDescriptionType(INamedTypeSymbol methodDescriptionType, string specification) =>
+        new(67,
+            6,
+            "Validation (Description Type)",
+            $"Description type \"{methodDescriptionType.Name}\" isn't validly defined: {specification}",
+            DieExceptionKind.Validation);
+    
     internal static DiagLogData UnexpectedException(Exception exception) =>
         new(66,
             1,

@@ -27,7 +27,7 @@ public class SourceGenerator : ISourceGenerator
                 new ReferenceGenerator(
                     referenceGeneratorCounter, 
                     new LocalDiagLogger(
-                        new FunctionLevelLogMessageEnhancerForSourceGenerator(), 
+                        new ExecuteLevelLogEnhancerDecorator(new BaseLogEnhancer()), 
                         new DiagLogger(new GeneratorConfiguration(context, wellKnownTypesMiscellaneous), context))), 
                 wellKnownTypes,
                 wellKnownTypesCollections);

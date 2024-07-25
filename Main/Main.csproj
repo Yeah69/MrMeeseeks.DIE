@@ -25,6 +25,8 @@
     <Compile Remove="Generator\**" />
     <EmbeddedResource Remove="Generator\**" />
     <None Remove="Generator\**" />
+    <Compile Remove="Logging\ContainerLevelLogMessageEnhancer.cs" />
+    <Compile Remove="Logging\RangeLevelLogMessageEnhancer.cs" />
   </ItemGroup>
 
   <ItemGroup>

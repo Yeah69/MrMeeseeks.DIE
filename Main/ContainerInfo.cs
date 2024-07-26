@@ -14,7 +14,7 @@ internal interface IContainerInfo
     IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)> CreateFunctionData { get; }
 }
 
-internal sealed class ContainerInfo : IContainerInfo, IContainerInstance
+internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContainerInstance
 {
     internal ContainerInfo(
         // parameters

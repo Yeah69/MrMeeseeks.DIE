@@ -10,12 +10,15 @@ using MrMeeseeks.DIE.Nodes.Roots;
 
 namespace MrMeeseeks.DIE.MsContainer;
 
+internal interface IContainerLevelOnlyContainerInstance;
+
 [ContainerInstanceImplementationAggregation(typeof(GeneratorExecutionContext))]
+[ContainerInstanceAbstractionAggregation(typeof(IContainerLevelOnlyContainerInstance))]
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
 [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
 [CreateFunction(typeof(IExecuteContainer), "Create")]
-internal sealed partial class MsContainer
+internal sealed partial class ContainerLevelContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
     private readonly Compilation DIE_Factory_Compilation;
@@ -24,7 +27,7 @@ internal sealed partial class MsContainer
     private readonly DisposeUtility DIE_Factory_DisposeUtility;
     private readonly ReferenceGeneratorCounter DIE_Factory_referenceGeneratorCounter;
 
-    private MsContainer(
+    private ContainerLevelContainer(
         GeneratorExecutionContext context, 
         ContainerInfo dieFactoryContainerInfo,
         RequiredKeywordUtility dieFactoryRequiredKeywordUtility,

@@ -13,3 +13,10 @@ internal sealed partial class Container<T>
 {
     private sealed partial class DIE_DefaultScope;
 }
+
+[CreateFunction(typeof(Class<>), "Create")]
+[CreateFunction(typeof(IInterface<>), "CreateInterface")]
+internal sealed partial class Container2<T>
+{
+    private sealed partial class DIE_DefaultScope;
+}

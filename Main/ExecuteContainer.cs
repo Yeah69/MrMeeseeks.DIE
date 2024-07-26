@@ -1,8 +1,10 @@
+using System.Threading;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Analytics;
 using MrMeeseeks.DIE.CodeGeneration;
 using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Validation.Range;
@@ -134,5 +136,35 @@ internal sealed class ExecuteContainer : IExecuteContainer
                     .VisitIContainerNode(containerNode);
             }
         }
+    }
+}
+
+internal interface IExecuteContainerContext :  IDisposable
+{
+    void Execute();
+}
+
+internal sealed class ExecuteContainerContext : IExecuteContainerContext, ITransientScopeRoot
+{
+    private readonly IExecuteContainer _executeContainer;
+    private readonly IDisposable _eagerDisposalTrigger;
+    private int _disposed; // 0 = false, >1 = true
+
+    public ExecuteContainerContext(
+        IExecuteContainer executeContainer,
+        IDisposable eagerDisposalTrigger)
+    {
+        _executeContainer = executeContainer;
+        _eagerDisposalTrigger = eagerDisposalTrigger;
+    }
+
+    public void Execute() => _executeContainer.Execute();
+
+    public void Dispose()
+    {
+        if (Interlocked.Increment(ref _disposed) != 1) 
+            return;
+        
+        _eagerDisposalTrigger.Dispose();
     }
 }

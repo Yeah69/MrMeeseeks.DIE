@@ -17,23 +17,23 @@ internal sealed class ExecuteImpl : IExecute
     private readonly IRangeUtility _rangeUtility;
     private readonly RequiredKeywordUtility _requiredKeywordUtility;
     private readonly DisposeUtility _disposeUtility;
-    private readonly ReferenceGeneratorCounter _referenceGeneratorCounter;
     private readonly Func<INamedTypeSymbol, ContainerInfo> _containerInfoFactory;
+    private readonly Func<ContainerInfo, IExecuteContainerContext> _executeContainerContextFactory;
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
         IRangeUtility rangeUtility,
         RequiredKeywordUtility requiredKeywordUtility,
         DisposeUtility disposeUtility,
-        ReferenceGeneratorCounter referenceGeneratorCounter,
-        Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory)
+        Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory,
+        Func<ContainerInfo, IExecuteContainerContext> executeContainerContextFactory)
     {
         _context = context;
         _rangeUtility = rangeUtility;
         _requiredKeywordUtility = requiredKeywordUtility;
         _disposeUtility = disposeUtility;
-        _referenceGeneratorCounter = referenceGeneratorCounter;
         _containerInfoFactory = containerInfoFactory;
+        _executeContainerContextFactory = executeContainerContextFactory;
     }
 
     public void Execute()
@@ -53,14 +53,8 @@ internal sealed class ExecuteImpl : IExecute
                 .Select(_containerInfoFactory)
                 .ToList();
             foreach (var containerInfo in containerInfos)
-            {
-                using var msContainer = MsContainer.MsContainer.DIE_CreateContainer(
-                    _context, 
-                    containerInfo,
-                    _requiredKeywordUtility, 
-                    _disposeUtility,
-                    _referenceGeneratorCounter);
-                var executeContainer = msContainer.Create();
+            { 
+                using var executeContainer = _executeContainerContextFactory(containerInfo);
                 executeContainer.Execute();
                 containersGenerated = true;
             }

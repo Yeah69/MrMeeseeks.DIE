@@ -78,6 +78,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
             .GetRoot()
             .NormalizeWhitespace()
             .SyntaxTree
-            .GetText(); _context.AddSource($"{_containerType.ContainingNamespace.FullName()}.{_containerType.Name}.g.cs", containerSource);
+            .GetText();
+        _context.AddSource($"{_containerType.ContainingNamespace.FullName()}.{_containerType.Name}.Exception.g.cs", containerSource);
     }
 }

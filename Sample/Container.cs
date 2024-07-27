@@ -3,6 +3,27 @@ using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
+[InvocationDescription]
+internal interface IInvocationDescription
+{
+    ITypeDescription TargetType { get; }
+    IMethodDescription TargetMethod { get; }
+}
+
+[MethodDescription]
+internal interface IMethodDescription
+{
+    string Name { get; }
+    ITypeDescription ReturnType { get; }
+}
+
+[TypeDescription]
+internal interface ITypeDescription
+{
+    string FullName { get; }
+    string Name { get; }
+}
+
 internal interface IInterface<T0>;
 
 internal sealed class Class<T0> : IInterface<T0>, IScopeRoot;

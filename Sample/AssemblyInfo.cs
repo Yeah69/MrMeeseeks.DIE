@@ -1,4 +1,6 @@
+using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Sample;
 using MrMeeseeks.DIE.UserUtility;
 
 //[assembly:ErrorDescriptionInsteadOfBuildFailure]
@@ -25,4 +27,19 @@ using MrMeeseeks.DIE.UserUtility;
 [assembly:InjectionKeyMapping(typeof(InjectionKeyAttribute))]
 [assembly:DecorationOrdinalMapping(typeof(DecorationOrdinalAttribute))]
 
+[assembly:InvocationDescriptionMapping(typeof(InvocationDescriptionAttribute))]
+[assembly:MethodDescriptionMapping(typeof(MethodDescriptionAttribute))]
+[assembly:TypeDescriptionMapping(typeof(TypeDescriptionAttribute))]
+
 [assembly:AllImplementationsAggregation]
+
+namespace MrMeeseeks.DIE.Sample;
+
+[AttributeUsage(AttributeTargets.Interface)]
+internal sealed class InvocationDescriptionAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Interface)]
+internal sealed class MethodDescriptionAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Interface)]
+internal sealed class TypeDescriptionAttribute : Attribute;

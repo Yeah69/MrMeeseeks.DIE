@@ -5,6 +5,7 @@ using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.SourceGeneratorUtility;
 
 // ReSharper disable InconsistentNaming
 
@@ -12,7 +13,10 @@ namespace MrMeeseeks.DIE.MsContainer;
 
 internal interface IContainerLevelOnlyContainerInstance;
 
-[ContainerInstanceImplementationAggregation(typeof(GeneratorExecutionContext))]
+[ContainerInstanceImplementationAggregation(
+    typeof(GeneratorExecutionContext),
+    typeof(NamedTypeCache) // Cache should be initialized on first run and read after it
+    )]
 [ContainerInstanceAbstractionAggregation(typeof(IContainerLevelOnlyContainerInstance))]
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
@@ -70,6 +74,10 @@ internal sealed partial class ContainerLevelContainer
     private WellKnownTypesMiscellaneous DIE_Factory_WellKnownTypesMiscellaneous() => 
         WellKnownTypesMiscellaneous.Create(DIE_Factory_Compilation);
 
+    private WellKnownTypesMapping DIE_Factory_WellKnownTypesMapping() => 
+        WellKnownTypesMapping.Create(DIE_Factory_Compilation);
+
+    [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private abstract class ScopeObject;
     

@@ -35,6 +35,9 @@ internal sealed partial class ExecuteLevelContainer
     private WellKnownTypesMiscellaneous DIE_Factory_WellKnownTypesMiscellaneous() => 
         WellKnownTypesMiscellaneous.Create(DIE_Factory_Compilation);
 
+    private WellKnownTypesMapping DIE_Factory_WellKnownTypesMapping() => 
+        WellKnownTypesMapping.Create(DIE_Factory_Compilation);
+
     private sealed partial class DIE_DefaultTransientScope
     {
         private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;

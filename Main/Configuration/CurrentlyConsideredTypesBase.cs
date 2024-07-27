@@ -12,11 +12,11 @@ internal sealed class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTyp
     internal ContainerCurrentlyConsideredTypes(
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache,
+        IImplementationCache implementationCache,
         ILocalDiagLogger localDiagLogger)
     : base(
         new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes },
-        implementationTypeSetCache,
+        implementationCache,
         localDiagLogger)
     {
     }
@@ -30,11 +30,11 @@ internal sealed class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBa
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
         IScopeTypesFromAttributes scopeTypesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache,
+        IImplementationCache implementationCache,
         ILocalDiagLogger localDiagLogger)
         : base(
             new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes, scopeTypesFromAttributes },
-            implementationTypeSetCache,
+            implementationCache,
             localDiagLogger)
     {
     }
@@ -67,6 +67,7 @@ internal interface ICurrentlyConsideredTypes
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<string>> PropertyChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> InterceptorChoices { get; }
     
 }
 
@@ -74,7 +75,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
 {
     public CurrentlyConsideredTypesBase(
         IReadOnlyList<ITypesFromAttributesBase> typesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache,
+        IImplementationCache implementationCache,
         ILocalDiagLogger localDiagLogger)
     {
         IImmutableSet<INamedTypeSymbol> allImplementations = ImmutableHashSet<INamedTypeSymbol>.Empty;
@@ -89,12 +90,12 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
                     types.FilterImplementation);
                 allImplementations = types.FilterAssemblyImplementations.Aggregate(
                     allImplementations, 
-                    (current, assembly) => current.Except(implementationTypeSetCache.ForAssembly(assembly)));
+                    (current, assembly) => current.Except(implementationCache.ForAssembly(assembly)));
             }
 
             if (types.AllImplementations)
             {
-                allImplementations = implementationTypeSetCache.All;
+                allImplementations = implementationCache.All;
             }
             else
             {
@@ -102,7 +103,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
                     types.Implementation);
                 allImplementations = types.AssemblyImplementations.Aggregate(
                     allImplementations, 
-                    (current, assembly) => current.Union(implementationTypeSetCache.ForAssembly(assembly)));
+                    (current, assembly) => current.Union(implementationCache.ForAssembly(assembly)));
             }
         }
 
@@ -435,6 +436,20 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         
         DecorationOrdinalChoices = decorationOrdinalChoices;
         
+        var interceptorChoices = 
+            new Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>(CustomSymbolEqualityComparer.Default);
+        
+        foreach (var types in typesFromAttributes)
+        {
+            foreach (var type in types.FilterInterceptorChoices)
+                interceptorChoices.Remove(type.UnboundIfGeneric());
+
+            foreach (var (type, choice) in types.InterceptorChoices)
+                interceptorChoices[type.UnboundIfGeneric()] = choice;
+        }
+        
+        InterceptorChoices = interceptorChoices;
+        
         return;
 
         IImmutableSet<INamedTypeSymbol> GetSetOfTypesWithProperties(
@@ -497,13 +512,22 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<string>> PropertyChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, INamedTypeSymbol> ImplementationChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ImplementationCollectionChoices { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> InterceptorChoices { get; }
 
     private sealed class DecoratorSequenceMap
     {
         private readonly Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> _map = new(CustomSymbolEqualityComparer.Default);
-        public void Add(INamedTypeSymbol decoratedType, IReadOnlyList<INamedTypeSymbol> decoratorSequence) => _map[decoratedType] = decoratorSequence;
-        public void Remove(INamedTypeSymbol decoratedType) => _map.Remove(decoratedType);
-        public bool Any => _map.Count != 0;
-        public Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => _map;
+
+        public void Add(INamedTypeSymbol decoratedType, IReadOnlyList<INamedTypeSymbol> decoratorSequence) => 
+            _map[decoratedType] = decoratorSequence;
+
+        public void Remove(INamedTypeSymbol decoratedType) =>
+            _map.Remove(decoratedType);
+
+        public bool Any => 
+            _map.Count != 0;
+
+        public Dictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>> ToReadOnlyDictionary() => 
+            _map;
     }
 }

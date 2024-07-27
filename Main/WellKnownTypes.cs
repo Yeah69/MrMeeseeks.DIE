@@ -38,6 +38,7 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol Nullable1, // .NET Standard 2.0
     INamedTypeSymbol Interlocked, // .NET Standard 2.0
     INamedTypeSymbol Type, // .NET Standard 2.0
+    INamedTypeSymbol String, // .NET Standard 2.0
     INamedTypeSymbol Object) // .NET Standard 2.0
     : IContainerInstance
 {
@@ -87,6 +88,7 @@ internal sealed record WellKnownTypes(
             Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"),
             Interlocked: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Interlocked"),
             Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"),
+            String: compilation.GetTypeByMetadataNameOrThrow("System.String"),
             Object: @object);
     }
 }

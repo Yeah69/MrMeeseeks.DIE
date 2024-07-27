@@ -15,16 +15,18 @@ internal sealed class ExecuteImpl : IExecute
 {
     private readonly GeneratorExecutionContext _context;
     private readonly IRangeUtility _rangeUtility;
-    private readonly RequiredKeywordUtility _requiredKeywordUtility;
-    private readonly DisposeUtility _disposeUtility;
+    private readonly IRequiredKeywordUtility _requiredKeywordUtility;
+    private readonly IDisposeUtility _disposeUtility;
+    private readonly IDescriptionsGenerator _descriptionsGenerator;
     private readonly Func<INamedTypeSymbol, ContainerInfo> _containerInfoFactory;
     private readonly Func<ContainerInfo, IExecuteContainerContext> _executeContainerContextFactory;
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
         IRangeUtility rangeUtility,
-        RequiredKeywordUtility requiredKeywordUtility,
-        DisposeUtility disposeUtility,
+        IRequiredKeywordUtility requiredKeywordUtility,
+        IDisposeUtility disposeUtility,
+        IDescriptionsGenerator descriptionsGenerator,
         Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory,
         Func<ContainerInfo, IExecuteContainerContext> executeContainerContextFactory)
     {
@@ -32,6 +34,7 @@ internal sealed class ExecuteImpl : IExecute
         _rangeUtility = rangeUtility;
         _requiredKeywordUtility = requiredKeywordUtility;
         _disposeUtility = disposeUtility;
+        _descriptionsGenerator = descriptionsGenerator;
         _containerInfoFactory = containerInfoFactory;
         _executeContainerContextFactory = executeContainerContextFactory;
     }
@@ -75,7 +78,7 @@ internal sealed class ExecuteImpl : IExecute
                 .SyntaxTree
                 .GetText();
             
-            _context.AddSource("RequiredKeywordTypes.cs", requiredSource);
+            _context.AddSource($"{Constants.NamespaceForGeneratedUtilities}.RequiredKeywordTypes.cs", requiredSource);
         }
         
         var disposeUtilityCode = CSharpSyntaxTree
@@ -85,6 +88,19 @@ internal sealed class ExecuteImpl : IExecute
             .SyntaxTree
             .GetText();
         
-        _context.AddSource($"{Constants.NamespaceForGeneratedStatics}.{_disposeUtility.ClassName}.cs", disposeUtilityCode);
+        _context.AddSource($"{Constants.NamespaceForGeneratedUtilities}.{_disposeUtility.ClassName}.cs", disposeUtilityCode);
+        
+        var descriptionsCode = _descriptionsGenerator.Generate();
+        if (descriptionsCode is not null)
+        {
+            var descriptionsSource = CSharpSyntaxTree
+                .ParseText(SourceText.From(descriptionsCode, Encoding.UTF8))
+                .GetRoot()
+                .NormalizeWhitespace()
+                .SyntaxTree
+                .GetText();
+            
+            _context.AddSource($"{Constants.NamespaceForGeneratedUtilities}.Descriptions.cs", descriptionsSource);
+        }
     }
 }

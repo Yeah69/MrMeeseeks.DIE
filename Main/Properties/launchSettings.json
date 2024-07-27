@@ -1,8 +1,9 @@
-{
+{  
+  "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
     "Main_Sample": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "/home/yeah69/Documents/GitRepositories/MrMeeseeks.DIE/Sample/Sample.csproj"
+      "targetProject": "../Sample/Sample.csproj"
     },
     "Main_Test": {
       "commandName": "DebugRoslynComponent",

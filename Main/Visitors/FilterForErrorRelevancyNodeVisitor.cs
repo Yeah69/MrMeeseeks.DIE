@@ -186,6 +186,9 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
             case IInitialTransientScopeSubDisposalNode initialTransientScopeSubDisposalNode:
                 VisitIInitialTransientScopeSubDisposalNode(initialTransientScopeSubDisposalNode);
                 break;
+            case IInterceptionElementNode interceptionElementNode:
+                VisitIInterceptionElementNode(interceptionElementNode);
+                break;
         }
     }
 
@@ -220,6 +223,16 @@ internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorReleva
 
     public void VisitINullNode(INullNode element)
     {
+    }
+
+    public void VisitIInterceptionElementNode(IInterceptionElementNode element)
+    {
+        _currentNodeStack.Push(element);
+
+        VisitIElementNode(element.InterceptorInstance);
+        VisitIElementNode(element.DecoratedInstance);
+        
+        _currentNodeStack.Pop();
     }
 
     public void VisitIFactoryPropertyNode(IFactoryPropertyNode element) {}

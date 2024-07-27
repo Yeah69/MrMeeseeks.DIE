@@ -22,14 +22,17 @@ internal abstract class RangedInstanceFunctionGroupNodeBase : IRangedInstanceFun
         INamedTypeSymbol type,
         
         // dependencies
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         Level = level;
         TypeFullName = type.FullName();
         var label = Level.ToString();
+#pragma warning disable CA1308
+        var lowercaseLabel = label.ToLowerInvariant();
+#pragma warning restore CA1308
         FieldReference =
-            referenceGenerator.Generate($"_{label.ToLowerInvariant()}InstanceField", type);
-        LockReference = referenceGenerator.Generate($"_{label.ToLowerInvariant()}InstanceLock");
+            referenceGenerator.Generate($"_{lowercaseLabel}InstanceField", type);
+        LockReference = referenceGenerator.Generate($"_{lowercaseLabel}InstanceLock");
         IsCreatedForStructs = type.IsValueType ? referenceGenerator.Generate("isCreated") : null;
     }
 

@@ -66,10 +66,10 @@ internal interface IRangeNode : INode
 
 internal abstract class RangeNode : IRangeNode
 {
-    private readonly IMapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
-    protected readonly ITypeParameterUtility TypeParameterUtility;
+    private readonly MapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
+    protected readonly TypeParameterUtility TypeParameterUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImplementationMappingConfiguration?, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> _multiKeyValueFunctionNodeFactory;
@@ -218,14 +218,14 @@ internal abstract class RangeNode : IRangeNode
     internal RangeNode(
         string name,
         INamedTypeSymbol? rangeType,
-        IUserDefinedElements userDefinedElements,
-        IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
-        ITypeParameterUtility typeParameterUtility,
-        IRangeUtility rangeUtility,
+        UserDefinedElements userDefinedElements,
+        MapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        TypeParameterUtility typeParameterUtility,
+        RangeUtility rangeUtility,
         ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImplementationMappingConfiguration?, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,

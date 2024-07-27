@@ -5,15 +5,11 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
 
-internal interface IContainerDieExceptionGenerator 
-{
-    void Generate(Exception? exception);
-}
-
-internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
+internal sealed class ContainerDieExceptionGenerator
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly IDiagLogger _diagLogger;
+    private readonly ContainerInfo _containerInfo;
+    private readonly DiagLogger _diagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly INamedTypeSymbol _containerType;
@@ -21,13 +17,14 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
 
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        IDiagLogger diagLogger)
+        DiagLogger diagLogger)
     {
         _context = context;
+        _containerInfo = containerInfo;
         _diagLogger = diagLogger;
         _wellKnownTypes = wellKnownTypes;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
@@ -79,6 +76,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
             .GetRoot()
             .NormalizeWhitespace()
             .SyntaxTree
-            .GetText(); _context.AddSource($"{_containerType.ContainingNamespace.FullName()}.{_containerType.Name}.g.cs", containerSource);
+            .GetText();
+        _context.AddSource(_containerInfo.GenerateHintPath(suffix: ".Exception"), containerSource);
     }
 }

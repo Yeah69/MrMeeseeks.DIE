@@ -3,20 +3,14 @@ using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.Logging;
 
-internal interface ILocalDiagLogger
-{
-    void Warning(DiagLogData data, Location location);
-    void Error(DiagLogData data, Location location);
-}
-
-internal sealed class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
+internal sealed class LocalDiagLogger : IScopeInstance
 {
     private readonly ILogEnhancer _logEnhancer;
-    private readonly IDiagLogger _diagLogger;
+    private readonly DiagLogger _diagLogger;
 
     internal LocalDiagLogger(
         ILogEnhancer logEnhancer,
-        IDiagLogger diagLogger)
+        DiagLogger diagLogger)
     {
         _logEnhancer = logEnhancer;
         _diagLogger = diagLogger;
@@ -25,7 +19,7 @@ internal sealed class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
     private static string CreateId(DiagLogData data) =>
         $"{Constants.DieAbbreviation}_{data.MajorNumber.ToString(CultureInfo.InvariantCulture.NumberFormat).PadLeft(2, '0')}_{data.MinorNumber.ToString(CultureInfo.InvariantCulture.NumberFormat).PadLeft(2, '0')}";
 
-    public void Warning(DiagLogData data, Location location) =>
+    internal void Warning(DiagLogData data, Location location) =>
         _diagLogger.Log(Diagnostic.Create(new DiagnosticDescriptor(
                 CreateId(data),
                 data.Title,
@@ -35,7 +29,7 @@ internal sealed class LocalDiagLogger : ILocalDiagLogger, IScopeInstance
                 true),
             location));
 
-    public void Error(DiagLogData data, Location location) =>
+    internal void Error(DiagLogData data, Location location) =>
         _diagLogger.Error(Diagnostic.Create(new DiagnosticDescriptor(
                 CreateId(data),
                 data.Title,

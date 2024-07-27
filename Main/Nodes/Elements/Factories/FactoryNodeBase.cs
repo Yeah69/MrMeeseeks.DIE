@@ -22,7 +22,7 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         // dependencies
         IFunctionNode parentFunction,
         ITaskBasedQueue taskBasedQueue,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
         Name = symbol.Name;

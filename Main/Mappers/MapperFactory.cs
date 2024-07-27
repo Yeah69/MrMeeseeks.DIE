@@ -1,19 +1,14 @@
 namespace MrMeeseeks.DIE.Mappers;
 
-internal interface IMapperFactory
-{
-    IElementNodeMapperBase Create(MapperData data);
-}
-
-internal sealed class MapperFactory : IMapperFactory
+internal sealed class MapperFactory
 {
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
-    private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, Override)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;
 
     public MapperFactory(
         Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
-        Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory, 
+        Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, Override)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;

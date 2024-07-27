@@ -31,7 +31,7 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        ITypeParameterUtility typeParameterUtility)
+        TypeParameterUtility typeParameterUtility)
         : base(
             accessibility,
             parameters,

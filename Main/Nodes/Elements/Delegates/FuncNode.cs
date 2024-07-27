@@ -13,9 +13,9 @@ internal sealed partial class FuncNode : DelegateBaseNode, IFuncNode
         ILocalFunctionNode function,
         IReadOnlyList<ITypeSymbol> typeParameters,
         
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
-        IReferenceGenerator referenceGenerator) 
+        ReferenceGenerator referenceGenerator) 
         : base(delegateTypes, function, typeParameters, localDiagLogger, parentContainer, referenceGenerator)
     {
     }

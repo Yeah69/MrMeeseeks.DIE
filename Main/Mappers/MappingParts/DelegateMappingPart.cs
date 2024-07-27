@@ -22,7 +22,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
     private readonly Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, IFuncNode> _funcNodeFactory;
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImmutableDictionary<ITypeSymbol, IParameterNode>, ILocalFunctionNodeRoot> _localFunctionNodeFactory;
-    private readonly ITypeParameterUtility _typeParameterUtility;
+    private readonly TypeParameterUtility _typeParameterUtility;
     private readonly IUserDefinedElementsMappingPart _userDefinedElementsMappingPart;
     private readonly WellKnownTypes _wellKnownTypes;
 
@@ -30,7 +30,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
     internal DelegateMappingPart(
         IContainerNode parentContainer, 
         IFunctionNode parentFunction, 
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
         WellKnownTypes wellKnownTypes,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         Func<(INamedTypeSymbol Outer, INamedTypeSymbol Inner), ILocalFunctionNode, IReadOnlyList<ITypeSymbol>, ILazyNode> lazyNodeFactory,

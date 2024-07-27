@@ -40,7 +40,7 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
         Params parameters,
         
         IFunctionNode calledFunction,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
         _wellKnownTypes = wellKnownTypes;

@@ -3,6 +3,8 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Analytics;
 using MrMeeseeks.DIE.CodeGeneration;
+using MrMeeseeks.DIE.InjectionGraph;
+using MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes;
@@ -12,41 +14,42 @@ using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE;
 
-internal interface IExecuteContainer
-{
-    void Execute();
-}
-
-internal sealed class ExecuteContainer : IExecuteContainer
+internal sealed class ExecuteContainer
 {
     private readonly bool _errorDescriptionInsteadOfBuildFailure;
     private readonly GeneratorExecutionContext _context;
     private readonly IContainerNode _containerNode;
     private readonly ICodeGenerationVisitor _codeGenerationVisitor;
     private readonly IValidateContainer _validateContainer;
-    private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
+    private readonly ContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
-    private readonly ILocalDiagLogger _localDiagLogger;
-    private readonly IAnalyticsFlags _analyticsFlags;
+    private readonly LocalDiagLogger _localDiagLogger;
+    private readonly AnalyticsFlags _analyticsFlags;
     private readonly Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> _resolutionGraphAnalyticsNodeVisitorFactory;
     private readonly Lazy<IFilterForErrorRelevancyNodeVisitor> _filterForErrorRelevancyNodeVisitor;
-    private readonly IDiagLogger _diagLogger;
-    private readonly IContainerInfo _containerInfo;
+    private readonly IInjectionGraphBuilder _injectionGraphBuilder;
+    private readonly InjectionGraphCodeGenerator _injectionGraphCodeGenerator;
+    private readonly IInjectionGraphPlantUmlGenerator _injectionGraphPlantUmlGenerator;
+    private readonly DiagLogger _diagLogger;
+    private readonly ContainerInfo _containerInfo;
 
     internal ExecuteContainer(
-        IGeneratorConfiguration generatorConfiguration,
+        GeneratorConfiguration generatorConfiguration,
         GeneratorExecutionContext context,
         IContainerNode containerNode,
         ICodeGenerationVisitor codeGenerationVisitor,
         IValidateContainer validateContainer,
-        IContainerDieExceptionGenerator containerDieExceptionGenerator,
-        IContainerInfo containerInfo,
+        ContainerDieExceptionGenerator containerDieExceptionGenerator,
+        ContainerInfo containerInfo,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
-        ILocalDiagLogger localDiagLogger,
-        IAnalyticsFlags analyticsFlags,
+        LocalDiagLogger localDiagLogger,
+        AnalyticsFlags analyticsFlags,
         Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> resolutionGraphAnalyticsNodeVisitorFactory,
         Lazy<IFilterForErrorRelevancyNodeVisitor> filterForErrorRelevancyNodeVisitor,
-        IDiagLogger diagLogger)
+        IInjectionGraphBuilder injectionGraphBuilder,
+        InjectionGraphCodeGenerator injectionGraphCodeGenerator,
+        IInjectionGraphPlantUmlGenerator injectionGraphPlantUmlGenerator,
+        DiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
         _context = context;
@@ -59,6 +62,9 @@ internal sealed class ExecuteContainer : IExecuteContainer
         _analyticsFlags = analyticsFlags;
         _resolutionGraphAnalyticsNodeVisitorFactory = resolutionGraphAnalyticsNodeVisitorFactory;
         _filterForErrorRelevancyNodeVisitor = filterForErrorRelevancyNodeVisitor;
+        _injectionGraphBuilder = injectionGraphBuilder;
+        _injectionGraphCodeGenerator = injectionGraphCodeGenerator;
+        _injectionGraphPlantUmlGenerator = injectionGraphPlantUmlGenerator;
         _diagLogger = diagLogger;
         _containerInfo = containerInfo;
     }
@@ -78,7 +84,7 @@ internal sealed class ExecuteContainer : IExecuteContainer
             }
             
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Resolution;
-            _containerNode.Build(new(ImmutableStack<INamedTypeSymbol>.Empty, null));
+            //_containerNode.Build(new(ImmutableStack<INamedTypeSymbol>.Empty, null));
 
             if (_diagLogger.ErrorsIssued)
             {
@@ -87,7 +93,7 @@ internal sealed class ExecuteContainer : IExecuteContainer
             }
 
             _currentExecutionPhaseSetter.Value = ExecutionPhase.CodeGeneration;
-            _codeGenerationVisitor.VisitIContainerNode(_containerNode);
+            //_codeGenerationVisitor.VisitIContainerNode(_containerNode);
 
             if (_diagLogger.ErrorsIssued)
             {
@@ -95,15 +101,35 @@ internal sealed class ExecuteContainer : IExecuteContainer
                 return;
             }
 
-            var containerSource = CSharpSyntaxTree
+            /*var containerSource = CSharpSyntaxTree
                 .ParseText(SourceText.From(_codeGenerationVisitor.GenerateContainerFile(), Encoding.UTF8))
                 .GetRoot()
                 .NormalizeWhitespace()
                 .SyntaxTree
                 .GetText();
 
-            _context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);
-                
+            //_context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);//*/
+            
+            foreach (var (rootType, name, overrideTypes, attributesLocation) in _containerInfo.CreateFunctionData)
+                _injectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes, attributesLocation);
+            
+            _injectionGraphBuilder.SplitAsyncConcreteEdges();
+            
+            _injectionGraphBuilder.AssignFunctions();
+            
+            var injectionGraphSource = CSharpSyntaxTree
+                .ParseText(SourceText.From(_injectionGraphCodeGenerator.Generate(), Encoding.UTF8))
+                .GetRoot()
+                .NormalizeWhitespace()
+                .SyntaxTree
+                .GetText();
+            
+            _context.AddSource(_containerInfo.GenerateHintPath(), injectionGraphSource);
+
+            var plantUmlDiagram = _injectionGraphPlantUmlGenerator.Generate();
+            var plantUmlSource = SourceText.From($"/*\n{plantUmlDiagram}*/\n", Encoding.UTF8);
+            _context.AddSource(_containerInfo.GenerateHintPath(".PlantUml"), plantUmlSource);
+
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Analytics;
             if (_analyticsFlags.ResolutionGraph)
                 _resolutionGraphAnalyticsNodeVisitorFactory(null).VisitIContainerNode(_containerNode);
@@ -148,12 +174,12 @@ internal interface IExecuteContainerContext :  IDisposable
 
 internal sealed class ExecuteContainerContext : IExecuteContainerContext, ITransientScopeRoot
 {
-    private readonly IExecuteContainer _executeContainer;
+    private readonly ExecuteContainer _executeContainer;
     private readonly IDisposable _eagerDisposalTrigger;
     private int _disposed; // 0 = false, > 0 = true
 
     public ExecuteContainerContext(
-        IExecuteContainer executeContainer,
+        ExecuteContainer executeContainer,
         IDisposable eagerDisposalTrigger)
     {
         _executeContainer = executeContainer;

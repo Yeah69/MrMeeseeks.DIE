@@ -4,17 +4,11 @@ using MrMeeseeks.DIE.Nodes.Ranges;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal interface IFunctionCycleTracker
+internal sealed class FunctionCycleTracker
 {
-    void DetectCycle(IContainerNode containerNode);
-}
+    private readonly LocalDiagLogger _localDiagLogger;
 
-internal sealed class FunctionCycleTracker : IFunctionCycleTracker
-{
-    private readonly ILocalDiagLogger _localDiagLogger;
-
-    internal FunctionCycleTracker(
-        ILocalDiagLogger localDiagLogger) =>
+    internal FunctionCycleTracker(LocalDiagLogger localDiagLogger) =>
         _localDiagLogger = localDiagLogger;
 
     public void DetectCycle(IContainerNode containerNode)

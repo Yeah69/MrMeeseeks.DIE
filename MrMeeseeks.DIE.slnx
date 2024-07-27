@@ -1,0 +1,5 @@
+﻿<Solution>
+  <Project Path="Main\Main.csproj" />
+  <Project Path="Sample\Sample.csproj" />
+  <Project Path="Test.Async/Test.Async.csproj" />
+</Solution>

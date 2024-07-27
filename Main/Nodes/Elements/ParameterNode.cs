@@ -9,7 +9,7 @@ internal sealed partial class ParameterNode : IParameterNode
     internal ParameterNode(
         ITypeSymbol type, 
         
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         TypeFullName = type.FullName();
         Reference = referenceGenerator.Generate(type);

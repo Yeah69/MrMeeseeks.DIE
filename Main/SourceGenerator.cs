@@ -3,7 +3,9 @@
 namespace MrMeeseeks.DIE;
 
 [Generator]
+#pragma warning disable RS1042
 public class SourceGenerator : ISourceGenerator
+#pragma warning restore RS1042
 {
     public void Initialize(GeneratorInitializationContext context)
     {

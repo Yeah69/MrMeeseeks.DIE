@@ -1,0 +1,154 @@
+using MrMeeseeks.DIE.InjectionGraph.Edges;
+using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
+
+namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
+
+internal sealed class ConcreteNodeCodeGeneratorDispatcher : IScopeInstance
+{
+    private readonly ContextGenerator _contextGenerator;
+    private readonly SharedNameRegistry _sharedNameRegistry;
+    private readonly ReferenceGenerator _referenceGenerator;
+    private readonly KeyUtility _keyUtility;
+    private readonly ContainerInfo _containerInfo;
+    private readonly ExceptionNodeCodeGenerator _exceptionNodeCodeGenerator;
+    private readonly OverrideNodeCodeGenerator _overrideNodeCodeGenerator;
+    private readonly ImplementationNodeCodeGenerator _implementationNodeCodeGenerator;
+    private readonly FunctorNodeCodeGenerator _functorNodeCodeGenerator;
+    private readonly InterfaceNodeCodeGenerator _interfaceNodeCodeGenerator;
+    private readonly KeyValuePairNodeCodeGenerator _keyValuePairNodeCodeGenerator;
+    private readonly EnumerableNodeCodeGenerator _enumerableNodeCodeGenerator;
+    private readonly TaskNodeCodeGenerator _taskNodeCodeGenerator;
+
+    internal ConcreteNodeCodeGeneratorDispatcher(
+        ContextGenerator contextGenerator,
+        SharedNameRegistry sharedNameRegistry,
+        ReferenceGenerator referenceGenerator,
+        KeyUtility keyUtility,
+        ContainerInfo containerInfo,
+        ExceptionNodeCodeGenerator exceptionNodeCodeGenerator,
+        OverrideNodeCodeGenerator overrideNodeCodeGenerator,
+        ImplementationNodeCodeGenerator implementationNodeCodeGenerator,
+        FunctorNodeCodeGenerator functorNodeCodeGenerator,
+        InterfaceNodeCodeGenerator interfaceNodeCodeGenerator,
+        KeyValuePairNodeCodeGenerator keyValuePairNodeCodeGenerator,
+        EnumerableNodeCodeGenerator enumerableNodeCodeGenerator,
+        TaskNodeCodeGenerator taskNodeCodeGenerator)
+    {
+        _contextGenerator = contextGenerator;
+        _sharedNameRegistry = sharedNameRegistry;
+        _referenceGenerator = referenceGenerator;
+        _keyUtility = keyUtility;
+        _containerInfo = containerInfo;
+        _exceptionNodeCodeGenerator = exceptionNodeCodeGenerator;
+        _overrideNodeCodeGenerator = overrideNodeCodeGenerator;
+        _implementationNodeCodeGenerator = implementationNodeCodeGenerator;
+        _functorNodeCodeGenerator = functorNodeCodeGenerator;
+        _interfaceNodeCodeGenerator = interfaceNodeCodeGenerator;
+        _keyValuePairNodeCodeGenerator = keyValuePairNodeCodeGenerator;
+        _enumerableNodeCodeGenerator = enumerableNodeCodeGenerator;
+        _taskNodeCodeGenerator = taskNodeCodeGenerator;
+    }
+
+    internal string GenerateForInjectionNode(StringBuilder code, TypeNode node, bool sync)
+    {
+        var edgeAndTargets = node.OutgoingConcreteEdges
+            .Where(e => sync && e is ConcreteSyncEdge || !sync && e is ConcreteAsyncEdge)
+            .Select(e => (Edges: e, ConcreteNode: e.Target))
+            .ToList();
+        var maybeOverride = edgeAndTargets.Select(t => t.ConcreteNode).OfType<ConcreteOverrideNode>().SingleOrDefault();
+        var nonOverrides = edgeAndTargets.Where(t => t.ConcreteNode is not ConcreteOverrideNode).ToList();
+        
+        if (maybeOverride is null && nonOverrides.Count == 1)
+            return GenerateSwitchBody(node, nonOverrides.Single().ConcreteNode, null);
+        if (maybeOverride is {} onlyOverride && nonOverrides.Count == 0)
+            return _overrideNodeCodeGenerator.Generate(code, node, onlyOverride, sync: sync);
+        
+        var reference = _referenceGenerator.Generate("ref");
+        code.AppendLine($"{node.Type.FullName()} {reference};");
+        
+        if (maybeOverride is {} concreteOverrideNode)
+        {
+            code.AppendLine($"if ({_contextGenerator.ParameterName}.{_contextGenerator.OverridesPropertyName} is {_sharedNameRegistry.IOverrideInterfaceName}<{concreteOverrideNode.Data.Type.FullName()}>)");
+            code.AppendLine("{");
+            _overrideNodeCodeGenerator.Generate(code, node, concreteOverrideNode, sync: sync, reference: reference);
+            code.AppendLine("}");
+            code.AppendLine("else");
+            code.AppendLine("{");
+            GenerateForNonOverrides();
+            code.AppendLine("}");
+            return reference;
+        }
+        
+        GenerateForNonOverrides();
+        
+        return reference;
+
+        void GenerateForNonOverrides()
+        {
+            if (nonOverrides is [var single])
+                GenerateSwitchBody(node, single.ConcreteNode, reference);
+            else
+            {
+                for (var i = 0; i < nonOverrides.Count; i++)
+                {
+                    var (edge, concreteNode) = nonOverrides[i];
+                    var condition = string.Join(" || ", edge.Contexts.Select(GenerateContextMatchCondition));
+
+                    if (i == 0)
+                        code.AppendLine($"if ({condition})");
+                    else if (i < nonOverrides.Count - 1)
+                        code.AppendLine($"else if ({condition})");
+                    else
+                        code.AppendLine("else");
+
+                    code.AppendLine("{");
+                    GenerateSwitchBody(node, concreteNode, reference);
+                    code.AppendLine("}");
+                }
+            }
+        }
+        
+        string GenerateSwitchBody(TypeNode typeNode, IConcreteNode concreteNode, string? maybeReference) =>
+            concreteNode switch
+            {
+                ConcreteExceptionNode exceptionNode => _exceptionNodeCodeGenerator.Generate(code, typeNode, exceptionNode, sync: sync, reference: maybeReference),
+                ConcreteImplementationNode implementationNode => _implementationNodeCodeGenerator.Generate(code, typeNode, implementationNode, sync: sync, reference: maybeReference),
+                ConcreteFunctorNode functorNode => _functorNodeCodeGenerator.Generate(code, typeNode, functorNode, sync: sync, reference: maybeReference),
+                ConcreteInterfaceNode interfaceNode => _interfaceNodeCodeGenerator.Generate(code, typeNode, interfaceNode, sync: sync, reference: maybeReference),
+                ConcreteKeyValuePairNode keyValuePairNode => _keyValuePairNodeCodeGenerator.Generate(code, typeNode, keyValuePairNode, sync: sync, reference: maybeReference),
+                ConcreteEnumerableNode enumerableNode => _enumerableNodeCodeGenerator.Generate(code, typeNode, enumerableNode, sync: sync, reference: maybeReference),
+                ConcreteOverrideNode overrideNode => _overrideNodeCodeGenerator.Generate(code, typeNode, overrideNode, sync: sync, reference: maybeReference),
+                ConcreteTaskNode taskNode => _taskNodeCodeGenerator.Generate(code, typeNode, taskNode, sync: sync, reference: maybeReference),
+                _ => ""
+            };
+        
+        string GenerateContextMatchCondition(EdgeContext context)
+        {
+            var scopeNodeName = context.ScopeNode switch
+            {
+                ScopeNodeContext.Container => _containerInfo.Name,
+                ScopeNodeContext.Scope scope => scope.ScopeName,
+                ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName,
+                _ => throw new ArgumentOutOfRangeException(nameof(context.ScopeNode))
+            };
+
+            var conditions = new List<string> { $"{_contextGenerator.ParameterName}.{_contextGenerator.ScopeNodeNamePropertyName} == \"{scopeNodeName}\"" };
+            
+            if (context.CaseChoice is CaseChoiceContext.Single(var outwardFacingTypeId, var caseId))
+            {
+                conditions.Add($"{_contextGenerator.ParameterName}.{_contextGenerator.OutwardFacingTypeNumberPropertyName} == {outwardFacingTypeId} && {_contextGenerator.ParameterName}.{_contextGenerator.CaseNumberPropertyName} == {caseId}");
+            }
+
+            if (context.Key is KeyContext.Single(var type, Value: var value))
+            {
+                var keyLiteral = _keyUtility.GenerateKeyLiteral(type, value);
+                conditions.Add($"{_contextGenerator.ParameterName}.{_contextGenerator.KeyPropertyName}?.Equals({keyLiteral}) == true");
+            }
+
+            return string.Join(" && ", conditions);
+        }
+    }
+}

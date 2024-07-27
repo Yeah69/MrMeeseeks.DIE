@@ -3,13 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
 
-internal interface IRequiredKeywordUtility
-{
-    void SetRequiredKeywordAsRequired();
-    string? GenerateRequiredKeywordTypesFile();
-}
-
-internal sealed class RequiredKeywordUtility : IRequiredKeywordUtility, IContainerInstance
+internal sealed class RequiredKeywordUtility : IContainerInstance
 {
     private readonly Compilation _compilation;
     private readonly ICheckInternalsVisible _checkInternalsVisible;

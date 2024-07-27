@@ -10,9 +10,7 @@ internal abstract class ValidateUserDefinedInjectionMethod : ValidateUserDefined
 {
     protected abstract INamedTypeSymbol InjectionAttribute { get; }
 
-    internal ValidateUserDefinedInjectionMethod(
-        ILocalDiagLogger localDiagLogger) 
-        : base(localDiagLogger)
+    internal ValidateUserDefinedInjectionMethod(LocalDiagLogger localDiagLogger) : base(localDiagLogger)
     {
     }
 

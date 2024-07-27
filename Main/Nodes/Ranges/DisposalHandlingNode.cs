@@ -1,3 +1,5 @@
+using MrMeeseeks.DIE.MsContainer;
+
 namespace MrMeeseeks.DIE.Nodes.Ranges;
 
 internal interface IDisposalHandlingNode
@@ -14,10 +16,10 @@ internal interface IDisposalHandlingNode
     string CollectionReference { get; }
 }
 
-internal sealed class DisposalHandlingNode : IDisposalHandlingNode
+internal sealed class DisposalHandlingNode : IDisposalHandlingNode, ITransientScopeInstance
 {
     internal DisposalHandlingNode(
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
         DisposedFieldReference = referenceGenerator.Generate("_disposed");

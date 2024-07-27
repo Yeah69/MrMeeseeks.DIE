@@ -1,0 +1,9 @@
+﻿# EditorConfig is awesome: https://EditorConfig.org
+# This file sets a wider right margin so editors wrap less aggressively.
+
+root = true
+
+[*.{cs,csx}]
+# Increase the preferred maximum line length for code editors that respect this setting.
+# Common defaults are 100-120. We set to 160 to make wrap wider while keeping readability.
+max_line_length = 160

@@ -17,7 +17,7 @@ internal interface IVoidFunctionNode : IFunctionNode
 internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunctionNode, IScopeInstance
 {
     private readonly IReadOnlyList<IInitializedInstanceNode> _initializedInstanceNodes;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly IRangeNode _parentRange;
 
     internal VoidFunctionNode(
@@ -28,8 +28,8 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         // dependencies
         IRangeNode parentRange,
         IContainerNode parentContainer,
-        IReferenceGenerator referenceGenerator,
-        ILocalDiagLogger localDiagLogger,
+        ReferenceGenerator referenceGenerator,
+        LocalDiagLogger localDiagLogger,
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,

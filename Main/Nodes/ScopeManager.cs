@@ -30,7 +30,7 @@ internal sealed class ScopeManager : IScopeManager, IContainerInstance
     private readonly Dictionary<INamedTypeSymbol, INamedTypeSymbol> _scopeRootTypeToScopeType;
 
     public ScopeManager(
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         IContainerNode container,
         ITransientScopeInterfaceNode transientScopeInterface,
         Func<string, INamedTypeSymbol?, IScopeNodeRoot> scopeFactory,

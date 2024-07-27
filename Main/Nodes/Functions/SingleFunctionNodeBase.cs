@@ -33,7 +33,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        ITypeParameterUtility typeParameterUtility)
+        TypeParameterUtility typeParameterUtility)
         : base(
             accessibility, 
             typeSymbol, 

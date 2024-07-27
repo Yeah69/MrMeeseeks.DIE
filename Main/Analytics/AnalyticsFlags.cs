@@ -3,18 +3,12 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Analytics;
 
-internal interface IAnalyticsFlags
-{
-    bool ResolutionGraph { get; }
-    bool ErrorFilteredResolutionGraph { get; }
-}
-
-internal sealed class AnalyticsFlags : IAnalyticsFlags, IContainerInstance
+internal sealed class AnalyticsFlags : IContainerInstance
 {
     private readonly Configuration.Attributes.Analytics? _analytics;
     
     internal AnalyticsFlags(
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         GeneratorExecutionContext context)
     {

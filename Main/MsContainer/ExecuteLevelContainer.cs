@@ -1,5 +1,6 @@
 using MrMeeseeks.DIE.CodeGeneration;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Configuration.Interception;
 using MrMeeseeks.DIE.Logging;
 
 // ReSharper disable InconsistentNaming
@@ -7,7 +8,7 @@ using MrMeeseeks.DIE.Logging;
 namespace MrMeeseeks.DIE.MsContainer;
 
 [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(ExecuteLevelLogEnhancerDecorator))]
-[CreateFunction(typeof(IExecute), "Create")]
+[CreateFunction(typeof(ExecuteImpl), "Create")]
 internal sealed partial class ExecuteLevelContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
@@ -35,6 +36,9 @@ internal sealed partial class ExecuteLevelContainer
     private WellKnownTypesMiscellaneous DIE_Factory_WellKnownTypesMiscellaneous() => 
         WellKnownTypesMiscellaneous.Create(DIE_Factory_Compilation);
 
+    private WellKnownTypesMapping DIE_Factory_WellKnownTypesMapping() => 
+        WellKnownTypesMapping.Create(DIE_Factory_Compilation);
+
     private sealed partial class DIE_DefaultTransientScope
     {
         private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
@@ -43,9 +47,10 @@ internal sealed partial class ExecuteLevelContainer
             DIE_Factory_GeneratorExecutionContext = context;
         }
         
-        private IExecuteContainer DIE_Factory_IExecuteContainer(
+        private ExecuteContainer DIE_Factory_IExecuteContainer(
             ContainerInfo containerInfo, 
             RequiredKeywordUtility requiredKeywordUtility,
+            InvocationTypeManager invocationTypeManager,
             DisposeUtility disposeUtility,
             ReferenceGeneratorCounter referenceGeneratorCounter)
         {
@@ -54,6 +59,7 @@ internal sealed partial class ExecuteLevelContainer
                 DIE_Factory_GeneratorExecutionContext, 
                 containerInfo,
                 requiredKeywordUtility,
+                invocationTypeManager,
                 disposeUtility,
                 referenceGeneratorCounter);
 #pragma warning restore CA2000

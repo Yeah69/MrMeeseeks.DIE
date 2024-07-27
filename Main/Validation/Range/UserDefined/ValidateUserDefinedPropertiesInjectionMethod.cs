@@ -8,7 +8,7 @@ internal sealed class ValidateUserDefinedPropertiesInjectionMethod : ValidateUse
 {
     internal ValidateUserDefinedPropertiesInjectionMethod(
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger diagLogger) 
+        LocalDiagLogger diagLogger) 
         : base(diagLogger) => 
         InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedPropertiesInjectionAttribute;
 

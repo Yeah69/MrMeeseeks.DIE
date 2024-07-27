@@ -17,8 +17,8 @@ internal interface IResolutionGraphAnalyticsNodeVisitor : INodeVisitor;
 internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnalyticsNodeVisitor
 {
     private readonly IImmutableSet<INode>? _relevantNodes;
-    private readonly IPaths _paths;
-    private readonly IContainerInfo _containerInfo;
+    private readonly Paths _paths;
+    private readonly ContainerInfo _containerInfo;
     private readonly string _dirPath;
     private readonly StringBuilder _code = new();
     private readonly StringBuilder _relations = new();
@@ -32,8 +32,8 @@ internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnal
         IImmutableSet<INode>? relevantNodes,
 
         // dependencies
-        IPaths paths,
-        IContainerInfo containerInfo)
+        Paths paths,
+        ContainerInfo containerInfo)
     {
         _relevantNodes = relevantNodes;
         _paths = paths;
@@ -277,6 +277,9 @@ package "{{element.ReturnedTypeFullName(ReturnTypeStatus.Ordinary)}} {{element.N
             case IInitialTransientScopeSubDisposalNode initialTransientScopeSubDisposalNode:
                 VisitIInitialTransientScopeSubDisposalNode(initialTransientScopeSubDisposalNode);
                 break;
+            case IInterceptionElementNode interceptionElementNode:
+                VisitIInterceptionElementNode(interceptionElementNode);
+                break;
         }
     }
 
@@ -337,6 +340,10 @@ object "Transient Scope Disposal Hook" as {{reference}}
 object "null" as {{reference}}
 """);
         _relations.AppendLine($"{_currentReference} --> {reference}");
+    }
+
+    public void VisitIInterceptionElementNode(IInterceptionElementNode element)
+    {
     }
 
     public void VisitIFactoryPropertyNode(IFactoryPropertyNode element) => 

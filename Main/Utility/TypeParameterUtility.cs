@@ -7,31 +7,24 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal interface ITypeParameterUtility
+internal sealed class TypeParameterUtility : IContainerInstance
 {
-    ITypeSymbol ReplaceTypeParametersByCustom(ITypeSymbol baseType);
-    IReadOnlyList<ITypeParameterSymbol> ExtractTypeParameters(ITypeSymbol baseType);
-    bool CheckLegitimacyOfTypeArguments(INamedTypeSymbol type);
-    bool CheckAssignability(ITypeParameterSymbol subject, ITypeParameterSymbol target);
-    bool ContainsOpenTypeParameters(ITypeSymbol type);
-    ITypeSymbol EquipWithMappedTypeParameters(ITypeSymbol type);
-}
-
-internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerInstance
-{
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
+    private readonly Func<string, IReadOnlyDictionary<ITypeParameterSymbol, string>, GrownTypeParameterConstraintsDisplayer> _grownTypeParameterConstraintsDisplayerFactory;
     private readonly Compilation _compilation;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Lazy<Dictionary<ITypeParameterSymbol, ITypeParameterSymbol>> _typeParameterToContainerTypeParameter;
 
     internal TypeParameterUtility(
         Lazy<IContainerNode> parentContainer,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         GeneratorExecutionContext generatorExecutionContext,
+        Func<string, IReadOnlyDictionary<ITypeParameterSymbol, string>, GrownTypeParameterConstraintsDisplayer> grownTypeParameterConstraintsDisplayerFactory,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         _referenceGenerator = referenceGenerator;
+        _grownTypeParameterConstraintsDisplayerFactory = grownTypeParameterConstraintsDisplayerFactory;
         _compilation = generatorExecutionContext.Compilation;
         _wellKnownTypes = wellKnownTypes;
 
@@ -178,11 +171,16 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerIn
         var extractedToGrownNames = extractedOpenTypeParameters
             .ToDictionary(e => e, _ => _referenceGenerator.Generate("T"));
 
+        var constraintsList = string.Join(
+            Environment.NewLine,
+            extractedToGrownNames.Select(kvp =>
+                _grownTypeParameterConstraintsDisplayerFactory(kvp.Value, extractedToGrownNames).Display(kvp.Key)));
+        
         var surrogateCode =
             $$"""
               namespace N
               {
-                  public class C<{{string.Join(", ", extractedToGrownNames.Values)}}> {{string.Join(Environment.NewLine, extractedToGrownNames.Select(kvp => TypeParameterToConstraintsString(kvp.Key, kvp.Value)))}}
+                  public class C<{{string.Join(", ", extractedToGrownNames.Values)}}> {{constraintsList}}
                   {}
               }
               """;
@@ -198,56 +196,6 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerIn
         return extractedOpenTypeParameters
             .Zip(newType.TypeParameters, (l, r) => (l, r))
             .ToDictionary(t => t.l, t => t.r);
-
-        string TypeParameterToConstraintsString(ITypeParameterSymbol tp, string name)
-        {
-            var constraints = new List<string>();
-            if (tp.HasUnmanagedTypeConstraint)
-                constraints.Add("unmanaged");
-            else if (tp.HasValueTypeConstraint)
-                constraints.Add("struct");
-            else if (tp.HasReferenceTypeConstraint)
-                constraints.Add(
-                    $"class{(tp.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "?" : "")}");
-            if (tp.HasNotNullConstraint)
-                constraints.Add("notnull");
-            constraints.AddRange(tp.ConstraintTypes.Select(GetTypeConstraintString));
-            if (tp.HasConstructorConstraint)
-                constraints.Add("new()");
-            return constraints.Count > 0 ? $" where {name} : {string.Join(", ", constraints)}" : "";
-
-            string GetTypeConstraintString(ITypeSymbol t)
-            {
-                switch (t)
-                {
-                    case IArrayTypeSymbol arrayTypeSymbol:
-                        // Arrays can't be type constraints top-level, but the can be nested in the type parameters
-                        return $"{GetTypeConstraintString(arrayTypeSymbol.ElementType)}[]";
-                    case IDynamicTypeSymbol:
-                        throw new ArgumentException("Dynamic can't be used as type constraint.", nameof(t));
-                    case IErrorTypeSymbol:
-                        throw new ArgumentException("Error can't be used as type constraint.", nameof(t));
-                    case IFunctionPointerTypeSymbol:
-                        throw new ArgumentException("Function pointer can't be used as type constraint.", nameof(t));
-                    case INamedTypeSymbol namedTypeSymbol:
-                        var withoutTypeParameters = 
-                            namedTypeSymbol.ToDisplayString(SymbolDisplayFormatPicks.FullNameExceptTypeParameters);
-                        var typeParameters = namedTypeSymbol.TypeArguments.Any()
-                            ? $"<{string.Join(", ", namedTypeSymbol.TypeArguments.Select(GetTypeConstraintString))}>"
-                            : "";
-                        return $"{withoutTypeParameters}{typeParameters}";
-                    case IPointerTypeSymbol:
-                        throw new ArgumentException(
-                            "Pointer type can't be used as type constraint, directly (see 'unmanaged' constraint).",
-                            nameof(t));
-                    case ITypeParameterSymbol typeParameterSymbol:
-                        // This type parameter has to be contained in the dictionary, otherwise the type extraction failed
-                        return extractedToGrownNames[typeParameterSymbol];
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(t));
-                }
-            }
-        }
     }
 
     public bool CheckLegitimacyOfTypeArguments(INamedTypeSymbol type)

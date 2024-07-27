@@ -18,7 +18,7 @@ internal sealed partial class ValueTupleNode : IValueTupleNode
         INamedTypeSymbol valueTupleType,
         IElementNodeMapperBase elementNodeMapper,
         
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         _valueTupleType = valueTupleType;
         _elementNodeMapper = elementNodeMapper;

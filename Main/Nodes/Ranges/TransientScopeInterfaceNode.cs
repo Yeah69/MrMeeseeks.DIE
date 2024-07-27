@@ -20,7 +20,7 @@ internal interface ITransientScopeInterfaceNode : INode
 internal sealed partial class TransientScopeInterfaceNode : ITransientScopeInterfaceNode, IContainerInstance
 {
     private readonly IContainerNode _container;
-    private readonly ITypeParameterUtility _typeParameterUtility;
+    private readonly TypeParameterUtility _typeParameterUtility;
     private readonly Dictionary<ITypeSymbol, List<IRangedInstanceInterfaceFunctionNode>> _interfaceFunctions = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Collection<IRangeNode> _ranges = [];
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceInterfaceFunctionNodeRoot> _rangedInstanceInterfaceFunctionNodeFactory;
@@ -28,8 +28,8 @@ internal sealed partial class TransientScopeInterfaceNode : ITransientScopeInter
     internal TransientScopeInterfaceNode(
         IContainerNode container,
         
-        IReferenceGenerator referenceGenerator,
-        ITypeParameterUtility typeParameterUtility,
+        ReferenceGenerator referenceGenerator,
+        TypeParameterUtility typeParameterUtility,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceInterfaceFunctionNodeRoot> rangedInstanceInterfaceFunctionNodeFactory)
     {
         _container = container;

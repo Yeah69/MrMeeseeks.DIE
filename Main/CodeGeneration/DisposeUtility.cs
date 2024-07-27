@@ -15,24 +15,9 @@ internal sealed record DisposalUtilityInterfaceData(
     string UserDefinedSyncDisposablesPropertyName,
     string? UserDefinedAsyncDisposablesPropertyName);
 
-internal interface IDisposeUtility
+internal sealed class DisposeUtility : IContainerInstance
 {
-    DisposalUtilityInterfaceData DisposableRangeInterfaceData { get; }
-    string DisposeFullyQualified { get; }
-    string? DisposeSyncOnlyFullyQualified { get; }
-    string? DisposeAsyncFullyQualified { get; }
-    string? DisposeChunkAsyncFullyQualified { get; }
-    string DisposeExceptionHandlingFullyQualified { get; }
-    string? DisposeExceptionHandlingSyncOnlyFullyQualified { get; }
-    string? DisposeExceptionHandlingAsyncFullyQualified { get; }
-    string? DisposeSingularAsyncFullyQualified { get; }
-    string? DisposeSingularAsyncSyncedFullyQualified { get; }
-    string? ReleaseDisposeAsyncFullyQualified { get; }
-}
-
-internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
-{
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
     private readonly string _disposeName;
@@ -53,7 +38,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
     private readonly string? _releaseDisposeAsyncName;
 
     internal DisposeUtility(
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
     {
@@ -63,53 +48,53 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
         ClassName = referenceGenerator.Generate("DisposeUtility");
         
         _disposeName = referenceGenerator.Generate("Dispose");
-        DisposeFullyQualified = $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeName}";
+        DisposeFullyQualified = $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeName}";
         
         _disposeSyncOnlyName = wellKnownTypes.IAsyncDisposable is not null && wellKnownTypes.ValueTask is not null
             ? referenceGenerator.Generate("DisposeSyncOnly")
             : null;
         DisposeSyncOnlyFullyQualified = _disposeSyncOnlyName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeSyncOnlyName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeSyncOnlyName}"
             : null;
         
         _disposeAsyncName = wellKnownTypes.IAsyncDisposable is not null && wellKnownTypes.ValueTask is not null
             ? referenceGenerator.Generate("DisposeAsync")
             : null;
         DisposeAsyncFullyQualified = _disposeAsyncName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeAsyncName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeAsyncName}"
             : null;
         
         _disposeSingularName = referenceGenerator.Generate("DisposeSingular");
-        DisposeSingularFullyQualified = $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeSingularName}";
+        DisposeSingularFullyQualified = $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeSingularName}";
         
         _disposeSingularAsyncName = wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
             ? referenceGenerator.Generate("DisposeSingularAsync")
             : null;
         DisposeSingularAsyncFullyQualified = _disposeSingularAsyncName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeSingularAsyncName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeSingularAsyncName}"
             : null;
         
         _disposeSingularAsyncSyncedName = wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
             ? referenceGenerator.Generate("DisposeSingularAsyncSynced")
             : null;
         DisposeSingularAsyncSyncedFullyQualified = _disposeSingularAsyncSyncedName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeSingularAsyncSyncedName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeSingularAsyncSyncedName}"
             : null;
         
         _aggregateExceptionRoutine = referenceGenerator.Generate("AggregateExceptionRoutine");
-        AggregateExceptionRoutineFullyQualified = $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_aggregateExceptionRoutine}";
+        AggregateExceptionRoutineFullyQualified = $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_aggregateExceptionRoutine}";
         
         _aggregateExceptionRoutineAsync = wellKnownTypes.IAsyncEnumerableOfException is not null && _wellKnownTypes.ValueTask is not null
             ? referenceGenerator.Generate("AggregateExceptionRoutineAsync")
             : null;
         AggregateExceptionRoutineAsyncFullyQualified = _aggregateExceptionRoutineAsync is not null 
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_aggregateExceptionRoutineAsync}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_aggregateExceptionRoutineAsync}"
             : null;
         
         _disposableRangeInterfaceName = referenceGenerator.Generate("IDisposableRange");
         
         DisposableRangeInterfaceData = new DisposalUtilityInterfaceData(
-            $"{Constants.NamespaceForGeneratedStatics}.{_disposableRangeInterfaceName}",
+            $"{Constants.NamespaceForGeneratedUtilities}.{_disposableRangeInterfaceName}",
             referenceGenerator.Generate("ShouldBeDisposed"),
             wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
                 ? referenceGenerator.Generate("ShouldBeDisposedAsync")
@@ -125,9 +110,9 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
         _disposeChunkAsyncName = wellKnownTypes.IAsyncEnumerableOfException is not null && _wellKnownTypes.ValueTask is not null
             ? referenceGenerator.Generate("DisposeChunkAsync")
             : null;
-        DisposeChunkFullyQualified = $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeChunkName}";
+        DisposeChunkFullyQualified = $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeChunkName}";
         DisposeChunkAsyncFullyQualified = _disposeChunkAsyncName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeChunkAsyncName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeChunkAsyncName}"
             : null;
         
         _disposeExceptionHandlingName = referenceGenerator.Generate("DisposeExceptionHandling");
@@ -138,12 +123,12 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             ? referenceGenerator.Generate("DisposeExceptionHandlingAsync")
             : null;
         
-        DisposeExceptionHandlingFullyQualified = $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeExceptionHandlingName}";
+        DisposeExceptionHandlingFullyQualified = $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeExceptionHandlingName}";
         DisposeExceptionHandlingSyncOnlyFullyQualified = _disposeExceptionHandlingSyncOnlyName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeExceptionHandlingSyncOnlyName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeExceptionHandlingSyncOnlyName}"
             : null;
         DisposeExceptionHandlingAsyncFullyQualified = _disposeExceptionHandlingAsyncName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_disposeExceptionHandlingAsyncName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_disposeExceptionHandlingAsyncName}"
             : null;
         
         _syncDisposalTriggeredExceptionName = "SyncDisposalTriggeredException";
@@ -151,7 +136,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             ? referenceGenerator.Generate("ReleaseDisposeAsync")
             : null;
         ReleaseDisposeAsyncFullyQualified = _releaseDisposeAsyncName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_releaseDisposeAsyncName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_releaseDisposeAsyncName}"
             : null;
     }
 
@@ -178,7 +163,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
         code.AppendLine(
             $$"""
               #nullable enable
-              namespace {{Constants.NamespaceForGeneratedStatics}}
+              namespace {{Constants.NamespaceForGeneratedUtilities}}
               {
               """);
         

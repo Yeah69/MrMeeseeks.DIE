@@ -9,6 +9,23 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol? IAsyncDisposable, // .NET Standard 2.1
     // ReSharper restore InconsistentNaming
     INamedTypeSymbol Lazy1, // .NET Standard 2.0
+    INamedTypeSymbol Func1, // .NET Standard 2.0
+    INamedTypeSymbol Func2, // .NET Standard 2.0
+    INamedTypeSymbol Func3, // .NET Standard 2.0
+    INamedTypeSymbol Func4, // .NET Standard 2.0
+    INamedTypeSymbol Func5, // .NET Standard 2.0
+    INamedTypeSymbol Func6, // .NET Standard 2.0
+    INamedTypeSymbol Func7, // .NET Standard 2.0
+    INamedTypeSymbol Func8, // .NET Standard 2.0
+    INamedTypeSymbol Func9, // .NET Standard 2.0
+    INamedTypeSymbol Func10, // .NET Standard 2.0
+    INamedTypeSymbol Func11, // .NET Standard 2.0
+    INamedTypeSymbol Func12, // .NET Standard 2.0
+    INamedTypeSymbol Func13, // .NET Standard 2.0
+    INamedTypeSymbol Func14, // .NET Standard 2.0
+    INamedTypeSymbol Func15, // .NET Standard 2.0
+    INamedTypeSymbol Func16, // .NET Standard 2.0
+    INamedTypeSymbol Func17, // .NET Standard 2.0
     INamedTypeSymbol ThreadLocal1, // .NET Standard 2.0
     INamedTypeSymbol? ValueTask, // .NET Standard 2.1
     INamedTypeSymbol? ValueTask1, // .NET Standard 2.1
@@ -18,6 +35,7 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol TaskCompletionSourceOfInt, // .NET Standard 2.0
     INamedTypeSymbol SpinWait, // .NET Standard 2.0
     INamedTypeSymbol Thread, // .NET Standard 2.0
+    INamedTypeSymbol Action, // .NET Standard 2.0
     INamedTypeSymbol ObjectDisposedException, // .NET Standard 2.0
     INamedTypeSymbol ConcurrentBagOfSyncDisposable, // .NET Standard 2.0
     INamedTypeSymbol? ConcurrentBagOfAsyncDisposable, // .NET Standard 2.1
@@ -42,8 +60,10 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol Nullable1, // .NET Standard 2.0
     INamedTypeSymbol Interlocked, // .NET Standard 2.0
     INamedTypeSymbol Type, // .NET Standard 2.0
+    INamedTypeSymbol MethodInfo, // .NET Standard 2.0
     INamedTypeSymbol String, // .NET Standard 2.0
-    INamedTypeSymbol Object) // .NET Standard 2.0
+    INamedTypeSymbol Object, // .NET Standard 2.0
+    INamedTypeSymbol Boolean) // .NET Standard 2.0
     : IContainerInstance
 {
     internal static WellKnownTypes Create(Compilation compilation)
@@ -67,6 +87,23 @@ internal sealed record WellKnownTypes(
             IDisposable: iDisposable,
             IAsyncDisposable: iAsyncDisposable,
             Lazy1: compilation.GetTypeByMetadataNameOrThrow("System.Lazy`1"),
+            Func1: compilation.GetTypeByMetadataNameOrThrow("System.Func`1"),
+            Func2: compilation.GetTypeByMetadataNameOrThrow("System.Func`2"),
+            Func3: compilation.GetTypeByMetadataNameOrThrow("System.Func`3"),
+            Func4: compilation.GetTypeByMetadataNameOrThrow("System.Func`4"),
+            Func5: compilation.GetTypeByMetadataNameOrThrow("System.Func`5"),
+            Func6: compilation.GetTypeByMetadataNameOrThrow("System.Func`6"),
+            Func7: compilation.GetTypeByMetadataNameOrThrow("System.Func`7"),
+            Func8: compilation.GetTypeByMetadataNameOrThrow("System.Func`8"),
+            Func9: compilation.GetTypeByMetadataNameOrThrow("System.Func`9"),
+            Func10: compilation.GetTypeByMetadataNameOrThrow("System.Func`10"),
+            Func11: compilation.GetTypeByMetadataNameOrThrow("System.Func`11"),
+            Func12: compilation.GetTypeByMetadataNameOrThrow("System.Func`12"),
+            Func13: compilation.GetTypeByMetadataNameOrThrow("System.Func`13"),
+            Func14: compilation.GetTypeByMetadataNameOrThrow("System.Func`14"),
+            Func15: compilation.GetTypeByMetadataNameOrThrow("System.Func`15"),
+            Func16: compilation.GetTypeByMetadataNameOrThrow("System.Func`16"),
+            Func17: compilation.GetTypeByMetadataNameOrThrow("System.Func`17"),
             ThreadLocal1: compilation.GetTypeByMetadataNameOrThrow("System.Threading.ThreadLocal`1"),
             ValueTask: compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask"),
             ValueTask1: valueTask1,
@@ -76,6 +113,7 @@ internal sealed record WellKnownTypes(
             TaskCompletionSourceOfInt: taskCompletionSource1.Construct(compilation.GetSpecialType(SpecialType.System_Int32)),
             SpinWait: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SpinWait"),
             Thread: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Thread"),
+            Action: compilation.GetTypeByMetadataNameOrThrow("System.Action"),
             ObjectDisposedException: compilation.GetTypeByMetadataNameOrThrow("System.ObjectDisposedException"),
             ConcurrentBagOfSyncDisposable: concurrentBag.Construct(iDisposable),
             ConcurrentBagOfAsyncDisposable: iAsyncDisposable is not null ? concurrentBag.Construct(iAsyncDisposable) : null,
@@ -98,7 +136,9 @@ internal sealed record WellKnownTypes(
             Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"),
             Interlocked: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Interlocked"),
             Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"),
+            MethodInfo: compilation.GetTypeByMetadataNameOrThrow("System.Reflection.MethodInfo"),
             String: compilation.GetTypeByMetadataNameOrThrow("System.String"),
-            Object: @object);
+            Object: @object,
+            Boolean: compilation.GetTypeByMetadataNameOrThrow("System.Boolean"));
     }
 }

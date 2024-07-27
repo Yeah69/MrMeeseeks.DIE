@@ -17,7 +17,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
 {
     private readonly MapperData _mapperData;
     private readonly ImplementationMappingConfiguration? _implementationMappingConfiguration;
-    private readonly IMapperFactory _mapperFactory;
+    private readonly MapperFactory _mapperFactory;
 
     internal CreateFunctionNode(
         // parameters
@@ -29,8 +29,8 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         // dependencies
         IRangeNode parentRange,
         IContainerNode parentContainer,
-        IReferenceGenerator referenceGenerator, 
-        IMapperFactory mapperFactory,
+        ReferenceGenerator referenceGenerator, 
+        MapperFactory mapperFactory,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,
@@ -40,7 +40,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility) 
+        TypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             typeSymbol, 

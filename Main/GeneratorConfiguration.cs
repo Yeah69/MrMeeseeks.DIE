@@ -3,12 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE;
 
-internal interface IGeneratorConfiguration
-{
-    bool ErrorDescriptionInsteadOfBuildFailure { get; }
-}
-
-internal sealed class GeneratorConfiguration : IGeneratorConfiguration, IContainerInstance
+internal sealed class GeneratorConfiguration : IContainerInstance
 {
     public GeneratorConfiguration(
         GeneratorExecutionContext context,

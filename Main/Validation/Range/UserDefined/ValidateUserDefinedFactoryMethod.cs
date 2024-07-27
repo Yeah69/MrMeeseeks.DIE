@@ -6,8 +6,7 @@ internal interface IValidateUserDefinedFactoryMethod : IValidateUserDefinedMetho
 
 internal sealed class ValidateUserDefinedFactoryMethod : ValidateUserDefinedMethod, IValidateUserDefinedFactoryMethod
 {
-    internal ValidateUserDefinedFactoryMethod(
-        ILocalDiagLogger localDiagLogger) 
+    internal ValidateUserDefinedFactoryMethod(LocalDiagLogger localDiagLogger) 
         : base(localDiagLogger)
     {
     }

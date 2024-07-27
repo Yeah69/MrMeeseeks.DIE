@@ -37,9 +37,9 @@ internal sealed record BuildJob(INode Node, PassedContext PassedContext);
 
 internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
-    private readonly IContainerInfo _containerInfo;
-    private readonly IFunctionCycleTracker _functionCycleTracker;
-    private readonly ITypeParameterUtility _typeParameterUtility;
+    private readonly ContainerInfo _containerInfo;
+    private readonly FunctionCycleTracker _functionCycleTracker;
+    private readonly TypeParameterUtility _typeParameterUtility;
     private readonly ITaskBasedQueue _taskBasedQueue;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
@@ -83,13 +83,13 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         _delegateBaseNodes.Add(delegateBaseNode);
 
     internal ContainerNode(
-        IContainerInfo containerInfo,
-        Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
-        IReferenceGenerator referenceGenerator,
-        IFunctionCycleTracker functionCycleTracker,
-        IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
-        ITypeParameterUtility typeParameterUtility,
-        IRangeUtility rangeUtility,
+        ContainerInfo containerInfo,
+        Func<(INamedTypeSymbol?, INamedTypeSymbol), UserDefinedElements> userDefinedElementsFactory,
+        ReferenceGenerator referenceGenerator,
+        FunctionCycleTracker functionCycleTracker,
+        MapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        TypeParameterUtility typeParameterUtility,
+        RangeUtility rangeUtility,
         ICheckTypeProperties checkTypeProperties,
         ITaskBasedQueue taskBasedQueue,
         WellKnownTypes wellKnownTypes,
@@ -181,7 +181,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
 
         TransientScopeInterface.RegisterRange(this);
         base.Build(passedContext);
-        foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)
+        foreach (var (typeSymbol, methodNamePrefix, parameterTypes, _) in _containerInfo.CreateFunctionData)
         {
             var actualType = _typeParameterUtility.EquipWithMappedTypeParameters(typeSymbol);
             var customizedType = TypeParameterUtility.ReplaceTypeParametersByCustom(actualType.OriginalDefinitionIfUnbound());

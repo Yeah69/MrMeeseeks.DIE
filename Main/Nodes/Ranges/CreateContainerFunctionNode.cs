@@ -27,8 +27,8 @@ internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunc
         
         // dependencies
         WellKnownTypes wellKnownTypes,
-        IReferenceGenerator referenceGenerator,
-        IContainerInfo containerInfo)
+        ReferenceGenerator referenceGenerator,
+        ContainerInfo containerInfo)
     {
         _initializationFunction = initializationFunction;
         Name = containerInfo.Name;

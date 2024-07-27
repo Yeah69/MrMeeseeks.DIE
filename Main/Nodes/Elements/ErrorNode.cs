@@ -10,12 +10,12 @@ internal interface IErrorNode : IElementNode
 internal sealed partial class ErrorNode : IErrorNode
 {
     private readonly ITypeSymbol _currentType;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
 
     internal ErrorNode(
         string message,
         ITypeSymbol currentType,
-        ILocalDiagLogger localDiagLogger)
+        LocalDiagLogger localDiagLogger)
     {
         _currentType = currentType;
         _localDiagLogger = localDiagLogger;

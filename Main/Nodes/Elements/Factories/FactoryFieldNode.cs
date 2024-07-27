@@ -11,7 +11,7 @@ internal sealed partial class FactoryFieldNode : FactoryNodeBase,  IFactoryField
         
         IFunctionNode parentFunction,
         ITaskBasedQueue taskBasedQueue,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes) 
         : base(fieldSymbol.Type, fieldSymbol, parentFunction, taskBasedQueue, referenceGenerator, wellKnownTypes)
     {

@@ -15,11 +15,11 @@ internal interface IMultiKeyValueMultiFunctionNode : IMultiFunctionNodeBase;
 internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNodeBase, IMultiKeyValueMultiFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> _keyValuePairNodeFactory;
+    private readonly TypeSymbolUtility _typeSymbolUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly WellKnownTypes _wellKnownTypes;
 
     internal MultiKeyValueMultiFunctionNode(
         // parameters
@@ -29,8 +29,8 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         // dependencies
         IContainerNode parentContainer,
         IRangeNode parentRange,
-        IReferenceGenerator referenceGenerator,
-        ILocalDiagLogger localDiagLogger,
+        ReferenceGenerator referenceGenerator,
+        LocalDiagLogger localDiagLogger,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,
@@ -43,9 +43,9 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> keyValuePairNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
+        TypeSymbolUtility typeSymbolUtility,
         ICheckTypeProperties checkTypeProperties,
-        WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             enumerableType, 
@@ -70,8 +70,8 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         _localDiagLogger = localDiagLogger;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _keyValuePairNodeFactory = keyValuePairNodeFactory;
+        _typeSymbolUtility = typeSymbolUtility;
         _checkTypeProperties = checkTypeProperties;
-        _wellKnownTypes = wellKnownTypes;
 
         NamePrefix = $"CreateMultiKeyValue{_enumerableType.Name}";
         NameNumberSuffix = referenceGenerator.Generate("");
@@ -85,7 +85,7 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         base.Build(passedContext);
         var keyValueType = (INamedTypeSymbol) _enumerableType.TypeArguments[0];
         var itemType = keyValueType.TypeArguments[1];
-        var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes);
+        var unwrappedItemType = _typeSymbolUtility.GetUnwrappedType(itemType);
         if (CollectionUtility.GetCollectionsInnerType(unwrappedItemType) is not INamedTypeSymbol iterableItemType)
         {
             _localDiagLogger.Error(ErrorLogData.ResolutionException("The iterable value type of the keyed map has to have a named item type (class, struct or interface).", _enumerableType, ImmutableStack<INamedTypeSymbol>.Empty), Location.None);

@@ -11,42 +11,81 @@ internal interface IContainerInfo
     string Namespace { get; }
     string FullName { get; }
     INamedTypeSymbol ContainerType { get; }
-    IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)> CreateFunctionData { get; }
+    IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }
+    ImmutableArray<string> ContainingTypeNames { get; }
+    string GenerateHintPath(string suffix = "");
 }
 
-internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContainerInstance
+internal sealed class ContainerInfo : IContainerLevelOnlyContainerInstance
 {
+    private readonly string _hintPathPrefix;
     internal ContainerInfo(
         // parameters
         INamedTypeSymbol containerClass,
             
         // dependencies
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        IRangeUtility rangeUtility)
+        RangeUtility rangeUtility)
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();
-        FullName = containerClass.FullName();
         ContainerType = containerClass;
-            
+
         CreateFunctionData = rangeUtility.GetRangeAttributes(containerClass)
             .Where(ad => CustomSymbolEqualityComparer.Default.Equals(wellKnownTypesMiscellaneous.CreateFunctionAttribute, ad.AttributeClass))
-            .Select(ad => ad.ConstructorArguments.Length == 3 
-                          && ad.ConstructorArguments[0].Kind == TypedConstantKind.Type
-                          && ad.ConstructorArguments[0].Value is ITypeSymbol type
-                          && ad.ConstructorArguments[1].Kind == TypedConstantKind.Primitive
-                          && ad.ConstructorArguments[1].Value is string methodNamePrefix
-                          && ad.ConstructorArguments[2].Kind == TypedConstantKind.Array
+            .Select(ad => ad.ConstructorArguments is [
+                              { Kind: TypedConstantKind.Type, Value: ITypeSymbol type },
+                              { Kind: TypedConstantKind.Primitive, Value: string methodNamePrefix }, 
+                              { Kind: TypedConstantKind.Array }]
                           && ad.ConstructorArguments[2].Values.Select(v => v.Value).All(v => v is ITypeSymbol)
-                          ? (type, methodNamePrefix, ad.ConstructorArguments[2].Values.Select(v => v.Value).OfType<ITypeSymbol>().ToList())
-                          : ((ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)?) null)
-            .OfType<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)>()
+                ? (
+                    type, 
+                    methodNamePrefix,
+                    ad.ConstructorArguments[2].Values.Select(v => v.Value).OfType<ITypeSymbol>().ToList(),
+                    ad.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None)
+                : ((ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)?) null)
+            .OfType<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)>()
             .ToList();
+
+        var nestingStack = new Stack<INamedTypeSymbol>();
+        var nestingParent = containerClass.ContainingType;
+        while (nestingParent is not null)
+        {
+            nestingStack.Push(nestingParent);
+            nestingParent = nestingParent.ContainingType;
+        }
+
+        var nesting = nestingStack.ToImmutableArray();
+
+        ContainingTypeNames = [..nestingStack.Select(n => n.Name)];
+
+        if (nesting is [var topmostAncestor, ..var remainingAncestors])
+        {
+            var fullNameBuilder =  new StringBuilder();
+            fullNameBuilder.Append(topmostAncestor.FullName());
+            foreach (var remainingAncestor in remainingAncestors)
+            {
+                fullNameBuilder.Append('.');
+                fullNameBuilder.Append(remainingAncestor.Name);
+            }
+            fullNameBuilder.Append('.');
+            fullNameBuilder.Append(containerClass.Name);
+            FullName = fullNameBuilder.ToString();
+        }
+        else
+            FullName = containerClass.FullName();
+        
+        var namespaceName = containerClass.ContainingNamespace.FullName();
+        var nestingPart = ContainingTypeNames.Length > 0 ? $".{string.Join(".", ContainingTypeNames)}" : string.Empty;
+        _hintPathPrefix = $"{namespaceName}{nestingPart}.{containerClass.Name}";
     }
 
     public string Name { get; }
     public string Namespace { get; }
     public string FullName { get; }
     public INamedTypeSymbol ContainerType { get; }
-    public IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>)> CreateFunctionData { get; }
+    public IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }
+    public ImmutableArray<string> ContainingTypeNames { get; }
+    public string GenerateHintPath(string suffix = "") => 
+        $"{_hintPathPrefix}{suffix}.g.cs";
 }

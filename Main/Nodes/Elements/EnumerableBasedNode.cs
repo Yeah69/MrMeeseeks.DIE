@@ -10,29 +10,30 @@ namespace MrMeeseeks.DIE.Nodes.Elements;
 internal enum EnumerableBasedType
 {
     // ReSharper disable InconsistentNaming
-    IEnumerable,
-    Array,
-    IList,
-    ICollection,
-    ReadOnlyCollection,
-    IReadOnlyCollection,
-    IReadOnlyList,
+    IEnumerable, // Check
+    Array, // Check
+    IList, // Check
+    ICollection, // Check
+    ReadOnlyCollection, // Check
+    IReadOnlyCollection, // Check
+    IReadOnlyList, // Check
     ArraySegment,
-    ConcurrentBag,
-    ConcurrentQueue,
-    ConcurrentStack,
-    HashSet,
-    LinkedList,
-    List,
-    Queue,
-    SortedSet,
-    Stack,
-    ImmutableArray,
-    ImmutableHashSet,
-    ImmutableList,
-    ImmutableQueue,
-    ImmutableSortedSet,
-    ImmutableStack,
+    ConcurrentBag, // IEnumerable<T> Constructor
+    ConcurrentQueue, // IEnumerable<T> Constructor
+    ConcurrentStack, // IEnumerable<T> Constructor
+    HashSet, // IEnumerable<T> Constructor
+    LinkedList, // IEnumerable<T> Constructor
+    List, // IEnumerable<T> Constructor
+    Queue, // IEnumerable<T> Constructor
+    SortedSet, // IEnumerable<T> Constructor
+    Stack, // IEnumerable<T> Constructor
+    ImmutableArray, // IEnumerable<T> CreateRange function
+    ImmutableHashSet, // IEnumerable<T> CreateRange function
+    ImmutableList, // IEnumerable<T> CreateRange function
+    ImmutableQueue, // IEnumerable<T> CreateRange function
+    ImmutableSortedSet, // IEnumerable<T> CreateRange function
+    ImmutableStack, // IEnumerable<T> CreateRange function
+    // FrozenSet, // IEnumerable<T> ToFrozenSet function
     
     IAsyncEnumerable
     // ReSharper restore InconsistentNaming
@@ -73,7 +74,7 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
     private readonly ITypeSymbol _collectionType;
     private readonly IRangeNode _parentRange;
     private readonly IFunctionNode _parentFunction;
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     internal EnumerableBasedNode(
@@ -81,7 +82,7 @@ internal sealed partial class EnumerableBasedNode : IEnumerableBasedNode
         
         IRangeNode parentRange,
         IFunctionNode parentFunction,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypesCollections wellKnownTypesCollections)
     {
         _collectionType = collectionType;

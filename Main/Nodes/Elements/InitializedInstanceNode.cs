@@ -19,7 +19,7 @@ internal sealed partial class InitializedInstanceNode : IInitializedInstanceNode
     internal InitializedInstanceNode(
         INamedTypeSymbol type,
         
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         _type = type;
         TypeFullName = type.FullName();

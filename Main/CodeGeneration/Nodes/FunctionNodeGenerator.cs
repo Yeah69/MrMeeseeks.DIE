@@ -17,16 +17,16 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
     private readonly IFunctionNode _function;
     private readonly IRangeNode _range;
     private readonly IContainerNode _container;
-    private readonly IDisposeUtility _disposeUtility;
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly DisposeUtility _disposeUtility;
+    private readonly ReferenceGenerator _referenceGenerator;
 
     internal FunctionNodeGenerator(
         WellKnownTypes wellKnownTypes,
         IFunctionNode function, 
         IRangeNode range,
         IContainerNode container,
-        IDisposeUtility disposeUtility,
-        IReferenceGenerator referenceGenerator)
+        DisposeUtility disposeUtility,
+        ReferenceGenerator referenceGenerator)
     {
         _wellKnownTypes = wellKnownTypes;
         _function = function;

@@ -1,4 +1,3 @@
-using System.IO.MemoryMappedFiles;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
@@ -15,8 +14,8 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
 {
     private readonly IValidateTransientScope _validateTransientScopeFactory;
     private readonly IValidateScope _validateScopeFactory;
-    private readonly Lazy<ITypeParameterUtility> _typeParameterUtility;
-    private readonly IRangeUtility _rangeUtility;
+    private readonly Lazy<TypeParameterUtility> _typeParameterUtility;
+    private readonly RangeUtility _rangeUtility;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
     internal ValidateContainer(
@@ -28,13 +27,13 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
-        IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        IValidateAttributes validateAttributes,
-        Lazy<ITypeParameterUtility> typeParameterUtility,
+        ValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        ValidateAttributes validateAttributes,
+        Lazy<TypeParameterUtility> typeParameterUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger localDiagLogger,
-        IRangeUtility rangeUtility) 
+        LocalDiagLogger localDiagLogger,
+        RangeUtility rangeUtility)
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 
@@ -59,6 +58,21 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
     public override void Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
         base.Validate(rangeType, containerType);
+
+        var checkNesting = rangeType;
+        while (checkNesting.ContainingType is { } nestingParent)
+        {
+            checkNesting = nestingParent;
+            if (!nestingParent.IsPartial())
+            {
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(
+                        rangeType, 
+                        rangeType,
+                        $"{nestingParent.FullName()} has to be partial, because it nests a container."), 
+                    nestingParent.Locations.FirstOrDefault() ?? Location.None);
+            }
+        }
         
         foreach (var instanceConstructor in rangeType
                      .InstanceConstructors

@@ -5,23 +5,18 @@ namespace MrMeeseeks.DIE.Mappers;
 internal abstract record MapperData;
 
 internal sealed record VanillaMapperData : MapperData;
-internal sealed record OverridingMapperData(ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)> Override) : MapperData;
+internal sealed record OverridingMapperData(ImmutableQueue<(INamedTypeSymbol, Override)> Override) : MapperData;
 internal sealed record OverridingWithDecorationMapperData((INamedTypeSymbol, INamedTypeSymbol) Override) : MapperData;
 
-internal interface IMapperDataToFunctionKeyTypeConverter
-{
-    ITypeSymbol Convert(MapperData data, ITypeSymbol initialKey);
-}
-
-internal sealed class MapperDataToFunctionKeyTypeConverter : IMapperDataToFunctionKeyTypeConverter
+internal sealed class MapperDataToFunctionKeyTypeConverter
 {
     public ITypeSymbol Convert(MapperData data, ITypeSymbol initialKey)
     {
         return data switch
         {
-            OverridingMapperData overridingMapperData when
-                overridingMapperData.Override.Peek() is var (abstraction, implementation) => 
-                CreateSubstitutedKey(initialKey, abstraction, implementation),
+            OverridingMapperData overridingMapperData when overridingMapperData.Override.Peek() is 
+                    (var abstraction, Override.Implementation { ImplementationType: {} implementationType}) => 
+                CreateSubstitutedKey(initialKey, abstraction, implementationType),
             OverridingWithDecorationMapperData { Override: var (abstraction, implementation) } => 
                 CreateSubstitutedKey(initialKey, abstraction, implementation),
             _ => initialKey

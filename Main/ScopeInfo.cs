@@ -1,12 +1,6 @@
 namespace MrMeeseeks.DIE;
 
-internal interface IScopeInfo
-{
-    string Name { get; }
-    INamedTypeSymbol? ScopeType { get; }
-}
-
-internal sealed class ScopeInfo : IScopeInfo
+internal sealed class ScopeInfo
 {
     internal ScopeInfo(
         string name,

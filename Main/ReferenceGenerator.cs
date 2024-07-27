@@ -6,23 +6,15 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
-internal interface IReferenceGenerator
-{
-    string Generate(ITypeSymbol type);
-    string Generate(string prefix, ITypeSymbol type);
-    string Generate(string prefix, ITypeSymbol type, string suffix);
-    string Generate(string hardcodedName);
-}
-
-internal sealed class ReferenceGenerator : IReferenceGenerator, IScopeInstance
+internal sealed class ReferenceGenerator : IScopeInstance
 {
     private int _i = -1;
     private readonly int _j;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
 
     internal ReferenceGenerator(
-        IReferenceGeneratorCounter referenceGeneratorCounter,
-        ILocalDiagLogger localDiagLogger)
+        ReferenceGeneratorCounter referenceGeneratorCounter,
+        LocalDiagLogger localDiagLogger)
     {
         _j = referenceGeneratorCounter.GetCount();
         _localDiagLogger = localDiagLogger;
@@ -65,13 +57,8 @@ internal sealed class ReferenceGenerator : IReferenceGenerator, IScopeInstance
     private string GenerateInner(string prefix, string inner, string suffix) => 
         $"{prefix}{inner}{suffix}_{_j.ToString(CultureInfo.InvariantCulture.NumberFormat)}_{Interlocked.Increment(ref _i).ToString(CultureInfo.InvariantCulture.NumberFormat)}";
 }
-    
-internal interface IReferenceGeneratorCounter
-{
-    int GetCount();
-}
 
-internal sealed class ReferenceGeneratorCounter : IReferenceGeneratorCounter, IContainerInstance
+internal sealed class ReferenceGeneratorCounter : IContainerInstance
 {
     private int _j = -1;
 

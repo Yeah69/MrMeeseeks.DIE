@@ -15,14 +15,14 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
 {
     private readonly IRangeNode _rangeNode;
     private readonly IContainerNode _containerNode;
-    private readonly IDisposeUtility _disposeUtility;
+    private readonly DisposeUtility _disposeUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     protected RangeNodeGenerator(
         IRangeNode rangeNode,
         IContainerNode containerNode,
-        IDisposeUtility disposeUtility,
+        DisposeUtility disposeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
     {

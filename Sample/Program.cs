@@ -1,14 +1,18 @@
 ﻿using System;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Sample;
 
 internal class Program
 {
-    private static void Main()
+    private static async Task Main()
     {
         try
         {
-            using var container = Container.DIE_CreateContainer(); 
-            var asdf = container.Create<int,int,int>();
+            var container = MixedSynchronicityScopes.Container.DIE_CreateContainer(); 
+            var parent = container.Create();
+
+            //var sync = parent.Sync;
+            //var async = await parent.Async;
             
             Console.WriteLine("Hello, World!");
         }

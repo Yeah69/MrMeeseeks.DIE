@@ -24,7 +24,7 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         // dependencies
         IRangeNode parentRange,
         IContainerNode parentContainer, 
-        IReferenceGenerator referenceGenerator, 
+        ReferenceGenerator referenceGenerator, 
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,
@@ -36,7 +36,7 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
-        ITypeParameterUtility typeParameterUtility) 
+        TypeParameterUtility typeParameterUtility) 
         : base(
             null,
             typeSymbol, 

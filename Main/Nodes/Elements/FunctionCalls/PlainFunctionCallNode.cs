@@ -17,7 +17,7 @@ internal sealed partial class PlainFunctionCallNode : FunctionCallNode, IPlainFu
         Params parameters,
         
         IFunctionNode calledFunction,
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
         : base(
             parameters.OwnerReference,
             parameters.CallSideType,

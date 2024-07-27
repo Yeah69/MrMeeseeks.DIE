@@ -1,10 +1,16 @@
 ﻿using MrMeeseeks.DIE.CodeGeneration;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Configuration.Interception;
+using MrMeeseeks.DIE.InjectionGraph;
+using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
+using MrMeeseeks.SourceGeneratorUtility;
+using ScopeNode = MrMeeseeks.DIE.Nodes.Ranges.ScopeNode;
+using TransientScopeNode = MrMeeseeks.DIE.Nodes.Ranges.TransientScopeNode;
 
 // ReSharper disable InconsistentNaming
 
@@ -12,19 +18,23 @@ namespace MrMeeseeks.DIE.MsContainer;
 
 internal interface IContainerLevelOnlyContainerInstance;
 
-[ContainerInstanceImplementationAggregation(typeof(GeneratorExecutionContext))]
+[ContainerInstanceImplementationAggregation(
+    typeof(GeneratorExecutionContext),
+    typeof(NamedTypeCache) // Cache should be initialized on first run and read after it
+    )]
 [ContainerInstanceAbstractionAggregation(typeof(IContainerLevelOnlyContainerInstance))]
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
 [ImplementationChoice(typeof(ICodeGenerationVisitor), typeof(CodeGenerationVisitor))]
 [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
-[CreateFunction(typeof(IExecuteContainer), "Create")]
+[CreateFunction(typeof(ExecuteContainer), "Create")]
 internal sealed partial class ContainerLevelContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
     private readonly Compilation DIE_Factory_Compilation;
     private readonly ContainerInfo DIE_Factory_ContainerInfo;
     private readonly RequiredKeywordUtility DIE_Factory_RequiredKeywordUtility;
+    private readonly InvocationTypeManager DIE_Factory_InvocationTypeManager;
     private readonly DisposeUtility DIE_Factory_DisposeUtility;
     private readonly ReferenceGeneratorCounter DIE_Factory_referenceGeneratorCounter;
 
@@ -32,11 +42,13 @@ internal sealed partial class ContainerLevelContainer
         GeneratorExecutionContext context, 
         ContainerInfo dieFactoryContainerInfo,
         RequiredKeywordUtility dieFactoryRequiredKeywordUtility,
+        InvocationTypeManager dieFactoryInvocationTypeManager,
         DisposeUtility dieFactoryDisposeUtility, 
         ReferenceGeneratorCounter dieFactoryReferenceGeneratorCounter)
     {
         DIE_Factory_ContainerInfo = dieFactoryContainerInfo;
         DIE_Factory_RequiredKeywordUtility = dieFactoryRequiredKeywordUtility;
+        DIE_Factory_InvocationTypeManager = dieFactoryInvocationTypeManager;
         DIE_Factory_DisposeUtility = dieFactoryDisposeUtility;
         DIE_Factory_referenceGeneratorCounter = dieFactoryReferenceGeneratorCounter;
         DIE_Factory_Compilation = context.Compilation;
@@ -71,6 +83,13 @@ internal sealed partial class ContainerLevelContainer
     private WellKnownTypesMiscellaneous DIE_Factory_WellKnownTypesMiscellaneous() => 
         WellKnownTypesMiscellaneous.Create(DIE_Factory_Compilation);
 
+    private WellKnownTypesMapping DIE_Factory_WellKnownTypesMapping() => 
+        WellKnownTypesMapping.Create(DIE_Factory_Compilation);
+
+    private ScopeNodeContext.Container DIE_Factory_ScopeNodeContextContainer(ICheckTypeProperties checkTypeProperties, UserDefinedElements userDefinedElements) => 
+        new ScopeNodeContext.Container() { CheckTypeProperties = checkTypeProperties, UserDefinedElements = userDefinedElements };
+
+    [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private abstract class ScopeObject;
     
@@ -80,8 +99,8 @@ internal sealed partial class ContainerLevelContainer
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
         protected static void DIE_ConstrParams_UserDefinedElements(
-            IContainerInfo containerInfo,
-            IScopeInfo scopeInfo,
+            ContainerInfo containerInfo,
+            ScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
             types = (scopeInfo.ScopeType, containerInfo.ContainerType);
     }
@@ -89,6 +108,10 @@ internal sealed partial class ContainerLevelContainer
     [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [CustomScopeForRootTypes(typeof(ScopeNodeRoot))]
     private sealed partial class DIE_TransientScope_ScopeNodeRoot : TransientScopeBase;
+
+    [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
+    [CustomScopeForRootTypes(typeof(ScopeNodeConfigContext))]
+    private sealed partial class DIE_TransientScope_ScopeNodeRoot_InjectionGraph : TransientScopeBase;
 
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
     [CustomScopeForRootTypes(typeof(TransientScopeNodeRoot))]

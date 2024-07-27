@@ -3,11 +3,10 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         
-        <RootNamespace>MrMeeseeks.DIE.Test</RootNamespace>
-        <AssemblyName>MrMeeseeks.DIE.Test</AssemblyName>
+        <RootNamespace>$(SolutionName).Test</RootNamespace>
+        <AssemblyName>$(SolutionName).Test</AssemblyName>
         <IsPackable>false</IsPackable>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
+        <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,10 +14,10 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
         <PackageReference Include="MrMeeseeks.DIE.UserUtility" Version="3.0.1" />
-        <PackageReference Include="xunit" Version="2.7.0" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
+        <PackageReference Include="xunit" Version="2.9.2" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>

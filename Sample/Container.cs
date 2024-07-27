@@ -1,48 +1,70 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal interface IInterface<T0>;
-
-internal sealed class Dependency<T0> : IInterface<T0>;
-
-internal interface IInterface<T3, T4, T5>
+public sealed partial class MixedSynchronicityScopes
 {
-    
-    Dependency<T5> DependencyInit { get; }
-    Dependency<T4> DependencyConstrParam { get; }
-    Dependency<T3>? DependencyInitParam { get; }
-    IInterface<T5> InterfaceInit { get; init; }
-    IInterface<T4> InterfaceConstrParam { get; }
-    IInterface<T3>? InterfaceInitParam { get; }
-}
-
-internal sealed class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
-{
-    public required Dependency<T0> DependencyInit { get; init; }
-    public Dependency<T1> DependencyConstrParam { get; }
-    public Dependency<T2>? DependencyInitParam { get; private set; }
-    public required IInterface<T0> InterfaceInit { get; init; }
-    public IInterface<T1> InterfaceConstrParam { get; }
-    public IInterface<T2>? InterfaceInitParam { get; private set; }
-    
-    // ReSharper disable once UnusedParameter.Local
-    internal DependencyHolder(
-        Dependency<T1> dependencyConstrParam, 
-        IInterface<T1> interfaceConstrParam)
+    internal sealed class SyncDependency : IInitializer
     {
-        DependencyConstrParam = dependencyConstrParam;
-        InterfaceConstrParam = interfaceConstrParam;
+        public bool IsInitialized { get; private set; }
+    
+        void IInitializer.Initialize() => 
+            IsInitialized = true;
+    }
+    internal sealed class AsyncDependency : ITaskInitializer
+    {
+        public bool IsInitialized { get; private set; }
+    
+        async Task ITaskInitializer.InitializeAsync()
+        {
+            await Task.Delay(500);
+            IsInitialized = true;
+        }
     }
 
-    internal void Initialize(Dependency<T2> dependencyInitParam, IInterface<T2> interfaceInitParam)
+    internal sealed class ScopeRootSyncSync : IScopeRoot
     {
-        DependencyInitParam = dependencyInitParam;
-        InterfaceInitParam = interfaceInitParam;
+        internal required SyncDependency Dependency { get; init; }
+    }
+
+    internal sealed class ScopeRootAsyncAsync : IScopeRoot
+    {
+        internal required AsyncDependency Dependency { get; init; }
+    }
+
+    internal sealed class ScopeRootSyncAsync : IScopeRoot
+    {
+        internal required SyncDependency Dependency { get; init; }
+    }
+
+    internal sealed class ScopeRootAsyncSync : IScopeRoot
+    {
+        internal required AsyncDependency Dependency { get; init; }
+    }
+
+    internal sealed class Parent
+    {
+        internal required ScopeRootSyncSync SyncSync { get; init; }
+        internal required ValueTask<ScopeRootAsyncAsync> AsyncAsync { get; init; }
+        internal required ValueTask<ScopeRootSyncAsync> SyncAsync { get; init; }
+        internal required ValueTask<ScopeRootAsyncSync> AsyncSync { get; init; }
+    }
+
+    [CreateFunction(typeof(Parent), "Create")]
+    internal sealed partial class Container
+    {
+        [CustomScopeForRootTypes(typeof(ScopeRootSyncSync), typeof(ScopeRootAsyncSync))]
+        private sealed partial class DIE_Scope_Sync
+        {
+            internal DIE_Scope_Sync(SyncDependency syncDependency){}
+        }
+
+        [CustomScopeForRootTypes(typeof(ScopeRootAsyncAsync), typeof(ScopeRootSyncAsync))]
+        private sealed partial class DIE_Scope_Async
+        {
+            internal DIE_Scope_Async(AsyncDependency asyncDependency){}
+        }
     }
 }
-
-[Initializer(typeof(DependencyHolder<,,>), "Initialize")]
-[CreateFunction(typeof(DependencyHolder<,,>), "Create")]
-[CreateFunction(typeof(IInterface<,,>), "CreateInterface")]
-internal sealed partial class Container;

@@ -18,6 +18,7 @@ internal sealed class ExecuteImpl : IExecute
     private readonly IRequiredKeywordUtility _requiredKeywordUtility;
     private readonly IDisposeUtility _disposeUtility;
     private readonly IDescriptionsGenerator _descriptionsGenerator;
+    private readonly IInterceptorDecoratorGenerator _interceptorDecoratorGenerator;
     private readonly Func<INamedTypeSymbol, ContainerInfo> _containerInfoFactory;
     private readonly Func<ContainerInfo, IExecuteContainerContext> _executeContainerContextFactory;
 
@@ -27,6 +28,7 @@ internal sealed class ExecuteImpl : IExecute
         IRequiredKeywordUtility requiredKeywordUtility,
         IDisposeUtility disposeUtility,
         IDescriptionsGenerator descriptionsGenerator,
+        IInterceptorDecoratorGenerator interceptorDecoratorGenerator,
         Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory,
         Func<ContainerInfo, IExecuteContainerContext> executeContainerContextFactory)
     {
@@ -35,6 +37,7 @@ internal sealed class ExecuteImpl : IExecute
         _requiredKeywordUtility = requiredKeywordUtility;
         _disposeUtility = disposeUtility;
         _descriptionsGenerator = descriptionsGenerator;
+        _interceptorDecoratorGenerator = interceptorDecoratorGenerator;
         _containerInfoFactory = containerInfoFactory;
         _executeContainerContextFactory = executeContainerContextFactory;
     }
@@ -101,6 +104,19 @@ internal sealed class ExecuteImpl : IExecute
                 .GetText();
             
             _context.AddSource($"{Constants.NamespaceForGeneratedUtilities}.Descriptions.cs", descriptionsSource);
+        }
+        
+        var interceptionCode = _interceptorDecoratorGenerator.Generate();
+        if (interceptionCode is not null)
+        {
+            var descriptionsSource = CSharpSyntaxTree
+                .ParseText(SourceText.From(interceptionCode, Encoding.UTF8))
+                .GetRoot()
+                .NormalizeWhitespace()
+                .SyntaxTree
+                .GetText();
+            
+            _context.AddSource($"{Constants.NamespaceForGeneratedUtilities}.Interception.cs", descriptionsSource);
         }
     }
 }

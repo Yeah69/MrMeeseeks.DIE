@@ -1,6 +1,6 @@
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
-namespace MrMeeseeks.DIE.Nodes.Descriptions;
+namespace MrMeeseeks.DIE.Nodes.Interception;
 
 internal interface IMethodDescriptionNode
 {
@@ -19,7 +19,7 @@ internal sealed class MethodDescriptionNode : IMethodDescriptionNode
         // dependencies
         IReferenceGenerator referenceGenerator)
     {
-        Name = referenceGenerator.Generate("TypeDescription");
+        Name = referenceGenerator.Generate("MethodDescription");
         InterfaceFullName = interfaceType.FullName();
         NameProperty = interfaceType.MemberNames.Contains("Name");
         ReturnTypeProperty = interfaceType

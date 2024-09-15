@@ -1,5 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.Nodes.Descriptions;
+using MrMeeseeks.DIE.Nodes.Interception;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;

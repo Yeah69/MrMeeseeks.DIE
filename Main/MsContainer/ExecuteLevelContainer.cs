@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.CodeGeneration;
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Logging;
 
@@ -49,14 +50,16 @@ internal sealed partial class ExecuteLevelContainer
         private IExecuteContainer DIE_Factory_IExecuteContainer(
             ContainerInfo containerInfo, 
             RequiredKeywordUtility requiredKeywordUtility,
+            InvocationTypeManager invocationTypeManager,
             DisposeUtility disposeUtility,
             ReferenceGeneratorCounter referenceGeneratorCounter)
         {
-#pragma warning disable CA2000 *** Manually added for disposal
+#pragma warning disable CA2000 // Manually added for disposal
             var container = ContainerLevelContainer.DIE_CreateContainer(
                 DIE_Factory_GeneratorExecutionContext, 
                 containerInfo,
                 requiredKeywordUtility,
+                invocationTypeManager,
                 disposeUtility,
                 referenceGeneratorCounter);
 #pragma warning restore CA2000

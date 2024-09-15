@@ -428,6 +428,9 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
             case IInitialTransientScopeSubDisposalNode initialTransientScopeSubDisposalNode:
                 VisitIInitialTransientScopeSubDisposalNode(initialTransientScopeSubDisposalNode);
                 break;
+            case IInterceptionElementNode interceptionElementNode:
+                VisitIInterceptionElementNode(interceptionElementNode);
+                break;
         }
     }
 
@@ -503,6 +506,14 @@ internal sealed class CodeGenerationVisitor : ICodeGenerationVisitor
 
     public void VisitINullNode(INullNode nullNode) => _code.AppendLine(
         $"{nullNode.TypeFullName} {nullNode.Reference} = ({nullNode.TypeFullName}) null;");
+
+    public void VisitIInterceptionElementNode(IInterceptionElementNode element)
+    {
+        VisitIElementNode(element.InterceptorInstance);
+        VisitIElementNode(element.DecoratedInstance);
+        _code.AppendLine(
+            $"{element.TypeFullName} {element.Reference} = new {element.TypeFullName}({element.InterceptorInstance.Reference}, {element.DecoratedInstance.Reference});");
+    }
 
     public void VisitIInitialOrdinarySubDisposalNode(IInitialOrdinarySubDisposalNode element) => 
         VisitIInitialSubDisposalNode(element);

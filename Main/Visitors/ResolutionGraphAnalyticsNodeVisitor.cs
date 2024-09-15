@@ -277,6 +277,9 @@ package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", e
             case IInitialTransientScopeSubDisposalNode initialTransientScopeSubDisposalNode:
                 VisitIInitialTransientScopeSubDisposalNode(initialTransientScopeSubDisposalNode);
                 break;
+            case IInterceptionElementNode interceptionElementNode:
+                VisitIInterceptionElementNode(interceptionElementNode);
+                break;
         }
     }
 
@@ -337,6 +340,10 @@ object "Transient Scope Disposal Hook" as {{reference}}
 object "null" as {{reference}}
 """);
         _relations.AppendLine($"{_currentReference} --> {reference}");
+    }
+
+    public void VisitIInterceptionElementNode(IInterceptionElementNode element)
+    {
     }
 
     public void VisitIFactoryPropertyNode(IFactoryPropertyNode element) => 

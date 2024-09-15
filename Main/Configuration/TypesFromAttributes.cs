@@ -997,15 +997,16 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         {
             if (attribute.ConstructorArguments.Length < 2
                 || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol interceptorImplementationType
-                || attribute.ConstructorArguments[1].Values is var abstractions 
-                || !validateAttributes.ValidateImplementation(interceptorImplementationType)
-                || abstractions.Any(tc => tc.Value is not INamedTypeSymbol))
+                || attribute.ConstructorArguments[1].Values is { Length: 0 }
+                || attribute.ConstructorArguments[1].Values.Any(tc => tc.Value is not INamedTypeSymbol)
+                || !validateAttributes.ValidateImplementation(interceptorImplementationType))
             {
                 NotParsableAttribute(attribute);
                 return null;
             }
 
-            return (interceptorImplementationType, abstractions.OfType<INamedTypeSymbol>().ToList());
+            var abstractions = attribute.ConstructorArguments[1].Values.Select(tc => tc.Value).OfType<INamedTypeSymbol>().ToList();
+            return (interceptorImplementationType, abstractions);
         }
 
         INamedTypeSymbol? ParseFilterInterceptorChoice(

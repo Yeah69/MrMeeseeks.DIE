@@ -6,6 +6,12 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
+internal abstract record Decoration(INamedTypeSymbol Type)
+{
+    internal sealed record Decorator(INamedTypeSymbol Type) : Decoration(Type);
+    internal sealed record Interceptor(INamedTypeSymbol Type) : Decoration(Type);
+}
+
 internal enum ScopeLevel
 {
     None,
@@ -60,8 +66,7 @@ internal interface ICheckTypeProperties
     INamedTypeSymbol? GetCompositeFor(INamedTypeSymbol interfaceType);
     IMethodSymbol? GetConstructorChoiceFor(INamedTypeSymbol implementationType);
     
-    bool ShouldBeDecorated(INamedTypeSymbol interfaceType);
-    IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
+    IReadOnlyList<Decoration> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
         INamedTypeSymbol implementationType);
 
     INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type,
@@ -242,49 +247,84 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             _ => null
         };
     }
-    
-    public bool ShouldBeDecorated(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.InterfaceToDecorators.ContainsKey(interfaceType.UnboundIfGeneric());
 
-    public IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
+    public IReadOnlyList<Decoration> GetDecorationSequenceFor(
+        INamedTypeSymbol interfaceType, 
         INamedTypeSymbol implementationType)
     {
-        IEnumerable<INamedTypeSymbol> sequence = Array.Empty<INamedTypeSymbol>();
+        IEnumerable<Decoration> sequence = Array.Empty<Decoration>();
         bool found = false;
         if (_currentlyConsideredTypes.DecoratorSequenceChoices.TryGetValue(interfaceType.UnboundIfGeneric(),
                 out var sequenceMap))
         {
             if (sequenceMap.TryGetValue(implementationType.UnboundIfGeneric(), out var implementationSequence))
             {
-                sequence = implementationSequence;
+                sequence = ToDecoration(implementationSequence);
                 found = true;
             }
             else if (sequenceMap.TryGetValue(interfaceType.UnboundIfGeneric(), out var interfaceSequence))
             {
-                sequence = interfaceSequence;
+                sequence = ToDecoration(interfaceSequence);
                 found = true;
             }
         }
         
-        if (!found && _currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators))
-            sequence = allDecorators
-                .OrderBy(d => _decorationToOrdinal.TryGetValue(d, out var ordinal) ? ordinal : 0);
-        
+        if (!found)
+        {
+            var unspecifiedSequence = _currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators)
+                ? allDecorators
+                : Enumerable.Empty<INamedTypeSymbol>();
+            
+            var implementationsBaseTypes = implementationType
+                .AllDerivedTypesAndSelf()
+                .Select(t => t.UnboundIfGeneric())
+                .ToImmutableHashSet(CustomSymbolEqualityComparer.Default);
+
+            unspecifiedSequence = unspecifiedSequence.Concat(
+                _currentlyConsideredTypes.InterceptorChoices
+                    .Where(kvp => kvp.Value.Any(imp => implementationsBaseTypes.Contains(imp.UnboundIfGeneric())))
+                    .Select(kvp => kvp.Key));
+            
+            sequence = ToDecoration(unspecifiedSequence
+                .OrderBy(d => _decorationToOrdinal.TryGetValue(d, out var ordinal) ? ordinal : 0));
+        }
+
         return sequence
-            .Select(imp =>
+            .Select(d =>
             {
-                var implementations = GetClosedImplementations(
-                    interfaceType,
-                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, imp),
-                    true,
-                    false,
-                    true);
+                switch (d)
+                {
+                    case Decoration.Decorator decorator:
+                    {
+                        var implementations = GetClosedImplementations(
+                            interfaceType,
+                            ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, decorator.Type),
+                            true,
+                            false,
+                            true);
                 
-                var list = implementations.Take(2).ToList();
+                        var list = implementations.Take(2).ToList();
                 
-                return list.Count != 1 ? null : list[0];
+                        return list.Count != 1 ? null : new Decoration.Decorator(list[0]);
+                    }
+                    case Decoration.Interceptor interceptor:
+                        return interceptor;
+                    default:
+                        return (Decoration?) null;
+                }
             })
-            .OfType<INamedTypeSymbol>()
+            .OfType<Decoration>()
             .ToList();
+        
+        IEnumerable<Decoration> ToDecoration(IEnumerable<INamedTypeSymbol> source) =>
+            source.Select(imp =>
+            {
+                if (_currentlyConsideredTypes.DecoratorTypes.Contains(imp, CustomSymbolEqualityComparer.Default))
+                    return new Decoration.Decorator(imp);
+                if (_currentlyConsideredTypes.InterceptorChoices.Keys.Contains(imp, CustomSymbolEqualityComparer.Default))
+                    return new Decoration.Interceptor(imp);
+                return (Decoration?) null;
+            }).OfType<Decoration>();
     }
 
     public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type,

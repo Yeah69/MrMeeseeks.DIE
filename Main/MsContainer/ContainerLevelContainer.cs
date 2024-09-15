@@ -28,6 +28,7 @@ internal sealed partial class ContainerLevelContainer
     private readonly Compilation DIE_Factory_Compilation;
     private readonly ContainerInfo DIE_Factory_ContainerInfo;
     private readonly RequiredKeywordUtility DIE_Factory_RequiredKeywordUtility;
+    private readonly InvocationTypeManager DIE_Factory_InvocationTypeManager;
     private readonly DisposeUtility DIE_Factory_DisposeUtility;
     private readonly ReferenceGeneratorCounter DIE_Factory_referenceGeneratorCounter;
 
@@ -35,11 +36,13 @@ internal sealed partial class ContainerLevelContainer
         GeneratorExecutionContext context, 
         ContainerInfo dieFactoryContainerInfo,
         RequiredKeywordUtility dieFactoryRequiredKeywordUtility,
+        InvocationTypeManager dieFactoryInvocationTypeManager,
         DisposeUtility dieFactoryDisposeUtility, 
         ReferenceGeneratorCounter dieFactoryReferenceGeneratorCounter)
     {
         DIE_Factory_ContainerInfo = dieFactoryContainerInfo;
         DIE_Factory_RequiredKeywordUtility = dieFactoryRequiredKeywordUtility;
+        DIE_Factory_InvocationTypeManager = dieFactoryInvocationTypeManager;
         DIE_Factory_DisposeUtility = dieFactoryDisposeUtility;
         DIE_Factory_referenceGeneratorCounter = dieFactoryReferenceGeneratorCounter;
         DIE_Factory_Compilation = context.Compilation;

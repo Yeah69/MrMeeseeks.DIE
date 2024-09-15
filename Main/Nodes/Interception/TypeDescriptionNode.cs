@@ -1,6 +1,6 @@
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
-namespace MrMeeseeks.DIE.Nodes.Descriptions;
+namespace MrMeeseeks.DIE.Nodes.Interception;
 
 internal interface ITypeDescriptionNode
 {

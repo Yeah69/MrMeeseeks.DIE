@@ -1,8 +1,9 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.UserUtility;
+﻿using System;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
+//*
 [InvocationDescription]
 internal interface IInvocationDescription
 {
@@ -24,20 +25,49 @@ internal interface ITypeDescription
     string Name { get; }
 }
 
-internal interface IInterface<T0>;
-
-internal sealed class Class<T0> : IInterface<T0>, IScopeRoot;
-
-[CreateFunction(typeof(Class<>), "Create")]
-[CreateFunction(typeof(IInterface<>), "CreateInterface")]
-internal sealed partial class Container<T>
+internal class Interceptor
 {
-    private sealed partial class DIE_DefaultScope;
+    internal void Intercept(IInvocationDescription invocationDescription)
+    {
+        Console.WriteLine($"Type: {invocationDescription.TargetType.FullName} Method: {invocationDescription.TargetMethod.Name}");
+    }
 }
 
-[CreateFunction(typeof(Class<>), "Create")]
-[CreateFunction(typeof(IInterface<>), "CreateInterface")]
-internal sealed partial class Container2<T>
+internal interface IInterface
 {
-    private sealed partial class DIE_DefaultScope;
+    void Do();
+    int Dont<T, TA>(T t, string s, TA ta);
+    int Prop { get; set; }
+    int PropGet { get; }
+    int PropSet { set; }
+    event EventHandler Event;
+    int this[int index] { get; set; }
 }
+
+internal sealed class Class : IInterface
+{
+    public void Do()
+    {
+        Console.WriteLine("Do");
+    }
+
+    public int Dont<T, TA>(T t, string s, TA ta)
+    {
+        return 69;
+    }
+
+    public int Prop { get; set; } = 69;
+    public int PropGet { get; } = 69;
+    public int PropSet { get; set; } = 69;
+    public event EventHandler? Event;
+
+    public int this[int index]
+    {
+        get { return index; }
+        set { value = 69; }
+    }
+}
+
+[InterceptorChoice(typeof(Interceptor), typeof(IInterface))]
+[CreateFunction(typeof(IInterface), "Create")]
+internal sealed partial class Container; //*/

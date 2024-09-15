@@ -48,7 +48,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
     private readonly Func<string, ITypeSymbol, IErrorNode> _errorNodeFactory;
     private readonly Func<ITypeSymbol, INullNode> _nullNodeFactory;
     private readonly WellKnownTypes _wellKnownTypes;
-    private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
+    private readonly Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, Override)>, IOverridingElementNodeMapper> _overridingElementNodeMapperFactory;
 
     internal AbstractionImplementationMappingPart(
         IContainerNode parentContainer,
@@ -63,7 +63,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol?, IElementNodeMapperBase, IImplementationNode> implementationNodeFactory,
         Func<IElementNode, IReusedNode> reusedNodeFactory,
         Func<string, IReferenceNode> referenceNodeFactory,
-        Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, INamedTypeSymbol)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory)
+        Func<IElementNodeMapperBase, ImmutableQueue<(INamedTypeSymbol, Override)>, IOverridingElementNodeMapper> overridingElementNodeMapperFactory)
     {
         _parentContainer = parentContainer;
         _parentRange = parentRange;
@@ -252,23 +252,28 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         IElementNodeMapperBase mapper,
         IElementNodeMapperBase current)
     {
-        var shouldBeDecorated = _checkTypeProperties.ShouldBeDecorated(interfaceType);
-        if (!shouldBeDecorated)
+        var decoratorSequence = _checkTypeProperties.GetDecorationSequenceFor(interfaceType, implementationType)
+            .Select(t => t switch
+            {
+                Decoration.Decorator {Type: var type} => new Override.Implementation(type),
+                Decoration.Interceptor {Type: var type} => new Override.Interceptor(type),
+                _ => (Override?) null
+            })
+            .OfType<Override>()
+            .Reverse()
+            .Append(new Override.Implementation(implementationType))
+            .ToList();
+        
+        if (decoratorSequence.Count == 1)
             return SwitchImplementation(
                 new(true, true, true),
                 interfaceType,
                 implementationType,
                 passedContext,
                 mapper);
-
-        var decoratorSequence = _checkTypeProperties.GetDecorationSequenceFor(interfaceType, implementationType)
-            .Reverse()
-            .Append(implementationType)
-            .ToList();
         
         var decoratorTypes = ImmutableQueue.CreateRange(decoratorSequence
-            .Select(t => (interfaceType, t))
-            .Append((interfaceType, implementationType)));
+            .Select(t => (interfaceType, t)));
             
         var overridingMapper = _overridingElementNodeMapperFactory(current, decoratorTypes);
         return overridingMapper.Map(interfaceType, passedContext);

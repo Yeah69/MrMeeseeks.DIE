@@ -9,9 +9,7 @@ internal sealed record WellKnownTypesMapping(
     INamedTypeSymbol FilterInjectionKeyMappingAttribute,
     INamedTypeSymbol DecorationOrdinalMappingAttribute,
     INamedTypeSymbol FilterDecorationOrdinalMappingAttribute,
-    INamedTypeSymbol InvocationDescriptionMappingAttribute,
-    INamedTypeSymbol TypeDescriptionMappingAttribute,
-    INamedTypeSymbol MethodDescriptionMappingAttribute)
+    INamedTypeSymbol InvocationDescriptionMappingAttribute)
     : IContainerInstance
 {
     internal static WellKnownTypesMapping Create(Compilation compilation) => new (
@@ -19,7 +17,5 @@ internal sealed record WellKnownTypesMapping(
         FilterInjectionKeyMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterInjectionKeyMappingAttribute).FullName ?? ""),
         DecorationOrdinalMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(DecorationOrdinalMappingAttribute).FullName ?? ""),
         FilterDecorationOrdinalMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(FilterDecorationOrdinalMappingAttribute).FullName ?? ""),
-        InvocationDescriptionMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InvocationDescriptionMappingAttribute).FullName ?? ""),
-        TypeDescriptionMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(TypeDescriptionMappingAttribute).FullName ?? ""),
-        MethodDescriptionMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(MethodDescriptionMappingAttribute).FullName ?? ""));
+        InvocationDescriptionMappingAttribute: compilation.GetTypeByMetadataNameOrThrow(typeof(InvocationDescriptionMappingAttribute).FullName ?? ""));
 }

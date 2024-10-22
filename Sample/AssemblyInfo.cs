@@ -28,8 +28,6 @@ using MrMeeseeks.DIE.UserUtility;
 [assembly:DecorationOrdinalMapping(typeof(DecorationOrdinalAttribute))]
 
 [assembly:InvocationDescriptionMapping(typeof(InvocationDescriptionAttribute))]
-[assembly:MethodDescriptionMapping(typeof(MethodDescriptionAttribute))]
-[assembly:TypeDescriptionMapping(typeof(TypeDescriptionAttribute))]
 
 [assembly:AllImplementationsAggregation]
 
@@ -37,9 +35,3 @@ namespace MrMeeseeks.DIE.Sample;
 
 [AttributeUsage(AttributeTargets.Interface)]
 internal sealed class InvocationDescriptionAttribute : Attribute;
-
-[AttributeUsage(AttributeTargets.Interface)]
-internal sealed class MethodDescriptionAttribute : Attribute;
-
-[AttributeUsage(AttributeTargets.Interface)]
-internal sealed class TypeDescriptionAttribute : Attribute;

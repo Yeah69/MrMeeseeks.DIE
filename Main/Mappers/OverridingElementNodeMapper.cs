@@ -1,4 +1,5 @@
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.Configuration.Interception;
 using MrMeeseeks.DIE.Mappers.MappingParts;
 using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Nodes.Elements;

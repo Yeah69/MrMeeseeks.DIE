@@ -18,6 +18,7 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol TaskCompletionSourceOfInt, // .NET Standard 2.0
     INamedTypeSymbol SpinWait, // .NET Standard 2.0
     INamedTypeSymbol Thread, // .NET Standard 2.0
+    INamedTypeSymbol Action, // .NET Standard 2.0
     INamedTypeSymbol ObjectDisposedException, // .NET Standard 2.0
     INamedTypeSymbol ConcurrentBagOfSyncDisposable, // .NET Standard 2.0
     INamedTypeSymbol? ConcurrentBagOfAsyncDisposable, // .NET Standard 2.1
@@ -40,6 +41,7 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol Nullable1, // .NET Standard 2.0
     INamedTypeSymbol Interlocked, // .NET Standard 2.0
     INamedTypeSymbol Type, // .NET Standard 2.0
+    INamedTypeSymbol MethodInfo, // .NET Standard 2.0
     INamedTypeSymbol String, // .NET Standard 2.0
     INamedTypeSymbol Object) // .NET Standard 2.0
     : IContainerInstance
@@ -73,6 +75,7 @@ internal sealed record WellKnownTypes(
             TaskCompletionSourceOfInt: taskCompletionSource1.Construct(compilation.GetSpecialType(SpecialType.System_Int32)),
             SpinWait: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SpinWait"),
             Thread: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Thread"),
+            Action: compilation.GetTypeByMetadataNameOrThrow("System.Action"),
             ObjectDisposedException: compilation.GetTypeByMetadataNameOrThrow("System.ObjectDisposedException"),
             ConcurrentBagOfSyncDisposable: concurrentBag.Construct(iDisposable),
             ConcurrentBagOfAsyncDisposable: iAsyncDisposable is not null ? concurrentBag.Construct(iAsyncDisposable) : null,
@@ -93,6 +96,7 @@ internal sealed record WellKnownTypes(
             Nullable1: compilation.GetTypeByMetadataNameOrThrow("System.Nullable`1"),
             Interlocked: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Interlocked"),
             Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"),
+            MethodInfo: compilation.GetTypeByMetadataNameOrThrow("System.Reflection.MethodInfo"),
             String: compilation.GetTypeByMetadataNameOrThrow("System.String"),
             Object: @object);
     }

@@ -1,3 +1,4 @@
+using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
@@ -21,6 +22,11 @@ using MrMeeseeks.DIE.UserUtility;
 [assembly:AllImplementationsAggregation]
 
 [assembly:ErrorDescriptionInsteadOfBuildFailure]
+
+[assembly:InvocationDescriptionMapping(typeof(InvocationDescriptionAttribute))]
+
+[AttributeUsage(AttributeTargets.Interface)]
+internal sealed class InvocationDescriptionAttribute : Attribute;
 
 //[assembly:Analytics(Analytics.ResolutionGraph)]
 

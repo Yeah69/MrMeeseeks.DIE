@@ -334,21 +334,6 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                             NotParsableAttribute(ad);
                             return null;
                         }
-
-                        if (!decoratorType
-                                .OriginalDefinition
-                                .AllDerivedTypesAndSelf()
-                                .Select(t => t.UnboundIfGeneric())
-                                .Contains(interfaceType, CustomSymbolEqualityComparer.Default))
-                        {
-                            localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
-                                ad,
-                                _rangeType,
-                                _containerType,
-                                $"Decorator type \"{decoratorType.FullName()}\" has to implement decorator interface \"{interfaceType.FullName()}\"."),
-                                ad.GetLocation());
-                            return null;
-                        }
                         
                         return decoratorType;
                     })

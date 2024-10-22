@@ -5,9 +5,9 @@
         
         <RootNamespace>MrMeeseeks.DIE.Test</RootNamespace>
         <AssemblyName>MrMeeseeks.DIE.Test</AssemblyName>
+        
         <IsPackable>false</IsPackable>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
+        <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
     <ItemGroup>

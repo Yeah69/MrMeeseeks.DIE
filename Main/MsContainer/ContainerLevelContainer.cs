@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.CodeGeneration;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.Configuration.Interception;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;

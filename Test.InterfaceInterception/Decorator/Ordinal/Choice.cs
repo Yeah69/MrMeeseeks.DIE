@@ -3,23 +3,26 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Decorator.Ordinal.Attribute;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.Ordinal.Choice;
 
 internal interface IInterface
 {
     IInterface Decorated { get; }
 }
 
+[DecorationOrdinal(69)]
 internal sealed class DecoratorUh : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
+[DecorationOrdinal(23)]
 internal sealed class DecoratorY : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
+[DecorationOrdinal(3)]
 internal sealed class DecoratorE : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
@@ -30,6 +33,7 @@ internal sealed class DecoratorA : IInterface, IDecorator<IInterface>
     public required IInterface Decorated { get; internal init; }
 }
 
+[DecorationOrdinal(-1)]
 internal sealed class DecoratorH : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
@@ -40,10 +44,6 @@ internal sealed class Dependency : IInterface
     public IInterface Decorated => this;
 }
 
-[DecorationOrdinalChoice(typeof(DecoratorH), -1)]
-[DecorationOrdinalChoice(typeof(DecoratorE), 3)]
-[DecorationOrdinalChoice(typeof(DecoratorY), 23)]
-[DecorationOrdinalChoice(typeof(DecoratorUh), 69)]
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 

@@ -9,8 +9,8 @@
         <IsTestProject>true</IsTestProject>
         <OutputType>Library</OutputType>
 
-        <RootNamespace>MrMeeseeks.DIE.Test.NetStandard</RootNamespace>
-        <AssemblyName>MrMeeseeks.DIE.Test.NetStandard</AssemblyName>
+        <RootNamespace>$(SolutionName).Test.NetStandard</RootNamespace>
+        <AssemblyName>$(SolutionName).Test.NetStandard</AssemblyName>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>

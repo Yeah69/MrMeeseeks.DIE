@@ -1,28 +1,27 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Decorator.Ordinal.Choice;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.Ordinal.NotConfigured;
 
 internal interface IInterface
 {
     IInterface Decorated { get; }
 }
 
-[DecorationOrdinal(69)]
 internal sealed class DecoratorUh : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
-[DecorationOrdinal(23)]
 internal sealed class DecoratorY : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
 }
 
-[DecorationOrdinal(3)]
 internal sealed class DecoratorE : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
@@ -33,7 +32,6 @@ internal sealed class DecoratorA : IInterface, IDecorator<IInterface>
     public required IInterface Decorated { get; internal init; }
 }
 
-[DecorationOrdinal(-1)]
 internal sealed class DecoratorH : IInterface, IDecorator<IInterface>
 {
     public required IInterface Decorated { get; internal init; }
@@ -53,18 +51,22 @@ public sealed class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var uh = container.Create();
-        var y = uh.Decorated;
-        var e = y.Decorated;
-        var a = e.Decorated;
-        var h = a.Decorated;
-        var implementation = h.Decorated;
+
+        var set = new HashSet<Type>(new[]
+        {
+            typeof(DecoratorUh),
+            typeof(DecoratorY),
+            typeof(DecoratorE),
+            typeof(DecoratorA),
+            typeof(DecoratorH),
+        });
         
-        Assert.IsType<DecoratorUh>(uh);
-        Assert.IsType<DecoratorY>(y);
-        Assert.IsType<DecoratorE>(e);
-        Assert.IsType<DecoratorA>(a);
-        Assert.IsType<DecoratorH>(h);
-        Assert.IsType<Dependency>(implementation);
+        var current = container.Create();
+        for (var i = 0; i < 5; i++)
+        {
+            Assert.True(set.Remove(current.GetType()));
+            current = current.Decorated;
+        }
+        Assert.IsType<Dependency>(current);
     }
 }

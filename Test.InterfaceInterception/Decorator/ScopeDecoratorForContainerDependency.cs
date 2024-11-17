@@ -4,14 +4,14 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Decorator.ScopeDecoratorForTransientScopeDependency;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.ScopeDecoratorForContainerDependency;
 
 internal interface IInterface
 {
     IInterface Decorated { get; }
 }
 
-internal sealed class Dependency : IInterface, ITransientScopeInstance
+internal sealed class Dependency : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }

@@ -3,8 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
 
-        <RootNamespace>MrMeeseeks.DIE.TestChild</RootNamespace>
-        <AssemblyName>MrMeeseeks.DIE.TestChild</AssemblyName>
+        <RootNamespace>$(SolutionName).TestChild</RootNamespace>
+        <AssemblyName>$(SolutionName).TestChild</AssemblyName>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>

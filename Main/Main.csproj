@@ -3,10 +3,10 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>MrMeeseeks.DIE</RootNamespace>
-    <AssemblyName>MrMeeseeks.DIE</AssemblyName>
-    <PackageId>$(AssemblyName)</PackageId>
-    <Product>$(AssemblyName)</Product>
+    <RootNamespace>$(SolutionName)</RootNamespace>
+    <AssemblyName>$(SolutionName)</AssemblyName>
+    <PackageId>$(SolutionName)</PackageId>
+    <Product>$(SolutionName)</Product>
 
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IsRoslynComponent>true</IsRoslynComponent>

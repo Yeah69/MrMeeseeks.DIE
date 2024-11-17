@@ -4,14 +4,14 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Decorator.Multi;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.MultiOnConcreteWithContainerInstanceDecorated;
 
 internal interface IInterface
 {
     IInterface Decorated { get; }
 }
 
-internal sealed class Dependency : IInterface
+internal sealed class Dependency : IInterface, IContainerInstance
 {
     public IInterface Decorated => this;
 }
@@ -33,7 +33,7 @@ internal sealed class DecoratorB : IInterface, IDecorator<IInterface>
 }
 
 [CreateFunction(typeof(IInterface), "Create")]
-[DecoratorSequenceChoice(typeof(IInterface), typeof(IInterface), typeof(DecoratorA), typeof(DecoratorB))]
+[DecoratorSequenceChoice(typeof(IInterface), typeof(Dependency), typeof(DecoratorA), typeof(DecoratorB))]
 internal sealed partial class Container;
 
 public sealed class Tests

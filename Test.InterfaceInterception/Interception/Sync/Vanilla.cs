@@ -6,7 +6,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Interceptor.Vanilla;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Interceptor.Vanilla;
 
 [InvocationDescription]
 internal interface IInvocation

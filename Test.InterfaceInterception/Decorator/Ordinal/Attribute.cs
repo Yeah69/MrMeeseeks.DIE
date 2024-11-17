@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Decorator.Ordinal.NotConfigured;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.Ordinal.Attribute;
 
 internal interface IInterface
 {
@@ -42,6 +40,10 @@ internal sealed class Dependency : IInterface
     public IInterface Decorated => this;
 }
 
+[DecorationOrdinalChoice(typeof(DecoratorH), -1)]
+[DecorationOrdinalChoice(typeof(DecoratorE), 3)]
+[DecorationOrdinalChoice(typeof(DecoratorY), 23)]
+[DecorationOrdinalChoice(typeof(DecoratorUh), 69)]
 [CreateFunction(typeof(IInterface), "Create")]
 internal sealed partial class Container;
 
@@ -51,22 +53,18 @@ public sealed class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-
-        var set = new HashSet<Type>(new[]
-        {
-            typeof(DecoratorUh),
-            typeof(DecoratorY),
-            typeof(DecoratorE),
-            typeof(DecoratorA),
-            typeof(DecoratorH),
-        });
+        var uh = container.Create();
+        var y = uh.Decorated;
+        var e = y.Decorated;
+        var a = e.Decorated;
+        var h = a.Decorated;
+        var implementation = h.Decorated;
         
-        var current = container.Create();
-        for (var i = 0; i < 5; i++)
-        {
-            Assert.True(set.Remove(current.GetType()));
-            current = current.Decorated;
-        }
-        Assert.IsType<Dependency>(current);
+        Assert.IsType<DecoratorUh>(uh);
+        Assert.IsType<DecoratorY>(y);
+        Assert.IsType<DecoratorE>(e);
+        Assert.IsType<DecoratorA>(a);
+        Assert.IsType<DecoratorH>(h);
+        Assert.IsType<Dependency>(implementation);
     }
 }

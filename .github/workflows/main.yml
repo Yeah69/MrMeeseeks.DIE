@@ -28,8 +28,10 @@ jobs:
       run: dotnet build .\MrMeeseeks.DIE.sln --configuration Release --no-restore
     - name: Test
       run: dotnet test .\Test\Test.csproj --no-restore --verbosity normal
-    - name: Test
+    - name: Test Interface Interception
       run: dotnet test .\Test.InterfaceInterception\Test.InterfaceInterception.csproj --no-restore --verbosity normal
+    - name: Test Wrappers
+      run: dotnet test .\Test.Wrappers\Test.Wrappers.csproj --no-restore --verbosity normal
     - name: Publish to NuGet
       uses: Yeah69/publish-nuget@main
       with:

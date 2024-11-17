@@ -10,6 +10,7 @@
   <Project Path="Sample\Sample.csproj" />
   <Project Path="Test.InterfaceInterception\Test.InterfaceInterception.csproj" Type="Classic C#" />
   <Project Path="Test.NetStandard\Test.NetStandard.csproj" Type="Classic C#" />
+  <Project Path="Test.Wrappers\Test.Wrappers.csproj" Type="Classic C#" />
   <Project Path="TestChild\TestChild.csproj" Type="Classic C#" />
   <Project Path="TestInternalsVisibleToChild\TestInternalsVisibleToChild.csproj" Type="Classic C#" />
   <Project Path="TestNotInternalsVisibleToChild\TestNotInternalsVisibleToChild.csproj" Type="Classic C#" />

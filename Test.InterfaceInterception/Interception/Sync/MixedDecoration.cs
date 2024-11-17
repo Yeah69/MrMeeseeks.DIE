@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Interceptor.MixedDecoration;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Interceptor.MixedDecoration;
 
 [InvocationDescription]
 internal interface IInvocation
@@ -81,6 +82,6 @@ public sealed class Tests
         var instance = container.Create();
         
         instance.Procedure();
-        trackLastInvocation.DecorationTypes.SequenceEqual(new [] { typeof(DecoratorB), typeof(Interceptor), typeof(DecoratorA) });
+        Assert.True(trackLastInvocation.DecorationTypes.SequenceEqual([typeof(DecoratorB), typeof(Interceptor), typeof(DecoratorA)]));
     }
 }//*/

@@ -3,8 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
 
-        <RootNamespace>MrMeeseeks.DIE.TestInternalsVisibleToChild</RootNamespace>
-        <AssemblyName>MrMeeseeks.DIE.TestInternalsVisibleToChild</AssemblyName>
+        <RootNamespace>$(SolutionName).TestInternalsVisibleToChild</RootNamespace>
+        <AssemblyName>$(SolutionName).TestInternalsVisibleToChild</AssemblyName>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>

@@ -5,7 +5,7 @@ using Xunit;
 // ReSharper disable InconsistentNaming
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Decorator.OneImplementationTwoDecoratedInterfaces;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.OneImplementationTwoDecoratedInterfaces;
 
 internal interface IInterfaceA
 {

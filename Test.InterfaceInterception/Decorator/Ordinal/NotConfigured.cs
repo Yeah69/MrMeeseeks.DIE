@@ -5,7 +5,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
-namespace MrMeeseeks.DIE.Test.Decorator.Ordinal.NotConfigured;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.Ordinal.NotConfigured;
 
 internal interface IInterface
 {

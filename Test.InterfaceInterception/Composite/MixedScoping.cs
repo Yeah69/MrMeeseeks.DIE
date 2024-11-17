@@ -5,7 +5,7 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Composite.Container;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Composite.MixedScoping;
 
 internal interface IInterface
 {
@@ -17,7 +17,7 @@ internal sealed class BasisA : IInterface, IContainerInstance
     public IReadOnlyList<IInterface> Composites => new List<IInterface> { this };
 }
 
-internal sealed class BasisB : IInterface, IContainerInstance
+internal sealed class BasisB : IInterface
 {
     public IReadOnlyList<IInterface> Composites => new List<IInterface> { this };
 }
@@ -47,6 +47,8 @@ public sealed class Tests
             var type = compositeComposite.GetType();
             Assert.True(type == typeof(BasisA) || type == typeof(BasisB));
         }
+        var nextComposite = container.CreateDep();
+        Assert.NotEqual(composite, nextComposite);
     }
     
     [Fact]
@@ -61,7 +63,7 @@ public sealed class Tests
         }
         Assert.Equal(2, composites.Count);
         var nextComposites = container.CreateCollection();
-        Assert.Equal(composites[0], nextComposites[0]);
-        Assert.Equal(composites[1], nextComposites[1]);
+        Assert.True(composites[0].Equals(nextComposites[0]) && !composites[1].Equals(nextComposites[1])
+            || composites[1].Equals(nextComposites[1]) && !composites[0].Equals(nextComposites[0]));
     }
 }

@@ -5,7 +5,7 @@ using MrMeeseeks.DIE.UserUtility;
 using Xunit;
 
 // ReSharper disable once CheckNamespace
-namespace MrMeeseeks.DIE.Test.Decorator.ContainerInstance;
+namespace MrMeeseeks.DIE.Test.InterfaceInterception.Decorator.ContainerInstance;
 
 internal interface IInterface
 {

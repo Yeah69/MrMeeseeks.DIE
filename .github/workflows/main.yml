@@ -20,7 +20,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3.2.0
       with:
-        dotnet-version: 8.0.406
+        dotnet-version: 9.0.100
     - run: set DOTNET_CLI_TELEMETRY_OPTOUT=1
     - name: Install dependencies
       run: dotnet restore .\MrMeeseeks.DIE.sln
@@ -28,6 +28,8 @@ jobs:
       run: dotnet build .\MrMeeseeks.DIE.sln --configuration Release --no-restore
     - name: Test
       run: dotnet test .\Test\Test.csproj --no-restore --verbosity normal
+    - name: Test
+      run: dotnet test .\Test.InterfaceInterception\Test.InterfaceInterception.csproj --no-restore --verbosity normal
     - name: Publish to NuGet
       uses: Yeah69/publish-nuget@main
       with:

@@ -4,6 +4,7 @@
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <Version>$(MinVerVersion)</Version>
     <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
+    <TargetFramework>net9.0</TargetFramework>
     <LangVersion>13</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>

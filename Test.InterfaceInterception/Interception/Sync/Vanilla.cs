@@ -24,12 +24,7 @@ internal interface IInvocation
 
 internal class TrackLastInvocation : IContainerInstance
 {
-    internal IInvocation? _lastInvocation;
-    internal IInvocation? LastInvocation
-    {
-        get => _lastInvocation;  
-        set => _lastInvocation = value; 
-    }
+    internal IInvocation? LastInvocation { get; set; }
 }
 
 internal class Interceptor

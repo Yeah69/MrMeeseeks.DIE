@@ -32,6 +32,8 @@ jobs:
       run: dotnet test .\Test.InterfaceInterception\Test.InterfaceInterception.csproj --no-restore --verbosity normal
     - name: Test Wrappers
       run: dotnet test .\Test.Wrappers\Test.Wrappers.csproj --no-restore --verbosity normal
+    - name: Test Injection
+      run: dotnet test .\Test.Injection\Test.Injection.csproj --no-restore --verbosity normal
     - name: Test
       run: dotnet test .\Test\Test.csproj --no-restore --verbosity normal
     - name: Publish to NuGet

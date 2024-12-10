@@ -8,6 +8,7 @@
   </Folder>
   <Project Path="Main\Main.csproj" />
   <Project Path="Sample\Sample.csproj" />
+  <Project Path="Test.Configuration\Test.Configuration.csproj" Type="Classic C#" />
   <Project Path="Test.InterfaceInterception\Test.InterfaceInterception.csproj" Type="Classic C#" />
   <Project Path="Test.NetStandard\Test.NetStandard.csproj" Type="Classic C#" />
   <Project Path="Test.Wrappers\Test.Wrappers.csproj" Type="Classic C#" />

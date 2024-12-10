@@ -28,6 +28,8 @@ jobs:
       run: dotnet build .\MrMeeseeks.DIE.sln --configuration Release --no-restore
     - name: Test
       run: dotnet test .\Test\Test.csproj --no-restore --verbosity normal
+    - name: Test Configuration
+      run: dotnet test .\Test.Configuration\Test.Configuration.csproj --no-restore --verbosity normal
     - name: Test Interface Interception
       run: dotnet test .\Test.InterfaceInterception\Test.InterfaceInterception.csproj --no-restore --verbosity normal
     - name: Test Wrappers

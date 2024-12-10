@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: MrMeeseeks.DIE.sln
+      Solution_Name: MrMeeseeks.DIE.slnx
       
     steps:
     - uses: actions/checkout@main
@@ -23,9 +23,9 @@ jobs:
         dotnet-version: 9.0.100
     - run: set DOTNET_CLI_TELEMETRY_OPTOUT=1
     - name: Install dependencies
-      run: dotnet restore .\MrMeeseeks.DIE.sln
+      run: dotnet restore .\MrMeeseeks.DIE.slnx
     - name: Build
-      run: dotnet build .\MrMeeseeks.DIE.sln --configuration Release --no-restore
+      run: dotnet build .\MrMeeseeks.DIE.slnx --configuration Release --no-restore
     - name: Test Configuration
       run: dotnet test .\Test.Configuration\Test.Configuration.csproj --no-restore --verbosity normal
     - name: Test Interface Interception

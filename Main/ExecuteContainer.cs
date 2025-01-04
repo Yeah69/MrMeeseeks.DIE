@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Analytics;
 using MrMeeseeks.DIE.CodeGeneration;
+using MrMeeseeks.DIE.InjectionGraph;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes;
@@ -30,6 +31,8 @@ internal sealed class ExecuteContainer : IExecuteContainer
     private readonly IAnalyticsFlags _analyticsFlags;
     private readonly Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> _resolutionGraphAnalyticsNodeVisitorFactory;
     private readonly Lazy<IFilterForErrorRelevancyNodeVisitor> _filterForErrorRelevancyNodeVisitor;
+    private readonly IInjectionGraphBuilder _injectionGraphBuilder;
+    private readonly IInjectionGraphCodeGenerator _injectionGraphCodeGenerator;
     private readonly IDiagLogger _diagLogger;
     private readonly IContainerInfo _containerInfo;
 
@@ -46,6 +49,8 @@ internal sealed class ExecuteContainer : IExecuteContainer
         IAnalyticsFlags analyticsFlags,
         Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> resolutionGraphAnalyticsNodeVisitorFactory,
         Lazy<IFilterForErrorRelevancyNodeVisitor> filterForErrorRelevancyNodeVisitor,
+        IInjectionGraphBuilder injectionGraphBuilder,
+        IInjectionGraphCodeGenerator injectionGraphCodeGenerator,
         IDiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
@@ -59,6 +64,8 @@ internal sealed class ExecuteContainer : IExecuteContainer
         _analyticsFlags = analyticsFlags;
         _resolutionGraphAnalyticsNodeVisitorFactory = resolutionGraphAnalyticsNodeVisitorFactory;
         _filterForErrorRelevancyNodeVisitor = filterForErrorRelevancyNodeVisitor;
+        _injectionGraphBuilder = injectionGraphBuilder;
+        _injectionGraphCodeGenerator = injectionGraphCodeGenerator;
         _diagLogger = diagLogger;
         _containerInfo = containerInfo;
     }
@@ -78,7 +85,7 @@ internal sealed class ExecuteContainer : IExecuteContainer
             }
             
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Resolution;
-            _containerNode.Build(new(ImmutableStack<INamedTypeSymbol>.Empty, null));
+            //_containerNode.Build(new(ImmutableStack<INamedTypeSymbol>.Empty, null));
 
             if (_diagLogger.ErrorsIssued)
             {
@@ -87,7 +94,7 @@ internal sealed class ExecuteContainer : IExecuteContainer
             }
 
             _currentExecutionPhaseSetter.Value = ExecutionPhase.CodeGeneration;
-            _codeGenerationVisitor.VisitIContainerNode(_containerNode);
+            //_codeGenerationVisitor.VisitIContainerNode(_containerNode);
 
             if (_diagLogger.ErrorsIssued)
             {
@@ -95,14 +102,30 @@ internal sealed class ExecuteContainer : IExecuteContainer
                 return;
             }
 
-            var containerSource = CSharpSyntaxTree
+            /*var containerSource = CSharpSyntaxTree
                 .ParseText(SourceText.From(_codeGenerationVisitor.GenerateContainerFile(), Encoding.UTF8))
                 .GetRoot()
                 .NormalizeWhitespace()
                 .SyntaxTree
                 .GetText();
 
-            _context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);
+            //_context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);//*/
+            
+            foreach (var (rootType, name, overrideTypes) in _containerInfo.CreateFunctionData)
+            {
+                _injectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes);
+            }
+            
+            _injectionGraphBuilder.AssignFunctions();
+            
+            var injectionGraphSource = CSharpSyntaxTree
+                .ParseText(SourceText.From(_injectionGraphCodeGenerator.Generate(), Encoding.UTF8))
+                .GetRoot()
+                .NormalizeWhitespace()
+                .SyntaxTree
+                .GetText();
+            
+            _context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", injectionGraphSource);
                 
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Analytics;
             if (_analyticsFlags.ResolutionGraph)

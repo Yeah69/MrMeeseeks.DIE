@@ -136,7 +136,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         
         _constructorParameters.AddRange(_constructor
             ?.Parameters
-            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsConstructor))) ?? Enumerable.Empty<(string, IElementNode)>());
+            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsConstructor))) ?? []);
 
         IReadOnlyList<IPropertySymbol> properties;
         if (_checkTypeProperties.GetPropertyChoicesFor(_implementationType) is { } propertyChoice)

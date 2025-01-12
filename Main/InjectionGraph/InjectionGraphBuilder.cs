@@ -4,12 +4,13 @@ using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
 internal interface IInjectionGraphBuilder
 {
-    IReadOnlyList<IFunction> Functions { get; }
+    IReadOnlyList<ITypeNodeFunction> Functions { get; }
     void BuildForRootType(ITypeSymbol type, string entryFunctionName, IReadOnlyList<ITypeSymbol> overrides);
     void AssignFunctions();
 }
@@ -20,17 +21,19 @@ internal class InjectionGraphBuilder(
     TypeNodeManager typeNodeManager,
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
     ConcreteImplementationNodeManager concreteImplementationNodeManager,
+    ConcreteFunctorNodeManager concreteFunctorNodeManager,
     ConcreteOverrideNodeManager concreteOverrideNodeManager,
     OverrideContextManager overrideContextManager,
-    Func<TypeNode, Accessibility?, Function> functionFactory,
-    Func<IFunction, FunctionEdgeType> functionEdgeTypeFactory,
-    Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory)
+    Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
+    Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
+    Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory,
+    WellKnownTypes wellKnownTypes)
     : IInjectionGraphBuilder, IContainerInstance
 {
     private readonly List<ConcreteEntryFunctionNode> _concreteEntryFunctionNodes = [];
-    private readonly List<IFunction> _functions = [];
+    private readonly List<ITypeNodeFunction> _functions = [];
 
-    public IReadOnlyList<IFunction> Functions => _functions;
+    public IReadOnlyList<ITypeNodeFunction> Functions => _functions;
 
     private record ResolutionStep(TypeNode Current, EdgeContext Context);
 
@@ -66,10 +69,21 @@ internal class InjectionGraphBuilder(
             case not null when edgeContext.Override is OverrideContext.Any any && any.Overrides.Contains(typeNodeType, CustomSymbolEqualityComparer.IncludeNullability):
                 var concreteOverrideNodeData = new ConcreteOverrideNodeData(typeNodeType);
                 var concreteOverrideNode = concreteOverrideNodeManager.GetOrAddNode(concreteOverrideNodeData);
-                
-                ConnectToTypeNodeIfNotAlready(concreteOverrideNode);
+                ConnectToTypeNodeIfNotAlready(concreteOverrideNode, edgeContext);
                 break;
-            case INamedTypeSymbol { TypeKind: TypeKind.Class } namedTypeSymbol:
+            case INamedTypeSymbol { TypeArguments.Length: >= 1 } maybeFunctor when 
+                CustomSymbolEqualityComparer.Default.Equals(maybeFunctor.OriginalDefinition, wellKnownTypes.Lazy1)
+                || CustomSymbolEqualityComparer.Default.Equals(maybeFunctor.OriginalDefinition, wellKnownTypes.ThreadLocal1)
+                || maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
+                var concreteFunctorNodeData = new ConcreteFunctorNodeData(maybeFunctor);
+                var concreteFunctorNode = concreteFunctorNodeManager.GetOrAddNode(concreteFunctorNodeData);
+                var newOverrideContext = overrideContextManager.GetOrAddContext(concreteFunctorNode.FunctorParameterTypes);
+                var newEdgeContext = edgeContext with { Override = newOverrideContext };
+                ConnectToTypeNodeIfNotAlready(concreteFunctorNode, newEdgeContext);
+                foreach (var node in concreteFunctorNode.ConnectIfNotAlready(newEdgeContext))
+                    queue.Enqueue(new ResolutionStep(node, newEdgeContext));
+                break;
+            case INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } namedTypeSymbol:
                 var implementation = containerCheckTypeProperties.MapToSingleFittingImplementation(namedTypeSymbol, null);
                 if (implementation is null)
                     throw new ArgumentException("Type is not a fitting implementation", nameof(typeNodeType)); // ToDo: Better exception
@@ -100,7 +114,7 @@ internal class InjectionGraphBuilder(
                 
                 var concreteImplementationNode = concreteImplementationNodeManager.GetOrAddNode(concreteImplementationNodeData);
                 
-                ConnectToTypeNodeIfNotAlready(concreteImplementationNode);
+                ConnectToTypeNodeIfNotAlready(concreteImplementationNode, edgeContext);
                 
                 foreach (var node in concreteImplementationNode.ConnectIfNotAlready(edgeContext))
                     queue.Enqueue(new ResolutionStep(node, edgeContext));
@@ -111,7 +125,7 @@ internal class InjectionGraphBuilder(
 
         return;
         
-        void ConnectToTypeNodeIfNotAlready(IConcreteNode concreteNode)
+        void ConnectToTypeNodeIfNotAlready(IConcreteNode concreteNode, EdgeContext edgeContextToContinueWith)
         {
             if (!typeNode.TryGetOutgoingEdgeFor(concreteNode, out var existingEdge))
             {
@@ -119,22 +133,18 @@ internal class InjectionGraphBuilder(
                 typeNode.AddOutgoing(existingEdge);
             }
 
-            existingEdge.AddContext(edgeContext);
+            existingEdge.AddContext(edgeContextToContinueWith);
         }
     }
 
     public void AssignFunctions()
     {
         foreach (var typedInjectionNode in typeNodeManager.AllTypeNodes)
-        {
-            if (typedInjectionNode.Incoming.Count > 1)
-            {
-                var function = functionFactory(typedInjectionNode, Accessibility.Internal);
-                _functions.Add(function);
-                foreach (var incoming in typedInjectionNode.Incoming)
-                    incoming.Type = functionEdgeTypeFactory(function);
-            }
-        }
+            if (// if multiple incoming edges
+                typedInjectionNode.Incoming.Count > 1 
+                // or incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
+                || typedInjectionNode.Incoming.Select(e => e.Source).Any(n => n is ConcreteFunctorNode))
+                NewFunctionIfNotAlready(typedInjectionNode);
 
         foreach (var concreteEntryFunctionNode in _concreteEntryFunctionNodes)
         {
@@ -147,6 +157,27 @@ internal class InjectionGraphBuilder(
                 var function = functionFactory(rootTypeNode, Accessibility.Private);
                 _functions.Add(function);
                 edge.Type = functionEdgeTypeFactory(function);
+            }
+        }
+
+        return;
+
+        void NewFunctionIfNotAlready(TypeNode typedInjectionNode)
+        {
+            if (typedInjectionNode.Incoming.Any(e => e.Type is DefaultEdgeType))
+            {
+                var function = typedInjectionNode.Incoming
+                    .Select(e => e.Type)
+                    .OfType<FunctionEdgeType>()
+                    .Select(fet => fet.Function)
+                    .FirstOrDefault();
+                if (function is null)
+                {
+                    function = functionFactory(typedInjectionNode, Accessibility.Internal);
+                    _functions.Add(function);
+                }
+                foreach (var incoming in typedInjectionNode.Incoming)
+                    incoming.Type = functionEdgeTypeFactory(function);
             }
         }
     }

@@ -8,7 +8,7 @@ internal class DefaultEdgeType : IEdgeType
     private DefaultEdgeType() {}
 }
 
-internal class FunctionEdgeType(IFunction function) : IEdgeType
+internal class FunctionEdgeType(ITypeNodeFunction function) : IEdgeType
 {
-    public IFunction Function { get; } = function;
+    public ITypeNodeFunction Function { get; } = function;
 }

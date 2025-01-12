@@ -1,6 +1,8 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using System.Threading;
+using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
@@ -12,26 +14,32 @@ internal interface IInjectionGraphCodeGenerator
 
 internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
 {
+    private const string NotAvailable = "null!"; // ToDo change value to "not_available" as soon as correct behavior is required
     private readonly StringBuilder _code = new();
-    private readonly Dictionary<IFunction, string> _functionNames = new();
+    private readonly Dictionary<IFunction, string> _functionNames = [];
+    private readonly Dictionary<ITypeSymbol, string> _entryFunctionsForFunctors = [];
     private readonly string _overridesParameterName;
     private readonly IReadOnlyList<(ITypeSymbol Type, string Name)> _functionParameters;
     private readonly IContainerInfo _containerInfo;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly OverrideContextManager _overrideContextManager;
+    private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly string _iOverrideInterfaceName;
+    private Dictionary<OverrideContext, string> _overrideContextNameMap = [];
 
     public InjectionGraphCodeGenerator(IContainerInfo containerInfo,
         IInjectionGraphBuilder injectionGraphBuilder,
         OverrideContextManager overrideContextManager,
+        ConcreteFunctorNodeManager concreteFunctorNodeManager,
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
         _containerInfo = containerInfo;
         _injectionGraphBuilder = injectionGraphBuilder;
         _overrideContextManager = overrideContextManager;
+        _concreteFunctorNodeManager = concreteFunctorNodeManager;
         _referenceGenerator = referenceGenerator;
         _wellKnownTypes = wellKnownTypes;
         _overridesParameterName = referenceGenerator.Generate("overrides");
@@ -41,7 +49,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
 
     public string Generate()
     {
-        var overrideContextNameMap = _overrideContextManager.AllOverrideContexts
+        _overrideContextNameMap = _overrideContextManager.AllOverrideContexts
             .ToDictionary(o => o, o => _referenceGenerator.Generate(o is OverrideContext.Any ? "Overrides" : "NoOverrides"));
         foreach (var function in _injectionGraphBuilder.Functions)
         {
@@ -87,6 +95,30 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                   """);
         }
 
+        var typesGettingFunctorEntry = _concreteFunctorNodeManager.AllNodes
+            .Select(n => n.ReturnedElement.Target)
+            .Distinct();
+        foreach (var typeNode in typesGettingFunctorEntry)
+        {
+            var functionName = _referenceGenerator.Generate("Create", typeNode.Type);
+            var function = new FunctorEntryFunction(typeNode.Type) { Accessibility = Accessibility.Private };
+            _code.AppendLine(
+                $$"""
+                  {{GenerateMethodDeclaration(function, functionName, _functionParameters)}}
+                  {
+                  """);
+            if (typeNode.Incoming.Select(e => e.Type).OfType<FunctionEdgeType>().FirstOrDefault() is { } nextFunction)
+            {
+                _code.AppendLine($"return {_functionNames[nextFunction.Function]}({_overridesParameterName});");
+            }
+            else
+            {
+                _code.AppendLine($"throw new Exception(\"No function found for type {typeNode.Type.FullName()} during code generation.\");");
+            }
+            _code.AppendLine("}");
+            _entryFunctionsForFunctors[typeNode.Type] = functionName;
+        }
+
         var entryCreateFunctionsMap = new Dictionary<string, string>();
         foreach (var function in _injectionGraphBuilder.Functions)
         {
@@ -104,7 +136,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             foreach (var entryCreateFunction in function.RootNode.Incoming.Select(e => e.Source).OfType<ConcreteEntryFunctionNode>())
                 entryCreateFunctionsMap[entryCreateFunction.Data.Name] = functionName;
         }
-        
+
         foreach (var (rootType, name, parameters) in _containerInfo.CreateFunctionData)
         {
             if (entryCreateFunctionsMap.TryGetValue(name, out var innerFunctionName)
@@ -112,7 +144,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             {
                 var parametersWithName = parameters.Select(p => (Type: p, Name: _referenceGenerator.Generate(p))).ToArray();
                 var parametersOnDeclaration = string.Join(", ", parametersWithName.Select(t => $"{t.Type.FullName()} {t.Name}"));
-                var overridesName = overrideContextNameMap[overrideContext];
+                var overridesName = _overrideContextNameMap[overrideContext];
                 var overridesReference = _referenceGenerator.Generate("overrides");
                 var overridesAssignment = overrideContext is OverrideContext.Any any 
                     ? string.Join(", ", any.Overrides.Select(p => parametersWithName.First(t => t.Type.Equals(p)).Name))
@@ -130,24 +162,25 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         }
 
         var overrideGenericTypeName = _referenceGenerator.Generate("TValue");
-        _code.AppendLine(
-            $$"""
-              private interface {{_iOverrideInterfaceName}}<{{overrideGenericTypeName}}>
-              {
-              {{overrideGenericTypeName}} Value();
-              }
-              """);
+        if (_overrideContextManager.AllOverrideContexts.Any(o => o is OverrideContext.Any))
+            _code.AppendLine(
+                $$"""
+                  private interface {{_iOverrideInterfaceName}}<{{overrideGenericTypeName}}>
+                  {
+                  {{overrideGenericTypeName}} Value();
+                  }
+                  """);
         
         foreach (var overrideContext in _overrideContextManager.AllOverrideContexts)
         {
             switch (overrideContext)
             {
                 case OverrideContext.None:
-                    var noneTypeName = overrideContextNameMap[overrideContext];
+                    var noneTypeName = _overrideContextNameMap[overrideContext];
                     _code.AppendLine($"private record {noneTypeName};");
                     break;
                 case OverrideContext.Any any:
-                    var anyTypeName = overrideContextNameMap[overrideContext];
+                    var anyTypeName = _overrideContextNameMap[overrideContext];
                     var properties = any.Overrides.Select((o, i) => $"{o.FullName()} Value{i}");
                     var interfaceAssignments = any.Overrides.Select(o => $"{_iOverrideInterfaceName}<{o.FullName()}>");
                     _code.AppendLine($"private record {anyTypeName}({string.Join(", ", properties)}) : {string.Join(", ", interfaceAssignments)}");
@@ -176,7 +209,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
     private string GenerateForInjectionNode(TypeNode node)
     {
         if (node.Outgoing.Count > 1)
-            return "not_available"; // ToDo this is wrong, adjust as soon a correct behavior is required
+            return NotAvailable; // ToDo this is wrong, adjust as soon a correct behavior is required
         
         var innerNode = node.Outgoing.Select(e => e.Target).FirstOrDefault();
         
@@ -206,8 +239,33 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             
             return reference;
         }
-        
-        return "not_available";
+        if (innerNode is ConcreteFunctorNode functorNode)
+        {
+            var reference = _referenceGenerator.Generate(functorNode.Data.Type);
+            switch (functorNode.FunctorType)
+            {
+                case ConcreteFunctorNodeType.Func:
+                    var parameterReferences = functorNode.FunctorParameterTypes.Select(_ => _referenceGenerator.Generate("p")).ToArray();
+                    var parameterDeclaration = string.Join(", ", parameterReferences);
+                    if (_overrideContextManager.TryGetContext(functorNode.FunctorParameterTypes, out var overrideContext)
+                        && _overrideContextNameMap.TryGetValue(overrideContext, out var overrideContextName))
+                    {
+                        var overrideParameters = overrideContext is OverrideContext.Any any
+                            ? string.Join(", ", any.Overrides.Select(o => parameterReferences[functorNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
+                            : "";
+                        _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}(new {overrideContextName}({overrideParameters}));");
+                    }
+                    break;
+                case ConcreteFunctorNodeType.Lazy:
+                case ConcreteFunctorNodeType.ThreadLocal:
+                    _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = new {functorNode.Data.Type.FullName()}(() => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}(new {_overrideContextNameMap[new OverrideContext.None()]}()));");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            return reference;
+        }
+        return NotAvailable;
     }
 
     private string CallFunctionOrGenerateForInjectionNode(TypeEdge edge, TypeNode node)
@@ -265,7 +323,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         }
 
         var parametersText = string.Join(", ", parameters.Select(p => $"{p.Type.FullName()} {p.Name}"));
-        return $"{accessibility}{asyncModifier}{function.RootNode.Type.FullName()} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
+        return $"{accessibility}{asyncModifier}{function.ReturnType.FullName()} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
     }
     
 }

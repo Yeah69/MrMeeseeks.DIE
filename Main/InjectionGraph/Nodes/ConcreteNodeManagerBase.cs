@@ -6,6 +6,8 @@ internal abstract class ConcreteNodeManagerBase<TData, TConcreteNode>(Func<TData
 {
     private readonly Dictionary<TData, TConcreteNode> _nodes = [];
     
+    internal IReadOnlyCollection<TConcreteNode> AllNodes => _nodes.Values;
+    
     internal TConcreteNode GetOrAddNode(TData data)
     {
         if (_nodes.TryGetValue(data, out var node))

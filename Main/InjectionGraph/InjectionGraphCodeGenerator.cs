@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using Microsoft.CodeAnalysis.CSharp;
+﻿using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -234,10 +233,24 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 var propertyNodeAssignments = implementationNode.ObjectInitializerAssignments;
                 objectInitializer = $" {{ {string.Join(", ", propertyNodeAssignments.Select(t => $"{t.Name} = {CallFunctionOrGenerateForInjectionNode(t.Edge, t.Edge.Target)}"))} }}";
             }
-            
-            _code.AppendLine($"{implementationNode.Data.Implementation.FullName()} {reference} = new {implementationNode.Data.Implementation.FullName()}({parameters}){objectInitializer};");
+
+            var implementationFullName = GetImplementationsFullName(implementationNode.Data.Implementation);
+            _code.AppendLine($"{implementationFullName} {reference} = new {implementationFullName}({parameters}){objectInitializer};");
             
             return reference;
+
+            static string GetImplementationsFullName(ITypeSymbol implementation)
+            {
+                var implementationFullName = implementation.FullName();
+                if (!implementationFullName.StartsWith("(") || !implementationFullName.EndsWith(")") || implementation is not INamedTypeSymbol namedType)
+                    return implementationFullName;
+                var namespaceFullName = implementation.ContainingNamespace.FullName();
+                var typeName = implementation.Name;
+                var typeParameters = namedType.TypeArguments.Length > 0 
+                    ? $"<{string.Join(", ", namedType.TypeArguments.Select(GetImplementationsFullName))}>"
+                    : "";
+                return $"{namespaceFullName}.{typeName}{typeParameters}";
+            }
         }
         if (innerNode is ConcreteFunctorNode functorNode)
         {

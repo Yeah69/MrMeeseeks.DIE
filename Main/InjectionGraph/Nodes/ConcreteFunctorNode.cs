@@ -75,8 +75,8 @@ internal class ConcreteFunctorNode : IConcreteNode
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteFunctorNode node && Data.Equals(node.Data);
 
-    public IReadOnlyList<TypeNode> ConnectIfNotAlready(EdgeContext context) => 
+    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
         ReturnedElement.AddContext(context) 
-            ? [ReturnedElement.Target] 
+            ? [(ReturnedElement.Target, Location.None)] 
             : [];
 }

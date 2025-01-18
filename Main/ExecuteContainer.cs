@@ -111,9 +111,9 @@ internal sealed class ExecuteContainer : IExecuteContainer
 
             //_context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);//*/
             
-            foreach (var (rootType, name, overrideTypes) in _containerInfo.CreateFunctionData)
+            foreach (var (rootType, name, overrideTypes, attributesLocation) in _containerInfo.CreateFunctionData)
             {
-                _injectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes);
+                _injectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes, attributesLocation);
             }
             
             _injectionGraphBuilder.AssignFunctions();

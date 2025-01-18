@@ -4,5 +4,5 @@ namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
 internal interface IConcreteNode
 {
-    IReadOnlyList<TypeNode> ConnectIfNotAlready(EdgeContext context);
+    IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context);
 }

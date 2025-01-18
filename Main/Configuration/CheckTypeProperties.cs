@@ -249,7 +249,9 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 
             // Otherwise, just return all constructors
             _ => implementationType.InstanceConstructors
-        }).ToList();
+        })
+        .Where(c => c.DeclaredAccessibility is not Accessibility.Private and not Accessibility.Protected)
+        .ToList();
         
         return visibleConstructors switch
         {

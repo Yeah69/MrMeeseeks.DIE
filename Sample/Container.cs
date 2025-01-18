@@ -9,7 +9,7 @@ internal sealed class DeeperClassB
     internal required DeeperClassA DeeperClassA { get; init; }
 }
 
-internal sealed class Class
+internal class Class
 {
     internal required DeeperClassA DeeperClassA { get; init; }
     internal required DeeperClassB DeeperClassB { get; init; }

@@ -101,34 +101,39 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
                 // Take inner type of Nullable<T>
                 implementationType = innerType;
             }
+
+            var implementationResult = _checkTypeProperties.MapToSingleFittingImplementation(implementationType, data.PassedContext.InjectionKeyModification);
             
-            if (_checkTypeProperties.MapToSingleFittingImplementation(implementationType, data.PassedContext.InjectionKeyModification) is not { } chosenImplementationType)
+            if (implementationResult is ImplementationResult.Single { Implementation: { } chosenImplementationType })
+                return SwitchImplementation(
+                    new(true, true, true),
+                    null,
+                    chosenImplementationType,
+                    data.PassedContext,
+                    data.Next,
+                    data);
+
+            // Check user defined elements as last resort
+            if (_userDefinedElementsMappingPart.Map(data) is { } userDefinedNode)
+                return userDefinedNode;
+            
+            if (classOrStructType.NullableAnnotation == NullableAnnotation.Annotated || isNullableStruct)
             {
-                // Check user defined elements as last resort
-                if (_userDefinedElementsMappingPart.Map(data) is { } userDefinedNode)
-                    return userDefinedNode;
-                
-                if (classOrStructType.NullableAnnotation == NullableAnnotation.Annotated || isNullableStruct)
-                {
-                    _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
-                        $"Class: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\", but injecting null instead."),
-                        Location.None);
-                    return _nullNodeFactory(classOrStructType)
-                        .EnqueueBuildJobTo(_parentContainer.BuildQueue, data.PassedContext);
-                }
-                return _errorNodeFactory(
-                        $"Class: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\",",
-                        classOrStructType)
+                _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
+                    $"Class: Multiple or no implementations where a single is required for \"{classOrStructType.FullName()}\", but injecting null instead."),
+                    Location.None);
+                return _nullNodeFactory(classOrStructType)
                     .EnqueueBuildJobTo(_parentContainer.BuildQueue, data.PassedContext);
             }
 
-            return SwitchImplementation(
-                new(true, true, true),
-                null,
-                chosenImplementationType,
-                data.PassedContext,
-                data.Next,
-                data);
+            var errorMessage = implementationResult switch
+            {
+                ImplementationResult.None => $"Class: No implementation registered for \"{classOrStructType.FullName()}\".",
+                ImplementationResult.Multiple { Implementations: var implementations} => $"Class: Multiple implementations registered for \"{classOrStructType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
+                _ => throw new InvalidOperationException("Unexpected ImplementationResult")
+            };
+
+            return _errorNodeFactory(errorMessage, classOrStructType).EnqueueBuildJobTo(_parentContainer.BuildQueue, data.PassedContext);
         }
 
         return null;
@@ -196,7 +201,9 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         if (data is not null && _userDefinedElementsMappingPart.Map(data) is { } userDefinedNode)
             return userDefinedNode;
 
-        if (_checkTypeProperties.GetConstructorChoiceFor(implementationType) is { } constructor)
+        var constructorResult = _checkTypeProperties.GetConstructorChoiceFor(implementationType);
+
+        if (constructorResult is ConstructorResult.Single { Constructor: {} constructor })
             return _implementationNodeFactory(
                     abstractionType,
                     implementationType, 
@@ -205,12 +212,11 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
 
         if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
-            return _errorNodeFactory(implementationType.InstanceConstructors.Length switch
+            return _errorNodeFactory(constructorResult switch
                 {
-                    0 => $"Class.Constructor: No constructor found for implementation {implementationType.FullName()}",
-                    > 1 =>
-                        $"Class.Constructor: More than one constructor found for implementation {implementationType.FullName()}",
-                    _ => $"Class.Constructor: {implementationType.InstanceConstructors[0].Name} is not a method symbol"
+                    ConstructorResult.None => $"Class.Constructor: No visible constructor found for implementation {implementationType.FullName()}",
+                    ConstructorResult.Multiple => $"Class.Constructor: More than one visible constructor found for implementation {implementationType.FullName()}",
+                    _ => throw new InvalidOperationException("Unexpected ConstructorResult")
                 },
                 implementationType).EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
             
@@ -226,23 +232,25 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         if (_checkTypeProperties.ShouldBeComposite(interfaceType)
             && _checkTypeProperties.GetCompositeFor(interfaceType) is {} compositeImplementationType)
             return SwitchInterfaceWithPotentialDecoration(interfaceType, compositeImplementationType, passedContext, data.Next, data.Current);
-        if (_checkTypeProperties.MapToSingleFittingImplementation(interfaceType, passedContext.InjectionKeyModification) is not { } impType)
+        var implementationResult = _checkTypeProperties.MapToSingleFittingImplementation(interfaceType, passedContext.InjectionKeyModification);
+        if (implementationResult is ImplementationResult.Single { Implementation: { } impType })
+            return SwitchInterfaceWithPotentialDecoration(interfaceType, impType, passedContext, data.Current, data.Current);
+        
+        if (interfaceType.NullableAnnotation == NullableAnnotation.Annotated)
         {
-            if (interfaceType.NullableAnnotation == NullableAnnotation.Annotated)
-            {
-                _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
-                        $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\", but injecting null instead."),
-                    Location.None);
-                return _nullNodeFactory(interfaceType)
-                    .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
-            }
-            return _errorNodeFactory(
-                    $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\".",
-                    interfaceType)
+            _localDiagLogger.Warning(WarningLogData.NullResolutionWarning(
+                    $"Interface: Multiple or no implementations where a single is required for \"{interfaceType.FullName()}\", but injecting null instead."),
+                Location.None);
+            return _nullNodeFactory(interfaceType)
                 .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
         }
-
-        return SwitchInterfaceWithPotentialDecoration(interfaceType, impType, passedContext, data.Current, data.Current);
+        var errorMessage = implementationResult switch
+        {
+            ImplementationResult.None => $"Interface: No implementation registered for \"{interfaceType.FullName()}\".",
+            ImplementationResult.Multiple { Implementations: var implementations } => $"Interface: Multiple implementations registered for \"{interfaceType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
+            _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
+        };
+        return _errorNodeFactory(errorMessage, interfaceType).EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
     }
 
     public IElementNode SwitchInterfaceWithPotentialDecoration(
@@ -285,10 +293,12 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         PassedContext passedContext,
         IElementNodeMapperBase nextMapper)
     {
+        var constructorResult = _checkTypeProperties.GetConstructorChoiceFor(implementationType);
+        
         var implementationNode = _implementationNodeFactory(
                 null,
                 implementationType,
-                _checkTypeProperties.GetConstructorChoiceFor(implementationType),
+                constructorResult is ConstructorResult.Single { Constructor: {} constructor } ? constructor : null,
                 nextMapper)
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);
 

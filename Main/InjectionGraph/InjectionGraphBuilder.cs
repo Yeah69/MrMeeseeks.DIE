@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -17,6 +18,7 @@ internal interface IInjectionGraphBuilder
 
 internal class InjectionGraphBuilder(
     IContainerCheckTypeProperties containerCheckTypeProperties,
+    ILocalDiagLogger containerDiagLogger,
     IInjectablePropertyExtractor injectablePropertyExtractor,
     TypeNodeManager typeNodeManager,
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
@@ -24,6 +26,7 @@ internal class InjectionGraphBuilder(
     ConcreteFunctorNodeManager concreteFunctorNodeManager,
     ConcreteOverrideNodeManager concreteOverrideNodeManager,
     OverrideContextManager overrideContextManager,
+    Lazy<ConcreteExceptionNode> concreteExceptionNode,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
     Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
     Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory,
@@ -84,14 +87,44 @@ internal class InjectionGraphBuilder(
                     queue.Enqueue(new ResolutionStep(node, newEdgeContext));
                 break;
             case INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } namedTypeSymbol:
-                var implementation = containerCheckTypeProperties.MapToSingleFittingImplementation(namedTypeSymbol, null);
-                if (implementation is null)
-                    throw new ArgumentException("Type is not a fitting implementation", nameof(typeNodeType)); // ToDo: Better exception
+                var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(namedTypeSymbol, null);
+                if (implementationResult is not ImplementationResult.Single { Implementation: { } implementation })
+                {
+                    ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext);
+                    var logMessage = implementationResult switch
+                    {
+                        ImplementationResult.None => $"Class: No implementation registered for \"{namedTypeSymbol.FullName()}\".",
+                        ImplementationResult.Multiple { Implementations: var implementations} => $"Class: Multiple implementations registered for \"{namedTypeSymbol.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
+                        _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
+                    };
+                    containerDiagLogger.Error(
+                        ErrorLogData.ResolutionException(
+                            logMessage,
+                            namedTypeSymbol,
+                            ImmutableStack<INamedTypeSymbol>.Empty), 
+                        Location.None);
+                    break;
+                }
                 
                 // Constructor
-                var constructor = containerCheckTypeProperties.GetConstructorChoiceFor(implementation);
-                if (constructor is null)
-                    throw new ArgumentException("Type does not have a fitting constructor", nameof(typeNodeType)); // ToDo: Better exception
+                var constructorResult = containerCheckTypeProperties.GetConstructorChoiceFor(implementation);
+                if (constructorResult is not ConstructorResult.Single { Constructor: {} constructor})
+                {
+                    ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext);
+                    var logMessage = constructorResult switch
+                    {
+                        ConstructorResult.None => $"Class.Constructor: No visible constructor found for implementation {namedTypeSymbol.FullName()}",
+                        ConstructorResult.Multiple => $"Class.Constructor: More than one visible constructor found for implementation {namedTypeSymbol.FullName()}",
+                        _ => throw new InvalidOperationException("Unexpected ConstructorResult")
+                    };
+                    containerDiagLogger.Error(
+                        ErrorLogData.ResolutionException(
+                            logMessage,
+                            namedTypeSymbol,
+                            ImmutableStack<INamedTypeSymbol>.Empty), 
+                        Location.None);
+                    break;
+                }
                 
                 // Properties
                 IReadOnlyList<IPropertySymbol> properties;

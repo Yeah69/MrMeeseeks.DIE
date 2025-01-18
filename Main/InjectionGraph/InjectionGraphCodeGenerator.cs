@@ -136,7 +136,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 entryCreateFunctionsMap[entryCreateFunction.Data.Name] = functionName;
         }
 
-        foreach (var (rootType, name, parameters) in _containerInfo.CreateFunctionData)
+        foreach (var (rootType, name, parameters, _) in _containerInfo.CreateFunctionData)
         {
             if (entryCreateFunctionsMap.TryGetValue(name, out var innerFunctionName)
                 && _overrideContextManager.TryGetContext(parameters, out var overrideContext))

@@ -177,7 +177,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
 
         TransientScopeInterface.RegisterRange(this);
         base.Build(passedContext);
-        foreach (var (typeSymbol, methodNamePrefix, parameterTypes) in _containerInfo.CreateFunctionData)
+        foreach (var (typeSymbol, methodNamePrefix, parameterTypes, _) in _containerInfo.CreateFunctionData)
         {
             var actualType = _typeParameterUtility.EquipWithMappedTypeParameters(typeSymbol);
             var customizedType = TypeParameterUtility.ReplaceTypeParametersByCustom(actualType.OriginalDefinitionIfUnbound());

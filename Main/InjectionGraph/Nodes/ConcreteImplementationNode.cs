@@ -54,26 +54,32 @@ internal class ConcreteImplementationNode : IConcreteNode
         Data = data;
         
         ConstructorParameters = data.Constructor.Parameters
-            .Select(p => (p.Name, typeEdgeFactory(this, typeNodeManager.GetOrAddNode(p.Type))))
+            .Select(p => (
+                p.Name,
+                typeEdgeFactory(this, typeNodeManager.GetOrAddNode(p.Type)),
+                p.Locations.FirstOrDefault() ?? Location.None))
             .ToImmutableArray();
         ObjectInitializerAssignments = data.ObjectInitializerProperties
-            .Select(p => (p.Name, typeEdgeFactory(this, typeNodeManager.GetOrAddNode(p.Type))))
+            .Select(p => (
+                p.Name, 
+                typeEdgeFactory(this, typeNodeManager.GetOrAddNode(p.Type)),
+                p.Locations.FirstOrDefault() ?? Location.None))
             .ToImmutableArray();
     }
     internal ConcreteImplementationNodeData Data { get; }
-    internal ImmutableArray<(string Name, TypeEdge Edge)> ConstructorParameters { get; }
-    internal ImmutableArray<(string Name, TypeEdge Edge)> ObjectInitializerAssignments { get; }
+    internal ImmutableArray<(string Name, TypeEdge Edge, Location Location)> ConstructorParameters { get; }
+    internal ImmutableArray<(string Name, TypeEdge Edge, Location Location)> ObjectInitializerAssignments { get; }
     
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteImplementationNode node && Data.Equals(node.Data);
 
-    public IReadOnlyList<TypeNode> ConnectIfNotAlready(EdgeContext context)
+    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context)
     {
-        var notYetConnectedTypeNodes = new List<TypeNode>();
-        foreach (var (_, edge) in ConstructorParameters.Concat(ObjectInitializerAssignments))
+        var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, Location Location)>();
+        foreach (var (_, edge, location) in ConstructorParameters.Concat(ObjectInitializerAssignments))
         {
             if (edge.AddContext(context))
-                notYetConnectedTypeNodes.Add(edge.Target);
+                notYetConnectedTypeNodes.Add((edge.Target, location));
         }
         return notYetConnectedTypeNodes;
     }

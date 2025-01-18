@@ -60,6 +60,8 @@ internal class ConcreteEntryFunctionNode : IConcreteNode
 
     public override bool Equals(object? obj) => obj is ConcreteEntryFunctionNode node && Data.Equals(node.Data);
     
-    public IReadOnlyList<TypeNode> ConnectIfNotAlready(EdgeContext context) => 
-        ReturnType.AddContext(context) ? [ReturnType.Target] : Array.Empty<TypeNode>();
+    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
+        ReturnType.AddContext(context) 
+            ? [(ReturnType.Target, Location.None)] 
+            : Array.Empty<(TypeNode TypeNode, Location Location)>();
 }

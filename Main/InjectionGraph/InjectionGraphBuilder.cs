@@ -12,7 +12,11 @@ namespace MrMeeseeks.DIE.InjectionGraph;
 internal interface IInjectionGraphBuilder
 {
     IReadOnlyList<ITypeNodeFunction> Functions { get; }
-    void BuildForRootType(ITypeSymbol type, string entryFunctionName, IReadOnlyList<ITypeSymbol> overrides);
+    void BuildForRootType(
+        ITypeSymbol type, 
+        string entryFunctionName, 
+        IReadOnlyList<ITypeSymbol> overrides,
+        Location createFunctionAttributeLocation);
     void AssignFunctions();
 }
 
@@ -38,30 +42,35 @@ internal class InjectionGraphBuilder(
 
     public IReadOnlyList<ITypeNodeFunction> Functions => _functions;
 
-    private record ResolutionStep(TypeNode Current, EdgeContext Context);
+    private record ResolutionStep(TypeNode Current, EdgeContext Context, Location CurrentResolvedLocation);
 
-    public void BuildForRootType(ITypeSymbol rootType, string entryFunctionName, IReadOnlyList<ITypeSymbol> overrides)
+    public void BuildForRootType(
+        ITypeSymbol rootType, 
+        string entryFunctionName, 
+        IReadOnlyList<ITypeSymbol> overrides,
+        Location createFunctionAttributeLocation)
     {
         var overrideContext = overrideContextManager.GetOrAddContext(overrides);
         var rootEdgeContext = new EdgeContext(new DomainContext.Container(), overrideContext, new KeyContext.None());
         var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, rootType, overrides);
         var concreteEntryFunctionNode = concreteEntryFunctionNodeManager.GetOrAddNode(concreteEntryFunctionNodeData);
         _concreteEntryFunctionNodes.Add(concreteEntryFunctionNode);
-        var rootTypeNodes = concreteEntryFunctionNode.ConnectIfNotAlready(rootEdgeContext);
+        var rootTypeNodes = concreteEntryFunctionNode.ConnectIfNotAlready(rootEdgeContext).Select(t => t.TypeNode).ToList();
         var queue = new Queue<ResolutionStep>();
         foreach (var rootTypeNode in rootTypeNodes)
-            queue.Enqueue(new ResolutionStep(rootTypeNode, rootEdgeContext));
+            queue.Enqueue(new ResolutionStep(rootTypeNode, rootEdgeContext, createFunctionAttributeLocation));
         while (queue.Count > 0)
         {
-            var (typeNode, edgeContext) = queue.Dequeue();
-            MakeResolutionStep(typeNode, edgeContext, queue);
+            var (typeNode, edgeContext, currentResolvedLocation) = queue.Dequeue();
+            MakeResolutionStep(typeNode, edgeContext, queue, currentResolvedLocation);
         }
     }
 
     private void MakeResolutionStep(
         TypeNode typeNode,
         EdgeContext edgeContext,
-        Queue<ResolutionStep> queue)
+        Queue<ResolutionStep> queue,
+        Location currentResolvedLocation)
     {
         if (typeNode.ContainsOutgoingEdgeFor(edgeContext))
             return;
@@ -83,8 +92,11 @@ internal class InjectionGraphBuilder(
                 var newOverrideContext = overrideContextManager.GetOrAddContext(concreteFunctorNode.FunctorParameterTypes);
                 var newEdgeContext = edgeContext with { Override = newOverrideContext };
                 ConnectToTypeNodeIfNotAlready(concreteFunctorNode, newEdgeContext);
-                foreach (var node in concreteFunctorNode.ConnectIfNotAlready(newEdgeContext))
-                    queue.Enqueue(new ResolutionStep(node, newEdgeContext));
+                foreach (var (node, location) in concreteFunctorNode.ConnectIfNotAlready(newEdgeContext))
+                    queue.Enqueue(new ResolutionStep(
+                        node,
+                        newEdgeContext,
+                        location.Equals(Location.None) ? currentResolvedLocation : location));
                 break;
             case INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } namedTypeSymbol:
                 var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(namedTypeSymbol, null);
@@ -102,7 +114,7 @@ internal class InjectionGraphBuilder(
                             logMessage,
                             namedTypeSymbol,
                             ImmutableStack<INamedTypeSymbol>.Empty), 
-                        Location.None);
+                        currentResolvedLocation);
                     break;
                 }
                 
@@ -122,7 +134,7 @@ internal class InjectionGraphBuilder(
                             logMessage,
                             namedTypeSymbol,
                             ImmutableStack<INamedTypeSymbol>.Empty), 
-                        Location.None);
+                        currentResolvedLocation);
                     break;
                 }
                 
@@ -149,11 +161,21 @@ internal class InjectionGraphBuilder(
                 
                 ConnectToTypeNodeIfNotAlready(concreteImplementationNode, edgeContext);
                 
-                foreach (var node in concreteImplementationNode.ConnectIfNotAlready(edgeContext))
-                    queue.Enqueue(new ResolutionStep(node, edgeContext));
+                foreach (var (node, location) in concreteImplementationNode.ConnectIfNotAlready(edgeContext))
+                    queue.Enqueue(new ResolutionStep(
+                        node, 
+                        edgeContext,
+                        location.Equals(Location.None) ? currentResolvedLocation : location));
                 break;
             default:
-                throw new ArgumentException("Type is unsupported for injection resolution", nameof(typeNodeType));
+                ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext);
+                containerDiagLogger.Error(
+                    ErrorLogData.ResolutionException(
+                        $"Type {typeNode.Type.FullName()} could not be resolved.",
+                        typeNode.Type,
+                        ImmutableStack<INamedTypeSymbol>.Empty), 
+                    currentResolvedLocation);
+                break;
         }
 
         return;

@@ -5,5 +5,6 @@ namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
 internal class ConcreteExceptionNode : IConcreteNode, IContainerInstance
 {
-    public IReadOnlyList<TypeNode> ConnectIfNotAlready(EdgeContext context) => Array.Empty<TypeNode>();
+    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
+        Array.Empty<(TypeNode TypeNode, Location Location)>();
 }

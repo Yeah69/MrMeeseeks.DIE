@@ -40,5 +40,6 @@ internal class ConcreteOverrideNode : IConcreteNode
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteOverrideNode node && Data.Equals(node.Data);
 
-    public IReadOnlyList<TypeNode> ConnectIfNotAlready(EdgeContext context) => Array.Empty<TypeNode>();
+    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
+        Array.Empty<(TypeNode TypeNode, Location Location)>();
 }

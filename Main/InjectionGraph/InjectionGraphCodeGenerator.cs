@@ -211,7 +211,14 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             return NotAvailable; // ToDo this is wrong, adjust as soon a correct behavior is required
         
         var innerNode = node.Outgoing.Select(e => e.Target).FirstOrDefault();
-        
+
+        if (innerNode is ConcreteExceptionNode)
+        {
+            var reference = _referenceGenerator.Generate(node.Type);
+            _code.AppendLine($"{node.Type.FullName()} {reference} = default!;");
+            _code.AppendLine($"throw new {_wellKnownTypes.Exception.FullName()}(\"Failed to resolve type {node.Type.FullName()} during code generation.\");");
+            return reference;
+        }
         if (innerNode is ConcreteOverrideNode overrideNode)
         {
             var reference = _referenceGenerator.Generate(overrideNode.Data.Type);

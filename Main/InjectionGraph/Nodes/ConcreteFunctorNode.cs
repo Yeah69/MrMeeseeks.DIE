@@ -33,7 +33,6 @@ internal enum ConcreteFunctorNodeType { Func, Lazy, ThreadLocal }
 
 internal class ConcreteFunctorNode : IConcreteNode
 {
-    
     internal ConcreteFunctorNode(
         // parameters
         ConcreteFunctorNodeData data,

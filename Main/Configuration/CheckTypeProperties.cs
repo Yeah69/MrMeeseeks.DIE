@@ -57,6 +57,20 @@ internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeChec
     }
 }
 
+internal abstract record ImplementationResult
+{
+    internal sealed record None : ImplementationResult;
+    internal sealed record Single(INamedTypeSymbol Implementation) : ImplementationResult;
+    internal sealed record Multiple(IReadOnlyList<INamedTypeSymbol> Implementations) : ImplementationResult;
+}
+
+internal abstract record ConstructorResult
+{
+    internal sealed record None : ConstructorResult;
+    internal sealed record Single(IMethodSymbol Constructor) : ConstructorResult;
+    internal sealed record Multiple(IReadOnlyList<IMethodSymbol> Constructors) : ConstructorResult;
+}
+
 internal interface ICheckTypeProperties
 {
     DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType);
@@ -64,17 +78,13 @@ internal interface ICheckTypeProperties
     bool ShouldBeComposite(INamedTypeSymbol interfaceType);
     ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType);
     INamedTypeSymbol? GetCompositeFor(INamedTypeSymbol interfaceType);
-    IMethodSymbol? GetConstructorChoiceFor(INamedTypeSymbol implementationType);
+    ConstructorResult GetConstructorChoiceFor(INamedTypeSymbol implementationType);
     
-    IReadOnlyList<Decoration> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
-        INamedTypeSymbol implementationType);
+    IReadOnlyList<Decoration> GetDecorationSequenceFor(INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType);
 
-    INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type,
-        InjectionKey? injectionKey);
-    IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,
-        InjectionKey? injectionKey);
-    IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol,
-        ITypeSymbol keyType);
+    ImplementationResult MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey);
+    IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey);
+    IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol, ITypeSymbol keyType);
     IReadOnlyDictionary<object, IReadOnlyList<INamedTypeSymbol>> MapToKeyedMultipleImplementations(
         INamedTypeSymbol typeSymbol,
         ITypeSymbol keyType);
@@ -219,32 +229,33 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         return list.Count != 1 ? null : list[0];
     }
 
-    public IMethodSymbol? GetConstructorChoiceFor(INamedTypeSymbol implementationType)
+    public ConstructorResult GetConstructorChoiceFor(INamedTypeSymbol implementationType)
     {
+        // If there is a choice for the implementation, just return it
         if (_currentlyConsideredTypes.ImplementationToConstructorChoice.TryGetValue(
                 implementationType.UnboundIfGeneric(), out var constr))
-            return constr;
-
-        return implementationType switch
+            return new ConstructorResult.Single(constr);
+        
+        // Otherwise, decide based on the implementation type kind and on the visible constructors
+        var visibleConstructors = (implementationType switch
         {
             // If reference record and two constructors, decide for the constructor which isn't the copy-constructor
-            { IsRecord: true, IsReferenceType: true, IsValueType: false, InstanceConstructors.Length: 2 } 
-                when implementationType
-                    .InstanceConstructors.SingleOrDefault(c =>
-                        c.Parameters.Length != 1 ||
-                        !CustomSymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)) 
-                is { } constructor => constructor,
+            { IsRecord: true, IsReferenceType: true, IsValueType: false, InstanceConstructors.Length: >= 2 } => 
+                implementationType.InstanceConstructors.Where(c => c.Parameters.Length != 1 || !CustomSymbolEqualityComparer.Default.Equals(c.Parameters[0].Type, implementationType)),
             
             // If value type and two constructors, decide for the constructor which isn't the parameterless constructor
-            { IsRecord: true or false, IsReferenceType: false, IsValueType: true, InstanceConstructors.Length: 2 } 
-                when implementationType.InstanceConstructors.SingleOrDefault(c => c.Parameters.Length > 0) 
-                    is { } constructor => constructor,
+            { IsRecord: true or false, IsReferenceType: false, IsValueType: true, InstanceConstructors.Length: >= 2 } => 
+                implementationType.InstanceConstructors.Where(c => c.Parameters.Length > 0),
 
-            // If only one constructor, just choose it
-            { InstanceConstructors.Length: 1 } when implementationType.InstanceConstructors.SingleOrDefault()
-                is { } constructor => constructor,
-
-            _ => null
+            // Otherwise, just return all constructors
+            _ => implementationType.InstanceConstructors
+        }).ToList();
+        
+        return visibleConstructors switch
+        {
+            [] => new ConstructorResult.None(),
+            [{} single] => new ConstructorResult.Single(single),
+            [..] => new ConstructorResult.Multiple(visibleConstructors)
         };
     }
 
@@ -327,8 +338,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             }).OfType<Decoration>();
     }
 
-    public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type,
-        InjectionKey? injectionKey)
+    public ImplementationResult MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey)
     {
         var choice =
             _currentlyConsideredTypes.ImplementationChoices.TryGetValue(type.UnboundIfGeneric(), out var choice0)
@@ -352,7 +362,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             
             var list = possibleChoices.Take(2).ToList();
             
-            return list.Count == 1 ? list[0] : null;
+            return Return(list);
         }
 
         if (type is { TypeKind: not TypeKind.Interface, IsAbstract: false, IsStatic: false })
@@ -360,7 +370,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             if (_currentlyConsideredTypes.DecoratorTypes.Contains(type) ||
                 _currentlyConsideredTypes.CompositeTypes.Contains(type))
                 // if concrete type is decorator or composite then just shortcut
-                return type;
+                return new ImplementationResult.Single(type);
             var possibleConcreteTypeImplementations = FilterByInjectionKey(
                 GetClosedImplementations(
                     type,
@@ -372,7 +382,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             
             var list = possibleConcreteTypeImplementations.Take(2).ToList();
             
-            return list.Count == 1 ? list[0] : null;
+            return Return(list);
         }
 
         var possibleImplementations = _currentlyConsideredTypes.ImplementationMap.TryGetValue(type.UnboundIfGeneric(), out var implementations) 
@@ -388,7 +398,15 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         
         var list2 = possibleImplementations.Take(2).ToList();
         
-        return list2.Count == 1 ? list2[0] : null;
+        return Return(list2);
+        
+        static ImplementationResult Return(List<INamedTypeSymbol> implementations) =>
+            implementations switch
+            {
+                [] => new ImplementationResult.None(),
+                [{} implementation] => new ImplementationResult.Single(implementation),
+                [..] => new ImplementationResult.Multiple(implementations)
+            };
     }
 
     public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,

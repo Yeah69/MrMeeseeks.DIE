@@ -160,7 +160,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
     {
-        if (implementationType.TypeKind is TypeKind.Struct or TypeKind.Structure)
+        if (implementationType.TypeKind is TypeKind.Struct)
             return DisposalType.None;
 
         var ret = DisposalType.None;
@@ -204,7 +204,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         var compositeImplementation = _currentlyConsideredTypes.InterfaceToComposite[interfaceType.UnboundIfGeneric()];
         var implementations = GetClosedImplementations(
             interfaceType, 
-            ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, compositeImplementation), 
+            [compositeImplementation], 
             true,
             true,
             false);
@@ -274,7 +274,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             {
                 var implementations = GetClosedImplementations(
                     interfaceType,
-                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, imp),
+                    [imp],
                     true,
                     false,
                     true);
@@ -304,7 +304,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             var possibleChoices = FilterByInjectionKey(
                 GetClosedImplementations(
                     type, 
-                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, choice),
+                    [choice],
                     true, 
                     false, 
                     false), 
@@ -324,7 +324,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             var possibleConcreteTypeImplementations = FilterByInjectionKey(
                 GetClosedImplementations(
                     type,
-                    ImmutableHashSet.Create<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default, type),
+                    [type],
                     true,
                     false,
                     false),
@@ -339,7 +339,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             ? FilterByInjectionKey(
                 GetClosedImplementations(
                     type, 
-                    implementations, 
+                    [..implementations], 
                     true, 
                     false, 
                     false),
@@ -354,29 +354,14 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,
         InjectionKey? injectionKey)
     {
-        var isChoice =
-            _currentlyConsideredTypes
-                .ImplementationChoices
-                .TryGetValue(typeSymbol.UnboundIfGeneric(), out var choice);
-        
-        var isCollectionChoice =
-            _currentlyConsideredTypes
-                .ImplementationCollectionChoices
-                .TryGetValue(typeSymbol.UnboundIfGeneric(), out var choiceCollection);
-
-        if (isChoice || isCollectionChoice)
+        if (_currentlyConsideredTypes
+            .ImplementationCollectionChoices
+            .TryGetValue(typeSymbol.UnboundIfGeneric(), out var choiceCollection))
         {
-            var set = ImmutableHashSet.CreateRange<INamedTypeSymbol>(
-                CustomSymbolEqualityComparer.Default,
-                isCollectionChoice && choiceCollection is not null
-                    ? choiceCollection
-                    : Enumerable.Empty<INamedTypeSymbol>());
-            if (isChoice && choice is not null)
-                set = set.Add(choice);
             return FilterByInjectionKey(
                 GetClosedImplementations(
                     typeSymbol, 
-                    set, 
+                    choiceCollection, 
                     false, 
                     false, 
                     false),
@@ -388,7 +373,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             ? FilterByInjectionKey(
                 GetClosedImplementations(
                     typeSymbol,
-                    implementations, 
+                    [..implementations], 
                     false, 
                     false, 
                     false),
@@ -428,7 +413,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     
     private IEnumerable<INamedTypeSymbol> GetClosedImplementations(
         INamedTypeSymbol targetType,
-        IImmutableSet<INamedTypeSymbol> rawImplementations,
+        IReadOnlyList<INamedTypeSymbol> rawImplementations,
         bool preferChoicesForOpenGenericParameters,
         bool chooseComposite,
         bool chooseDecorator)

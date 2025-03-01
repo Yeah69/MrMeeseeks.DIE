@@ -33,8 +33,7 @@ internal class InjectionGraphBuilder(
     Lazy<ConcreteExceptionNode> concreteExceptionNode,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
     Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
-    Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory,
-    WellKnownTypes wellKnownTypes)
+    Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory)
     : IInjectionGraphBuilder, IContainerInstance
 {
     private readonly List<ConcreteEntryFunctionNode> _concreteEntryFunctionNodes = [];
@@ -84,9 +83,7 @@ internal class InjectionGraphBuilder(
                 ConnectToTypeNodeIfNotAlready(concreteOverrideNode, edgeContext);
                 break;
             case INamedTypeSymbol { TypeArguments.Length: >= 1 } maybeFunctor when 
-                CustomSymbolEqualityComparer.Default.Equals(maybeFunctor.OriginalDefinition, wellKnownTypes.Lazy1)
-                || CustomSymbolEqualityComparer.Default.Equals(maybeFunctor.OriginalDefinition, wellKnownTypes.ThreadLocal1)
-                || maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
+                maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
                 var concreteFunctorNodeData = new ConcreteFunctorNodeData(maybeFunctor);
                 var concreteFunctorNode = concreteFunctorNodeManager.GetOrAddNode(concreteFunctorNodeData);
                 var newOverrideContext = overrideContextManager.GetOrAddContext(concreteFunctorNode.FunctorParameterTypes);
@@ -127,6 +124,8 @@ internal class InjectionGraphBuilder(
                     {
                         ConstructorResult.None => $"Class.Constructor: No visible constructor found for implementation {namedTypeSymbol.FullName()}",
                         ConstructorResult.Multiple => $"Class.Constructor: More than one visible constructor found for implementation {namedTypeSymbol.FullName()}",
+                        ConstructorResult.ChoiceFailedNone => $"Class.Constructor: Constructor choice didn't match with any constructor for implementation {namedTypeSymbol.FullName()}",
+                        ConstructorResult.ChoiceFailedMultiple => $"Class.Constructor: Constructor choice matched with multiple constructors for implementation {namedTypeSymbol.FullName()}",
                         _ => throw new InvalidOperationException("Unexpected ConstructorResult")
                     };
                     containerDiagLogger.Error(

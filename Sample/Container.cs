@@ -1,19 +1,21 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using System.Threading;
+using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal sealed class DeeperClassA;
-
-internal sealed class DeeperClassB
+internal class HelloSayer
 {
-    internal required DeeperClassA DeeperClassA { get; init; }
+    internal void SayHello() => Console.WriteLine("Hello!");
 }
 
-internal class Class
+internal class Dialog
 {
-    internal required DeeperClassA DeeperClassA { get; init; }
-    internal required DeeperClassB DeeperClassB { get; init; }
+    internal Dialog(ThreadLocal<HelloSayer> helloSayer) => HelloSayer = helloSayer.Value!;
+    public HelloSayer HelloSayer { get; set; }
+    
+    internal void StartConversation() => HelloSayer.SayHello();
 }
 
-[CreateFunction(typeof(Class), "Create")]
+[CreateFunction(typeof(Dialog), "Create")]
 internal sealed partial class Container;

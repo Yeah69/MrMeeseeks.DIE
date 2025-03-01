@@ -8,7 +8,9 @@ internal class Program
         try
         {
             var container = Container.DIE_CreateContainer(); 
-            var asdf = container.Create();
+            var dialog = container.Create();
+            
+            dialog.StartConversation();
             
             Console.WriteLine("Hello, World!");
         }

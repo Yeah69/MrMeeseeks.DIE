@@ -216,6 +216,8 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
                 {
                     ConstructorResult.None => $"Class.Constructor: No visible constructor found for implementation {implementationType.FullName()}",
                     ConstructorResult.Multiple => $"Class.Constructor: More than one visible constructor found for implementation {implementationType.FullName()}",
+                    ConstructorResult.ChoiceFailedNone => $"Class.Constructor: Constructor choice didn't match with any constructor for implementation {implementationType.FullName()}",
+                    ConstructorResult.ChoiceFailedMultiple => $"Class.Constructor: Constructor choice matched with multiple constructors for implementation {implementationType.FullName()}",
                     _ => throw new InvalidOperationException("Unexpected ConstructorResult")
                 },
                 implementationType).EnqueueBuildJobTo(_parentContainer.BuildQueue, passedContext);

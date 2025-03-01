@@ -29,7 +29,7 @@ internal interface ITypesFromAttributesBase
     IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; }
     IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; }
     IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
-    IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
+    IImmutableSet<(INamedTypeSymbol, IReadOnlyList<ITypeSymbol>)> ConstructorChoices { get; }
     IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; } 
     IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; } 
@@ -388,7 +388,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                 if (ad.ConstructorArguments.Length < 2)
                 {
                     NotParsableAttribute(ad);
-                    return ((INamedTypeSymbol, IMethodSymbol)?) null;
+                    return ((INamedTypeSymbol, IReadOnlyList<ITypeSymbol>)?) null;
                 }
                 
                 var implementationType = ad.ConstructorArguments[0].Value as INamedTypeSymbol;
@@ -396,40 +396,19 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                     .ConstructorArguments[1]
                     .Values
                     .Select(tc => tc.Value)
-                    .OfType<INamedTypeSymbol>()
+                    .OfType<ITypeSymbol>()
                     .ToList();
 
                 if (implementationType is not null)
                 {
                     implementationType = implementationType.OriginalDefinitionIfUnbound();
-
-                    var constructorChoice = implementationType
-                        .InstanceConstructors
-                        .Where(c => c.Parameters.Length == parameterTypes.Count)
-                        .SingleOrDefault(c => c.Parameters.Select(p => p.Type)
-                            .Zip(parameterTypes,
-                                (pLeft, pRight) => CustomSymbolEqualityComparer.Default.Equals(pLeft, pRight))
-                            .All(b => b));
-
-                    if (constructorChoice is not null)
-                    {
-                        return (implementationType, constructorChoice);
-                    }
-
-                    localDiagLogger.Error(ErrorLogData.ValidationConfigurationAttribute(
-                        ad,
-                        _rangeType,
-                        _containerType,
-                        $"Couldn't find constructor \"{implementationType.FullName()}({string.Join(", ", parameterTypes.Select(p => p.FullName()))})\"."),
-                        ad.GetLocation());
-                    
-                    return null;
+                    return (implementationType, parameterTypes);
                 }
 
                 NotParsableAttribute(ad);
                 return null;
             })
-            .OfType<(INamedTypeSymbol, IMethodSymbol)>());
+            .OfType<(INamedTypeSymbol, IReadOnlyList<ITypeSymbol>)>());
 
         INamedTypeSymbol? SingleTypeArgument(AttributeData ad)
         {
@@ -1091,7 +1070,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
     public IImmutableSet<INamedTypeSymbol> TransientScopeRootImplementation { get; protected set; }
     public IImmutableSet<INamedTypeSymbol> ScopeRootImplementation { get; protected set; }
     public IImmutableSet<(INamedTypeSymbol, INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>)> DecoratorSequenceChoices { get; }
-    public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> ConstructorChoices { get; }
+    public IImmutableSet<(INamedTypeSymbol, IReadOnlyList<ITypeSymbol>)> ConstructorChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, IMethodSymbol)> Initializers { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, IReadOnlyList<INamedTypeSymbol>)> GenericParameterSubstitutesChoices { get; }
     public IImmutableSet<(INamedTypeSymbol, ITypeParameterSymbol, INamedTypeSymbol)> GenericParameterChoices { get; }

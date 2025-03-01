@@ -57,7 +57,7 @@ internal interface ICurrentlyConsideredTypes
     IImmutableSet<INamedTypeSymbol> DecorationOrdinalAttributeTypes { get; }
     IImmutableSet<(INamedTypeSymbol DecorationImplementationType, int Ordinal)> DecorationOrdinalChoices { get; }
     IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
-    IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
+    IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>> ImplementationToConstructorChoice { get; }
     IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>> DecoratorSequenceChoices { get; }
     IReadOnlyDictionary<INamedTypeSymbol, IImmutableSet<INamedTypeSymbol>> ImplementationMap { get; }
@@ -211,7 +211,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             .Where(g => g.Count() == 1)
             .ToDictionary(g => g.Key, g => g.Single(), CustomSymbolEqualityComparer.Default);
 
-        var constructorChoices = new Dictionary<INamedTypeSymbol, IMethodSymbol>(CustomSymbolEqualityComparer.Default);
+        var constructorChoices = new Dictionary<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>>(CustomSymbolEqualityComparer.Default);
         
         foreach (var types in typesFromAttributes)
         {
@@ -502,7 +502,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
     public IImmutableSet<(INamedTypeSymbol DecorationImplementationType, int Ordinal)> DecorationOrdinalChoices { get; }
 
     public IReadOnlyDictionary<ISymbol?, INamedTypeSymbol> InterfaceToComposite { get; }
-    public IReadOnlyDictionary<INamedTypeSymbol, IMethodSymbol> ImplementationToConstructorChoice { get; }
+    public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>> ImplementationToConstructorChoice { get; }
     public IReadOnlyDictionary<ISymbol?, IReadOnlyList<INamedTypeSymbol>> InterfaceToDecorators { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyDictionary<INamedTypeSymbol, IReadOnlyList<INamedTypeSymbol>>> DecoratorSequenceChoices { get; }
     public IReadOnlyDictionary<INamedTypeSymbol, IImmutableSet<INamedTypeSymbol>> ImplementationMap { get; }

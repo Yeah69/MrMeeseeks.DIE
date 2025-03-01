@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 using MrMeeseeks.DIE.UserUtility;
@@ -30,6 +31,9 @@ using MrMeeseeks.DIE.UserUtility;
 [assembly:InvocationDescriptionMapping(typeof(InvocationDescriptionAttribute))]
 
 [assembly:AllImplementationsAggregation]
+
+[assembly:ConstructorChoice(typeof(Lazy<>), typeof(Func<>))]
+[assembly:ConstructorChoice(typeof(ThreadLocal<>), typeof(Func<>))]
 
 namespace MrMeeseeks.DIE.Sample;
 

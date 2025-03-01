@@ -1,7 +1,6 @@
 ﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
@@ -29,8 +28,6 @@ internal record ConcreteFunctorNodeData(INamedTypeSymbol Type)
 internal class ConcreteFunctorNodeManager(Func<ConcreteFunctorNodeData, ConcreteFunctorNode> factory)
     : ConcreteNodeManagerBase<ConcreteFunctorNodeData, ConcreteFunctorNode>(factory), IContainerInstance;
 
-internal enum ConcreteFunctorNodeType { Func, Lazy, ThreadLocal }
-
 internal class ConcreteFunctorNode : IConcreteNode
 {
     internal ConcreteFunctorNode(
@@ -39,36 +36,15 @@ internal class ConcreteFunctorNode : IConcreteNode
 
         // dependencies
         TypeNodeManager typeNodeManager,
-        Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory,
-        WellKnownTypes wellKnownTypes)
+        Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory)
     {
         Data = data;
 
-        ITypeSymbol returnedType;
-        if (data.Type.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal))
-        {
-            FunctorType = ConcreteFunctorNodeType.Func;
-            FunctorParameterTypes = data.Type.TypeArguments.Take(data.Type.TypeArguments.Length - 1).ToArray();
-            returnedType = data.Type.TypeArguments.Last();
-        }
-        else if (CustomSymbolEqualityComparer.Default.Equals(data.Type.OriginalDefinition, wellKnownTypes.Lazy1))
-        {
-            FunctorType = ConcreteFunctorNodeType.Lazy;
-            FunctorParameterTypes = [];
-            returnedType = data.Type.TypeArguments.Single();
-        }
-        else if (CustomSymbolEqualityComparer.Default.Equals(data.Type.OriginalDefinition, wellKnownTypes.ThreadLocal1))
-        {
-            FunctorType = ConcreteFunctorNodeType.ThreadLocal;
-            FunctorParameterTypes = [];
-            returnedType = data.Type.TypeArguments.Single();
-        }
-        else
-            throw new ArgumentException("Invalid functor type");
+        FunctorParameterTypes = data.Type.TypeArguments.Take(data.Type.TypeArguments.Length - 1).ToArray();
+        var returnedType = data.Type.TypeArguments.Last();
         ReturnedElement = typeEdgeFactory(this, typeNodeManager.GetOrAddNode(returnedType));
     }
     internal ConcreteFunctorNodeData Data { get; }
-    internal ConcreteFunctorNodeType FunctorType { get; }
     internal IReadOnlyList<ITypeSymbol> FunctorParameterTypes { get; }
     internal TypeEdge ReturnedElement { get; }
     

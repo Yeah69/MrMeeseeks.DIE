@@ -262,26 +262,15 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         if (innerNode is ConcreteFunctorNode functorNode)
         {
             var reference = _referenceGenerator.Generate(functorNode.Data.Type);
-            switch (functorNode.FunctorType)
+            var parameterReferences = functorNode.FunctorParameterTypes.Select(_ => _referenceGenerator.Generate("p")).ToArray();
+            var parameterDeclaration = string.Join(", ", parameterReferences);
+            if (_overrideContextManager.TryGetContext(functorNode.FunctorParameterTypes, out var overrideContext)
+                && _overrideContextNameMap.TryGetValue(overrideContext, out var overrideContextName))
             {
-                case ConcreteFunctorNodeType.Func:
-                    var parameterReferences = functorNode.FunctorParameterTypes.Select(_ => _referenceGenerator.Generate("p")).ToArray();
-                    var parameterDeclaration = string.Join(", ", parameterReferences);
-                    if (_overrideContextManager.TryGetContext(functorNode.FunctorParameterTypes, out var overrideContext)
-                        && _overrideContextNameMap.TryGetValue(overrideContext, out var overrideContextName))
-                    {
-                        var overrideParameters = overrideContext is OverrideContext.Any any
-                            ? string.Join(", ", any.Overrides.Select(o => parameterReferences[functorNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
-                            : "";
-                        _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}(new {overrideContextName}({overrideParameters}));");
-                    }
-                    break;
-                case ConcreteFunctorNodeType.Lazy:
-                case ConcreteFunctorNodeType.ThreadLocal:
-                    _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = new {functorNode.Data.Type.FullName()}(() => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}(new {_overrideContextNameMap[new OverrideContext.None()]}()));");
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                var overrideParameters = overrideContext is OverrideContext.Any any
+                    ? string.Join(", ", any.Overrides.Select(o => parameterReferences[functorNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
+                    : "";
+                _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}(new {overrideContextName}({overrideParameters}));");
             }
             return reference;
         }

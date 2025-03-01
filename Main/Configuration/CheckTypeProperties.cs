@@ -66,6 +66,8 @@ internal abstract record ImplementationResult
 
 internal abstract record ConstructorResult
 {
+    internal sealed record ChoiceFailedNone : ConstructorResult;
+    internal sealed record ChoiceFailedMultiple(IReadOnlyList<IMethodSymbol> Constructors) : ConstructorResult;
     internal sealed record None : ConstructorResult;
     internal sealed record Single(IMethodSymbol Constructor) : ConstructorResult;
     internal sealed record Multiple(IReadOnlyList<IMethodSymbol> Constructors) : ConstructorResult;
@@ -233,8 +235,21 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     {
         // If there is a choice for the implementation, just return it
         if (_currentlyConsideredTypes.ImplementationToConstructorChoice.TryGetValue(
-                implementationType.UnboundIfGeneric(), out var constr))
-            return new ConstructorResult.Single(constr);
+                implementationType.UnboundIfGeneric(), out var constructorParameterTypes))
+        {
+            var filteredConstructors = implementationType.InstanceConstructors
+                .Where(c => c.Parameters.Length == constructorParameterTypes.Count 
+                            && c.Parameters.Zip(constructorParameterTypes, (p, t) => CustomSymbolEqualityComparer.Default.Equals(p.Type, t)
+                                || p.Type is INamedTypeSymbol named && CustomSymbolEqualityComparer.Default.Equals(named.UnboundIfGeneric(), t))
+                                .All(b => b))
+                .ToList();
+            return filteredConstructors switch
+            {
+                [] => new ConstructorResult.ChoiceFailedNone(),
+                [{} single] => new ConstructorResult.Single(single),
+                [..] => new ConstructorResult.ChoiceFailedMultiple(filteredConstructors)
+            };
+        }
         
         // Otherwise, decide based on the implementation type kind and on the visible constructors
         var visibleConstructors = (implementationType switch

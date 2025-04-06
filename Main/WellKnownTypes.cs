@@ -14,6 +14,8 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol? ValueTask1, // .NET Standard 2.1
     INamedTypeSymbol Task, // .NET Standard 2.0
     INamedTypeSymbol Task1, // .NET Standard 2.0
+    INamedTypeSymbol TaskCompletionSource1, // .NET Standard 2.0
+    INamedTypeSymbol TaskCompletionSourceOfInt, // .NET Standard 2.0
     INamedTypeSymbol SpinWait, // .NET Standard 2.0
     INamedTypeSymbol Thread, // .NET Standard 2.0
     INamedTypeSymbol ObjectDisposedException, // .NET Standard 2.0
@@ -56,6 +58,7 @@ internal sealed record WellKnownTypes(
         var exception = compilation.GetTypeByMetadataNameOrThrow("System.Exception");
         var task1 = compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task`1");
         var aggregateException = compilation.GetTypeByMetadataNameOrThrow("System.AggregateException");
+        var taskCompletionSource1 = compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.TaskCompletionSource`1");
         
         return new WellKnownTypes(
             IDisposable: iDisposable,
@@ -66,6 +69,8 @@ internal sealed record WellKnownTypes(
             ValueTask1: valueTask1,
             Task: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Tasks.Task"),
             Task1: task1,
+            TaskCompletionSource1: taskCompletionSource1,
+            TaskCompletionSourceOfInt: taskCompletionSource1.Construct(compilation.GetSpecialType(SpecialType.System_Int32)),
             SpinWait: compilation.GetTypeByMetadataNameOrThrow("System.Threading.SpinWait"),
             Thread: compilation.GetTypeByMetadataNameOrThrow("System.Threading.Thread"),
             ObjectDisposedException: compilation.GetTypeByMetadataNameOrThrow("System.ObjectDisposedException"),

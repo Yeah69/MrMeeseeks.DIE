@@ -197,8 +197,13 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                   finally
                   {
                   {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Decrement)}}(ref {{_range.ResolutionCounterReference}});
-                  }
                   """);
+            if (_wellKnownTypes.ValueTask is not null && _wellKnownTypes.IAsyncDisposable is not null && _disposeUtility.ReleaseDisposeAsyncFullyQualified is {} releaseDisposeAsyncFullyQualified)
+            {
+                code.AppendLine(
+                    $"{releaseDisposeAsyncFullyQualified}(ref {_range.DisposalHandling.DisposedFieldReference}, ref {_range.ResolutionCounterReference}, {_range.ReleaseDisposeAsyncReference});");
+            }
+            code.AppendLine("}");
         }
 
         switch (_function)

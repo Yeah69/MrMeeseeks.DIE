@@ -10,8 +10,8 @@ internal interface ICreateContainerFunctionNode : INode
     string ContainerTypeFullName { get; }
     string ContainerReference { get; }
     string? InitializationFunctionName { get; }
-    bool InitializationAwaited { get; }
     string ReturnTypeFullName { get; }
+    ReturnTypeStatus ReturnTypeStatus { get; }
 }
 
 internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunctionNode
@@ -34,9 +34,7 @@ internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunc
         Name = containerInfo.Name;
         ContainerTypeFullName = containerInfo.FullName;
         ContainerReference = referenceGenerator.Generate(containerInfo.ContainerType);
-        Parameters = constructor?.Parameters.Select(ps => (ps.Type.FullName(), ps.Name)).ToList()
-            ?? new List<(string, string)>();
-        InitializationFunctionName = initializationFunction?.Name;
+        Parameters = constructor?.Parameters.Select(ps => (ps.Type.FullName(), ps.Name)).ToList() ?? [];
         _containerType = containerInfo.ContainerType;
         _wellKnownTypes = wellKnownTypes;
     }
@@ -47,13 +45,30 @@ internal sealed partial class CreateContainerFunctionNode : ICreateContainerFunc
     public IReadOnlyList<(string TypeFullName, string Reference)> Parameters { get; }
     public string ContainerTypeFullName { get; }
     public string ContainerReference { get; }
-    public string? InitializationFunctionName { get; }
 
-    public bool InitializationAwaited =>
-        _initializationFunction?.SynchronicityDecision is {} synchronicityDecision
-        && synchronicityDecision != SynchronicityDecision.Sync;
+    public string? InitializationFunctionName
+    {
+        get
+        {
+            if (_initializationFunction is null)
+                return null;
+            var statuses = Enum.GetValues(typeof(ReturnTypeStatus)).OfType<ReturnTypeStatus>();
+            foreach (var status in statuses)
+                if (_initializationFunction.ReturnTypeStatus.HasFlag(status))
+                    return _initializationFunction.Name(status);
+            throw new InvalidOperationException("No valid return type status.");
+        }
+    }
 
-    public string ReturnTypeFullName => InitializationAwaited
-        ? (_wellKnownTypes.ValueTask1 ?? _wellKnownTypes.Task1).Construct(_containerType).FullName()
-        : ContainerTypeFullName;
+    public string ReturnTypeFullName => _initializationFunction switch
+    {
+        { ReturnTypeStatus: var returnTypeStatus0 } 
+            when returnTypeStatus0.HasFlag(ReturnTypeStatus.ValueTask) && _wellKnownTypes.ValueTask1 is not null => 
+            _wellKnownTypes.ValueTask1.Construct(_containerType).FullName(),
+        { ReturnTypeStatus: var returnTypeStatus1 } 
+            when returnTypeStatus1.HasFlag(ReturnTypeStatus.Task) => 
+            _wellKnownTypes.Task1.Construct(_containerType).FullName(),
+        _ => ContainerTypeFullName
+    };
+    public ReturnTypeStatus ReturnTypeStatus => _initializationFunction?.ReturnTypeStatus ?? ReturnTypeStatus.Ordinary;
 }

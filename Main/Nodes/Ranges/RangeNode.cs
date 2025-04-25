@@ -28,7 +28,7 @@ internal interface IRangeNode : INode
     IWrappedAsyncFunctionCallNode BuildAsyncCreateCall(
         MapperData mapperData, 
         ITypeSymbol type,
-        SynchronicityDecision synchronicity, 
+        INamedTypeSymbol someTaskType,
         IFunctionNode callingFunction);
     ITransientScopeCallNode BuildTransientScopeCall(
         INamedTypeSymbol type, 
@@ -87,7 +87,7 @@ internal abstract class RangeNode : IRangeNode
     private readonly Dictionary<ITypeSymbol, IRangedInstanceFunctionGroupNode> _rangedInstanceFunctionGroupNodes = new(MatchTypeParametersSymbolEqualityComparer.IncludeNullability);
 
     // ReSharper disable once InconsistentNaming
-    protected readonly List<IVoidFunctionNode> _initializationFunctions = new();
+    protected readonly List<IVoidFunctionNode> _initializationFunctions = [];
 
     protected readonly Dictionary<INamedTypeSymbol, IInitializedInstanceNode> InitializedInstanceNodesMap = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly INamedTypeSymbol _objectType;
@@ -309,7 +309,7 @@ internal abstract class RangeNode : IRangeNode
     public IWrappedAsyncFunctionCallNode BuildAsyncCreateCall(
         MapperData mapperData, 
         ITypeSymbol type, 
-        SynchronicityDecision synchronicity,
+        INamedTypeSymbol someTaskType,
         IFunctionNode callingFunction) =>
         FunctionResolutionUtility.GetOrCreateFunctionCall(
             _mapperDataToFunctionKeyTypeConverter.Convert(mapperData, type),
@@ -322,7 +322,7 @@ internal abstract class RangeNode : IRangeNode
                     null)
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)),
-            f => f.CreateAsyncCall(type, null, synchronicity, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
+            f => f.CreateAsyncCall(type, someTaskType, null, callingFunction, TypeParameterUtility.ExtractTypeParameters(type)));
 
     public IFunctionCallNode BuildInitializationCall(IFunctionNode callingFunction)
     {
@@ -335,7 +335,7 @@ internal abstract class RangeNode : IRangeNode
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)));
 
-        return voidFunction.CreateCall(_objectType, null, callingFunction, Array.Empty<ITypeSymbol>());
+        return voidFunction.CreateCall(_objectType, null, callingFunction, []);
     }
 
     public void CycleDetectionAndReorderingOfInitializedInstances()

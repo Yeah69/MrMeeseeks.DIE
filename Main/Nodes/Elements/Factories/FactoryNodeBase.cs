@@ -5,25 +5,26 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.Factories;
 
-internal interface IFactoryNodeBase : IElementNode, IAwaitableNode
+internal interface IFactoryNodeBase : IElementNode
 {
     string Name { get; }
     string? AsyncTypeFullName { get; }
+    bool Awaited { get; }
 }
 
 internal abstract class FactoryNodeBase : IFactoryNodeBase
 {
-    private readonly IFunctionNode _parentFunction;
-
     internal FactoryNodeBase(
+        // parameters
         ITypeSymbol referenceType,
         ISymbol symbol,
         
+        // dependencies
         IFunctionNode parentFunction,
+        ITaskBasedQueue taskBasedQueue,
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
-        _parentFunction = parentFunction;
         Name = symbol.Name;
         Reference = referenceGenerator.Generate(referenceType);
         TypeFullName = referenceType.FullName();
@@ -34,12 +35,12 @@ internal abstract class FactoryNodeBase : IFactoryNodeBase
         {
             Awaited = true;
             AsyncTypeFullName = namedReferenceType.TypeArguments.First().FullName();
+            taskBasedQueue.EnqueueTaskBasedOnlyFunction(parentFunction);
         }
     }
     
     public virtual void Build(PassedContext passedContext)
     {
-        _parentFunction.RegisterAwaitableNode(this);
     }
 
     public abstract void Accept(INodeVisitor nodeVisitor);

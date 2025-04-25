@@ -9,19 +9,20 @@ namespace MrMeeseeks.DIE.Nodes.Functions;
 internal interface IFunctionNode : INode
 {
     Accessibility? Accessibility { get; }
-    SynchronicityDecision SynchronicityDecision { get; }
-    SynchronicityDecisionKind SynchronicityDecisionKind { get; }
-    string Name { get; }
+    ReturnTypeStatus ReturnTypeStatus { get; }
+    AsyncAwaitStatus AsyncAwaitStatus { get; }
+    string Name(ReturnTypeStatus returnTypeStatus);
+    (IReadOnlyList<IFunctionNode> Calling, IReadOnlyList<IFunctionNode> Called) MakeTaskBasedOnly();
+    IReadOnlyList<IFunctionNode> MakeTaskBasedToo();
     IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
     ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }
     IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; }
-    string ReturnedTypeFullName { get; }
+    string ReturnedTypeFullName(ReturnTypeStatus returnTypeStatus);
     string ReturnedTypeNameNotWrapped { get; }
     string Description { get; }
     HashSet<IFunctionNode> CalledFunctions { get; }
     IEnumerable<IFunctionNode> CalledFunctionsOfSameRange { get; }
     IEnumerable<IInitializedInstanceNode> UsedInitializedInstance { get; }
-    void RegisterAwaitableNode(IAwaitableNode awaitableNode);
     void RegisterCalledFunction(IFunctionNode calledFunction);
     void RegisterCallingFunction(IFunctionNode callingFunction);
     void RegisterUsedInitializedInstance(IInitializedInstanceNode initializedInstance);
@@ -29,8 +30,6 @@ internal interface IFunctionNode : INode
     int GetSubDisposalCount();
     void AddOneToTransientScopeDisposalCount();
     int GetTransientScopeDisposalCount();
-    void CheckSynchronicity();
-    void ForceToAsync();
     string RangeFullName { get; }
     IReadOnlyList<ILocalFunctionNode> LocalFunctions { get; }
     void AddLocalFunction(ILocalFunctionNode function);
@@ -53,8 +52,8 @@ internal interface IFunctionNode : INode
         IReadOnlyList<ITypeSymbol> typeParameters);
     IWrappedAsyncFunctionCallNode CreateAsyncCall(
         ITypeSymbol wrappedType,
+        INamedTypeSymbol someTaskType,
         string? ownerReference,
-        SynchronicityDecision synchronicity,
         IFunctionNode callingFunction,
         IReadOnlyList<ITypeSymbol> typeParameters);
     IScopeCallNode CreateScopeCall(

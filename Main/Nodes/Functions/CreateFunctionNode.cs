@@ -62,7 +62,8 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         _mapperData = mapperData;
         _implementationMappingConfiguration = implementationMappingConfiguration;
         _mapperFactory = mapperFactory;
-        Name = referenceGenerator.Generate("Create", typeSymbol);
+        NamePrefix = $"Create{typeSymbol.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
@@ -75,6 +76,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
             : base.MapToReturnedElement(mapper);
 
     protected override IElementNodeMapperBase GetMapper() => _mapperFactory.Create(_mapperData);
-    
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

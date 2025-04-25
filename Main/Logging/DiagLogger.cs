@@ -14,7 +14,7 @@ internal sealed class DiagLogger : IDiagLogger, IContainerInstance
 {
     private readonly bool _ignoreErrors;
     private readonly GeneratorExecutionContext _context;
-    private readonly List<DieExceptionKind> _errorKinds = new();
+    private readonly List<DieExceptionKind> _errorKinds = [];
 
     internal DiagLogger(
         IGeneratorConfiguration generatorConfiguration,

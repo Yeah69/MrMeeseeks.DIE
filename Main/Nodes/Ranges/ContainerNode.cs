@@ -39,6 +39,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
     private readonly IContainerInfo _containerInfo;
     private readonly IFunctionCycleTracker _functionCycleTracker;
     private readonly ITypeParameterUtility _typeParameterUtility;
+    private readonly ITaskBasedQueue _taskBasedQueue;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
     private readonly Func<ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, IEntryFunctionNodeRoot> _entryFunctionNodeFactory;
@@ -88,6 +89,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         ITypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
         ICheckTypeProperties checkTypeProperties,
+        ITaskBasedQueue taskBasedQueue,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
@@ -127,6 +129,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         _containerInfo = containerInfo;
         _functionCycleTracker = functionCycleTracker;
         _typeParameterUtility = typeParameterUtility;
+        _taskBasedQueue = taskBasedQueue;
         _currentExecutionPhaseSetter = currentExecutionPhaseSetter;
         _lazyTransientScopeInterfaceNode = lazyTransientScopeInterfaceNode;
         _entryFunctionNodeFactory = entryFunctionNodeFactory;
@@ -154,7 +157,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         var initializedInstancesFunction = InitializedInstances.Any()
             ? VoidFunctionNodeFactory(
                     InitializedInstances.ToList(),
-                    Array.Empty<ITypeSymbol>())
+                    [])
                 .Function
                 .EnqueueBuildJobTo(ParentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null))
             : null;
@@ -196,11 +199,10 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
 
         _currentExecutionPhaseSetter.Value = ExecutionPhase.ResolutionValidation;
         
-        while (AsyncCheckQueue.Count != 0 && AsyncCheckQueue.Dequeue() is { } function)
-            function.CheckSynchronicity();
+        _taskBasedQueue.Process();
         
         foreach (var call in asyncCallNodes)
-            call.AdjustToCurrentCalledFunctionSynchronicity();
+            call.AdjustToCurrentCalledFunction();
         
         AdjustRangedInstancesIfGeneric();
         foreach (var scope in Scopes)

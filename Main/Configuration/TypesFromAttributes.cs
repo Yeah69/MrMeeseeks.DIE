@@ -182,7 +182,7 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
         : base(
             scopeInfo.ScopeType is not null 
                 ? rangeUtility.GetRangeAttributes(scopeInfo.ScopeType) 
-                : Array.Empty<AttributeData>(),
+                : [],
             scopeInfo.ScopeType,
             containerInfo.ContainerType,
             localDiagLogger,
@@ -757,7 +757,7 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
                     ? assemblyImplementationsAttributes
                     : Enumerable.Empty<AttributeData>())
                 .SelectMany(ad => ad.ConstructorArguments.Length < 1
-                    ? Array.Empty<IAssemblySymbol>()
+                    ? []
                     : ad.ConstructorArguments[0]
                         .Values
                         .Select(tc =>

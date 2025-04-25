@@ -65,9 +65,6 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
 
         ItemTypeFullName = CollectionUtility.GetCollectionsInnerType(enumerableType).FullName();
 
-        SuppressAsync = 
-            wellKnownTypesCollections.IAsyncEnumerable1 is not null 
-            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
         IsAsyncEnumerable =
             wellKnownTypesCollections.IAsyncEnumerable1 is not null 
             && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
@@ -86,11 +83,12 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
                 (namedUnwrappedType, namedTypeSymbol))
             : baseMapper;
     }
-
-    protected override bool SuppressAsync { get; }
     public override string ReturnedTypeNameNotWrapped { get; }
 
-    public IReadOnlyList<IElementNode> ReturnedElements { get; protected set; } = Array.Empty<IElementNode>();
+    public IReadOnlyList<IElementNode> ReturnedElements { get; protected set; } = [];
     public bool IsAsyncEnumerable { get; }
     public string ItemTypeFullName { get; }
+    public override string Name(ReturnTypeStatus returnTypeStatus) => IsAsyncEnumerable 
+        ? $"{NamePrefix}{NameNumberSuffix}"
+        : base.Name(returnTypeStatus);
 }

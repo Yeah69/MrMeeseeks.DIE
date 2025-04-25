@@ -57,7 +57,8 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
-        Name = prefix;
+        NamePrefix = prefix;
+        NameNumberSuffix = "";
     }
 
     protected override IElementNodeMapperBase GetMapper()
@@ -67,5 +68,8 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
         return _nonWrapToCreateElementNodeMapperFactory(dummyMapper);
     }
 
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
+    public override string Name(ReturnTypeStatus returnTypeStatus) => NamePrefix;
 }

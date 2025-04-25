@@ -33,12 +33,12 @@ internal sealed class AsyncWrapperMappingPart : IAsyncWrapperMappingPart, IScope
             && CustomSymbolEqualityComparer.Default.Equals(data.Type.OriginalDefinition, _wellKnownTypes.ValueTask1)
             && data.Type is INamedTypeSymbol valueTask)
             return _userDefinedElementsMappingPart.Map(data) 
-                   ?? _parentRange.BuildAsyncCreateCall(data.GetMapperDataForAsyncWrapping(), valueTask.TypeArguments[0], SynchronicityDecision.AsyncValueTask, _parentFunction);
+                   ?? _parentRange.BuildAsyncCreateCall(data.GetMapperDataForAsyncWrapping(), valueTask.TypeArguments[0], valueTask, _parentFunction);
 
         if (CustomSymbolEqualityComparer.Default.Equals(data.Type.OriginalDefinition, _wellKnownTypes.Task1)
             && data.Type is INamedTypeSymbol task)
             return _userDefinedElementsMappingPart.Map(data) 
-                   ?? _parentRange.BuildAsyncCreateCall(data.GetMapperDataForAsyncWrapping(), task.TypeArguments[0], SynchronicityDecision.AsyncTask, _parentFunction);
+                   ?? _parentRange.BuildAsyncCreateCall(data.GetMapperDataForAsyncWrapping(), task.TypeArguments[0], task, _parentFunction);
 
         return null;
     }

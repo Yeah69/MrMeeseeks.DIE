@@ -76,12 +76,12 @@ internal sealed class ScopeManager : IScopeManager, IContainerInstance
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch
                     {
-                        TypedConstantKind.Type => new [] { tc.Value as INamedTypeSymbol },
+                        TypedConstantKind.Type => [tc.Value as INamedTypeSymbol],
                         TypedConstantKind.Array => tc
                             .Values 
                             .Where(subTc => subTc.Kind == TypedConstantKind.Type)
                             .Select(subTc => subTc.Value as INamedTypeSymbol),
-                        _ => Array.Empty<INamedTypeSymbol>()
+                        _ => []
                     }))
                 .OfType<INamedTypeSymbol>()
                 .Select(rootType => (rootType, nts)))
@@ -102,12 +102,12 @@ internal sealed class ScopeManager : IScopeManager, IContainerInstance
                     .ConstructorArguments
                     .SelectMany(tc => tc.Kind switch
                     {
-                        TypedConstantKind.Type => new [] { tc.Value as INamedTypeSymbol },
+                        TypedConstantKind.Type => [tc.Value as INamedTypeSymbol],
                         TypedConstantKind.Array => tc
                             .Values 
                             .Where(subTc => subTc.Kind == TypedConstantKind.Type)
                             .Select(subTc => subTc.Value as INamedTypeSymbol),
-                        _ => Array.Empty<INamedTypeSymbol>()
+                        _ => []
                     }))
                 .OfType<INamedTypeSymbol>()
                 .Select(rootType => (rootType, nts)))

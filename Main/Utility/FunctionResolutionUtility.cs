@@ -16,7 +16,7 @@ internal static class FunctionResolutionUtility
     {
         if (!cache.TryGetValue(key, out var list))
         {
-            list = new List<TFunctionNode>();
+            list = [];
             cache[key] = list;
         }
 

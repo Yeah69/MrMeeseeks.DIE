@@ -20,8 +20,8 @@ internal sealed class FunctionCycleTracker : IFunctionCycleTracker
     public void DetectCycle(IContainerNode containerNode)
     {
         Queue<IFunctionNode> roots = new(containerNode.RootFunctions);
-        HashSet<IFunctionNode> v = new();
-        HashSet<IFunctionNode> cf = new();
+        HashSet<IFunctionNode> v = [];
+        HashSet<IFunctionNode> cf = [];
         Stack<IFunctionNode> s = new();
 
         while (roots.Count != 0 && roots.Dequeue() is {} next)

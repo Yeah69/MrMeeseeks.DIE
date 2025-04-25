@@ -16,7 +16,7 @@ internal interface IFilterForErrorRelevancyNodeVisitor : INodeVisitor
 
 internal sealed class FilterForErrorRelevancyNodeVisitor : IFilterForErrorRelevancyNodeVisitor
 {
-    private readonly HashSet<INode> _errorRelevantNodes = new();
+    private readonly HashSet<INode> _errorRelevantNodes = [];
     
     public IImmutableSet<INode> ErrorRelevantNodes => _errorRelevantNodes.ToImmutableHashSet();
     

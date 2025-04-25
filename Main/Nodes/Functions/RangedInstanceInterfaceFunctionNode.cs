@@ -59,24 +59,20 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
         _type = type;
         _parentContainer = parentContainer;
         ReturnedTypeNameNotWrapped = type.Name;
-        Name = referenceGenerator.Generate("GetTransientScopeInstance", _type);
+        NamePrefix = $"GetTransientScopeInstance{_type.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
     public override string ReturnedTypeNameNotWrapped { get; }
 
     public void AddConsideredRange(IRangeNode range)
     {
         var implementation = range.BuildTransientScopeFunction(_type, this);
-        (implementation as IRangedInstanceFunctionNodeInitializer)?.Initialize(Name, _parentContainer.TransientScopeInterface.FullName);
+        (implementation as IRangedInstanceFunctionNodeInitializer)?.Initialize(NamePrefix, NameNumberSuffix, _parentContainer.TransientScopeInterface.FullName);
         implementation.RegisterCallingFunction(this);
         _implementations.Add(implementation);
-    }
-
-    protected override void OnBecameAsync()
-    {
-        base.OnBecameAsync();
-        foreach (var implementation in _implementations)
-            implementation.ForceToAsync();
     }
 }

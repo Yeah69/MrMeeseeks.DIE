@@ -57,7 +57,8 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
-        Name = referenceGenerator.Generate("Local", typeSymbol);
+        NamePrefix = $"Local{typeSymbol.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     protected override IElementNodeMapperBase GetMapper()
@@ -66,5 +67,6 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         return _nonWrapToCreateElementNodeMapperFactory(baseMapper);
     }
 
-    public override string Name { get; protected set; }
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

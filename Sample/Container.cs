@@ -1,22 +1,45 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal interface IInterface<T0>;
-
-internal sealed class Class<T0> : IInterface<T0>, IScopeRoot;
-
-[CreateFunction(typeof(Class<>), "Create")]
-[CreateFunction(typeof(IInterface<>), "CreateInterface")]
-internal sealed partial class Container<T>
+internal sealed class Dependency : IValueTaskInitializer
 {
-    private sealed partial class DIE_DefaultScope;
+    public ValueTask InitializeAsync() => default;
 }
 
-[CreateFunction(typeof(Class<>), "Create")]
-[CreateFunction(typeof(IInterface<>), "CreateInterface")]
-internal sealed partial class Container2<T>
+internal sealed class OuterDependency
 {
-    private sealed partial class DIE_DefaultScope;
+    internal OuterDependency(
+        // ReSharper disable once UnusedParameter.Local
+        Dependency dependency)
+    {
+        
+    }
 }
+
+[CreateFunction(typeof(Lazy<ValueTask<Task<ValueTask<Task<OuterDependency>>>>>), "Create")]
+internal sealed partial class Container;
+
+/*
+internal class Class : ITaskInitializer, IContainerInstance
+{
+    public async Task InitializeAsync()
+    {
+        await Task.Delay(1000);
+    }
+}
+
+internal class SyncClass : IContainerInstance;
+
+internal class ParentClass
+{
+    internal ParentClass(Class classInstance, SyncClass syncClassInstance) {}
+}
+
+[CreateFunction(typeof(ParentClass), "Create")]
+[CreateFunction(typeof(SyncClass), "CreateSync")]
+internal sealed partial class Container;
+//*/

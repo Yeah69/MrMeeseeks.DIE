@@ -20,7 +20,7 @@ internal interface IRangedInstanceFunctionNodeInitializer
     /// <summary>
     /// Only intended for transient scope instance function, cause they need to synchronize identifier with their interface function
     /// </summary>
-    void Initialize(string name, string explicitInterfaceFullName);
+    void Initialize(string namePrefix, string nameNumberSuffix, string explicitInterfaceFullName);
 }
 
 internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBase, IRangedInstanceFunctionNode, IRangedInstanceFunctionNodeInitializer, IScopeInstance
@@ -69,7 +69,8 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
     {
         _type = type;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
-        Name = referenceGenerator.Generate($"Get{level.ToString()}Instance", _type);
+        NamePrefix = $"Get{level.ToString()}Instance{type.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     protected override IElementNodeMapperBase GetMapper() =>
@@ -83,13 +84,16 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
             _type,
             new(ImmutableStack<INamedTypeSymbol>.Empty, null)); 
 
-    public override string Name { get; protected set; }
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 
     void IRangedInstanceFunctionNodeInitializer.Initialize(
-        string name, 
+        string namePrefix, 
+        string nameNumberSuffix, 
         string explicitInterfaceFullName)
     {
-        Name = name;
+        NamePrefix = namePrefix;
+        NameNumberSuffix = nameNumberSuffix;
         ExplicitInterfaceFullName = explicitInterfaceFullName;
     }
 

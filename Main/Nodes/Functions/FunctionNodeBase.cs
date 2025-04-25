@@ -6,8 +6,23 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Visitors;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
+
+[Flags]
+internal enum ReturnTypeStatus
+{
+    Ordinary = 1,
+    Task = 2,
+    ValueTask = 4
+}
+
+internal enum AsyncAwaitStatus
+{
+    No,
+    Yes
+}
 
 internal abstract class FunctionNodeBase : IFunctionNode
 {
@@ -17,16 +32,14 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> _asyncFunctionCallNodeFactory;
     private readonly Func<ScopeCallNode.Params, IScopeCallNode> _scopeCallNodeFactory;
     private readonly Func<TransientScopeCallNode.Params, ITransientScopeCallNode> _transientScopeCallNodeFactory;
-    protected readonly WellKnownTypes WellKnownTypes;
-    private readonly List<IAwaitableNode> _awaitableNodes = [];
+    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly bool _valueTaskExisting;
     private readonly List<ILocalFunctionNode> _localFunctions = [];
     private readonly List<IFunctionNode> _callingFunctions = [];
     private readonly List<IInitializedInstanceNode> _usedInitializedInstances = [];
 
     private readonly Dictionary<ITypeSymbol, IReusedNode> _reusedNodes =
         new(CustomSymbolEqualityComparer.IncludeNullability);
-
-    private bool _synchronicityCheckedAlready;
 
     protected FunctionNodeBase(
         // parameters
@@ -53,7 +66,8 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _asyncFunctionCallNodeFactory = asyncFunctionCallNodeFactory;
         _scopeCallNodeFactory = scopeCallNodeFactory;
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
-        WellKnownTypes = wellKnownTypes;
+        _wellKnownTypes = wellKnownTypes;
+        _valueTaskExisting = wellKnownTypes.ValueTask1 is not null;
         Parameters = parameters.Select(p=> (p, parameterNodeFactory(p)
             .EnqueueBuildJobTo(parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)))).ToList();
         Accessibility = accessibility;
@@ -97,10 +111,10 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public abstract void Accept(INodeVisitor nodeVisitor);
 
     public ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }
-    public virtual IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; } = Array.Empty<ITypeParameterSymbol>();
+    public virtual IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; } = [];
 
     public string Description => 
-        $"{ReturnedTypeFullName} {RangeFullName}.{Name}({string.Join(", ", Parameters.Select(p => $"{p.Node.TypeFullName} {p.Node.Reference}"))})";
+        $"{ReturnedTypeFullName(ReturnTypeStatus.Ordinary)} {RangeFullName}.{Name(ReturnTypeStatus.Ordinary)}({string.Join(", ", Parameters.Select(p => $"{p.Node.TypeFullName} {p.Node.Reference}"))})";
 
     public HashSet<IFunctionNode> CalledFunctions { get; } = [];
 
@@ -108,9 +122,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
         CalledFunctions.Where(cf => Equals(cf.RangeFullName, RangeFullName));
 
     public IEnumerable<IInitializedInstanceNode> UsedInitializedInstance => _usedInitializedInstances;
-
-    public void RegisterAwaitableNode(IAwaitableNode awaitableNode) => 
-        _awaitableNodes.Add(awaitableNode);
 
     public void RegisterCalledFunction(IFunctionNode calledFunction) => 
         CalledFunctions.Add(calledFunction);
@@ -138,32 +149,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         CalledFunctions
             .Where(f => f.IsTransientScopeDisposalAsParameter)
             .Sum(f => f.GetTransientScopeDisposalCount());
-
-    protected virtual void OnBecameAsync() {}
-
-    public void CheckSynchronicity()
-    {
-        if (_synchronicityCheckedAlready) return;
-        
-        if (_awaitableNodes.Any(an => an.Awaited))
-            ForceToAsync();
-    }
-
-    protected abstract void AdjustToAsync();
-
-    public void ForceToAsync()
-    {
-        if (SuppressAsync) return;
-        _synchronicityCheckedAlready = true;
-        if (SynchronicityDecisionKind != SynchronicityDecisionKind.Sync) return; // Already async
-        SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncForced;
-        AdjustToAsync();
-        OnBecameAsync();
-        foreach (var callingFunction in _callingFunctions)
-            _parentContainer.AsyncCheckQueue.Enqueue(callingFunction);
-    }
-
-    protected virtual bool SuppressAsync => false;
+    
     public string RangeFullName { get; }
     public IElementNode SubDisposalNode { get; }
     public IElementNode TransientScopeDisposalNode { get; }
@@ -187,24 +173,23 @@ internal abstract class FunctionNodeBase : IFunctionNode
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
-        callingFunction.RegisterAwaitableNode(call);
         _callingFunctions.Add(callingFunction);
 
         return call;
     }
 
     public IWrappedAsyncFunctionCallNode CreateAsyncCall(
-        ITypeSymbol wrappedType, 
+        ITypeSymbol wrappedType,
+        INamedTypeSymbol someTaskType,
         string? ownerReference, 
-        SynchronicityDecision synchronicity, 
         IFunctionNode callingFunction, 
         IReadOnlyList<ITypeSymbol> typeParameters)
     {
         var call = _asyncFunctionCallNodeFactory(
                 new WrappedAsyncFunctionCallNode.Params(
                     wrappedType,
+                    someTaskType,
                     ownerReference,
-                    synchronicity,
                     Parameters.Select(t => (t.Node, callingFunction.Overrides[t.Type])).ToList(),
                     typeParameters,
                     callingFunction.SubDisposalNode,
@@ -212,7 +197,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
-        callingFunction.RegisterAwaitableNode(call);
         _callingFunctions.Add(callingFunction);
 
         return call;
@@ -242,7 +226,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
-        callingFunction.RegisterAwaitableNode(call);
         _callingFunctions.Add(callingFunction);
 
         return call;
@@ -272,7 +255,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
             .EnqueueBuildJobTo(_parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null));
         
         callingFunction.RegisterCalledFunction(this);
-        callingFunction.RegisterAwaitableNode(call);
         _callingFunctions.Add(callingFunction);
 
         return call;
@@ -300,10 +282,76 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public IReadOnlyList<ILocalFunctionNode> LocalFunctions => _localFunctions;
 
     public Accessibility? Accessibility { get; }
-    public SynchronicityDecision SynchronicityDecision { get; protected set; } = SynchronicityDecision.Sync;
-    public SynchronicityDecisionKind SynchronicityDecisionKind { get; protected set; } = SynchronicityDecisionKind.Sync;
-    public abstract string Name { get; protected set; }
-    public string ReturnedTypeFullName { get; protected set; } = "";
+    public abstract ReturnTypeStatus ReturnTypeStatus { get; protected set; } 
+    public abstract AsyncAwaitStatus AsyncAwaitStatus { get; protected set; }
+
+    protected abstract string NamePrefix { get; set; }
+    protected abstract string NameNumberSuffix { get; set; }
+    
+    public virtual string Name(ReturnTypeStatus returnTypeStatus)
+    {
+        if (returnTypeStatus.HasFlag(ReturnTypeStatus.Ordinary))
+        {
+            return $"{NamePrefix}{NameNumberSuffix}";
+        }
+        if (returnTypeStatus.HasFlag(ReturnTypeStatus.Task))
+        {
+            return $"{NamePrefix}Async{NameNumberSuffix}";
+        }
+        if (returnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask))
+        {
+            return $"{NamePrefix}ValueTask{NameNumberSuffix}";
+        }
+        throw new InvalidOperationException($"Invalid return type status: {returnTypeStatus}");
+    }
+
+    public (IReadOnlyList<IFunctionNode> Calling, IReadOnlyList<IFunctionNode> Called) MakeTaskBasedOnly()
+    {
+        AsyncAwaitStatus = AsyncAwaitStatus.Yes;
+        if (ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task) || ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask))
+        {
+            ReturnTypeStatus = ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask) 
+                ? ReturnTypeStatus.ValueTask 
+                : ReturnTypeStatus.Task;
+            return (_callingFunctions, CalledFunctions.ToList());
+        }
+        ReturnTypeStatus = _valueTaskExisting ? ReturnTypeStatus.ValueTask : ReturnTypeStatus.Task;
+        return (_callingFunctions, CalledFunctions.ToList());
+    }
+
+    public IReadOnlyList<IFunctionNode> MakeTaskBasedToo()
+    {
+        AsyncAwaitStatus = AsyncAwaitStatus.Yes;
+        if (ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task) || ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask))
+            return CalledFunctions.ToList();
+        ReturnTypeStatus |= _valueTaskExisting ? ReturnTypeStatus.ValueTask : ReturnTypeStatus.Task;
+        return CalledFunctions.ToList();
+    }
+
+    protected ITypeSymbol? ReturnedType; // null for void
+    public string ReturnedTypeFullName(ReturnTypeStatus returnTypeStatus)
+    {
+        if (ReturnedType is null)
+        {
+            return returnTypeStatus switch
+            {
+                ReturnTypeStatus.ValueTask when _wellKnownTypes.ValueTask is not null => _wellKnownTypes.ValueTask
+                    .FullName(),
+                ReturnTypeStatus.Task => _wellKnownTypes.Task.FullName(),
+                ReturnTypeStatus.Ordinary => "void",
+                _ => throw new InvalidOperationException($"Invalid return type status: {returnTypeStatus}")
+            };
+        }
+        
+        return returnTypeStatus switch
+        {
+            ReturnTypeStatus.ValueTask when _wellKnownTypes.ValueTask1 is not null => 
+                _wellKnownTypes.ValueTask1.Construct(ReturnedType).FullName(),
+            ReturnTypeStatus.Task => _wellKnownTypes.Task1.Construct(ReturnedType).FullName(),
+            ReturnTypeStatus.Ordinary => ReturnedType.FullName(),
+            _ => throw new InvalidOperationException($"Invalid return type status: {returnTypeStatus}")
+        };
+    }
     public abstract string ReturnedTypeNameNotWrapped { get; }
 
     public IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }

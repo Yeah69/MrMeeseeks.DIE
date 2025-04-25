@@ -10,9 +10,10 @@ internal sealed partial class FactoryPropertyNode : FactoryNodeBase, IFactoryPro
         IPropertySymbol propertySymbol, 
         
         IFunctionNode parentFunction,
+        ITaskBasedQueue taskBasedQueue,
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes) 
-        : base(propertySymbol.Type, propertySymbol, parentFunction, referenceGenerator, wellKnownTypes)
+        : base(propertySymbol.Type, propertySymbol, parentFunction, taskBasedQueue, referenceGenerator, wellKnownTypes)
     {
     }
 }

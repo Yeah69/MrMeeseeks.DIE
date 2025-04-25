@@ -56,7 +56,8 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
     {
         _typeSymbol = typeSymbol;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
-        Name = referenceGenerator.Generate("CreateScope", _typeSymbol);
+        NamePrefix = $"CreateScope{typeSymbol.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
@@ -69,5 +70,7 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
     protected override IElementNodeMapperBase GetMapper() =>
         _typeToElementNodeMapperFactory();
 
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

@@ -16,6 +16,7 @@ internal interface IContainerLevelOnlyContainerInstance;
 [ContainerInstanceAbstractionAggregation(typeof(IContainerLevelOnlyContainerInstance))]
 [ImplementationChoice(typeof(IRangeNode), typeof(ContainerNode))]
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
+[ImplementationChoice(typeof(ICodeGenerationVisitor), typeof(CodeGenerationVisitor))]
 [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
 [CreateFunction(typeof(IExecuteContainer), "Create")]
 internal sealed partial class ContainerLevelContainer

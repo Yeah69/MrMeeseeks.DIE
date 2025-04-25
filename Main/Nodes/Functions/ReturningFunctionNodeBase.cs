@@ -52,38 +52,21 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
             wellKnownTypes)
     {
         TypeSymbol = typeSymbol;
-        ReturnedTypeFullName = TypeSymbol.FullName();
+        ReturnedType = TypeSymbol;
         TypeParameters = typeParameterUtility.ExtractTypeParameters(typeSymbol);
 
-        if (TypeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol)
+        ReturnTypeStatus = ReturnTypeStatus.Ordinary;
+        AsyncAwaitStatus = AsyncAwaitStatus.No;
+        
+        if (wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.IncludeNullability.Equals(typeSymbol.OriginalDefinition, wellKnownTypes.ValueTask1))
         {
-            if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.Task1, namedTypeSymbol.OriginalDefinition))
-            {
-                SynchronicityDecision = SynchronicityDecision.AsyncTask;
-                SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncNatural;
-            }
-            else if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.ValueTask1, namedTypeSymbol.OriginalDefinition))
-            {
-                SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-                SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncNatural;
-            }
+            ReturnTypeStatus = ReturnTypeStatus.ValueTask;
+            AsyncAwaitStatus = AsyncAwaitStatus.Yes;
         }
-    }
-
-    protected override void AdjustToAsync()
-    {
-        var symbol = TypeSymbol is INamedTypeSymbol namedTypeSymbol
-            ? namedTypeSymbol.OriginalDefinitionIfUnbound()
-            : TypeSymbol;
-        if (WellKnownTypes.ValueTask1 is not null)
+        else if (CustomSymbolEqualityComparer.IncludeNullability.Equals(typeSymbol.OriginalDefinition, wellKnownTypes.Task1))
         {
-            SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-            ReturnedTypeFullName =  WellKnownTypes.ValueTask1.Construct(symbol).FullName();
-        }
-        else
-        {
-            SynchronicityDecision = SynchronicityDecision.AsyncTask;
-            ReturnedTypeFullName =  WellKnownTypes.Task1.Construct(symbol).FullName();
+            ReturnTypeStatus = ReturnTypeStatus.Task;
+            AsyncAwaitStatus = AsyncAwaitStatus.Yes;
         }
     }
 
@@ -91,4 +74,7 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         CustomSymbolEqualityComparer.IncludeNullability.Equals(type, TypeSymbol);
 
     public override IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; }
+
+    public override ReturnTypeStatus ReturnTypeStatus { get; protected set; }
+    public override AsyncAwaitStatus AsyncAwaitStatus { get; protected set; }
 }

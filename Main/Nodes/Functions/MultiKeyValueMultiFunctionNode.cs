@@ -72,7 +72,8 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         _checkTypeProperties = checkTypeProperties;
         _wellKnownTypes = wellKnownTypes;
 
-        Name = referenceGenerator.Generate("CreateMultiKeyValue", _enumerableType);
+        NamePrefix = $"CreateMultiKeyValue{_enumerableType.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     private static IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType, ITypeSymbol keyType, object keyValue) =>
@@ -104,5 +105,6 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
             .ToList();
     }
 
-    public override string Name { get; protected set; }
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

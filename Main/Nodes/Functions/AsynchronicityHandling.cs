@@ -73,10 +73,7 @@ internal abstract class AsynchronicityHandlingBase : IAsynchronicityHandling
     internal AsynchronicityHandlingBase(
         // parameters
         ReturnTypeStatus returnTypeStatus,
-        AsyncAwaitStatus asyncAwaitStatus,
-        
-        // dependencies
-        WellKnownTypes wellKnownTypes)
+        AsyncAwaitStatus asyncAwaitStatus)
     {
         ReturnTypeStatus = returnTypeStatus;
         AsyncAwaitStatus = asyncAwaitStatus;
@@ -116,7 +113,7 @@ internal sealed class TypedAsynchronicityHandling : AsynchronicityHandlingBase
         ITypeSymbol type,
         
         // dependencies
-        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No, wellKnownTypes)
+        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No)
     {
         _type = type;
         _wellKnownTypes = wellKnownTypes;
@@ -178,7 +175,7 @@ internal sealed class VoidAsynchronicityHandling : AsynchronicityHandlingBase
 
     internal VoidAsynchronicityHandling(
         // dependencies
-        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No, wellKnownTypes)
+        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No)
     {
         _wellKnownTypes = wellKnownTypes;
         _valueTaskExisting = wellKnownTypes.ValueTask is not null;
@@ -214,32 +211,28 @@ internal sealed class VoidAsynchronicityHandling : AsynchronicityHandlingBase
             _ => throw new InvalidOperationException($"Invalid return type status: {returnTypeStatus}")
         };
 
-    public override AsyncSingleReturnStrategy SelectAsyncSingleReturnStrategy(ReturnTypeStatus returnTypeStatus, bool isAsyncAwait)
-    {
-        return !isAsyncAwait && !returnTypeStatus.HasFlag(ReturnTypeStatus.Ordinary)
+    public override AsyncSingleReturnStrategy SelectAsyncSingleReturnStrategy(ReturnTypeStatus returnTypeStatus, bool isAsyncAwait) =>
+        !isAsyncAwait && !returnTypeStatus.HasFlag(ReturnTypeStatus.Ordinary)
             ? returnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask)
                 ? AsyncSingleReturnStrategy.ValueTaskCompletedTask
                 : returnTypeStatus.HasFlag(ReturnTypeStatus.Task)
                     ? AsyncSingleReturnStrategy.TaskCompletedTask
                     : throw new ArgumentOutOfRangeException(nameof(returnTypeStatus), returnTypeStatus, null)
             : AsyncSingleReturnStrategy.Pass;
-    }
 }
 
 internal sealed class SomeTaskAsynchronicityHandling : AsynchronicityHandlingBase
 {
     private readonly INamedTypeSymbol _someTaskType;
-    private readonly bool _valueTask1Existing;
 
     internal SomeTaskAsynchronicityHandling(
         // parameters
         INamedTypeSymbol someTaskType,
         
         // dependencies
-        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No, wellKnownTypes)
+        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No)
     {
         _someTaskType = someTaskType;
-        _valueTask1Existing = wellKnownTypes.ValueTask1 is not null;
         ReturnTypeStatus = wellKnownTypes.ValueTask1 is { } valueTaskType &&
                            CustomSymbolEqualityComparer.IncludeNullability.Equals(someTaskType.OriginalDefinition, valueTaskType)
             ? ReturnTypeStatus.ValueTask
@@ -248,22 +241,17 @@ internal sealed class SomeTaskAsynchronicityHandling : AsynchronicityHandlingBas
                 : throw new ArgumentOutOfRangeException(nameof(someTaskType), someTaskType, null);
     }
 
-    public override void MakeTaskBasedOnly()
-    {
+    public override void MakeTaskBasedOnly() => 
         AsyncAwaitStatus = AsyncAwaitStatus.Yes;
-    }
 
-    public override void MakeTaskBasedToo()
-    {
-    }
+    public override void MakeTaskBasedToo() { }
     
     public override string ReturnedTypeFullName(ReturnTypeStatus returnTypeStatus) => _someTaskType.FullName();
-    public override AsyncSingleReturnStrategy SelectAsyncSingleReturnStrategy(ReturnTypeStatus returnTypeStatus, bool isAsyncAwait)
-    {
-        if (isAsyncAwait)
-            return AsyncSingleReturnStrategy.Await;
-        return AsyncSingleReturnStrategy.Pass;
-    }
+    
+    public override AsyncSingleReturnStrategy SelectAsyncSingleReturnStrategy(ReturnTypeStatus returnTypeStatus, bool isAsyncAwait) => 
+        isAsyncAwait 
+            ? AsyncSingleReturnStrategy.Await 
+            : AsyncSingleReturnStrategy.Pass;
 }
 
 internal sealed class AsyncEnumerableAsynchronicityHandling : AsynchronicityHandlingBase
@@ -273,29 +261,24 @@ internal sealed class AsyncEnumerableAsynchronicityHandling : AsynchronicityHand
     internal AsyncEnumerableAsynchronicityHandling(
         // parameters
         INamedTypeSymbol asyncEnumerableType,
-        bool isIteratorFunction,
-        
-        // dependencies
-        WellKnownTypes wellKnownTypes) 
-        : base(ReturnTypeStatus.IAsyncEnumerable, isIteratorFunction ? AsyncAwaitStatus.Yes : AsyncAwaitStatus.No, wellKnownTypes)
+        bool isIteratorFunction) 
+        : base(ReturnTypeStatus.IAsyncEnumerable, isIteratorFunction ? AsyncAwaitStatus.Yes : AsyncAwaitStatus.No)
     {
         _asyncEnumerableType = asyncEnumerableType;
     }
 
-    public override void MakeTaskBasedOnly()
-    {
-    }
+    public override void MakeTaskBasedOnly() { }
 
-    public override void MakeTaskBasedToo()
-    {
-    }
-
+    public override void MakeTaskBasedToo() { }
+    
     public override void MakeAsyncYes()
     {
         // Do nothing in case of IAsyncEnumerable
     }
 
-    public override string ReturnedTypeFullName(ReturnTypeStatus returnTypeStatus) => _asyncEnumerableType.FullName();
+    public override string ReturnedTypeFullName(ReturnTypeStatus returnTypeStatus) => 
+        _asyncEnumerableType.FullName();
+    
     public override AsyncSingleReturnStrategy SelectAsyncSingleReturnStrategy(ReturnTypeStatus returnTypeStatus, bool isAsyncAwait) => 
         AsyncSingleReturnStrategy.Pass;
 }

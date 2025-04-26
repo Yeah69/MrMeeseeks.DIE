@@ -38,8 +38,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
-        Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        WellKnownTypes wellKnownTypes)
+        Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal, 
             parameters, 
@@ -54,13 +53,11 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
-            transientScopeCallNodeFactory,
-            wellKnownTypes)
+            transientScopeCallNodeFactory)
     {
         _initializedInstanceNodes = initializedInstanceNodes;
         _localDiagLogger = localDiagLogger;
         _parentRange = parentRange;
-        ReturnedType = null;
         NamePrefix = "Initialize";
         NameNumberSuffix = referenceGenerator.Generate("");
     }
@@ -72,8 +69,6 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             .Select(i => (i.BuildCall(_parentRange, this), i))
             .ToList();
     }
-
-    public override bool CheckIfReturnedType(ITypeSymbol type) => false;
 
     protected override string NamePrefix { get; set; }
     protected override string NameNumberSuffix { get; set; }

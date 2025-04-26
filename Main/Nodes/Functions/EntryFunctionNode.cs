@@ -26,7 +26,6 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
         IRangeNode parentRange,
         IContainerNode parentContainer, 
         ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes,
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,
@@ -54,8 +53,7 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;

@@ -3,7 +3,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -32,8 +31,7 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes)
+        ITypeParameterUtility typeParameterUtility)
         : base(
             accessibility,
             parameters,
@@ -49,16 +47,11 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
-            transientScopeCallNodeFactory,
-            wellKnownTypes)
+            transientScopeCallNodeFactory)
     {
         TypeSymbol = typeSymbol;
-        ReturnedType = TypeSymbol;
         TypeParameters = typeParameterUtility.ExtractTypeParameters(typeSymbol);
     }
-
-    public override bool CheckIfReturnedType(ITypeSymbol type) => 
-        CustomSymbolEqualityComparer.IncludeNullability.Equals(type, TypeSymbol);
 
     public override IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; }
 }

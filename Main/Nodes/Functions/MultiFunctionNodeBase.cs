@@ -41,7 +41,6 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         ITypeParameterUtility typeParameterUtility,
         IRangeNode parentRange,
-        WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private, 
@@ -59,8 +58,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;

@@ -58,7 +58,6 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
             parentRange,
-            wellKnownTypes,
             wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;

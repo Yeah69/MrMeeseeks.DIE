@@ -63,7 +63,6 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
             parentRange,
-            wellKnownTypes,
             wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;

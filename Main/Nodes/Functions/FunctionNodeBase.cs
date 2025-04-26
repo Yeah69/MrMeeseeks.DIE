@@ -32,8 +32,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
     private readonly Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> _asyncFunctionCallNodeFactory;
     private readonly Func<ScopeCallNode.Params, IScopeCallNode> _scopeCallNodeFactory;
     private readonly Func<TransientScopeCallNode.Params, ITransientScopeCallNode> _transientScopeCallNodeFactory;
-    private readonly WellKnownTypes _wellKnownTypes;
-    private readonly bool _valueTaskExisting;
     private readonly List<ILocalFunctionNode> _localFunctions = [];
     private readonly List<IFunctionNode> _nonAsyncWrappedCallingFunctions = [];
     private readonly List<IInitializedInstanceNode> _usedInitializedInstances = [];
@@ -59,8 +57,7 @@ internal abstract class FunctionNodeBase : IFunctionNode
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
-        Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        WellKnownTypes wellKnownTypes)
+        Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory)
     {
         _parentContainer = parentContainer;
         _functionNodeGenerator = functionNodeGenerator;
@@ -68,8 +65,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
         _asyncFunctionCallNodeFactory = asyncFunctionCallNodeFactory;
         _scopeCallNodeFactory = scopeCallNodeFactory;
         _transientScopeCallNodeFactory = transientScopeCallNodeFactory;
-        _wellKnownTypes = wellKnownTypes;
-        _valueTaskExisting = wellKnownTypes.ValueTask1 is not null;
         Parameters = parameters.Select(p=> (p, parameterNodeFactory(p)
             .EnqueueBuildJobTo(parentContainer.BuildQueue, new(ImmutableStack<INamedTypeSymbol>.Empty, null)))).ToList();
         Accessibility = accessibility;
@@ -266,7 +261,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
         return call;
     }
 
-    public abstract bool CheckIfReturnedType(ITypeSymbol type);
     public bool TryGetReusedNode(ITypeSymbol type, out IReusedNode? reusedNode)
     {
         reusedNode = null;
@@ -311,7 +305,6 @@ internal abstract class FunctionNodeBase : IFunctionNode
     public AsyncSingleReturnStrategy SelectAsyncSingleReturnStrategy(ReturnTypeStatus returnTypeStatus, bool isAsyncAwait) => 
         AsynchronicityHandling.SelectAsyncSingleReturnStrategy(returnTypeStatus, isAsyncAwait);
 
-    protected ITypeSymbol? ReturnedType; // null for void
     public string ReturnedTypeFullName(ReturnTypeStatus returnTypeStatus) => AsynchronicityHandling.ReturnedTypeFullName(returnTypeStatus);
     public abstract string ReturnedTypeNameNotWrapped { get; }
 

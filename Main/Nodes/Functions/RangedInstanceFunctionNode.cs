@@ -48,8 +48,7 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes) 
+        ITypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             type, 
@@ -66,8 +65,7 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _type = type;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;

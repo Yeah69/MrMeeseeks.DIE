@@ -4,24 +4,20 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 
-internal enum AsyncFunctionCallTransformation
+internal enum WrappedAsyncTransformation
 {
-    ValueTaskFromValueTask,
+    SameSame,
     ValueTaskFromTask,
     ValueTaskFromSync,
-    ValueTaskFromForcedTask,
-    ValueTaskFromForcedValueTask,
+    ValueTaskDeeper,
     TaskFromValueTask,
-    TaskFromTask,
     TaskFromSync,
-    TaskFromForcedTask,
-    TaskFromForcedValueTask,
-    
+    TaskDeeper
 }
 
 internal interface IWrappedAsyncFunctionCallNode : IFunctionCallNode
 {
-    AsyncFunctionCallTransformation Transformation { get; }
+    WrappedAsyncTransformation Transformation { get; }
     void AdjustToCurrentCalledFunction();
 }
 
@@ -29,6 +25,7 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
 {
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly INamedTypeSymbol _someTaskType;
+    private readonly ITypeSymbol _wrappedType;
     private readonly IFunctionNode _calledFunction;
     
     internal record struct Params(
@@ -47,6 +44,7 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
         WellKnownTypes wellKnownTypes)
     {
         _wellKnownTypes = wellKnownTypes;
+        _wrappedType = parameters.WrappedType;
         _someTaskType = parameters.SomeTaskType;
         _calledFunction = calledFunction;
         OwnerReference = parameters.OwnerReference;
@@ -66,30 +64,50 @@ internal sealed partial class WrappedAsyncFunctionCallNode : IWrappedAsyncFuncti
 
     public void Build(PassedContext passedContext) { }
     
-    public AsyncFunctionCallTransformation Transformation { get; private set; }
-    
+    public WrappedAsyncTransformation Transformation { get; private set; }
+
     public void AdjustToCurrentCalledFunction()
     {
         if (_wellKnownTypes.ValueTask1 is { } valueTaskType &&
             CustomSymbolEqualityComparer.IncludeNullability.Equals(_someTaskType.OriginalDefinition, valueTaskType))
         {
             if (_calledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask))
-                Transformation = AsyncFunctionCallTransformation.ValueTaskFromForcedValueTask;
+            {
+                Transformation = _calledFunction.ReturnedTypeFullName(ReturnTypeStatus.ValueTask) == _wrappedType.FullName() 
+                    ? WrappedAsyncTransformation.ValueTaskDeeper 
+                    : WrappedAsyncTransformation.SameSame;
+            }
             else if (_calledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task))
-                Transformation = AsyncFunctionCallTransformation.ValueTaskFromForcedTask;
+            {
+                Transformation = _calledFunction.ReturnedTypeFullName(ReturnTypeStatus.Task) == _wrappedType.FullName() 
+                    ? WrappedAsyncTransformation.ValueTaskFromSync 
+                    : WrappedAsyncTransformation.ValueTaskFromTask;
+            }
             else if (_calledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Ordinary))
-                Transformation = AsyncFunctionCallTransformation.ValueTaskFromSync;
+            {
+                Transformation = WrappedAsyncTransformation.ValueTaskFromSync;
+            }
             else
                 throw new InvalidOperationException("Invalid return type status.");
         }
         else
         {
             if (_calledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask))
-                Transformation = AsyncFunctionCallTransformation.TaskFromForcedValueTask;
+            {
+                Transformation = _calledFunction.ReturnedTypeFullName(ReturnTypeStatus.ValueTask) == _wrappedType.FullName() 
+                    ? WrappedAsyncTransformation.TaskFromSync 
+                    : WrappedAsyncTransformation.TaskFromValueTask;
+            }
             else if (_calledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task))
-                Transformation = AsyncFunctionCallTransformation.TaskFromForcedTask;
+            {
+                Transformation = _calledFunction.ReturnedTypeFullName(ReturnTypeStatus.Task) == _wrappedType.FullName() 
+                    ? WrappedAsyncTransformation.TaskDeeper 
+                    : WrappedAsyncTransformation.SameSame;
+            }
             else if (_calledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Ordinary))
-                Transformation = AsyncFunctionCallTransformation.TaskFromSync;
+            {
+                Transformation = WrappedAsyncTransformation.TaskFromSync;
+            }
             else
                 throw new InvalidOperationException("Invalid return type status.");
         }

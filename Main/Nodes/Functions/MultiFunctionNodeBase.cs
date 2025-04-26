@@ -30,6 +30,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         // dependencies
         ISubDisposalNodeChooser subDisposalNodeChooser,
         ITransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -49,6 +50,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
             parentRange, 
+            asynchronicityHandlingFactory.Typed(enumerableType, true),
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
             functionNodeGenerator,

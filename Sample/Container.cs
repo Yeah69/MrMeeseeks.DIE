@@ -1,27 +1,56 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
+//*
 
-internal sealed class Dependency : IValueTaskInitializer
+internal interface IInterface
 {
-    public ValueTask InitializeAsync() => default;
+    bool IsInitialized { get; }
 }
 
-internal sealed class OuterDependency
+internal sealed class DependencyA : ITaskInitializer, IInterface
 {
-    internal OuterDependency(
-        // ReSharper disable once UnusedParameter.Local
-        Dependency dependency)
+    public bool IsInitialized { get; private set; }
+    
+    async Task ITaskInitializer.InitializeAsync()
     {
-        
+        await Task.Delay(500);
+        IsInitialized = true;
     }
 }
 
-[CreateFunction(typeof(Lazy<ValueTask<Task<ValueTask<Task<OuterDependency>>>>>), "Create")]
-internal sealed partial class Container;
+internal sealed class DependencyB : IValueTaskInitializer, IInterface
+{
+    public bool IsInitialized { get; private set; }
+    
+    async ValueTask IValueTaskInitializer.InitializeAsync()
+    {
+        await Task.Delay(500);
+        IsInitialized = true;
+    }
+}
+
+internal sealed class DependencyC : IInitializer, IInterface
+{
+    public bool IsInitialized { get; private set; }
+    
+    void IInitializer.Initialize()
+    {
+        IsInitialized = true;
+    }
+}
+
+internal sealed class DependencyD : IInterface
+{
+    public bool IsInitialized => true;
+}
+
+[CreateFunction(typeof(IReadOnlyList<ValueTask<IInterface>>), "Create")]
+internal sealed partial class Container; //*/
 
 /*
 internal class Class : ITaskInitializer, IContainerInstance

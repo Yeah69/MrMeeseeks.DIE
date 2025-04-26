@@ -28,6 +28,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
         // dependencies
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -46,6 +47,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,

@@ -26,6 +26,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         // dependencies
         ISubDisposalNodeChooser subDisposalNodeChooser,
         ITransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -41,6 +42,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             closureParameters, 
             parentContainer, 
             parentRange,
+            asynchronicityHandlingFactory.Typed(typeSymbol, false),
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
             functionNodeGenerator,

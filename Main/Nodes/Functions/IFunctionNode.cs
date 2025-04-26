@@ -14,6 +14,7 @@ internal interface IFunctionNode : INode
     string Name(ReturnTypeStatus returnTypeStatus);
     (IReadOnlyList<IFunctionNode> Calling, IReadOnlyList<IFunctionNode> Called) MakeTaskBasedOnly();
     IReadOnlyList<IFunctionNode> MakeTaskBasedToo();
+    AsyncSingleReturnStrategy SelectAsyncSingleReturnStrategy(ReturnTypeStatus returnTypeStatus, bool isAsyncAwait);
     IReadOnlyList<(ITypeSymbol Type, IParameterNode Node)> Parameters { get; }
     ImmutableDictionary<ITypeSymbol, IParameterNode> Overrides { get; }
     IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; }
@@ -23,7 +24,7 @@ internal interface IFunctionNode : INode
     HashSet<IFunctionNode> CalledFunctions { get; }
     IEnumerable<IFunctionNode> CalledFunctionsOfSameRange { get; }
     IEnumerable<IInitializedInstanceNode> UsedInitializedInstance { get; }
-    void RegisterCalledFunction(IFunctionNode calledFunction);
+    void RegisterCalledFunction(IFunctionNode calledFunction, bool isNotAsyncWrapped);
     void RegisterCallingFunction(IFunctionNode callingFunction);
     void RegisterUsedInitializedInstance(IInitializedInstanceNode initializedInstance);
     void AddOneToSubDisposalCount();

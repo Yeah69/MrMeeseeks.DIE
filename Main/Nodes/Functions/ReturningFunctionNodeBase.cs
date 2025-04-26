@@ -4,7 +4,6 @@ using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -22,6 +21,7 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IContainerNode parentContainer,
         IRangeNode parentRange,
+        IAsynchronicityHandling asynchronicityHandling,
         
         // dependencies
         ISubDisposalNodeChooser subDisposalNodeChooser,
@@ -38,9 +38,10 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
             accessibility,
             parameters,
             closureParameters,
+            asynchronicityHandling,
+            
             parentContainer,
             parentRange,
-            
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
             functionNodeGenerator,
@@ -54,27 +55,10 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         TypeSymbol = typeSymbol;
         ReturnedType = TypeSymbol;
         TypeParameters = typeParameterUtility.ExtractTypeParameters(typeSymbol);
-
-        ReturnTypeStatus = ReturnTypeStatus.Ordinary;
-        AsyncAwaitStatus = AsyncAwaitStatus.No;
-        
-        if (wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.IncludeNullability.Equals(typeSymbol.OriginalDefinition, wellKnownTypes.ValueTask1))
-        {
-            ReturnTypeStatus = ReturnTypeStatus.ValueTask;
-            AsyncAwaitStatus = AsyncAwaitStatus.Yes;
-        }
-        else if (CustomSymbolEqualityComparer.IncludeNullability.Equals(typeSymbol.OriginalDefinition, wellKnownTypes.Task1))
-        {
-            ReturnTypeStatus = ReturnTypeStatus.Task;
-            AsyncAwaitStatus = AsyncAwaitStatus.Yes;
-        }
     }
 
     public override bool CheckIfReturnedType(ITypeSymbol type) => 
         CustomSymbolEqualityComparer.IncludeNullability.Equals(type, TypeSymbol);
 
     public override IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; }
-
-    public override ReturnTypeStatus ReturnTypeStatus { get; protected set; }
-    public override AsyncAwaitStatus AsyncAwaitStatus { get; protected set; }
 }

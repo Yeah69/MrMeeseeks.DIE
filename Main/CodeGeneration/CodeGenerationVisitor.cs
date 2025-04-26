@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
+﻿using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -83,7 +82,7 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
     }
 
     private bool CurrentFunctionAsyncAwait =>
-        _returnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask) || _returnTypeStatus.HasFlag(ReturnTypeStatus.Task) 
+        (_returnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask) || _returnTypeStatus.HasFlag(ReturnTypeStatus.Task))
         && _asyncAwaitStatus is AsyncAwaitStatus.Yes;
 
     public void VisitIContainerNode(IContainerNode container) => 
@@ -283,31 +282,23 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
         var typeParameters = functionCallNode.TypeParameters.Any()
             ? $"<{string.Join(", ", functionCallNode.TypeParameters.Select(p => p.Name))}>"
             : "";
-        var functionName = functionCallNode.Transformation switch
-        {
-            AsyncFunctionCallTransformation.ValueTaskFromValueTask or AsyncFunctionCallTransformation.ValueTaskFromForcedValueTask
-                or AsyncFunctionCallTransformation.TaskFromValueTask or AsyncFunctionCallTransformation.TaskFromForcedValueTask 
-                => functionCallNode.CalledFunction.Name(ReturnTypeStatus.ValueTask),
-            AsyncFunctionCallTransformation.ValueTaskFromTask or AsyncFunctionCallTransformation.ValueTaskFromForcedTask
-                or AsyncFunctionCallTransformation.TaskFromTask or AsyncFunctionCallTransformation.TaskFromForcedTask 
-                => functionCallNode.CalledFunction.Name(ReturnTypeStatus.Task),
-            AsyncFunctionCallTransformation.ValueTaskFromSync or AsyncFunctionCallTransformation.TaskFromSync
-                => functionCallNode.CalledFunction.Name(ReturnTypeStatus.Ordinary),
-            _ => throw new ArgumentOutOfRangeException(nameof(functionCallNode), $"Switch in DIE type {nameof(CodeGenerationVisitor)} is not exhaustive.")
-        };
+        string functionName;
+        if (functionCallNode.CalledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask)) 
+            functionName = functionCallNode.FunctionName(ReturnTypeStatus.ValueTask);
+        else if (functionCallNode.CalledFunction.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task))
+            functionName = functionCallNode.FunctionName(ReturnTypeStatus.Task);
+        else
+            functionName = functionCallNode.FunctionName(ReturnTypeStatus.Ordinary);
         var call = $"{owner}{functionName}{typeParameters}({parameters})";
         call = functionCallNode.Transformation switch
         {
-            AsyncFunctionCallTransformation.ValueTaskFromValueTask => $"new {typeFullName}({call})",
-            AsyncFunctionCallTransformation.ValueTaskFromForcedValueTask => call,
-            AsyncFunctionCallTransformation.ValueTaskFromTask => $"new {typeFullName}({call})",
-            AsyncFunctionCallTransformation.ValueTaskFromForcedTask => $"new {typeFullName}({call})",
-            AsyncFunctionCallTransformation.ValueTaskFromSync => $"new {typeFullName}({call})",
-            AsyncFunctionCallTransformation.TaskFromValueTask => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
-            AsyncFunctionCallTransformation.TaskFromForcedValueTask => $"{call}.AsTask()",
-            AsyncFunctionCallTransformation.TaskFromTask => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
-            AsyncFunctionCallTransformation.TaskFromForcedTask => call,
-            AsyncFunctionCallTransformation.TaskFromSync => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
+            WrappedAsyncTransformation.SameSame => call,
+            WrappedAsyncTransformation.ValueTaskFromTask => $"new {typeFullName}({call})",
+            WrappedAsyncTransformation.ValueTaskFromSync => $"new {typeFullName}({_wellKnownTypes.Task.FullName()}.FromResult({call}))",
+            WrappedAsyncTransformation.ValueTaskDeeper => $"new {typeFullName}({call}.AsTask())",
+            WrappedAsyncTransformation.TaskFromValueTask => $"{call}.AsTask()",
+            WrappedAsyncTransformation.TaskFromSync => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
+            WrappedAsyncTransformation.TaskDeeper => $"{_wellKnownTypes.Task.FullName()}.FromResult({call})",
             _ => throw new ArgumentOutOfRangeException(nameof(functionCallNode), $"Switch in DIE type {nameof(CodeGenerationVisitor)} is not exhaustive.")
         };
         _code.AppendLine($"{typeFullName} {functionCallNode.Reference} = ({typeFullName}){call};");

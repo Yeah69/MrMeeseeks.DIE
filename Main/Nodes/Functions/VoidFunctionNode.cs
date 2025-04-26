@@ -32,6 +32,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         ILocalDiagLogger localDiagLogger,
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -42,7 +43,8 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal, 
             parameters, 
-            ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
+            ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability),
+            asynchronicityHandlingFactory.Void(),
             parentContainer, 
             parentRange,
             subDisposalNodeChooser,
@@ -61,8 +63,6 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         ReturnedType = null;
         NamePrefix = "Initialize";
         NameNumberSuffix = referenceGenerator.Generate("");
-        ReturnTypeStatus = ReturnTypeStatus.Ordinary;
-        AsyncAwaitStatus = AsyncAwaitStatus.No;
     }
     
     public override void Build(PassedContext passedContext)
@@ -75,8 +75,6 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
 
     public override bool CheckIfReturnedType(ITypeSymbol type) => false;
 
-    public override ReturnTypeStatus ReturnTypeStatus { get; protected set; }
-    public override AsyncAwaitStatus AsyncAwaitStatus { get; protected set; }
     protected override string NamePrefix { get; set; }
     protected override string NameNumberSuffix { get; set; }
     public override string ReturnedTypeNameNotWrapped => "void";

@@ -59,6 +59,7 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
         NamePrefix = $"Local{typeSymbol.Name}";
         NameNumberSuffix = referenceGenerator.Generate("");
+        AsynchronicityHandling.MakeAsyncYes(); // LocalFunctionNode is always async (in case it returns a Task), because it needs to await Disposal in case of an exception
     }
 
     protected override IElementNodeMapperBase GetMapper()

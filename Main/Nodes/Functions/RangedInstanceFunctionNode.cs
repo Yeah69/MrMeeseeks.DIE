@@ -71,6 +71,7 @@ internal sealed partial class RangedInstanceFunctionNode : SingleFunctionNodeBas
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         NamePrefix = $"Get{level.ToString()}Instance{type.Name}";
         NameNumberSuffix = referenceGenerator.Generate("");
+        AsynchronicityHandling.MakeAsyncYes(); // RangedInstanceFunctionNode is always async (in case it returns a Task), because it needs to await the semaphore
     }
 
     protected override IElementNodeMapperBase GetMapper() =>

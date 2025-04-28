@@ -190,11 +190,14 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         }
 
         var asyncCallNodes = new List<IWrappedAsyncFunctionCallNode>();
+        var potentialTaskBasedEntryFunctions = new List<IFunctionNode>();
         while (BuildQueue.Count != 0 && BuildQueue.Dequeue() is { } buildJob)
         {
             buildJob.Node.Build(buildJob.PassedContext);
             if (buildJob.Node is IWrappedAsyncFunctionCallNode call)
                 asyncCallNodes.Add(call);
+            if (buildJob.Node is IFunctionNode function and (IEntryFunctionNode or ILocalFunctionNode))
+                potentialTaskBasedEntryFunctions.Add(function);
         }
 
         _currentExecutionPhaseSetter.Value = ExecutionPhase.ResolutionValidation;
@@ -220,6 +223,13 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         
         foreach (var delegateBaseNode in _delegateBaseNodes)
             delegateBaseNode.CheckSynchronicity();
+
+        foreach (var potentialTaskBasedEntryFunction in potentialTaskBasedEntryFunctions)
+        {
+            var returnTypeStatus = potentialTaskBasedEntryFunction.ReturnTypeStatus;
+            if (returnTypeStatus.HasFlag(ReturnTypeStatus.Task) || returnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask))
+                potentialTaskBasedEntryFunction.MakeTaskBasedToo();
+        }
     }
 
     public override string? ContainerReference => null;

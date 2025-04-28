@@ -113,7 +113,7 @@ internal sealed class TypedAsynchronicityHandling : AsynchronicityHandlingBase
         ITypeSymbol type,
         
         // dependencies
-        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No)
+        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.Yes)
     {
         _type = type;
         _wellKnownTypes = wellKnownTypes;
@@ -175,7 +175,7 @@ internal sealed class VoidAsynchronicityHandling : AsynchronicityHandlingBase
 
     internal VoidAsynchronicityHandling(
         // dependencies
-        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No)
+        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.Yes)
     {
         _wellKnownTypes = wellKnownTypes;
         _valueTaskExisting = wellKnownTypes.ValueTask is not null;
@@ -230,7 +230,7 @@ internal sealed class SomeTaskAsynchronicityHandling : AsynchronicityHandlingBas
         INamedTypeSymbol someTaskType,
         
         // dependencies
-        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No)
+        WellKnownTypes wellKnownTypes) : base(ReturnTypeStatus.Ordinary, AsyncAwaitStatus.Yes)
     {
         _someTaskType = someTaskType;
         ReturnTypeStatus = wellKnownTypes.ValueTask1 is { } valueTaskType &&

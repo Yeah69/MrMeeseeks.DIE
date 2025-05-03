@@ -61,9 +61,12 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
     }
     public void CheckSynchronicity()
     {
-        if (!Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.Ordinary /* ToDo should this whole function be removed? */), _innerType.FullName()))
-            _localDiagLogger.Error(ErrorLogData.SyncToAsyncCallCompilationError(
-                "Func/Lazy injections need to have a sync function generated or its return type should be wrapped by a ValueTask/Task."),
-                Location.None);
+        if (_function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Ordinary)     && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.Ordinary), _innerType.FullName())
+            || _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask) && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.ValueTask), _innerType.FullName())
+            || _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task)      && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.Task), _innerType.FullName()))
+            return;
+        _localDiagLogger.Error(ErrorLogData.SyncToAsyncCallCompilationError(
+            "Func/Lazy/ThreadLocal injections need to have a sync function generated or its return type should be wrapped by a ValueTask/Task."),
+            Location.None);
     }
 }

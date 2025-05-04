@@ -1,6 +1,5 @@
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
-using Xunit;
 
 [assembly:ContainerInstanceAbstractionAggregation(typeof(IContainerInstance))]
 [assembly:TransientScopeInstanceAbstractionAggregation(typeof(ITransientScopeInstance))]

@@ -30,6 +30,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         // dependencies
         ISubDisposalNodeChooser subDisposalNodeChooser,
         ITransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -40,7 +41,6 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         ITypeParameterUtility typeParameterUtility,
         IRangeNode parentRange,
-        WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private, 
@@ -49,6 +49,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
             parentContainer, 
             parentRange, 
+            asynchronicityHandlingFactory.Typed(enumerableType, true),
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
             functionNodeGenerator,
@@ -57,17 +58,13 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _overridingElementNodeWithDecorationMapperFactory = overridingElementNodeWithDecorationMapperFactory;
 
         ItemTypeFullName = CollectionUtility.GetCollectionsInnerType(enumerableType).FullName();
 
-        SuppressAsync = 
-            wellKnownTypesCollections.IAsyncEnumerable1 is not null 
-            && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
         IsAsyncEnumerable =
             wellKnownTypesCollections.IAsyncEnumerable1 is not null 
             && CustomSymbolEqualityComparer.Default.Equals(enumerableType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
@@ -86,11 +83,12 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
                 (namedUnwrappedType, namedTypeSymbol))
             : baseMapper;
     }
-
-    protected override bool SuppressAsync { get; }
     public override string ReturnedTypeNameNotWrapped { get; }
 
-    public IReadOnlyList<IElementNode> ReturnedElements { get; protected set; } = Array.Empty<IElementNode>();
+    public IReadOnlyList<IElementNode> ReturnedElements { get; protected set; } = [];
     public bool IsAsyncEnumerable { get; }
     public string ItemTypeFullName { get; }
+    public override string Name(ReturnTypeStatus returnTypeStatus) => IsAsyncEnumerable 
+        ? $"{NamePrefix}{NameNumberSuffix}"
+        : base.Name(returnTypeStatus);
 }

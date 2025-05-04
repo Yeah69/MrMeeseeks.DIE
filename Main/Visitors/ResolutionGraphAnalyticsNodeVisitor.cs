@@ -70,7 +70,7 @@ internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnal
         var reference = GetOrAddReference(element);
         _currentReference = reference;
         _code.AppendLine($$"""
-                           package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
+                           package "{{element.ReturnedTypeFullName(ReturnTypeStatus.Ordinary)}} {{element.Name(ReturnTypeStatus.Ordinary)}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
                            """);
 
         foreach (var returnedElement in element.ReturnedElements)
@@ -181,7 +181,7 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
         var reference = GetOrAddReference(element);
         _currentReference = reference;
         _code.AppendLine($$"""
-package "{{element.ReturnedTypeFullName}} {{element.Name}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
+package "{{element.ReturnedTypeFullName(ReturnTypeStatus.Ordinary)}} {{element.Name(ReturnTypeStatus.Ordinary)}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
 """);
 
         VisitIElementNode(element.ReturnedElement);
@@ -454,7 +454,7 @@ map "({{string.Join(", ", element.Items.Select(i => i.TypeFullName))}})" as {{re
 
         if (_currentFunctionNode
                 ?.LocalFunctions
-                .FirstOrDefault(f => f.Name == element.MethodGroup) 
+                .FirstOrDefault(f => f.Name(ReturnTypeStatus.Ordinary) == element.MethodGroup) 
             is { } calledFunction)
         {
             _relations.AppendLine($"{_currentReference} --> {GetOrAddReference(calledFunction)}");
@@ -466,7 +466,6 @@ map "({{string.Join(", ", element.Items.Select(i => i.TypeFullName))}})" as {{re
 
     public void VisitIImplicitScopeImplementationNode(IImplicitScopeImplementationNode element)
     {
-        // ToDo
     }
 
     public void VisitILazyNode(ILazyNode element) => 
@@ -518,7 +517,6 @@ map "Tuple<{{string.Join(", ", element.Parameters.Select(p => p.Node.TypeFullNam
 
     public void VisitIReferenceNode(IReferenceNode element)
     {
-        // ToDo
     }
 
     public void VisitIErrorNode(IErrorNode element)
@@ -578,8 +576,6 @@ map "{{element.TypeFullName}}" as {{reference}} {
             
             _currentReference = previousReference;
         }
-        
-        // todo for dependencies of UserDefined Injections? See method in CodeGeneratorNodeVisitor
     }
 
     public void VisitIRangedInstanceInterfaceFunctionNode(IRangedInstanceInterfaceFunctionNode element)
@@ -634,7 +630,7 @@ map "{{element.TypeFullName}}" as {{reference}} {
         _currentReference = reference;
         _code.AppendLine(
             $$"""
-              package "void {{element.Name}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
+              package "void {{element.Name(ReturnTypeStatus.Ordinary)}}({{string.Join(", ", element.Parameters.Select(p => $"{p.Node.TypeFullName}"))}})" as {{reference}} {
               """);
 
         foreach (var initialization in element.Initializations)
@@ -661,11 +657,9 @@ map "{{element.TypeFullName}}" as {{reference}} {
 
     public void VisitIKeyValueBasedNode(IKeyValueBasedNode keyValueBasedNode)
     {
-        // todo implement
     }
 
     public void VisitIKeyValuePairNode(IKeyValuePairNode keyValuePairNode)
     {
-        // todo implement
     }
 }

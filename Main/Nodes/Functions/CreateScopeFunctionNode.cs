@@ -27,6 +27,7 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
         IReferenceGenerator referenceGenerator, 
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -34,8 +35,7 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes) 
+        ITypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
             typeSymbol, 
@@ -45,18 +45,19 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _typeSymbol = typeSymbol;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
-        Name = referenceGenerator.Generate("CreateScope", _typeSymbol);
+        NamePrefix = $"CreateScope{typeSymbol.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
@@ -69,5 +70,7 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
     protected override IElementNodeMapperBase GetMapper() =>
         _typeToElementNodeMapperFactory();
 
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

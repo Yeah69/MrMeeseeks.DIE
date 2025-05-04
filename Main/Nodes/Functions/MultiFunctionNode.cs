@@ -28,6 +28,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
         // dependencies
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -46,6 +47,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
@@ -56,13 +58,13 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
             parentRange,
-            wellKnownTypes,
             wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;
         _checkTypeProperties = checkTypeProperties;
         _wellKnownTypes = wellKnownTypes;
-        Name = referenceGenerator.Generate("CreateMulti", _enumerableType);
+        NamePrefix = $"CreateMulti{_enumerableType.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     private static IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
@@ -76,7 +78,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
 
         var concreteItemTypes = unwrappedItemType is INamedTypeSymbol namedTypeSymbol
             ? _checkTypeProperties.MapToImplementations(namedTypeSymbol, passedContext.InjectionKeyModification)
-            : (IReadOnlyList<ITypeSymbol>) new[] { unwrappedItemType };
+            : (IReadOnlyList<ITypeSymbol>) [unwrappedItemType];
 
         ReturnedElements = concreteItemTypes
             .Select(cit => MapToReturnedElement(
@@ -85,5 +87,6 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
             .ToList();
     }
 
-    public override string Name { get; protected set; }
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

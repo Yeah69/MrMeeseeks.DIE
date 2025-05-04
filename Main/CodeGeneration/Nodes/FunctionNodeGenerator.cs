@@ -34,23 +34,50 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
         _disposeUtility = disposeUtility;
         _referenceGenerator = referenceGenerator;
     }
-    
+
     public void Generate(StringBuilder code, ICodeGenerationVisitor visitor)
+    {
+        var consideredStatuses = Enum.GetValues(typeof(ReturnTypeStatus))
+            .OfType<ReturnTypeStatus>()
+            .Where(r => _function.ReturnTypeStatus.HasFlag(r));
+        foreach (var returnTypeStatus in consideredStatuses)
+        {
+            var functionVisitor = visitor.CreateNestedFunctionVisitor(returnTypeStatus, _function.AsyncAwaitStatus);
+            var asyncAwaitStatus = returnTypeStatus is ReturnTypeStatus.Ordinary 
+                ? AsyncAwaitStatus.No 
+                : _function.AsyncAwaitStatus;
+            GenerateOneFunction(
+                code, 
+                functionVisitor, 
+                _function is IMultiFunctionNodeBase { IsAsyncEnumerable: true },
+                returnTypeStatus, 
+                asyncAwaitStatus);
+        }
+    }
+
+    private void GenerateOneFunction(
+        StringBuilder code, 
+        ICodeGenerationVisitor visitor,
+        bool isAsyncEnumerable,
+        ReturnTypeStatus returnTypeStatus, 
+        AsyncAwaitStatus asyncAwaitStatus)
     {
         var typeHandleField = new Lazy<string>(() => _referenceGenerator.Generate("typeHandle"));
         var instance0 = new Lazy<string>(() => _referenceGenerator.Generate("instance"));
         var instance1 = new Lazy<string>(() => _referenceGenerator.Generate("instance"));
         var instance2 = new Lazy<string>(() => _referenceGenerator.Generate("instance"));
         var instance3 = new Lazy<string>(() => _referenceGenerator.Generate("instance"));
-        var isAsync =
-            _function.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask;
+        var isAsyncAwait = asyncAwaitStatus is AsyncAwaitStatus.Yes;
+        var isSomeTask = returnTypeStatus.HasFlag(ReturnTypeStatus.Task) || returnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask);
+        var isTask = returnTypeStatus.HasFlag(ReturnTypeStatus.Task);
+        var isValueTask = returnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask);
         code.AppendLine(
             $$"""
-              {{GenerateMethodDeclaration(_function)}}
+              {{GenerateMethodDeclaration(_function, returnTypeStatus, isAsyncAwait)}}
               {
               """);
         
-        if (IsAsyncFunction(_function))
+        if (isAsyncAwait)
             code.AppendLine($"await {_wellKnownTypes.Task.FullName()}.{nameof(Task.Yield)}();");
         
         visitor.VisitIElementNode(_function.TransientScopeDisposalNode);
@@ -62,19 +89,19 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                 code.AppendLine(
                     $$"""
                       var {{typeHandleField.Value}} = typeof({{rangedInstanceFunctionNode.ReturnedElement.TypeFullName}}).TypeHandle;
-                      if ({{group.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField.Value}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance0.Value}}) && {{instance0.Value}} is {{rangedInstanceFunctionNode.ReturnedElement.TypeFullName}} {{instance1.Value}}) return {{instance1.Value}};
-                      {{(isAsync ? "await " : "")}}{{Constants.ThisKeyword}}.{{group.LockReference}}.Wait{{(isAsync ? "Async" : "")}}();
+                      if ({{group.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField.Value}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance0.Value}}) && {{instance0.Value}} is {{rangedInstanceFunctionNode.ReturnedElement.TypeFullName}} {{instance1.Value}}) return {{ReturnExpression(instance1.Value)}};
+                      {{(isAsyncAwait ? "await " : "")}}{{Constants.ThisKeyword}}.{{group.LockReference}}.Wait{{(isAsyncAwait ? "Async" : "")}}();
                       try
                       {
-                      if ({{group.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField.Value}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance2.Value}}) && {{instance2.Value}} is {{rangedInstanceFunctionNode.ReturnedElement.TypeFullName}} {{instance3.Value}}) return {{instance3.Value}};
+                      if ({{group.RangedInstanceStorageFieldName}}.TryGetValue({{typeHandleField.Value}}, out {{_wellKnownTypes.Object.FullName()}}? {{instance2.Value}}) && {{instance2.Value}} is {{rangedInstanceFunctionNode.ReturnedElement.TypeFullName}} {{instance3.Value}}) return {{ReturnExpression(instance3.Value)}};
                       """);
                 break;
             case IRangedInstanceFunctionNode { Group: { IsOpenGeneric: false } group }:
                 var checkAndReturnAlreadyCreatedInstance = group.IsCreatedForStructs is { } createdReference
-                    ? $"if ({createdReference}) return {group.FieldReference};"
-                    : $"if (!{_wellKnownTypes.Object.FullName()}.ReferenceEquals({group.FieldReference}, null)) return {group.FieldReference};";
+                    ? $"if ({createdReference}) return {ReturnExpression(group.FieldReference)};"
+                    : $"if (!{_wellKnownTypes.Object.FullName()}.ReferenceEquals({group.FieldReference}, null)) return {ReturnExpression(group.FieldReference)};";
 
-                var waitLine = isAsync
+                var waitLine = isAsyncAwait
                     ? $"await ({Constants.ThisKeyword}.{group.LockReference}?.WaitAsync() ?? {_wellKnownTypes.Task.FullName()}.{nameof(Task.CompletedTask)});"
                     : $"{Constants.ThisKeyword}.{group.LockReference}?.Wait();";
 
@@ -97,7 +124,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             ObjectDisposedCheck(
                 _range.DisposalHandling.DisposedPropertyReference,
                 _range.FullName, 
-                _function.ReturnedTypeFullName);
+                _function.ReturnedTypeFullName(returnTypeStatus));
             code.AppendLine(
                 $$"""
                   try
@@ -116,8 +143,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                 foreach (var returnedElement in multiFunctionNode.ReturnedElements)
                 {
                     visitor.VisitIElementNode(returnedElement);
-                    if (multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync)
-                        code.AppendLine($"yield return {returnedElement.Reference};");
+                    if (!isSomeTask || isAsyncEnumerable) code.AppendLine($"yield return {returnedElement.Reference};");
                 }
 
                 break;
@@ -135,7 +161,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             ObjectDisposedCheck(
                 _range.DisposalHandling.DisposedPropertyReference, 
                 _range.FullName, 
-                _function.ReturnedTypeFullName);
+                _function.ReturnedTypeFullName(returnTypeStatus));
 
         if (!_function.IsSubDisposalAsParameter)
         {
@@ -159,20 +185,41 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                 code.AppendLine(
                     $$"""
                       {{group.RangedInstanceStorageFieldName}}[{{typeHandleField}}] = {{rangedInstanceFunctionNode.ReturnedElement.Reference}};
-                      return {{rangedInstanceFunctionNode.ReturnedElement.Reference}};
+                      return {{ReturnExpression(rangedInstanceFunctionNode.ReturnedElement.Reference)}};
                       """);
                 break;
             case IRangedInstanceFunctionNode { Group: { IsOpenGeneric: false } group } rangedInstanceFunctionNode:
                 code.AppendLine($"{group.FieldReference} = {rangedInstanceFunctionNode.ReturnedElement.Reference};");
                 break;
-            case ISingleFunctionNode {SynchronicityDecisionKind: var synchronicityDecisionKind  } singleFunctionNode:
-                code.AppendLine($"return {(synchronicityDecisionKind is SynchronicityDecisionKind.AsyncNatural ? "await " : "")}{singleFunctionNode.ReturnedElement.Reference};");
+            case ISingleFunctionNode singleFunctionNode:
+                var returnLine = _function.SelectAsyncSingleReturnStrategy(returnTypeStatus, isAsyncAwait) switch
+                {
+                    AsyncSingleReturnStrategy.Pass => $"return {singleFunctionNode.ReturnedElement.Reference};",
+                    AsyncSingleReturnStrategy.Await =>  $"return await {singleFunctionNode.ReturnedElement.Reference};",
+                    AsyncSingleReturnStrategy.ValueTaskFromResult => 
+                        $"return new {_wellKnownTypes.ValueTask?.FullName()}<{singleFunctionNode.ReturnedTypeFullName(ReturnTypeStatus.Ordinary)}>({_wellKnownTypes.Task.FullName()}.FromResult({singleFunctionNode.ReturnedElement.Reference}));",
+                    AsyncSingleReturnStrategy.TaskFromResult => 
+                        $"return {_wellKnownTypes.Task.FullName()}.FromResult({singleFunctionNode.ReturnedElement.Reference});",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                code.AppendLine(returnLine);
+                break;
+            case IVoidFunctionNode voidFunctionNode:
+                var voidReturnStrategy = voidFunctionNode.SelectAsyncSingleReturnStrategy(returnTypeStatus, isAsyncAwait);
+                if (voidReturnStrategy == AsyncSingleReturnStrategy.ValueTaskCompletedTask)
+                    code.AppendLine($"return new {_wellKnownTypes.ValueTask!.FullName()}({_wellKnownTypes.Task.FullName()}.CompletedTask);");
+                else if (voidReturnStrategy == AsyncSingleReturnStrategy.TaskCompletedTask)
+                    code.AppendLine($"return {_wellKnownTypes.Task.FullName()}.CompletedTask;");
                 break;
             case IMultiFunctionNodeBase multiFunctionNode:
-                code.AppendLine(multiFunctionNode.SynchronicityDecision == SynchronicityDecision.Sync
-                    ? "yield break;"
-                    : $"return new {multiFunctionNode.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNode.ReturnedElements.Select(re => re.Reference))} }};");
-                
+                if (!isSomeTask || isAsyncEnumerable)
+                    code.AppendLine("yield break;");
+                else if (isAsyncAwait)
+                    code.AppendLine($"return new {multiFunctionNode.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNode.ReturnedElements.Select(re => re.Reference))} }};");
+                else if (isValueTask)
+                    code.AppendLine($"return new {_wellKnownTypes.ValueTask?.FullName()}<{multiFunctionNode.ReturnedTypeFullName(ReturnTypeStatus.Ordinary)}>({_wellKnownTypes.Task.FullName()}.FromResult(({multiFunctionNode.ReturnedTypeFullName(ReturnTypeStatus.Ordinary)}) new {multiFunctionNode.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNode.ReturnedElements.Select(re => re.Reference))} }}));");
+                else if (isTask)
+                    code.AppendLine($"return {_wellKnownTypes.Task.FullName()}.FromResult(({multiFunctionNode.ReturnedTypeFullName(ReturnTypeStatus.Ordinary)}) new {multiFunctionNode.ItemTypeFullName}[] {{ {string.Join(", ", multiFunctionNode.ReturnedElements.Select(re => re.Reference))} }});");
                 break;
         }
         
@@ -183,7 +230,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                 ? $"exception, {_function.SubDisposalNode.Reference}, {_function.TransientScopeDisposalNode.Reference}"
                 : $"exception, {_function.SubDisposalNode.Reference}";
             
-            var throwLine = isAsync && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
+            var throwLine = isAsyncAwait && _wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null
                 ? $"throw await {_disposeUtility.DisposeExceptionHandlingAsyncFullyQualified}(({_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}) {Constants.ThisKeyword}, {parameters});"
                 : $"throw {(!_container.AsyncDisposablesPossible && _disposeUtility.DisposeExceptionHandlingSyncOnlyFullyQualified is {} syncOnlyName ? syncOnlyName : _disposeUtility.DisposeExceptionHandlingFullyQualified)}(({_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}) {Constants.ThisKeyword}, {parameters});";
     
@@ -224,7 +271,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
                       {{Constants.ThisKeyword}}.{{group.LockReference}}?.Release();
                       }
                       {{Constants.ThisKeyword}}.{{group.LockReference}} = null;
-                      return {{Constants.ThisKeyword}}.{{group.FieldReference}};
+                      return {{ReturnExpression($"{Constants.ThisKeyword}.{group.FieldReference}")}};
                       """);
                 break;
         }
@@ -240,21 +287,31 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             string rangeFullName,
             string returnTypeFullName) => code.AppendLine(
             $"if ({disposedPropertyReference}) throw new {_wellKnownTypes.ObjectDisposedException}(\"{rangeFullName}\", $\"[DIE] This scope \\\"{rangeFullName}\\\" is already disposed, so it can't create a \\\"{returnTypeFullName}\\\" instance anymore.\");");
-    
+
+        string ReturnExpression(string reference)
+        {
+            if (isAsyncAwait)
+                return reference;
+            if (isValueTask)
+                return $"new {_function.ReturnedTypeFullName(returnTypeStatus)}({_wellKnownTypes.Task.FullName()}.FromResult({reference}))";
+            if (isTask)
+                return $"{_wellKnownTypes.Task.FullName()}.FromResult({reference})";
+            return reference;
+        }
     }
 
-    private static string GenerateMethodDeclaration(IFunctionNode functionNode)
+    private static string GenerateMethodDeclaration(IFunctionNode functionNode, ReturnTypeStatus returnTypeStatus, bool isAsyncAwait)
     {
         var accessibility = functionNode is { Accessibility: { } acc, ExplicitInterfaceFullName: null }
             ? $"{SyntaxFacts.GetText(acc)} "  
             : "";
-        var asyncModifier = 
-            IsAsyncFunction(functionNode)
+        var asyncModifier = isAsyncAwait
             ? "async "
             : "";
         var explicitInterfaceFullName = functionNode.ExplicitInterfaceFullName is { } interfaceName
             ? $"{interfaceName}."
             : "";
+        var name = functionNode.Name(returnTypeStatus);
         var typeParameters = "";
         var typeParametersConstraints = "";
         if (functionNode is IReturningFunctionNode returningFunctionNode && returningFunctionNode.TypeParameters.Any())
@@ -291,10 +348,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             .Select(r => $"{r.Node.TypeFullName} {r.Node.Reference}")
             .AppendIf($"{functionNode.SubDisposalNode.TypeFullName} {functionNode.SubDisposalNode.Reference}", functionNode.IsSubDisposalAsParameter)
             .AppendIf($"{functionNode.TransientScopeDisposalNode.TypeFullName} {functionNode.TransientScopeDisposalNode.Reference}", functionNode.IsTransientScopeDisposalAsParameter));
-        return $"{accessibility}{asyncModifier}{functionNode.ReturnedTypeFullName} {explicitInterfaceFullName}{functionNode.Name}{typeParameters}({parameters}){typeParametersConstraints}";
+        var returnedTypeFullName = functionNode.ReturnedTypeFullName(returnTypeStatus);
+        return $"{accessibility}{asyncModifier}{returnedTypeFullName} {explicitInterfaceFullName}{name}{typeParameters}({parameters}){typeParametersConstraints}";
     }
-    
-    private static bool IsAsyncFunction(IFunctionNode functionNode) =>
-        functionNode.SynchronicityDecision is SynchronicityDecision.AsyncTask or SynchronicityDecision.AsyncValueTask 
-        || functionNode is IMultiFunctionNodeBase { IsAsyncEnumerable: true };
 }

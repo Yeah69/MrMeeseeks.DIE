@@ -26,14 +26,14 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
         // dependencies
         ISubDisposalNodeChooser subDisposalNodeChooser,
         ITransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes)
+        ITypeParameterUtility typeParameterUtility)
         : base(
             accessibility, 
             typeSymbol, 
@@ -41,6 +41,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             closureParameters, 
             parentContainer, 
             parentRange,
+            asynchronicityHandlingFactory.Typed(typeSymbol, false),
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
             functionNodeGenerator,
@@ -49,8 +50,7 @@ internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISin
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         ReturnedTypeNameNotWrapped = typeSymbol.Name;
     }

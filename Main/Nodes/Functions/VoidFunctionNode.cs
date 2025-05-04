@@ -5,7 +5,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -33,17 +32,18 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         ILocalDiagLogger localDiagLogger,
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
-        Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        WellKnownTypes wellKnownTypes)
+        Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory)
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal, 
             parameters, 
-            ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability), 
+            ImmutableDictionary.Create<ITypeSymbol, IParameterNode>(CustomSymbolEqualityComparer.IncludeNullability),
+            asynchronicityHandlingFactory.Void(),
             parentContainer, 
             parentRange,
             subDisposalNodeChooser,
@@ -53,14 +53,13 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
-            transientScopeCallNodeFactory,
-            wellKnownTypes)
+            transientScopeCallNodeFactory)
     {
         _initializedInstanceNodes = initializedInstanceNodes;
         _localDiagLogger = localDiagLogger;
         _parentRange = parentRange;
-        ReturnedTypeFullName = "void";
-        Name = referenceGenerator.Generate("Initialize");
+        NamePrefix = "Initialize";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
     
     public override void Build(PassedContext passedContext)
@@ -71,27 +70,11 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
             .ToList();
     }
 
-    protected override void AdjustToAsync()
-    {
-        if (WellKnownTypes.ValueTask is not null)
-        {
-            SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-            ReturnedTypeFullName = WellKnownTypes.ValueTask.FullName();
-        }
-        else
-        {
-            SynchronicityDecision = SynchronicityDecision.AsyncTask;
-            ReturnedTypeFullName = WellKnownTypes.Task.FullName();
-        }
-    }
-
-    public override bool CheckIfReturnedType(ITypeSymbol type) => false;
-
-    public override string Name { get; protected set; }
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
     public override string ReturnedTypeNameNotWrapped => "void";
 
-    public IReadOnlyList<(IFunctionCallNode, IInitializedInstanceNode)> Initializations { get; private set; } =
-        Array.Empty<(IFunctionCallNode, IInitializedInstanceNode)>();
+    public IReadOnlyList<(IFunctionCallNode, IInitializedInstanceNode)> Initializations { get; private set; } = [];
 
     public void ReorderOrDetectCycle()
     {
@@ -124,6 +107,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         }
 
         Initializations = orderedList;
+        return;
 
         IEnumerable<IFunctionNode> SelfAndCalledFunctions(IFunctionNode self)
         {
@@ -146,6 +130,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
                     v, 
                     s,
                     cf);
+            return;
 
             void DetectCycleInner(
                 IInitializedInstanceNode current, 

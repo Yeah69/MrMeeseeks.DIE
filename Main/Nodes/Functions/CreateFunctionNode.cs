@@ -33,14 +33,14 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         IMapperFactory mapperFactory,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes) 
+        ITypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             typeSymbol, 
@@ -50,19 +50,20 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _mapperData = mapperData;
         _implementationMappingConfiguration = implementationMappingConfiguration;
         _mapperFactory = mapperFactory;
-        Name = referenceGenerator.Generate("Create", typeSymbol);
+        NamePrefix = $"Create{typeSymbol.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) =>
@@ -75,6 +76,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
             : base.MapToReturnedElement(mapper);
 
     protected override IElementNodeMapperBase GetMapper() => _mapperFactory.Create(_mapperData);
-    
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

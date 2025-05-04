@@ -27,6 +27,7 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         IReferenceGenerator referenceGenerator, 
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -35,8 +36,7 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes) 
+        ITypeParameterUtility typeParameterUtility) 
         : base(
             null,
             typeSymbol, 
@@ -46,18 +46,20 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
-        Name = referenceGenerator.Generate("Local", typeSymbol);
+        NamePrefix = $"Local{typeSymbol.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
+        AsynchronicityHandling.MakeAsyncYes(); // LocalFunctionNode is always async (in case it returns a Task), because it needs to await Disposal in case of an exception
     }
 
     protected override IElementNodeMapperBase GetMapper()
@@ -66,5 +68,6 @@ internal sealed partial class LocalFunctionNode : SingleFunctionNodeBase, ILocal
         return _nonWrapToCreateElementNodeMapperFactory(baseMapper);
     }
 
-    public override string Name { get; protected set; }
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

@@ -52,14 +52,13 @@ public sealed class Tests
     {
         await using var container = Container.DIE_CreateContainer();
 
-        var set = new HashSet<Type>(new[]
-        {
+        var set = new HashSet<Type>([
             typeof(DecoratorUh),
             typeof(DecoratorY),
             typeof(DecoratorE),
             typeof(DecoratorA),
-            typeof(DecoratorH),
-        });
+            typeof(DecoratorH)
+        ]);
         
         var current = container.Create();
         for (var i = 0; i < 5; i++)

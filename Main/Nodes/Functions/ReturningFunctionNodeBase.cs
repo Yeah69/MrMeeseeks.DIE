@@ -3,8 +3,6 @@ using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
-using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Functions;
 
@@ -22,6 +20,7 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         ImmutableDictionary<ITypeSymbol, IParameterNode> closureParameters,
         IContainerNode parentContainer,
         IRangeNode parentRange,
+        IAsynchronicityHandling asynchronicityHandling,
         
         // dependencies
         ISubDisposalNodeChooser subDisposalNodeChooser,
@@ -32,15 +31,15 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
         Func<WrappedAsyncFunctionCallNode.Params, IWrappedAsyncFunctionCallNode> asyncFunctionCallNodeFactory,
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes)
+        ITypeParameterUtility typeParameterUtility)
         : base(
             accessibility,
             parameters,
             closureParameters,
+            asynchronicityHandling,
+            
             parentContainer,
             parentRange,
-            
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
             functionNodeGenerator,
@@ -48,47 +47,11 @@ internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturning
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
-            transientScopeCallNodeFactory,
-            wellKnownTypes)
+            transientScopeCallNodeFactory)
     {
         TypeSymbol = typeSymbol;
-        ReturnedTypeFullName = TypeSymbol.FullName();
         TypeParameters = typeParameterUtility.ExtractTypeParameters(typeSymbol);
-
-        if (TypeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol)
-        {
-            if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.Task1, namedTypeSymbol.OriginalDefinition))
-            {
-                SynchronicityDecision = SynchronicityDecision.AsyncTask;
-                SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncNatural;
-            }
-            else if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.ValueTask1, namedTypeSymbol.OriginalDefinition))
-            {
-                SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-                SynchronicityDecisionKind = SynchronicityDecisionKind.AsyncNatural;
-            }
-        }
     }
-
-    protected override void AdjustToAsync()
-    {
-        var symbol = TypeSymbol is INamedTypeSymbol namedTypeSymbol
-            ? namedTypeSymbol.OriginalDefinitionIfUnbound()
-            : TypeSymbol;
-        if (WellKnownTypes.ValueTask1 is not null)
-        {
-            SynchronicityDecision = SynchronicityDecision.AsyncValueTask;
-            ReturnedTypeFullName =  WellKnownTypes.ValueTask1.Construct(symbol).FullName();
-        }
-        else
-        {
-            SynchronicityDecision = SynchronicityDecision.AsyncTask;
-            ReturnedTypeFullName =  WellKnownTypes.Task1.Construct(symbol).FullName();
-        }
-    }
-
-    public override bool CheckIfReturnedType(ITypeSymbol type) => 
-        CustomSymbolEqualityComparer.IncludeNullability.Equals(type, TypeSymbol);
 
     public override IReadOnlyList<ITypeParameterSymbol> TypeParameters { get; }
 }

@@ -248,7 +248,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     public IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
         INamedTypeSymbol implementationType)
     {
-        IEnumerable<INamedTypeSymbol> sequence = Array.Empty<INamedTypeSymbol>();
+        IEnumerable<INamedTypeSymbol> sequence = [];
         bool found = false;
         if (_currentlyConsideredTypes.DecoratorSequenceChoices.TryGetValue(interfaceType.UnboundIfGeneric(),
                 out var sequenceMap))
@@ -344,7 +344,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     false, 
                     false),
                 injectionKey)
-            : Array.Empty<INamedTypeSymbol>();
+            : [];
         
         var list2 = possibleImplementations.Take(2).ToList();
         
@@ -399,7 +399,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 ? keyToValue.TryGetValue(keyType, out var values)
                     ? values.Select(v => (v, i))
                     : Enumerable.Empty<(object, INamedTypeSymbol)>()
-                : Enumerable.Empty<(object, INamedTypeSymbol)>())
+                : [])
             .GroupBy(t => t.Item1)
             .ToDictionary(
                 g => g.Key, 
@@ -547,7 +547,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     _currentlyConsideredTypes.GenericParameterSubstitutesChoices.TryGetValue(
                         (unboundImpl, constructedFromImpl.TypeParameters[i]), out var subs1)
                         ? subs1
-                        : Array.Empty<INamedTypeSymbol>());
+                        : []);
                 if (_currentlyConsideredTypes.GenericParameterChoices.TryGetValue(
                         (unboundImpl, constructedFromImpl.TypeParameters[i]), out var choice1))
                     substitutes1 = substitutes1.Add(choice1);

@@ -61,7 +61,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                    ?? CreateDelegateNode(
                        lazyType, 
                        lazyType.TypeArguments.SingleOrDefault(), 
-                       Array.Empty<ITypeSymbol>(), 
+                       [], 
                        _lazyNodeFactory, 
                        "Lazy",
                        true);
@@ -74,7 +74,7 @@ internal sealed class DelegateMappingPart : IDelegateMappingPart, IScopeInstance
                    ?? CreateDelegateNode(
                        threadLocalType, 
                        threadLocalType.TypeArguments.SingleOrDefault(), 
-                       Array.Empty<ITypeSymbol>(), 
+                       [], 
                        _threadLocalNodeFactory, 
                        "ThreadLocal",
                        true);

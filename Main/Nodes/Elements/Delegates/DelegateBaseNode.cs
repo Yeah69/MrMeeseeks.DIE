@@ -15,6 +15,7 @@ internal interface IDelegateBaseNode : IElementNode
 internal abstract class DelegateBaseNode : IDelegateBaseNode
 {
     private readonly ILocalFunctionNode _function;
+    private readonly IReadOnlyList<ITypeSymbol> _typeParameters;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly IContainerNode _parentContainer;
     private readonly ITypeSymbol _innerType;
@@ -29,10 +30,9 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
         IReferenceGenerator referenceGenerator)
     {
         _function = function;
+        _typeParameters = typeParameters;
         _localDiagLogger = localDiagLogger;
         _parentContainer = parentContainer;
-        var genericsSuffix = typeParameters.Any() ? $"<{string.Join(", ", typeParameters.Select(p => p.FullName()))}>" : string.Empty;
-        MethodGroup = $"{function.Name}{genericsSuffix}";
         Reference = referenceGenerator.Generate(delegateTypes.Inner);
         TypeFullName = delegateTypes.Outer.FullName();
         _innerType = delegateTypes.Inner.TypeArguments.Last();
@@ -45,13 +45,28 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
 
     public string TypeFullName { get; }
     public string Reference { get; }
-    
-    public string MethodGroup { get; }
+
+    public string MethodGroup 
+    {
+        get
+        {
+            var genericsSuffix = _typeParameters.Any() ? $"<{string.Join(", ", _typeParameters.Select(p => p.FullName()))}>" : string.Empty;
+            var functionName = _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask)
+                ? _function.Name(ReturnTypeStatus.ValueTask)
+                : _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task)
+                    ? _function.Name(ReturnTypeStatus.Task)
+                    : _function.Name(ReturnTypeStatus.Ordinary);
+            return $"{functionName}{genericsSuffix}";
+        }
+    }
     public void CheckSynchronicity()
     {
-        if (!Equals(_function.ReturnedTypeFullName, _innerType.FullName()))
-            _localDiagLogger.Error(ErrorLogData.SyncToAsyncCallCompilationError(
-                "Func/Lazy injections need to have a sync function generated or its return type should be wrapped by a ValueTask/Task."),
-                Location.None);
+        if (_function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Ordinary)     && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.Ordinary), _innerType.FullName())
+            || _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask) && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.ValueTask), _innerType.FullName())
+            || _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task)      && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.Task), _innerType.FullName()))
+            return;
+        _localDiagLogger.Error(ErrorLogData.SyncToAsyncCallCompilationError(
+            "Func/Lazy/ThreadLocal injections need to have a sync function generated or its return type should be wrapped by a ValueTask/Task."),
+            Location.None);
     }
 }

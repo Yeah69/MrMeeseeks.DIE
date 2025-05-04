@@ -20,7 +20,7 @@ internal sealed partial class RangedInstanceFunctionGroupNode : RangedInstanceFu
     private readonly IContainerNode _parentContainer;
     private readonly IRangeNode _parentRange;
     private readonly Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceFunctionNodeRoot> _rangedInstanceFunctionNodeFactory;
-    private readonly List<IRangedInstanceFunctionNode> _overloads = new();
+    private readonly List<IRangedInstanceFunctionNode> _overloads = [];
 
     internal RangedInstanceFunctionGroupNode(
         // parameters

@@ -28,6 +28,7 @@ internal sealed partial class CreateTransientScopeFunctionNode : SingleFunctionN
         IReferenceGenerator referenceGenerator, 
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, ITransientScopeDisposalElementNodeMapper> transientScopeDisposalElementNodeMapperFactory,
@@ -36,8 +37,7 @@ internal sealed partial class CreateTransientScopeFunctionNode : SingleFunctionN
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes) 
+        ITypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
             typeSymbol, 
@@ -47,19 +47,20 @@ internal sealed partial class CreateTransientScopeFunctionNode : SingleFunctionN
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _typeSymbol = typeSymbol;
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _transientScopeDisposalElementNodeMapperFactory = transientScopeDisposalElementNodeMapperFactory;
-        Name = referenceGenerator.Generate("Create", _typeSymbol);
+        NamePrefix = $"CreateTransientScope{typeSymbol.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     protected override IElementNode MapToReturnedElement(IElementNodeMapperBase mapper) => 
@@ -75,5 +76,7 @@ internal sealed partial class CreateTransientScopeFunctionNode : SingleFunctionN
         return _transientScopeDisposalElementNodeMapperFactory(parentMapper);
     }
 
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

@@ -1,22 +1,19 @@
-﻿using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using System;
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal interface IInterface<T0>;
-
-internal sealed class Class<T0> : IInterface<T0>, IScopeRoot;
-
-[CreateFunction(typeof(Class<>), "Create")]
-[CreateFunction(typeof(IInterface<>), "CreateInterface")]
-internal sealed partial class Container<T>
+//*
+internal class Class : IContainerInstance, ITaskInitializer
 {
-    private sealed partial class DIE_DefaultScope;
+    public async Task InitializeAsync()
+    {
+        await Task.Delay(1000);
+    }
 }
 
-[CreateFunction(typeof(Class<>), "Create")]
-[CreateFunction(typeof(IInterface<>), "CreateInterface")]
-internal sealed partial class Container2<T>
-{
-    private sealed partial class DIE_DefaultScope;
-}
+[CreateFunction(typeof(Func<Class>), "Create")]
+internal sealed partial class Container;
+//*/

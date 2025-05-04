@@ -122,6 +122,8 @@ internal sealed class ExecuteContainer : IExecuteContainer
             ErrorExit(exception, _containerNode);
         }
 
+        return;
+
         void ErrorExit(
             Exception? exception,
             IContainerNode? containerNode)
@@ -148,7 +150,7 @@ internal sealed class ExecuteContainerContext : IExecuteContainerContext, ITrans
 {
     private readonly IExecuteContainer _executeContainer;
     private readonly IDisposable _eagerDisposalTrigger;
-    private int _disposed; // 0 = false, >1 = true
+    private int _disposed; // 0 = false, > 0 = true
 
     public ExecuteContainerContext(
         IExecuteContainer executeContainer,

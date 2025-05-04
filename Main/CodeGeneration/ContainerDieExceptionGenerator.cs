@@ -65,6 +65,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
 
         generatedContainer.AppendLine($$"""
             public {{listOfKinds.FullName()}} ExceptionKinds_0_0 { get; } = new {{listOfKinds.FullName()}}() { {{string.Join(", ", _diagLogger.ErrorKinds.Select(k => $"{_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{k.ToString()}"))}} };
+            public {{_wellKnownTypes.String.FullName()}}[] DieBuildErrorCodes { get; } = new {{_wellKnownTypes.String.FullName()}}[] { {{string.Join(", ", _diagLogger.DieBuildErrorCodes.Select(c => $"\"{c}\""))}} };
             public string ExceptionToString_0_1 => @"{{exception?.ToString() ?? "no exception"}}";
             public void Dispose(){}
             {{(_wellKnownTypes.ValueTask is not null ? $"public {_wellKnownTypes.ValueTask.FullName()} DisposeAsync() => new {_wellKnownTypes.ValueTask.FullName()}();" : "")}}

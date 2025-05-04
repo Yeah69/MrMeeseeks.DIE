@@ -14,12 +14,12 @@ internal interface IInterface<T0>
 
 internal sealed class BaseA<T0> : IInterface<T0>
 {
-    public IReadOnlyList<IInterface<T0>> Implementations => new[] { this };
+    public IReadOnlyList<IInterface<T0>> Implementations => [this];
 }
 
 internal sealed class BaseB<T0> : IInterface<T0>
 {
-    public IReadOnlyList<IInterface<T0>> Implementations => new[] { this };
+    public IReadOnlyList<IInterface<T0>> Implementations => [this];
 }
 
 // ReSharper disable once UnusedTypeParameter

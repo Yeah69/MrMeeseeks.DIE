@@ -32,6 +32,7 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         ILocalDiagLogger localDiagLogger,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
         Func<PlainFunctionCallNode.Params, IPlainFunctionCallNode> plainFunctionCallNodeFactory,
@@ -51,6 +52,7 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
@@ -61,7 +63,6 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
             overridingElementNodeWithDecorationMapperFactory,
             typeParameterUtility,
             parentRange,
-            wellKnownTypes,
             wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;
@@ -70,7 +71,8 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         _checkTypeProperties = checkTypeProperties;
         _wellKnownTypes = wellKnownTypes;
 
-        Name = referenceGenerator.Generate("CreateMultiKeyValue", _enumerableType);
+        NamePrefix = $"CreateMultiKeyValue{_enumerableType.Name}";
+        NameNumberSuffix = referenceGenerator.Generate("");
     }
 
     private static IElementNode MapToReturnedElement(IElementNodeMapperBase mapper, ITypeSymbol itemType) =>
@@ -98,5 +100,6 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
             .ToList();
     }
 
-    public override string Name { get; protected set; }
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
 }

@@ -26,9 +26,9 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
         IRangeNode parentRange,
         IContainerNode parentContainer, 
         ITypeParameterUtility typeParameterUtility,
-        WellKnownTypes wellKnownTypes,
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
+        AsynchronicityHandlingFactory asynchronicityHandlingFactory,
         Lazy<IFunctionNodeGenerator> functionNodeGenerator,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory, 
         Func<IElementNodeMapperBase, INonWrapToCreateElementNodeMapper> nonWrapToCreateElementNodeMapperFactory,
@@ -46,18 +46,20 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
             parentContainer, 
             subDisposalNodeChooser,
             transientScopeDisposalNodeChooser,
+            asynchronicityHandlingFactory,
             functionNodeGenerator,
             parameterNodeFactory,
             plainFunctionCallNodeFactory,
             asyncFunctionCallNodeFactory,
             scopeCallNodeFactory,
             transientScopeCallNodeFactory,
-            typeParameterUtility,
-            wellKnownTypes)
+            typeParameterUtility)
     {
         _typeToElementNodeMapperFactory = typeToElementNodeMapperFactory;
         _nonWrapToCreateElementNodeMapperFactory = nonWrapToCreateElementNodeMapperFactory;
-        Name = prefix;
+        NamePrefix = prefix;
+        NameNumberSuffix = "";
+        AsynchronicityHandling.MakeAsyncYes(); // EntryFunctionNode is always async (in case it returns a Task), because it needs to await Disposal in case of an exception
     }
 
     protected override IElementNodeMapperBase GetMapper()
@@ -67,5 +69,8 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
         return _nonWrapToCreateElementNodeMapperFactory(dummyMapper);
     }
 
-    public override string Name { get; protected set; }
+
+    protected override string NamePrefix { get; set; }
+    protected override string NameNumberSuffix { get; set; }
+    public override string Name(ReturnTypeStatus returnTypeStatus) => NamePrefix;
 }

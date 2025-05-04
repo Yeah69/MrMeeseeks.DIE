@@ -9,7 +9,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements;
 
-internal interface IImplementationNode : IElementNode, IAwaitableNode
+internal interface IImplementationNode : IElementNode
 {
     string ConstructorCallName { get; }
     ImplementationNode.UserDefinedInjection? UserDefinedInjectionConstructor { get; }
@@ -20,6 +20,7 @@ internal interface IImplementationNode : IElementNode, IAwaitableNode
     string SubDisposalReference { get; }
     bool AggregateForDisposal { get; }
     
+    bool InitializerReturnsSomeTask { get; }
     string? AsyncReference { get; }
     string? AsyncTypeFullName { get; }
     
@@ -51,11 +52,12 @@ internal sealed partial class ImplementationNode : IImplementationNode
     private readonly IUserDefinedElements _userDefinedElements;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly ITaskBasedQueue _taskBasedQueue;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
 
-    private readonly List<(string Name, IElementNode Element)> _constructorParameters = new();
-    private readonly List<(string Name, IElementNode Element)> _properties = new();
-    private (string Name, IElementNode Element)[] _additionalProperties = Array.Empty<(string Name, IElementNode Element)>();
+    private readonly List<(string Name, IElementNode Element)> _constructorParameters = [];
+    private readonly List<(string Name, IElementNode Element)> _properties = [];
+    private (string Name, IElementNode Element)[] _additionalProperties = [];
 
     internal ImplementationNode(
         // parameters
@@ -72,6 +74,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         ICheckTypeProperties checkTypeProperties,
         IReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
+        ITaskBasedQueue taskBasedQueue,
         IInjectablePropertyExtractor injectablePropertyExtractor)
     {
         _implementationType = implementationType;
@@ -84,6 +87,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         _userDefinedElements = userDefinedElements;
         _referenceGenerator = referenceGenerator;
         _localDiagLogger = localDiagLogger;
+        _taskBasedQueue = taskBasedQueue;
         _injectablePropertyExtractor = injectablePropertyExtractor;
         TypeFullName = abstractionType?.FullName() ?? implementationType.FullName();
         ImplementationTypeFullName = implementationType.FullName();
@@ -95,7 +99,6 @@ internal sealed partial class ImplementationNode : IImplementationNode
 
     public void Build(PassedContext passedContext)
     {
-        _parentFunction.RegisterAwaitableNode(this);
         var implementationCycle = passedContext.ImplementationStack.Contains(_implementationType, CustomSymbolEqualityComparer.Default);
 
         if (implementationCycle)
@@ -136,7 +139,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         
         _constructorParameters.AddRange(_constructor
             ?.Parameters
-            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsConstructor))) ?? Enumerable.Empty<(string, IElementNode)>());
+            .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsConstructor))) ?? []);
 
         IReadOnlyList<IPropertySymbol> properties;
         if (_checkTypeProperties.GetPropertyChoicesFor(_implementationType) is { } propertyChoice)
@@ -149,7 +152,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
                 .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false))
                 .ToList();
         else 
-            properties = Array.Empty<IPropertySymbol>();
+            properties = [];
         _properties.AddRange(properties
             .Select(p => (p.Name, MapToInjection(p.Name, p.Type, p, outParamsProperties))));
 
@@ -158,7 +161,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
             .Select(ps => (ps.Type, $"\"{ps.Name}\" (constructor parameter)"))
             .Concat(properties
                 .Select(ps => (ps.Type, $"\"{ps.Name}\" (property)")))
-            .ToList() ?? new List<(ITypeSymbol, string)>();
+            .ToList() ?? [];
 
         if (_checkTypeProperties.GetInitializerFor(_implementationType) is { Type: {} initializerType, Initializer: {} initializerMethod })
         {
@@ -180,9 +183,10 @@ internal sealed partial class ImplementationNode : IImplementationNode
             // if not void then the initializer return either ValueTask or Task (meaning it is async)
             if (!initializerMethod.ReturnsVoid)
             {
-                Awaited = true;
+                InitializerReturnsSomeTask = true;
                 AsyncReference = _referenceGenerator.Generate("task");
                 AsyncTypeFullName = initializerMethod.ReturnType.FullName(); // ReturnType can only be either ValueTask or Task at this point
+                _taskBasedQueue.EnqueueTaskBasedOnlyFunction(_parentFunction);
             }
             
             injectionsAnalysisGathering.AddRange(initializerMethod
@@ -398,7 +402,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
     public string SubDisposalReference { get; }
     public bool AggregateForDisposal { get; private set; }
 
-    public bool Awaited { get; private set; }
+    public bool InitializerReturnsSomeTask { get; private set; }
     public string? AsyncReference { get; private set; }
     public string? AsyncTypeFullName { get; private set; }
     public string ImplementationTypeFullName { get; }

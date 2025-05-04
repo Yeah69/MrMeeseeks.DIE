@@ -15,7 +15,7 @@ internal sealed class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTyp
         IImplementationTypeSetCache implementationTypeSetCache,
         ILocalDiagLogger localDiagLogger)
     : base(
-        new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes },
+        [assemblyTypesFromAttributes, containerTypesFromAttributes],
         implementationTypeSetCache,
         localDiagLogger)
     {
@@ -33,7 +33,7 @@ internal sealed class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBa
         IImplementationTypeSetCache implementationTypeSetCache,
         ILocalDiagLogger localDiagLogger)
         : base(
-            new ITypesFromAttributesBase[] { assemblyTypesFromAttributes, containerTypesFromAttributes, scopeTypesFromAttributes },
+            [assemblyTypesFromAttributes, containerTypesFromAttributes, scopeTypesFromAttributes],
             implementationTypeSetCache,
             localDiagLogger)
     {

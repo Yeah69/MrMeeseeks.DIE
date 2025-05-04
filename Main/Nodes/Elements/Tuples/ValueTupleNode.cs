@@ -12,7 +12,7 @@ internal sealed partial class ValueTupleNode : IValueTupleNode
 {
     private readonly INamedTypeSymbol _valueTupleType;
     private readonly IElementNodeMapperBase _elementNodeMapper;
-    private readonly List<(string Name, IElementNode Node)> _parameters = new();
+    private readonly List<(string Name, IElementNode Node)> _parameters = [];
 
     internal ValueTupleNode(
         INamedTypeSymbol valueTupleType,

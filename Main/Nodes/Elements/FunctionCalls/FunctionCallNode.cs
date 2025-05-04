@@ -4,10 +4,10 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Nodes.Elements.FunctionCalls;
 
-internal interface IFunctionCallNode : IElementNode, IAwaitableNode
+internal interface IFunctionCallNode : IElementNode
 {
     string? OwnerReference { get; }
-    string FunctionName { get; }
+    string FunctionName(ReturnTypeStatus returnTypeStatus);
     IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
     (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
     (IElementNode Calling, IElementNode Called)? TransientScopeDisposalParameter { get; }
@@ -32,7 +32,6 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         OwnerReference = ownerReference;
         Parameters = parameters;
         TypeParameters = typeParameters;
-        FunctionName = calledFunction.Name;
         TypeFullName = callSideType.FullName();
         Reference = referenceGenerator.Generate("functionCallResult");
         SubDisposalParameter = callingSubDisposal is null || !calledFunction.IsSubDisposalAsParameter
@@ -49,13 +48,12 @@ internal abstract class FunctionCallNode : IFunctionCallNode
 
     public string TypeFullName { get; }
     public string Reference { get; }
-    public string FunctionName { get; }
+
+    public string FunctionName(ReturnTypeStatus returnTypeStatus) => CalledFunction.Name(returnTypeStatus);
     public virtual string? OwnerReference { get; }
     public IReadOnlyList<(IParameterNode, IParameterNode)> Parameters { get; }
     public (IElementNode Calling, IElementNode Called)? SubDisposalParameter { get; }
     public (IElementNode Calling, IElementNode Called)? TransientScopeDisposalParameter { get; }
     public IReadOnlyList<ITypeSymbol> TypeParameters { get; }
     public IFunctionNode CalledFunction { get; }
-
-    public bool Awaited => CalledFunction.SynchronicityDecision is not SynchronicityDecision.Sync;
 }

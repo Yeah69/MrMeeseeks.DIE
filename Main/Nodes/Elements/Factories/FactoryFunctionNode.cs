@@ -12,16 +12,17 @@ internal sealed partial class FactoryFunctionNode : FactoryNodeBase, IFactoryFun
 {
     private readonly IMethodSymbol _methodSymbol;
     private readonly IElementNodeMapperBase _elementNodeMapperBase;
-    private readonly List<(string, IElementNode)> _parameters = new ();
+    private readonly List<(string, IElementNode)> _parameters = [];
 
     internal FactoryFunctionNode(
         IMethodSymbol methodSymbol,
         IElementNodeMapperBase elementNodeMapperBase,
         
         IFunctionNode parentFunction,
+        ITaskBasedQueue taskBasedQueue,
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes) 
-        : base(methodSymbol.ReturnType, methodSymbol, parentFunction, referenceGenerator, wellKnownTypes)
+        : base(methodSymbol.ReturnType, methodSymbol, parentFunction, taskBasedQueue, referenceGenerator, wellKnownTypes)
     {
         _methodSymbol = methodSymbol;
         _elementNodeMapperBase = elementNodeMapperBase;

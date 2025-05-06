@@ -313,7 +313,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             var awaitDisposalSourceReference = _referenceGenerator.Generate("awaitDisposalSource");
             code.AppendLine(
                 $$"""
-                  internal static void {{_releaseDisposeAsyncName}}(ref int {{disposedReference}}, ref readonly int {{resolutionCounterReference}}, {{_wellKnownTypes.TaskCompletionSourceOfInt.FullName()}} {{awaitDisposalSourceReference}})
+                  internal static void {{_releaseDisposeAsyncName}}(ref int {{disposedReference}}, ref int {{resolutionCounterReference}}, {{_wellKnownTypes.TaskCompletionSourceOfInt.FullName()}} {{awaitDisposalSourceReference}})
                   {
                       if ({{disposedReference}} == 0 || {{resolutionCounterReference}} > 0)
                           return;

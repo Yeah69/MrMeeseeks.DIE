@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>11</LangVersion>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <OutputType>Library</OutputType>
+
+        <RootNamespace>MrMeeseeks.DIE.Test.LowerLanguageVersion</RootNamespace>
+        <AssemblyName>MrMeeseeks.DIE.Test.LowerLanguageVersion</AssemblyName>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
+
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+        <PackageReference Include="MrMeeseeks.DIE.UserUtility" Version="3.0.1" />
+        <PackageReference Include="xunit" Version="2.7.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Main\Main.csproj" OutputItemType="Analyzer" PrivateAssets="all"/>
+    </ItemGroup>
+
+</Project>

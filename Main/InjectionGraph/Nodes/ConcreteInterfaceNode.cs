@@ -1,0 +1,143 @@
+﻿using System.Threading;
+using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.InjectionGraph.Edges;
+using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility;
+
+namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
+
+internal record ConcreteInterfaceNodeData(INamedTypeSymbol Interface)
+{
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Interface, CustomSymbolEqualityComparer.IncludeNullability);
+        return hash.ToHashCode();
+    }
+
+    public virtual bool Equals(ConcreteInterfaceNodeData? other)
+    {
+        if (ReferenceEquals(this, other))
+            return true;
+        if (other is null)
+            return false;
+        if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(Interface, other.Interface))
+            return false;
+        return true;
+    }
+}
+
+internal record ConcreteInterfaceNodeImplementationData(INamedTypeSymbol Implementation, IReadOnlyList<Decoration> Decorations)
+{
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Implementation, CustomSymbolEqualityComparer.IncludeNullability);
+        foreach (var decoration in Decorations)
+            hash.Add(decoration);
+        return hash.ToHashCode();
+    }
+
+    public virtual bool Equals(ConcreteInterfaceNodeImplementationData? other)
+    {
+        if (ReferenceEquals(this, other))
+            return true;
+        if (other is null)
+            return false;
+        if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(Implementation, other.Implementation))
+            return false;
+        if (Decorations.Count != other.Decorations.Count)
+            return false;
+        for (var i = 0; i < Decorations.Count; i++)
+        {
+            switch (Decorations[i], other.Decorations[i])
+            {
+                case (Decoration.Decorator, Decoration.Interceptor):
+                case (Decoration.Interceptor, Decoration.Decorator):
+                case (Decoration.Decorator decorator, Decoration.Decorator otherDecorator) 
+                    when !CustomSymbolEqualityComparer.IncludeNullability.Equals(decorator.Type, otherDecorator.Type):
+                case (Decoration.Interceptor interceptor, Decoration.Interceptor otherInterceptor) 
+                    when !CustomSymbolEqualityComparer.IncludeNullability.Equals(interceptor.Type, otherInterceptor.Type):
+                    return false;
+            }
+        }
+        return true;
+    }
+}
+
+internal class ConcreteInterfaceNodeManager(Func<ConcreteInterfaceNodeData, ConcreteInterfaceNode> factory)
+    : ConcreteNodeManagerBase<ConcreteInterfaceNodeData, ConcreteInterfaceNode>(factory), IContainerInstance;
+
+internal class ConcreteInterfaceNodeNumberProvider : IContainerInstance
+{
+    private int _currentNumber;
+    internal int GetNextNumber() => Interlocked.Increment(ref _currentNumber);
+}
+
+internal class ConcreteInterfaceNode : IConcreteNode
+{
+    private readonly TypeNodeManager _typeNodeManager;
+    private readonly Func<IConcreteNode, TypeNode, TypeEdge> _typeEdgeFactory;
+    private readonly Dictionary<DomainContext, int> _defaultImplementationsCaseNumbers = [];
+    private readonly Dictionary<ConcreteInterfaceNodeImplementationData, ImmutableArray<(TypeEdge Edge, int Id, int NextId)>> _implementationDataToCases = [];
+    private int _caseNumber;
+    
+    internal ConcreteInterfaceNode(
+        // parameters
+        ConcreteInterfaceNodeData data,
+
+        // dependencies
+        ConcreteInterfaceNodeNumberProvider numberProvider,
+        TypeNodeManager typeNodeManager,
+        Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory)
+    {
+        _typeNodeManager = typeNodeManager;
+        _typeEdgeFactory = typeEdgeFactory;
+        Data = data;
+        Number = numberProvider.GetNextNumber();
+    }
+    internal int Number { get; }
+    internal ConcreteInterfaceNodeData Data { get; }
+    internal IEnumerable<(TypeEdge Edge, int Id, int NextId)> Cases => _implementationDataToCases.SelectMany(kvp => kvp.Value);
+    internal IReadOnlyDictionary<DomainContext, int> DefaultImplementationsCaseNumbers => _defaultImplementationsCaseNumbers;
+    
+    public override int GetHashCode() => Data.GetHashCode();
+    public override bool Equals(object? obj) => obj is ConcreteInterfaceNode node && Data.Equals(node.Data);
+
+    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(
+        EdgeContext context, 
+        ConcreteInterfaceNodeImplementationData implementationData,
+        bool isDefaultInjection)
+    {
+        if (!_implementationDataToCases.TryGetValue(implementationData, out var cases))
+        {
+            var ids = Enumerable.Range(0, implementationData.Decorations.Count + 1)
+                .Select(_ => Interlocked.Increment(ref _caseNumber))
+                .ToImmutableArray();
+            var tempCases = new (TypeEdge Edge, int Id, int NextId)[ids.Length];
+            foreach (var (decoration, i) in implementationData.Decorations.Select((d, i) => (d, i)))
+            {
+                var decorationTypeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(decoration switch
+                    {
+                        Decoration.Decorator decorator => decorator.Type,
+                        Decoration.Interceptor interceptor => interceptor.Type,
+                        _ => throw new ArgumentException("Unknown decoration type")
+                    }));
+                tempCases[i] = (decorationTypeEdge, ids[i], ids[i + 1]);
+            }
+            var implementationTypeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(implementationData.Implementation));
+            tempCases[^1] = (implementationTypeEdge, ids[^1], 0);
+            cases = tempCases.ToImmutableArray();
+            _implementationDataToCases[implementationData] = cases;
+        }
+        
+        if (isDefaultInjection)
+            _defaultImplementationsCaseNumbers[context.Domain] = cases[0].Id;
+        
+        var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, Location Location)>();
+        foreach (var (edge, _, _) in cases)
+            if (edge.AddContext(context))
+                notYetConnectedTypeNodes.Add((edge.Target, Location.None));
+        return notYetConnectedTypeNodes;
+    }
+}

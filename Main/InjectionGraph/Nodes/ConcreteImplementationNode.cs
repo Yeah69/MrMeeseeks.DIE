@@ -12,10 +12,10 @@ internal record ConcreteImplementationNodeData(
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        hash.Add(Implementation);
-        hash.Add(Constructor);
+        hash.Add(Implementation, CustomSymbolEqualityComparer.IncludeNullability);
+        hash.Add(Constructor, CustomSymbolEqualityComparer.IncludeNullability);
         foreach (var property in ObjectInitializerProperties)
-            hash.Add(property);
+            hash.Add(property, CustomSymbolEqualityComparer.IncludeNullability);
         return hash.ToHashCode();
     }
 

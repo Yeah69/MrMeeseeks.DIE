@@ -9,7 +9,7 @@ internal record ConcreteFunctorNodeData(INamedTypeSymbol Type)
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        hash.Add(Type);
+        hash.Add(Type, CustomSymbolEqualityComparer.IncludeNullability);
         return hash.ToHashCode();
     }
 

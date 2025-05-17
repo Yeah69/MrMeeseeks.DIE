@@ -1,21 +1,18 @@
-﻿using System;
-using System.Threading;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal class HelloSayer
-{
-    internal void SayHello() => Console.WriteLine("Hello!");
-}
+internal interface IInterface;
 
-internal class Dialog
-{
-    internal Dialog(ThreadLocal<HelloSayer> helloSayer) => HelloSayer = helloSayer.Value!;
-    public HelloSayer HelloSayer { get; set; }
-    
-    internal void StartConversation() => HelloSayer.SayHello();
-}
+internal sealed class Decorator(IInterface decorated) : IInterface, IDecorator<IInterface>;
 
-[CreateFunction(typeof(Dialog), "Create")]
+internal sealed class Implementation : IInterface;
+
+internal sealed class ImplementationA : IInterface;
+
+internal class Parent(IInterface child);
+
+[ImplementationChoice(typeof(IInterface), typeof(ImplementationA))]
+[CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container;

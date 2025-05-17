@@ -1,6 +1,6 @@
-﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
+﻿using MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
+namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
 internal class TypeEdge
 {

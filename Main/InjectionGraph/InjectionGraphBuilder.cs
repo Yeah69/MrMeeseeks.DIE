@@ -1,13 +1,12 @@
-﻿using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.InjectionGraph.Edges;
+﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
-using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
+
+internal record ResolutionStep(TypeNode Current, EdgeContext Context, Location CurrentResolvedLocation);
 
 internal interface IInjectionGraphBuilder
 {
@@ -21,27 +20,18 @@ internal interface IInjectionGraphBuilder
 }
 
 internal class InjectionGraphBuilder(
-    IContainerCheckTypeProperties containerCheckTypeProperties,
-    ILocalDiagLogger containerDiagLogger,
-    IInjectablePropertyExtractor injectablePropertyExtractor,
+    InjectionGraphBuilderResolutionSteps resolutionSteps,
     TypeNodeManager typeNodeManager,
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
-    ConcreteImplementationNodeManager concreteImplementationNodeManager,
-    ConcreteFunctorNodeManager concreteFunctorNodeManager,
-    ConcreteOverrideNodeManager concreteOverrideNodeManager,
     OverrideContextManager overrideContextManager,
-    Lazy<ConcreteExceptionNode> concreteExceptionNode,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
-    Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
-    Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory)
+    Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory)
     : IInjectionGraphBuilder, IContainerInstance
 {
     private readonly List<ConcreteEntryFunctionNode> _concreteEntryFunctionNodes = [];
     private readonly List<ITypeNodeFunction> _functions = [];
 
     public IReadOnlyList<ITypeNodeFunction> Functions => _functions;
-
-    private record ResolutionStep(TypeNode Current, EdgeContext Context, Location CurrentResolvedLocation);
 
     public void BuildForRootType(
         ITypeSymbol rootType, 
@@ -78,116 +68,20 @@ internal class InjectionGraphBuilder(
         switch (typeNodeType)
         {
             case not null when edgeContext.Override is OverrideContext.Any any && any.Overrides.Contains(typeNodeType, CustomSymbolEqualityComparer.IncludeNullability):
-                var concreteOverrideNodeData = new ConcreteOverrideNodeData(typeNodeType);
-                var concreteOverrideNode = concreteOverrideNodeManager.GetOrAddNode(concreteOverrideNodeData);
-                ConnectToTypeNodeIfNotAlready(concreteOverrideNode, edgeContext);
+                resolutionSteps.OverrideStep(typeNode, edgeContext);
                 break;
-            case INamedTypeSymbol { TypeArguments.Length: >= 1 } maybeFunctor when 
-                maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
-                var concreteFunctorNodeData = new ConcreteFunctorNodeData(maybeFunctor);
-                var concreteFunctorNode = concreteFunctorNodeManager.GetOrAddNode(concreteFunctorNodeData);
-                var newOverrideContext = overrideContextManager.GetOrAddContext(concreteFunctorNode.FunctorParameterTypes);
-                var newEdgeContext = edgeContext with { Override = newOverrideContext };
-                ConnectToTypeNodeIfNotAlready(concreteFunctorNode, newEdgeContext);
-                foreach (var (node, location) in concreteFunctorNode.ConnectIfNotAlready(newEdgeContext))
-                    queue.Enqueue(new ResolutionStep(
-                        node,
-                        newEdgeContext,
-                        location.Equals(Location.None) ? currentResolvedLocation : location));
+            case INamedTypeSymbol { TypeArguments.Length: >= 1 } maybeFunctor when maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
+                resolutionSteps.FunctorStep(maybeFunctor, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
-            case INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } namedTypeSymbol:
-                var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(namedTypeSymbol, null);
-                if (implementationResult is not ImplementationResult.Single { Implementation: { } implementation })
-                {
-                    ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext);
-                    var logMessage = implementationResult switch
-                    {
-                        ImplementationResult.None => $"Class: No implementation registered for \"{namedTypeSymbol.FullName()}\".",
-                        ImplementationResult.Multiple { Implementations: var implementations} => $"Class: Multiple implementations registered for \"{namedTypeSymbol.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
-                        _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
-                    };
-                    containerDiagLogger.Error(
-                        ErrorLogData.ResolutionException(
-                            logMessage,
-                            namedTypeSymbol,
-                            ImmutableStack<INamedTypeSymbol>.Empty), 
-                        currentResolvedLocation);
-                    break;
-                }
-                
-                // Constructor
-                var constructorResult = containerCheckTypeProperties.GetConstructorChoiceFor(implementation);
-                if (constructorResult is not ConstructorResult.Single { Constructor: {} constructor})
-                {
-                    ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext);
-                    var logMessage = constructorResult switch
-                    {
-                        ConstructorResult.None => $"Class.Constructor: No visible constructor found for implementation {namedTypeSymbol.FullName()}",
-                        ConstructorResult.Multiple => $"Class.Constructor: More than one visible constructor found for implementation {namedTypeSymbol.FullName()}",
-                        ConstructorResult.ChoiceFailedNone => $"Class.Constructor: Constructor choice didn't match with any constructor for implementation {namedTypeSymbol.FullName()}",
-                        ConstructorResult.ChoiceFailedMultiple => $"Class.Constructor: Constructor choice matched with multiple constructors for implementation {namedTypeSymbol.FullName()}",
-                        _ => throw new InvalidOperationException("Unexpected ConstructorResult")
-                    };
-                    containerDiagLogger.Error(
-                        ErrorLogData.ResolutionException(
-                            logMessage,
-                            namedTypeSymbol,
-                            ImmutableStack<INamedTypeSymbol>.Empty), 
-                        currentResolvedLocation);
-                    break;
-                }
-                
-                // Properties
-                IReadOnlyList<IPropertySymbol> properties;
-                if (containerCheckTypeProperties.GetPropertyChoicesFor(implementation) is { } propertyChoice)
-                    properties = propertyChoice;
-                // Automatic property injection is disabled for record types, but property choices are still allowed
-                else if (!implementation.IsRecord)
-                    properties = injectablePropertyExtractor
-                        .GetInjectableProperties(implementation)
-                        // Check whether property is settable
-                        .Where(p => p.IsRequired || (p.SetMethod?.IsInitOnly ?? false))
-                        .ToList();
-                else 
-                    properties = Array.Empty<IPropertySymbol>();
-                
-                var concreteImplementationNodeData = new ConcreteImplementationNodeData(
-                    implementation,
-                    constructor,
-                    properties.OrderBy(p => p.Name).ToList());
-                
-                var concreteImplementationNode = concreteImplementationNodeManager.GetOrAddNode(concreteImplementationNodeData);
-                
-                ConnectToTypeNodeIfNotAlready(concreteImplementationNode, edgeContext);
-                
-                foreach (var (node, location) in concreteImplementationNode.ConnectIfNotAlready(edgeContext))
-                    queue.Enqueue(new ResolutionStep(
-                        node, 
-                        edgeContext,
-                        location.Equals(Location.None) ? currentResolvedLocation : location));
+            case INamedTypeSymbol { TypeKind: TypeKind.Interface } interfaceType:
+                resolutionSteps.InterfaceStep(interfaceType, typeNode, edgeContext, queue, currentResolvedLocation);
+                break;
+            case INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } implementationType:
+                resolutionSteps.ImplementationStep(implementationType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
             default:
-                ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext);
-                containerDiagLogger.Error(
-                    ErrorLogData.ResolutionException(
-                        $"Type {typeNode.Type.FullName()} could not be resolved.",
-                        typeNode.Type,
-                        ImmutableStack<INamedTypeSymbol>.Empty), 
-                    currentResolvedLocation);
+                resolutionSteps.DefaultStep(typeNode, edgeContext, currentResolvedLocation);
                 break;
-        }
-
-        return;
-        
-        void ConnectToTypeNodeIfNotAlready(IConcreteNode concreteNode, EdgeContext edgeContextToContinueWith)
-        {
-            if (!typeNode.TryGetOutgoingEdgeFor(concreteNode, out var existingEdge))
-            {
-                existingEdge = concreteEdgeFactory(typeNode, concreteNode);
-                typeNode.AddOutgoing(existingEdge);
-            }
-
-            existingEdge.AddContext(edgeContextToContinueWith);
         }
     }
 

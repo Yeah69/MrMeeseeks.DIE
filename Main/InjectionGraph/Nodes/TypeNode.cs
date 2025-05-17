@@ -1,12 +1,13 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
 internal class TypeNodeManager : IContainerInstance
 {
-    private readonly Dictionary<ITypeSymbol, TypeNode> _nodes = [];
+    private readonly Dictionary<ITypeSymbol, TypeNode> _nodes = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Func<ITypeSymbol,TypeNode> _factory;
 
     internal TypeNodeManager(Func<ITypeSymbol, TypeNode> factory) => _factory = factory;

@@ -10,9 +10,9 @@ internal record ConcreteEntryFunctionNodeData(string Name, ITypeSymbol ReturnTyp
     {
         var hash = new HashCode();
         hash.Add(Name);
-        hash.Add(ReturnType);
+        hash.Add(ReturnType, CustomSymbolEqualityComparer.IncludeNullability);
         foreach (var parameterType in ParameterTypes)
-            hash.Add(parameterType);
+            hash.Add(parameterType, CustomSymbolEqualityComparer.IncludeNullability);
         return hash.ToHashCode();
     }
 

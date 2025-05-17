@@ -4,7 +4,7 @@ using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
-namespace MrMeeseeks.DIE.InjectionGraph;
+namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 
 internal interface IInjectionGraphCodeGenerator
 {
@@ -17,21 +17,22 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
     private readonly StringBuilder _code = new();
     private readonly Dictionary<IFunction, string> _functionNames = [];
     private readonly Dictionary<ITypeSymbol, string> _entryFunctionsForFunctors = [];
-    private readonly string _overridesParameterName;
-    private readonly IReadOnlyList<(ITypeSymbol Type, string Name)> _functionParameters;
     private readonly IContainerInfo _containerInfo;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly OverrideContextManager _overrideContextManager;
     private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
+    private readonly ContextGenerator _contextGenerator;
     private readonly IReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly string _iOverrideInterfaceName;
     private Dictionary<OverrideContext, string> _overrideContextNameMap = [];
 
-    public InjectionGraphCodeGenerator(IContainerInfo containerInfo,
+    public InjectionGraphCodeGenerator(
+        IContainerInfo containerInfo,
         IInjectionGraphBuilder injectionGraphBuilder,
         OverrideContextManager overrideContextManager,
         ConcreteFunctorNodeManager concreteFunctorNodeManager,
+        ContextGenerator contextGenerator,
         IReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
@@ -39,11 +40,10 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         _injectionGraphBuilder = injectionGraphBuilder;
         _overrideContextManager = overrideContextManager;
         _concreteFunctorNodeManager = concreteFunctorNodeManager;
+        _contextGenerator = contextGenerator;
         _referenceGenerator = referenceGenerator;
         _wellKnownTypes = wellKnownTypes;
-        _overridesParameterName = referenceGenerator.Generate("overrides");
         _iOverrideInterfaceName = _referenceGenerator.Generate("IOverride");
-        _functionParameters = [(wellKnownTypes.Object, _overridesParameterName)];
     }
 
     public string Generate()
@@ -72,6 +72,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             $$"""
               sealed partial class {{_containerInfo.Name}}
               {
+              {{_contextGenerator.GenerateContextClass()}}
               """);
 
         var constructors = _containerInfo.ContainerType.GetMembers().OfType<IMethodSymbol>()
@@ -103,12 +104,12 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             var function = new FunctorEntryFunction(typeNode.Type) { Accessibility = Accessibility.Private };
             _code.AppendLine(
                 $$"""
-                  {{GenerateMethodDeclaration(function, functionName, _functionParameters)}}
+                  {{GenerateMethodDeclaration(function, functionName)}}
                   {
                   """);
             if (typeNode.Incoming.Select(e => e.Type).OfType<FunctionEdgeType>().FirstOrDefault() is { } nextFunction)
             {
-                _code.AppendLine($"return {_functionNames[nextFunction.Function]}({_overridesParameterName});");
+                _code.AppendLine($"return {_functionNames[nextFunction.Function]}({_contextGenerator.ParameterName});");
             }
             else
             {
@@ -125,7 +126,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
 
             _code.AppendLine(
                 $$"""
-                  {{GenerateMethodDeclaration(function, functionName, _functionParameters)}}
+                  {{GenerateMethodDeclaration(function, functionName)}}
                   {
                   """);
 
@@ -144,17 +145,14 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 var parametersWithName = parameters.Select(p => (Type: p, Name: _referenceGenerator.Generate(p))).ToArray();
                 var parametersOnDeclaration = string.Join(", ", parametersWithName.Select(t => $"{t.Type.FullName()} {t.Name}"));
                 var overridesName = _overrideContextNameMap[overrideContext];
-                var overridesReference = _referenceGenerator.Generate("overrides");
                 var overridesAssignment = overrideContext is OverrideContext.Any any 
                     ? string.Join(", ", any.Overrides.Select(p => parametersWithName.First(t => t.Type.Equals(p)).Name))
                     : "";
-                //var overrides 
                 _code.AppendLine(
                     $$"""
                       internal {{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
                       {
-                      {{_wellKnownTypes.Object.FullName()}} {{overridesReference}} = new {{overridesName}}({{overridesAssignment}});
-                      return {{innerFunctionName}}({{overridesReference}});
+                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation($"new {overridesName}({overridesAssignment})", 0, 0)}});
                       }
                       """);
             }
@@ -222,7 +220,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         if (innerNode is ConcreteOverrideNode overrideNode)
         {
             var reference = _referenceGenerator.Generate(overrideNode.Data.Type);
-            _code.AppendLine($"{overrideNode.Data.Type.FullName()} {reference} = (({_iOverrideInterfaceName}<{overrideNode.Data.Type.FullName()}>) {_overridesParameterName}).Value();");
+            _code.AppendLine($"{overrideNode.Data.Type.FullName()} {reference} = (({_iOverrideInterfaceName}<{overrideNode.Data.Type.FullName()}>) {_contextGenerator.ParameterName}).{_contextGenerator.OverridesPropertyName}.Value();");
             return reference;
         }
         if (innerNode is ConcreteImplementationNode implementationNode)
@@ -270,11 +268,81 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 var overrideParameters = overrideContext is OverrideContext.Any any
                     ? string.Join(", ", any.Overrides.Select(o => parameterReferences[functorNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
                     : "";
-                _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}(new {overrideContextName}({overrideParameters}));");
+                var parameters = _contextGenerator.GenerateInstanceCreation($"new {overrideContextName}({overrideParameters})", 0, 0);
+                _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}({parameters});");
             }
             return reference;
         }
+        if (innerNode is ConcreteInterfaceNode interfaceNode)
+        {
+            if (interfaceNode.DefaultImplementationsCaseNumbers.Count > 0)
+            {
+                if (interfaceNode.DefaultImplementationsCaseNumbers.Count > 1)
+                    // ToDo implement this
+                    throw new NotImplementedException("More than one default implementation found.");
+                else
+                    _code.AppendLine(
+                        $$"""
+                          if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.InterfaceNumberPropertyName}} != {{interfaceNode.Number}})
+                          {
+                          {{_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: interfaceNode.Number, implementationNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().Value)}}
+                          }
+                          """);
+            }
+            
+            var reference = _referenceGenerator.Generate(interfaceNode.Data.Interface);
+            _code.AppendLine($"{interfaceNode.Data.Interface.FullName()} {reference};");
+            var first = true;
+            foreach (var interfaceNodeCase in interfaceNode.Cases)
+            {
+                var ifKeyword = "else if";
+                if (first)
+                {
+                    ifKeyword = "if";
+                    first = false;
+                }
+                _code.AppendLine(
+                    $$"""
+                      {{ifKeyword}} ({{_contextGenerator.ParameterName}}.{{_contextGenerator.ImplementationNumberPropertyName}} == {{interfaceNodeCase.Id}})
+                      {
+                      """);
+                
+                var newInterfaceNumber = interfaceNodeCase.NextId == 0 ? 0 : interfaceNode.Number;
+                _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: newInterfaceNumber, implementationNumber: interfaceNodeCase.NextId));
+                
+                var innerReference = CallFunctionOrGenerateForInjectionNode(interfaceNodeCase.Edge, interfaceNodeCase.Edge.Target);
+                
+                _code.AppendLine(
+                    $$"""
+                      {{reference}} = ({{interfaceNode.Data.Interface.FullName()}}) {{innerReference}};
+                      }
+                      """);
+            }
+            _code.AppendLine(
+                $$"""
+                  else
+                  {
+                  throw new {{_wellKnownTypes.Exception.FullName()/* todo change the exception type to one created by DIE */}}("Bug in DIE generator. This exception should be impossible. Please (re)open an issue ticket with the UUID {{new Guid("E8922F27-2F80-4334-B152-667441D8D3C3").ToString()}} in https://github.com/Yeah69/MrMeeseeks.DIE/issues .");
+                  }
+                  """);
+            
+            return reference;
+        }
         return NotAvailable;
+    }
+    
+    private record Context(int Interface, int Implementation);
+
+    private interface IAsdf;
+    
+    private class Asdf : IAsdf
+    {
+        public string Name { get; set; } = "";
+    }
+    
+    private class AsdfDecorator(IAsdf inner) : IAsdf
+    {
+        public string Name { get; set; } = "";
     }
 
     private string CallFunctionOrGenerateForInjectionNode(TypeEdge edge, TypeNode node)
@@ -283,13 +351,13 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         {
             var function = functionEdgeType.Function;
             var resultReference = _referenceGenerator.Generate(function.RootNode.Type);
-            _code.AppendLine($"{function.RootNode.Type.FullName()} {resultReference} = {_functionNames[function]}({_overridesParameterName});");
+            _code.AppendLine($"{function.RootNode.Type.FullName()} {resultReference} = {_functionNames[function]}({_contextGenerator.ParameterName});");
             return resultReference;
         }
         return GenerateForInjectionNode(node);
     }
     
-    private static string GenerateMethodDeclaration(IFunction function, string functionName, IReadOnlyList<(ITypeSymbol Type, string Name)> parameters)
+    private string GenerateMethodDeclaration(IFunction function, string functionName)
     {
         var accessibility = function is { Accessibility: { } acc, ExplicitInterface: null }
             ? $"{SyntaxFacts.GetText(acc)} "  
@@ -331,7 +399,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 }));
         }
 
-        var parametersText = string.Join(", ", parameters.Select(p => $"{p.Type.FullName()} {p.Name}"));
+        var parametersText = _contextGenerator.FullNameAndParameterName;
         return $"{accessibility}{asyncModifier}{function.ReturnType.FullName()} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
     }
     

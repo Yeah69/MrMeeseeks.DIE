@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Text;
 using MrMeeseeks.DIE.Analytics;
 using MrMeeseeks.DIE.CodeGeneration;
 using MrMeeseeks.DIE.InjectionGraph;
+using MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes;

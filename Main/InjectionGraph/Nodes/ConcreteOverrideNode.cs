@@ -9,7 +9,7 @@ internal record ConcreteOverrideNodeData(ITypeSymbol Type)
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        hash.Add(Type);
+        hash.Add(Type, CustomSymbolEqualityComparer.IncludeNullability);
         return hash.ToHashCode();
     }
 
@@ -40,6 +40,5 @@ internal class ConcreteOverrideNode : IConcreteNode
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteOverrideNode node && Data.Equals(node.Data);
 
-    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
-        Array.Empty<(TypeNode TypeNode, Location Location)>();
+    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => [];
 }

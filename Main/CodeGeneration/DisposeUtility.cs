@@ -26,7 +26,6 @@ internal interface IDisposeUtility
     string? DisposeExceptionHandlingAsyncFullyQualified { get; }
     string? DisposeSingularAsyncFullyQualified { get; }
     string? DisposeSingularAsyncSyncedFullyQualified { get; }
-    string? ReleaseDisposeAsyncFullyQualified { get; }
 }
 
 internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
@@ -49,7 +48,6 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
     private readonly string? _disposeExceptionHandlingSyncOnlyName;
     private readonly string? _disposeExceptionHandlingAsyncName;
     private readonly string _syncDisposalTriggeredExceptionName;
-    private readonly string? _releaseDisposeAsyncName;
 
     internal DisposeUtility(
         IReferenceGenerator referenceGenerator,
@@ -146,12 +144,6 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             : null;
         
         _syncDisposalTriggeredExceptionName = "SyncDisposalTriggeredException";
-        _releaseDisposeAsyncName = wellKnownTypes.IAsyncDisposable is not null && wellKnownTypes.ValueTask is not null
-            ? referenceGenerator.Generate("ReleaseDisposeAsync")
-            : null;
-        ReleaseDisposeAsyncFullyQualified = _releaseDisposeAsyncName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_releaseDisposeAsyncName}"
-            : null;
     }
 
     public DisposalUtilityInterfaceData DisposableRangeInterfaceData { get; }
@@ -168,7 +160,6 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
     private string DisposeSingularFullyQualified { get; }
     public string? DisposeSingularAsyncFullyQualified { get; }
     public string? DisposeSingularAsyncSyncedFullyQualified { get; }
-    public string? ReleaseDisposeAsyncFullyQualified { get; }
     public string ClassName { get; }
 
     public string GenerateSingularDisposeFunctionsFile()
@@ -302,23 +293,6 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
                       }
                       if (aggregate.{{nameof(List<Exception>.Count)}} > 0) return new {{_wellKnownTypes.AggregateException.FullName()}}(aggregate);
                       return null;
-                  }
-                  """);
-        }
-
-        if (_wellKnownTypes.IAsyncDisposable is not null && _wellKnownTypes.ValueTask is not null)
-        {
-            var disposedReference = _referenceGenerator.Generate("disposed");
-            var resolutionCounterReference = _referenceGenerator.Generate("resolutionCounter");
-            var awaitDisposalSourceReference = _referenceGenerator.Generate("awaitDisposalSource");
-            code.AppendLine(
-                $$"""
-                  internal static void {{_releaseDisposeAsyncName}}(ref int {{disposedReference}}, ref int {{resolutionCounterReference}}, {{_wellKnownTypes.TaskCompletionSourceOfInt.FullName()}} {{awaitDisposalSourceReference}})
-                  {
-                      if ({{disposedReference}} == 0 || {{resolutionCounterReference}} > 0)
-                          return;
-                      if ({{_wellKnownTypes.Interlocked.FullName()}}.Exchange(ref {{disposedReference}}, 2) != 2)
-                          {{awaitDisposalSourceReference}}.SetResult(0);
                   }
                   """);
         }

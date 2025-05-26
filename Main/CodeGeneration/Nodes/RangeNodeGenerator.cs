@@ -1,5 +1,4 @@
 using System.Threading;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
@@ -64,16 +63,10 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
             code.AppendLine($"{DefaultConstructorDeclaredAccessibility}{_rangeNode.Name}() {{ }}");
         
         PreGeneralContent(code, visitor);
-
-        if (_wellKnownTypes.ValueTask is not null && _wellKnownTypes.IAsyncDisposable is not null)
-        {
-            code.AppendLine(
-                $"private readonly {_wellKnownTypes.TaskCompletionSourceOfInt.FullName()} {_rangeNode.ReleaseDisposeAsyncReference} = new {_wellKnownTypes.TaskCompletionSourceOfInt.FullName()}();");
-        }
         
         code.AppendLine(
             $$"""
-              private {{_wellKnownTypes.Int32.FullName()}} {{_rangeNode.ResolutionCounterReference}} = 0;
+              private {{_wellKnownTypes.Int32.FullName()}} {{_rangeNode.ResolutionCounterReference}};
               private {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{_rangeNode.DisposalHandling.CollectionReference}} = new {{_wellKnownTypes.ListOfListOfObject.FullName()}}();
               """);
         foreach (var initializedInstance in _rangeNode.InitializedInstances)
@@ -158,15 +151,6 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
                   finally
                   {
                   {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Decrement)}}(ref {{_rangeNode.ResolutionCounterReference}});
-
-                  """);
-            if (_wellKnownTypes.ValueTask is not null && _wellKnownTypes.IAsyncDisposable is not null && _disposeUtility.ReleaseDisposeAsyncFullyQualified is {} releaseDisposeAsyncFullyQualified)
-            {
-                code.AppendLine(
-                    $"{releaseDisposeAsyncFullyQualified}(ref {_rangeNode.DisposalHandling.DisposedFieldReference}, ref {_rangeNode.ResolutionCounterReference}, {_rangeNode.ReleaseDisposeAsyncReference});");
-            }
-            code.AppendLine(
-                $$"""
                   }
                   }
                   """);
@@ -260,16 +244,8 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
                   {
                       var {{disposalHandling.DisposedLocalReference}} = {{_wellKnownTypes.Interlocked.FullName()}}.{{nameof(Interlocked.Exchange)}}(ref {{disposalHandling.DisposedFieldReference}}, 1);
                       if ({{disposalHandling.DisposedLocalReference}} != 0) return;
+                      {{_wellKnownTypes.SpinWait}}.{{nameof(SpinWait.SpinUntil)}}(() => {{_rangeNode.ResolutionCounterReference}} == 0);
                   """);
-            if (_disposeUtility.ReleaseDisposeAsyncFullyQualified is {} releaseDisposeAsyncFullyQualified)
-            {
-                code.AppendLine(
-                    $"{releaseDisposeAsyncFullyQualified}(ref {_rangeNode.DisposalHandling.DisposedFieldReference}, ref {_rangeNode.ResolutionCounterReference}, {_rangeNode.ReleaseDisposeAsyncReference});");
-            }
-
-            code.AppendLine(isAsync && _disposeUtility.ReleaseDisposeAsyncFullyQualified is not null
-                ? $"await {_rangeNode.ReleaseDisposeAsyncReference}.{nameof(TaskCompletionSource<int>.Task)};"
-                : $"{_wellKnownTypes.SpinWait}.{nameof(SpinWait.SpinUntil)}(() => {_rangeNode.ResolutionCounterReference} == 0);");
 
             switch (_rangeNode)
             {

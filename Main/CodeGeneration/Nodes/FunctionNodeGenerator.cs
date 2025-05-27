@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
@@ -166,7 +167,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
         if (!_function.IsSubDisposalAsParameter)
         {
             code.AppendLine(
-                $"{_range.DisposalHandling.CollectionReference}.{nameof(List<List<object>>.Add)}({_function.SubDisposalNode.Reference});");
+                $"{_range.DisposalHandling.CollectionReference}.{nameof(ConcurrentStack<ConcurrentStack<object>>.Push)}({_function.SubDisposalNode.Reference});");
         }
 
         if (!_function.IsTransientScopeDisposalAsParameter)

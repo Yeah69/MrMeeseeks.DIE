@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
@@ -74,7 +75,7 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
         code.AppendLine(
             $$"""
               private {{_wellKnownTypes.Int32.FullName()}} {{_rangeNode.ResolutionCounterReference}} = 0;
-              private {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{_rangeNode.DisposalHandling.CollectionReference}} = new {{_wellKnownTypes.ListOfListOfObject.FullName()}}();
+              private {{_wellKnownTypes.ConcurrentStackOfConcurrentStackOfObject.FullName()}} {{_rangeNode.DisposalHandling.CollectionReference}} = new {{_wellKnownTypes.ConcurrentStackOfConcurrentStackOfObject.FullName()}}();
               """);
         foreach (var initializedInstance in _rangeNode.InitializedInstances)
             visitor.VisitIInitializedInstanceNode(initializedInstance);
@@ -202,7 +203,7 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
             
         code.AppendLine(
             $$"""
-              {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.DisposablesPropertyName}} => {{_rangeNode.DisposalHandling.CollectionReference}};
+              {{_wellKnownTypes.ConcurrentStackOfConcurrentStackOfObject.FullName()}} {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.DisposablesPropertyName}} => {{_rangeNode.DisposalHandling.CollectionReference}};
               {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}} => {{_rangeNode.DisposalHandling.SyncCollectionReference}};
               """);
 

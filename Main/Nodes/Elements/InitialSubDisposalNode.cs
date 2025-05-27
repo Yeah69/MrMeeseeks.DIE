@@ -18,20 +18,14 @@ internal abstract class InitialSubDisposalNode : IInitialSubDisposalNode
 {
     private readonly Lazy<string> _reference;
 
-    protected InitialSubDisposalNode(
-        Lazy<string> reference,
-        WellKnownTypes wellKnownTypes)
-    {
-        TypeFullName = wellKnownTypes.ListOfObject.FullName();
-        _reference = reference;
-    }
-    
+    protected InitialSubDisposalNode(Lazy<string> reference) => _reference = reference;
+
     public void Build(PassedContext passedContext) { }
     public abstract void Accept(INodeVisitor visitor);
     
     public abstract int SubDisposalCount { get; }
 
-    public string TypeFullName { get; }
+    public abstract string TypeFullName { get; }
     public string Reference => _reference.Value;
 }
 
@@ -43,10 +37,14 @@ internal sealed partial class InitialOrdinarySubDisposalNode : InitialSubDisposa
         Lazy<IFunctionNode> parentFunction,
         Lazy<IReferenceGenerator> referenceGenerator,
         WellKnownTypes wellKnownTypes)
-        : base(referenceGenerator.Select(rg => rg.Generate("subDisposal")), wellKnownTypes) =>
+        : base(referenceGenerator.Select(rg => rg.Generate("subDisposal")))
+    {
         _parentFunction = parentFunction;
+        TypeFullName = wellKnownTypes.ConcurrentStackOfObject.FullName();
+    }
 
     public override int SubDisposalCount => _parentFunction.Value.GetSubDisposalCount();
+    public override string TypeFullName { get; }
 }
 
 internal sealed partial class InitialTransientScopeSubDisposalNode : InitialSubDisposalNode, IInitialTransientScopeSubDisposalNode
@@ -57,8 +55,12 @@ internal sealed partial class InitialTransientScopeSubDisposalNode : InitialSubD
         Lazy<IFunctionNode> parentFunction,
         Lazy<IReferenceGenerator> referenceGenerator,
         WellKnownTypes wellKnownTypes)
-        : base(referenceGenerator.Select(rg => rg.Generate("transientScopeSubDisposal")), wellKnownTypes) =>
+        : base(referenceGenerator.Select(rg => rg.Generate("transientScopeSubDisposal")))
+    {
         _parentFunction = parentFunction;
+        TypeFullName = wellKnownTypes.ListOfObject.FullName();
+    }
 
     public override int SubDisposalCount => _parentFunction.Value.GetTransientScopeDisposalCount();
+    public override string TypeFullName { get; }
 }

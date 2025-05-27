@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.MsContainer;
@@ -329,10 +330,10 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             
             code.AppendLine(
                 $$"""
-                  private static {{asyncModifier}}{{returnType}} {{functionName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.ListOfObject.FullName()}} disposables)
+                  private static {{asyncModifier}}{{returnType}} {{functionName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.ConcurrentStackOfObject.FullName()}} disposables)
                   {
                       {{taskYieldLine}}
-                      for (var i = disposables.{{nameof(List<object>.Count)}} - 1; i >= 0; i--)
+                      while (disposables.{{nameof(ConcurrentStack<object>.TryPop)}}(out {{_wellKnownTypes.Object.FullName()}}? maybeDisposable) && maybeDisposable is {} disposable)
                       {
                   """);
             
@@ -356,7 +357,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
                 var exceptionReference = _referenceGenerator.Generate("exception");
                 code.AppendLine(
                     $$"""
-                      if ({{disposableElementParameterReference}}.{{clauseFunctionName}}(disposables[i]) && disposables[i] is {{disposableType}} {{disposableReference}} && {{disposableCall}}({{disposableReference}}) is {{_wellKnownTypes.Exception}} {{exceptionReference}})
+                      if ({{disposableElementParameterReference}}.{{clauseFunctionName}}(disposable) && disposable is {{disposableType}} {{disposableReference}} && {{disposableCall}}({{disposableReference}}) is {{_wellKnownTypes.Exception}} {{exceptionReference}})
                       {
                           yield return {{exceptionReference}};
                       }
@@ -379,7 +380,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             
             code.AppendLine(
                 $$"""
-                  internal static {{_wellKnownTypes.Exception.FullName()}} {{name}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
+                  internal static {{_wellKnownTypes.Exception.FullName()}} {{name}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ConcurrentStackOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
                   {
                       if ({{AggregateExceptionRoutineFullyQualified}}(Inner()) is { } aggregateException)
                           return aggregateException;
@@ -416,7 +417,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             
             code.AppendLine(
                 $$"""
-                  internal static {{_wellKnownTypes.Exception.FullName()}} {{_disposeExceptionHandlingName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null) =>
+                  internal static {{_wellKnownTypes.Exception.FullName()}} {{_disposeExceptionHandlingName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ConcurrentStackOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null) =>
                         throw new {{_syncDisposalTriggeredExceptionName}}({{_disposeExceptionHandlingAsyncName}}({{disposableElementParameterReference}}, exception, subDisposal, transientScopeDisposal), exception);
                   """);
         }
@@ -432,7 +433,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             
             code.AppendLine(
                 $$"""
-                  internal static async {{_wellKnownTypes.TaskOfException.FullName()}} {{_disposeExceptionHandlingAsyncName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ListOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
+                  internal static async {{_wellKnownTypes.TaskOfException.FullName()}} {{_disposeExceptionHandlingAsyncName}}({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}} {{disposableElementParameterReference}}, {{_wellKnownTypes.Exception.FullName()}} exception, {{_wellKnownTypes.ConcurrentStackOfObject.FullName()}} subDisposal, {{_wellKnownTypes.ListOfObject.FullName()}}? transientScopeDisposal = null)
                   {
                       if (await {{AggregateExceptionRoutineAsyncFullyQualified}}(Inner()) is { } aggregateException && aggregateException.InnerExceptions.Count > 1)
                           return aggregateException;
@@ -468,7 +469,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
                   internal interface {{_disposableRangeInterfaceName}}
                   {
                       internal {{_wellKnownTypes.Object.FullName()}}[] {{DisposableRangeInterfaceData.TransientScopesPropertyName}} { get; }
-                      internal {{_wellKnownTypes.ListOfListOfObject.FullName()}} {{DisposableRangeInterfaceData.DisposablesPropertyName}} { get; }
+                      internal {{_wellKnownTypes.ConcurrentStackOfConcurrentStackOfObject.FullName()}} {{DisposableRangeInterfaceData.DisposablesPropertyName}} { get; }
                       internal {{_wellKnownTypes.ConcurrentBagOfSyncDisposable.FullName()}} {{DisposableRangeInterfaceData.UserDefinedSyncDisposablesPropertyName}} { get; }
                       internal bool {{DisposableRangeInterfaceData.SyncClauseFunctionName}}({{_wellKnownTypes.Object.FullName()}} disposable);
                   """);
@@ -548,9 +549,9 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
         
             code.AppendLine(
                 $$"""
-                          for (var i = {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
+                          while ({{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(ConcurrentStack<ConcurrentStack<object>>.TryPop)}}(out {{_wellKnownTypes.ConcurrentStackOfObject.FullName()}}? maybeDisposables) && maybeDisposables is {} disposables)
                           {
-                              foreach (var exception in {{DisposeChunkFullyQualified}}(({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}}) {{disposeParamReference}}, {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}[i]))
+                              foreach (var exception in {{DisposeChunkFullyQualified}}(({{DisposableRangeInterfaceData.InterfaceNameFullyQualified}}) {{disposeParamReference}}, disposables))
                               {
                                   yield return exception;
                               }
@@ -618,9 +619,9 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
                       if (transientScope is {{_wellKnownTypes.IAsyncDisposable.FullName()}} asyncDisposable && await {{DisposeSingularAsyncFullyQualified}}(asyncDisposable) is {{_wellKnownTypes.Exception.FullName()}} exception)
                       yield return exception;
                       }
-                                for (var i = {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(List<List<object>>.Count)}} - 1; i >= 0; i--)
+                                while ({{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}.{{nameof(ConcurrentStack<ConcurrentStack<object>>.TryPop)}}(out {{_wellKnownTypes.ConcurrentStackOfObject.FullName()}}? maybeDisposables) && maybeDisposables is {} disposables)
                                 {
-                                    await foreach (var exception in {{DisposeChunkAsyncFullyQualified}}({{disposeParamReference}}, {{disposeParamReference}}.{{DisposableRangeInterfaceData.DisposablesPropertyName}}[i]))
+                                    await foreach (var exception in {{DisposeChunkAsyncFullyQualified}}({{disposeParamReference}}, disposables))
                                     {
                                         yield return exception;
                                     }

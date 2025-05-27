@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using System.Collections.Concurrent;
+using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
@@ -155,7 +156,7 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
     public void VisitIScopeCallNode(IScopeCallNode scopeCall)
     {
         VisitIElementNode(scopeCall.ScopeConstruction);
-        _code.AppendLine($"{scopeCall.SubDisposalReference}.{nameof(List<object>.Add)}({scopeCall.ScopeConstruction.Reference});");
+        _code.AppendLine($"{scopeCall.SubDisposalReference}.{nameof(ConcurrentStack<object>.Push)}({scopeCall.ScopeConstruction.Reference});");
         GenerateInitialization(scopeCall.Initialization, scopeCall.ScopeConstruction.Reference);
         VisitIFunctionCallNode(scopeCall);
     }
@@ -264,7 +265,7 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
     }
 
     public void VisitIInitialSubDisposalNode(IInitialSubDisposalNode element) => 
-        _code.AppendLine($"{element.TypeFullName} {element.Reference} = new {element.TypeFullName}({element.SubDisposalCount});");
+        _code.AppendLine($"{element.TypeFullName} {element.Reference} = new {element.TypeFullName}();");
 
     public void VisitIWrappedAsyncFunctionCallNode(IWrappedAsyncFunctionCallNode functionCallNode)
     {
@@ -384,7 +385,7 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
         _code.AppendLine(
             $"{threadLocalNode.TypeFullName} {threadLocalNode.Reference} = new {threadLocalNode.TypeFullName}({threadLocalNode.MethodGroup}, false);");
         if (threadLocalNode.SubDisposalReference is {} subDisposalReference)
-            _code.AppendLine($"{subDisposalReference}.Add({threadLocalNode.Reference});");
+            _code.AppendLine($"{subDisposalReference}.{nameof(ConcurrentStack<object>.Push)}({threadLocalNode.Reference});");
     }
 
     public void VisitITupleNode(ITupleNode tupleNode)
@@ -523,7 +524,7 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
             $"{implementationNode.TypeFullName} {implementationNode.Reference} = {cast}new {implementationNode.ConstructorCallName}({constructorParameters}){objectInitializerParameter};");
 
         if (implementationNode.AggregateForDisposal) 
-            _code.AppendLine($"{implementationNode.SubDisposalReference}.{nameof(List<object>.Add)}({implementationNode.Reference});");
+            _code.AppendLine($"{implementationNode.SubDisposalReference}.{nameof(ConcurrentStack<object>.Push)}({implementationNode.Reference});");
 
         if (implementationNode.Initializer is {} init)
         {

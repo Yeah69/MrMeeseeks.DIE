@@ -175,8 +175,22 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             var containerReference = _range.ContainerReference is { } reference
                 ? $"{reference}."
                 : "";
+            
+            var awaitPrefix = isAsyncAwait ? "await " : "";
+            var waitMethod = isAsyncAwait ? nameof(SemaphoreSlim.WaitAsync) : nameof(SemaphoreSlim.Wait);
+            
             code.AppendLine(
-                $"{containerReference}{_container.TransientScopeDisposalReference}.{nameof(List<object>.AddRange)}({_function.TransientScopeDisposalNode.Reference});");
+                $$"""
+                  {{awaitPrefix}}{{containerReference}}{{_container.TransientScopeDisposalSemaphoreReference}}.{{waitMethod}}();
+                  try 
+                  {
+                  {{containerReference}}{{_container.TransientScopeDisposalReference}}.{{nameof(List<object>.AddRange)}}({{_function.TransientScopeDisposalNode.Reference}});
+                  }
+                  finally
+                  {
+                  {{containerReference}}{{_container.TransientScopeDisposalSemaphoreReference}}.{{nameof(SemaphoreSlim.Release)}}();
+                  }
+                  """);
         }
         
 

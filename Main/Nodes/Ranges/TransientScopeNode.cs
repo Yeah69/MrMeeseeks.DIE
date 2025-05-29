@@ -15,7 +15,6 @@ namespace MrMeeseeks.DIE.Nodes.Ranges;
 internal interface ITransientScopeNode : IScopeNodeBase
 {
     string TransientScopeInterfaceName { get; }
-    string TransientScopeDisposalReference { get; }
     ITransientScopeCallNode BuildTransientScopeCallFunction(
         string containerParameter,
         INamedTypeSymbol type,
@@ -77,7 +76,6 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
         _transientScopeNodeGenerator = transientScopeNodeGenerator;
         _createTransientScopeFunctionNodeFactory = createTransientScopeFunctionNodeFactory;
         TransientScopeInterfaceName = parentContainer.TransientScopeInterface.Name;
-        TransientScopeDisposalReference = parentContainer.TransientScopeDisposalReference;
     }
     protected override string ContainerParameterForScope => ContainerReference;
 
@@ -92,7 +90,6 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
         ParentContainer.TransientScopeInterface.BuildTransientScopeInstanceCall($"({Constants.ThisKeyword} as {ParentContainer.TransientScopeInterface.FullName})", type, callingFunction);
 
     public string TransientScopeInterfaceName { get; }
-    public string TransientScopeDisposalReference { get; }
 
     public ITransientScopeCallNode BuildTransientScopeCallFunction(
         string containerParameter,

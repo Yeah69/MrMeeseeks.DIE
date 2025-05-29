@@ -164,10 +164,8 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
     public void VisitITransientScopeCallNode(ITransientScopeCallNode transientScopeCall)
     {
         VisitIElementNode(transientScopeCall.ScopeConstruction);
-        var owner = transientScopeCall.ContainerReference is { } containerReference
-            ? $"{containerReference}."
-            : "";
-        _code.AppendLine($"{owner}{transientScopeCall.TransientScopeDisposalReference}.{nameof(List<object>.Add)}({transientScopeCall.ScopeConstruction.Reference});");
+        if (transientScopeCall.TransientScopeDisposalParameter?.Calling.Reference is {} reference)
+            _code.AppendLine($"{reference}.{nameof(List<object>.Add)}({transientScopeCall.ScopeConstruction.Reference});");
         GenerateInitialization(transientScopeCall.Initialization, transientScopeCall.ScopeConstruction.Reference);
         VisitIFunctionCallNode(transientScopeCall);
     }

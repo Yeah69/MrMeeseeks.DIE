@@ -49,7 +49,7 @@ internal sealed partial class ExecuteLevelContainer
             DisposeUtility disposeUtility,
             ReferenceGeneratorCounter referenceGeneratorCounter)
         {
-#pragma warning disable CA2000 *** Manually added for disposal
+#pragma warning disable CA2000 // Manually added for disposal
             var container = ContainerLevelContainer.DIE_CreateContainer(
                 DIE_Factory_GeneratorExecutionContext, 
                 containerInfo,

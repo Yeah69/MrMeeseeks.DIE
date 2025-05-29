@@ -1,19 +1,18 @@
 ﻿using System;
-using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-//*
-internal class Class : IContainerInstance, ITaskInitializer
-{
-    public async Task InitializeAsync()
-    {
-        await Task.Delay(1000);
-    }
-}
+internal sealed class Disposable : IDisposable { public void Dispose() { } }
 
-[CreateFunction(typeof(Func<Class>), "Create")]
+internal sealed class Class(ClassBelow _, Disposable __) : ITransientScopeRoot;
+
+internal sealed class ClassBelow(ClassS _, Disposable __) : ITransientScopeRoot;
+
+internal sealed class ClassS(ClassBelowS _, Disposable __) : IScopeRoot;
+
+internal sealed class ClassBelowS(Disposable __) : IScopeRoot;
+
+[CreateFunction(typeof(Class), "Create")]
 internal sealed partial class Container;
-//*/

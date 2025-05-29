@@ -193,7 +193,23 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
         {
             case IContainerNode container:
                 code.AppendLine(
-                    $"{_wellKnownTypes.Object.FullName()}[] {_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}.{_disposeUtility.DisposableRangeInterfaceData.TransientScopesPropertyName} => {_wellKnownTypesCollections.Enumerable}.{nameof(Enumerable.ToArray)}({container.TransientScopeDisposalReference});");
+                    $$"""
+                      {{_wellKnownTypes.Object.FullName()}}[] {{_disposeUtility.DisposableRangeInterfaceData.InterfaceNameFullyQualified}}.{{_disposeUtility.DisposableRangeInterfaceData.TransientScopesPropertyName}}
+                      {
+                      get
+                      {
+                      {{container.TransientScopeDisposalSemaphoreReference}}.{{nameof(SemaphoreSlim.Wait)}}();
+                      try
+                      {
+                      return {{_wellKnownTypesCollections.Enumerable}}.{{nameof(Enumerable.ToArray)}}({{container.TransientScopeDisposalReference}});
+                      }
+                      finally
+                      {
+                      {{container.TransientScopeDisposalSemaphoreReference}}.{{nameof(SemaphoreSlim.Release)}}();
+                      }
+                      }
+                      }
+                      """);
                 break;
             default:
                 code.AppendLine(
@@ -275,10 +291,19 @@ internal abstract class RangeNodeGenerator : IRangeNodeGenerator
             switch (_rangeNode)
             {
                 case ITransientScopeNode transientScope:
+                    var waitMethod = isAsync ? nameof(SemaphoreSlim.WaitAsync) : nameof(SemaphoreSlim.Wait);
                     code.AppendLine(
                         $$"""
-                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.Remove)}}(this);
-                          {{transientScope.ContainerReference}}.{{transientScope.TransientScopeDisposalReference}}.{{nameof(List<object>.TrimExcess)}}();
+                          {{awaitPrefix}}{{transientScope.ContainerReference}}.{{_containerNode.TransientScopeDisposalSemaphoreReference}}.{{waitMethod}}();
+                          try 
+                          {
+                          {{transientScope.ContainerReference}}.{{_containerNode.TransientScopeDisposalReference}}.{{nameof(List<object>.Remove)}}(this);
+                          {{transientScope.ContainerReference}}.{{_containerNode.TransientScopeDisposalReference}}.{{nameof(List<object>.TrimExcess)}}();
+                          }
+                          finally
+                          {
+                          {{transientScope.ContainerReference}}.{{_containerNode.TransientScopeDisposalSemaphoreReference}}.{{nameof(SemaphoreSlim.Release)}}();
+                          }
                           """);
                     break;
             }

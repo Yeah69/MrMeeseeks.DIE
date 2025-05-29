@@ -58,6 +58,7 @@ internal sealed class ContainerNodeGenerator : RangeNodeGenerator, IContainerNod
               private interface {{_containerNode.ScopeInterface}} : {{GenerateDisposalInterfaceAssignments()}} {}
 
               private {{_wellKnownTypes.ListOfObject.FullName()}} {{_containerNode.TransientScopeDisposalReference}} = new {{_wellKnownTypes.ListOfObject.FullName()}}();
+              private {{_wellKnownTypes.SemaphoreSlim.FullName()}} {{_containerNode.TransientScopeDisposalSemaphoreReference}} = new {{_wellKnownTypes.SemaphoreSlim.FullName()}}(1);
               """);
         
         visitor.VisitITransientScopeInterfaceNode(_containerNode.TransientScopeInterface);

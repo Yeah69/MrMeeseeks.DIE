@@ -11,8 +11,10 @@ internal class InjectionGraphBuilderResolutionSteps(
     IContainerCheckTypeProperties containerCheckTypeProperties,
     ILocalDiagLogger containerDiagLogger,
     IInjectablePropertyExtractor injectablePropertyExtractor,
+    IdRegister idRegister,
     ConcreteImplementationNodeManager concreteImplementationNodeManager,
     ConcreteInterfaceNodeManager concreteInterfaceNodeManager,
+    ConcreteEnumerableNodeManager concreteEnumerableNodeManager,
     ConcreteFunctorNodeManager concreteFunctorNodeManager,
     ConcreteOverrideNodeManager concreteOverrideNodeManager,
     OverrideContextManager overrideContextManager,
@@ -54,7 +56,7 @@ internal class InjectionGraphBuilderResolutionSteps(
         Location currentResolvedLocation)
     {
         var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null); // ToDo InjectionKey
-        if (implementationResult is not ImplementationResult.Single { Implementation: { } implementation })
+        if (GetConcreteImplementationType() is not {} implementation)
         {
             ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
             var logMessage = implementationResult switch
@@ -88,7 +90,27 @@ internal class InjectionGraphBuilderResolutionSteps(
             queue.Enqueue(new ResolutionStep(
                 node, 
                 edgeContext,
-                location.Equals(Location.None) ? currentResolvedLocation : location));              
+                location.Equals(Location.None) ? currentResolvedLocation : location));
+        return;
+
+        INamedTypeSymbol? GetConcreteImplementationType()
+        {
+            var registeredImplementation = edgeContext.InitialInitialCaseChoice switch
+            {
+                InitialCaseChoiceContext.Single { OutwardFacingTypeId: var outwardId, InitialCaseId: var caseId }
+                    when idRegister.GetOutwardFacingTypeId(currentType) == outwardId =>
+                    idRegister.GetTypeByInitialCaseId(edgeContext.Domain, caseId),
+                _ => null
+            };
+            if (registeredImplementation is INamedTypeSymbol namedTypeSymbol)
+                return namedTypeSymbol;
+            if (registeredImplementation is null)
+                return null;
+            return containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null) // ToDo InjectionKey
+                is ImplementationResult.Single { Implementation: { } singleImplementation }
+                ? singleImplementation 
+                : null;
+        }
     }
 
     internal void ImplementationStep(
@@ -168,6 +190,33 @@ internal class InjectionGraphBuilderResolutionSteps(
                 edgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
                 
+    }
+
+    internal void EnumerableStep(
+        INamedTypeSymbol currentType,
+        TypeNode typeNode,
+        EdgeContext edgeContext,
+        Queue<ResolutionStep> queue,
+        Location currentResolvedLocation)
+    {
+        var concreteEnumerableNodeData = new ConcreteEnumerableNodeData(Enumerable: currentType);
+
+        var concreteEnumerableNode = concreteEnumerableNodeManager.GetOrAddNode(concreteEnumerableNodeData);
+        
+        var implementationsResult = concreteEnumerableNode.UnwrappedInnerType is INamedTypeSymbol namedTypeSymbol
+            ? containerCheckTypeProperties.MapToImplementations(namedTypeSymbol, null) // ToDo InjectionKey
+            : throw new NotImplementedException(
+                $"Unwrapped inner type of enumerable node {concreteEnumerableNodeData} is not a named type symbol, but {concreteEnumerableNode.UnwrappedInnerType.GetType().FullName}.");
+
+        var concreteEnumerableNodeSequenceData = new ConcreteEnumerableNodeSequenceData(implementationsResult);
+
+        ConnectToTypeNodeIfNotAlready(concreteEnumerableNode, edgeContext, typeNode);
+        
+        foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext, concreteEnumerableNodeSequenceData))
+            queue.Enqueue(new ResolutionStep(
+                node, 
+                newEdgeContext,
+                location.Equals(Location.None) ? currentResolvedLocation : location));
     }
 
     internal void DefaultStep(TypeNode typeNode, EdgeContext edgeContext, Location currentResolvedLocation)

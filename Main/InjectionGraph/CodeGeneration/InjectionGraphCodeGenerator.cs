@@ -131,7 +131,8 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                   """);
 
             var rootReference = GenerateForInjectionNode(function.RootNode);
-            _code.AppendLine($"return {rootReference};");
+            if (!function.RootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
+                _code.AppendLine($"return {rootReference};");
             _code.AppendLine("}");
             foreach (var entryCreateFunction in function.RootNode.Incoming.Select(e => e.Source).OfType<ConcreteEntryFunctionNode>())
                 entryCreateFunctionsMap[entryCreateFunction.Data.Name] = functionName;
@@ -152,7 +153,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                     $$"""
                       internal {{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
                       {
-                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation($"new {overridesName}({overridesAssignment})", 0, 0)}});
+                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation($"new {overridesName}({overridesAssignment})", "0", "0")}});
                       }
                       """);
             }
@@ -265,10 +266,17 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             if (_overrideContextManager.TryGetContext(functorNode.FunctorParameterTypes, out var overrideContext)
                 && _overrideContextNameMap.TryGetValue(overrideContext, out var overrideContextName))
             {
+                var outwardFacingTypeIdReference = _referenceGenerator.Generate("oId");
+                var initialCaseIdReference = _referenceGenerator.Generate("cId");
+                _code.AppendLine(
+                    $$"""
+                      {{_wellKnownTypes.Int32.FullName()}} {{outwardFacingTypeIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.InterfaceNumberPropertyName}};
+                      {{_wellKnownTypes.Int32.FullName()}} {{initialCaseIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ImplementationNumberPropertyName}};
+                      """);
                 var overrideParameters = overrideContext is OverrideContext.Any any
                     ? string.Join(", ", any.Overrides.Select(o => parameterReferences[functorNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
                     : "";
-                var parameters = _contextGenerator.GenerateInstanceCreation($"new {overrideContextName}({overrideParameters})", 0, 0);
+                var parameters = _contextGenerator.GenerateInstanceCreation($"new {overrideContextName}({overrideParameters})", outwardFacingTypeIdReference, initialCaseIdReference);
                 _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}({parameters});");
             }
             return reference;
@@ -285,7 +293,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                         $$"""
                           if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.InterfaceNumberPropertyName}} != {{interfaceNode.Number}})
                           {
-                          {{_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: interfaceNode.Number, implementationNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().Value)}}
+                          {{_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: interfaceNode.Number.ToString(), implementationNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().Value.ToString())}}
                           }
                           """);
             }
@@ -308,7 +316,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                       """);
                 
                 var newInterfaceNumber = interfaceNodeCase.NextId == 0 ? 0 : interfaceNode.Number;
-                _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: newInterfaceNumber, implementationNumber: interfaceNodeCase.NextId));
+                _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: newInterfaceNumber.ToString(), implementationNumber: interfaceNodeCase.NextId.ToString()));
                 
                 var innerReference = CallFunctionOrGenerateForInjectionNode(interfaceNodeCase.Edge, interfaceNodeCase.Edge.Target);
                 
@@ -328,21 +336,29 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             
             return reference;
         }
-        return NotAvailable;
-    }
-    
-    private record Context(int Interface, int Implementation);
+        if (innerNode is ConcreteEnumerableNode enumerableNode)
+        {
+            if (enumerableNode.Sequences.Count > 1)
+            {
+                // ToDo implement this
+                throw new NotImplementedException("More than one sequence found in enumerable node.");
+            }
 
-    private interface IAsdf;
-    
-    private class Asdf : IAsdf
-    {
-        public string Name { get; set; } = "";
-    }
-    
-    private class AsdfDecorator(IAsdf inner) : IAsdf
-    {
-        public string Name { get; set; } = "";
+            var outwardFacingTypeId = enumerableNode.OutwardFacingTypeId;
+            foreach (var sequence in enumerableNode.Sequences)
+            {
+                foreach (var initialCaseId in sequence.Value)
+                {
+                    _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: outwardFacingTypeId.ToString(), implementationNumber: initialCaseId.ToString()));
+                    
+                    var innerReference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+
+                    _code.AppendLine($"yield return {innerReference};");
+                }
+            }
+            _code.AppendLine("yield break;");
+        }
+        return NotAvailable;
     }
 
     private string CallFunctionOrGenerateForInjectionNode(TypeEdge edge, TypeNode node)

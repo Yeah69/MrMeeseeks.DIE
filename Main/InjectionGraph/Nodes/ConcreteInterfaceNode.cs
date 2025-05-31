@@ -68,33 +68,28 @@ internal record ConcreteInterfaceNodeImplementationData(INamedTypeSymbol Impleme
 internal class ConcreteInterfaceNodeManager(Func<ConcreteInterfaceNodeData, ConcreteInterfaceNode> factory)
     : ConcreteNodeManagerBase<ConcreteInterfaceNodeData, ConcreteInterfaceNode>(factory), IContainerInstance;
 
-internal class ConcreteInterfaceNodeNumberProvider : IContainerInstance
-{
-    private int _currentNumber;
-    internal int GetNextNumber() => Interlocked.Increment(ref _currentNumber);
-}
-
 internal class ConcreteInterfaceNode : IConcreteNode
 {
+    private readonly IdRegister _idRegister;
     private readonly TypeNodeManager _typeNodeManager;
     private readonly Func<IConcreteNode, TypeNode, TypeEdge> _typeEdgeFactory;
     private readonly Dictionary<DomainContext, int> _defaultImplementationsCaseNumbers = [];
-    private readonly Dictionary<ConcreteInterfaceNodeImplementationData, ImmutableArray<(TypeEdge Edge, int Id, int NextId)>> _implementationDataToCases = [];
-    private int _caseNumber;
+    private readonly Dictionary<int, ImmutableArray<(TypeEdge Edge, int Id, int NextId)>> _implementationDataToCases = [];
     
     internal ConcreteInterfaceNode(
         // parameters
         ConcreteInterfaceNodeData data,
 
         // dependencies
-        ConcreteInterfaceNodeNumberProvider numberProvider,
+        IdRegister idRegister,
         TypeNodeManager typeNodeManager,
         Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory)
     {
+        _idRegister = idRegister;
         _typeNodeManager = typeNodeManager;
         _typeEdgeFactory = typeEdgeFactory;
         Data = data;
-        Number = numberProvider.GetNextNumber();
+        Number = idRegister.GetOutwardFacingTypeId(data.Interface);
     }
     internal int Number { get; }
     internal ConcreteInterfaceNodeData Data { get; }
@@ -109,10 +104,12 @@ internal class ConcreteInterfaceNode : IConcreteNode
         ConcreteInterfaceNodeImplementationData implementationData,
         bool isDefaultInjection)
     {
-        if (!_implementationDataToCases.TryGetValue(implementationData, out var cases))
+        var initialCaseId = _idRegister.GetInitialCaseId(context.Domain, implementationData.Implementation);
+        if (!_implementationDataToCases.TryGetValue(initialCaseId, out var cases))
         {
-            var ids = Enumerable.Range(0, implementationData.Decorations.Count + 1)
-                .Select(_ => Interlocked.Increment(ref _caseNumber))
+            var ids = Enumerable.Range(0, implementationData.Decorations.Count)
+                .Select(_ => _idRegister.GetUnusedCaseId())
+                .Prepend(initialCaseId)
                 .ToImmutableArray();
             var tempCases = new (TypeEdge Edge, int Id, int NextId)[ids.Length];
             foreach (var (decoration, i) in implementationData.Decorations.Select((d, i) => (d, i)))
@@ -128,10 +125,10 @@ internal class ConcreteInterfaceNode : IConcreteNode
             var implementationTypeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(implementationData.Implementation));
             tempCases[^1] = (implementationTypeEdge, ids[^1], 0);
             cases = tempCases.ToImmutableArray();
-            _implementationDataToCases[implementationData] = cases;
+            _implementationDataToCases[initialCaseId] = cases;
         }
         
-        if (isDefaultInjection)
+        if (isDefaultInjection) 
             _defaultImplementationsCaseNumbers[context.Domain] = cases[0].Id;
         
         var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, Location Location)>();

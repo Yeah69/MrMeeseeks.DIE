@@ -42,14 +42,14 @@ internal class ContextGenerator
           }
           """;
 
-    internal string GenerateInstanceCreation(string overrideInstanceCreation, int interfaceNumber, int implementationNumber) =>
+    internal string GenerateInstanceCreation(string overrideInstanceCreation, string interfaceNumber, string implementationNumber) =>
         $"new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreation}, {InterfaceNumberConstructorParameterName}: {interfaceNumber}, {ImplementationNumberConstructorParameterName}: {implementationNumber})";
 
-    internal string GenerateInstanceCopyAndAdjustment(string? overrideInstanceCreation = null, int? interfaceNumber = null, int? implementationNumber = null)
+    internal string GenerateInstanceCopyAndAdjustment(string? overrideInstanceCreation = null, string? interfaceNumber = null, string? implementationNumber = null)
     {
         var overrideInstanceCreationString = overrideInstanceCreation ?? $"{ParameterName}.{OverridesPropertyName}";
-        var interfaceNumberString = interfaceNumber.HasValue ? interfaceNumber.ToString() : $"{ParameterName}.{InterfaceNumberPropertyName}";
-        var implementationNumberString = implementationNumber.HasValue ? implementationNumber.ToString() : $"{ParameterName}.{ImplementationNumberPropertyName}";
+        var interfaceNumberString = interfaceNumber ?? $"{ParameterName}.{InterfaceNumberPropertyName}";
+        var implementationNumberString = implementationNumber ?? $"{ParameterName}.{ImplementationNumberPropertyName}";
         return $"{ParameterName} = new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreationString}, {InterfaceNumberConstructorParameterName}: {interfaceNumberString}, {ImplementationNumberConstructorParameterName}: {implementationNumberString});";
     }
 

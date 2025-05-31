@@ -25,7 +25,8 @@ internal class InjectionGraphBuilder(
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
     OverrideContextManager overrideContextManager,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
-    Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory)
+    Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
+    WellKnownTypesCollections wellKnownTypesCollections)
     : IInjectionGraphBuilder, IContainerInstance
 {
     private readonly List<ConcreteEntryFunctionNode> _concreteEntryFunctionNodes = [];
@@ -40,7 +41,11 @@ internal class InjectionGraphBuilder(
         Location createFunctionAttributeLocation)
     {
         var overrideContext = overrideContextManager.GetOrAddContext(overrides);
-        var rootEdgeContext = new EdgeContext(new DomainContext.Container(), overrideContext, new KeyContext.None());
+        var rootEdgeContext = new EdgeContext(
+            new DomainContext.Container(), 
+            overrideContext, 
+            new KeyContext.None(), 
+            new InitialCaseChoiceContext.None());
         var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, rootType, overrides);
         var concreteEntryFunctionNode = concreteEntryFunctionNodeManager.GetOrAddNode(concreteEntryFunctionNodeData);
         _concreteEntryFunctionNodes.Add(concreteEntryFunctionNode);
@@ -70,6 +75,9 @@ internal class InjectionGraphBuilder(
             case not null when edgeContext.Override is OverrideContext.Any any && any.Overrides.Contains(typeNodeType, CustomSymbolEqualityComparer.IncludeNullability):
                 resolutionSteps.OverrideStep(typeNode, edgeContext);
                 break;
+            case INamedTypeSymbol { Name: "IEnumerable" } enumerableType when CustomSymbolEqualityComparer.IncludeNullability.Equals(typeNodeType.OriginalDefinition, wellKnownTypesCollections.IEnumerable1):
+                resolutionSteps.EnumerableStep(enumerableType, typeNode, edgeContext, queue, currentResolvedLocation);
+                break;
             case INamedTypeSymbol { TypeArguments.Length: >= 1 } maybeFunctor when maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
                 resolutionSteps.FunctorStep(maybeFunctor, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
@@ -88,10 +96,12 @@ internal class InjectionGraphBuilder(
     public void AssignFunctions()
     {
         foreach (var typedInjectionNode in typeNodeManager.AllTypeNodes)
-            if (// if multiple incoming edges
-                typedInjectionNode.Incoming.Count > 1 
+            if (// if multiple incoming edges x contexts
+                typedInjectionNode.Incoming.SelectMany(i => i.Contexts).Count() > 1 
                 // or incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
-                || typedInjectionNode.Incoming.Select(e => e.Source).Any(n => n is ConcreteFunctorNode))
+                || typedInjectionNode.Incoming.Any(e => e.Source is ConcreteFunctorNode)
+                // or outgoing edges contain concrete enumerable
+                || typedInjectionNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
                 NewFunctionIfNotAlready(typedInjectionNode);
 
         foreach (var concreteEntryFunctionNode in _concreteEntryFunctionNodes)

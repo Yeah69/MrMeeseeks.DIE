@@ -7,14 +7,14 @@ namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
 internal abstract record DomainContext
 {
-    internal record Container : DomainContext;
-    internal record Scoped(string ScopeName) : DomainContext;
+    internal sealed record Container : DomainContext;
+    internal sealed record Scoped(string ScopeName) : DomainContext;
 }
 
 internal abstract record OverrideContext
 {
-    internal record None : OverrideContext;
-    internal record Any(ImmutableArray<ITypeSymbol> Overrides) : OverrideContext;
+    internal sealed record None : OverrideContext;
+    internal sealed record Any(ImmutableArray<ITypeSymbol> Overrides) : OverrideContext;
 }
 
 internal class OverrideContextManager : IContainerInstance
@@ -54,8 +54,18 @@ internal class OverrideContextManager : IContainerInstance
 
 internal abstract record KeyContext
 {
-    internal record None : KeyContext;
-    internal record Single(ITypeSymbol KeyType, object KeyValue) : KeyContext;
+    internal sealed record None : KeyContext;
+    internal sealed record Single(ITypeSymbol KeyType, object KeyValue) : KeyContext;
 }
 
-internal record EdgeContext(DomainContext Domain, OverrideContext Override, KeyContext Key);
+internal abstract record InitialCaseChoiceContext
+{
+    internal sealed record None : InitialCaseChoiceContext;
+    internal sealed record Single(int OutwardFacingTypeId, int InitialCaseId) : InitialCaseChoiceContext;
+}
+
+internal sealed record EdgeContext(
+    DomainContext Domain, 
+    OverrideContext Override, 
+    KeyContext Key, 
+    InitialCaseChoiceContext InitialInitialCaseChoice);

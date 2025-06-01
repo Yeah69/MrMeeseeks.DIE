@@ -55,24 +55,8 @@ internal class InjectionGraphBuilderResolutionSteps(
         Queue<ResolutionStep> queue,
         Location currentResolvedLocation)
     {
-        var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null); // ToDo InjectionKey
-        if (GetConcreteImplementationType() is not {} implementation)
-        {
-            ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
-            var logMessage = implementationResult switch
-            {
-                ImplementationResult.None => $"Interface: No implementation registered for \"{currentType.FullName()}\".",
-                ImplementationResult.Multiple { Implementations: var implementations} => $"Interface: Multiple implementations registered for \"{currentType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
-                _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
-            };
-            containerDiagLogger.Error(
-                ErrorLogData.ResolutionException(
-                    logMessage,
-                    currentType,
-                    ImmutableStack<INamedTypeSymbol>.Empty), 
-                currentResolvedLocation);
+        if (GetConcreteImplementationType(out var isDefaultCase) is not {} implementation)
             return;
-        }
 
         var decorationSequence = containerCheckTypeProperties.GetDecorationSequenceFor(currentType, implementation);
         
@@ -86,30 +70,61 @@ internal class InjectionGraphBuilderResolutionSteps(
         
         ConnectToTypeNodeIfNotAlready(concreteInterfaceNode, edgeContext, typeNode);
         
-        foreach (var (node, location) in concreteInterfaceNode.ConnectIfNotAlready(edgeContext, concreteInterfaceNodeImplementationData, isDefaultInjection: true))
+        foreach (var (node, location) in concreteInterfaceNode.ConnectIfNotAlready(edgeContext, concreteInterfaceNodeImplementationData, isDefaultInjection: isDefaultCase))
             queue.Enqueue(new ResolutionStep(
                 node, 
                 edgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
         return;
 
-        INamedTypeSymbol? GetConcreteImplementationType()
+        INamedTypeSymbol? GetConcreteImplementationType(out bool isDefaultCase)
         {
-            var registeredImplementation = edgeContext.InitialInitialCaseChoice switch
+            isDefaultCase = true;
+            var currentOutwardFacingTypeId = idRegister.GetOutwardFacingTypeId(currentType);
+            // If the context has an initial case ID for the matching outward facing type ID, we try to resolve the type by that ID.
+            if (edgeContext.InitialInitialCaseChoice is InitialCaseChoiceContext.Single { OutwardFacingTypeId: var outwardId, InitialCaseId: var caseId }
+                && currentOutwardFacingTypeId == outwardId)
             {
-                InitialCaseChoiceContext.Single { OutwardFacingTypeId: var outwardId, InitialCaseId: var caseId }
-                    when idRegister.GetOutwardFacingTypeId(currentType) == outwardId =>
-                    idRegister.GetTypeByInitialCaseId(edgeContext.Domain, caseId),
-                _ => null
-            };
-            if (registeredImplementation is INamedTypeSymbol namedTypeSymbol)
-                return namedTypeSymbol;
-            if (registeredImplementation is null)
+                isDefaultCase = false;
+                var registeredImplementation = idRegister.GetTypeByInitialCaseId(edgeContext.Domain, caseId);
+                if (registeredImplementation is INamedTypeSymbol namedTypeSymbol)
+                    return namedTypeSymbol;
+                ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
+                containerDiagLogger.Error(
+                    ErrorLogData.ResolutionException(
+                        "Interface: ID registry didn't find type for a given initial case ID.",
+                        currentType,
+                        ImmutableStack<INamedTypeSymbol>.Empty), 
+                    currentResolvedLocation);
                 return null;
-            return containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null) // ToDo InjectionKey
-                is ImplementationResult.Single { Implementation: { } singleImplementation }
-                ? singleImplementation 
-                : null;
+            }
+            
+            // If there is a registered composite type for the current interface type, we use that as the implementation.
+            if (containerCheckTypeProperties.ShouldBeComposite(currentType) 
+                && containerCheckTypeProperties.GetCompositeFor(currentType) is { } compositeType)
+                return compositeType;
+            
+            // Otherwise, we try to resolve the type by the registered implementations.
+            var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null);
+            if (containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null) // ToDo InjectionKey
+                is not ImplementationResult.Single { Implementation: { } singleImplementation })
+            {
+                ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
+                var logMessage = implementationResult switch
+                {
+                    ImplementationResult.None => $"Interface: No implementation registered for \"{currentType.FullName()}\".",
+                    ImplementationResult.Multiple { Implementations: var implementations} => $"Interface: Multiple implementations registered for \"{currentType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
+                    _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
+                };
+                containerDiagLogger.Error(
+                    ErrorLogData.ResolutionException(
+                        logMessage,
+                        currentType,
+                        ImmutableStack<INamedTypeSymbol>.Empty), 
+                    currentResolvedLocation);
+                return null;
+            }
+            return singleImplementation;
         }
     }
 

@@ -18,21 +18,22 @@ internal enum EnumerableBasedType
     IReadOnlyCollection,
     IReadOnlyList,
     ArraySegment,
-    ConcurrentBag,
-    ConcurrentQueue,
-    ConcurrentStack,
-    HashSet,
-    LinkedList,
-    List,
-    Queue,
-    SortedSet,
-    Stack,
-    ImmutableArray,
-    ImmutableHashSet,
-    ImmutableList,
-    ImmutableQueue,
-    ImmutableSortedSet,
-    ImmutableStack,
+    ConcurrentBag, // IEnumerable<T> Constructor
+    ConcurrentQueue, // IEnumerable<T> Constructor
+    ConcurrentStack, // IEnumerable<T> Constructor
+    HashSet, // IEnumerable<T> Constructor
+    LinkedList, // IEnumerable<T> Constructor
+    List, // IEnumerable<T> Constructor
+    Queue, // IEnumerable<T> Constructor
+    SortedSet, // IEnumerable<T> Constructor
+    Stack, // IEnumerable<T> Constructor
+    ImmutableArray, // IEnumerable<T> CreateRange function
+    ImmutableHashSet, // IEnumerable<T> CreateRange function
+    ImmutableList, // IEnumerable<T> CreateRange function
+    ImmutableQueue, // IEnumerable<T> CreateRange function
+    ImmutableSortedSet, // IEnumerable<T> CreateRange function
+    ImmutableStack, // IEnumerable<T> CreateRange function
+    // FrozenSet, // IEnumerable<T> ToFrozenSet function
     
     IAsyncEnumerable
     // ReSharper restore InconsistentNaming

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
@@ -34,6 +36,15 @@ using MrMeeseeks.DIE.UserUtility;
 
 [assembly:ConstructorChoice(typeof(Lazy<>), typeof(Func<>))]
 [assembly:ConstructorChoice(typeof(ThreadLocal<>), typeof(Func<>))]
+[assembly:ConstructorChoice(typeof(ConcurrentBag<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(ConcurrentQueue<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(ConcurrentStack<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(HashSet<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(LinkedList<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(List<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(Queue<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(SortedSet<>), typeof(IEnumerable<>))]
+[assembly:ConstructorChoice(typeof(Stack<>), typeof(IEnumerable<>))]
 
 namespace MrMeeseeks.DIE.Sample;
 

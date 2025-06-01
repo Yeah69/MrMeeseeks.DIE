@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using MrMeeseeks.DIE.Sample;
 
 internal class Program
@@ -9,7 +8,7 @@ internal class Program
         try
         {
             var container = Container.DIE_CreateContainer(); 
-            var parent = container.Create().Children.ToList();
+            var parent = container.Create();
 
             Console.WriteLine("Hello, World!");
         }

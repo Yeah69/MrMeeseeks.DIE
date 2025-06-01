@@ -1,0 +1,5 @@
+﻿<Solution>
+  <Configurations />
+  <Project Path="Main\Main.csproj" Type="Classic C#" />
+  <Project Path="Sample\Sample.csproj" Type="Classic C#" />
+</Solution>

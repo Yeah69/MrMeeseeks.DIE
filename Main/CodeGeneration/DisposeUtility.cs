@@ -152,7 +152,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
             ? referenceGenerator.Generate("ReleaseDisposeAsync")
             : null;
         ReleaseDisposeAsyncFullyQualified = _releaseDisposeAsyncName is not null
-            ? $"{Constants.NamespaceForGeneratedStatics}.{ClassName}.{_releaseDisposeAsyncName}"
+            ? $"{Constants.NamespaceForGeneratedUtilities}.{ClassName}.{_releaseDisposeAsyncName}"
             : null;
     }
 

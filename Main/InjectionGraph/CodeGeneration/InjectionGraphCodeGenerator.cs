@@ -270,8 +270,8 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 var initialCaseIdReference = _referenceGenerator.Generate("cId");
                 _code.AppendLine(
                     $$"""
-                      {{_wellKnownTypes.Int32.FullName()}} {{outwardFacingTypeIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.InterfaceNumberPropertyName}};
-                      {{_wellKnownTypes.Int32.FullName()}} {{initialCaseIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ImplementationNumberPropertyName}};
+                      {{_wellKnownTypes.Int32.FullName()}} {{outwardFacingTypeIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}};
+                      {{_wellKnownTypes.Int32.FullName()}} {{initialCaseIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.CaseNumberPropertyName}};
                       """);
                 var overrideParameters = overrideContext is OverrideContext.Any any
                     ? string.Join(", ", any.Overrides.Select(o => parameterReferences[functorNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
@@ -291,9 +291,9 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 else
                     _code.AppendLine(
                         $$"""
-                          if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.InterfaceNumberPropertyName}} != {{interfaceNode.Number}})
+                          if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != {{interfaceNode.Number}})
                           {
-                          {{_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: interfaceNode.Number.ToString(), implementationNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().Value.ToString())}}
+                          {{_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: interfaceNode.Number.ToString(), caseNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().Value.ToString())}}
                           }
                           """);
             }
@@ -311,12 +311,12 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 }
                 _code.AppendLine(
                     $$"""
-                      {{ifKeyword}} ({{_contextGenerator.ParameterName}}.{{_contextGenerator.ImplementationNumberPropertyName}} == {{interfaceNodeCase.Id}})
+                      {{ifKeyword}} ({{_contextGenerator.ParameterName}}.{{_contextGenerator.CaseNumberPropertyName}} == {{interfaceNodeCase.Id}})
                       {
                       """);
                 
                 var newInterfaceNumber = interfaceNodeCase.NextId == 0 ? 0 : interfaceNode.Number;
-                _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: newInterfaceNumber.ToString(), implementationNumber: interfaceNodeCase.NextId.ToString()));
+                _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: newInterfaceNumber.ToString(), caseNumber: interfaceNodeCase.NextId.ToString()));
                 
                 var innerReference = CallFunctionOrGenerateForInjectionNode(interfaceNodeCase.Edge, interfaceNodeCase.Edge.Target);
                 
@@ -349,7 +349,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             {
                 foreach (var initialCaseId in sequence.Value)
                 {
-                    _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(interfaceNumber: outwardFacingTypeId.ToString(), implementationNumber: initialCaseId.ToString()));
+                    _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: outwardFacingTypeId.ToString(), caseNumber: initialCaseId.ToString()));
                     
                     var innerReference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
 

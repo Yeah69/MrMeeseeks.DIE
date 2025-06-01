@@ -5,8 +5,8 @@ namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 internal class ContextGenerator
 {
     private const string OverridesConstructorParameterName = "overrides";
-    private const string InterfaceNumberConstructorParameterName = "interfaceNr";
-    private const string ImplementationNumberConstructorParameterName = "implementationNr";
+    private const string OutwardFacingTypeNumberConstructorParameterName = "outwardFacingTypeNr";
+    private const string CaseNumberConstructorParameterName = "caseNr";
     private readonly string _contextClassName;
     private readonly string _contextClassFullName;
     private readonly WellKnownTypes _wellKnownTypes;
@@ -22,40 +22,40 @@ internal class ContextGenerator
         ParameterName = referenceGenerator.Generate("context");
         FullNameAndParameterName = $"{_contextClassFullName} {ParameterName}";
         OverridesPropertyName = "Overrides";
-        InterfaceNumberPropertyName = "InterfaceNumber";
-        ImplementationNumberPropertyName = "ImplementationNumber";
+        OutwardFacingTypeNumberPropertyName = "OutwardFacingTypeNumber";
+        CaseNumberPropertyName = "CaseNumber";
     }
     
     internal string GenerateContextClass() =>
         $$"""
           internal class {{_contextClassName}}
           {
-            internal {{_contextClassName}}({{_wellKnownTypes.Object.FullName()}} {{OverridesConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{InterfaceNumberConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{ImplementationNumberConstructorParameterName}}) 
+            internal {{_contextClassName}}({{_wellKnownTypes.Object.FullName()}} {{OverridesConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{OutwardFacingTypeNumberConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{CaseNumberConstructorParameterName}}) 
             {
               {{OverridesPropertyName}} = {{OverridesConstructorParameterName}};
-              {{InterfaceNumberPropertyName}} = {{InterfaceNumberConstructorParameterName}};
-              {{ImplementationNumberPropertyName}} = {{ImplementationNumberConstructorParameterName}};
+              {{OutwardFacingTypeNumberPropertyName}} = {{OutwardFacingTypeNumberConstructorParameterName}};
+              {{CaseNumberPropertyName}} = {{CaseNumberConstructorParameterName}};
             }
             internal {{_wellKnownTypes.Object.FullName()}} {{OverridesPropertyName}} { get; }
-            internal {{_wellKnownTypes.Int32.FullName()}} {{InterfaceNumberPropertyName}} { get; }
-            internal {{_wellKnownTypes.Int32.FullName()}} {{ImplementationNumberPropertyName}} { get; }
+            internal {{_wellKnownTypes.Int32.FullName()}} {{OutwardFacingTypeNumberPropertyName}} { get; }
+            internal {{_wellKnownTypes.Int32.FullName()}} {{CaseNumberPropertyName}} { get; }
           }
           """;
 
-    internal string GenerateInstanceCreation(string overrideInstanceCreation, string interfaceNumber, string implementationNumber) =>
-        $"new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreation}, {InterfaceNumberConstructorParameterName}: {interfaceNumber}, {ImplementationNumberConstructorParameterName}: {implementationNumber})";
+    internal string GenerateInstanceCreation(string overrideInstanceCreation, string outwardFacingTypeNumber, string caseNumber) =>
+        $"new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreation}, {OutwardFacingTypeNumberConstructorParameterName}: {outwardFacingTypeNumber}, {CaseNumberConstructorParameterName}: {caseNumber})";
 
-    internal string GenerateInstanceCopyAndAdjustment(string? overrideInstanceCreation = null, string? interfaceNumber = null, string? implementationNumber = null)
+    internal string GenerateInstanceCopyAndAdjustment(string? overrideInstanceCreation = null, string? outwardFacingTypeNumber = null, string? caseNumber = null)
     {
         var overrideInstanceCreationString = overrideInstanceCreation ?? $"{ParameterName}.{OverridesPropertyName}";
-        var interfaceNumberString = interfaceNumber ?? $"{ParameterName}.{InterfaceNumberPropertyName}";
-        var implementationNumberString = implementationNumber ?? $"{ParameterName}.{ImplementationNumberPropertyName}";
-        return $"{ParameterName} = new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreationString}, {InterfaceNumberConstructorParameterName}: {interfaceNumberString}, {ImplementationNumberConstructorParameterName}: {implementationNumberString});";
+        var outwardFacingTypeNumberString = outwardFacingTypeNumber ?? $"{ParameterName}.{OutwardFacingTypeNumberPropertyName}";
+        var caseNumberString = caseNumber ?? $"{ParameterName}.{CaseNumberPropertyName}";
+        return $"{ParameterName} = new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreationString}, {OutwardFacingTypeNumberConstructorParameterName}: {outwardFacingTypeNumberString}, {CaseNumberConstructorParameterName}: {caseNumberString});";
     }
 
     internal string ParameterName { get; }
     internal string FullNameAndParameterName { get; }
     internal string OverridesPropertyName { get; }
-    internal string InterfaceNumberPropertyName { get; }
-    internal string ImplementationNumberPropertyName { get; }
+    internal string OutwardFacingTypeNumberPropertyName { get; }
+    internal string CaseNumberPropertyName { get; }
 }

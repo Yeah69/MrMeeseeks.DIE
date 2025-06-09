@@ -208,7 +208,7 @@ internal class InjectionGraphBuilderResolutionSteps(
     }
 
     internal void EnumerableStep(
-        INamedTypeSymbol currentType,
+        ITypeSymbol currentType,
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,

@@ -78,6 +78,9 @@ internal class InjectionGraphBuilder(
             case INamedTypeSymbol { Name: "IEnumerable" } enumerableType when CustomSymbolEqualityComparer.IncludeNullability.Equals(typeNodeType.OriginalDefinition, wellKnownTypesCollections.IEnumerable1):
                 resolutionSteps.EnumerableStep(enumerableType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
+            case IArrayTypeSymbol arrayType:
+                resolutionSteps.EnumerableStep(arrayType, typeNode, edgeContext, queue, currentResolvedLocation);
+                break;
             case INamedTypeSymbol { TypeArguments.Length: >= 1 } maybeFunctor when maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
                 resolutionSteps.FunctorStep(maybeFunctor, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;

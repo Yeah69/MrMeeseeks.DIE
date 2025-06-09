@@ -5,7 +5,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal record ConcreteEnumerableNodeData(INamedTypeSymbol Enumerable)
+internal record ConcreteEnumerableNodeData(ITypeSymbol Enumerable)
 {
     public override int GetHashCode()
     {
@@ -73,7 +73,13 @@ internal class ConcreteEnumerableNode : IConcreteNode
         _idRegister = idRegister;
         Data = data;
 
-        var maybeWrappedInnerType = data.Enumerable.TypeArguments[0];
+        var maybeWrappedInnerType = data.Enumerable switch
+        {
+            INamedTypeSymbol { IsGenericType: true, TypeArguments.Length: 1 } namedType => namedType.TypeArguments[0],
+            IArrayTypeSymbol arrayType => arrayType.ElementType,
+            _ => throw new InvalidOperationException(
+                $"The enumerable type '{data.Enumerable}' is not supported. It must be a generic type with one type argument or an array type.")
+        };
         UnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(maybeWrappedInnerType, wellKnownTypes);
         OutwardFacingTypeId = idRegister.GetOutwardFacingTypeId(UnwrappedInnerType);
         _innerEdgeLazy = new Lazy<TypeEdge>(() => typeEdgeFactory(this, typeNodeManager.GetOrAddNode(maybeWrappedInnerType)));
@@ -96,8 +102,7 @@ internal class ConcreteEnumerableNode : IConcreteNode
     {
         if (!_sequences.TryGetValue(context.Domain, out var sequence))
         {
-            sequence = sequenceData.Sequence.Select(t => _idRegister.GetInitialCaseId(context.Domain, t))
-                .ToImmutableArray();
+            sequence = [..sequenceData.Sequence.Select(t => _idRegister.GetInitialCaseId(context.Domain, t))];
             _sequences[context.Domain] = sequence;
         }
         

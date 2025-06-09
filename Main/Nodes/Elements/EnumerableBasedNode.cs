@@ -10,13 +10,13 @@ namespace MrMeeseeks.DIE.Nodes.Elements;
 internal enum EnumerableBasedType
 {
     // ReSharper disable InconsistentNaming
-    IEnumerable,
-    Array,
-    IList,
-    ICollection,
-    ReadOnlyCollection,
-    IReadOnlyCollection,
-    IReadOnlyList,
+    IEnumerable, // Check
+    Array, // Check
+    IList, // Check
+    ICollection, // Check
+    ReadOnlyCollection, // Check
+    IReadOnlyCollection, // Check
+    IReadOnlyList, // Check
     ArraySegment,
     ConcurrentBag, // IEnumerable<T> Constructor
     ConcurrentQueue, // IEnumerable<T> Constructor

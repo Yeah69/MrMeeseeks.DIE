@@ -345,18 +345,38 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             }
 
             var outwardFacingTypeId = enumerableNode.OutwardFacingTypeId;
-            foreach (var sequence in enumerableNode.Sequences)
-            {
-                foreach (var initialCaseId in sequence.Value)
-                {
-                    _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: outwardFacingTypeId.ToString(), caseNumber: initialCaseId.ToString()));
-                    
-                    var innerReference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
 
-                    _code.AppendLine($"yield return {innerReference};");
+            if (enumerableNode.Data.Enumerable is IArrayTypeSymbol)
+            {
+                foreach (var sequence in enumerableNode.Sequences)
+                {
+                    var references = new List<string>(sequence.Value.Length);
+                    foreach (var initialCaseId in sequence.Value)
+                    {
+                        _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: outwardFacingTypeId.ToString(), caseNumber: initialCaseId.ToString()));
+                    
+                        var innerReference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+
+                        references.Add(innerReference);
+                    }
+                    _code.AppendLine($"return new {enumerableNode.Data.Enumerable.FullName()} {{ {string.Join(", ", references)} }};");
                 }
             }
-            _code.AppendLine("yield break;");
+            else
+            {
+                foreach (var sequence in enumerableNode.Sequences)
+                {
+                    foreach (var initialCaseId in sequence.Value)
+                    {
+                        _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: outwardFacingTypeId.ToString(), caseNumber: initialCaseId.ToString()));
+                    
+                        var innerReference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+
+                        _code.AppendLine($"yield return {innerReference};");
+                    }
+                    _code.AppendLine("yield break;");
+                }
+            }
         }
         return NotAvailable;
     }

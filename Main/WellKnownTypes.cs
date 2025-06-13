@@ -25,6 +25,8 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol? ConcurrentDictionaryOfAsyncDisposable,  // .NET Standard 2.1
     INamedTypeSymbol ListOfObject, // .NET Standard 2.0
     INamedTypeSymbol ListOfListOfObject, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentStackOfObject, // .NET Standard 2.0
+    INamedTypeSymbol ConcurrentStackOfConcurrentStackOfObject, // .NET Standard 2.0
     INamedTypeSymbol ConcurrentDictionaryOfRuntimeTypeHandleToObject, // .NET Standard 2.0
     INamedTypeSymbol Exception, // .NET Standard 2.0
     // ReSharper disable InconsistentNaming
@@ -53,6 +55,7 @@ internal sealed record WellKnownTypes(
         var runtimeTypeHandle = compilation.GetTypeByMetadataNameOrThrow("System.RuntimeTypeHandle");
         var @object = compilation.GetTypeByMetadataNameOrThrow("System.Object");
         var list = compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.List`1");
+        var concurrentStack = compilation.GetTypeByMetadataNameOrThrow("System.Collections.Concurrent.ConcurrentStack`1");
         var valueTask1 = compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask`1");
         var enumerable1 = compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IEnumerable`1");
         var exception = compilation.GetTypeByMetadataNameOrThrow("System.Exception");
@@ -81,6 +84,8 @@ internal sealed record WellKnownTypes(
             ConcurrentDictionaryOfRuntimeTypeHandleToObject: concurrentDictionary2.Construct(runtimeTypeHandle, @object),
             ListOfObject: list.Construct(@object),
             ListOfListOfObject: list.Construct(list.Construct(@object)),
+            ConcurrentStackOfObject: concurrentStack.Construct(@object),
+            ConcurrentStackOfConcurrentStackOfObject: concurrentStack.Construct(concurrentStack.Construct(@object)),
             Exception: exception,
             IEnumerableOfException: enumerable1.Construct(exception),
             IAsyncEnumerableOfException: compilation.GetTypeByMetadataName("System.Collections.Generic.IAsyncEnumerable`1")?.Construct(exception),

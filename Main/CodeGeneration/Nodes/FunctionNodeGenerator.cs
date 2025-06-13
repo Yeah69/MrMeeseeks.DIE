@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
@@ -166,7 +167,7 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
         if (!_function.IsSubDisposalAsParameter)
         {
             code.AppendLine(
-                $"{_range.DisposalHandling.CollectionReference}.{nameof(List<List<object>>.Add)}({_function.SubDisposalNode.Reference});");
+                $"{_range.DisposalHandling.CollectionReference}.{nameof(ConcurrentStack<ConcurrentStack<object>>.Push)}({_function.SubDisposalNode.Reference});");
         }
 
         if (!_function.IsTransientScopeDisposalAsParameter)
@@ -174,8 +175,22 @@ internal sealed class FunctionNodeGenerator : IFunctionNodeGenerator
             var containerReference = _range.ContainerReference is { } reference
                 ? $"{reference}."
                 : "";
+            
+            var awaitPrefix = isAsyncAwait ? "await " : "";
+            var waitMethod = isAsyncAwait ? nameof(SemaphoreSlim.WaitAsync) : nameof(SemaphoreSlim.Wait);
+            
             code.AppendLine(
-                $"{containerReference}{_container.TransientScopeDisposalReference}.{nameof(List<object>.AddRange)}({_function.TransientScopeDisposalNode.Reference});");
+                $$"""
+                  {{awaitPrefix}}{{containerReference}}{{_container.TransientScopeDisposalSemaphoreReference}}.{{waitMethod}}();
+                  try 
+                  {
+                  {{containerReference}}{{_container.TransientScopeDisposalReference}}.{{nameof(List<object>.AddRange)}}({{_function.TransientScopeDisposalNode.Reference}});
+                  }
+                  finally
+                  {
+                  {{containerReference}}{{_container.TransientScopeDisposalSemaphoreReference}}.{{nameof(SemaphoreSlim.Release)}}();
+                  }
+                  """);
         }
         
 

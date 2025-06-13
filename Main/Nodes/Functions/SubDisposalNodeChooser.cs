@@ -46,5 +46,5 @@ internal sealed class InnerFunctionSubDisposalNodeChooser : IInnerFunctionSubDis
     }
 
     public IElementNode ChooseSubDisposalNode() =>
-        _parameterNodeFactory(_wellKnownTypes.ListOfObject).EnqueueBuildJobTo(_parentContainer.BuildQueue, PassedContext.Empty);
+        _parameterNodeFactory(_wellKnownTypes.ConcurrentStackOfObject).EnqueueBuildJobTo(_parentContainer.BuildQueue, PassedContext.Empty);
 }

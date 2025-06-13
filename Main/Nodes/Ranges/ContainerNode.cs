@@ -25,6 +25,7 @@ internal interface IContainerNode : IRangeNode
     ITransientScopeInterfaceNode TransientScopeInterface { get; }
     string ScopeInterface { get; }
     string TransientScopeDisposalReference { get; }
+    string TransientScopeDisposalSemaphoreReference { get; }
     IFunctionCallNode BuildContainerInstanceCall(string? ownerReference, INamedTypeSymbol type, IFunctionNode callingFunction);
     IReadOnlyList<ICreateContainerFunctionNode> CreateContainerFunctions { get; }
     bool AsyncDisposablesPossible { get; }
@@ -60,6 +61,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
     public ITransientScopeInterfaceNode TransientScopeInterface => _lazyTransientScopeInterfaceNode.Value;
     public string ScopeInterface { get; }
     public string TransientScopeDisposalReference { get; }
+    public string TransientScopeDisposalSemaphoreReference { get; }
 
     public IFunctionCallNode BuildContainerInstanceCall(
         string? ownerReference, 
@@ -141,6 +143,8 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         _containerNodeGenerator = containerNodeGenerator;
 
         TransientScopeDisposalReference = referenceGenerator.Generate("transientScopeDisposal");
+
+        TransientScopeDisposalSemaphoreReference = referenceGenerator.Generate("transientScopeDisposalLock");
         
         GenerateEmptyConstructor = !_containerInfo.ContainerType.InstanceConstructors.Any(ic => !ic.IsImplicitlyDeclared);
         

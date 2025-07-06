@@ -75,7 +75,8 @@ internal class ConcreteInterfaceNode : IConcreteNode
     private readonly Func<IConcreteNode, TypeNode, TypeEdge> _typeEdgeFactory;
     private readonly Dictionary<DomainContext, int> _defaultImplementationsCaseNumbers = [];
     private readonly Dictionary<int, ImmutableArray<(TypeEdge Edge, int Id, int NextId)>> _implementationDataToCases = [];
-    
+    private readonly Dictionary<(DomainContext Domain, object KeyObject), int> _defaultKeyObjectToCaseNumbers = [];
+
     internal ConcreteInterfaceNode(
         // parameters
         ConcreteInterfaceNodeData data,
@@ -95,6 +96,7 @@ internal class ConcreteInterfaceNode : IConcreteNode
     internal ConcreteInterfaceNodeData Data { get; }
     internal IEnumerable<(TypeEdge Edge, int Id, int NextId)> Cases => _implementationDataToCases.SelectMany(kvp => kvp.Value);
     internal IReadOnlyDictionary<DomainContext, int> DefaultImplementationsCaseNumbers => _defaultImplementationsCaseNumbers;
+    internal IReadOnlyDictionary<(DomainContext Domain, object KeyObject), int> KeyObjectToCaseNumbers => _defaultKeyObjectToCaseNumbers;
     
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteInterfaceNode node && Data.Equals(node.Data);
@@ -102,7 +104,8 @@ internal class ConcreteInterfaceNode : IConcreteNode
     public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(
         EdgeContext context, 
         ConcreteInterfaceNodeImplementationData implementationData,
-        bool isDefaultInjection)
+        bool isDefaultInjection,
+        object? keyObject)
     {
         var initialCaseId = _idRegister.GetInitialCaseId(context.Domain, implementationData.Implementation);
         if (!_implementationDataToCases.TryGetValue(initialCaseId, out var cases))
@@ -124,11 +127,20 @@ internal class ConcreteInterfaceNode : IConcreteNode
             }
             var implementationTypeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(implementationData.Implementation));
             tempCases[^1] = (implementationTypeEdge, ids[^1], 0);
-            cases = tempCases.ToImmutableArray();
+            cases = [..tempCases];
             _implementationDataToCases[initialCaseId] = cases;
         }
         
-        if (isDefaultInjection) 
+        if (keyObject is not null)
+        {
+            var keyObjectTuple = (context.Domain, keyObject);
+            if (!_defaultKeyObjectToCaseNumbers.TryGetValue(keyObjectTuple, out var caseNumber))
+            {
+                caseNumber = cases[0].Id;
+                _defaultKeyObjectToCaseNumbers[keyObjectTuple] = caseNumber;
+            }
+        }
+        else if (isDefaultInjection) 
             _defaultImplementationsCaseNumbers[context.Domain] = cases[0].Id;
         
         var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, Location Location)>();

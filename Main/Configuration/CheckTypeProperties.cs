@@ -36,8 +36,9 @@ internal sealed class ContainerCheckTypeProperties : CheckTypeProperties, IConta
         IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
         IInjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections,
         ITypeParameterUtility typeParameterUtility) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, wellKnownTypesCollections, typeParameterUtility)
     {
     }
 }
@@ -51,8 +52,9 @@ internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeChec
         
         IInjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections,
         ITypeParameterUtility typeParameterUtility) 
-        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, typeParameterUtility)
+        : base(currentlyConsideredTypes, injectablePropertyExtractor, wellKnownTypes, wellKnownTypesCollections, typeParameterUtility)
     {
     }
 }
@@ -94,6 +96,8 @@ internal interface ICheckTypeProperties
     IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType);
 
     InjectionKey? IdentifyInjectionKeyModification(ISymbol parameterOrProperty);
+    
+    bool IsContextPassingType(ITypeSymbol typeSymbol);
 }
 
 internal abstract class CheckTypeProperties : ICheckTypeProperties
@@ -110,6 +114,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         ICurrentlyConsideredTypes currentlyConsideredTypes,
         IInjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections,
         ITypeParameterUtility typeParameterUtility)
     {
         _currentlyConsideredTypes = currentlyConsideredTypes;
@@ -173,6 +178,34 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             .Select(t => t ?? throw new ImpossibleDieException())
             .Concat(currentlyConsideredTypes.DecorationOrdinalChoices)
             .ToDictionary(t => t.DecorationImplementationType, t => t.Ordinal);
+
+        _defaultContextPassingTypes = ImmutableHashSet.CreateRange([
+            wellKnownTypes.Lazy1, 
+            wellKnownTypes.ThreadLocal1, 
+            wellKnownTypesCollections.IEnumerable1,
+            wellKnownTypesCollections.ArraySegment1,
+            wellKnownTypesCollections.IList1,
+            wellKnownTypesCollections.ICollection1,
+            wellKnownTypesCollections.IReadOnlyCollection1,
+            wellKnownTypesCollections.ReadOnlyCollection1,
+            wellKnownTypesCollections.IReadOnlyList1,
+            wellKnownTypesCollections.ConcurrentBag1,
+            wellKnownTypesCollections.ConcurrentQueue1,
+            wellKnownTypesCollections.ConcurrentStack1,
+            wellKnownTypesCollections.HashSet1,
+            wellKnownTypesCollections.LinkedList1,
+            wellKnownTypesCollections.List1,
+            wellKnownTypesCollections.Queue1,
+            wellKnownTypesCollections.SortedSet1,
+            wellKnownTypesCollections.Stack1,
+            wellKnownTypesCollections.KeyValuePair2,
+            wellKnownTypesCollections.IDictionary2,
+            wellKnownTypesCollections.IReadOnlyDictionary2,
+            wellKnownTypesCollections.Dictionary2,
+            wellKnownTypesCollections.ReadOnlyDictionary2,
+            wellKnownTypesCollections.SortedDictionary2,
+            wellKnownTypesCollections.SortedList2
+        ]);
     }
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
@@ -483,7 +516,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     public IReadOnlyDictionary<object, INamedTypeSymbol> MapToKeyedImplementations(INamedTypeSymbol typeSymbol,
         ITypeSymbol keyType) =>
         MapToKeyedMultipleImplementations(typeSymbol, keyType)
-            .Where(kvp => kvp.Value.Count == 1)
+            .Select(kvp => (kvp.Key, Value: kvp.Value.Distinct(CustomSymbolEqualityComparer.Default).OfType<INamedTypeSymbol>().ToImmutableArray()))
+            .Where(kvp => kvp.Value.Length == 1)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
     
     private IEnumerable<INamedTypeSymbol> GetClosedImplementations(
@@ -685,4 +719,14 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             ? new(ret.Item1, ret.Item2)
             : null;
     }
+    
+    private readonly ImmutableHashSet<INamedTypeSymbol> _defaultContextPassingTypes = ImmutableHashSet<INamedTypeSymbol>.Empty;
+
+    public bool IsContextPassingType(ITypeSymbol typeSymbol) =>
+        typeSymbol switch
+        {
+            IArrayTypeSymbol => true,
+            INamedTypeSymbol namedTypeSymbol => _defaultContextPassingTypes.Contains(namedTypeSymbol.OriginalDefinition),
+            _ => false
+        };
 }

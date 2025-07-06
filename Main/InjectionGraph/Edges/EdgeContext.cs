@@ -55,7 +55,7 @@ internal class OverrideContextManager : IContainerInstance
 internal abstract record KeyContext
 {
     internal sealed record None : KeyContext;
-    internal sealed record Single(ITypeSymbol KeyType, object KeyValue) : KeyContext;
+    internal sealed record Single(ITypeSymbol Type, object Value) : KeyContext;
 }
 
 internal abstract record InitialCaseChoiceContext

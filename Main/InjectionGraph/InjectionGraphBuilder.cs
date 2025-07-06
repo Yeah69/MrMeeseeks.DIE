@@ -87,6 +87,9 @@ internal class InjectionGraphBuilder(
             case INamedTypeSymbol { TypeKind: TypeKind.Interface } interfaceType:
                 resolutionSteps.InterfaceStep(interfaceType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
+            case INamedTypeSymbol keyValuePairType when CustomSymbolEqualityComparer.Default.Equals(keyValuePairType.OriginalDefinition, wellKnownTypesCollections.KeyValuePair2):
+                resolutionSteps.KeyValuePairStep(keyValuePairType, typeNode, edgeContext, queue, currentResolvedLocation);
+                break;
             case INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } implementationType:
                 resolutionSteps.ImplementationStep(implementationType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Linq;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
@@ -15,26 +13,36 @@ internal sealed class Proxy(IInterface decorated) : IInterface
     public IInterface Decorated => decorated;
 }
 
-internal sealed class Decorator(Func<string, Func<string, Lazy<IInterface>>> boobies, Proxy proxy) : IInterface, IDecorator<IInterface>
+internal sealed class Decorator(IInterface boobies) : IInterface, IDecorator<IInterface>
 {
-    public IInterface Decorated => boobies(".")(".").Value;
-    public Proxy Proxy => proxy;
+    public IInterface Decorated => boobies;
 }
 
+internal enum Key 
+{
+    Zero,
+    A,
+    B,
+    C
+}
+
+[InjectionKey(Key.Zero)]
 internal sealed class Implementation : IInterface;
 
+[InjectionKey(Key.A)]
 internal sealed class ImplementationA : IInterface;
 
+[InjectionKey(Key.B)]
 internal sealed class ImplementationB : IInterface;
 
+[InjectionKey(Key.C)]
 internal sealed class ImplementationC : IInterface;
 
-internal class Parent(IInterface[] children) 
+internal class Parent(IEnumerable<KeyValuePair<Key, Lazy<IInterface>>> children) 
 {
-    public ICollection<IInterface> Children { get; } = children;
+    public List<KeyValuePair<Key, IInterface>> Children { get; } = children.Select(kvp => new KeyValuePair<Key, IInterface>(kvp.Key, kvp.Value.Value)).ToList();
 }
 
-[ImplementationChoice(typeof(IInterface), typeof(Implementation))]
 [ImplementationCollectionChoice(typeof(IInterface),
     typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC),
     typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC))]

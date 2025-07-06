@@ -2,6 +2,7 @@
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.Logging;
+using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -17,6 +18,7 @@ internal class InjectionGraphBuilderResolutionSteps(
     ConcreteEnumerableNodeManager concreteEnumerableNodeManager,
     ConcreteFunctorNodeManager concreteFunctorNodeManager,
     ConcreteOverrideNodeManager concreteOverrideNodeManager,
+    ConcreteKeyValuePairNodeManager concreteKeyValuePairNodeManager,
     OverrideContextManager overrideContextManager,
     Lazy<ConcreteExceptionNode> concreteExceptionNode,
     Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory)
@@ -70,7 +72,11 @@ internal class InjectionGraphBuilderResolutionSteps(
         
         ConnectToTypeNodeIfNotAlready(concreteInterfaceNode, edgeContext, typeNode);
         
-        foreach (var (node, location) in concreteInterfaceNode.ConnectIfNotAlready(edgeContext, concreteInterfaceNodeImplementationData, isDefaultInjection: isDefaultCase))
+        var newConnections = edgeContext.Key is KeyContext.Single { Value: var keyValue }
+            ? concreteInterfaceNode.ConnectIfNotAlready(edgeContext, concreteInterfaceNodeImplementationData, isDefaultInjection: false, keyObject: keyValue)
+            : concreteInterfaceNode.ConnectIfNotAlready(edgeContext, concreteInterfaceNodeImplementationData, isDefaultInjection: isDefaultCase, keyObject: null);
+        
+        foreach (var (node, location) in newConnections)
             queue.Enqueue(new ResolutionStep(
                 node, 
                 edgeContext,
@@ -105,9 +111,11 @@ internal class InjectionGraphBuilderResolutionSteps(
                 return compositeType;
             
             // Otherwise, we try to resolve the type by the registered implementations.
-            var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null);
-            if (containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null) // ToDo InjectionKey
-                is not ImplementationResult.Single { Implementation: { } singleImplementation })
+            var key = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } && !containerCheckTypeProperties.IsContextPassingType(currentType)
+                ? new InjectionKey(keyType, keyValue)
+                : null;
+            var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, key);
+            if (implementationResult is not ImplementationResult.Single { Implementation: { } singleImplementation })
             {
                 ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
                 var logMessage = implementationResult switch
@@ -135,7 +143,10 @@ internal class InjectionGraphBuilderResolutionSteps(
         Queue<ResolutionStep> queue,
         Location currentResolvedLocation)
     {
-        var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, null); // ToDo InjectionKey
+        var key = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } && !containerCheckTypeProperties.IsContextPassingType(currentType)
+            ? new InjectionKey(keyType, keyValue)
+            : null;
+        var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, key);
         if (implementationResult is not ImplementationResult.Single { Implementation: { } implementation })
         {
             ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
@@ -207,6 +218,26 @@ internal class InjectionGraphBuilderResolutionSteps(
                 
     }
 
+    internal void KeyValuePairStep(
+        INamedTypeSymbol currentType,
+        TypeNode typeNode,
+        EdgeContext edgeContext,
+        Queue<ResolutionStep> queue,
+        Location currentResolvedLocation)
+    {
+        var concreteKeyValuePairNodeData = new ConcreteKeyValuePairNodeData(currentType);
+        
+        var concreteKeyValuePairNode = concreteKeyValuePairNodeManager.GetOrAddNode(concreteKeyValuePairNodeData);
+        
+        ConnectToTypeNodeIfNotAlready(concreteKeyValuePairNode, edgeContext, typeNode);
+        
+        foreach (var (node, location) in concreteKeyValuePairNode.ConnectIfNotAlready(edgeContext))
+            queue.Enqueue(new ResolutionStep(
+                node, 
+                edgeContext,
+                location.Equals(Location.None) ? currentResolvedLocation : location));
+    }
+
     internal void EnumerableStep(
         ITypeSymbol currentType,
         TypeNode typeNode,
@@ -217,13 +248,23 @@ internal class InjectionGraphBuilderResolutionSteps(
         var concreteEnumerableNodeData = new ConcreteEnumerableNodeData(Enumerable: currentType);
 
         var concreteEnumerableNode = concreteEnumerableNodeManager.GetOrAddNode(concreteEnumerableNodeData);
+        var unwrappedInnerType = concreteEnumerableNode.UnwrappedInnerType as INamedTypeSymbol 
+                                 ?? throw new InvalidOperationException($"Unwrapped inner type of enumerable node {concreteEnumerableNodeData} is not a named type symbol, but {concreteEnumerableNode.UnwrappedInnerType.GetType().FullName}.");
         
-        var implementationsResult = concreteEnumerableNode.UnwrappedInnerType is INamedTypeSymbol namedTypeSymbol
-            ? containerCheckTypeProperties.MapToImplementations(namedTypeSymbol, null) // ToDo InjectionKey
-            : throw new NotImplementedException(
-                $"Unwrapped inner type of enumerable node {concreteEnumerableNodeData} is not a named type symbol, but {concreteEnumerableNode.UnwrappedInnerType.GetType().FullName}.");
-
-        var concreteEnumerableNodeSequenceData = new ConcreteEnumerableNodeSequenceData(implementationsResult);
+        var outwardFacingTypeId = idRegister.GetOutwardFacingTypeId(unwrappedInnerType);
+        var sequence = (concreteEnumerableNode switch
+        {
+            { KeyType: { } keyTypeSingular, IsKeyedMultiple: false } => containerCheckTypeProperties.MapToKeyedImplementations(unwrappedInnerType, keyTypeSingular)
+                .Select(ConcreteEnumerableYield (kvp) => new ConcreteEnumerableYield.Key(keyTypeSingular, kvp.Key)),
+            { KeyType: { } keyTypeMultiple, IsKeyedMultiple: true } => containerCheckTypeProperties
+                .MapToKeyedMultipleImplementations(unwrappedInnerType, keyTypeMultiple)
+                .Select(kvp => new ConcreteEnumerableYield.Key(keyTypeMultiple, kvp.Key)),
+            _ => containerCheckTypeProperties.MapToImplementations(unwrappedInnerType, edgeContext.Key 
+                    is KeyContext.Single { Type: var keyType, Value: var keyValue} ? new InjectionKey(keyType, keyValue) : null)
+                .Select(i => new ConcreteEnumerableYield.Case(outwardFacingTypeId, idRegister.GetInitialCaseId(edgeContext.Domain, i)))
+        }).ToArray();
+        
+        var concreteEnumerableNodeSequenceData = new ConcreteEnumerableNodeSequenceData(sequence);
 
         ConnectToTypeNodeIfNotAlready(concreteEnumerableNode, edgeContext, typeNode);
         

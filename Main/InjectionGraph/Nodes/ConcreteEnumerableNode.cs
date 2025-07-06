@@ -26,13 +26,13 @@ internal record ConcreteEnumerableNodeData(ITypeSymbol Enumerable)
     }
 }
 
-internal record ConcreteEnumerableNodeSequenceData(IReadOnlyList<ITypeSymbol> Sequence)
+internal record ConcreteEnumerableNodeSequenceData(IReadOnlyList<ConcreteEnumerableYield> Sequence)
 {
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        foreach (var type in Sequence)
-            hash.Add(type, CustomSymbolEqualityComparer.IncludeNullability);
+        foreach (var yield in Sequence)
+            hash.Add(yield);
         return hash.ToHashCode();
     }
 
@@ -45,7 +45,7 @@ internal record ConcreteEnumerableNodeSequenceData(IReadOnlyList<ITypeSymbol> Se
         if (Sequence.Count != other.Sequence.Count)
             return false;
         for (var i = 0; i < Sequence.Count; i++)
-            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(Sequence[i], other.Sequence[i]))
+            if (!Sequence[i].Equals(other.Sequence[i]))
                 return false;
         return true;
     }
@@ -54,10 +54,16 @@ internal record ConcreteEnumerableNodeSequenceData(IReadOnlyList<ITypeSymbol> Se
 internal class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteEnumerableNode> factory)
     : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IContainerInstance;
 
+internal abstract record ConcreteEnumerableYield
+{
+    internal sealed record Case(int OutwardFacingTypeId, int CaseId) : ConcreteEnumerableYield;
+    internal sealed record Key(ITypeSymbol KeyType, object KeyObject) : ConcreteEnumerableYield;
+}
+
 internal class ConcreteEnumerableNode : IConcreteNode
 {
     private readonly IdRegister _idRegister;
-    private readonly Dictionary<DomainContext, ImmutableArray<int>> _sequences = [];
+    private readonly Dictionary<DomainContext, ImmutableArray<ConcreteEnumerableYield>> _sequences = [];
     private readonly Lazy<TypeEdge> _innerEdgeLazy;
 
     internal ConcreteEnumerableNode(
@@ -65,10 +71,12 @@ internal class ConcreteEnumerableNode : IConcreteNode
         ConcreteEnumerableNodeData data,
 
         // dependencies
+        ICheckIterableTypes checkIterableTypes,
         IdRegister idRegister,
         TypeNodeManager typeNodeManager,
         Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory,
-        WellKnownTypes wellKnownTypes)
+        WellKnownTypes wellKnownTypes,
+        WellKnownTypesCollections wellKnownTypesCollections)
     {
         _idRegister = idRegister;
         Data = data;
@@ -80,21 +88,31 @@ internal class ConcreteEnumerableNode : IConcreteNode
             _ => throw new InvalidOperationException(
                 $"The enumerable type '{data.Enumerable}' is not supported. It must be a generic type with one type argument or an array type.")
         };
-        UnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(maybeWrappedInnerType, wellKnownTypes);
-        OutwardFacingTypeId = idRegister.GetOutwardFacingTypeId(UnwrappedInnerType);
+        var tempUnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(maybeWrappedInnerType, wellKnownTypes);
+        if (CustomSymbolEqualityComparer.Default.Equals(tempUnwrappedInnerType.OriginalDefinition,
+                wellKnownTypesCollections.KeyValuePair2)
+            && tempUnwrappedInnerType is INamedTypeSymbol { TypeArguments: [var keyType, var valueType] })
+        {
+            KeyType = keyType;
+            tempUnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(valueType, wellKnownTypes);
+            IsKeyedMultiple = checkIterableTypes.IsCollectionType(tempUnwrappedInnerType);
+        }
+
+        UnwrappedInnerType = tempUnwrappedInnerType;
         _innerEdgeLazy = new Lazy<TypeEdge>(() => typeEdgeFactory(this, typeNodeManager.GetOrAddNode(maybeWrappedInnerType)));
     }
 
     internal TypeEdge InnerEdge => _innerEdgeLazy.Value;
     
+    internal ITypeSymbol? KeyType { get; }
+    internal bool IsKeyedMultiple { get; }
     internal ITypeSymbol UnwrappedInnerType { get; }
 
     internal ConcreteEnumerableNodeData Data { get; }
-    internal int OutwardFacingTypeId { get; }
-    internal IReadOnlyDictionary<DomainContext, ImmutableArray<int>> Sequences => _sequences;
+    internal IReadOnlyDictionary<DomainContext, ImmutableArray<ConcreteEnumerableYield>> Sequences => _sequences;
     
     public override int GetHashCode() => Data.GetHashCode();
-    public override bool Equals(object? obj) => obj is ConcreteInterfaceNode node && Data.Equals(node.Data);
+    public override bool Equals(object? obj) => obj is ConcreteEnumerableNode other && Data.Equals(other.Data);
 
     public IReadOnlyList<(TypeNode TypeNode, EdgeContext NewContext, Location Location)> ConnectIfNotAlready(
         EdgeContext context, 
@@ -102,14 +120,21 @@ internal class ConcreteEnumerableNode : IConcreteNode
     {
         if (!_sequences.TryGetValue(context.Domain, out var sequence))
         {
-            sequence = [..sequenceData.Sequence.Select(t => _idRegister.GetInitialCaseId(context.Domain, t))];
+            sequence = [..sequenceData.Sequence];
             _sequences[context.Domain] = sequence;
         }
         
         var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, EdgeContext NewContext, Location Location)>();
-        foreach (var caseId in sequence)
+        foreach (var yield in sequence)
         {
-            var newContext = context with { InitialInitialCaseChoice = new InitialCaseChoiceContext.Single(OutwardFacingTypeId, caseId) };
+            var newContext = yield switch
+            {
+                ConcreteEnumerableYield.Case(var outwardFacingTypeId, var caseId) => 
+                    context with { InitialInitialCaseChoice = new InitialCaseChoiceContext.Single(outwardFacingTypeId, caseId) },
+                ConcreteEnumerableYield.Key(var keyType, var keyObject) =>
+                    context with { Key = new KeyContext.Single(keyType, keyObject) },
+                _ => throw new InvalidOperationException($"Unknown yield type: {yield.GetType()}")
+            };
             if (InnerEdge.AddContext(newContext))
                 notYetConnectedTypeNodes.Add((InnerEdge.Target, newContext, Location.None));
         }

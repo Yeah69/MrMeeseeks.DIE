@@ -7,7 +7,7 @@ using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Sample;
 using MrMeeseeks.DIE.UserUtility;
 
-[assembly:ErrorDescriptionInsteadOfBuildFailure]
+//[assembly:ErrorDescriptionInsteadOfBuildFailure]
 //[assembly:Analytics(Analytics.ResolutionGraph | Analytics.ErrorFilteredResolutionGraph)]
 
 [assembly:ContainerInstanceAbstractionAggregation(typeof(IContainerInstance))]
@@ -56,3 +56,4 @@ namespace MrMeeseeks.DIE.Sample;
 
 [AttributeUsage(AttributeTargets.Interface)]
 internal sealed class InvocationDescriptionAttribute : Attribute;
+

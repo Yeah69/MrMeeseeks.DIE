@@ -228,22 +228,70 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         {
             var reference = _referenceGenerator.Generate(implementationNode.Data.Implementation);
             
-            // Constructor
-            var parameterNodes = implementationNode.ConstructorParameters.Select(t => t.Edge);
-            var parameters = string.Join(", ", parameterNodes.Select(e => CallFunctionOrGenerateForInjectionNode(e, e.Target)));
+            var originalContextNeeded = implementationNode.OriginalContextNeeded;
+
+            var originalContextReference = "";
+            var newContextReference = "";
             
+            if (originalContextNeeded)
+            {
+                originalContextReference = _referenceGenerator.Generate("originalContext");
+                newContextReference = _referenceGenerator.Generate("newContext");
+            }
+            
+            if (implementationNode.OriginalContextNeeded)
+                _code.AppendLine($"{originalContextReference} = {_contextGenerator.ParameterName}");
+
+            if (implementationNode.ContextPurging)
+                _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: "0", caseNumber: "0", key: "null"));
+            
+            if (implementationNode.OriginalContextNeeded)
+                _code.AppendLine($"{newContextReference} = {_contextGenerator.ParameterName}");
+            
+            // Constructor
+            var parameters = string.Join(", ", implementationNode.ConstructorParameters.Select(GenerateForConstructorParameter));
+
             // Object initializer
             var objectInitializer = ""; 
             if (implementationNode.ObjectInitializerAssignments.Length > 0)
-            {
-                var propertyNodeAssignments = implementationNode.ObjectInitializerAssignments;
-                objectInitializer = $" {{ {string.Join(", ", propertyNodeAssignments.Select(t => $"{t.Name} = {CallFunctionOrGenerateForInjectionNode(t.Edge, t.Edge.Target)}"))} }}";
-            }
+                objectInitializer = $" {{ {string.Join(", ", implementationNode.ObjectInitializerAssignments.Select(GenerateForObjectInitializerAssignment))} }}";
 
             var implementationFullName = GetImplementationsFullName(implementationNode.Data.Implementation);
             _code.AppendLine($"{implementationFullName} {reference} = new {implementationFullName}({parameters}){objectInitializer};");
             
             return reference;
+            
+            string GenerateForConstructorParameter(ConcreteImplementationNode.Dependency dependency) => $"{dependency.Name}: {GenerateForDependency(dependency)}";
+            
+            string GenerateForObjectInitializerAssignment(ConcreteImplementationNode.Dependency dependency) => $"{dependency.Name} = {GenerateForDependency(dependency)}";
+
+            string GenerateForDependency(ConcreteImplementationNode.Dependency dependency)
+            {
+                if (dependency.ContextSwitchOutwardFacingTypeId is not null)
+                {
+                    _code.AppendLine(
+                        $$"""
+                          if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != {{dependency.ContextSwitchOutwardFacingTypeId}})
+                          {
+                          {{_contextGenerator.ParameterName}} = {{originalContextReference}};
+                          }
+                          """);
+                }
+                    
+                var dependencyReference = CallFunctionOrGenerateForInjectionNode(dependency.Edge, dependency.Edge.Target);
+                
+                if (dependency.ContextSwitchOutwardFacingTypeId is not null)
+                {
+                    _code.AppendLine(
+                        $$"""
+                          if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != {{dependency.ContextSwitchOutwardFacingTypeId}})
+                          {
+                          {{_contextGenerator.ParameterName}} = {{newContextReference}};
+                          }
+                          """);
+                }
+                return dependencyReference;
+            }
 
             static string GetImplementationsFullName(ITypeSymbol implementation)
             {

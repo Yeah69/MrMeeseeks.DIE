@@ -17,8 +17,8 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
     private readonly INamedTypeSymbol _enumerableType;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> _keyValuePairNodeFactory;
+    private readonly TypeSymbolUtility _typeSymbolUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly WellKnownTypes _wellKnownTypes;
 
     internal MultiKeyValueFunctionNode(
         // parameters
@@ -43,8 +43,8 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> keyValuePairNodeFactory,
         ITypeParameterUtility typeParameterUtility,
+        TypeSymbolUtility typeSymbolUtility,
         ICheckTypeProperties checkTypeProperties,
-        WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             enumerableType, 
@@ -68,8 +68,8 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         _enumerableType = enumerableType;
         _localDiagLogger = localDiagLogger;
         _keyValuePairNodeFactory = keyValuePairNodeFactory;
+        _typeSymbolUtility = typeSymbolUtility;
         _checkTypeProperties = checkTypeProperties;
-        _wellKnownTypes = wellKnownTypes;
 
         NamePrefix = $"CreateMultiKeyValue{_enumerableType.Name}";
         NameNumberSuffix = referenceGenerator.Generate("");
@@ -83,7 +83,7 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         base.Build(passedContext);
         var keyValueType = (INamedTypeSymbol) _enumerableType.TypeArguments[0];
         var itemType = keyValueType.TypeArguments[1];
-        if (TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes) is not INamedTypeSymbol unwrappedItemType)
+        if (_typeSymbolUtility.GetUnwrappedType(itemType) is not INamedTypeSymbol unwrappedItemType)
         {
             _localDiagLogger.Error(ErrorLogData.ResolutionException("The value type of the keyed map is non-iterable, therefore it has to be a named type (class, struct or interface).", _enumerableType, ImmutableStack<INamedTypeSymbol>.Empty), Location.None);
             throw new InvalidOperationException();

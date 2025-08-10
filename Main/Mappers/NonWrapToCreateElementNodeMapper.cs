@@ -13,7 +13,7 @@ internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, 
 {
     private readonly IFunctionNode _parentFunction;
     private readonly IRangeNode _parentRange;
-    private readonly WellKnownTypes _wellKnownTypes;
+    private readonly TypeSymbolUtility _typeSymbolUtility;
 
     internal NonWrapToCreateElementNodeMapper(
         IElementNodeMapperBase parentElementNodeMapper,
@@ -21,7 +21,7 @@ internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, 
         IFunctionNode parentFunction,
         IContainerNode parentContainer,
         IRangeNode parentRange,
-        WellKnownTypes wellKnownTypes,
+        TypeSymbolUtility typeSymbolUtility,
         IOverridesMappingPart overridesMappingPart,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         IAsyncWrapperMappingPart asyncWrapperMappingPart,
@@ -49,8 +49,8 @@ internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, 
     {
         _parentFunction = parentFunction;
         _parentRange = parentRange;
+        _typeSymbolUtility = typeSymbolUtility;
         Next = parentElementNodeMapper;
-        _wellKnownTypes = wellKnownTypes;
     }
 
     protected override IElementNodeMapperBase NextForWraps => this;
@@ -62,7 +62,7 @@ internal sealed class NonWrapToCreateElementNodeMapper : ElementNodeMapperBase, 
         if (type is INamedTypeSymbol namedType && _parentRange.GetInitializedNode(namedType) is { } initializedNode)
             return initializedNode;
         
-        return TypeSymbolUtility.IsWrapType(type, _wellKnownTypes)
+        return _typeSymbolUtility.IsWrapType(type)
             ? base.Map(type, passedContext)
             : _parentRange.BuildCreateCall(type, _parentFunction);
     }

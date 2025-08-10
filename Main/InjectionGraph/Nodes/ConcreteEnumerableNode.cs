@@ -74,6 +74,7 @@ internal class ConcreteEnumerableNode : IConcreteNode
         ICheckIterableTypes checkIterableTypes,
         IdRegister idRegister,
         TypeNodeManager typeNodeManager,
+        TypeSymbolUtility typeSymbolUtility,
         Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
@@ -88,13 +89,13 @@ internal class ConcreteEnumerableNode : IConcreteNode
             _ => throw new InvalidOperationException(
                 $"The enumerable type '{data.Enumerable}' is not supported. It must be a generic type with one type argument or an array type.")
         };
-        var tempUnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(maybeWrappedInnerType, wellKnownTypes);
+        var tempUnwrappedInnerType = typeSymbolUtility.GetUnwrappedType(maybeWrappedInnerType);
         if (CustomSymbolEqualityComparer.Default.Equals(tempUnwrappedInnerType.OriginalDefinition,
                 wellKnownTypesCollections.KeyValuePair2)
             && tempUnwrappedInnerType is INamedTypeSymbol { TypeArguments: [var keyType, var valueType] })
         {
             KeyType = keyType;
-            tempUnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(valueType, wellKnownTypes);
+            tempUnwrappedInnerType = typeSymbolUtility.GetUnwrappedType(valueType);
             IsKeyedMultiple = checkIterableTypes.IsCollectionType(tempUnwrappedInnerType);
         }
 

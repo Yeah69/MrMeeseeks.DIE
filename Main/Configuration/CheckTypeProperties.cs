@@ -726,7 +726,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         typeSymbol switch
         {
             IArrayTypeSymbol => true,
-            INamedTypeSymbol namedTypeSymbol => _defaultContextPassingTypes.Contains(namedTypeSymbol.OriginalDefinition),
+            INamedTypeSymbol namedTypeSymbol => _defaultContextPassingTypes.Contains(namedTypeSymbol.OriginalDefinition)
+                || _currentlyConsideredTypes.DecoratorTypes.Contains(typeSymbol),
             _ => false
         };
 }

@@ -1,28 +1,29 @@
+using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal static class TypeSymbolUtility
+internal class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContainerInstance
 {
-    internal static ITypeSymbol GetUnwrappedType(ITypeSymbol type, WellKnownTypes wellKnownTypes)
+    internal ITypeSymbol GetUnwrappedType(ITypeSymbol type)
     {
-        if (IsWrapTypeOfSingleGenericType(type, wellKnownTypes)
+        if (IsWrapTypeOfSingleGenericType(type)
             && type is INamedTypeSymbol namedType)
-            return GetUnwrappedType(namedType.TypeArguments.First(), wellKnownTypes);
+            return GetUnwrappedType(namedType.TypeArguments.First());
 
         if (IsFuncDelegate(type) && type is INamedTypeSymbol func)
-            return GetUnwrappedType(func.TypeArguments.Last(), wellKnownTypes);
+            return GetUnwrappedType(func.TypeArguments.Last());
 
         return type;
     }
-    internal static bool IsWrapType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
-        IsWrapTypeOfSingleGenericType(type, wellKnownTypes) || IsFuncDelegate(type);
+    internal bool IsWrapType(ITypeSymbol type) =>
+        IsWrapTypeOfSingleGenericType(type) || IsFuncDelegate(type);
 
-    internal static bool IsFuncDelegate(ITypeSymbol type) =>
+    internal bool IsFuncDelegate(ITypeSymbol type) =>
         type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal);
 
-    internal static bool IsWrapTypeOfSingleGenericType(ITypeSymbol type, WellKnownTypes wellKnownTypes) =>
+    internal bool IsWrapTypeOfSingleGenericType(ITypeSymbol type) =>
         wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)

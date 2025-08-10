@@ -14,8 +14,8 @@ internal interface IMultiFunctionNode : IMultiFunctionNodeBase;
 internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
+    private readonly TypeSymbolUtility _typeSymbolUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly WellKnownTypes _wellKnownTypes;
 
     internal MultiFunctionNode(
         // parameters
@@ -38,8 +38,8 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         ITypeParameterUtility typeParameterUtility,
+        TypeSymbolUtility typeSymbolUtility,
         ICheckTypeProperties checkTypeProperties,
-        WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(
             enumerableType, 
@@ -61,8 +61,8 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
             wellKnownTypesCollections)
     {
         _enumerableType = enumerableType;
+        _typeSymbolUtility = typeSymbolUtility;
         _checkTypeProperties = checkTypeProperties;
-        _wellKnownTypes = wellKnownTypes;
         NamePrefix = $"CreateMulti{_enumerableType.Name}";
         NameNumberSuffix = referenceGenerator.Generate("");
     }
@@ -74,7 +74,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
     {
         base.Build(passedContext);
         var itemType = CollectionUtility.GetCollectionsInnerType(_enumerableType);
-        var unwrappedItemType = TypeSymbolUtility.GetUnwrappedType(itemType, _wellKnownTypes);
+        var unwrappedItemType = _typeSymbolUtility.GetUnwrappedType(itemType);
 
         var concreteItemTypes = unwrappedItemType is INamedTypeSymbol namedTypeSymbol
             ? _checkTypeProperties.MapToImplementations(namedTypeSymbol, passedContext.InjectionKeyModification)

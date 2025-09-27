@@ -62,7 +62,6 @@ internal abstract record ConcreteEnumerableYield
 
 internal class ConcreteEnumerableNode : IConcreteNode
 {
-    private readonly IdRegister _idRegister;
     private readonly Dictionary<DomainContext, ImmutableArray<ConcreteEnumerableYield>> _sequences = [];
     private readonly Lazy<TypeEdge> _innerEdgeLazy;
 
@@ -72,13 +71,11 @@ internal class ConcreteEnumerableNode : IConcreteNode
 
         // dependencies
         ICheckIterableTypes checkIterableTypes,
-        IdRegister idRegister,
         TypeNodeManager typeNodeManager,
         Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory,
-        WellKnownTypes wellKnownTypes,
+        TypeSymbolUtility typeSymbolUtility,
         WellKnownTypesCollections wellKnownTypesCollections)
     {
-        _idRegister = idRegister;
         Data = data;
 
         var maybeWrappedInnerType = data.Enumerable switch
@@ -88,13 +85,13 @@ internal class ConcreteEnumerableNode : IConcreteNode
             _ => throw new InvalidOperationException(
                 $"The enumerable type '{data.Enumerable}' is not supported. It must be a generic type with one type argument or an array type.")
         };
-        var tempUnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(maybeWrappedInnerType, wellKnownTypes);
+        var tempUnwrappedInnerType = typeSymbolUtility.GetUnwrappedType(maybeWrappedInnerType);
         if (CustomSymbolEqualityComparer.Default.Equals(tempUnwrappedInnerType.OriginalDefinition,
                 wellKnownTypesCollections.KeyValuePair2)
             && tempUnwrappedInnerType is INamedTypeSymbol { TypeArguments: [var keyType, var valueType] })
         {
             KeyType = keyType;
-            tempUnwrappedInnerType = TypeSymbolUtility.GetUnwrappedType(valueType, wellKnownTypes);
+            tempUnwrappedInnerType = typeSymbolUtility.GetUnwrappedType(valueType);
             IsKeyedMultiple = checkIterableTypes.IsCollectionType(tempUnwrappedInnerType);
         }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -23,6 +24,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
     private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
     private readonly ContextGenerator _contextGenerator;
     private readonly IReferenceGenerator _referenceGenerator;
+    private readonly KeyUtility _keyUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly string _iOverrideInterfaceName;
     private Dictionary<OverrideContext, string> _overrideContextNameMap = [];
@@ -34,6 +36,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         ConcreteFunctorNodeManager concreteFunctorNodeManager,
         ContextGenerator contextGenerator,
         IReferenceGenerator referenceGenerator,
+        KeyUtility keyUtility,
         WellKnownTypes wellKnownTypes)
     {
         _containerInfo = containerInfo;
@@ -42,6 +45,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         _concreteFunctorNodeManager = concreteFunctorNodeManager;
         _contextGenerator = contextGenerator;
         _referenceGenerator = referenceGenerator;
+        _keyUtility = keyUtility;
         _wellKnownTypes = wellKnownTypes;
         _iOverrideInterfaceName = _referenceGenerator.Generate("IOverride");
     }
@@ -227,23 +231,65 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         if (innerNode is ConcreteImplementationNode implementationNode)
         {
             var reference = _referenceGenerator.Generate(implementationNode.Data.Implementation);
+            var referenceOriginalContext = _referenceGenerator.Generate("originalContext");
+            var referencePurgedContext = _referenceGenerator.Generate("purgedContext");
+            if (implementationNode.NeedsOriginalContextReference)
+            {
+                _code.AppendLine(
+                    $$"""
+                      var {{referenceOriginalContext}} = {{_contextGenerator.ParameterName}};
+                      {{_contextGenerator.ParameterName}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != 0
+                        ? {{_contextGenerator.GenerateCopyCreation(outwardFacingTypeNumber: "0", caseNumber: "0")}}
+                        : {{_contextGenerator.ParameterName}};
+                      var {{referencePurgedContext}} = {{_contextGenerator.ParameterName}};
+                      """);
+            }
+            else if (implementationNode.NeedsPurge)
+            {
+                _code.AppendLine(
+                    $$"""
+                      {{_contextGenerator.ParameterName}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != 0
+                        ? {{_contextGenerator.GenerateCopyCreation(outwardFacingTypeNumber: "0", caseNumber: "0")}}
+                        : {{_contextGenerator.ParameterName}};
+                      """);
+            }
             
             // Constructor
-            var parameterNodes = implementationNode.ConstructorParameters.Select(t => t.Edge);
-            var parameters = string.Join(", ", parameterNodes.Select(e => CallFunctionOrGenerateForInjectionNode(e, e.Target)));
+            var parameters = string.Join(", ", implementationNode.ConstructorParameters.Select(HandleImplementationDependency));
             
             // Object initializer
             var objectInitializer = ""; 
             if (implementationNode.ObjectInitializerAssignments.Length > 0)
             {
                 var propertyNodeAssignments = implementationNode.ObjectInitializerAssignments;
-                objectInitializer = $" {{ {string.Join(", ", propertyNodeAssignments.Select(t => $"{t.Name} = {CallFunctionOrGenerateForInjectionNode(t.Edge, t.Edge.Target)}"))} }}";
+                objectInitializer = $" {{ {string.Join(", ", propertyNodeAssignments.Select(d => $"{d.Name} = {HandleImplementationDependency(d)}"))} }}";
             }
 
             var implementationFullName = GetImplementationsFullName(implementationNode.Data.Implementation);
             _code.AppendLine($"{implementationFullName} {reference} = new {implementationFullName}({parameters}){objectInitializer};");
             
             return reference;
+
+            string HandleImplementationDependency(ConcreteImplementationNode.Dependency dependency)
+            {
+                if (dependency.PassOriginalChoiceContextId is not null)
+                {
+                    _code.AppendLine(
+                        $$"""
+                          {{_contextGenerator.ParameterName}} = {{referenceOriginalContext}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} == {{dependency.PassOriginalChoiceContextId}}
+                            ? {{referenceOriginalContext}}
+                            : {{_contextGenerator.ParameterName}};
+                          """);
+                }
+
+                var ret = CallFunctionOrGenerateForInjectionNode(dependency.Edge, dependency.Edge.Target);
+                if (dependency.PassOriginalChoiceContextId is not null)
+                {
+                    _code.AppendLine($"{_contextGenerator.ParameterName} = {referencePurgedContext};");
+                }
+
+                return ret;
+            }
 
             static string GetImplementationsFullName(ITypeSymbol implementation)
             {
@@ -285,7 +331,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         }
         if (innerNode is ConcreteInterfaceNode interfaceNode)
         {
-            if (interfaceNode.DefaultImplementationsCaseNumbers.Count > 0 || interfaceNode.KeyObjectToCaseNumbers.Count > 0)
+            if (interfaceNode.DefaultImplementationsCaseNumbers.Any() || interfaceNode.KeyObjectToCaseNumbers.Any())
             {
                 _code.AppendLine(
                     $$"""
@@ -295,26 +341,30 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 var firstKeyObjectToCaseNumber = true;
                 foreach (var keyObjectToCaseNumber in interfaceNode.KeyObjectToCaseNumbers)
                 {
-                    var keyObject = keyObjectToCaseNumber.Key.KeyObject;
-                    var caseNumber = keyObjectToCaseNumber.Value;
+                    var keyObject = keyObjectToCaseNumber.KeyObject;
+                    var caseNumber = keyObjectToCaseNumber.NextId;
                     if (firstKeyObjectToCaseNumber)
                         firstKeyObjectToCaseNumber = false;
                     else
                         _code.Append("else ");
+                    var keyLiteral = _keyUtility.GenerateKeyLiteral(keyObjectToCaseNumber.KeyType, keyObjectToCaseNumber.KeyObject);
                     _code.AppendLine(
                         $$"""
-                          if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.KeyPropertyName}}?.Equals({{KeyObjectToString(keyObject)}}) ?? false)
+                          if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.KeyPropertyName}}?.Equals({{keyLiteral}}) ?? false)
                           {
-                          {{_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: interfaceNode.Number.ToString(), caseNumber: caseNumber.ToString())}}
+                          {{_contextGenerator.GenerateCopyAssignment(
+                              key: "null",
+                              outwardFacingTypeNumber: interfaceNode.Number.ToString(), 
+                              caseNumber: caseNumber.ToString())}}
                           }
                           """);
                 }
 
-                if (interfaceNode.DefaultImplementationsCaseNumbers.Count > 0)
+                if (interfaceNode.DefaultImplementationsCaseNumbers.Any())
                 {
-                    var line = _contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: interfaceNode.Number.ToString(), caseNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().Value.ToString());
+                    var line = _contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: interfaceNode.Number.ToString(), caseNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().NextId.ToString());
                     _code.AppendLine(
-                        interfaceNode.KeyObjectToCaseNumbers.Count > 0
+                        interfaceNode.KeyObjectToCaseNumbers.Any()
                             ? $$"""
                                 else 
                                 {
@@ -345,7 +395,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                       """);
                 
                 var newInterfaceNumber = interfaceNodeCase.NextId == 0 ? 0 : interfaceNode.Number;
-                _code.AppendLine(_contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: newInterfaceNumber.ToString(), caseNumber: interfaceNodeCase.NextId.ToString()));
+                _code.AppendLine(_contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: newInterfaceNumber.ToString(), caseNumber: interfaceNodeCase.NextId.ToString()));
                 
                 var innerReference = CallFunctionOrGenerateForInjectionNode(interfaceNodeCase.Edge, interfaceNodeCase.Edge.Target);
                 
@@ -375,45 +425,92 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         }
         if (innerNode is ConcreteEnumerableNode enumerableNode)
         {
-            if (enumerableNode.Sequences.Count > 1)
+            if (enumerableNode.CollectionCases.Count > 1)
             {
                 // ToDo implement this
                 throw new NotImplementedException("More than one sequence found in enumerable node.");
             }
 
-            if (enumerableNode.Data.Enumerable is IArrayTypeSymbol)
+            var isArray = enumerableNode.Data.Enumerable is IArrayTypeSymbol;
+
+            var cases = enumerableNode.CollectionCases[new DomainContext.Container()];
+            var maybeDefaultCase = cases.TryGetValue(new KeyContext.None(), out var foundDefaultCase)
+                ? foundDefaultCase
+                : null;
+            var keyedCases = cases
+                .Where(kvp => kvp.Key != new KeyContext.None())
+                .Select(kvp => (KeyContext: (KeyContext.Single) kvp.Key, Result: kvp.Value))
+                .ToImmutableArray();
+
+            foreach (var keyedCase in keyedCases)
             {
-                foreach (var sequence in enumerableNode.Sequences)
-                {
-                    var references = sequence.Value.Select(GetYieldReference).ToArray();
-                    _code.AppendLine($"return new {enumerableNode.Data.Enumerable.FullName()} {{ {string.Join(", ", references)} }};");
-                }
+                var keyLiteral = _keyUtility.GenerateKeyLiteral(keyedCase.KeyContext.Type, keyedCase.KeyContext.Value);
+                _code.AppendLine(
+                    $$"""
+                      if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.KeyPropertyName}} == {{keyLiteral}})
+                      {
+                      """);
+
+                GenerateForResult(keyedCase.Result);
+
+                _code.AppendLine("}");
             }
-            else
-            {
-                foreach (var sequence in enumerableNode.Sequences)
-                {
-                    foreach (var yield in sequence.Value)
-                        _code.AppendLine($"yield return {GetYieldReference(yield)};");
-                    _code.AppendLine("yield break;");
-                }
-            }
+            
+            if (maybeDefaultCase is not null) 
+                GenerateForResult(maybeDefaultCase);
+            
+            _code.AppendLine("throw new System.Exception(\"Should be impossible\");");
 
             return "";
 
-            string GetYieldReference(ConcreteEnumerableYield yield)
+            void GenerateForResult(ConcreteEnumerableResult result)
             {
-                var contextLine = yield switch
+                var references = GetResultReferences(result);
+
+                _code.AppendLine(isArray 
+                    ? $"return new {enumerableNode.Data.Enumerable.FullName()} {{ {string.Join(", ", references)} }};"
+                    : "yield break;");
+            }
+
+            ImmutableArray<string> GetResultReferences(ConcreteEnumerableResult result)
+            {
+                if (result.PurgeKeyAndChoice)
+                    _contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: "0", caseNumber: "0", key: "null");
+                
+                switch (result)
                 {
-                    ConcreteEnumerableYield.Case(var outwardFacingTypeId, var initialCaseId) =>
-                        _contextGenerator.GenerateInstanceCopyAndAdjustment(outwardFacingTypeNumber: outwardFacingTypeId.ToString(), caseNumber: initialCaseId.ToString()),
-                    ConcreteEnumerableYield.Key(var keyType, var keyObject) =>
-                        _contextGenerator.GenerateInstanceCopyAndAdjustment(key: KeyObjectToString(keyObject)),
-                    _ => throw new InvalidOperationException($"Unknown yield type: {yield.GetType()}")
-                };
-                _code.AppendLine(contextLine);
-                    
-                return CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                    case ConcreteEnumerableResult.Interface @interface:
+                        var interfacedSequence = @interface.Choices.Select(single =>
+                        {
+                            _code.AppendLine(_contextGenerator.GenerateCopyAssignment(
+                                outwardFacingTypeNumber: single.OutwardFacingTypeId.ToString(),
+                                caseNumber: single.CaseId.ToString(), 
+                                key: "null"));
+                            var reference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                            if (!isArray)
+                                _code.AppendLine($"yield return {reference};");
+                            return reference;
+                        });
+                        return [..interfacedSequence];
+                    case ConcreteEnumerableResult.Key key:
+                        var keyedSequence = key.KeyValues.Select(value =>
+                        {
+                            string keyLiteral = _keyUtility.GenerateKeyLiteral(key.KeyType, value);
+                            _code.AppendLine(_contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: "0", caseNumber: "0", key: keyLiteral));
+                            var reference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                            if (!isArray)
+                                _code.AppendLine($"yield return {reference};");
+                            return reference;
+                        });
+                        return [..keyedSequence];
+                    case ConcreteEnumerableResult.SinglePlainItem:
+                        string singlePlainItemReference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                        if (!isArray)
+                            _code.AppendLine($"yield return {singlePlainItemReference};");
+                        return [singlePlainItemReference];
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(result));
+                }
             }
         }
         return NotAvailable;

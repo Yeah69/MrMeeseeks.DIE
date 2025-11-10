@@ -50,17 +50,25 @@ internal class ContextGenerator
         string caseNumber, string key) =>
         $"new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreation}, {OutwardFacingTypeNumberConstructorParameterName}: {outwardFacingTypeNumber}, {CaseNumberConstructorParameterName}: {caseNumber}, {KeyConstructorParameterName}: {key})";
 
-    internal string GenerateInstanceCopyAndAdjustment(string? overrideInstanceCreation = null,
-        string? outwardFacingTypeNumber = null, string? caseNumber = null, string? key = null)
+    internal string GenerateCopyCreation(
+        string? overrideInstanceCreation = null,
+        string? outwardFacingTypeNumber = null, 
+        string? caseNumber = null, 
+        string? key = null)
     {
         var overrideInstanceCreationString = overrideInstanceCreation ?? $"{ParameterName}.{OverridesPropertyName}";
         var outwardFacingTypeNumberString =
             outwardFacingTypeNumber ?? $"{ParameterName}.{OutwardFacingTypeNumberPropertyName}";
         var caseNumberString = caseNumber ?? $"{ParameterName}.{CaseNumberPropertyName}";
         var keyString = key ?? $"{ParameterName}.{KeyPropertyName}";
-        return
-            $"{ParameterName} = new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreationString}, {OutwardFacingTypeNumberConstructorParameterName}: {outwardFacingTypeNumberString}, {CaseNumberConstructorParameterName}: {caseNumberString}, {KeyConstructorParameterName}: {keyString});";
+        return GenerateInstanceCreation(overrideInstanceCreationString, outwardFacingTypeNumberString, caseNumberString, keyString);
     }
+    internal string GenerateCopyAssignment(
+        string? overrideInstanceCreation = null,
+        string? outwardFacingTypeNumber = null,
+        string? caseNumber = null, 
+        string? key = null) =>
+        $"{ParameterName} = {GenerateCopyCreation(overrideInstanceCreation, outwardFacingTypeNumber, caseNumber, key)};";
 
     internal string ParameterName { get; }
     internal string FullNameAndParameterName { get; }

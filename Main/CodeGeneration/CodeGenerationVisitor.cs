@@ -1,5 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
-using MrMeeseeks.DIE.Configuration;
+﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.Nodes.Elements;
 using MrMeeseeks.DIE.Nodes.Elements.Delegates;
@@ -10,7 +9,6 @@ using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.DIE.Visitors;
-using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
@@ -30,8 +28,9 @@ internal sealed class CodeGenerationVisitor : CodeGenerationVisitorBase
     internal CodeGenerationVisitor(
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
+        KeyUtility keyUtility,
         Func<StringBuilder, ReturnTypeStatus, AsyncAwaitStatus, CodeGenerationFunctionVisitor> codeGenerationFunctionVisitorFactory)
-        : base(new(), ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No, wellKnownTypes, wellKnownTypesCollections, codeGenerationFunctionVisitorFactory)
+        : base(new(), ReturnTypeStatus.Ordinary, AsyncAwaitStatus.No, wellKnownTypes, wellKnownTypesCollections, keyUtility, codeGenerationFunctionVisitorFactory)
     {
     }
 }
@@ -47,8 +46,9 @@ internal sealed class CodeGenerationFunctionVisitor : CodeGenerationVisitorBase
         // dependencies
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
+        KeyUtility keyUtility,
         Func<StringBuilder, ReturnTypeStatus, AsyncAwaitStatus, CodeGenerationFunctionVisitor> codeGenerationFunctionVisitorFactory)
-        : base(code, returnTypeStatus, asyncAwaitStatus, wellKnownTypes, wellKnownTypesCollections, codeGenerationFunctionVisitorFactory)
+        : base(code, returnTypeStatus, asyncAwaitStatus, wellKnownTypes, wellKnownTypesCollections, keyUtility, codeGenerationFunctionVisitorFactory)
     {
     }
 }
@@ -58,6 +58,7 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
     private readonly StringBuilder _code;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
+    private readonly KeyUtility _keyUtility;
     private readonly Func<StringBuilder, ReturnTypeStatus, AsyncAwaitStatus, CodeGenerationFunctionVisitor> _codeGenerationFunctionVisitorFactory;
     private readonly ReturnTypeStatus _returnTypeStatus;
     private readonly AsyncAwaitStatus _asyncAwaitStatus;
@@ -71,11 +72,13 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
         // dependencies
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
+        KeyUtility keyUtility,
         Func<StringBuilder, ReturnTypeStatus, AsyncAwaitStatus, CodeGenerationFunctionVisitor> codeGenerationFunctionVisitorFactory)
     {
         _code = code;
         _wellKnownTypes = wellKnownTypes;
         _wellKnownTypesCollections = wellKnownTypesCollections;
+        _keyUtility = keyUtility;
         _codeGenerationFunctionVisitorFactory = codeGenerationFunctionVisitorFactory;
         _returnTypeStatus = returnTypeStatus;
         _asyncAwaitStatus = asyncAwaitStatus;
@@ -716,11 +719,7 @@ internal class CodeGenerationVisitorBase : ICodeGenerationVisitor
     public void VisitIKeyValuePairNode(IKeyValuePairNode keyValuePairNode)
     {
         VisitIElementNode(keyValuePairNode.Value);
-        var keyLiteral = keyValuePairNode.KeyType.TypeKind == TypeKind.Enum 
-            ? $"({keyValuePairNode.KeyType.FullName()}) {SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false)}" 
-            : CustomSymbolEqualityComparer.Default.Equals(keyValuePairNode.KeyType, _wellKnownTypes.Type) 
-                ? $"typeof({(keyValuePairNode.Key as ITypeSymbol)?.FullName() ?? ""})" 
-                : SymbolDisplay.FormatPrimitive(keyValuePairNode.Key, true, false);
+        var keyLiteral = _keyUtility.GenerateKeyLiteral(keyValuePairNode.KeyType, keyValuePairNode.Key);
         _code.AppendLine(
             $"{keyValuePairNode.TypeFullName} {keyValuePairNode.Reference} = new {keyValuePairNode.TypeFullName}({keyLiteral}, {keyValuePairNode.Value.Reference});");
     }

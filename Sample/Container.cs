@@ -13,9 +13,9 @@ internal sealed class Proxy(IInterface decorated) : IInterface
     public IInterface Decorated => decorated;
 }
 
-internal sealed class Decorator(IInterface boobies) : IInterface, IDecorator<IInterface>
+internal sealed class Decorator(Lazy<IInterface> boobies) : IInterface, IDecorator<IInterface>
 {
-    public IInterface Decorated => boobies;
+    public IInterface Decorated => boobies.Value;
 }
 
 internal enum Key 
@@ -38,9 +38,9 @@ internal sealed class ImplementationB : IInterface;
 [InjectionKey(Key.C)]
 internal sealed class ImplementationC : IInterface;
 
-internal class Parent(IEnumerable<KeyValuePair<Key, Lazy<IInterface>>> children) 
+internal class Parent(Lazy<IEnumerable<KeyValuePair<Key, Lazy<IInterface>>>> children) 
 {
-    public List<KeyValuePair<Key, IInterface>> Children { get; } = children.Select(kvp => new KeyValuePair<Key, IInterface>(kvp.Key, kvp.Value.Value)).ToList();
+    public List<KeyValuePair<Key, IInterface>> Children { get; } = children.Value.Select(kvp => new KeyValuePair<Key, IInterface>(kvp.Key, kvp.Value.Value)).ToList();
 }
 
 [ImplementationCollectionChoice(typeof(IInterface),

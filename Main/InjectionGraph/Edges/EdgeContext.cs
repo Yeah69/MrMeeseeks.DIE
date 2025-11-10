@@ -58,14 +58,14 @@ internal abstract record KeyContext
     internal sealed record Single(ITypeSymbol Type, object Value) : KeyContext;
 }
 
-internal abstract record InitialCaseChoiceContext
+internal abstract record CaseChoiceContext
 {
-    internal sealed record None : InitialCaseChoiceContext;
-    internal sealed record Single(int OutwardFacingTypeId, int InitialCaseId) : InitialCaseChoiceContext;
+    internal sealed record None : CaseChoiceContext;
+    internal sealed record Single(int OutwardFacingTypeId, int CaseId) : CaseChoiceContext;
 }
 
 internal sealed record EdgeContext(
     DomainContext Domain, 
     OverrideContext Override, 
     KeyContext Key, 
-    InitialCaseChoiceContext InitialInitialCaseChoice);
+    CaseChoiceContext CaseChoice);

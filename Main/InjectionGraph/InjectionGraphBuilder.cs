@@ -45,7 +45,7 @@ internal class InjectionGraphBuilder(
             new DomainContext.Container(), 
             overrideContext, 
             new KeyContext.None(), 
-            new InitialCaseChoiceContext.None());
+            new CaseChoiceContext.None());
         var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, rootType, overrides);
         var concreteEntryFunctionNode = concreteEntryFunctionNodeManager.GetOrAddNode(concreteEntryFunctionNodeData);
         _concreteEntryFunctionNodes.Add(concreteEntryFunctionNode);

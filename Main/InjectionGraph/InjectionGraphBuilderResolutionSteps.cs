@@ -12,7 +12,6 @@ internal class InjectionGraphBuilderResolutionSteps(
     IContainerCheckTypeProperties containerCheckTypeProperties,
     ILocalDiagLogger containerDiagLogger,
     IInjectablePropertyExtractor injectablePropertyExtractor,
-    IdRegister idRegister,
     ConcreteImplementationNodeManager concreteImplementationNodeManager,
     ConcreteInterfaceNodeManager concreteInterfaceNodeManager,
     ConcreteEnumerableNodeManager concreteEnumerableNodeManager,
@@ -57,83 +56,26 @@ internal class InjectionGraphBuilderResolutionSteps(
         Queue<ResolutionStep> queue,
         Location currentResolvedLocation)
     {
-        if (GetConcreteImplementationType(out var isDefaultCase) is not {} implementation)
-            return;
-
-        var decorationSequence = containerCheckTypeProperties.GetDecorationSequenceFor(currentType, implementation);
-        
         var concreteInterfaceNodeData = new ConcreteInterfaceNodeData(Interface: currentType);
-
-        var concreteInterfaceNodeImplementationData = new ConcreteInterfaceNodeImplementationData(
-            Implementation: implementation,
-            Decorations: decorationSequence);
 
         var concreteInterfaceNode = concreteInterfaceNodeManager.GetOrAddNode(concreteInterfaceNodeData);
         
         ConnectToTypeNodeIfNotAlready(concreteInterfaceNode, edgeContext, typeNode);
         
-        var newConnections = edgeContext.Key is KeyContext.Single { Value: var keyValue }
-            ? concreteInterfaceNode.ConnectIfNotAlready(edgeContext, concreteInterfaceNodeImplementationData, isDefaultInjection: false, keyObject: keyValue)
-            : concreteInterfaceNode.ConnectIfNotAlready(edgeContext, concreteInterfaceNodeImplementationData, isDefaultInjection: isDefaultCase, keyObject: null);
+        var connectionResult = concreteInterfaceNode.ConnectIfNotAlready(edgeContext);
         
-        foreach (var (node, location) in newConnections)
+        if (connectionResult is ConcreteInterfaceNode.CaseIdResponse.Success { TypeNode: var newNode, Location: var newLocation, EdgeContext: var newEdgeContext})
             queue.Enqueue(new ResolutionStep(
-                node, 
-                edgeContext,
-                location.Equals(Location.None) ? currentResolvedLocation : location));
-        return;
-
-        INamedTypeSymbol? GetConcreteImplementationType(out bool isDefaultCase)
-        {
-            isDefaultCase = true;
-            var currentOutwardFacingTypeId = idRegister.GetOutwardFacingTypeId(currentType);
-            // If the context has an initial case ID for the matching outward facing type ID, we try to resolve the type by that ID.
-            if (edgeContext.InitialInitialCaseChoice is InitialCaseChoiceContext.Single { OutwardFacingTypeId: var outwardId, InitialCaseId: var caseId }
-                && currentOutwardFacingTypeId == outwardId)
-            {
-                isDefaultCase = false;
-                var registeredImplementation = idRegister.GetTypeByInitialCaseId(edgeContext.Domain, caseId);
-                if (registeredImplementation is INamedTypeSymbol namedTypeSymbol)
-                    return namedTypeSymbol;
-                ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
-                containerDiagLogger.Error(
-                    ErrorLogData.ResolutionException(
-                        "Interface: ID registry didn't find type for a given initial case ID.",
-                        currentType,
-                        ImmutableStack<INamedTypeSymbol>.Empty), 
-                    currentResolvedLocation);
-                return null;
-            }
-            
-            // If there is a registered composite type for the current interface type, we use that as the implementation.
-            if (containerCheckTypeProperties.ShouldBeComposite(currentType) 
-                && containerCheckTypeProperties.GetCompositeFor(currentType) is { } compositeType)
-                return compositeType;
-            
-            // Otherwise, we try to resolve the type by the registered implementations.
-            var key = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } && !containerCheckTypeProperties.IsContextPassingType(currentType)
-                ? new InjectionKey(keyType, keyValue)
-                : null;
-            var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, key);
-            if (implementationResult is not ImplementationResult.Single { Implementation: { } singleImplementation })
-            {
-                ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
-                var logMessage = implementationResult switch
-                {
-                    ImplementationResult.None => $"Interface: No implementation registered for \"{currentType.FullName()}\".",
-                    ImplementationResult.Multiple { Implementations: var implementations} => $"Interface: Multiple implementations registered for \"{currentType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
-                    _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
-                };
-                containerDiagLogger.Error(
-                    ErrorLogData.ResolutionException(
-                        logMessage,
-                        currentType,
-                        ImmutableStack<INamedTypeSymbol>.Empty), 
-                    currentResolvedLocation);
-                return null;
-            }
-            return singleImplementation;
-        }
+                newNode, 
+                newEdgeContext, 
+                newLocation.Equals(Location.None) ? currentResolvedLocation : newLocation));
+        else if (connectionResult is ConcreteInterfaceNode.CaseIdResponse.Error { ErrorMessage: var errorMessage})
+            containerDiagLogger.Error(
+                ErrorLogData.ResolutionException(
+                    errorMessage,
+                    currentType,
+                    ImmutableStack<INamedTypeSymbol>.Empty), 
+                currentResolvedLocation);
     }
 
     internal void ImplementationStep(
@@ -210,10 +152,10 @@ internal class InjectionGraphBuilderResolutionSteps(
         
         ConnectToTypeNodeIfNotAlready(concreteImplementationNode, edgeContext, typeNode);
         
-        foreach (var (node, location) in concreteImplementationNode.ConnectIfNotAlready(edgeContext))
+        foreach (var (node, location, context) in concreteImplementationNode.ConnectIfNotAlready(edgeContext))
             queue.Enqueue(new ResolutionStep(
                 node, 
-                edgeContext,
+                context,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
                 
     }
@@ -248,27 +190,10 @@ internal class InjectionGraphBuilderResolutionSteps(
         var concreteEnumerableNodeData = new ConcreteEnumerableNodeData(Enumerable: currentType);
 
         var concreteEnumerableNode = concreteEnumerableNodeManager.GetOrAddNode(concreteEnumerableNodeData);
-        var unwrappedInnerType = concreteEnumerableNode.UnwrappedInnerType as INamedTypeSymbol 
-                                 ?? throw new InvalidOperationException($"Unwrapped inner type of enumerable node {concreteEnumerableNodeData} is not a named type symbol, but {concreteEnumerableNode.UnwrappedInnerType.GetType().FullName}.");
-        
-        var outwardFacingTypeId = idRegister.GetOutwardFacingTypeId(unwrappedInnerType);
-        var sequence = (concreteEnumerableNode switch
-        {
-            { KeyType: { } keyTypeSingular, IsKeyedMultiple: false } => containerCheckTypeProperties.MapToKeyedImplementations(unwrappedInnerType, keyTypeSingular)
-                .Select(ConcreteEnumerableYield (kvp) => new ConcreteEnumerableYield.Key(keyTypeSingular, kvp.Key)),
-            { KeyType: { } keyTypeMultiple, IsKeyedMultiple: true } => containerCheckTypeProperties
-                .MapToKeyedMultipleImplementations(unwrappedInnerType, keyTypeMultiple)
-                .Select(kvp => new ConcreteEnumerableYield.Key(keyTypeMultiple, kvp.Key)),
-            _ => containerCheckTypeProperties.MapToImplementations(unwrappedInnerType, edgeContext.Key 
-                    is KeyContext.Single { Type: var keyType, Value: var keyValue} ? new InjectionKey(keyType, keyValue) : null)
-                .Select(i => new ConcreteEnumerableYield.Case(outwardFacingTypeId, idRegister.GetInitialCaseId(edgeContext.Domain, i)))
-        }).ToArray();
-        
-        var concreteEnumerableNodeSequenceData = new ConcreteEnumerableNodeSequenceData(sequence);
 
         ConnectToTypeNodeIfNotAlready(concreteEnumerableNode, edgeContext, typeNode);
         
-        foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext, concreteEnumerableNodeSequenceData))
+        foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext))
             queue.Enqueue(new ResolutionStep(
                 node, 
                 newEdgeContext,

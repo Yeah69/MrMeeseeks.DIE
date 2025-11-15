@@ -13,6 +13,7 @@ internal interface IContainerDieExceptionGenerator
 internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
 {
     private readonly GeneratorExecutionContext _context;
+    private readonly IContainerInfo _containerInfo;
     private readonly IDiagLogger _diagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
@@ -28,6 +29,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
         IDiagLogger diagLogger)
     {
         _context = context;
+        _containerInfo = containerInfo;
         _diagLogger = diagLogger;
         _wellKnownTypes = wellKnownTypes;
         _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
@@ -80,6 +82,6 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
             .NormalizeWhitespace()
             .SyntaxTree
             .GetText();
-        _context.AddSource($"{_containerType.ContainingNamespace.FullName()}.{_containerType.Name}.Exception.g.cs", containerSource);
+        _context.AddSource(_containerInfo.GenerateHintPath(suffix: ".Exception"), containerSource);
     }
 }

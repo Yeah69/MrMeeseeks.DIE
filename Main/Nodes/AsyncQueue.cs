@@ -9,7 +9,7 @@ internal interface ITaskBasedQueue
     void Process();
 }
 
-internal class TaskBasedQueue : ITaskBasedQueue, IContainerInstance
+internal sealed class TaskBasedQueue : ITaskBasedQueue, IContainerInstance
 {
     private readonly HashSet<IFunctionNode> _taskBasedOnlyFunctions = [];
     private readonly Queue<IFunctionNode> _taskBasedOnlyQueue = new();

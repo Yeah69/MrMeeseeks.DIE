@@ -16,7 +16,7 @@ internal interface ITypeNodeFunction : IFunction
     TypeNode RootNode { get; }
 }
 
-internal class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
+internal sealed class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
 {
     public Accessibility? Accessibility { get; init; }
     public INamedTypeSymbol? ExplicitInterface { get; init; }
@@ -26,7 +26,7 @@ internal class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
     public bool IsAsync { get; }
 }
 
-internal class FunctorEntryFunction(ITypeSymbol returnType) : IFunction
+internal sealed class FunctorEntryFunction(ITypeSymbol returnType) : IFunction
 {
     public Accessibility? Accessibility { get; init; }
     public INamedTypeSymbol? ExplicitInterface { get; init; }

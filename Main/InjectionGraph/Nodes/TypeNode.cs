@@ -5,7 +5,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal class TypeNodeManager : IContainerInstance
+internal sealed class TypeNodeManager : IContainerInstance
 {
     private readonly Dictionary<ITypeSymbol, TypeNode> _nodes = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Func<ITypeSymbol,TypeNode> _factory;
@@ -26,7 +26,7 @@ internal class TypeNodeManager : IContainerInstance
     internal bool TryGetNode(ITypeSymbol type, [NotNullWhen(true)] out TypeNode? node) => _nodes.TryGetValue(type, out node);
 }
 
-internal class TypeNode(ITypeSymbol type)
+internal sealed class TypeNode(ITypeSymbol type)
 {
     private readonly List<TypeEdge> _incoming = [];
     private readonly List<ConcreteEdge> _outgoing = [];

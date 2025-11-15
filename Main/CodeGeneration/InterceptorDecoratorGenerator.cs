@@ -9,7 +9,7 @@ internal interface IInterceptorDecoratorGenerator
     string? Generate();
 }
 
-internal class InterceptorDecoratorGenerator : IInterceptorDecoratorGenerator
+internal sealed class InterceptorDecoratorGenerator : IInterceptorDecoratorGenerator
 {
     private readonly IInvocationTypeManager _invocationTypeManager;
     private readonly IReferenceGenerator _referenceGenerator;

@@ -5,7 +5,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal record ConcreteImplementationNodeData(
+internal sealed record ConcreteImplementationNodeData(
     INamedTypeSymbol Implementation,
     IMethodSymbol Constructor,
     IReadOnlyList<IPropertySymbol> ObjectInitializerProperties)
@@ -20,7 +20,7 @@ internal record ConcreteImplementationNodeData(
         return hash.ToHashCode();
     }
 
-    public virtual bool Equals(ConcreteImplementationNodeData? other)
+    public bool Equals(ConcreteImplementationNodeData? other)
     {
         if (ReferenceEquals(this, other))
             return true;
@@ -39,12 +39,12 @@ internal record ConcreteImplementationNodeData(
     }
 }
 
-internal class ConcreteImplementationNodeManager(Func<ConcreteImplementationNodeData, ConcreteImplementationNode> factory)
+internal sealed class ConcreteImplementationNodeManager(Func<ConcreteImplementationNodeData, ConcreteImplementationNode> factory)
     : ConcreteNodeManagerBase<ConcreteImplementationNodeData, ConcreteImplementationNode>(factory), IContainerInstance;
 
-internal class ConcreteImplementationNode : IConcreteNode
+internal sealed class ConcreteImplementationNode : IConcreteNode
 {
-    internal record Dependency(string Name, TypeEdge Edge, Location Location, ITypeSymbol Type)
+    internal sealed record Dependency(string Name, TypeEdge Edge, Location Location, ITypeSymbol Type)
     {
         internal int? PassOriginalChoiceContextId { get; set; }
     }

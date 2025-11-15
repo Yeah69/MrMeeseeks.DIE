@@ -19,7 +19,7 @@ internal interface IInvocationTypeManager
 
 internal interface IInterceptorDecoratorMemberImplementation;
 
-internal class InterceptionDecoratorData
+internal sealed class InterceptionDecoratorData
 {
     private readonly INamedTypeSymbol _interfaceType;
     private readonly INamedTypeSymbol _interceptorType;
@@ -48,9 +48,9 @@ internal class InterceptionDecoratorData
     internal IReadOnlyList<IInterceptorDecoratorMemberImplementation> Implementations { get; }
 }
 
-internal class InterceptionDecoratorDataBuilder
+internal sealed class InterceptionDecoratorDataBuilder
 {
-    private record MethodAndInvocation(IMethodSymbol Method, IInvocationDescriptionNode Invocation);
+    private sealed record MethodAndInvocation(IMethodSymbol Method, IInvocationDescriptionNode Invocation);
     
     private readonly INamedTypeSymbol _interceptorType;
     private readonly Func<(INamedTypeSymbol InterceptorType, INamedTypeSymbol InterfaceType), IReadOnlyList<IInterceptorDecoratorMemberImplementation>, InterceptionDecoratorData> _interceptionDecoratorDataFactory;

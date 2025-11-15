@@ -4,7 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContainerInstance
+internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContainerInstance
 {
     internal ITypeSymbol GetUnwrappedType(ITypeSymbol type)
     {

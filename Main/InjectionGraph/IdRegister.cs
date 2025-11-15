@@ -21,12 +21,12 @@ internal sealed class IdRegister(
 
     internal abstract record CaseIdResponse
     {
-        internal record Success(int NextCaseId, INamedTypeSymbol Type) : CaseIdResponse;
-        internal record NoNextCaseId :  CaseIdResponse;
-        internal record Error(string ErrorMessage) : CaseIdResponse;
+        internal sealed record Success(int NextCaseId, INamedTypeSymbol Type) : CaseIdResponse;
+        internal sealed record NoNextCaseId : CaseIdResponse;
+        internal sealed record Error(string ErrorMessage) : CaseIdResponse;
     }
 
-    private record DecorationChainNode(INamedTypeSymbol Type, int CaseId, DecorationChainNode? Next)
+    private sealed record DecorationChainNode(INamedTypeSymbol Type, int CaseId, DecorationChainNode? Next)
     {
         internal ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode> Previous { get; } = new (CustomSymbolEqualityComparer.Default);
     }

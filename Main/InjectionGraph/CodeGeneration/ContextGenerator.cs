@@ -2,7 +2,7 @@
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 
-internal class ContextGenerator
+internal sealed class ContextGenerator
 {
     private const string OverridesConstructorParameterName = "overrides";
     private const string OutwardFacingTypeNumberConstructorParameterName = "outwardFacingTypeNr";

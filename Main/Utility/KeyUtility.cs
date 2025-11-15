@@ -4,7 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal class KeyUtility(WellKnownTypes wellKnownTypes)
+internal sealed class KeyUtility(WellKnownTypes wellKnownTypes)
 {
     internal string GenerateKeyLiteral(ITypeSymbol type, object value)
     {

@@ -13,7 +13,7 @@ internal interface IInjectionGraphCodeGenerator
     string Generate();
 }
 
-internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
+internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
 {
     private const string NotAvailable = "null!"; // ToDo change value to "not_available" as soon as correct behavior is required
     private readonly StringBuilder _code = new();

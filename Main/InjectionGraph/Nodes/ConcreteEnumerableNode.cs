@@ -8,7 +8,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal record ConcreteEnumerableNodeData(ITypeSymbol Enumerable)
+internal sealed record ConcreteEnumerableNodeData(ITypeSymbol Enumerable)
 {
     public override int GetHashCode()
     {
@@ -17,7 +17,7 @@ internal record ConcreteEnumerableNodeData(ITypeSymbol Enumerable)
         return hash.ToHashCode();
     }
 
-    public virtual bool Equals(ConcreteEnumerableNodeData? other)
+    public bool Equals(ConcreteEnumerableNodeData? other)
     {
         if (ReferenceEquals(this, other))
             return true;
@@ -29,7 +29,7 @@ internal record ConcreteEnumerableNodeData(ITypeSymbol Enumerable)
     }
 }
 
-internal class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteEnumerableNode> factory)
+internal sealed class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteEnumerableNode> factory)
     : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IContainerInstance;
 
 internal abstract record ConcreteEnumerableResult
@@ -42,7 +42,7 @@ internal abstract record ConcreteEnumerableResult
     internal bool PurgeKeyAndChoice { get; set; }
 }
 
-internal class ConcreteEnumerableNode : IConcreteNode
+internal sealed class ConcreteEnumerableNode : IConcreteNode
 {
     private readonly IContainerCheckTypeProperties _containerCheckTypeProperties;
     private readonly IdRegister _idRegister;

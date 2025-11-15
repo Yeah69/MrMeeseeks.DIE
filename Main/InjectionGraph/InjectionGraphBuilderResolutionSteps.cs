@@ -8,7 +8,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
-internal class InjectionGraphBuilderResolutionSteps(
+internal sealed class InjectionGraphBuilderResolutionSteps(
     IContainerCheckTypeProperties containerCheckTypeProperties,
     ILocalDiagLogger containerDiagLogger,
     IInjectablePropertyExtractor injectablePropertyExtractor,

@@ -12,7 +12,7 @@ internal class DelegationImplementationBase : IInterceptorDecoratorMemberImpleme
     internal string DeclaringInterfaceFullName { get; }
 }
 
-internal class DelegationPropertyImplementation : DelegationImplementationBase
+internal sealed class DelegationPropertyImplementation : DelegationImplementationBase
 {
     private readonly IPropertySymbol _property;
 
@@ -30,7 +30,7 @@ internal class DelegationPropertyImplementation : DelegationImplementationBase
     internal bool HasSetter => _property.SetMethod is not null && !_property.SetMethod.IsInitOnly;
 }
 
-internal class DelegationMethodImplementation : DelegationImplementationBase
+internal sealed class DelegationMethodImplementation : DelegationImplementationBase
 {
     private readonly IMethodSymbol _method;
 
@@ -50,7 +50,7 @@ internal class DelegationMethodImplementation : DelegationImplementationBase
     internal IReadOnlyList<(string TypeFullName, string Name)> Parameters => _method.Parameters.Select(p => (p.Type.FullName(), p.Name)).ToList();
 }
 
-internal class DelegationEventImplementation : DelegationImplementationBase
+internal sealed class DelegationEventImplementation : DelegationImplementationBase
 {
     private readonly IEventSymbol _event;
 
@@ -66,7 +66,7 @@ internal class DelegationEventImplementation : DelegationImplementationBase
     internal string TypeFullName => _event.Type.FullName();
 }
 
-internal class DelegationIndexerImplementation : DelegationImplementationBase
+internal sealed class DelegationIndexerImplementation : DelegationImplementationBase
 {
     private readonly IPropertySymbol _indexer;
 

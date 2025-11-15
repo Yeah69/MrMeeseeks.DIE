@@ -126,7 +126,7 @@ internal sealed class ExecuteContainer : IExecuteContainer
                 .SyntaxTree
                 .GetText();
             
-            _context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", injectionGraphSource);
+            _context.AddSource(_containerInfo.GenerateHintPath(), injectionGraphSource);
                 
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Analytics;
             if (_analyticsFlags.ResolutionGraph)

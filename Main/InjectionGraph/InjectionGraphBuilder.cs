@@ -6,7 +6,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
-internal record ResolutionStep(TypeNode Current, EdgeContext Context, Location CurrentResolvedLocation);
+internal sealed record ResolutionStep(TypeNode Current, EdgeContext Context, Location CurrentResolvedLocation);
 
 internal interface IInjectionGraphBuilder
 {
@@ -19,7 +19,7 @@ internal interface IInjectionGraphBuilder
     void AssignFunctions();
 }
 
-internal class InjectionGraphBuilder(
+internal sealed class InjectionGraphBuilder(
     InjectionGraphBuilderResolutionSteps resolutionSteps,
     TypeNodeManager typeNodeManager,
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,

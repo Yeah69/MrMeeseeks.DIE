@@ -17,7 +17,7 @@ internal abstract record OverrideContext
     internal sealed record Any(ImmutableArray<ITypeSymbol> Overrides) : OverrideContext;
 }
 
-internal class OverrideContextManager : IContainerInstance
+internal sealed class OverrideContextManager : IContainerInstance
 {
     private readonly Dictionary<string, OverrideContext> _contexts = [];
     

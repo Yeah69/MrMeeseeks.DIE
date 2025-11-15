@@ -1,6 +1,6 @@
 ﻿namespace MrMeeseeks.DIE.Utility;
 
-internal class ValueTupleEqualityComparer<T1, T2>(
+internal sealed class ValueTupleEqualityComparer<T1, T2>(
     IEqualityComparer<T1> t1EqualityComparer,
     IEqualityComparer<T2> t2EqualityComparer)
     : IEqualityComparer<ValueTuple<T1, T2>>

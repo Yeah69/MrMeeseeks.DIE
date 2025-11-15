@@ -13,10 +13,12 @@ internal interface IContainerInfo
     INamedTypeSymbol ContainerType { get; }
     IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }
     ImmutableArray<string> ContainingTypeNames { get; }
+    string GenerateHintPath(string suffix = "");
 }
 
 internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContainerInstance
 {
+    private string _hintPathPrefix;
     internal ContainerInfo(
         // parameters
         INamedTypeSymbol containerClass,
@@ -45,19 +47,37 @@ internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContain
             .OfType<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)>()
             .ToList();
 
-        var nesting = new Stack<INamedTypeSymbol>();
+        var nestingStack = new Stack<INamedTypeSymbol>();
         var nestingParent = containerClass.ContainingType;
         while (nestingParent is not null)
         {
-            nesting.Push(nestingParent);
+            nestingStack.Push(nestingParent);
             nestingParent = nestingParent.ContainingType;
         }
 
-        ContainingTypeNames = [..nesting.Select(n => n.Name)];
+        var nesting = nestingStack.ToImmutableArray();
+
+        ContainingTypeNames = [..nestingStack.Select(n => n.Name)];
+
+        if (nesting is [var topmostAncestor, ..var remainingAncestors])
+        {
+            var fullNameBuilder =  new StringBuilder();
+            fullNameBuilder.Append(topmostAncestor.FullName());
+            foreach (var remainingAncestor in remainingAncestors)
+            {
+                fullNameBuilder.Append('.');
+                fullNameBuilder.Append(remainingAncestor.Name);
+            }
+            fullNameBuilder.Append('.');
+            fullNameBuilder.Append(containerClass.Name);
+            FullName = fullNameBuilder.ToString();
+        }
+        else
+            FullName = containerClass.FullName();
         
         var namespaceName = containerClass.ContainingNamespace.FullName();
-        var nestingPart = ContainingTypeNames.Length > 0 ? $".{string.Join(".", ContainingTypeNames)}" :  string.Empty;
-        FullName = $"{namespaceName}{nestingPart}.{containerClass.Name}";
+        var nestingPart = ContainingTypeNames.Length > 0 ? $".{string.Join(".", ContainingTypeNames)}" : string.Empty;
+        _hintPathPrefix = $"{namespaceName}{nestingPart}.{containerClass.Name}";
     }
 
     public string Name { get; }
@@ -66,4 +86,6 @@ internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContain
     public INamedTypeSymbol ContainerType { get; }
     public IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }
     public ImmutableArray<string> ContainingTypeNames { get; }
+    public string GenerateHintPath(string suffix = "") => 
+        $"{_hintPathPrefix}{suffix}.g.cs";
 }

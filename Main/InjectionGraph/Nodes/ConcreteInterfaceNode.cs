@@ -7,7 +7,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal record ConcreteInterfaceNodeData(INamedTypeSymbol Interface)
+internal sealed record ConcreteInterfaceNodeData(INamedTypeSymbol Interface)
 {
     public override int GetHashCode()
     {
@@ -16,7 +16,7 @@ internal record ConcreteInterfaceNodeData(INamedTypeSymbol Interface)
         return hash.ToHashCode();
     }
 
-    public virtual bool Equals(ConcreteInterfaceNodeData? other)
+    public bool Equals(ConcreteInterfaceNodeData? other)
     {
         if (ReferenceEquals(this, other))
             return true;
@@ -28,10 +28,10 @@ internal record ConcreteInterfaceNodeData(INamedTypeSymbol Interface)
     }
 }
 
-internal class ConcreteInterfaceNodeManager(Func<ConcreteInterfaceNodeData, ConcreteInterfaceNode> factory)
+internal sealed class ConcreteInterfaceNodeManager(Func<ConcreteInterfaceNodeData, ConcreteInterfaceNode> factory)
     : ConcreteNodeManagerBase<ConcreteInterfaceNodeData, ConcreteInterfaceNode>(factory), IContainerInstance;
 
-internal class ConcreteInterfaceNode : IConcreteNode
+internal sealed class ConcreteInterfaceNode : IConcreteNode
 {
     private readonly IContainerCheckTypeProperties _containerCheckTypeProperties;
     private readonly IdRegister _idRegister;

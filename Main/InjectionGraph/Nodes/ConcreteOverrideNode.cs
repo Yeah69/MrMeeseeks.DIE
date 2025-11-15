@@ -4,7 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal record ConcreteOverrideNodeData(ITypeSymbol Type)
+internal sealed record ConcreteOverrideNodeData(ITypeSymbol Type)
 {
     public override int GetHashCode()
     {
@@ -13,7 +13,7 @@ internal record ConcreteOverrideNodeData(ITypeSymbol Type)
         return hash.ToHashCode();
     }
 
-    public virtual bool Equals(ConcreteOverrideNodeData? other)
+    public bool Equals(ConcreteOverrideNodeData? other)
     {
         if (ReferenceEquals(this, other))
             return true;
@@ -25,10 +25,10 @@ internal record ConcreteOverrideNodeData(ITypeSymbol Type)
     }
 }
 
-internal class ConcreteOverrideNodeManager(Func<ConcreteOverrideNodeData, ConcreteOverrideNode> factory)
+internal sealed class ConcreteOverrideNodeManager(Func<ConcreteOverrideNodeData, ConcreteOverrideNode> factory)
     : ConcreteNodeManagerBase<ConcreteOverrideNodeData, ConcreteOverrideNode>(factory), IContainerInstance;
 
-internal class ConcreteOverrideNode : IConcreteNode
+internal sealed class ConcreteOverrideNode : IConcreteNode
 {
     internal ConcreteOverrideNode(
         // parameters

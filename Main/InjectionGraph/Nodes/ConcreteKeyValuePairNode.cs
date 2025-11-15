@@ -5,7 +5,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
 
-internal record ConcreteKeyValuePairNodeData(INamedTypeSymbol KeyValuePairType)
+internal sealed record ConcreteKeyValuePairNodeData(INamedTypeSymbol KeyValuePairType)
 {
     public override int GetHashCode()
     {
@@ -14,7 +14,7 @@ internal record ConcreteKeyValuePairNodeData(INamedTypeSymbol KeyValuePairType)
         return hash.ToHashCode();
     }
 
-    public virtual bool Equals(ConcreteKeyValuePairNodeData? other)
+    public bool Equals(ConcreteKeyValuePairNodeData? other)
     {
         if (ReferenceEquals(this, other))
             return true;
@@ -26,10 +26,10 @@ internal record ConcreteKeyValuePairNodeData(INamedTypeSymbol KeyValuePairType)
     }
 }
 
-internal class ConcreteKeyValuePairNodeManager(Func<ConcreteKeyValuePairNodeData, ConcreteKeyValuePairNode> factory)
+internal sealed class ConcreteKeyValuePairNodeManager(Func<ConcreteKeyValuePairNodeData, ConcreteKeyValuePairNode> factory)
     : ConcreteNodeManagerBase<ConcreteKeyValuePairNodeData, ConcreteKeyValuePairNode>(factory), IContainerInstance;
 
-internal class ConcreteKeyValuePairNode : IConcreteNode
+internal sealed class ConcreteKeyValuePairNode : IConcreteNode
 {
     internal ConcreteKeyValuePairNode(
         // parameters

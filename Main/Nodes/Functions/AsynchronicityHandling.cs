@@ -25,7 +25,7 @@ internal enum AsyncSingleReturnStrategy
     TaskCompletedTask
 }
 
-internal class AsynchronicityHandlingFactory
+internal sealed class AsynchronicityHandlingFactory
 {
     private readonly Func<VoidAsynchronicityHandling> _voidAsynchronicityHandlingFactory;
     private readonly Func<ITypeSymbol, TypedAsynchronicityHandling> _typedAsynchronicityHandlingFactory;

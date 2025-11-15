@@ -2,7 +2,7 @@
 
 namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal class TypeEdge
+internal sealed class TypeEdge
 {
     private readonly List<EdgeContext> _contexts = [];
 

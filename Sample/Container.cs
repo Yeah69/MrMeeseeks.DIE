@@ -43,8 +43,14 @@ internal class Parent(Lazy<IEnumerable<KeyValuePair<Key, Lazy<IInterface>>>> chi
     public List<KeyValuePair<Key, IInterface>> Children { get; } = children.Value.Select(kvp => new KeyValuePair<Key, IInterface>(kvp.Key, kvp.Value.Value)).ToList();
 }
 
-[ImplementationCollectionChoice(typeof(IInterface),
-    typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC),
-    typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC))]
-[CreateFunction(typeof(Parent), "Create")]
-internal sealed partial class Container;
+internal sealed partial class NestingParentA
+{
+    internal sealed partial class NestingParentB
+    {
+        [ImplementationCollectionChoice(typeof(IInterface),
+            typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC),
+            typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC))]
+        [CreateFunction(typeof(Parent), "Create")]
+        internal sealed partial class Container;
+    }
+}

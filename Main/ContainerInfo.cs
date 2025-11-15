@@ -12,6 +12,7 @@ internal interface IContainerInfo
     string FullName { get; }
     INamedTypeSymbol ContainerType { get; }
     IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }
+    ImmutableArray<string> ContainingTypeNames { get; }
 }
 
 internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContainerInstance
@@ -26,7 +27,6 @@ internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContain
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();
-        FullName = containerClass.FullName();
         ContainerType = containerClass;
 
         CreateFunctionData = rangeUtility.GetRangeAttributes(containerClass)
@@ -44,6 +44,20 @@ internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContain
                 : ((ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)?) null)
             .OfType<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)>()
             .ToList();
+
+        var nesting = new Stack<INamedTypeSymbol>();
+        var nestingParent = containerClass.ContainingType;
+        while (nestingParent is not null)
+        {
+            nesting.Push(nestingParent);
+            nestingParent = nestingParent.ContainingType;
+        }
+
+        ContainingTypeNames = [..nesting.Select(n => n.Name)];
+        
+        var namespaceName = containerClass.ContainingNamespace.FullName();
+        var nestingPart = ContainingTypeNames.Length > 0 ? $".{string.Join(".", ContainingTypeNames)}" :  string.Empty;
+        FullName = $"{namespaceName}{nestingPart}.{containerClass.Name}";
     }
 
     public string Name { get; }
@@ -51,4 +65,5 @@ internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContain
     public string FullName { get; }
     public INamedTypeSymbol ContainerType { get; }
     public IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }
+    public ImmutableArray<string> ContainingTypeNames { get; }
 }

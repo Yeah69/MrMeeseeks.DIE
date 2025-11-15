@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using System.Globalization;
+using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.Utility;
@@ -71,6 +72,15 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         /*var genericParameters = _rangeNode is IContainerNode containerNode && containerNode.TypeParameters.Any()
             ? $"<{string.Join(", ", containerNode.TypeParameters.Select(p => p.Name))}>"
             : ""; // ToDo generic types for the container */
+        
+        foreach (var nestingParentName in _containerInfo.ContainingTypeNames)
+        {
+            _code.AppendLine(
+                $$"""
+                  partial class {{nestingParentName}}
+                  {
+                  """);
+        }
 
         _code.AppendLine(
             $$"""
@@ -198,6 +208,8 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         }
 
         _code.AppendLine("}");
+
+        _code.AppendLine(string.Join(Environment.NewLine, _containerInfo.ContainingTypeNames.Select(_ => "}")));
 
         _code.AppendLine(
             """
@@ -341,7 +353,6 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                 var firstKeyObjectToCaseNumber = true;
                 foreach (var keyObjectToCaseNumber in interfaceNode.KeyObjectToCaseNumbers)
                 {
-                    var keyObject = keyObjectToCaseNumber.KeyObject;
                     var caseNumber = keyObjectToCaseNumber.NextId;
                     if (firstKeyObjectToCaseNumber)
                         firstKeyObjectToCaseNumber = false;
@@ -354,15 +365,15 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                           {
                           {{_contextGenerator.GenerateCopyAssignment(
                               key: "null",
-                              outwardFacingTypeNumber: interfaceNode.Number.ToString(), 
-                              caseNumber: caseNumber.ToString())}}
+                              outwardFacingTypeNumber: interfaceNode.Number.ToString(CultureInfo.InvariantCulture), 
+                              caseNumber: caseNumber.ToString(CultureInfo.InvariantCulture))}}
                           }
                           """);
                 }
 
                 if (interfaceNode.DefaultImplementationsCaseNumbers.Any())
                 {
-                    var line = _contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: interfaceNode.Number.ToString(), caseNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().NextId.ToString());
+                    var line = _contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: interfaceNode.Number.ToString(CultureInfo.InvariantCulture), caseNumber: interfaceNode.DefaultImplementationsCaseNumbers.First().NextId.ToString(CultureInfo.InvariantCulture));
                     _code.AppendLine(
                         interfaceNode.KeyObjectToCaseNumbers.Any()
                             ? $$"""
@@ -395,7 +406,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                       """);
                 
                 var newInterfaceNumber = interfaceNodeCase.NextId == 0 ? 0 : interfaceNode.Number;
-                _code.AppendLine(_contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: newInterfaceNumber.ToString(), caseNumber: interfaceNodeCase.NextId.ToString()));
+                _code.AppendLine(_contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: newInterfaceNumber.ToString(CultureInfo.InvariantCulture), caseNumber: interfaceNodeCase.NextId.ToString(CultureInfo.InvariantCulture)));
                 
                 var innerReference = CallFunctionOrGenerateForInjectionNode(interfaceNodeCase.Edge, interfaceNodeCase.Edge.Target);
                 
@@ -483,8 +494,8 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                         var interfacedSequence = @interface.Choices.Select(single =>
                         {
                             _code.AppendLine(_contextGenerator.GenerateCopyAssignment(
-                                outwardFacingTypeNumber: single.OutwardFacingTypeId.ToString(),
-                                caseNumber: single.CaseId.ToString(), 
+                                outwardFacingTypeNumber: single.OutwardFacingTypeId.ToString(CultureInfo.InvariantCulture),
+                                caseNumber: single.CaseId.ToString(CultureInfo.InvariantCulture), 
                                 key: "null"));
                             var reference = CallFunctionOrGenerateForInjectionNode(enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
                             if (!isArray)
@@ -514,27 +525,6 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             }
         }
         return NotAvailable;
-
-        string KeyObjectToString(object keyObject) =>
-            keyObject switch
-            {
-                string str => $"\"{str}\"",
-                char ch => $"'{ch}'",
-                byte b => b.ToString(),
-                sbyte sb => sb.ToString(),
-                short s => s.ToString(),
-                ushort us => us.ToString(),
-                int i => i.ToString(),
-                uint ui => $"{ui}U",
-                long l => $"{l}L",
-                ulong ul => $"{ul}UL",
-                float f => $"{f}F",
-                double d => $"{d}D",
-                decimal dec => $"{dec}M",
-                bool b => b.ToString().ToLowerInvariant(),
-                Enum e => $"({e.GetType().FullName}) {e}",
-                _ => throw new InvalidOperationException($"Unsupported key object type: {keyObject.GetType()}")
-            };
     }
 
     private string CallFunctionOrGenerateForInjectionNode(TypeEdge edge, TypeNode node)
@@ -562,7 +552,7 @@ internal class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             : "";
         var typeParameters = "";
         var typeParametersConstraints = "";
-        if (function.TypeParameters.Any())
+        if (function.TypeParameters.Length != 0)
         {
             typeParameters = $"<{string.Join(", ", function.TypeParameters.Select(p => p.Name))}>";
             typeParametersConstraints = string.Join("", function

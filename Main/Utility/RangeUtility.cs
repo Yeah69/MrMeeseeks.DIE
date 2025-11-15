@@ -22,7 +22,7 @@ internal sealed class RangeUtility : IRangeUtility
     }
 
     public bool IsAContainer(INamedTypeSymbol rangeType) =>
-        rangeType is { IsAbstract: false, ContainingType: null } 
+        rangeType is { IsAbstract: false } 
         && rangeType
             .AllBaseTypesAndSelf()
             .Concat(rangeType.AllInterfaces)

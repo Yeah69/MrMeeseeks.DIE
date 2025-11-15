@@ -55,6 +55,8 @@ internal sealed class ExecuteImpl : IExecute
                 .Select(x => ModelExtensions.GetDeclaredSymbol(semanticModel, x))
                 .Where(x => x is not null)
                 .OfType<INamedTypeSymbol>()
+                // Container types can be nested in other types
+                //.SelectMany(SelfAndNestedTypes)
                 .Where(x => _rangeUtility.IsAContainer(x))
                 .Select(_containerInfoFactory)
                 .ToList();
@@ -63,6 +65,15 @@ internal sealed class ExecuteImpl : IExecute
                 using var executeContainer = _executeContainerContextFactory(containerInfo);
                 executeContainer.Execute();
                 containersGenerated = true;
+            }
+
+            continue;
+
+            IEnumerable<INamedTypeSymbol> SelfAndNestedTypes(INamedTypeSymbol symbol)
+            {
+                yield return symbol;
+                foreach (INamedTypeSymbol nested in symbol.GetTypeMembers().SelectMany(SelfAndNestedTypes))
+                    yield return nested;
             }
         }
         

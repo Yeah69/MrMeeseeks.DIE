@@ -1,4 +1,3 @@
-using System.IO.MemoryMappedFiles;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Utility;
@@ -59,6 +58,21 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
     public override void Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType)
     {
         base.Validate(rangeType, containerType);
+
+        var checkNesting = rangeType;
+        while (checkNesting.ContainingType is { } nestingParent)
+        {
+            checkNesting = nestingParent;
+            if (!nestingParent.IsPartial())
+            {
+                LocalDiagLogger.Error(
+                    ValidationErrorDiagnostic(
+                        rangeType, 
+                        rangeType,
+                        $"{nestingParent.FullName()} has to be partial, because it nests a container."), 
+                    nestingParent.Locations.FirstOrDefault() ?? Location.None);
+            }
+        }
         
         foreach (var instanceConstructor in rangeType
                      .InstanceConstructors

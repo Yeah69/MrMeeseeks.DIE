@@ -19,7 +19,7 @@ internal class ContextGenerator
     {
         _wellKnownTypes = wellKnownTypes;
         _contextClassName = referenceGenerator.Generate("Context");
-        _contextClassFullName = $"global::{containerInfo.Namespace}.{containerInfo.Name}.{_contextClassName}";
+        _contextClassFullName = $"{containerInfo.FullName}.{_contextClassName}";
         ParameterName = referenceGenerator.Generate("context");
         FullNameAndParameterName = $"{_contextClassFullName} {ParameterName}";
         OverridesPropertyName = "Overrides";

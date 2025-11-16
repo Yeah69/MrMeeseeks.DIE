@@ -20,10 +20,10 @@ internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContai
     internal bool IsWrapType(ITypeSymbol type) =>
         IsWrapTypeOfSingleGenericType(type) || IsFuncDelegate(type);
 
-    internal bool IsFuncDelegate(ITypeSymbol type) =>
+    private static bool IsFuncDelegate(ITypeSymbol type) =>
         type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal);
 
-    internal bool IsWrapTypeOfSingleGenericType(ITypeSymbol type) =>
+    private bool IsWrapTypeOfSingleGenericType(ITypeSymbol type) =>
         wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)

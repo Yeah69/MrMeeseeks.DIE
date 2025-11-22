@@ -18,7 +18,7 @@ internal sealed partial class TupleNode : ITupleNode
         INamedTypeSymbol tupleType,
         IElementNodeMapperBase elementNodeMapper,
         
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         _tupleType = tupleType;
         _elementNodeMapper = elementNodeMapper;

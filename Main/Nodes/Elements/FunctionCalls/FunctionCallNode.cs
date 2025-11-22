@@ -26,7 +26,7 @@ internal abstract class FunctionCallNode : IFunctionCallNode
         IElementNode callingTransientScopeDisposal,
         
         IFunctionNode calledFunction,
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         CalledFunction = calledFunction;
         OwnerReference = ownerReference;

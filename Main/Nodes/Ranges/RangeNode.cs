@@ -67,9 +67,9 @@ internal interface IRangeNode : INode
 internal abstract class RangeNode : IRangeNode
 {
     private readonly IMapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
-    protected readonly ITypeParameterUtility TypeParameterUtility;
+    protected readonly TypeParameterUtility TypeParameterUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImplementationMappingConfiguration?, ICreateFunctionNodeRoot> _createFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> _multiFunctionNodeFactory;
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> _multiKeyValueFunctionNodeFactory;
@@ -220,12 +220,12 @@ internal abstract class RangeNode : IRangeNode
         INamedTypeSymbol? rangeType,
         IUserDefinedElements userDefinedElements,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
         ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         Func<MapperData, ITypeSymbol, IReadOnlyList<ITypeSymbol>, ImplementationMappingConfiguration?, ICreateFunctionNodeRoot> createFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiFunctionNodeRoot> multiFunctionNodeFactory,
         Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IMultiKeyValueFunctionNodeRoot> multiKeyValueFunctionNodeFactory,

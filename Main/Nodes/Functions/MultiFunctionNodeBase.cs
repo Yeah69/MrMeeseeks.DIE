@@ -39,7 +39,7 @@ internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMult
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
         IRangeNode parentRange,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(

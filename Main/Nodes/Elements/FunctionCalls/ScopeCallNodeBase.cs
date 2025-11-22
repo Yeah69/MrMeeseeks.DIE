@@ -29,7 +29,7 @@ internal abstract class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
         
         // dependencies
         IFunctionNode calledFunction, 
-        IReferenceGenerator referenceGenerator) 
+        ReferenceGenerator referenceGenerator) 
         : base(
             null,
             callSideType,

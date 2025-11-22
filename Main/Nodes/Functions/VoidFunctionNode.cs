@@ -28,7 +28,7 @@ internal sealed partial class VoidFunctionNode : FunctionNodeBase, IVoidFunction
         // dependencies
         IRangeNode parentRange,
         IContainerNode parentContainer,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,

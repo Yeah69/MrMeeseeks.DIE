@@ -7,29 +7,19 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal interface ITypeParameterUtility
+internal sealed class TypeParameterUtility : IContainerInstance
 {
-    ITypeSymbol ReplaceTypeParametersByCustom(ITypeSymbol baseType);
-    IReadOnlyList<ITypeParameterSymbol> ExtractTypeParameters(ITypeSymbol baseType);
-    bool CheckLegitimacyOfTypeArguments(INamedTypeSymbol type);
-    bool CheckAssignability(ITypeParameterSymbol subject, ITypeParameterSymbol target);
-    bool ContainsOpenTypeParameters(ITypeSymbol type);
-    ITypeSymbol EquipWithMappedTypeParameters(ITypeSymbol type);
-}
-
-internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerInstance
-{
-    private readonly IReferenceGenerator _referenceGenerator;
-    private readonly Func<string, IReadOnlyDictionary<ITypeParameterSymbol, string>, IGrownTypeParameterConstraintsDisplayer> _grownTypeParameterConstraintsDisplayerFactory;
+    private readonly ReferenceGenerator _referenceGenerator;
+    private readonly Func<string, IReadOnlyDictionary<ITypeParameterSymbol, string>, GrownTypeParameterConstraintsDisplayer> _grownTypeParameterConstraintsDisplayerFactory;
     private readonly Compilation _compilation;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly Lazy<Dictionary<ITypeParameterSymbol, ITypeParameterSymbol>> _typeParameterToContainerTypeParameter;
 
     internal TypeParameterUtility(
         Lazy<IContainerNode> parentContainer,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         GeneratorExecutionContext generatorExecutionContext,
-        Func<string, IReadOnlyDictionary<ITypeParameterSymbol, string>, IGrownTypeParameterConstraintsDisplayer> grownTypeParameterConstraintsDisplayerFactory,
+        Func<string, IReadOnlyDictionary<ITypeParameterSymbol, string>, GrownTypeParameterConstraintsDisplayer> grownTypeParameterConstraintsDisplayerFactory,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {

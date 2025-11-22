@@ -27,7 +27,7 @@ internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNo
         IRangeNode parentRange,
         IFunctionNode parentFunction,
         ICheckTypeProperties checkTypeProperties,
-        IReferenceGenerator referenceGenerator) 
+        ReferenceGenerator referenceGenerator) 
         : base(delegateTypes, function, typeParameters, localDiagLogger, parentContainer, referenceGenerator)
     {
         _threadLocalType = delegateTypes.Inner;

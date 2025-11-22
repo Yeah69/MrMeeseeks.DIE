@@ -27,7 +27,7 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
         // dependencies
         IContainerNode parentContainer,
         IRangeNode parentRange,
-        IReferenceGenerator referenceGenerator, 
+        ReferenceGenerator referenceGenerator, 
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,
@@ -37,7 +37,7 @@ internal sealed partial class RangedInstanceInterfaceFunctionNode : ReturningFun
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility) 
+        TypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             type, 

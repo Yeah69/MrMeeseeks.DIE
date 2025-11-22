@@ -31,13 +31,13 @@ internal sealed partial class ScopeNode : ScopeNodeBase, IScopeNode, IScopeInsta
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateScopeFunctionNodeRoot> _createScopeFunctionNodeFactory;
 
     internal ScopeNode(
-        IScopeInfo scopeInfo,
+        ScopeInfo scopeInfo,
         IContainerNode parentContainer,
         ITransientScopeInterfaceNode transientScopeInterfaceNode,
         IScopeManager scopeManager,
         IUserDefinedElements userDefinedElements,
-        IReferenceGenerator referenceGenerator,
-        ITypeParameterUtility typeParameterUtility,
+        ReferenceGenerator referenceGenerator,
+        TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
         IRequiredKeywordUtility requiredKeywordUtility,
         ICheckTypeProperties checkTypeProperties,

@@ -27,7 +27,7 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
         
         ILocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         _function = function;
         _typeParameters = typeParameters;

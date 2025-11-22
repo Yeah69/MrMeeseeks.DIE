@@ -13,7 +13,7 @@ internal interface IContainerDieExceptionGenerator
 internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly IContainerInfo _containerInfo;
+    private readonly ContainerInfo _containerInfo;
     private readonly IDiagLogger _diagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
@@ -22,7 +22,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
 
     internal ContainerDieExceptionGenerator(
         GeneratorExecutionContext context,
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,

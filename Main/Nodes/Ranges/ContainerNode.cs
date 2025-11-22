@@ -36,9 +36,9 @@ internal sealed record BuildJob(INode Node, PassedContext PassedContext);
 
 internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContainerInstance
 {
-    private readonly IContainerInfo _containerInfo;
+    private readonly ContainerInfo _containerInfo;
     private readonly IFunctionCycleTracker _functionCycleTracker;
-    private readonly ITypeParameterUtility _typeParameterUtility;
+    private readonly TypeParameterUtility _typeParameterUtility;
     private readonly ITaskBasedQueue _taskBasedQueue;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly Lazy<ITransientScopeInterfaceNode> _lazyTransientScopeInterfaceNode;
@@ -81,12 +81,12 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
         _delegateBaseNodes.Add(delegateBaseNode);
 
     internal ContainerNode(
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
         ICheckTypeProperties checkTypeProperties,
         ITaskBasedQueue taskBasedQueue,

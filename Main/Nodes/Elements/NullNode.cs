@@ -9,7 +9,7 @@ internal sealed partial class NullNode : INullNode
     internal NullNode(
         ITypeSymbol nullableType,
         
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         TypeFullName = nullableType.FullName();
         Reference = referenceGenerator.Generate(nullableType);

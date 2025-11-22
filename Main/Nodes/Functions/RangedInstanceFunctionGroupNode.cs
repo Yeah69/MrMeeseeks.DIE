@@ -30,8 +30,8 @@ internal sealed partial class RangedInstanceFunctionGroupNode : RangedInstanceFu
         // dependencies
         IContainerNode parentContainer,
         IRangeNode parentRange,
-        ITypeParameterUtility typeParameterUtility,
-        IReferenceGenerator referenceGenerator,
+        TypeParameterUtility typeParameterUtility,
+        ReferenceGenerator referenceGenerator,
         Func<ScopeLevel, INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, IRangedInstanceFunctionNodeRoot> rangedInstanceFunctionNodeFactory)
         : base(level, type, referenceGenerator)
     {

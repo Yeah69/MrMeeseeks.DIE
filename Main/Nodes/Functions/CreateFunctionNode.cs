@@ -29,7 +29,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         // dependencies
         IRangeNode parentRange,
         IContainerNode parentContainer,
-        IReferenceGenerator referenceGenerator, 
+        ReferenceGenerator referenceGenerator, 
         IMapperFactory mapperFactory,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
@@ -40,7 +40,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility) 
+        TypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Private,
             typeSymbol, 

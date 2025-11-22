@@ -20,7 +20,7 @@ internal sealed partial class FactoryFunctionNode : FactoryNodeBase, IFactoryFun
         
         IFunctionNode parentFunction,
         ITaskBasedQueue taskBasedQueue,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes) 
         : base(methodSymbol.ReturnType, methodSymbol, parentFunction, taskBasedQueue, referenceGenerator, wellKnownTypes)
     {

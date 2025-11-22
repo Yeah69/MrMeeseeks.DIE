@@ -50,7 +50,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
     private readonly IElementNodeMapperBase _elementNodeMapper;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly IUserDefinedElements _userDefinedElements;
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly ITaskBasedQueue _taskBasedQueue;
     private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
@@ -72,7 +72,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         IElementNodeMapperBase elementNodeMapper,
         IUserDefinedElements userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
         ITaskBasedQueue taskBasedQueue,
         IInjectablePropertyExtractor injectablePropertyExtractor)

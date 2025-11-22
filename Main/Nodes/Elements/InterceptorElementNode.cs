@@ -14,7 +14,7 @@ internal sealed partial class InterceptionElementNode : IInterceptionElementNode
         (IElementNode Interceptor, IElementNode Decorated) innerInstances,
         
         // dependencies
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         Reference = referenceGenerator.Generate("interception");
         TypeFullName = typeFullName;

@@ -8,7 +8,7 @@ internal abstract class ImplementationBodyGeneratorBase
 {
     private readonly SyncImplementationBase _syncImplementation;
     private readonly InterceptionDecoratorData _interceptionDecoratorData;
-    public required IReferenceGenerator ReferenceGenerator { protected get; init; }
+    public required ReferenceGenerator ReferenceGenerator { protected get; init; }
     public required WellKnownTypes WellKnownTypes { protected get; init; }
     public required WellKnownTypesCollections WellKnownTypesCollections { protected get; init; }
     public required IInvocationTypeManager InvocationTypeManager { protected get; init; }

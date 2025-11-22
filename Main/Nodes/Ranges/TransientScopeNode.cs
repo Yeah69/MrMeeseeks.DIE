@@ -30,12 +30,12 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
     private readonly Func<INamedTypeSymbol, IReadOnlyList<ITypeSymbol>, ICreateTransientScopeFunctionNodeRoot> _createTransientScopeFunctionNodeFactory;
 
     internal TransientScopeNode(
-        IScopeInfo scopeInfo,
+        ScopeInfo scopeInfo,
         IContainerNode parentContainer,
         IScopeManager scopeManager,
         IUserDefinedElements userDefinedElements,
-        IReferenceGenerator referenceGenerator,
-        ITypeParameterUtility typeParameterUtility,
+        ReferenceGenerator referenceGenerator,
+        TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
         IRequiredKeywordUtility requiredKeywordUtility,
         ICheckTypeProperties checkTypeProperties,

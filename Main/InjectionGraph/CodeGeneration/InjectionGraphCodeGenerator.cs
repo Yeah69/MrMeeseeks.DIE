@@ -19,24 +19,24 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
     private readonly StringBuilder _code = new();
     private readonly Dictionary<IFunction, string> _functionNames = [];
     private readonly Dictionary<ITypeSymbol, string> _entryFunctionsForFunctors = [];
-    private readonly IContainerInfo _containerInfo;
+    private readonly ContainerInfo _containerInfo;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly OverrideContextManager _overrideContextManager;
     private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
     private readonly ContextGenerator _contextGenerator;
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly KeyUtility _keyUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly string _iOverrideInterfaceName;
     private Dictionary<OverrideContext, string> _overrideContextNameMap = [];
 
     public InjectionGraphCodeGenerator(
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         IInjectionGraphBuilder injectionGraphBuilder,
         OverrideContextManager overrideContextManager,
         ConcreteFunctorNodeManager concreteFunctorNodeManager,
         ContextGenerator contextGenerator,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         KeyUtility keyUtility,
         WellKnownTypes wellKnownTypes)
     {
@@ -306,7 +306,9 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             static string GetImplementationsFullName(ITypeSymbol implementation)
             {
                 var implementationFullName = implementation.FullName();
-                if (!implementationFullName.StartsWith("(") || !implementationFullName.EndsWith(")") || implementation is not INamedTypeSymbol namedType)
+                if (!implementationFullName.StartsWith("(", StringComparison.InvariantCulture) 
+                    || !implementationFullName.EndsWith(")", StringComparison.InvariantCulture) 
+                    || implementation is not INamedTypeSymbol namedType)
                     return implementationFullName;
                 var namespaceFullName = implementation.ContainingNamespace.FullName();
                 var typeName = implementation.Name;

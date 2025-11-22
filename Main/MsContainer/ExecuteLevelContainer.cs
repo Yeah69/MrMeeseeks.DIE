@@ -9,7 +9,7 @@ using MrMeeseeks.DIE.Logging;
 namespace MrMeeseeks.DIE.MsContainer;
 
 [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(ExecuteLevelLogEnhancerDecorator))]
-[CreateFunction(typeof(IExecute), "Create")]
+[CreateFunction(typeof(ExecuteImpl), "Create")]
 internal sealed partial class ExecuteLevelContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
@@ -48,7 +48,7 @@ internal sealed partial class ExecuteLevelContainer
             DIE_Factory_GeneratorExecutionContext = context;
         }
         
-        private IExecuteContainer DIE_Factory_IExecuteContainer(
+        private ExecuteContainer DIE_Factory_IExecuteContainer(
             ContainerInfo containerInfo, 
             RequiredKeywordUtility requiredKeywordUtility,
             InvocationTypeManager invocationTypeManager,

@@ -11,7 +11,7 @@ internal sealed partial class ImplicitScopeImplementationNode : IImplicitScopeIm
         string typeFullName,
         (string Name, IElementNode Element)[] properties,
         
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         TypeFullName = typeFullName;
         Reference = referenceGenerator.Generate("scope");

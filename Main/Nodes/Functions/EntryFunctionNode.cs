@@ -25,7 +25,7 @@ internal sealed partial class EntryFunctionNode : SingleFunctionNodeBase, IEntry
         // dependencies
         IRangeNode parentRange,
         IContainerNode parentContainer, 
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IEntryTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,

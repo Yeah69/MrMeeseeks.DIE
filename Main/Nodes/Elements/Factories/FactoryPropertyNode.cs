@@ -11,7 +11,7 @@ internal sealed partial class FactoryPropertyNode : FactoryNodeBase, IFactoryPro
         
         IFunctionNode parentFunction,
         ITaskBasedQueue taskBasedQueue,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes) 
         : base(propertySymbol.Type, propertySymbol, parentFunction, taskBasedQueue, referenceGenerator, wellKnownTypes)
     {

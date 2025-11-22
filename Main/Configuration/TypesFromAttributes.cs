@@ -130,7 +130,7 @@ internal sealed class ContainerTypesFromAttributes : TypesFromAttributesBase, IC
     internal ContainerTypesFromAttributes(
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
@@ -174,12 +174,12 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
 {
     internal ScopeTypesFromAttributes(
         // parameter
-        IScopeInfo scopeInfo,
+        ScopeInfo scopeInfo,
 
         // dependencies
         ILocalDiagLogger localDiagLogger,
         IValidateAttributes validateAttributes,
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,

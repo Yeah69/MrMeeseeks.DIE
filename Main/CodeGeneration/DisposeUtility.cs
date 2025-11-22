@@ -33,7 +33,7 @@ internal interface IDisposeUtility
 
 internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
 {
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
     private readonly string _disposeName;
@@ -54,7 +54,7 @@ internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
     private readonly string? _releaseDisposeAsyncName;
 
     internal DisposeUtility(
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
     {

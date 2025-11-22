@@ -29,7 +29,7 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         // dependencies
         IContainerNode parentContainer,
         IRangeNode parentRange,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
@@ -43,7 +43,7 @@ internal sealed partial class MultiKeyValueMultiFunctionNode : MultiFunctionNode
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
         Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> keyValuePairNodeFactory,
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
         TypeSymbolUtility typeSymbolUtility,
         ICheckTypeProperties checkTypeProperties,
         WellKnownTypesCollections wellKnownTypesCollections)

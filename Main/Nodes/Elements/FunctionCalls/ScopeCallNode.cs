@@ -26,7 +26,7 @@ internal sealed partial class ScopeCallNode : ScopeCallNodeBase, IScopeCallNode
         
         // dependencies
         IFunctionNode calledFunction, 
-        IReferenceGenerator referenceGenerator) 
+        ReferenceGenerator referenceGenerator) 
         : base(
             parameters.CallSideType,
             parameters.Scope,

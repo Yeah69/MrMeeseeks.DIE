@@ -6,12 +6,7 @@ using MrMeeseeks.DIE.Utility;
 
 namespace MrMeeseeks.DIE;
 
-internal interface IExecute 
-{
-    void Execute();
-}
-
-internal sealed class ExecuteImpl : IExecute
+internal sealed class ExecuteImpl
 {
     private readonly GeneratorExecutionContext _context;
     private readonly IRangeUtility _rangeUtility;

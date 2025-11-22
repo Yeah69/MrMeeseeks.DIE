@@ -23,7 +23,7 @@ internal interface IContainerLevelOnlyContainerInstance;
 [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ContainerCheckTypeProperties))]
 [ImplementationChoice(typeof(ICodeGenerationVisitor), typeof(CodeGenerationVisitor))]
 [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
-[CreateFunction(typeof(IExecuteContainer), "Create")]
+[CreateFunction(typeof(ExecuteContainer), "Create")]
 internal sealed partial class ContainerLevelContainer
 {
     private readonly GeneratorExecutionContext DIE_Factory_GeneratorExecutionContext;
@@ -92,8 +92,8 @@ internal sealed partial class ContainerLevelContainer
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
         protected static void DIE_ConstrParams_UserDefinedElements(
-            IContainerInfo containerInfo,
-            IScopeInfo scopeInfo,
+            ContainerInfo containerInfo,
+            ScopeInfo scopeInfo,
             out (INamedTypeSymbol? Range, INamedTypeSymbol Container) types) => 
             types = (scopeInfo.ScopeType, containerInfo.ContainerType);
     }

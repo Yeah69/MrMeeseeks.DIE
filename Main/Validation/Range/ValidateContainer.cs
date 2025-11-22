@@ -14,7 +14,7 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
 {
     private readonly IValidateTransientScope _validateTransientScopeFactory;
     private readonly IValidateScope _validateScopeFactory;
-    private readonly Lazy<ITypeParameterUtility> _typeParameterUtility;
+    private readonly Lazy<TypeParameterUtility> _typeParameterUtility;
     private readonly IRangeUtility _rangeUtility;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
@@ -29,7 +29,7 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
         IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         IValidateAttributes validateAttributes,
-        Lazy<ITypeParameterUtility> typeParameterUtility,
+        Lazy<TypeParameterUtility> typeParameterUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         ILocalDiagLogger localDiagLogger,

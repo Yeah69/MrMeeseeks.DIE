@@ -41,7 +41,7 @@ internal sealed partial class InitialOrdinarySubDisposalNode : InitialSubDisposa
 
     internal InitialOrdinarySubDisposalNode(
         Lazy<IFunctionNode> parentFunction,
-        Lazy<IReferenceGenerator> referenceGenerator,
+        Lazy<ReferenceGenerator> referenceGenerator,
         WellKnownTypes wellKnownTypes)
         : base(referenceGenerator.Select(rg => rg.Generate("subDisposal")), wellKnownTypes) =>
         _parentFunction = parentFunction;
@@ -55,7 +55,7 @@ internal sealed partial class InitialTransientScopeSubDisposalNode : InitialSubD
 
     internal InitialTransientScopeSubDisposalNode(
         Lazy<IFunctionNode> parentFunction,
-        Lazy<IReferenceGenerator> referenceGenerator,
+        Lazy<ReferenceGenerator> referenceGenerator,
         WellKnownTypes wellKnownTypes)
         : base(referenceGenerator.Select(rg => rg.Generate("transientScopeSubDisposal")), wellKnownTypes) =>
         _parentFunction = parentFunction;

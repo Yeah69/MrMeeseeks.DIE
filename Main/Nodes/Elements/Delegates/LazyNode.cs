@@ -15,7 +15,7 @@ internal sealed partial class LazyNode : DelegateBaseNode, ILazyNode
         
         ILocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
-        IReferenceGenerator referenceGenerator) 
+        ReferenceGenerator referenceGenerator) 
         : base(delegateTypes, function, typeParameters, localDiagLogger, parentContainer, referenceGenerator)
     {
     }

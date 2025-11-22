@@ -24,7 +24,7 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
         // dependencies
         IRangeNode parentRange,
         IContainerNode parentContainer, 
-        IReferenceGenerator referenceGenerator, 
+        ReferenceGenerator referenceGenerator, 
         IOuterFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,
@@ -35,7 +35,7 @@ internal sealed partial class CreateScopeFunctionNode : SingleFunctionNodeBase, 
         Func<ScopeCallNode.Params, IScopeCallNode> scopeCallNodeFactory,
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<ITypeSymbol, IParameterNode> parameterNodeFactory,
-        ITypeParameterUtility typeParameterUtility) 
+        TypeParameterUtility typeParameterUtility) 
         : base(
             Microsoft.CodeAnalysis.Accessibility.Internal,
             typeSymbol, 

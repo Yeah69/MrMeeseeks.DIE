@@ -18,7 +18,7 @@ internal sealed partial class KeyValuePairNode : IKeyValuePairNode
         IElementNode value,
         
         // dependencies
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         Key = key;
         KeyType = keyValuePairType.TypeArguments[0];

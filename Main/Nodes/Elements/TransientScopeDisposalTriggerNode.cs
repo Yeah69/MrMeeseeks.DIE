@@ -11,7 +11,7 @@ internal sealed partial class TransientScopeDisposalTriggerNode : ITransientScop
     internal TransientScopeDisposalTriggerNode(
         INamedTypeSymbol disposableType,
         
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         TypeFullName = disposableType.FullName();
         Reference = referenceGenerator.Generate(disposableType);

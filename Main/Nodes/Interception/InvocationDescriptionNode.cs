@@ -29,7 +29,7 @@ internal sealed class InvocationDescriptionNode : IInvocationDescriptionNode
         INamedTypeSymbol interfaceType,
         
         // dependencies
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         Name = referenceGenerator.Generate("InvocationDescription");
         InterfaceFullName = interfaceType.FullName();

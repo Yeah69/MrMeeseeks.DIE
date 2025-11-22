@@ -58,12 +58,7 @@ internal abstract class TypeParameterConstraintsDisplayBase
     }
 }
 
-internal interface IGrownTypeParameterConstraintsDisplayer
-{
-    string Display(ITypeParameterSymbol typeParameter);
-}
-
-internal sealed class GrownTypeParameterConstraintsDisplayer : TypeParameterConstraintsDisplayBase, IGrownTypeParameterConstraintsDisplayer
+internal sealed class GrownTypeParameterConstraintsDisplayer : TypeParameterConstraintsDisplayBase
 {
     private readonly string _name;
     private readonly IReadOnlyDictionary<ITypeParameterSymbol,string> _extractedToGrownNames;

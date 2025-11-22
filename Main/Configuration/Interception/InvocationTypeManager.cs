@@ -30,7 +30,7 @@ internal sealed class InterceptionDecoratorData
         IReadOnlyList<IInterceptorDecoratorMemberImplementation> implementations,
         
         // dependencies
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         _interfaceType = types.InterfaceType;
         _interceptorType = types.InterceptorType;

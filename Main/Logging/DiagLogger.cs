@@ -19,7 +19,7 @@ internal sealed class DiagLogger : IDiagLogger, IContainerInstance
     private readonly List<string> _dieBuildErrorCodes = [];
 
     internal DiagLogger(
-        IGeneratorConfiguration generatorConfiguration,
+        GeneratorConfiguration generatorConfiguration,
         GeneratorExecutionContext context)
     {
         _ignoreErrors = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;

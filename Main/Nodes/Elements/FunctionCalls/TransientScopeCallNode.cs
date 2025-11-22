@@ -27,7 +27,7 @@ internal sealed partial class TransientScopeCallNode : ScopeCallNodeBase, ITrans
         
         IContainerNode parentContainer,
         IFunctionNode calledFunction,
-        IReferenceGenerator referenceGenerator) 
+        ReferenceGenerator referenceGenerator) 
         : base(
             parameters.CallSideType,
             parameters.Scope,

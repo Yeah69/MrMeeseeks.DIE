@@ -12,7 +12,7 @@ internal interface IInterceptorDecoratorGenerator
 internal sealed class InterceptorDecoratorGenerator : IInterceptorDecoratorGenerator
 {
     private readonly IInvocationTypeManager _invocationTypeManager;
-    private readonly IReferenceGenerator _referenceGenerator;
+    private readonly ReferenceGenerator _referenceGenerator;
     private readonly IOrdinaryTypeParameterConstraintsDisplayer _ordinaryTypeParameterConstraintsDisplayer;
     private readonly Func<SyncMethodImplementation, InterceptionDecoratorData, MethodImplementationBodyGenerator> _methodImplementationBodyGeneratorFactory;
     private readonly Func<SyncPropertyImplementation, InterceptionDecoratorData, PropertyGetImplementationBodyGenerator> _propertyGetImplementationBodyGeneratorFactory;
@@ -27,7 +27,7 @@ internal sealed class InterceptorDecoratorGenerator : IInterceptorDecoratorGener
         
         // dependencies
         IInvocationTypeManager invocationTypeManager,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         IOrdinaryTypeParameterConstraintsDisplayer ordinaryTypeParameterConstraintsDisplayer,
         Func<SyncMethodImplementation, InterceptionDecoratorData, MethodImplementationBodyGenerator> methodImplementationBodyGeneratorFactory,
         Func<SyncPropertyImplementation, InterceptionDecoratorData, PropertyGetImplementationBodyGenerator> propertyGetImplementationBodyGeneratorFactory,

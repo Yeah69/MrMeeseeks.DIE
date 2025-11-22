@@ -19,12 +19,12 @@ internal interface IScopeNodeBase : IRangeNode
 internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
 {
     internal ScopeNodeBase(
-        IScopeInfo scopeInfo,
+        ScopeInfo scopeInfo,
         IContainerNode parentContainer,
         IScopeManager scopeManager,
         IUserDefinedElements userDefinedElements,
-        IReferenceGenerator referenceGenerator,
-        ITypeParameterUtility typeParameterUtility,
+        ReferenceGenerator referenceGenerator,
+        TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,
         IRequiredKeywordUtility requiredKeywordUtility,
         ICheckTypeProperties checkTypeProperties,

@@ -19,7 +19,7 @@ internal interface IDisposalHandlingNode
 internal sealed class DisposalHandlingNode : IDisposalHandlingNode, ITransientScopeInstance
 {
     internal DisposalHandlingNode(
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
         DisposedFieldReference = referenceGenerator.Generate("_disposed");

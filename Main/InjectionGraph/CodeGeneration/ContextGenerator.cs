@@ -13,8 +13,8 @@ internal sealed class ContextGenerator
     private readonly WellKnownTypes _wellKnownTypes;
 
     internal ContextGenerator(
-        IContainerInfo containerInfo,
-        IReferenceGenerator referenceGenerator,
+        ContainerInfo containerInfo,
+        ReferenceGenerator referenceGenerator,
         WellKnownTypes wellKnownTypes)
     {
         _wellKnownTypes = wellKnownTypes;

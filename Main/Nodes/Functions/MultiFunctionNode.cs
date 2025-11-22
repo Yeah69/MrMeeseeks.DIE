@@ -23,7 +23,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
         IReadOnlyList<ITypeSymbol> parameters,
         IContainerNode parentContainer,
         IRangeNode parentRange,
-        IReferenceGenerator referenceGenerator,
+        ReferenceGenerator referenceGenerator,
         
         // dependencies
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
@@ -37,7 +37,7 @@ internal sealed partial class MultiFunctionNode : MultiFunctionNodeBase, IMultiF
         Func<TransientScopeCallNode.Params, ITransientScopeCallNode> transientScopeCallNodeFactory,
         Func<IElementNodeMapper> typeToElementNodeMapperFactory,
         Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> overridingElementNodeWithDecorationMapperFactory,
-        ITypeParameterUtility typeParameterUtility,
+        TypeParameterUtility typeParameterUtility,
         TypeSymbolUtility typeSymbolUtility,
         ICheckTypeProperties checkTypeProperties,
         WellKnownTypesCollections wellKnownTypesCollections)

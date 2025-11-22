@@ -14,12 +14,7 @@ using MrMeeseeks.DIE.Visitors;
 
 namespace MrMeeseeks.DIE;
 
-internal interface IExecuteContainer
-{
-    void Execute();
-}
-
-internal sealed class ExecuteContainer : IExecuteContainer
+internal sealed class ExecuteContainer
 {
     private readonly bool _errorDescriptionInsteadOfBuildFailure;
     private readonly GeneratorExecutionContext _context;
@@ -29,25 +24,25 @@ internal sealed class ExecuteContainer : IExecuteContainer
     private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
     private readonly ILocalDiagLogger _localDiagLogger;
-    private readonly IAnalyticsFlags _analyticsFlags;
+    private readonly AnalyticsFlags _analyticsFlags;
     private readonly Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> _resolutionGraphAnalyticsNodeVisitorFactory;
     private readonly Lazy<IFilterForErrorRelevancyNodeVisitor> _filterForErrorRelevancyNodeVisitor;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly IInjectionGraphCodeGenerator _injectionGraphCodeGenerator;
     private readonly IDiagLogger _diagLogger;
-    private readonly IContainerInfo _containerInfo;
+    private readonly ContainerInfo _containerInfo;
 
     internal ExecuteContainer(
-        IGeneratorConfiguration generatorConfiguration,
+        GeneratorConfiguration generatorConfiguration,
         GeneratorExecutionContext context,
         IContainerNode containerNode,
         ICodeGenerationVisitor codeGenerationVisitor,
         IValidateContainer validateContainer,
         IContainerDieExceptionGenerator containerDieExceptionGenerator,
-        IContainerInfo containerInfo,
+        ContainerInfo containerInfo,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
         ILocalDiagLogger localDiagLogger,
-        IAnalyticsFlags analyticsFlags,
+        AnalyticsFlags analyticsFlags,
         Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> resolutionGraphAnalyticsNodeVisitorFactory,
         Lazy<IFilterForErrorRelevancyNodeVisitor> filterForErrorRelevancyNodeVisitor,
         IInjectionGraphBuilder injectionGraphBuilder,
@@ -172,12 +167,12 @@ internal interface IExecuteContainerContext :  IDisposable
 
 internal sealed class ExecuteContainerContext : IExecuteContainerContext, ITransientScopeRoot
 {
-    private readonly IExecuteContainer _executeContainer;
+    private readonly ExecuteContainer _executeContainer;
     private readonly IDisposable _eagerDisposalTrigger;
     private int _disposed; // 0 = false, > 0 = true
 
     public ExecuteContainerContext(
-        IExecuteContainer executeContainer,
+        ExecuteContainer executeContainer,
         IDisposable eagerDisposalTrigger)
     {
         _executeContainer = executeContainer;

@@ -16,9 +16,9 @@ internal interface IContainerInfo
     string GenerateHintPath(string suffix = "");
 }
 
-internal sealed class ContainerInfo : IContainerInfo, IContainerLevelOnlyContainerInstance
+internal sealed class ContainerInfo : IContainerLevelOnlyContainerInstance
 {
-    private string _hintPathPrefix;
+    private readonly string _hintPathPrefix;
     internal ContainerInfo(
         // parameters
         INamedTypeSymbol containerClass,

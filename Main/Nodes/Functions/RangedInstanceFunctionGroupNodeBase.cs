@@ -22,7 +22,7 @@ internal abstract class RangedInstanceFunctionGroupNodeBase : IRangedInstanceFun
         INamedTypeSymbol type,
         
         // dependencies
-        IReferenceGenerator referenceGenerator)
+        ReferenceGenerator referenceGenerator)
     {
         Level = level;
         TypeFullName = type.FullName();

@@ -18,7 +18,7 @@ internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnal
 {
     private readonly IImmutableSet<INode>? _relevantNodes;
     private readonly IPaths _paths;
-    private readonly IContainerInfo _containerInfo;
+    private readonly ContainerInfo _containerInfo;
     private readonly string _dirPath;
     private readonly StringBuilder _code = new();
     private readonly StringBuilder _relations = new();
@@ -33,7 +33,7 @@ internal sealed class ResolutionGraphAnalyticsNodeVisitor : IResolutionGraphAnal
 
         // dependencies
         IPaths paths,
-        IContainerInfo containerInfo)
+        ContainerInfo containerInfo)
     {
         _relevantNodes = relevantNodes;
         _paths = paths;

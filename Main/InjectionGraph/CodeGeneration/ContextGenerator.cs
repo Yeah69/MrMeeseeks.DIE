@@ -1,8 +1,9 @@
-﻿using MrMeeseeks.SourceGeneratorUtility.Extensions;
+﻿using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 
-internal sealed class ContextGenerator
+internal sealed class ContextGenerator : IContainerInstance
 {
     private const string OverridesConstructorParameterName = "overrides";
     private const string OutwardFacingTypeNumberConstructorParameterName = "outwardFacingTypeNr";

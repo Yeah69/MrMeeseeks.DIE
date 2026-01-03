@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.Utility;
@@ -13,14 +12,17 @@ internal interface IInjectionGraphCodeGenerator
     string Generate();
 }
 
-internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
+internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
 {
     private const string NotAvailable = "null!"; // ToDo change value to "not_available" as soon as correct behavior is required
     private readonly StringBuilder _code = new();
-    private readonly Dictionary<IFunction, string> _functionNames = [];
     private readonly Dictionary<ITypeSymbol, string> _entryFunctionsForFunctors = [];
     private readonly ContainerInfo _containerInfo;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
+    private readonly DomainCodeGenerator _domainCodeGenerator;
+    private readonly DomainsRegister _domainsRegister;
+    private readonly FunctionUtility _functionUtility;
+    private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
     private readonly OverrideContextManager _overrideContextManager;
     private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
     private readonly ContextGenerator _contextGenerator;
@@ -33,6 +35,10 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
     public InjectionGraphCodeGenerator(
         ContainerInfo containerInfo,
         IInjectionGraphBuilder injectionGraphBuilder,
+        DomainCodeGenerator domainCodeGenerator,
+        DomainsRegister domainsRegister,
+        FunctionUtility functionUtility,
+        ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription,
         OverrideContextManager overrideContextManager,
         ConcreteFunctorNodeManager concreteFunctorNodeManager,
         ContextGenerator contextGenerator,
@@ -42,6 +48,10 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
     {
         _containerInfo = containerInfo;
         _injectionGraphBuilder = injectionGraphBuilder;
+        _domainCodeGenerator = domainCodeGenerator;
+        _domainsRegister = domainsRegister;
+        _functionUtility = functionUtility;
+        _scopedInstanceInterfaceDescription = scopedInstanceInterfaceDescription;
         _overrideContextManager = overrideContextManager;
         _concreteFunctorNodeManager = concreteFunctorNodeManager;
         _contextGenerator = contextGenerator;
@@ -55,12 +65,6 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
     {
         _overrideContextNameMap = _overrideContextManager.AllOverrideContexts
             .ToDictionary(o => o, o => _referenceGenerator.Generate(o is OverrideContext.Any ? "Overrides" : "NoOverrides"));
-        foreach (var function in _injectionGraphBuilder.Functions)
-        {
-            if (_functionNames.ContainsKey(function))
-                continue;
-            _functionNames[function] = _referenceGenerator.Generate("Create", function.RootNode.Type);
-        }
         
         _code.AppendLine(
         $$"""
@@ -82,12 +86,20 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                   """);
         }
 
+        var inheritanceElements = _domainCodeGenerator.GetInheritanceHeaderElements(_domainsRegister.ContainerDomain, isContainer: true);
+
+        var inheritance = inheritanceElements.Any()
+            ? $" : {string.Join(", ", inheritanceElements)}"
+            : "";
+
         _code.AppendLine(
             $$"""
-              sealed partial class {{_containerInfo.Name}}
+              sealed partial class {{_containerInfo.Name}}{{inheritance}}
               {
               {{_contextGenerator.GenerateContextClass()}}
               """);
+
+        _domainCodeGenerator.GenerateInterface(_code);
 
         var constructors = _containerInfo.ContainerType.GetMembers().OfType<IMethodSymbol>()
             .Where(ms => ms.MethodKind == MethodKind.Constructor);
@@ -108,6 +120,8 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                   }
                   """);
         }
+        
+        _domainCodeGenerator.Generate(_code, _domainsRegister.ContainerDomain, Constants.ThisKeyword);
 
         var typesGettingFunctorEntry = _concreteFunctorNodeManager.AllNodes
             .Select(n => n.ReturnedElement.Target)
@@ -118,12 +132,12 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
             var function = new FunctorEntryFunction(typeNode.Type) { Accessibility = Accessibility.Private };
             _code.AppendLine(
                 $$"""
-                  {{GenerateMethodDeclaration(function, functionName)}}
+                  {{_functionUtility.GenerateHeader(function)}}
                   {
                   """);
             if (typeNode.Incoming.Select(e => e.Type).OfType<FunctionEdgeType>().FirstOrDefault() is { } nextFunction)
             {
-                _code.AppendLine($"return {_functionNames[nextFunction.Function]}({_contextGenerator.ParameterName});");
+                _code.AppendLine($"return {_functionUtility.GenerateFunctionCall(nextFunction.Function, doScopedInstance: true)};");
             }
             else
             {
@@ -136,19 +150,34 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         var entryCreateFunctionsMap = new Dictionary<string, string>();
         foreach (var function in _injectionGraphBuilder.Functions)
         {
-            var functionName = _functionNames[function];
+            var functionName = _functionUtility.GetName(function);
 
             _code.AppendLine(
                 $$"""
-                  {{GenerateMethodDeclaration(function, functionName)}}
+                  {{_functionUtility.GenerateHeader(function)}}
                   {
                   """);
+            
+            var rootNode = function.RootNode;
+            
+            if (rootNode.DomainType is not DomainType.None)
+            {
+                if (rootNode.DomainType is DomainType.Container)
+                {
+                    var (_, scopedInstanceFunction) = _domainsRegister.ContainerDomain.ScopedInstances.First(sid =>
+                        CustomSymbolEqualityComparer.Default.Equals(sid.TypeNode.Type, rootNode.Type));
+                    _code.AppendLine($"if ({_functionUtility.DoScopedInstanceParameterName})");
+                    _code.AppendLine("{");
+                    _code.AppendLine($"return ({Constants.ThisKeyword} as {_scopedInstanceInterfaceDescription.InterfaceName}<{rootNode.Type}>).{_functionUtility.GenerateFunctionCall(scopedInstanceFunction, doScopedInstance: true)};");
+                    _code.AppendLine("}");
+                }
+            }
 
-            var rootReference = GenerateForInjectionNode(function.RootNode);
-            if (!function.RootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
+            var rootReference = GenerateForInjectionNode(rootNode);
+            if (!rootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
                 _code.AppendLine($"return {rootReference};");
             _code.AppendLine("}");
-            foreach (var entryCreateFunction in function.RootNode.Incoming.Select(e => e.Source).OfType<ConcreteEntryFunctionNode>())
+            foreach (var entryCreateFunction in rootNode.Incoming.Select(e => e.Source).OfType<ConcreteEntryFunctionNode>())
                 entryCreateFunctionsMap[entryCreateFunction.Data.Name] = functionName;
         }
 
@@ -167,7 +196,7 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
                     $$"""
                       internal {{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
                       {
-                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null")}});
+                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null")}}, {{_functionUtility.DoScopedInstanceParameterName}}: {{Constants.TrueKeyword}});
                       }
                       """);
             }
@@ -535,56 +564,10 @@ internal sealed class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
         {
             var function = functionEdgeType.Function;
             var resultReference = _referenceGenerator.Generate(function.RootNode.Type);
-            _code.AppendLine($"{function.RootNode.Type.FullName()} {resultReference} = {_functionNames[function]}({_contextGenerator.ParameterName});");
+            _code.AppendLine($"{function.RootNode.Type.FullName()} {resultReference} = {_functionUtility.GenerateFunctionCall(function, doScopedInstance: true)};");
             return resultReference;
         }
         return GenerateForInjectionNode(node);
-    }
-    
-    private string GenerateMethodDeclaration(IFunction function, string functionName)
-    {
-        var accessibility = function is { Accessibility: { } acc, ExplicitInterface: null }
-            ? $"{SyntaxFacts.GetText(acc)} "  
-            : "";
-        var asyncModifier = function.IsAsync
-            ? "async "
-            : "";
-        var explicitInterfaceFullName = function.ExplicitInterface is { } explicitInterface
-            ? $"{explicitInterface.FullName()}."
-            : "";
-        var typeParameters = "";
-        var typeParametersConstraints = "";
-        if (function.TypeParameters.Length != 0)
-        {
-            typeParameters = $"<{string.Join(", ", function.TypeParameters.Select(p => p.Name))}>";
-            typeParametersConstraints = string.Join("", function
-                .TypeParameters
-                .Where(p => p.HasValueTypeConstraint 
-                            || p.HasReferenceTypeConstraint
-                            || p.HasNotNullConstraint 
-                            || p.HasUnmanagedTypeConstraint
-                            || p.HasConstructorConstraint
-                            || p.ConstraintTypes.Length > 0)
-                .Select(p =>
-                {
-                    var constraints = new List<string>();
-                    if (p.HasUnmanagedTypeConstraint)
-                        constraints.Add("unmanaged");
-                    else if (p.HasValueTypeConstraint)
-                        constraints.Add("struct");
-                    else if (p.HasReferenceTypeConstraint)
-                        constraints.Add($"class{(p.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "?" : "")}");
-                    if (p.HasNotNullConstraint)
-                        constraints.Add("notnull");
-                    constraints.AddRange(p.ConstraintTypes.Select((t, i) => t.WithNullableAnnotation(p.ConstraintNullableAnnotations[i]).FullName()));
-                    if (p.HasConstructorConstraint)
-                        constraints.Add("new()");
-                    return $"{Environment.NewLine}where {p.Name} : {string.Join(", ", constraints)}";
-                }));
-        }
-
-        var parametersText = _contextGenerator.FullNameAndParameterName;
-        return $"{accessibility}{asyncModifier}{function.ReturnType.FullName()} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
     }
     
 }

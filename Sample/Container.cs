@@ -1,56 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal interface IInterface;
+internal class Dependency : IContainerInstance;
 
-internal sealed class Proxy(IInterface decorated) : IInterface
+internal class Parent
 {
-    public IInterface Decorated => decorated;
+    internal required Dependency DependencyA { get; init; }
+    internal required Dependency DependencyB { get; init; }
+    internal bool SameSame => ReferenceEquals(DependencyA, DependencyB);
 }
 
-internal sealed class Decorator(Lazy<IInterface> boobies) : IInterface, IDecorator<IInterface>
-{
-    public IInterface Decorated => boobies.Value;
-}
-
-internal enum Key 
-{
-    Zero,
-    A,
-    B,
-    C
-}
-
-[InjectionKey(Key.Zero)]
-internal sealed class Implementation : IInterface;
-
-[InjectionKey(Key.A)]
-internal sealed class ImplementationA : IInterface;
-
-[InjectionKey(Key.B)]
-internal sealed class ImplementationB : IInterface;
-
-[InjectionKey(Key.C)]
-internal sealed class ImplementationC : IInterface;
-
-internal class Parent(Lazy<IEnumerable<KeyValuePair<Key, Lazy<IInterface>>>> children) 
-{
-    public List<KeyValuePair<Key, IInterface>> Children { get; } = children.Value.Select(kvp => new KeyValuePair<Key, IInterface>(kvp.Key, kvp.Value.Value)).ToList();
-}
-
-internal sealed partial class NestingParentA
-{
-    internal sealed partial class NestingParentB
-    {
-        [ImplementationCollectionChoice(typeof(IInterface),
-            typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC),
-            typeof(Implementation), typeof(ImplementationA), typeof(ImplementationB), typeof(ImplementationC))]
-        [CreateFunction(typeof(Parent), "Create")]
-        internal sealed partial class Container;
-    }
-}
+[CreateFunction(typeof(Parent), "Create")]
+internal sealed partial class Container;

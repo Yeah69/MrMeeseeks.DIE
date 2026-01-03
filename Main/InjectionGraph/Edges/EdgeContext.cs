@@ -8,7 +8,8 @@ namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 internal abstract record DomainContext
 {
     internal sealed record Container : DomainContext;
-    internal sealed record Scoped(string ScopeName) : DomainContext;
+    internal sealed record TransientScope(string TransientScopeName) : DomainContext;
+    internal sealed record Scope(string ScopeName, string? TransientScopeName) : DomainContext;
 }
 
 internal abstract record OverrideContext

@@ -7,8 +7,8 @@ internal class Program
     {
         try
         {
-            //var container = NestingParent.Container.DIE_CreateContainer(); 
-            //var parent = container.Create();
+            var container = Container.DIE_CreateContainer(); 
+            var parent = container.Create();
 
             Console.WriteLine("Hello, World!");
         }

@@ -80,7 +80,7 @@ internal interface ICheckTypeProperties
     DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType);
     ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType);
     bool ShouldBeComposite(INamedTypeSymbol interfaceType);
-    ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType);
+    ScopeLevel GetScopeLevelFor(ITypeSymbol implementationType);
     INamedTypeSymbol? GetCompositeFor(INamedTypeSymbol interfaceType);
     ConstructorResult GetConstructorChoiceFor(INamedTypeSymbol implementationType);
     
@@ -237,7 +237,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     }
 
     public bool ShouldBeComposite(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.InterfaceToComposite.ContainsKey(interfaceType.UnboundIfGeneric());
-    public ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType)
+    public ScopeLevel GetScopeLevelFor(ITypeSymbol implementationType)
     {
         var unbound = implementationType.UnboundIfGeneric();
         if (_currentlyConsideredTypes.ContainerInstanceTypes.Contains(unbound))

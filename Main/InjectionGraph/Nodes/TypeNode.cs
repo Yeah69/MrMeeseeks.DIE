@@ -34,6 +34,7 @@ internal sealed class TypeNode(ITypeSymbol type)
     internal ITypeSymbol Type { get; } = type;
     internal IReadOnlyList<TypeEdge> Incoming => _incoming;
     internal IReadOnlyList<ConcreteEdge> Outgoing => _outgoing;
+    internal DomainType DomainType { get; set; } = DomainType.None;
     
     internal void AddIncoming(TypeEdge edge) => _incoming.Add(edge);
     internal void AddOutgoing(ConcreteEdge edge) => _outgoing.Add(edge);

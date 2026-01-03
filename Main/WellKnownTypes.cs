@@ -43,7 +43,8 @@ internal sealed record WellKnownTypes(
     INamedTypeSymbol Type, // .NET Standard 2.0
     INamedTypeSymbol MethodInfo, // .NET Standard 2.0
     INamedTypeSymbol String, // .NET Standard 2.0
-    INamedTypeSymbol Object) // .NET Standard 2.0
+    INamedTypeSymbol Object, // .NET Standard 2.0
+    INamedTypeSymbol Boolean) // .NET Standard 2.0
     : IContainerInstance
 {
     internal static WellKnownTypes Create(Compilation compilation)
@@ -98,6 +99,7 @@ internal sealed record WellKnownTypes(
             Type: compilation.GetTypeByMetadataNameOrThrow("System.Type"),
             MethodInfo: compilation.GetTypeByMetadataNameOrThrow("System.Reflection.MethodInfo"),
             String: compilation.GetTypeByMetadataNameOrThrow("System.String"),
-            Object: @object);
+            Object: @object,
+            Boolean: compilation.GetTypeByMetadataNameOrThrow("System.Boolean"));
     }
 }

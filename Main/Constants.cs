@@ -5,9 +5,12 @@ internal static class Constants
     // General
     internal const string DieAbbreviation = "DIE";
     internal const string ThisKeyword = "this";
+    internal const string NullKeyword = "null";
     internal const string PublicKeyword = "public";
     internal const string InternalKeyword = "internal";
     internal const string PrivateKeyword = "private";
+    internal const string TrueKeyword = "true";
+    internal const string FalseKeyword = "false";
     internal const string DescriptionsNamespace = $"MrMeeseeks.{DieAbbreviation}.Descriptions";
     
     // Ranges

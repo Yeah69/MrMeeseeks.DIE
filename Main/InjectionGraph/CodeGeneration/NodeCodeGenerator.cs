@@ -4,7 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 
-internal sealed class DomainCodeGenerator(
+internal sealed class NodeCodeGenerator(
     FunctionUtility functionUtility,
     ContainerInfo containerInfo,
     ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription,
@@ -12,10 +12,10 @@ internal sealed class DomainCodeGenerator(
     ReferenceGenerator referenceGenerator, 
     WellKnownTypes wellKnownTypes)
 {
-    internal ImmutableArray<string> GetInheritanceHeaderElements(Domain domain, bool isContainer)
+    internal ImmutableArray<string> GetInheritanceHeaderElements(Node node, bool isContainer)
     {
         var prefix = isContainer ? $"{containerInfo.Name}." : string.Empty;
-        return [..domain.ScopedInstances.Select(si => 
+        return [..node.ScopedInstances.Select(si => 
             $"{prefix}{scopedInstanceInterfaceDescription.InterfaceName}<{si.TypeNode.Type.FullName()}>")];
     }
     
@@ -26,16 +26,15 @@ internal sealed class DomainCodeGenerator(
         code.AppendLine("{");
         code.AppendLine($"{typeParameterName} {ScopedInstanceInterfaceDescription.FunctionName}({contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {functionUtility.DoScopedInstanceParameterName});");
         code.AppendLine("}");
+        code.AppendLine();
     }
     
-    internal void Generate(StringBuilder code, Domain domain, string containerReference)
+    internal void GenerateFunctions(StringBuilder code, Node node, string containerReference)
     {
         var semaphoreSlimFullName = wellKnownTypes.SemaphoreSlim.FullName();
         var objectFullName = wellKnownTypes.Object.FullName();
 
-        code.AppendLine($"// {string.Join(", ", domain.ScopedInstances.Select(sid => sid.TypeNode.Type.FullName()))}");
-
-        foreach ( var scopedInstance in domain.ScopedInstances)
+        foreach ( var scopedInstance in node.ScopedInstances)
         {
             var typeSymbol = scopedInstance.TypeNode.Type;
             var function = scopedInstance.Function;

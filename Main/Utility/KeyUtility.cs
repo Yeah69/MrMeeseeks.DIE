@@ -12,6 +12,6 @@ internal sealed class KeyUtility(WellKnownTypes wellKnownTypes)
             ? $"({type.FullName()}) {SymbolDisplay.FormatPrimitive(value, true, false)}" 
             : CustomSymbolEqualityComparer.Default.Equals(type, wellKnownTypes.Type) 
                 ? $"typeof({(value as ITypeSymbol)?.FullName() ?? ""})" 
-                : SymbolDisplay.FormatPrimitive(value, true, false);
+                : SymbolDisplay.FormatPrimitive(value, true, false) ?? string.Empty;
     }
 }

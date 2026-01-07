@@ -4,7 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
-internal enum DomainType
+internal enum NodeType
 {
     None,
     Container,
@@ -20,12 +20,12 @@ internal class ScopedInstanceInterfaceDescription(ReferenceGenerator referenceGe
 
 internal record ScopedInstanceDescription(TypeNode TypeNode, IFunction Function);
 
-internal sealed class Domain
+internal sealed class Node
 {
     private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
     private readonly List<ScopedInstanceDescription> _scopedInstances = [];
 
-    internal Domain(ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)
+    internal Node(ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)
     {
         _scopedInstanceInterfaceDescription = scopedInstanceInterfaceDescription;
         ScopedInstances = _scopedInstances.AsReadOnly();

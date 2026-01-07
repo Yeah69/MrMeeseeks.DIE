@@ -29,7 +29,7 @@ internal abstract record ExplicitInterfaceDescription
 
 internal sealed class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
 {
-    public Accessibility? Accessibility { get; init; }
+    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Private;
     public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None.Instance;
     public ITypeParameterSymbol[] TypeParameters { get; } = [];
     public ITypeSymbol ReturnType => RootNode.Type;
@@ -39,7 +39,7 @@ internal sealed class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
 
 internal sealed class FunctorEntryFunction(ITypeSymbol returnType) : IFunction
 {
-    public Accessibility? Accessibility { get; init; }
+    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Private;
     public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None.Instance;
     public ITypeParameterSymbol[] TypeParameters { get; } = [];
     public ITypeSymbol ReturnType => returnType;

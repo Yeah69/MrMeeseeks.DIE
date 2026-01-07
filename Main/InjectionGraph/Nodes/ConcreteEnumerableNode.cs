@@ -46,7 +46,7 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
 {
     private readonly IContainerCheckTypeProperties _containerCheckTypeProperties;
     private readonly IdRegister _idRegister;
-    private readonly ConcurrentDictionary<DomainContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> _collectionCases = [];
+    private readonly ConcurrentDictionary<NodeContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> _collectionCases = [];
     private readonly Lazy<TypeEdge> _innerEdgeLazy;
 
     internal ConcreteEnumerableNode(
@@ -94,7 +94,7 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
     internal ITypeSymbol UnwrappedItemType { get; }
 
     internal ConcreteEnumerableNodeData Data { get; }
-    internal ConcurrentDictionary<DomainContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> CollectionCases => _collectionCases;
+    internal ConcurrentDictionary<NodeContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> CollectionCases => _collectionCases;
     
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteEnumerableNode other && Data.Equals(other.Data);
@@ -109,7 +109,7 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
                 : _containerCheckTypeProperties.MapToKeyedImplementations(unwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key))
                 .ToImmutableArray();
 
-            var keyResult = _collectionCases.GetOrAdd(context.Domain, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
+            var keyResult = _collectionCases.GetOrAdd(context.Node, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
                 .GetOrAdd(new KeyContext.None(), new ConcreteEnumerableResult.Key(keyValuePairKeyType, keyValues));
             keyResult.PurgeKeyAndChoice = context is { Key: not KeyContext.None } or { CaseChoice: not CaseChoiceContext.None };
                 
@@ -132,12 +132,12 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
         {
             var outwardFacingId = _idRegister.GetOutwardFacingTypeId(interfaceType);
             var caseChoices = _containerCheckTypeProperties.MapToImplementations(interfaceType, injectionKey)
-                .Select(i => _idRegister.GetInitialCaseId(context.Domain, interfaceType, i))
+                .Select(i => _idRegister.GetInitialCaseId(context.Node, interfaceType, i))
                 .OfType<IdRegister.CaseIdResponse.Success>()
                 .Select(s => new CaseChoiceContext.Single(outwardFacingId, s.NextCaseId))
                 .ToImmutableArray();
 
-            var interfaceResult = _collectionCases.GetOrAdd(context.Domain, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
+            var interfaceResult = _collectionCases.GetOrAdd(context.Node, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
                 .GetOrAdd(context.Key, new ConcreteEnumerableResult.Interface(caseChoices));
             interfaceResult.PurgeKeyAndChoice = context is { Key: not KeyContext.None } or { CaseChoice: not CaseChoiceContext.None };
             
@@ -153,7 +153,7 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
             return notYetConnectedTypeNodes;
         }
 
-        var singlePlainItemResult = _collectionCases.GetOrAdd(context.Domain, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
+        var singlePlainItemResult = _collectionCases.GetOrAdd(context.Node, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
             .GetOrAdd(context.Key, new ConcreteEnumerableResult.SinglePlainItem());
         singlePlainItemResult.PurgeKeyAndChoice = context is { Key: not KeyContext.None } or { CaseChoice: not CaseChoiceContext.None };
 

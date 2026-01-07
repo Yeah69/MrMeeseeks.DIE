@@ -26,7 +26,7 @@ internal sealed class InjectionGraphBuilder(
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
     OverrideContextManager overrideContextManager,
     IContainerCheckTypeProperties containerCheckTypeProperties,
-    DomainsRegister domainsRegister,
+    NodesRegister nodesRegister,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
     Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
     WellKnownTypesCollections wellKnownTypesCollections)
@@ -45,9 +45,9 @@ internal sealed class InjectionGraphBuilder(
     {
         var overrideContext = overrideContextManager.GetOrAddContext(overrides);
         var rootEdgeContext = new EdgeContext(
-            new DomainContext.Container(), 
-            overrideContext, 
-            new KeyContext.None(), 
+            new NodeContext.Container(),
+            overrideContext,
+            new KeyContext.None(),
             new CaseChoiceContext.None());
         var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, rootType, overrides);
         var concreteEntryFunctionNode = concreteEntryFunctionNodeManager.GetOrAddNode(concreteEntryFunctionNodeData);
@@ -78,23 +78,23 @@ internal sealed class InjectionGraphBuilder(
         {
             if (scopeLevel is ScopeLevel.Container)
             {
-                domainsRegister.RegisterContainerInstance(typeNode);
-                typeNode.DomainType = DomainType.Container;
+                nodesRegister.RegisterContainerInstance(typeNode);
+                typeNode.NodeType = NodeType.Container;
             }
             else
             {
-                if (scopeLevel is ScopeLevel.Scope && edgeContext.Domain is DomainContext.Scope { ScopeName: var scopeName })
+                if (scopeLevel is ScopeLevel.Scope && edgeContext.Node is NodeContext.Scope { ScopeName: var scopeName })
                 {
-                    domainsRegister.RegisterScopedInstance(scopeName, typeNode);
-                    typeNode.DomainType = DomainType.Scope;
+                    nodesRegister.RegisterScopedInstance(scopeName, typeNode);
+                    typeNode.NodeType = NodeType.Scope;
                 }
-                else if (scopeLevel is ScopeLevel.TransientScope && edgeContext.Domain is DomainContext.TransientScope
+                else if (scopeLevel is ScopeLevel.TransientScope && edgeContext.Node is NodeContext.TransientScope
                          {
                              TransientScopeName: var transientScopeName
                          })
                 {
-                    domainsRegister.RegisterScopedInstance(transientScopeName, typeNode);
-                    typeNode.DomainType = DomainType.TransientScope;
+                    nodesRegister.RegisterScopedInstance(transientScopeName, typeNode);
+                    typeNode.NodeType = NodeType.TransientScope;
                 }
             }
         }
@@ -138,7 +138,7 @@ internal sealed class InjectionGraphBuilder(
                 // or outgoing edges contain concrete enumerable
                 || typeNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode)
                 // or Type Node is scoped
-                || typeNode.DomainType is not DomainType.None)
+                || typeNode.NodeType is not NodeType.None)
                 NewFunctionIfNotAlready(typeNode);
 
         foreach (var concreteEntryFunctionNode in _concreteEntryFunctionNodes)

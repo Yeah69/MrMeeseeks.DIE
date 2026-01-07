@@ -5,11 +5,11 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal abstract record DomainContext
+internal abstract record NodeContext
 {
-    internal sealed record Container : DomainContext;
-    internal sealed record TransientScope(string TransientScopeName) : DomainContext;
-    internal sealed record Scope(string ScopeName, string? TransientScopeName) : DomainContext;
+    internal sealed record Container : NodeContext;
+    internal sealed record TransientScope(string TransientScopeName) : NodeContext;
+    internal sealed record Scope(string ScopeName, string? TransientScopeName) : NodeContext;
 }
 
 internal abstract record OverrideContext
@@ -66,7 +66,7 @@ internal abstract record CaseChoiceContext
 }
 
 internal sealed record EdgeContext(
-    DomainContext Domain, 
-    OverrideContext Override, 
-    KeyContext Key, 
+    NodeContext Node,
+    OverrideContext Override,
+    KeyContext Key,
     CaseChoiceContext CaseChoice);

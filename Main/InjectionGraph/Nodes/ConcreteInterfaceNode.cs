@@ -38,8 +38,8 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     private readonly TypeNodeManager _typeNodeManager;
     private readonly Func<IConcreteNode, TypeNode, TypeEdge> _typeEdgeFactory;
     private readonly Dictionary<int, InnerCaseIdResponse.Success> _caseToNextCase = [];
-    private readonly Dictionary<DomainContext, InnerCaseIdResponse.Success> _domainToNextCase = [];
-    private readonly Dictionary<(DomainContext Domain, ITypeSymbol KeyType, object KeyObject), InnerCaseIdResponse.Success> _keyToNextCase = [];
+    private readonly Dictionary<NodeContext, InnerCaseIdResponse.Success> _nodeToNextCase = [];
+    private readonly Dictionary<(NodeContext Node, ITypeSymbol KeyType, object KeyObject), InnerCaseIdResponse.Success> _keyToNextCase = [];
 
     internal ConcreteInterfaceNode(
         // parameters
@@ -62,10 +62,10 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     internal ConcreteInterfaceNodeData Data { get; }
     internal IEnumerable<(TypeEdge Edge, int Id, int NextId)> Cases => 
         _caseToNextCase.Select(kvp => (kvp.Value.Edge, kvp.Key, kvp.Value.NextCaseId));
-    internal IEnumerable<(DomainContext Domain, int NextId)> DefaultImplementationsCaseNumbers => 
-        _domainToNextCase.Select(kvp => (kvp.Key, kvp.Value.NextCaseId));
-    internal IEnumerable<(DomainContext Domain, ITypeSymbol KeyType, object KeyObject, int NextId)> KeyObjectToCaseNumbers => 
-        _keyToNextCase.Select(kvp => (kvp.Key.Domain, kvp.Key.KeyType, kvp.Key.KeyObject, kvp.Value.NextCaseId));
+    internal IEnumerable<(NodeContext Node, int NextId)> DefaultImplementationsCaseNumbers =>
+        _nodeToNextCase.Select(kvp => (kvp.Key, kvp.Value.NextCaseId));
+    internal IEnumerable<(NodeContext Node, ITypeSymbol KeyType, object KeyObject, int NextId)> KeyObjectToCaseNumbers =>
+        _keyToNextCase.Select(kvp => (kvp.Key.Node, kvp.Key.KeyType, kvp.Key.KeyObject, kvp.Value.NextCaseId));
     
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteInterfaceNode node && Data.Equals(node.Data);
@@ -86,13 +86,13 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     {
         var innerCaseIdResponse = context switch
         {
-            { Domain: var domain, Key: KeyContext.Single { Type: {} keyType, Value: { } keyValue } } => 
-                GetKeyedDefault(domain, keyType, keyValue),
-            { CaseChoice: CaseChoiceContext.Single { OutwardFacingTypeId: var outwardFacingTypeId, CaseId: var caseId } } 
+            { Node: var node, Key: KeyContext.Single { Type: {} keyType, Value: { } keyValue } } =>
+                GetKeyedDefault(node, keyType, keyValue),
+            { CaseChoice: CaseChoiceContext.Single { OutwardFacingTypeId: var outwardFacingTypeId, CaseId: var caseId } }
                 when outwardFacingTypeId == Number =>
                 GetNextCase(caseId),
-            { Domain: var domain } =>
-                GetDefault(domain)
+            { Node: var node } =>
+                GetDefault(node)
         };
         if (context.Key != new KeyContext.None())
             context = context with { Key = new KeyContext.None() };
@@ -112,9 +112,9 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
                 return new CaseIdResponse.Error("Unexpected case");
         }
         
-        InnerCaseIdResponse GetKeyedDefault(DomainContext domain, ITypeSymbol keyType, object keyValue)
+        InnerCaseIdResponse GetKeyedDefault(NodeContext node, ITypeSymbol keyType, object keyValue)
         {
-            if (_keyToNextCase.TryGetValue((domain, keyType, keyValue), out var success)) 
+            if (_keyToNextCase.TryGetValue((node, keyType, keyValue), out var success))
                 return success;
             
             var targetImplementationResult =
@@ -134,13 +134,13 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(domain, Data.Interface, targetImplementation))
+            switch (_idRegister.GetInitialCaseId(node, Data.Interface, targetImplementation))
             {
                 case IdRegister.CaseIdResponse.Success { NextCaseId: var keyedCaseId }:
                 {
                     var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(Data.Interface));
                     success = new InnerCaseIdResponse.Success(typeEdge, keyedCaseId);
-                    _keyToNextCase[(domain, keyType, keyValue)] = success;
+                    _keyToNextCase[(node, keyType, keyValue)] = success;
 
                     return success;
                 }
@@ -179,9 +179,9 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
             return success;
         }
         
-        InnerCaseIdResponse GetDefault(DomainContext domain)
+        InnerCaseIdResponse GetDefault(NodeContext node)
         {
-            if (_domainToNextCase.TryGetValue(domain, out var success)) 
+            if (_nodeToNextCase.TryGetValue(node, out var success))
                 return success;
             
             var targetImplementationResult =
@@ -201,13 +201,13 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(domain, Data.Interface, targetImplementation))
+            switch (_idRegister.GetInitialCaseId(node, Data.Interface, targetImplementation))
             {
-                case IdRegister.CaseIdResponse.Success { NextCaseId: var domainCaseId }:
+                case IdRegister.CaseIdResponse.Success { NextCaseId: var nodeCaseId }:
                 {
                     var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(Data.Interface));
-                    success = new InnerCaseIdResponse.Success(typeEdge, domainCaseId);
-                    _domainToNextCase[domain] = success;
+                    success = new InnerCaseIdResponse.Success(typeEdge, nodeCaseId);
+                    _nodeToNextCase[node] = success;
 
                     return success;
                 }

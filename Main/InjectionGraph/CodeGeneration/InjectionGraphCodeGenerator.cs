@@ -19,8 +19,8 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
     private readonly Dictionary<ITypeSymbol, string> _entryFunctionsForFunctors = [];
     private readonly ContainerInfo _containerInfo;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
-    private readonly DomainCodeGenerator _domainCodeGenerator;
-    private readonly DomainsRegister _domainsRegister;
+    private readonly NodeCodeGenerator _nodeCodeGenerator;
+    private readonly NodesRegister _nodesRegister;
     private readonly FunctionUtility _functionUtility;
     private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
     private readonly OverrideContextManager _overrideContextManager;
@@ -35,8 +35,8 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
     public InjectionGraphCodeGenerator(
         ContainerInfo containerInfo,
         IInjectionGraphBuilder injectionGraphBuilder,
-        DomainCodeGenerator domainCodeGenerator,
-        DomainsRegister domainsRegister,
+        NodeCodeGenerator nodeCodeGenerator,
+        NodesRegister nodesRegister,
         FunctionUtility functionUtility,
         ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription,
         OverrideContextManager overrideContextManager,
@@ -48,8 +48,8 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
     {
         _containerInfo = containerInfo;
         _injectionGraphBuilder = injectionGraphBuilder;
-        _domainCodeGenerator = domainCodeGenerator;
-        _domainsRegister = domainsRegister;
+        _nodeCodeGenerator = nodeCodeGenerator;
+        _nodesRegister = nodesRegister;
         _functionUtility = functionUtility;
         _scopedInstanceInterfaceDescription = scopedInstanceInterfaceDescription;
         _overrideContextManager = overrideContextManager;
@@ -86,7 +86,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                   """);
         }
 
-        var inheritanceElements = _domainCodeGenerator.GetInheritanceHeaderElements(_domainsRegister.ContainerDomain, isContainer: true);
+        var inheritanceElements = _nodeCodeGenerator.GetInheritanceHeaderElements(_nodesRegister.ContainerNode, isContainer: true);
 
         var inheritance = inheritanceElements.Any()
             ? $" : {string.Join(", ", inheritanceElements)}"
@@ -96,10 +96,11 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             $$"""
               sealed partial class {{_containerInfo.Name}}{{inheritance}}
               {
-              {{_contextGenerator.GenerateContextClass()}}
               """);
+        
+        _contextGenerator.GenerateContextClass(_code);
 
-        _domainCodeGenerator.GenerateInterface(_code);
+        _nodeCodeGenerator.GenerateInterface(_code);
 
         var constructors = _containerInfo.ContainerType.GetMembers().OfType<IMethodSymbol>()
             .Where(ms => ms.MethodKind == MethodKind.Constructor);
@@ -121,7 +122,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                   """);
         }
         
-        _domainCodeGenerator.Generate(_code, _domainsRegister.ContainerDomain, Constants.ThisKeyword);
+        _nodeCodeGenerator.GenerateFunctions(_code, _nodesRegister.ContainerNode, Constants.ThisKeyword);
 
         var typesGettingFunctorEntry = _concreteFunctorNodeManager.AllNodes
             .Select(n => n.ReturnedElement.Target)
@@ -129,7 +130,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
         foreach (var typeNode in typesGettingFunctorEntry)
         {
             var functionName = _referenceGenerator.Generate("Create", typeNode.Type);
-            var function = new FunctorEntryFunction(typeNode.Type) { Accessibility = Accessibility.Private };
+            var function = new FunctorEntryFunction(typeNode.Type);
             _code.AppendLine(
                 $$"""
                   {{_functionUtility.GenerateHeader(function)}}
@@ -160,15 +161,15 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             
             var rootNode = function.RootNode;
             
-            if (rootNode.DomainType is not DomainType.None)
+            if (rootNode.NodeType is not NodeType.None)
             {
-                if (rootNode.DomainType is DomainType.Container)
+                if (rootNode.NodeType is NodeType.Container)
                 {
-                    var (_, scopedInstanceFunction) = _domainsRegister.ContainerDomain.ScopedInstances.First(sid =>
+                    var (_, scopedInstanceFunction) = _nodesRegister.ContainerNode.ScopedInstances.First(sid =>
                         CustomSymbolEqualityComparer.Default.Equals(sid.TypeNode.Type, rootNode.Type));
                     _code.AppendLine($"if ({_functionUtility.DoScopedInstanceParameterName})");
                     _code.AppendLine("{");
-                    _code.AppendLine($"return ({Constants.ThisKeyword} as {_scopedInstanceInterfaceDescription.InterfaceName}<{rootNode.Type}>).{_functionUtility.GenerateFunctionCall(scopedInstanceFunction, doScopedInstance: true)};");
+                    _code.AppendLine($"return (({_scopedInstanceInterfaceDescription.InterfaceName}<{rootNode.Type}>) {Constants.ThisKeyword}).{_functionUtility.GenerateFunctionCall(scopedInstanceFunction, doScopedInstance: true)};");
                     _code.AppendLine("}");
                 }
             }
@@ -196,7 +197,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                     $$"""
                       internal {{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
                       {
-                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null")}}, {{_functionUtility.DoScopedInstanceParameterName}}: {{Constants.TrueKeyword}});
+                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null", containerNode: Constants.ThisKeyword, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword)}}, {{_functionUtility.DoScopedInstanceParameterName}}: {{Constants.TrueKeyword}});
                       }
                       """);
             }
@@ -358,16 +359,22 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                 var outwardFacingTypeIdReference = _referenceGenerator.Generate("oId");
                 var initialCaseIdReference = _referenceGenerator.Generate("cId");
                 var keyReference = _referenceGenerator.Generate("kId");
+                var containerNodeReference = _referenceGenerator.Generate("cnId");
+                var transientScopeNodeReference = _referenceGenerator.Generate("tsnId");
+                var scopeNodeReference = _referenceGenerator.Generate("snId");
                 _code.AppendLine(
                     $$"""
                       {{_wellKnownTypes.Int32.FullName()}} {{outwardFacingTypeIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}};
                       {{_wellKnownTypes.Int32.FullName()}} {{initialCaseIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.CaseNumberPropertyName}};
                       {{_wellKnownTypes.Object.WithNullableAnnotation(NullableAnnotation.Annotated).FullName()}} {{keyReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.KeyPropertyName}};
+                      {{_wellKnownTypes.Object.FullName()}} {{containerNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ContainerNodePropertyName}};
+                      {{_wellKnownTypes.Object.FullName()}} {{transientScopeNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.TransientScopeNodePropertyName}};
+                      {{_wellKnownTypes.Object.FullName()}} {{scopeNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ScopeNodePropertyName}};
                       """);
                 var overrideParameters = overrideContext is OverrideContext.Any any
                     ? string.Join(", ", any.Overrides.Select(o => parameterReferences[functorNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
                     : "";
-                var parameters = _contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overrideContextName}({overrideParameters})", outwardFacingTypeNumber: outwardFacingTypeIdReference, caseNumber: initialCaseIdReference, key: keyReference);
+                var parameters = _contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overrideContextName}({overrideParameters})", outwardFacingTypeNumber: outwardFacingTypeIdReference, caseNumber: initialCaseIdReference, key: keyReference, containerNode: containerNodeReference, transientScopeNode: transientScopeNodeReference, scopeNode: scopeNodeReference);
                 _code.AppendLine($"{functorNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_entryFunctionsForFunctors[functorNode.ReturnedElement.Target.Type]}({parameters});");
             }
             return reference;
@@ -475,7 +482,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
 
             var isArray = enumerableNode.Data.Enumerable is IArrayTypeSymbol;
 
-            var cases = enumerableNode.CollectionCases[new DomainContext.Container()];
+            var cases = enumerableNode.CollectionCases[new NodeContext.Container()];
             var maybeDefaultCase = cases.TryGetValue(new KeyContext.None(), out var foundDefaultCase)
                 ? foundDefaultCase
                 : null;

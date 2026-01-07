@@ -31,16 +31,16 @@ internal sealed class IdRegister(
         internal ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode> Previous { get; } = new (CustomSymbolEqualityComparer.Default);
     }
 
-    private readonly 
-        ConcurrentDictionary<DomainContext, 
-            ConcurrentDictionary<INamedTypeSymbol, 
+    private readonly
+        ConcurrentDictionary<NodeContext,
+            ConcurrentDictionary<INamedTypeSymbol,
                 ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>>> _initialDecorationChainNode = [];
     private readonly ConcurrentDictionary<int, DecorationChainNode> _caseIdToDecorationChainNode = [];
     private int _caseCounter;
     
-    internal CaseIdResponse GetInitialCaseId(DomainContext domain, INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
+    internal CaseIdResponse GetInitialCaseId(NodeContext node, INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
     {
-        var initialNode = _initialDecorationChainNode.GetOrAdd(domain, _ => new ConcurrentDictionary<INamedTypeSymbol, ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>>())
+        var initialNode = _initialDecorationChainNode.GetOrAdd(node, _ => new ConcurrentDictionary<INamedTypeSymbol, ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>>())
             .GetOrAdd(interfaceType, _ => new ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>(CustomSymbolEqualityComparer.Default))
             .GetOrAdd(implementationType, AddDecorationChainNode);
         

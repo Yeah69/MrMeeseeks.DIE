@@ -26,7 +26,7 @@ internal sealed class InjectionGraphBuilder(
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
     OverrideContextManager overrideContextManager,
     IContainerCheckTypeProperties containerCheckTypeProperties,
-    NodesRegister nodesRegister,
+    ScopeNodeRegister scopeNodeRegister,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
     Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
     WellKnownTypesCollections wellKnownTypesCollections)
@@ -78,23 +78,23 @@ internal sealed class InjectionGraphBuilder(
         {
             if (scopeLevel is ScopeLevel.Container)
             {
-                nodesRegister.RegisterContainerInstance(typeNode);
-                typeNode.NodeType = NodeType.Container;
+                scopeNodeRegister.RegisterContainerInstance(typeNode);
+                typeNode.ScopeNodeType = ScopeNodeType.Container;
             }
             else
             {
                 if (scopeLevel is ScopeLevel.Scope && edgeContext.Node is NodeContext.Scope { ScopeName: var scopeName })
                 {
-                    nodesRegister.RegisterScopedInstance(scopeName, typeNode);
-                    typeNode.NodeType = NodeType.Scope;
+                    scopeNodeRegister.RegisterScopedInstance(scopeName, typeNode);
+                    typeNode.ScopeNodeType = ScopeNodeType.Scope;
                 }
                 else if (scopeLevel is ScopeLevel.TransientScope && edgeContext.Node is NodeContext.TransientScope
                          {
                              TransientScopeName: var transientScopeName
                          })
                 {
-                    nodesRegister.RegisterScopedInstance(transientScopeName, typeNode);
-                    typeNode.NodeType = NodeType.TransientScope;
+                    scopeNodeRegister.RegisterScopedInstance(transientScopeName, typeNode);
+                    typeNode.ScopeNodeType = ScopeNodeType.TransientScope;
                 }
             }
         }
@@ -138,7 +138,7 @@ internal sealed class InjectionGraphBuilder(
                 // or outgoing edges contain concrete enumerable
                 || typeNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode)
                 // or Type Node is scoped
-                || typeNode.NodeType is not NodeType.None)
+                || typeNode.ScopeNodeType is not ScopeNodeType.None)
                 NewFunctionIfNotAlready(typeNode);
 
         foreach (var concreteEntryFunctionNode in _concreteEntryFunctionNodes)

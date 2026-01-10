@@ -12,10 +12,10 @@ internal sealed class NodeCodeGenerator(
     ReferenceGenerator referenceGenerator, 
     WellKnownTypes wellKnownTypes)
 {
-    internal ImmutableArray<string> GetInheritanceHeaderElements(Node node, bool isContainer)
+    internal ImmutableArray<string> GetInheritanceHeaderElements(ScopeNode scopeNode, bool isContainer)
     {
         var prefix = isContainer ? $"{containerInfo.Name}." : string.Empty;
-        return [..node.ScopedInstances.Select(si => 
+        return [..scopeNode.ScopedInstances.Select(si => 
             $"{prefix}{scopedInstanceInterfaceDescription.InterfaceName}<{si.TypeNode.Type.FullName()}>")];
     }
     
@@ -29,12 +29,12 @@ internal sealed class NodeCodeGenerator(
         code.AppendLine();
     }
     
-    internal void GenerateFunctions(StringBuilder code, Node node, string containerReference)
+    internal void GenerateFunctions(StringBuilder code, ScopeNode scopeNode, string containerReference)
     {
         var semaphoreSlimFullName = wellKnownTypes.SemaphoreSlim.FullName();
         var objectFullName = wellKnownTypes.Object.FullName();
 
-        foreach ( var scopedInstance in node.ScopedInstances)
+        foreach ( var scopedInstance in scopeNode.ScopedInstances)
         {
             var typeSymbol = scopedInstance.TypeNode.Type;
             var function = scopedInstance.Function;

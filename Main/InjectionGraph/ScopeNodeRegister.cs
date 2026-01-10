@@ -3,22 +3,22 @@ using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
-internal sealed class NodesRegister : IContainerInstance
+internal sealed class ScopeNodeRegister : IContainerInstance
 {
-    private readonly Func<Node> _nodeFactory;
-    private readonly Dictionary<string, Node> _nodes = [];
+    private readonly Func<ScopeNode> _nodeFactory;
+    private readonly Dictionary<string, ScopeNode> _nodes = [];
 
-    internal NodesRegister(Func<Node>  nodeFactory)
+    internal ScopeNodeRegister(Func<ScopeNode>  nodeFactory)
     {
         _nodeFactory = nodeFactory;
-        ContainerNode = nodeFactory();
+        ContainerScopeNode = nodeFactory();
     }
 
-    internal Node ContainerNode { get; }
-    internal Node this[string name] => _nodes[name];
+    internal ScopeNode ContainerScopeNode { get; }
+    internal ScopeNode this[string name] => _nodes[name];
 
     internal void RegisterContainerInstance(TypeNode node) =>
-        ContainerNode.AddScopedInstance(node);
+        ContainerScopeNode.AddScopedInstance(node);
 
     internal void RegisterScopedInstance(string scopeName, TypeNode node)
     {

@@ -17,7 +17,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
     private readonly ContainerInfo _containerInfo;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly NodeCodeGenerator _nodeCodeGenerator;
-    private readonly NodesRegister _nodesRegister;
+    private readonly ScopeNodeRegister _scopeNodeRegister;
     private readonly FunctionUtility _functionUtility;
     private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
     private readonly OverrideContextManager _overrideContextManager;
@@ -31,7 +31,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
         ContainerInfo containerInfo,
         IInjectionGraphBuilder injectionGraphBuilder,
         NodeCodeGenerator nodeCodeGenerator,
-        NodesRegister nodesRegister,
+        ScopeNodeRegister scopeNodeRegister,
         FunctionUtility functionUtility,
         ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription,
         OverrideContextManager overrideContextManager,
@@ -44,7 +44,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
         _containerInfo = containerInfo;
         _injectionGraphBuilder = injectionGraphBuilder;
         _nodeCodeGenerator = nodeCodeGenerator;
-        _nodesRegister = nodesRegister;
+        _scopeNodeRegister = scopeNodeRegister;
         _functionUtility = functionUtility;
         _scopedInstanceInterfaceDescription = scopedInstanceInterfaceDescription;
         _overrideContextManager = overrideContextManager;
@@ -77,7 +77,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                   """);
         }
 
-        var inheritanceElements = _nodeCodeGenerator.GetInheritanceHeaderElements(_nodesRegister.ContainerNode, isContainer: true);
+        var inheritanceElements = _nodeCodeGenerator.GetInheritanceHeaderElements(_scopeNodeRegister.ContainerScopeNode, isContainer: true);
 
         var inheritance = inheritanceElements.Any()
             ? $" : {string.Join(", ", inheritanceElements)}"
@@ -113,7 +113,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                   """);
         }
         
-        _nodeCodeGenerator.GenerateFunctions(_code, _nodesRegister.ContainerNode, Constants.ThisKeyword);
+        _nodeCodeGenerator.GenerateFunctions(_code, _scopeNodeRegister.ContainerScopeNode, Constants.ThisKeyword);
 
         var typesGettingFunctorEntry = _concreteFunctorNodeManager.AllNodes
             .Select(n => n.ReturnedElement.Target)
@@ -152,11 +152,11 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             
             var rootNode = function.RootNode;
             
-            if (rootNode.NodeType is not NodeType.None)
+            if (rootNode.ScopeNodeType is not ScopeNodeType.None)
             {
-                if (rootNode.NodeType is NodeType.Container)
+                if (rootNode.ScopeNodeType is ScopeNodeType.Container)
                 {
-                    var (_, scopedInstanceFunction) = _nodesRegister.ContainerNode.ScopedInstances.First(sid =>
+                    var (_, scopedInstanceFunction) = _scopeNodeRegister.ContainerScopeNode.ScopedInstances.First(sid =>
                         CustomSymbolEqualityComparer.Default.Equals(sid.TypeNode.Type, rootNode.Type));
                     _code.AppendLine($"if ({_functionUtility.DoScopedInstanceParameterName})");
                     _code.AppendLine("{");

@@ -1,5 +1,5 @@
 ﻿<Solution>
-  <Configurations />
-  <Project Path="Main\Main.csproj" Type="Classic C#" />
-  <Project Path="Sample\Sample.csproj" Type="Classic C#" />
+  <Project Path="DebugWorkaround/DebugWorkaround.csproj" />
+  <Project Path="Main\Main.csproj" Type="C#" />
+  <Project Path="Sample\Sample.csproj" Type="C#" />
 </Solution>

@@ -9,7 +9,8 @@ internal sealed class FunctionUtility(
     ContextGenerator contextGenerator,
     WellKnownTypes wellKnownTypes) : IContainerInstance
 {
-    internal string DoScopedInstanceParameterName { get; } = referenceGenerator.Generate("skipScopedInstance");
+    internal string DoScopedInstanceParameterName { get; } = referenceGenerator.Generate("doScopedInstance");
+    internal string DoScopeRootParameterName { get; } = referenceGenerator.Generate("doScopeRoot");
     private readonly Dictionary<IFunction, string> _namesMap = [];
     
     internal string GetName(IFunction function)
@@ -19,6 +20,7 @@ internal sealed class FunctionUtility(
             name = function switch
             {
                 FunctorEntryFunction functorEntryFunction => referenceGenerator.Generate("CreateEntry", functorEntryFunction.ReturnType),
+                ScopeRootFunction scopeRootFunction => referenceGenerator.Generate("CreateRoot", scopeRootFunction.ReturnType),
                 ScopedInstanceFunction => ScopedInstanceInterfaceDescription.FunctionName,
                 TypeNodeFunction typeNodeFunction => referenceGenerator.Generate("Create", typeNodeFunction.ReturnType),
                 _ => throw new ArgumentOutOfRangeException(nameof(function))
@@ -28,13 +30,15 @@ internal sealed class FunctionUtility(
         return name;
     }
 
-    internal string GenerateFunctionCall(IFunction function, bool doScopedInstance) => $"{GetName(function)}({contextGenerator.ParameterName}, {DoScopedInstanceParameterName}: {(doScopedInstance ? Constants.TrueKeyword : Constants.FalseKeyword)})";
+    internal string GenerateFunctionCall(IFunction function, bool doScopedInstance, bool doScopeRoot) => $"{GetName(function)}({contextGenerator.ParameterName}, {DoScopedInstanceParameterName}: {(doScopedInstance ? Constants.TrueKeyword : Constants.FalseKeyword)}, {DoScopeRootParameterName}: {(doScopeRoot ? Constants.TrueKeyword : Constants.FalseKeyword)})";
 
     internal string GenerateHeader(IFunction function)
     {
-        var accessibility = function is { Accessibility: { } acc, ExplicitInterface: null }
-            ? $"{SyntaxFacts.GetText(acc)} "  
-            : "";
+        var accessibility =
+            function is { Accessibility: { } acc, ExplicitInterface: var explicitInterface }
+            && explicitInterface.Equals(ExplicitInterfaceDescription.None4.Instance)
+                ? $"{SyntaxFacts.GetText(acc)} "
+                : "";
         var asyncModifier = function.IsAsync
             ? "async "
             : "";
@@ -42,7 +46,7 @@ internal sealed class FunctionUtility(
             {
                 ExplicitInterfaceDescription.Generated generated => $"{generated.TypeFullName}.",
                 ExplicitInterfaceDescription.KnownType knownType => knownType.Type.FullName(),
-                ExplicitInterfaceDescription.None => "",
+                ExplicitInterfaceDescription.None4 => "",
                 _ => throw new ArgumentOutOfRangeException("Should be impossible")
             };
         var typeParameters = "";
@@ -76,7 +80,7 @@ internal sealed class FunctionUtility(
                 }));
         }
 
-        var parametersText = $"{contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopedInstanceParameterName}";
+        var parametersText = $"{contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopedInstanceParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopeRootParameterName}";
         var functionName = GetName(function);
         return $"{accessibility}{asyncModifier}{function.ReturnType.FullName()} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
     }

@@ -30,7 +30,7 @@ internal sealed class InjectionNodeGenerator : IContainerInstance
         {
             var function = functionEdgeType.Function;
             var resultReference = _referenceGenerator.Generate(function.RootNode.Type);
-            code.AppendLine($"{function.RootNode.Type.FullName()} {resultReference} = {_functionUtility.GenerateFunctionCall(function, doScopedInstance: true)};");
+            code.AppendLine($"{function.RootNode.Type.FullName()} {resultReference} = {_functionUtility.GenerateFunctionCall(function, doScopedInstance: true, doScopeRoot: true)};");
             return resultReference;
         }
         return GenerateForInjectionNode(code, node);

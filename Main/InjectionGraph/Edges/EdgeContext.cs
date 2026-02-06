@@ -5,16 +5,16 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal abstract record NodeContext
+internal abstract record ScopeNodeContext
 {
-    internal sealed record Container : NodeContext;
-    internal sealed record TransientScope(string TransientScopeName) : NodeContext;
-    internal sealed record Scope(string ScopeName, string? TransientScopeName) : NodeContext;
+    internal sealed record Container : ScopeNodeContext;
+    internal sealed record TransientScope(string TransientScopeName) : ScopeNodeContext;
+    internal sealed record Scope(string ScopeName, string? TransientScopeName) : ScopeNodeContext;
 }
 
 internal abstract record OverrideContext
 {
-    internal sealed record None : OverrideContext;
+    internal sealed record None0 : OverrideContext;
     internal sealed record Any(ImmutableArray<ITypeSymbol> Overrides) : OverrideContext;
 }
 
@@ -36,7 +36,7 @@ internal sealed class OverrideContextManager : IContainerInstance
             return context;
         context = consideredTypes.Length > 0 
             ? new OverrideContext.Any(consideredTypes)
-            : new OverrideContext.None();
+            : new OverrideContext.None0();
         _contexts[key] = context;
         return context;
     }
@@ -55,18 +55,18 @@ internal sealed class OverrideContextManager : IContainerInstance
 
 internal abstract record KeyContext
 {
-    internal sealed record None : KeyContext;
+    internal sealed record None1 : KeyContext;
     internal sealed record Single(ITypeSymbol Type, object Value) : KeyContext;
 }
 
 internal abstract record CaseChoiceContext
 {
-    internal sealed record None : CaseChoiceContext;
+    internal sealed record None2 : CaseChoiceContext;
     internal sealed record Single(int OutwardFacingTypeId, int CaseId) : CaseChoiceContext;
 }
 
 internal sealed record EdgeContext(
-    NodeContext Node,
+    ScopeNodeContext ScopeNode,
     OverrideContext Override,
     KeyContext Key,
     CaseChoiceContext CaseChoice);

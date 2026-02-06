@@ -5,7 +5,7 @@ namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 
 internal sealed class SharedNameRegistry : IContainerInstance
 {
-    private readonly Dictionary<OverrideContext, string> _overrideContextNameMap;
+    private readonly Lazy<Dictionary<OverrideContext, string>> _overrideContextNameMap;
     private readonly Dictionary<ITypeSymbol, string> _entryFunctionsForFunctors = [];
     
     internal SharedNameRegistry(
@@ -13,8 +13,8 @@ internal sealed class SharedNameRegistry : IContainerInstance
         ReferenceGenerator referenceGenerator)
     {
         IOverrideInterfaceName = referenceGenerator.Generate("IOverride");
-        _overrideContextNameMap = overrideContextManager.AllOverrideContexts
-            .ToDictionary(o => o, o => referenceGenerator.Generate(o is OverrideContext.Any ? "Overrides" : "NoOverrides"));
+        _overrideContextNameMap = new Lazy<Dictionary<OverrideContext, string>>(() => overrideContextManager.AllOverrideContexts
+            .ToDictionary(o => o, o => referenceGenerator.Generate(o is OverrideContext.Any ? "Overrides" : "NoOverrides")));
     }
 
     internal string IOverrideInterfaceName { get; }
@@ -23,9 +23,9 @@ internal sealed class SharedNameRegistry : IContainerInstance
         _entryFunctionsForFunctors[type] = entryFunctionName;
     
     internal string GetOverrideContextName(OverrideContext overrideContext) =>
-        _overrideContextNameMap[overrideContext];
+        _overrideContextNameMap.Value[overrideContext];
     internal bool TryGetOverrideContextName(OverrideContext overrideContext, out string overrideContextName) =>
-        _overrideContextNameMap.TryGetValue(overrideContext, out overrideContextName);
+        _overrideContextNameMap.Value.TryGetValue(overrideContext, out overrideContextName);
     internal string GetEntryFunctionName(ITypeSymbol type) =>
         _entryFunctionsForFunctors[type];
 }

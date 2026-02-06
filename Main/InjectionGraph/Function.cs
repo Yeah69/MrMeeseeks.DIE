@@ -18,10 +18,10 @@ internal interface ITypeNodeFunction : IFunction
 
 internal abstract record ExplicitInterfaceDescription
 {
-    internal sealed record None : ExplicitInterfaceDescription
+    internal sealed record None4 : ExplicitInterfaceDescription
     {
-        private None() {}
-        internal static None Instance { get; } = new();
+        private None4() {}
+        internal static None4 Instance { get; } = new();
     }
     internal sealed record KnownType(INamedTypeSymbol Type) : ExplicitInterfaceDescription;
     internal sealed record Generated(string TypeFullName) : ExplicitInterfaceDescription;
@@ -30,7 +30,7 @@ internal abstract record ExplicitInterfaceDescription
 internal sealed class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
 {
     public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Private;
-    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None.Instance;
+    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
     public ITypeParameterSymbol[] TypeParameters { get; } = [];
     public ITypeSymbol ReturnType => RootNode.Type;
     public TypeNode RootNode { get; } = rootElement;
@@ -40,7 +40,7 @@ internal sealed class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
 internal sealed class FunctorEntryFunction(ITypeSymbol returnType) : IFunction
 {
     public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Private;
-    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None.Instance;
+    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
     public ITypeParameterSymbol[] TypeParameters { get; } = [];
     public ITypeSymbol ReturnType => returnType;
     public bool IsAsync { get; }
@@ -53,5 +53,15 @@ internal sealed class ScopedInstanceFunction(TypeNode scopedInstanceElement) : I
     public ITypeParameterSymbol[] TypeParameters { get; } = [];
     public ITypeSymbol ReturnType => RootNode.Type;
     public TypeNode RootNode { get; } = scopedInstanceElement;
+    public bool IsAsync { get; }
+}
+
+internal sealed class ScopeRootFunction(TypeNode scopeRootElement) : ITypeNodeFunction
+{
+    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Internal;
+    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
+    public ITypeParameterSymbol[] TypeParameters { get; } = [];
+    public ITypeSymbol ReturnType => RootNode.Type;
+    public TypeNode RootNode { get; } = scopeRootElement;
     public bool IsAsync { get; }
 }

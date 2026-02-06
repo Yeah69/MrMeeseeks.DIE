@@ -96,10 +96,10 @@ internal sealed class ConcreteImplementationNode : IConcreteNode
     public IReadOnlyList<(TypeNode TypeNode, Location Location, EdgeContext Context)> ConnectIfNotAlready(EdgeContext context)
     {
         var originalContext = context;
-        context = context.CaseChoice is CaseChoiceContext.None
+        context = context.CaseChoice is CaseChoiceContext.None2
             ? context
-            : context with { CaseChoice = new CaseChoiceContext.None() };
-        if (originalContext.CaseChoice is not CaseChoiceContext.None)
+            : context with { CaseChoice = new CaseChoiceContext.None2() };
+        if (originalContext.CaseChoice is not CaseChoiceContext.None2)
             NeedsPurge = true;
         var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, Location Location, EdgeContext Context)>();
         foreach (var dependency in ConstructorParameters.Concat(ObjectInitializerAssignments))

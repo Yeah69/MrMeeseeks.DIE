@@ -61,7 +61,7 @@ internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeChec
 
 internal abstract record ImplementationResult
 {
-    internal sealed record None : ImplementationResult;
+    internal sealed record None5 : ImplementationResult;
     internal sealed record Single(INamedTypeSymbol Implementation) : ImplementationResult;
     internal sealed record Multiple(IReadOnlyList<INamedTypeSymbol> Implementations) : ImplementationResult;
 }
@@ -70,7 +70,7 @@ internal abstract record ConstructorResult
 {
     internal sealed record ChoiceFailedNone : ConstructorResult;
     internal sealed record ChoiceFailedMultiple(IReadOnlyList<IMethodSymbol> Constructors) : ConstructorResult;
-    internal sealed record None : ConstructorResult;
+    internal sealed record None6 : ConstructorResult;
     internal sealed record Single(IMethodSymbol Constructor) : ConstructorResult;
     internal sealed record Multiple(IReadOnlyList<IMethodSymbol> Constructors) : ConstructorResult;
 }
@@ -78,7 +78,7 @@ internal abstract record ConstructorResult
 internal interface ICheckTypeProperties
 {
     DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType);
-    ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType);
+    ScopeLevel ShouldBeScopeRoot(ITypeSymbol type);
     bool ShouldBeComposite(INamedTypeSymbol interfaceType);
     ScopeLevel GetScopeLevelFor(ITypeSymbol implementationType);
     INamedTypeSymbol? GetCompositeFor(INamedTypeSymbol interfaceType);
@@ -227,11 +227,11 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         return ret;
     }
 
-    public ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType)
+    public ScopeLevel ShouldBeScopeRoot(ITypeSymbol type)
     {
-        if (_currentlyConsideredTypes.TransientScopeRootTypes.Contains(implementationType.UnboundIfGeneric()))
+        if (_currentlyConsideredTypes.TransientScopeRootTypes.Contains(type.UnboundIfGeneric()))
             return ScopeLevel.TransientScope;
-        if (_currentlyConsideredTypes.ScopeRootTypes.Contains(implementationType.UnboundIfGeneric()))
+        if (_currentlyConsideredTypes.ScopeRootTypes.Contains(type.UnboundIfGeneric()))
             return ScopeLevel.Scope;
         return ScopeLevel.None;
     }
@@ -303,7 +303,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         
         return visibleConstructors switch
         {
-            [] => new ConstructorResult.None(),
+            [] => new ConstructorResult.None6(),
             [{} single] => new ConstructorResult.Single(single),
             [..] => new ConstructorResult.Multiple(visibleConstructors)
         };
@@ -453,7 +453,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         static ImplementationResult Return(List<INamedTypeSymbol> implementations) =>
             implementations switch
             {
-                [] => new ImplementationResult.None(),
+                [] => new ImplementationResult.None5(),
                 [{} implementation] => new ImplementationResult.Single(implementation),
                 [..] => new ImplementationResult.Multiple(implementations)
             };

@@ -9,7 +9,6 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 namespace MrMeeseeks.DIE.InjectionGraph;
 
 internal sealed class InjectionGraphBuilderResolutionSteps(
-    IContainerCheckTypeProperties containerCheckTypeProperties,
     ILocalDiagLogger containerDiagLogger,
     IInjectablePropertyExtractor injectablePropertyExtractor,
     ConcreteImplementationNodeManager concreteImplementationNodeManager,
@@ -54,7 +53,8 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,
-        Location currentResolvedLocation)
+        Location currentResolvedLocation,
+        ICheckTypeProperties checkTypeProperties)
     {
         var concreteInterfaceNodeData = new ConcreteInterfaceNodeData(Interface: currentType);
 
@@ -62,7 +62,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         
         ConnectToTypeNodeIfNotAlready(concreteInterfaceNode, edgeContext, typeNode);
         
-        var connectionResult = concreteInterfaceNode.ConnectIfNotAlready(edgeContext);
+        var connectionResult = concreteInterfaceNode.ConnectIfNotAlready(edgeContext, checkTypeProperties);
         
         if (connectionResult is ConcreteInterfaceNode.CaseIdResponse.Success { TypeNode: var newNode, Location: var newLocation, EdgeContext: var newEdgeContext})
             queue.Enqueue(new ResolutionStep(
@@ -83,18 +83,19 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,
-        Location currentResolvedLocation)
+        Location currentResolvedLocation,
+        ICheckTypeProperties checkTypeProperties)
     {
-        var key = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } && !containerCheckTypeProperties.IsContextPassingType(currentType)
+        var key = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } && !checkTypeProperties.IsContextPassingType(currentType)
             ? new InjectionKey(keyType, keyValue)
             : null;
-        var implementationResult = containerCheckTypeProperties.MapToSingleFittingImplementation(currentType, key);
+        var implementationResult = checkTypeProperties.MapToSingleFittingImplementation(currentType, key);
         if (implementationResult is not ImplementationResult.Single { Implementation: { } implementation })
         {
             ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
             var logMessage = implementationResult switch
             {
-                ImplementationResult.None => $"Class: No implementation registered for \"{currentType.FullName()}\".",
+                ImplementationResult.None5 => $"Class: No implementation registered for \"{currentType.FullName()}\".",
                 ImplementationResult.Multiple { Implementations: var implementations} => $"Class: Multiple implementations registered for \"{currentType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
                 _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
             };
@@ -108,13 +109,13 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         }
         
         // Constructor
-        var constructorResult = containerCheckTypeProperties.GetConstructorChoiceFor(implementation);
+        var constructorResult = checkTypeProperties.GetConstructorChoiceFor(implementation);
         if (constructorResult is not ConstructorResult.Single { Constructor: {} constructor})
         {
             ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
             var logMessage = constructorResult switch
             {
-                ConstructorResult.None => $"Class.Constructor: No visible constructor found for implementation {currentType.FullName()}",
+                ConstructorResult.None6 => $"Class.Constructor: No visible constructor found for implementation {currentType.FullName()}",
                 ConstructorResult.Multiple => $"Class.Constructor: More than one visible constructor found for implementation {currentType.FullName()}",
                 ConstructorResult.ChoiceFailedNone => $"Class.Constructor: Constructor choice didn't match with any constructor for implementation {currentType.FullName()}",
                 ConstructorResult.ChoiceFailedMultiple => $"Class.Constructor: Constructor choice matched with multiple constructors for implementation {currentType.FullName()}",
@@ -131,7 +132,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         
         // Properties
         IReadOnlyList<IPropertySymbol> properties;
-        if (containerCheckTypeProperties.GetPropertyChoicesFor(implementation) is { } propertyChoice)
+        if (checkTypeProperties.GetPropertyChoicesFor(implementation) is { } propertyChoice)
             properties = propertyChoice;
         // Automatic property injection is disabled for record types, but property choices are still allowed
         else if (!implementation.IsRecord)
@@ -185,7 +186,8 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,
-        Location currentResolvedLocation)
+        Location currentResolvedLocation,
+        ICheckTypeProperties checkTypeProperties)
     {
         var concreteEnumerableNodeData = new ConcreteEnumerableNodeData(Enumerable: currentType);
 
@@ -193,7 +195,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
 
         ConnectToTypeNodeIfNotAlready(concreteEnumerableNode, edgeContext, typeNode);
         
-        foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext))
+        foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext, checkTypeProperties))
             queue.Enqueue(new ResolutionStep(
                 node, 
                 newEdgeContext,

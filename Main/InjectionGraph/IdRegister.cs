@@ -7,8 +7,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
-internal sealed class IdRegister(
-    IContainerCheckTypeProperties containerCheckTypeProperties) 
+internal sealed class IdRegister
     : IContainerInstance
 {
     private int _outwardFacingTypeIdCounter;
@@ -32,15 +31,15 @@ internal sealed class IdRegister(
     }
 
     private readonly
-        ConcurrentDictionary<NodeContext,
+        ConcurrentDictionary<ScopeNodeContext,
             ConcurrentDictionary<INamedTypeSymbol,
                 ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>>> _initialDecorationChainNode = [];
     private readonly ConcurrentDictionary<int, DecorationChainNode> _caseIdToDecorationChainNode = [];
     private int _caseCounter;
     
-    internal CaseIdResponse GetInitialCaseId(NodeContext node, INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
+    internal CaseIdResponse GetInitialCaseId(ScopeNodeContext scopeNode, INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType, ICheckTypeProperties checkTypeProperties)
     {
-        var initialNode = _initialDecorationChainNode.GetOrAdd(node, _ => new ConcurrentDictionary<INamedTypeSymbol, ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>>())
+        var initialNode = _initialDecorationChainNode.GetOrAdd(scopeNode, _ => new ConcurrentDictionary<INamedTypeSymbol, ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>>())
             .GetOrAdd(interfaceType, _ => new ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>(CustomSymbolEqualityComparer.Default))
             .GetOrAdd(implementationType, AddDecorationChainNode);
         
@@ -51,7 +50,7 @@ internal sealed class IdRegister(
             var currentDecorationChainNode = new DecorationChainNode(implementation, Interlocked.Increment(ref _caseCounter), null);
             _caseIdToDecorationChainNode[currentDecorationChainNode.CaseId] = currentDecorationChainNode;
         
-            var decorationSequence = containerCheckTypeProperties.GetDecorationSequenceFor(interfaceType, implementation);
+            var decorationSequence = checkTypeProperties.GetDecorationSequenceFor(interfaceType, implementation);
 
             for (int i = decorationSequence.Count - 1; i >= 0; i--)
             {

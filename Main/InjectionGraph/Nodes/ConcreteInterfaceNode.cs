@@ -33,25 +33,22 @@ internal sealed class ConcreteInterfaceNodeManager(Func<ConcreteInterfaceNodeDat
 
 internal sealed class ConcreteInterfaceNode : IConcreteNode
 {
-    private readonly IContainerCheckTypeProperties _containerCheckTypeProperties;
     private readonly IdRegister _idRegister;
     private readonly TypeNodeManager _typeNodeManager;
     private readonly Func<IConcreteNode, TypeNode, TypeEdge> _typeEdgeFactory;
     private readonly Dictionary<int, InnerCaseIdResponse.Success> _caseToNextCase = [];
-    private readonly Dictionary<NodeContext, InnerCaseIdResponse.Success> _nodeToNextCase = [];
-    private readonly Dictionary<(NodeContext Node, ITypeSymbol KeyType, object KeyObject), InnerCaseIdResponse.Success> _keyToNextCase = [];
+    private readonly Dictionary<ScopeNodeContext, InnerCaseIdResponse.Success> _nodeToNextCase = [];
+    private readonly Dictionary<(ScopeNodeContext Node, ITypeSymbol KeyType, object KeyObject), InnerCaseIdResponse.Success> _keyToNextCase = [];
 
     internal ConcreteInterfaceNode(
         // parameters
         ConcreteInterfaceNodeData data,
 
         // dependencies
-        IContainerCheckTypeProperties containerCheckTypeProperties,
         IdRegister idRegister,
         TypeNodeManager typeNodeManager,
         Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory)
     {
-        _containerCheckTypeProperties = containerCheckTypeProperties;
         _idRegister = idRegister;
         _typeNodeManager = typeNodeManager;
         _typeEdgeFactory = typeEdgeFactory;
@@ -62,9 +59,9 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     internal ConcreteInterfaceNodeData Data { get; }
     internal IEnumerable<(TypeEdge Edge, int Id, int NextId)> Cases => 
         _caseToNextCase.Select(kvp => (kvp.Value.Edge, kvp.Key, kvp.Value.NextCaseId));
-    internal IEnumerable<(NodeContext Node, int NextId)> DefaultImplementationsCaseNumbers =>
+    internal IEnumerable<(ScopeNodeContext Node, int NextId)> DefaultImplementationsCaseNumbers =>
         _nodeToNextCase.Select(kvp => (kvp.Key, kvp.Value.NextCaseId));
-    internal IEnumerable<(NodeContext Node, ITypeSymbol KeyType, object KeyObject, int NextId)> KeyObjectToCaseNumbers =>
+    internal IEnumerable<(ScopeNodeContext Node, ITypeSymbol KeyType, object KeyObject, int NextId)> KeyObjectToCaseNumbers =>
         _keyToNextCase.Select(kvp => (kvp.Key.Node, kvp.Key.KeyType, kvp.Key.KeyObject, kvp.Value.NextCaseId));
     
     public override int GetHashCode() => Data.GetHashCode();
@@ -80,67 +77,67 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     {
         internal sealed record Success(TypeNode TypeNode, Location Location, EdgeContext EdgeContext) :  CaseIdResponse;
         internal sealed record Error(string ErrorMessage) : CaseIdResponse;
-        internal sealed record None : CaseIdResponse;
+        internal sealed record None3 : CaseIdResponse;
     }
-    public CaseIdResponse ConnectIfNotAlready(EdgeContext context)
+    public CaseIdResponse ConnectIfNotAlready(EdgeContext context, ICheckTypeProperties checkTypeProperties)
     {
         var innerCaseIdResponse = context switch
         {
-            { Node: var node, Key: KeyContext.Single { Type: {} keyType, Value: { } keyValue } } =>
+            { ScopeNode: var node, Key: KeyContext.Single { Type: {} keyType, Value: { } keyValue } } =>
                 GetKeyedDefault(node, keyType, keyValue),
             { CaseChoice: CaseChoiceContext.Single { OutwardFacingTypeId: var outwardFacingTypeId, CaseId: var caseId } }
                 when outwardFacingTypeId == Number =>
                 GetNextCase(caseId),
-            { Node: var node } =>
+            { ScopeNode: var node } =>
                 GetDefault(node)
         };
-        if (context.Key != new KeyContext.None())
-            context = context with { Key = new KeyContext.None() };
+        if (context.Key != new KeyContext.None1())
+            context = context with { Key = new KeyContext.None1() };
         switch (innerCaseIdResponse)
         {
             case InnerCaseIdResponse.Success { NextCaseId: var nextCaseId, Edge: var nextEdge}:
                 context = nextCaseId is 0 
-                    ? context with { CaseChoice = new CaseChoiceContext.None() }
+                    ? context with { CaseChoice = new CaseChoiceContext.None2() }
                     : context with { CaseChoice = new CaseChoiceContext.Single(Number, nextCaseId) };
 
                 return nextEdge.AddContext(context) 
                     ? new CaseIdResponse.Success(nextEdge.Target, Location.None, context)
-                    : new CaseIdResponse.None();
+                    : new CaseIdResponse.None3();
             case InnerCaseIdResponse.Error { ErrorMessage: var errorMessage }:
                 return new CaseIdResponse.Error(errorMessage);
             default:
                 return new CaseIdResponse.Error("Unexpected case");
         }
         
-        InnerCaseIdResponse GetKeyedDefault(NodeContext node, ITypeSymbol keyType, object keyValue)
+        InnerCaseIdResponse GetKeyedDefault(ScopeNodeContext scopeNode, ITypeSymbol keyType, object keyValue)
         {
-            if (_keyToNextCase.TryGetValue((node, keyType, keyValue), out var success))
+            if (_keyToNextCase.TryGetValue((scopeNode, keyType, keyValue), out var success))
                 return success;
             
             var targetImplementationResult =
                 // If there is a registered composite type for the current interface type, we use that as the implementation
-                _containerCheckTypeProperties.ShouldBeComposite(Data.Interface) && _containerCheckTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
+                checkTypeProperties.ShouldBeComposite(Data.Interface) && checkTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
                     ? new ImplementationResult.Single(compositeType)
-                    : _containerCheckTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: new InjectionKey(keyType, keyValue));
+                    : checkTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: new InjectionKey(keyType, keyValue));
         
             if (targetImplementationResult is not ImplementationResult.Single { Implementation: var targetImplementation })
             {
                 var logMessage = targetImplementationResult switch
                 {
-                    ImplementationResult.None => $"Interface: No implementation registered for \"{Data.Interface.FullName()}\".",
+                    ImplementationResult.None5 => $"Interface: No implementation registered for \"{Data.Interface.FullName()}\".",
                     ImplementationResult.Multiple { Implementations: var implementations} => $"Interface: Multiple implementations registered for \"{Data.Interface.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
                     _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
                 };
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(node, Data.Interface, targetImplementation))
+            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation, checkTypeProperties))
             {
                 case IdRegister.CaseIdResponse.Success { NextCaseId: var keyedCaseId }:
                 {
                     var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(Data.Interface));
                     success = new InnerCaseIdResponse.Success(typeEdge, keyedCaseId);
-                    _keyToNextCase[(node, keyType, keyValue)] = success;
+                    _keyToNextCase[(scopeNode, keyType, keyValue)] = success;
 
                     return success;
                 }
@@ -179,35 +176,35 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
             return success;
         }
         
-        InnerCaseIdResponse GetDefault(NodeContext node)
+        InnerCaseIdResponse GetDefault(ScopeNodeContext scopeNode)
         {
-            if (_nodeToNextCase.TryGetValue(node, out var success))
+            if (_nodeToNextCase.TryGetValue(scopeNode, out var success))
                 return success;
             
             var targetImplementationResult =
                 // If there is a registered composite type for the current interface type, we use that as the implementation
-                _containerCheckTypeProperties.ShouldBeComposite(Data.Interface) && _containerCheckTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
+                checkTypeProperties.ShouldBeComposite(Data.Interface) && checkTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
                     ? new ImplementationResult.Single(compositeType)
-                    : _containerCheckTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: null);
+                    : checkTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: null);
         
             if (targetImplementationResult is not ImplementationResult.Single { Implementation: var targetImplementation })
             {
                 var logMessage = targetImplementationResult switch
                 {
-                    ImplementationResult.None => $"Interface: No implementation registered for \"{Data.Interface.FullName()}\".",
+                    ImplementationResult.None5 => $"Interface: No implementation registered for \"{Data.Interface.FullName()}\".",
                     ImplementationResult.Multiple { Implementations: var implementations} => $"Interface: Multiple implementations registered for \"{Data.Interface.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
                     _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
                 };
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(node, Data.Interface, targetImplementation))
+            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation, checkTypeProperties))
             {
                 case IdRegister.CaseIdResponse.Success { NextCaseId: var nodeCaseId }:
                 {
                     var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(Data.Interface));
                     success = new InnerCaseIdResponse.Success(typeEdge, nodeCaseId);
-                    _nodeToNextCase[node] = success;
+                    _nodeToNextCase[scopeNode] = success;
 
                     return success;
                 }

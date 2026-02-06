@@ -33,12 +33,12 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
 
         var isArray = concreteNode.Data.Enumerable is IArrayTypeSymbol;
 
-        var cases = concreteNode.CollectionCases[new NodeContext.Container()];
-        var maybeDefaultCase = cases.TryGetValue(new KeyContext.None(), out var foundDefaultCase)
+        var cases = concreteNode.CollectionCases[new ScopeNodeContext.Container()];
+        var maybeDefaultCase = cases.TryGetValue(new KeyContext.None1(), out var foundDefaultCase)
             ? foundDefaultCase
             : null;
         var keyedCases = cases
-            .Where(kvp => kvp.Key != new KeyContext.None())
+            .Where(kvp => kvp.Key != new KeyContext.None1())
             .Select(kvp => (KeyContext: (KeyContext.Single)kvp.Key, Result: kvp.Value))
             .ToImmutableArray();
 

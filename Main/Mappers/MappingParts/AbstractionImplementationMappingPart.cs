@@ -128,7 +128,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
 
             var errorMessage = implementationResult switch
             {
-                ImplementationResult.None => $"Class: No implementation registered for \"{classOrStructType.FullName()}\".",
+                ImplementationResult.None5 => $"Class: No implementation registered for \"{classOrStructType.FullName()}\".",
                 ImplementationResult.Multiple { Implementations: var implementations} => $"Class: Multiple implementations registered for \"{classOrStructType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
                 _ => throw new InvalidOperationException("Unexpected ImplementationResult")
             };
@@ -214,7 +214,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         if (implementationType.NullableAnnotation != NullableAnnotation.Annotated)
             return _errorNodeFactory(constructorResult switch
                 {
-                    ConstructorResult.None => $"Class.Constructor: No visible constructor found for implementation {implementationType.FullName()}",
+                    ConstructorResult.None6 => $"Class.Constructor: No visible constructor found for implementation {implementationType.FullName()}",
                     ConstructorResult.Multiple => $"Class.Constructor: More than one visible constructor found for implementation {implementationType.FullName()}",
                     ConstructorResult.ChoiceFailedNone => $"Class.Constructor: Constructor choice didn't match with any constructor for implementation {implementationType.FullName()}",
                     ConstructorResult.ChoiceFailedMultiple => $"Class.Constructor: Constructor choice matched with multiple constructors for implementation {implementationType.FullName()}",
@@ -248,7 +248,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         }
         var errorMessage = implementationResult switch
         {
-            ImplementationResult.None => $"Interface: No implementation registered for \"{interfaceType.FullName()}\".",
+            ImplementationResult.None5 => $"Interface: No implementation registered for \"{interfaceType.FullName()}\".",
             ImplementationResult.Multiple { Implementations: var implementations } => $"Interface: Multiple implementations registered for \"{interfaceType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
             _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
         };

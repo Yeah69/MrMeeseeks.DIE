@@ -35,6 +35,7 @@ internal sealed class TypeNode(ITypeSymbol type)
     internal IReadOnlyList<TypeEdge> Incoming => _incoming;
     internal IReadOnlyList<ConcreteEdge> Outgoing => _outgoing;
     internal ScopeNodeType ScopeNodeType { get; set; } = ScopeNodeType.None;
+    internal ScopeNodeContext? ScopeNodeContext { get; set; }
     
     internal void AddIncoming(TypeEdge edge) => _incoming.Add(edge);
     internal void AddOutgoing(ConcreteEdge edge) => _outgoing.Add(edge);

@@ -5,11 +5,16 @@ namespace MrMeeseeks.DIE.Sample;
 
 internal class Dependency : IContainerInstance;
 
+internal class Scope : IScopeRoot
+{
+    internal required Dependency Dependency { get; init; }
+    internal required Dependency Dependency1 { get; init; }
+}
+
 internal class Parent
 {
-    internal required Dependency DependencyA { get; init; }
-    internal required Dependency DependencyB { get; init; }
-    internal bool SameSame => ReferenceEquals(DependencyA, DependencyB);
+    internal required Scope Scope { get; init; }
+    internal required Dependency Dependency { get; init; }
 }
 
 [CreateFunction(typeof(Parent), "Create")]

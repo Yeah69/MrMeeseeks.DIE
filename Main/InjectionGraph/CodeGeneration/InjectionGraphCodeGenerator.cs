@@ -157,6 +157,18 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
 
             if (rootNode.ScopeNodeContext is not null)
             {
+                if (rootNode.ScopeNodeContext is ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName })
+                {
+                    var transientScopeNode = _scopeNodeManager.TransientScopes.First(s => s.Name == transientScopeName);
+                    var (_, transientScopeRootFunction) = transientScopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
+                    var transientScopeReference = _referenceGenerator.Generate("transientScope");
+                    _code.AppendLine($"if ({_functionUtility.DoScopeRootParameterName})");
+                    _code.AppendLine("{");
+                    _code.AppendLine($"{transientScopeName} {transientScopeReference} = new {transientScopeName}() {{ {scopeNodeToContainerPropertyReference[transientScopeNode]} = ({_containerInfo.FullName}) {_contextGenerator.ParameterName}.{_contextGenerator.ContainerNodePropertyName} }};");
+                    _code.AppendLine($"return {transientScopeReference}.{_functionUtility.GenerateFunctionCall(transientScopeRootFunction, doScopedInstance: true, doScopeRoot: true)};");
+                    
+                    _code.AppendLine("}");
+                }
                 if (rootNode.ScopeNodeContext is ScopeNodeContext.Scope { ScopeName: var scopeName })
                 {
                     var scopeNode = _scopeNodeManager.Scopes.First(s => s.Name == scopeName);
@@ -164,7 +176,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                     var scopeReference = _referenceGenerator.Generate("scope");
                     _code.AppendLine($"if ({_functionUtility.DoScopeRootParameterName})");
                     _code.AppendLine("{");
-                    _code.AppendLine($"{scopeName} {scopeReference} = new {scopeName}() {{ {scopeNodeToContainerPropertyReference[scopeNode]} = {Constants.ThisKeyword} }};");
+                    _code.AppendLine($"{scopeName} {scopeReference} = new {scopeName}() {{ {scopeNodeToContainerPropertyReference[scopeNode]} = ({_containerInfo.FullName}) {_contextGenerator.ParameterName}.{_contextGenerator.ContainerNodePropertyName} }};");
                     _code.AppendLine($"return {scopeReference}.{_functionUtility.GenerateFunctionCall(scopeRootFunction, doScopedInstance: true, doScopeRoot: true)};");
                     
                     _code.AppendLine("}");

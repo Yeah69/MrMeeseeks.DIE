@@ -22,7 +22,7 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
         ScopeInfo scopeInfo,
         IContainerNode parentContainer,
         IScopeManager scopeManager,
-        IUserDefinedElements userDefinedElements,
+        UserDefinedElements userDefinedElements,
         ReferenceGenerator referenceGenerator,
         TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,

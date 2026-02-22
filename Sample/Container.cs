@@ -18,4 +18,8 @@ internal class Parent
 }
 
 [CreateFunction(typeof(Parent), "Create")]
-internal sealed partial class Container;
+internal sealed partial class Container
+{
+    [CustomScopeForRootTypes(typeof(Scope))]
+    private sealed partial class DIE_Scope;
+}

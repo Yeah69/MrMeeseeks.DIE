@@ -10,15 +10,18 @@ namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<ConcreteEnumerableNode>, IContainerInstance
 {
     private readonly Lazy<InjectionNodeGenerator> _injectionNodeGenerator;
+    private readonly ScopeNodeContext.Container _containerScopeNodeContext;
     private readonly ContextGenerator _contextGenerator;
     private readonly KeyUtility _keyUtility;
 
     internal EnumerableNodeCodeGenerator(
         Lazy<InjectionNodeGenerator> injectionNodeGenerator,
+        ScopeNodeContext.Container containerScopeNodeContext,
         ContextGenerator contextGenerator,
         KeyUtility keyUtility)
     {
         _injectionNodeGenerator = injectionNodeGenerator;
+        _containerScopeNodeContext = containerScopeNodeContext;
         _contextGenerator = contextGenerator;
         _keyUtility = keyUtility;
     }
@@ -33,7 +36,7 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
 
         var isArray = concreteNode.Data.Enumerable is IArrayTypeSymbol;
 
-        var cases = concreteNode.CollectionCases[new ScopeNodeContext.Container()];
+        var cases = concreteNode.CollectionCases[_containerScopeNodeContext];
         var maybeDefaultCase = cases.TryGetValue(new KeyContext.None1(), out var foundDefaultCase)
             ? foundDefaultCase
             : null;

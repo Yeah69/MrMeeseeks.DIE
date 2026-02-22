@@ -11,7 +11,7 @@ internal interface IUserDefinedElementsMappingPart : IMappingPart;
 
 internal sealed class UserDefinedElementsMappingPart : IUserDefinedElementsMappingPart, IScopeInstance
 {
-    private readonly IUserDefinedElements _userDefinedElements;
+    private readonly UserDefinedElements _userDefinedElements;
     private readonly IContainerNode _parentContainer;
     private readonly Func<IFieldSymbol, IFactoryFieldNode> _factoryFieldNodeFactory;
     private readonly Func<IPropertySymbol, IFactoryPropertyNode> _factoryPropertyNodeFactory;
@@ -19,7 +19,7 @@ internal sealed class UserDefinedElementsMappingPart : IUserDefinedElementsMappi
     
     internal UserDefinedElementsMappingPart(
         IContainerNode parentContainer,
-        IUserDefinedElements userDefinedElements,
+        UserDefinedElements userDefinedElements,
         Func<IFieldSymbol, IFactoryFieldNode> factoryFieldNodeFactory,
         Func<IPropertySymbol, IFactoryPropertyNode> factoryPropertyNodeFactory,
         Func<IMethodSymbol, IElementNodeMapperBase, IFactoryFunctionNode> factoryFunctionNodeFactory)

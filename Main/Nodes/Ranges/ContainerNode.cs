@@ -82,7 +82,7 @@ internal sealed partial class ContainerNode : RangeNode, IContainerNode, IContai
 
     internal ContainerNode(
         ContainerInfo containerInfo,
-        Func<(INamedTypeSymbol?, INamedTypeSymbol), IUserDefinedElements> userDefinedElementsFactory,
+        Func<(INamedTypeSymbol?, INamedTypeSymbol), UserDefinedElements> userDefinedElementsFactory,
         ReferenceGenerator referenceGenerator,
         IFunctionCycleTracker functionCycleTracker,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,

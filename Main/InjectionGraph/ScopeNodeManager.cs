@@ -1,4 +1,6 @@
 using System.Threading;
+using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -8,9 +10,11 @@ namespace MrMeeseeks.DIE.InjectionGraph;
 internal sealed class ScopeNodeManager : IContainerInstance
 {
     private readonly Dictionary<string, ScopeNodeBase> _scopeNodes = [];
+    private readonly Dictionary<NonContainerScopeNode, ScopeNodeContext> _scopeNodeContexts = [];
 
     private readonly Func<string, INamedTypeSymbol?, ScopeNode> _scopeFactory;
     private readonly Func<string, INamedTypeSymbol?, TransientScopeNode> _transientScopeFactory;
+    private readonly Func<string, INamedTypeSymbol?, ScopeNodeConfigContext> _scopeCheckTypePropertiesFactory;
     private readonly Lazy<ScopeNode> _defaultScope;
     private readonly Lazy<TransientScopeNode> _defaultTransientScope;
     private readonly Dictionary<ITypeSymbol, ScopeNode> _customScopes;
@@ -23,11 +27,13 @@ internal sealed class ScopeNodeManager : IContainerInstance
         Func<ContainerScopeNode> containerScopeNodeFactory,
         Func<string, INamedTypeSymbol?, ScopeNode> scopeFactory,
         Func<string, INamedTypeSymbol?, TransientScopeNode> transientScopeFactory,
+        Func<string, INamedTypeSymbol?, ScopeNodeConfigContext> scopeCheckTypePropertiesFactory,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         ContainerScopeNode = containerScopeNodeFactory();
         _scopeFactory = scopeFactory;
         _transientScopeFactory = transientScopeFactory;
+        _scopeCheckTypePropertiesFactory = scopeCheckTypePropertiesFactory;
         _defaultScope = new Lazy<ScopeNode>(
             () =>
             {
@@ -162,4 +168,38 @@ internal sealed class ScopeNodeManager : IContainerInstance
 
     internal void RegisterScopedInstance(string scopeName, TypeNode node) => 
         _scopeNodes[scopeName].AddScopedInstance(node);
+
+    internal ScopeNodeContext GetScopeNodeContext(ScopeNodeContext previousScopeNodeContext, TypeNode typeNode, ScopeLevel scopeNodeLevel)
+    {
+        var scopeNode = scopeNodeLevel switch
+        {
+            ScopeLevel.Scope => GetScope(typeNode.Type),
+            ScopeLevel.TransientScope => GetTransientScope(typeNode.Type),
+            _ => throw new ArgumentOutOfRangeException(new Guid("07D1B558-E50E-4C4F-9DF4-6B96700E911B").ToString())
+        };
+        if (!_scopeNodeContexts.TryGetValue(scopeNode, out var context))
+        {
+            var oldTransientScopeName = previousScopeNodeContext is ScopeNodeContext.TransientScope(var name) ? name : null;
+            scopeNode.AddScopeRoot(typeNode);
+            var scopeNodeConfigContext = _scopeCheckTypePropertiesFactory(scopeNode.Name, scopeNode.Type);
+            context = scopeNodeLevel switch
+            {
+                ScopeLevel.Scope => new ScopeNodeContext.Scope(scopeNode.Name, oldTransientScopeName)
+                {
+                    CheckTypeProperties = scopeNodeConfigContext.CheckTypeProperties, 
+                    UserDefinedElements = scopeNodeConfigContext.UserDefinedElements
+                },
+                ScopeLevel.TransientScope => new ScopeNodeContext.TransientScope(scopeNode.Name)
+                {
+                    CheckTypeProperties = scopeNodeConfigContext.CheckTypeProperties, 
+                    UserDefinedElements = scopeNodeConfigContext.UserDefinedElements
+                },
+                _ => throw new ArgumentOutOfRangeException(new Guid("56CF73C9-AE92-4B6C-BB98-90713F5C817F").ToString())
+            };
+            
+            _scopeNodeContexts[scopeNode] = context;
+        }
+
+        return context;
+    }
 }

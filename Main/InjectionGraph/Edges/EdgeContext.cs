@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -7,9 +8,12 @@ namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
 internal abstract record ScopeNodeContext
 {
-    internal sealed record Container : ScopeNodeContext;
+    internal sealed record Container : ScopeNodeContext, IContainerInstance;
     internal sealed record TransientScope(string TransientScopeName) : ScopeNodeContext;
     internal sealed record Scope(string ScopeName, string? TransientScopeName) : ScopeNodeContext;
+    
+    internal required ICheckTypeProperties CheckTypeProperties { get; init; }
+    internal required UserDefinedElements UserDefinedElements { get; init; }
 }
 
 internal abstract record OverrideContext

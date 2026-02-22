@@ -218,7 +218,7 @@ internal abstract class RangeNode : IRangeNode
     internal RangeNode(
         string name,
         INamedTypeSymbol? rangeType,
-        IUserDefinedElements userDefinedElements,
+        UserDefinedElements userDefinedElements,
         IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,

@@ -33,7 +33,7 @@ internal sealed partial class TransientScopeNode : ScopeNodeBase, ITransientScop
         ScopeInfo scopeInfo,
         IContainerNode parentContainer,
         IScopeManager scopeManager,
-        IUserDefinedElements userDefinedElements,
+        UserDefinedElements userDefinedElements,
         ReferenceGenerator referenceGenerator,
         TypeParameterUtility typeParameterUtility,
         IRangeUtility rangeUtility,

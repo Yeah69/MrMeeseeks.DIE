@@ -46,11 +46,13 @@ internal sealed class ContainerScopeNode(ScopedInstanceInterfaceDescription scop
     : ScopeNodeBase(scopedInstanceInterfaceDescription);
 
 internal abstract class NonContainerScopeNode(
+    INamedTypeSymbol? type,
     string name,
     ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription) : ScopeNodeBase(scopedInstanceInterfaceDescription)
 {
     private readonly Dictionary<TypeNode, ScopeRootDescription> _scopeRoots = [];
     internal string Name { get; } = name;
+    internal INamedTypeSymbol? Type { get; } = type;
     internal IEnumerable<ScopeRootDescription> ScopedRoots => _scopeRoots.Values;
     internal void AddScopeRoot(TypeNode node)
     {
@@ -62,15 +64,13 @@ internal abstract class NonContainerScopeNode(
 internal sealed class ScopeNode(
     INamedTypeSymbol? type,
     string name,
-    ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription) : NonContainerScopeNode(name, scopedInstanceInterfaceDescription)
+    ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription) : NonContainerScopeNode(type, name, scopedInstanceInterfaceDescription)
 {
-    internal INamedTypeSymbol? Type { get; } = type;
 }
 
 internal sealed class TransientScopeNode(
     INamedTypeSymbol? type,
     string name,
-    ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription) : NonContainerScopeNode(name, scopedInstanceInterfaceDescription)
+    ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription) : NonContainerScopeNode(type, name, scopedInstanceInterfaceDescription)
 {
-    internal INamedTypeSymbol? Type { get; } = type;
 }

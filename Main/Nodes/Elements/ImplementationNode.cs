@@ -49,7 +49,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
     private readonly IRangeNode _parentRange;
     private readonly IElementNodeMapperBase _elementNodeMapper;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly IUserDefinedElements _userDefinedElements;
+    private readonly UserDefinedElements _userDefinedElements;
     private readonly ReferenceGenerator _referenceGenerator;
     private readonly ILocalDiagLogger _localDiagLogger;
     private readonly ITaskBasedQueue _taskBasedQueue;
@@ -70,7 +70,7 @@ internal sealed partial class ImplementationNode : IImplementationNode
         IContainerNode parentContainer,
         IRangeNode parentRange,
         IElementNodeMapperBase elementNodeMapper,
-        IUserDefinedElements userDefinedElements,
+        UserDefinedElements userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
         ReferenceGenerator referenceGenerator,
         ILocalDiagLogger localDiagLogger,

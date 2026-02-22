@@ -6,19 +6,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
-internal interface IUserDefinedElements
-{
-    IFieldSymbol? GetFactoryFieldFor(ITypeSymbol type);
-    IPropertySymbol? GetFactoryPropertyFor(ITypeSymbol type);
-    IMethodSymbol? GetFactoryMethodFor(ITypeSymbol type);
-    IMethodSymbol? AddForDisposal { get; }
-    IMethodSymbol? AddForDisposalAsync { get; }
-    IMethodSymbol? GetConstructorParametersInjectionFor(INamedTypeSymbol type);
-    IMethodSymbol? GetPropertiesInjectionFor(INamedTypeSymbol type);
-    IMethodSymbol? GetInitializerParametersInjectionFor(INamedTypeSymbol type);
-}
-
-internal sealed class UserDefinedElements : IUserDefinedElements, ITransientScopeInstance
+internal sealed class UserDefinedElements : ITransientScopeInstance
 {
     private readonly Dictionary<ITypeSymbol, IFieldSymbol> _typeToField;
     private readonly Dictionary<ITypeSymbol, IPropertySymbol> _typeToProperty;

@@ -79,7 +79,7 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
         internal sealed record Error(string ErrorMessage) : CaseIdResponse;
         internal sealed record None3 : CaseIdResponse;
     }
-    public CaseIdResponse ConnectIfNotAlready(EdgeContext context, ICheckTypeProperties checkTypeProperties)
+    public CaseIdResponse ConnectIfNotAlready(EdgeContext context)
     {
         var innerCaseIdResponse = context switch
         {
@@ -116,9 +116,10 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
             
             var targetImplementationResult =
                 // If there is a registered composite type for the current interface type, we use that as the implementation
-                checkTypeProperties.ShouldBeComposite(Data.Interface) && checkTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
+                context.ScopeNode.CheckTypeProperties.ShouldBeComposite(Data.Interface) 
+                && context.ScopeNode.CheckTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
                     ? new ImplementationResult.Single(compositeType)
-                    : checkTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: new InjectionKey(keyType, keyValue));
+                    : context.ScopeNode.CheckTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: new InjectionKey(keyType, keyValue));
         
             if (targetImplementationResult is not ImplementationResult.Single { Implementation: var targetImplementation })
             {
@@ -131,7 +132,7 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation, checkTypeProperties))
+            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation))
             {
                 case IdRegister.CaseIdResponse.Success { NextCaseId: var keyedCaseId }:
                 {
@@ -183,9 +184,10 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
             
             var targetImplementationResult =
                 // If there is a registered composite type for the current interface type, we use that as the implementation
-                checkTypeProperties.ShouldBeComposite(Data.Interface) && checkTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
+                context.ScopeNode.CheckTypeProperties.ShouldBeComposite(Data.Interface) 
+                && context.ScopeNode.CheckTypeProperties.GetCompositeFor(Data.Interface) is { } compositeType 
                     ? new ImplementationResult.Single(compositeType)
-                    : checkTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: null);
+                    : context.ScopeNode.CheckTypeProperties.MapToSingleFittingImplementation(Data.Interface, injectionKey: null);
         
             if (targetImplementationResult is not ImplementationResult.Single { Implementation: var targetImplementation })
             {
@@ -198,7 +200,7 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation, checkTypeProperties))
+            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation))
             {
                 case IdRegister.CaseIdResponse.Success { NextCaseId: var nodeCaseId }:
                 {

@@ -37,7 +37,7 @@ internal sealed class IdRegister
     private readonly ConcurrentDictionary<int, DecorationChainNode> _caseIdToDecorationChainNode = [];
     private int _caseCounter;
     
-    internal CaseIdResponse GetInitialCaseId(ScopeNodeContext scopeNode, INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType, ICheckTypeProperties checkTypeProperties)
+    internal CaseIdResponse GetInitialCaseId(ScopeNodeContext scopeNode, INamedTypeSymbol interfaceType, INamedTypeSymbol implementationType)
     {
         var initialNode = _initialDecorationChainNode.GetOrAdd(scopeNode, _ => new ConcurrentDictionary<INamedTypeSymbol, ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>>())
             .GetOrAdd(interfaceType, _ => new ConcurrentDictionary<INamedTypeSymbol, DecorationChainNode>(CustomSymbolEqualityComparer.Default))
@@ -50,7 +50,7 @@ internal sealed class IdRegister
             var currentDecorationChainNode = new DecorationChainNode(implementation, Interlocked.Increment(ref _caseCounter), null);
             _caseIdToDecorationChainNode[currentDecorationChainNode.CaseId] = currentDecorationChainNode;
         
-            var decorationSequence = checkTypeProperties.GetDecorationSequenceFor(interfaceType, implementation);
+            var decorationSequence = scopeNode.CheckTypeProperties.GetDecorationSequenceFor(interfaceType, implementation);
 
             for (int i = decorationSequence.Count - 1; i >= 0; i--)
             {

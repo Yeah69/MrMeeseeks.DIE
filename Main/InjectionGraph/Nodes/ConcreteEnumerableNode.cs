@@ -96,14 +96,14 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
     public override int GetHashCode() => Data.GetHashCode();
     public override bool Equals(object? obj) => obj is ConcreteEnumerableNode other && Data.Equals(other.Data);
 
-    public IReadOnlyList<(TypeNode TypeNode, EdgeContext NewContext, Location Location)> ConnectIfNotAlready(EdgeContext context, ICheckTypeProperties checkTypeProperties)
+    public IReadOnlyList<(TypeNode TypeNode, EdgeContext NewContext, Location Location)> ConnectIfNotAlready(EdgeContext context)
     {
         // KeyValuePair involved
         if (KeyValuePairKeyType is {} keyValuePairKeyType && UnwrappedItemType is INamedTypeSymbol { TypeKind: TypeKind.Interface } unwrappedItemType)
         {
             var keyValues = (IsKeyValuePairWithCollectionValue 
-                ? checkTypeProperties.MapToKeyedMultipleImplementations(unwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key)
-                : checkTypeProperties.MapToKeyedImplementations(unwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key))
+                ? context.ScopeNode.CheckTypeProperties.MapToKeyedMultipleImplementations(unwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key)
+                : context.ScopeNode.CheckTypeProperties.MapToKeyedImplementations(unwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key))
                 .ToImmutableArray();
 
             var keyResult = _collectionCases.GetOrAdd(context.ScopeNode, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
@@ -128,8 +128,8 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
         if (UnwrappedItemType is INamedTypeSymbol { TypeKind: TypeKind.Interface } interfaceType)
         {
             var outwardFacingId = _idRegister.GetOutwardFacingTypeId(interfaceType);
-            var caseChoices = checkTypeProperties.MapToImplementations(interfaceType, injectionKey)
-                .Select(i => _idRegister.GetInitialCaseId(context.ScopeNode, interfaceType, i, checkTypeProperties))
+            var caseChoices = context.ScopeNode.CheckTypeProperties.MapToImplementations(interfaceType, injectionKey)
+                .Select(i => _idRegister.GetInitialCaseId(context.ScopeNode, interfaceType, i))
                 .OfType<IdRegister.CaseIdResponse.Success>()
                 .Select(s => new CaseChoiceContext.Single(outwardFacingId, s.NextCaseId))
                 .ToImmutableArray();

@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -25,10 +26,11 @@ internal sealed class InjectionGraphBuilder(
     TypeNodeManager typeNodeManager,
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
     OverrideContextManager overrideContextManager,
-    IContainerCheckTypeProperties containerCheckTypeProperties,
+    ScopeNodeContext.Container containerScopeNodeContext,
     ScopeNodeManager scopeNodeManager,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
     Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
+    LocalDiagLogger logger,
     WellKnownTypesCollections wellKnownTypesCollections)
     : IInjectionGraphBuilder, IContainerInstance
 {
@@ -45,7 +47,7 @@ internal sealed class InjectionGraphBuilder(
     {
         var overrideContext = overrideContextManager.GetOrAddContext(overrides);
         var rootEdgeContext = new EdgeContext(
-            new ScopeNodeContext.Container(),
+            containerScopeNodeContext,
             overrideContext,
             new KeyContext.None1(),
             new CaseChoiceContext.None2());
@@ -59,7 +61,7 @@ internal sealed class InjectionGraphBuilder(
         while (queue.Count > 0)
         {
             var (typeNode, edgeContext, currentResolvedLocation) = queue.Dequeue();
-            MakeResolutionStep(typeNode, edgeContext, queue, currentResolvedLocation, containerCheckTypeProperties);
+            MakeResolutionStep(typeNode, edgeContext, queue, currentResolvedLocation);
         }
     }
 
@@ -67,46 +69,38 @@ internal sealed class InjectionGraphBuilder(
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,
-        Location currentResolvedLocation,
-        ICheckTypeProperties checkTypeProperties)
+        Location currentResolvedLocation)
     {
+        var scopeNodeDescription = edgeContext.ScopeNode switch
+        {
+            ScopeNodeContext.Container container => "Container",
+            ScopeNodeContext.Scope scope => "Scope",
+            ScopeNodeContext.TransientScope transientScope => "TransientScope",
+            _ => throw new ArgumentOutOfRangeException()
+        };
         if (typeNode.ContainsOutgoingEdgeFor(edgeContext))
             return;
 
         var typeNodeType = typeNode.Type;
 
         if (typeNode.ScopeNodeContext is null 
-            && checkTypeProperties.ShouldBeScopeRoot(typeNode.Type) is var scopeNodeLevel and (ScopeLevel.Scope or ScopeLevel.TransientScope))
+            && edgeContext.ScopeNode.CheckTypeProperties.ShouldBeScopeRoot(typeNode.Type) is var scopeNodeLevel and (ScopeLevel.Scope or ScopeLevel.TransientScope))
         {
-            var oldTransientScopeName = edgeContext.ScopeNode is ScopeNodeContext.TransientScope(var name) ? name : null;
-            var scopeNode = scopeNodeLevel switch
-            {
-                ScopeLevel.Scope => scopeNodeManager.GetScope(typeNode.Type),
-                ScopeLevel.TransientScope => scopeNodeManager.GetTransientScope(typeNode.Type),
-                _ => throw new ArgumentOutOfRangeException(new Guid("07D1B558-E50E-4C4F-9DF4-6B96700E911B").ToString())
-            };
-            scopeNode.AddScopeRoot(typeNode);
-            var newScopeNodeContext = scopeNodeLevel switch
-            {
-                ScopeLevel.Scope => (ScopeNodeContext) new ScopeNodeContext.Scope(scopeNode.Name, oldTransientScopeName),
-                ScopeLevel.TransientScope => new ScopeNodeContext.TransientScope(scopeNode.Name),
-                _ => throw new ArgumentOutOfRangeException(new Guid("56CF73C9-AE92-4B6C-BB98-90713F5C817F").ToString())
-            };
-            
-            // Todo clean scope creation
-            
-            // Todo switch ICheckTypeProperties instance
+            var newScopeNodeContext = scopeNodeManager.GetScopeNodeContext(edgeContext.ScopeNode, typeNode, scopeNodeLevel);
                 
             edgeContext = edgeContext with { ScopeNode = newScopeNodeContext };
 
             typeNode.ScopeNodeContext = newScopeNodeContext;
         }
 
-        if (checkTypeProperties.GetScopeLevelFor(typeNode.Type) is var scopeInstanceLevel and not ScopeLevel.None)
+        var scopeLevelFor = edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type);
+        if (edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type) is var scopeInstanceLevel and not ScopeLevel.None)
         {
+            logger.Warning(WarningLogData.Logging($"Inside ScopeLevel {scopeLevelFor.ToString()} {edgeContext.ScopeNode.CheckTypeProperties.GetHashCode()} ({typeNode.Type.FullName()}, {scopeNodeDescription})"), Location.None);
             switch (edgeContext.ScopeNode)
             {
                 case ScopeNodeContext.Container:
+                    logger.Warning(WarningLogData.Logging($"Inside Container case {scopeLevelFor.ToString()} {edgeContext.ScopeNode.CheckTypeProperties.GetHashCode()} ({typeNode.Type.FullName()}, {scopeNodeDescription})"), Location.None);
                     scopeNodeManager.RegisterContainerInstance(typeNode);
                     break;
                 case ScopeNodeContext.Scope { ScopeName: var scopeName }:
@@ -134,22 +128,22 @@ internal sealed class InjectionGraphBuilder(
                 resolutionSteps.OverrideStep(typeNode, edgeContext);
                 break;
             case INamedTypeSymbol { Name: "IEnumerable" } enumerableType when CustomSymbolEqualityComparer.IncludeNullability.Equals(typeNodeType.OriginalDefinition, wellKnownTypesCollections.IEnumerable1):
-                resolutionSteps.EnumerableStep(enumerableType, typeNode, edgeContext, queue, currentResolvedLocation, checkTypeProperties);
+                resolutionSteps.EnumerableStep(enumerableType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
             case IArrayTypeSymbol arrayType:
-                resolutionSteps.EnumerableStep(arrayType, typeNode, edgeContext, queue, currentResolvedLocation, checkTypeProperties);
+                resolutionSteps.EnumerableStep(arrayType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
             case INamedTypeSymbol { TypeArguments.Length: >= 1 } maybeFunctor when maybeFunctor.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal):
                 resolutionSteps.FunctorStep(maybeFunctor, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
             case INamedTypeSymbol { TypeKind: TypeKind.Interface } interfaceType:
-                resolutionSteps.InterfaceStep(interfaceType, typeNode, edgeContext, queue, currentResolvedLocation, checkTypeProperties);
+                resolutionSteps.InterfaceStep(interfaceType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
             case INamedTypeSymbol keyValuePairType when CustomSymbolEqualityComparer.Default.Equals(keyValuePairType.OriginalDefinition, wellKnownTypesCollections.KeyValuePair2):
                 resolutionSteps.KeyValuePairStep(keyValuePairType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
             case INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } implementationType:
-                resolutionSteps.ImplementationStep(implementationType, typeNode, edgeContext, queue, currentResolvedLocation, checkTypeProperties);
+                resolutionSteps.ImplementationStep(implementationType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
             default:
                 resolutionSteps.DefaultStep(typeNode, edgeContext, currentResolvedLocation);

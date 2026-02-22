@@ -53,8 +53,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,
-        Location currentResolvedLocation,
-        ICheckTypeProperties checkTypeProperties)
+        Location currentResolvedLocation)
     {
         var concreteInterfaceNodeData = new ConcreteInterfaceNodeData(Interface: currentType);
 
@@ -62,7 +61,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         
         ConnectToTypeNodeIfNotAlready(concreteInterfaceNode, edgeContext, typeNode);
         
-        var connectionResult = concreteInterfaceNode.ConnectIfNotAlready(edgeContext, checkTypeProperties);
+        var connectionResult = concreteInterfaceNode.ConnectIfNotAlready(edgeContext);
         
         if (connectionResult is ConcreteInterfaceNode.CaseIdResponse.Success { TypeNode: var newNode, Location: var newLocation, EdgeContext: var newEdgeContext})
             queue.Enqueue(new ResolutionStep(
@@ -83,13 +82,13 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,
-        Location currentResolvedLocation,
-        ICheckTypeProperties checkTypeProperties)
+        Location currentResolvedLocation)
     {
-        var key = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } && !checkTypeProperties.IsContextPassingType(currentType)
+        var key = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } 
+                  && !edgeContext.ScopeNode.CheckTypeProperties.IsContextPassingType(currentType)
             ? new InjectionKey(keyType, keyValue)
             : null;
-        var implementationResult = checkTypeProperties.MapToSingleFittingImplementation(currentType, key);
+        var implementationResult = edgeContext.ScopeNode.CheckTypeProperties.MapToSingleFittingImplementation(currentType, key);
         if (implementationResult is not ImplementationResult.Single { Implementation: { } implementation })
         {
             ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
@@ -109,7 +108,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         }
         
         // Constructor
-        var constructorResult = checkTypeProperties.GetConstructorChoiceFor(implementation);
+        var constructorResult = edgeContext.ScopeNode.CheckTypeProperties.GetConstructorChoiceFor(implementation);
         if (constructorResult is not ConstructorResult.Single { Constructor: {} constructor})
         {
             ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
@@ -132,7 +131,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         
         // Properties
         IReadOnlyList<IPropertySymbol> properties;
-        if (checkTypeProperties.GetPropertyChoicesFor(implementation) is { } propertyChoice)
+        if (edgeContext.ScopeNode.CheckTypeProperties.GetPropertyChoicesFor(implementation) is { } propertyChoice)
             properties = propertyChoice;
         // Automatic property injection is disabled for record types, but property choices are still allowed
         else if (!implementation.IsRecord)
@@ -186,8 +185,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         TypeNode typeNode,
         EdgeContext edgeContext,
         Queue<ResolutionStep> queue,
-        Location currentResolvedLocation,
-        ICheckTypeProperties checkTypeProperties)
+        Location currentResolvedLocation)
     {
         var concreteEnumerableNodeData = new ConcreteEnumerableNodeData(Enumerable: currentType);
 
@@ -195,7 +193,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
 
         ConnectToTypeNodeIfNotAlready(concreteEnumerableNode, edgeContext, typeNode);
         
-        foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext, checkTypeProperties))
+        foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext))
             queue.Enqueue(new ResolutionStep(
                 node, 
                 newEdgeContext,

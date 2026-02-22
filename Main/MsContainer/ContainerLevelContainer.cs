@@ -2,11 +2,15 @@
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.Configuration.Interception;
+using MrMeeseeks.DIE.InjectionGraph;
+using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes.Functions;
 using MrMeeseeks.DIE.Nodes.Ranges;
 using MrMeeseeks.DIE.Nodes.Roots;
 using MrMeeseeks.SourceGeneratorUtility;
+using ScopeNode = MrMeeseeks.DIE.Nodes.Ranges.ScopeNode;
+using TransientScopeNode = MrMeeseeks.DIE.Nodes.Ranges.TransientScopeNode;
 
 // ReSharper disable InconsistentNaming
 
@@ -82,6 +86,9 @@ internal sealed partial class ContainerLevelContainer
     private WellKnownTypesMapping DIE_Factory_WellKnownTypesMapping() => 
         WellKnownTypesMapping.Create(DIE_Factory_Compilation);
 
+    private ScopeNodeContext.Container DIE_Factory_ScopeNodeContextContainer(ICheckTypeProperties checkTypeProperties, UserDefinedElements userDefinedElements) => 
+        new ScopeNodeContext.Container() { CheckTypeProperties = checkTypeProperties, UserDefinedElements = userDefinedElements };
+
     [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [InitializedInstances(typeof(ReferenceGenerator))]
     private abstract class ScopeObject;
@@ -101,6 +108,10 @@ internal sealed partial class ContainerLevelContainer
     [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [CustomScopeForRootTypes(typeof(ScopeNodeRoot))]
     private sealed partial class DIE_TransientScope_ScopeNodeRoot : TransientScopeBase;
+
+    [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
+    [CustomScopeForRootTypes(typeof(ScopeNodeConfigContext))]
+    private sealed partial class DIE_TransientScope_ScopeNodeRoot_InjectionGraph : TransientScopeBase;
 
     [ImplementationChoice(typeof(IRangeNode), typeof(TransientScopeNode))]
     [CustomScopeForRootTypes(typeof(TransientScopeNodeRoot))]

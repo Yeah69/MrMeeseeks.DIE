@@ -15,7 +15,7 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
     private readonly IValidateTransientScope _validateTransientScopeFactory;
     private readonly IValidateScope _validateScopeFactory;
     private readonly Lazy<TypeParameterUtility> _typeParameterUtility;
-    private readonly IRangeUtility _rangeUtility;
+    private readonly RangeUtility _rangeUtility;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 
     internal ValidateContainer(
@@ -27,13 +27,13 @@ internal sealed class ValidateContainer : ValidateRange, IValidateContainer
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
-        IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        IValidateAttributes validateAttributes,
+        ValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        ValidateAttributes validateAttributes,
         Lazy<TypeParameterUtility> typeParameterUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger localDiagLogger,
-        IRangeUtility rangeUtility) 
+        LocalDiagLogger localDiagLogger,
+        RangeUtility rangeUtility)
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync, 

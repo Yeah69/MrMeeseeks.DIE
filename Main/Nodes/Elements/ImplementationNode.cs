@@ -51,9 +51,9 @@ internal sealed partial class ImplementationNode : IImplementationNode
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly UserDefinedElements _userDefinedElements;
     private readonly ReferenceGenerator _referenceGenerator;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly ITaskBasedQueue _taskBasedQueue;
-    private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
+    private readonly InjectablePropertyExtractor _injectablePropertyExtractor;
 
     private readonly List<(string Name, IElementNode Element)> _constructorParameters = [];
     private readonly List<(string Name, IElementNode Element)> _properties = [];
@@ -73,9 +73,9 @@ internal sealed partial class ImplementationNode : IImplementationNode
         UserDefinedElements userDefinedElements,
         ICheckTypeProperties checkTypeProperties,
         ReferenceGenerator referenceGenerator,
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         ITaskBasedQueue taskBasedQueue,
-        IInjectablePropertyExtractor injectablePropertyExtractor)
+        InjectablePropertyExtractor injectablePropertyExtractor)
     {
         _implementationType = implementationType;
         _constructor = constructor;

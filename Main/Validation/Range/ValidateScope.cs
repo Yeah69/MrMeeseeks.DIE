@@ -16,13 +16,13 @@ internal sealed class ValidateScope : ValidateScopeBase, IValidateScope
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
-        IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        IValidateAttributes validateAttributes,
+        ValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        ValidateAttributes validateAttributes,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger localDiagLogger,
-        IRangeUtility rangeUtility) 
+        LocalDiagLogger localDiagLogger,
+        RangeUtility rangeUtility)
         : base(
             validateUserDefinedAddForDisposalSync, 
             validateUserDefinedAddForDisposalAsync,

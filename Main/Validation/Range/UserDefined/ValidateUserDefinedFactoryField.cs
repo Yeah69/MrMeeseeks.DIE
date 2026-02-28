@@ -2,17 +2,11 @@ using MrMeeseeks.DIE.Logging;
 
 namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
-internal interface IValidateUserDefinedFactoryField
+internal sealed class ValidateUserDefinedFactoryField
 {
-    void Validate(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
-}
+    private readonly LocalDiagLogger _localDiagLogger;
 
-internal sealed class ValidateUserDefinedFactoryField : IValidateUserDefinedFactoryField
-{
-    private readonly ILocalDiagLogger _localDiagLogger;
-
-    internal ValidateUserDefinedFactoryField(
-        ILocalDiagLogger localDiagLogger) =>
+    internal ValidateUserDefinedFactoryField(LocalDiagLogger localDiagLogger) =>
         _localDiagLogger = localDiagLogger;
 
     public void Validate(IFieldSymbol field, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)

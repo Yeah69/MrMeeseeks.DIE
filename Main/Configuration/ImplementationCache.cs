@@ -3,14 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Configuration;
 
-internal interface IImplementationCache
-{
-    IImmutableSet<INamedTypeSymbol> All { get; }
-
-    IImmutableSet<INamedTypeSymbol> ForAssembly(IAssemblySymbol assembly);
-}
-
-internal sealed class ImplementationCache : IImplementationCache, IContainerInstance
+internal sealed class ImplementationCache : IContainerInstance
 {
     private readonly INamedTypeCache _namedTypeCache;
     private readonly Lazy<IImmutableSet<INamedTypeSymbol>> _all;

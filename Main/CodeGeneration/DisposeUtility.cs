@@ -14,24 +14,7 @@ internal sealed record DisposalUtilityInterfaceData(
     string UserDefinedSyncDisposablesPropertyName,
     string? UserDefinedAsyncDisposablesPropertyName);
 
-internal interface IDisposeUtility
-{
-    string ClassName { get; }
-    DisposalUtilityInterfaceData DisposableRangeInterfaceData { get; }
-    string DisposeFullyQualified { get; }
-    string? DisposeSyncOnlyFullyQualified { get; }
-    string? DisposeAsyncFullyQualified { get; }
-    string? DisposeChunkAsyncFullyQualified { get; }
-    string DisposeExceptionHandlingFullyQualified { get; }
-    string? DisposeExceptionHandlingSyncOnlyFullyQualified { get; }
-    string? DisposeExceptionHandlingAsyncFullyQualified { get; }
-    string? DisposeSingularAsyncFullyQualified { get; }
-    string? DisposeSingularAsyncSyncedFullyQualified { get; }
-    string GenerateSingularDisposeFunctionsFile();
-    string? ReleaseDisposeAsyncFullyQualified { get; }
-}
-
-internal sealed class DisposeUtility : IDisposeUtility, IContainerInstance
+internal sealed class DisposeUtility : IContainerInstance
 {
     private readonly ReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypes _wellKnownTypes;

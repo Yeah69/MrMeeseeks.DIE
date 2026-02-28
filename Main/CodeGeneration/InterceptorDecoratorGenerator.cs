@@ -4,12 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
 
-internal interface IInterceptorDecoratorGenerator
-{
-    string? Generate();
-}
-
-internal sealed class InterceptorDecoratorGenerator : IInterceptorDecoratorGenerator
+internal sealed class InterceptorDecoratorGenerator
 {
     private readonly IInvocationTypeManager _invocationTypeManager;
     private readonly ReferenceGenerator _referenceGenerator;

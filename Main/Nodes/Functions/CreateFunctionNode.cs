@@ -17,7 +17,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
 {
     private readonly MapperData _mapperData;
     private readonly ImplementationMappingConfiguration? _implementationMappingConfiguration;
-    private readonly IMapperFactory _mapperFactory;
+    private readonly MapperFactory _mapperFactory;
 
     internal CreateFunctionNode(
         // parameters
@@ -30,7 +30,7 @@ internal sealed partial class CreateFunctionNode : SingleFunctionNodeBase, ICrea
         IRangeNode parentRange,
         IContainerNode parentContainer,
         ReferenceGenerator referenceGenerator, 
-        IMapperFactory mapperFactory,
+        MapperFactory mapperFactory,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,

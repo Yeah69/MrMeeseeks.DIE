@@ -10,10 +10,9 @@ internal interface IValidateUserDefinedMethod
 
 internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
 {
-    protected readonly ILocalDiagLogger LocalDiagLogger;
+    protected readonly LocalDiagLogger LocalDiagLogger;
 
-    internal ValidateUserDefinedMethod(
-        ILocalDiagLogger localDiagLogger) =>
+    internal ValidateUserDefinedMethod(LocalDiagLogger localDiagLogger) =>
         LocalDiagLogger = localDiagLogger;
 
     public virtual void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType)

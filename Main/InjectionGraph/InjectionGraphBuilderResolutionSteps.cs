@@ -9,8 +9,8 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 namespace MrMeeseeks.DIE.InjectionGraph;
 
 internal sealed class InjectionGraphBuilderResolutionSteps(
-    ILocalDiagLogger containerDiagLogger,
-    IInjectablePropertyExtractor injectablePropertyExtractor,
+    LocalDiagLogger containerDiagLogger,
+    InjectablePropertyExtractor injectablePropertyExtractor,
     ConcreteImplementationNodeManager concreteImplementationNodeManager,
     ConcreteInterfaceNodeManager concreteInterfaceNodeManager,
     ConcreteEnumerableNodeManager concreteEnumerableNodeManager,

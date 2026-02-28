@@ -34,7 +34,7 @@ internal sealed class ContainerCheckTypeProperties : CheckTypeProperties, IConta
 {
     internal ContainerCheckTypeProperties(
         IContainerCurrentlyConsideredTypes currentlyConsideredTypes, 
-        IInjectablePropertyExtractor injectablePropertyExtractor,
+        InjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
         TypeParameterUtility typeParameterUtility) 
@@ -50,7 +50,7 @@ internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeChec
     internal ScopeCheckTypeProperties(
         IScopeCurrentlyConsideredTypes currentlyConsideredTypes, 
         
-        IInjectablePropertyExtractor injectablePropertyExtractor,
+        InjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
         TypeParameterUtility typeParameterUtility) 
@@ -103,7 +103,7 @@ internal interface ICheckTypeProperties
 internal abstract class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
-    private readonly IInjectablePropertyExtractor _injectablePropertyExtractor;
+    private readonly InjectablePropertyExtractor _injectablePropertyExtractor;
     private readonly TypeParameterUtility _typeParameterUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     
@@ -112,7 +112,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
-        IInjectablePropertyExtractor injectablePropertyExtractor,
+        InjectablePropertyExtractor injectablePropertyExtractor,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
         TypeParameterUtility typeParameterUtility)

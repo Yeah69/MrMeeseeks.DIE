@@ -21,15 +21,15 @@ internal sealed class ExecuteContainer
     private readonly IContainerNode _containerNode;
     private readonly ICodeGenerationVisitor _codeGenerationVisitor;
     private readonly IValidateContainer _validateContainer;
-    private readonly IContainerDieExceptionGenerator _containerDieExceptionGenerator;
+    private readonly ContainerDieExceptionGenerator _containerDieExceptionGenerator;
     private readonly ICurrentExecutionPhaseSetter _currentExecutionPhaseSetter;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly AnalyticsFlags _analyticsFlags;
     private readonly Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> _resolutionGraphAnalyticsNodeVisitorFactory;
     private readonly Lazy<IFilterForErrorRelevancyNodeVisitor> _filterForErrorRelevancyNodeVisitor;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly IInjectionGraphCodeGenerator _injectionGraphCodeGenerator;
-    private readonly IDiagLogger _diagLogger;
+    private readonly DiagLogger _diagLogger;
     private readonly ContainerInfo _containerInfo;
 
     internal ExecuteContainer(
@@ -38,16 +38,16 @@ internal sealed class ExecuteContainer
         IContainerNode containerNode,
         ICodeGenerationVisitor codeGenerationVisitor,
         IValidateContainer validateContainer,
-        IContainerDieExceptionGenerator containerDieExceptionGenerator,
+        ContainerDieExceptionGenerator containerDieExceptionGenerator,
         ContainerInfo containerInfo,
         ICurrentExecutionPhaseSetter currentExecutionPhaseSetter,
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         AnalyticsFlags analyticsFlags,
         Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> resolutionGraphAnalyticsNodeVisitorFactory,
         Lazy<IFilterForErrorRelevancyNodeVisitor> filterForErrorRelevancyNodeVisitor,
         IInjectionGraphBuilder injectionGraphBuilder,
         IInjectionGraphCodeGenerator injectionGraphCodeGenerator,
-        IDiagLogger diagLogger)
+        DiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
         _context = context;

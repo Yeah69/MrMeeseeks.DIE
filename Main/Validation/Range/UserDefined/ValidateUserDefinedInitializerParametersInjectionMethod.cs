@@ -8,7 +8,7 @@ internal sealed class ValidateUserDefinedInitializerParametersInjectionMethod : 
 {
     internal ValidateUserDefinedInitializerParametersInjectionMethod(
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger diagLogger) 
+        LocalDiagLogger diagLogger) 
         : base(diagLogger) => 
         InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedInitializerParametersInjectionAttribute;
 

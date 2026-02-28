@@ -10,11 +10,11 @@ internal sealed class ReferenceGenerator : IScopeInstance
 {
     private int _i = -1;
     private readonly int _j;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
 
     internal ReferenceGenerator(
         ReferenceGeneratorCounter referenceGeneratorCounter,
-        ILocalDiagLogger localDiagLogger)
+        LocalDiagLogger localDiagLogger)
     {
         _j = referenceGeneratorCounter.GetCount();
         _localDiagLogger = localDiagLogger;

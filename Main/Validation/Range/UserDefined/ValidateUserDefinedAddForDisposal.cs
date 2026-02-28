@@ -12,7 +12,7 @@ internal sealed class ValidateUserDefinedAddForDisposalSync
 {
     internal ValidateUserDefinedAddForDisposalSync(
         WellKnownTypes wellKnownTypes,
-        ILocalDiagLogger localDiagLogger)
+        LocalDiagLogger localDiagLogger)
         : base(localDiagLogger) => 
         DisposableType = wellKnownTypes.IDisposable;
 
@@ -26,7 +26,7 @@ internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefin
 {
     internal ValidateUserDefinedAddForDisposalAsync(
         WellKnownTypes wellKnownTypes,
-        ILocalDiagLogger localDiagLogger)
+        LocalDiagLogger localDiagLogger)
         : base(localDiagLogger) => 
         DisposableType = wellKnownTypes.IAsyncDisposable;
 
@@ -37,9 +37,7 @@ internal interface IValidateUserDefinedAddForDisposalBase : IValidateUserDefined
 
 internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefinedMethod, IValidateUserDefinedAddForDisposalBase
 {
-    internal ValidateUserDefinedAddForDisposalBase(
-        ILocalDiagLogger localDiagLogger) 
-        : base(localDiagLogger)
+    internal ValidateUserDefinedAddForDisposalBase(LocalDiagLogger localDiagLogger) : base(localDiagLogger)
     {
     }
     protected abstract INamedTypeSymbol? DisposableType { get; }

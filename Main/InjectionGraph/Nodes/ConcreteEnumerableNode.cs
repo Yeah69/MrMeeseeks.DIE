@@ -53,7 +53,7 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
         ConcreteEnumerableNodeData data,
 
         // dependencies
-        ICheckIterableTypes checkIterableTypes,
+        CheckIterableTypes checkIterableTypes,
         IdRegister idRegister,
         TypeNodeManager typeNodeManager,
         Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory,

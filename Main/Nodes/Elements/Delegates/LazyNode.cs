@@ -13,7 +13,7 @@ internal sealed partial class LazyNode : DelegateBaseNode, ILazyNode
         ILocalFunctionNode function,
         IReadOnlyList<ITypeSymbol> typeParameters,
         
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         ReferenceGenerator referenceGenerator) 
         : base(delegateTypes, function, typeParameters, localDiagLogger, parentContainer, referenceGenerator)

@@ -12,8 +12,8 @@ internal sealed class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTyp
     internal ContainerCurrentlyConsideredTypes(
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
-        IImplementationCache implementationCache,
-        ILocalDiagLogger localDiagLogger)
+        ImplementationCache implementationCache,
+        LocalDiagLogger localDiagLogger)
     : base(
         [assemblyTypesFromAttributes, containerTypesFromAttributes],
         implementationCache,
@@ -30,8 +30,8 @@ internal sealed class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBa
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
         IScopeTypesFromAttributes scopeTypesFromAttributes,
-        IImplementationCache implementationCache,
-        ILocalDiagLogger localDiagLogger)
+        ImplementationCache implementationCache,
+        LocalDiagLogger localDiagLogger)
         : base(
             [assemblyTypesFromAttributes, containerTypesFromAttributes, scopeTypesFromAttributes],
             implementationCache,
@@ -75,8 +75,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
 {
     public CurrentlyConsideredTypesBase(
         IReadOnlyList<ITypesFromAttributesBase> typesFromAttributes,
-        IImplementationCache implementationCache,
-        ILocalDiagLogger localDiagLogger)
+        ImplementationCache implementationCache,
+        LocalDiagLogger localDiagLogger)
     {
         IImmutableSet<INamedTypeSymbol> allImplementations = ImmutableHashSet<INamedTypeSymbol>.Empty;
 

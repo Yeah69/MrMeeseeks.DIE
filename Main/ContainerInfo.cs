@@ -25,7 +25,7 @@ internal sealed class ContainerInfo : IContainerLevelOnlyContainerInstance
             
         // dependencies
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        IRangeUtility rangeUtility)
+        RangeUtility rangeUtility)
     {
         Name = containerClass.Name;
         Namespace = containerClass.ContainingNamespace.FullName();

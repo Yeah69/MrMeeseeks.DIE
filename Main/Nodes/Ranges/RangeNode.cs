@@ -66,7 +66,7 @@ internal interface IRangeNode : INode
 
 internal abstract class RangeNode : IRangeNode
 {
-    private readonly IMapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
+    private readonly MapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
     protected readonly TypeParameterUtility TypeParameterUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
     private readonly ReferenceGenerator _referenceGenerator;
@@ -219,9 +219,9 @@ internal abstract class RangeNode : IRangeNode
         string name,
         INamedTypeSymbol? rangeType,
         UserDefinedElements userDefinedElements,
-        IMapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
+        MapperDataToFunctionKeyTypeConverter mapperDataToFunctionKeyTypeConverter,
         TypeParameterUtility typeParameterUtility,
-        IRangeUtility rangeUtility,
+        RangeUtility rangeUtility,
         ICheckTypeProperties checkTypeProperties,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,

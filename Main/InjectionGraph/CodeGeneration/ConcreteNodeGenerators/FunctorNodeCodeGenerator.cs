@@ -58,14 +58,17 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
                 ? string.Join(", ", any.Overrides.Select(o => parameterReferences[concreteNode.FunctorParameterTypes.Select((t, i) => (t, i)).First(t => CustomSymbolEqualityComparer.IncludeNullability.Equals(t.t, o)).i]))
                 : "";
 
-            var parameters = _contextGenerator.GenerateInstanceCreation(
-                overrideInstanceCreation: $"new {overrideContextName}({overrideParameters})",
-                outwardFacingTypeNumber: outwardFacingTypeIdReference,
-                caseNumber: initialCaseIdReference,
-                key: keyReference,
-                containerNode: containerNodeReference,
-                transientScopeNode: transientScopeNodeReference,
-                scopeNode: scopeNodeReference);
+            var parameters = string.Join(", ",
+                _contextGenerator.GenerateInstanceCreation(
+                    overrideInstanceCreation: $"new {overrideContextName}({overrideParameters})",
+                    outwardFacingTypeNumber: outwardFacingTypeIdReference,
+                    caseNumber: initialCaseIdReference,
+                    key: keyReference,
+                    containerNode: containerNodeReference,
+                    transientScopeNode: transientScopeNodeReference,
+                    scopeNode: scopeNodeReference),
+                Constants.TrueKeyword,
+                Constants.TrueKeyword);
 
             code.AppendLine($"{concreteNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_sharedNameRegistry.GetEntryFunctionName(concreteNode.ReturnedElement.Target.Type)}({parameters});");
         }

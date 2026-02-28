@@ -2,12 +2,7 @@ using MrMeeseeks.DIE.Configuration.Interception;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
 
-internal interface IDescriptionsGenerator
-{
-    string? Generate();
-}
-
-internal sealed class DescriptionsGenerator : IDescriptionsGenerator
+internal sealed class DescriptionsGenerator
 {
     private readonly IInvocationTypeManager _invocationTypeManager;
     private readonly WellKnownTypes _wellKnownTypes;

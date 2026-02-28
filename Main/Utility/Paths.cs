@@ -2,14 +2,7 @@ using System.IO;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal interface IPaths
-{
-    string Analytics { get; }
-    string AnalyticsErrorFilteredResolutionGraph(string containerName);
-    string AnalyticsResolutionGraph(string containerName);
-}
-
-internal sealed class Paths : IPaths
+internal sealed class Paths
 {
     internal Paths(GeneratorExecutionContext context)
     {

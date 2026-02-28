@@ -12,7 +12,7 @@ internal abstract class ScopeNodeBaseGenerator : RangeNodeGenerator, IScopeNodeB
     protected ScopeNodeBaseGenerator(
         IRangeNode rangeNode,
         IContainerNode containerNode,
-        IDisposeUtility disposeUtility,
+        DisposeUtility disposeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections)
         : base(

@@ -15,7 +15,7 @@ internal interface IMultiKeyValueFunctionNode : IMultiFunctionNodeBase;
 internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase, IMultiKeyValueFunctionNode, IScopeInstance
 {
     private readonly INamedTypeSymbol _enumerableType;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly Func<INamedTypeSymbol, object, IElementNode, IKeyValuePairNode> _keyValuePairNodeFactory;
     private readonly TypeSymbolUtility _typeSymbolUtility;
     private readonly ICheckTypeProperties _checkTypeProperties;
@@ -29,7 +29,7 @@ internal sealed partial class MultiKeyValueFunctionNode : MultiFunctionNodeBase,
         IContainerNode parentContainer,
         IRangeNode parentRange,
         ReferenceGenerator referenceGenerator,
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         IInnerFunctionSubDisposalNodeChooser subDisposalNodeChooser,
         IInnerTransientScopeDisposalNodeChooser transientScopeDisposalNodeChooser,
         AsynchronicityHandlingFactory asynchronicityHandlingFactory,

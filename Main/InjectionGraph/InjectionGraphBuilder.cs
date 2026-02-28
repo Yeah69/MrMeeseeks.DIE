@@ -30,7 +30,6 @@ internal sealed class InjectionGraphBuilder(
     ScopeNodeManager scopeNodeManager,
     Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
     Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
-    LocalDiagLogger logger,
     WellKnownTypesCollections wellKnownTypesCollections)
     : IInjectionGraphBuilder, IContainerInstance
 {
@@ -71,13 +70,6 @@ internal sealed class InjectionGraphBuilder(
         Queue<ResolutionStep> queue,
         Location currentResolvedLocation)
     {
-        var scopeNodeDescription = edgeContext.ScopeNode switch
-        {
-            ScopeNodeContext.Container container => "Container",
-            ScopeNodeContext.Scope scope => "Scope",
-            ScopeNodeContext.TransientScope transientScope => "TransientScope",
-            _ => throw new ArgumentOutOfRangeException()
-        };
         if (typeNode.ContainsOutgoingEdgeFor(edgeContext))
             return;
 
@@ -93,14 +85,11 @@ internal sealed class InjectionGraphBuilder(
             typeNode.ScopeNodeContext = newScopeNodeContext;
         }
 
-        var scopeLevelFor = edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type);
         if (edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type) is var scopeInstanceLevel and not ScopeLevel.None)
         {
-            logger.Warning(WarningLogData.Logging($"Inside ScopeLevel {scopeLevelFor.ToString()} {edgeContext.ScopeNode.CheckTypeProperties.GetHashCode()} ({typeNode.Type.FullName()}, {scopeNodeDescription})"), Location.None);
             switch (edgeContext.ScopeNode)
             {
                 case ScopeNodeContext.Container:
-                    logger.Warning(WarningLogData.Logging($"Inside Container case {scopeLevelFor.ToString()} {edgeContext.ScopeNode.CheckTypeProperties.GetHashCode()} ({typeNode.Type.FullName()}, {scopeNodeDescription})"), Location.None);
                     scopeNodeManager.RegisterContainerInstance(typeNode);
                     break;
                 case ScopeNodeContext.Scope { ScopeName: var scopeName }:

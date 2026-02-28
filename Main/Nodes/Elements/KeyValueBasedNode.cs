@@ -53,7 +53,7 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
     private readonly IRangeNode _parentRange;
     private readonly IFunctionNode _parentFunction;
     private readonly ReferenceGenerator _referenceGenerator;
-    private readonly ICheckIterableTypes _checkIterableTypes;
+    private readonly CheckIterableTypes _checkIterableTypes;
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 
     public KeyValueBasedBasedNode(
@@ -65,7 +65,7 @@ internal sealed partial class KeyValueBasedBasedNode : IKeyValueBasedNode
         IFunctionNode parentFunction,
         ReferenceGenerator referenceGenerator,
         WellKnownTypesCollections wellKnownTypesCollections,
-        ICheckIterableTypes checkIterableTypes)
+        CheckIterableTypes checkIterableTypes)
     {
         _mapType = mapType;
         _parentRange = parentRange;

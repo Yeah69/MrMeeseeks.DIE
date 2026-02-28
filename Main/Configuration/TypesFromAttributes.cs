@@ -85,8 +85,8 @@ internal sealed class AssemblyTypesFromAttributes : TypesFromAttributesBase, IAs
 {
     internal AssemblyTypesFromAttributes(
         Compilation compilation,
-        ILocalDiagLogger localDiagLogger,
-        IValidateAttributes validateAttributes,
+        LocalDiagLogger localDiagLogger,
+        ValidateAttributes validateAttributes,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
@@ -128,15 +128,15 @@ internal interface IContainerTypesFromAttributes : ITypesFromAttributesBase;
 internal sealed class ContainerTypesFromAttributes : TypesFromAttributesBase, IContainerTypesFromAttributes, IContainerInstance
 {
     internal ContainerTypesFromAttributes(
-        ILocalDiagLogger localDiagLogger,
-        IValidateAttributes validateAttributes,
+        LocalDiagLogger localDiagLogger,
+        ValidateAttributes validateAttributes,
         ContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         WellKnownTypesMapping wellKnownTypesMapping,
-        IRangeUtility rangeUtility) 
+        RangeUtility rangeUtility)
         : base(
             rangeUtility.GetRangeAttributes(containerInfo.ContainerType), 
             containerInfo.ContainerType,
@@ -177,15 +177,15 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
         ScopeInfo scopeInfo,
 
         // dependencies
-        ILocalDiagLogger localDiagLogger,
-        IValidateAttributes validateAttributes,
+        LocalDiagLogger localDiagLogger,
+        ValidateAttributes validateAttributes,
         ContainerInfo containerInfo,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         WellKnownTypesMapping wellKnownTypesMapping,
-        IRangeUtility rangeUtility)
+        RangeUtility rangeUtility)
         : base(
             scopeInfo.ScopeType is not null 
                 ? rangeUtility.GetRangeAttributes(scopeInfo.ScopeType) 
@@ -207,8 +207,8 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
 {
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;
-    private readonly ILocalDiagLogger _localDiagLogger;
-    private readonly IValidateAttributes _validateAttributes;
+    private readonly LocalDiagLogger _localDiagLogger;
+    private readonly ValidateAttributes _validateAttributes;
 
     internal TypesFromAttributesBase(
         // parameter
@@ -217,8 +217,8 @@ internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
         INamedTypeSymbol? containerType,
 
         // dependencies
-        ILocalDiagLogger localDiagLogger,
-        IValidateAttributes validateAttributes,
+        LocalDiagLogger localDiagLogger,
+        ValidateAttributes validateAttributes,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesChoice wellKnownTypesChoice,

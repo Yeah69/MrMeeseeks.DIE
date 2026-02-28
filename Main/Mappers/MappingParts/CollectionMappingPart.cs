@@ -11,14 +11,14 @@ internal interface ICollectionMappingPart : IMappingPart;
 internal sealed class CollectionMappingPart : ICollectionMappingPart, IScopeInstance
 {
     private readonly IContainerNode _parentContainer;
-    private readonly ICheckIterableTypes _checkIterableTypes;
+    private readonly CheckIterableTypes _checkIterableTypes;
     private readonly IUserDefinedElementsMappingPart _userDefinedElementsMappingPart;
     private readonly Func<ITypeSymbol, IEnumerableBasedNode> _enumerableBasedNodeFactory;
     private readonly Func<INamedTypeSymbol, IKeyValueBasedNode> _keyValueBasedNodeFactory;
 
     internal CollectionMappingPart(
         IContainerNode parentContainer, 
-        ICheckIterableTypes checkIterableTypes, 
+        CheckIterableTypes checkIterableTypes, 
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         Func<ITypeSymbol, IEnumerableBasedNode> enumerableBasedNodeFactory,
         Func<INamedTypeSymbol, IKeyValueBasedNode> keyValueBasedNodeFactory)

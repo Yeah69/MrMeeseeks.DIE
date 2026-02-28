@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
@@ -24,6 +25,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
     private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
     private readonly ContextGenerator _contextGenerator;
     private readonly ReferenceGenerator _referenceGenerator;
+    private readonly LocalDiagLogger _logger;
     private readonly InjectionNodeGenerator _injectionNodeGenerator;
     private readonly SharedNameRegistry _sharedNameRegistry;
 
@@ -38,6 +40,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
         ConcreteFunctorNodeManager concreteFunctorNodeManager,
         ContextGenerator contextGenerator,
         ReferenceGenerator referenceGenerator,
+        LocalDiagLogger logger,
         InjectionNodeGenerator injectionNodeGenerator,
         SharedNameRegistry sharedNameRegistry)
     {
@@ -51,6 +54,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
         _concreteFunctorNodeManager = concreteFunctorNodeManager;
         _contextGenerator = contextGenerator;
         _referenceGenerator = referenceGenerator;
+        _logger = logger;
         _injectionNodeGenerator = injectionNodeGenerator;
         _sharedNameRegistry = sharedNameRegistry;
     }
@@ -123,8 +127,8 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             .Distinct();
         foreach (var typeNode in typesGettingFunctorEntry)
         {
-            var functionName = _referenceGenerator.Generate("Create", typeNode.Type);
             var function = new FunctorEntryFunction(typeNode.Type);
+            var functionName = _functionUtility.GetName(function);
             _code.AppendLine(
                 $$"""
                   {{_functionUtility.GenerateHeader(function)}}

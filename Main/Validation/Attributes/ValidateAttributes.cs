@@ -1,12 +1,6 @@
 namespace MrMeeseeks.DIE.Validation.Attributes;
 
-internal interface IValidateAttributes
-{
-    bool ValidateAbstraction(INamedTypeSymbol type);
-    bool ValidateImplementation(INamedTypeSymbol type);
-}
-
-internal sealed class ValidateAttributes : IValidateAttributes
+internal sealed class ValidateAttributes
 {
     public bool ValidateAbstraction(INamedTypeSymbol type) => 
         type.TypeKind == TypeKind.Interface || type.IsReferenceType;

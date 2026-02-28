@@ -16,7 +16,7 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
 {
     private readonly ILocalFunctionNode _function;
     private readonly IReadOnlyList<ITypeSymbol> _typeParameters;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly IContainerNode _parentContainer;
     private readonly ITypeSymbol _innerType;
 
@@ -25,7 +25,7 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
         ILocalFunctionNode function,
         IReadOnlyList<ITypeSymbol> typeParameters,
         
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         ReferenceGenerator referenceGenerator)
     {

@@ -21,10 +21,10 @@ internal abstract class ValidateRange : IValidateRange
     private readonly IValidateUserDefinedPropertiesMethod _validateUserDefinedPropertiesMethod;
     private readonly IValidateUserDefinedInitializerParametersInjectionMethod _validateUserDefinedInitializerParametersInjectionMethod;
     private readonly IValidateUserDefinedFactoryMethod _validateUserDefinedFactoryMethod;
-    private readonly IValidateUserDefinedFactoryField _validateUserDefinedFactoryField;
-    private readonly IValidateAttributes _validateAttributes;
-    protected readonly ILocalDiagLogger LocalDiagLogger;
-    private readonly IRangeUtility _rangeUtility;
+    private readonly ValidateUserDefinedFactoryField _validateUserDefinedFactoryField;
+    private readonly ValidateAttributes _validateAttributes;
+    protected readonly LocalDiagLogger LocalDiagLogger;
+    private readonly RangeUtility _rangeUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly Regex _generatedMemberNames = new("(_[1-9][0-9]*){2}$");
@@ -36,12 +36,12 @@ internal abstract class ValidateRange : IValidateRange
         IValidateUserDefinedPropertiesMethod validateUserDefinedPropertiesMethod,
         IValidateUserDefinedInitializerParametersInjectionMethod validateUserDefinedInitializerParametersInjectionMethod,
         IValidateUserDefinedFactoryMethod validateUserDefinedFactoryMethod,
-        IValidateUserDefinedFactoryField validateUserDefinedFactoryField,
-        IValidateAttributes validateAttributes,
+        ValidateUserDefinedFactoryField validateUserDefinedFactoryField,
+        ValidateAttributes validateAttributes,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger localDiagLogger,
-        IRangeUtility rangeUtility)
+        LocalDiagLogger localDiagLogger,
+        RangeUtility rangeUtility)
     {
         _validateUserDefinedAddForDisposalSync = validateUserDefinedAddForDisposalSync;
         _validateUserDefinedAddForDisposalAsync = validateUserDefinedAddForDisposalAsync;

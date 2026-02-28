@@ -2,14 +2,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal interface ICheckIterableTypes
-{
-    bool IsCollectionType(ITypeSymbol type);
-    bool IsMapType(ITypeSymbol type);
-    bool MapTypeHasPluralItemType(INamedTypeSymbol mapType);
-}
-
-internal sealed class CheckIterableTypes : ICheckIterableTypes
+internal sealed class CheckIterableTypes
 {
     private readonly WellKnownTypesCollections _wellKnownTypesCollections;
 

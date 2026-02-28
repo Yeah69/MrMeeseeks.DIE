@@ -40,7 +40,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
     private readonly IRangeNode _parentRange;
     private readonly IFunctionNode _parentFunction;
     private readonly ICheckTypeProperties _checkTypeProperties;
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly IUserDefinedElementsMappingPart _userDefinedElementsMappingPart;
     private readonly Func<INamedTypeSymbol?, INamedTypeSymbol, IMethodSymbol?, IElementNodeMapperBase, IImplementationNode> _implementationNodeFactory;
     private readonly Func<IElementNode, IReusedNode> _reusedNodeFactory;
@@ -55,7 +55,7 @@ internal sealed class AbstractionImplementationMappingPart : IAbstractionImpleme
         IRangeNode parentRange,
         ICheckTypeProperties checkTypeProperties,
         IFunctionNode parentFunction,
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         WellKnownTypes wellKnownTypes,
         IUserDefinedElementsMappingPart userDefinedElementsMappingPart,
         Func<string, ITypeSymbol, IErrorNode> errorNodeFactory,

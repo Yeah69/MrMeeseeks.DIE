@@ -4,12 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal interface IInjectablePropertyExtractor
-{
-    IEnumerable<IPropertySymbol> GetInjectableProperties(INamedTypeSymbol implementationType);
-}
-
-internal sealed class InjectablePropertyExtractor : IInjectablePropertyExtractor, IContainerInstance
+internal sealed class InjectablePropertyExtractor : IContainerInstance
 {
     private readonly ICheckInternalsVisible _checkInternalsVisible;
 

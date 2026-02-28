@@ -2,16 +2,7 @@
 
 namespace MrMeeseeks.DIE.Logging;
 
-internal interface IDiagLogger
-{
-    bool ErrorsIssued { get; }
-    IReadOnlyList<DieExceptionKind> ErrorKinds { get; }
-    IReadOnlyList<string> DieBuildErrorCodes { get; }
-    void Error(Diagnostic diagnostic, DieExceptionKind? kind);
-    void Log(Diagnostic diagnostic);
-}
-
-internal sealed class DiagLogger : IDiagLogger, IContainerInstance
+internal sealed class DiagLogger : IContainerInstance
 {
     private readonly bool _ignoreErrors;
     private readonly GeneratorExecutionContext _context;

@@ -8,7 +8,7 @@ internal sealed class ValidateUserDefinedConstructorParametersInjectionMethod : 
 {
     internal ValidateUserDefinedConstructorParametersInjectionMethod(
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger diagLogger) 
+        LocalDiagLogger diagLogger) 
         : base(diagLogger) => 
         InjectionAttribute = wellKnownTypesMiscellaneous.UserDefinedConstructorParametersInjectionAttribute;
 

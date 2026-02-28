@@ -9,21 +9,21 @@ namespace MrMeeseeks.DIE;
 internal sealed class ExecuteImpl
 {
     private readonly GeneratorExecutionContext _context;
-    private readonly IRangeUtility _rangeUtility;
-    private readonly IRequiredKeywordUtility _requiredKeywordUtility;
-    private readonly IDisposeUtility _disposeUtility;
-    private readonly IDescriptionsGenerator _descriptionsGenerator;
-    private readonly IInterceptorDecoratorGenerator _interceptorDecoratorGenerator;
+    private readonly RangeUtility _rangeUtility;
+    private readonly RequiredKeywordUtility _requiredKeywordUtility;
+    private readonly DisposeUtility _disposeUtility;
+    private readonly DescriptionsGenerator _descriptionsGenerator;
+    private readonly InterceptorDecoratorGenerator _interceptorDecoratorGenerator;
     private readonly Func<INamedTypeSymbol, ContainerInfo> _containerInfoFactory;
     private readonly Func<ContainerInfo, IExecuteContainerContext> _executeContainerContextFactory;
 
     internal ExecuteImpl(
         GeneratorExecutionContext context,
-        IRangeUtility rangeUtility,
-        IRequiredKeywordUtility requiredKeywordUtility,
-        IDisposeUtility disposeUtility,
-        IDescriptionsGenerator descriptionsGenerator,
-        IInterceptorDecoratorGenerator interceptorDecoratorGenerator,
+        RangeUtility rangeUtility,
+        RequiredKeywordUtility requiredKeywordUtility,
+        DisposeUtility disposeUtility,
+        DescriptionsGenerator descriptionsGenerator,
+        InterceptorDecoratorGenerator interceptorDecoratorGenerator,
         Func<INamedTypeSymbol, ContainerInfo> containerInfoFactory,
         Func<ContainerInfo, IExecuteContainerContext> executeContainerContextFactory)
     {

@@ -11,12 +11,12 @@ internal interface IValidateInvocationDescriptionMappingAttributes
 
 internal sealed class ValidateInvocationDescriptionMappingAttributes : IValidateInvocationDescriptionMappingAttributes
 {
-    private readonly ILocalDiagLogger _localDiagLogger;
+    private readonly LocalDiagLogger _localDiagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly HashSet<string> _acceptedMemberNames = ["TargetType", "TargetMethod"];
 
     internal ValidateInvocationDescriptionMappingAttributes(
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         WellKnownTypes wellKnownTypes)
     {
         _localDiagLogger = localDiagLogger;

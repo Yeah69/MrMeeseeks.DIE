@@ -12,7 +12,7 @@ internal sealed class ContainerNodeGenerator : RangeNodeGenerator, IContainerNod
 
     internal ContainerNodeGenerator(
         IContainerNode containerNode,
-        IDisposeUtility disposeUtility,
+        DisposeUtility disposeUtility,
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections) 
         : base(

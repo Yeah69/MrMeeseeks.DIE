@@ -22,7 +22,7 @@ internal sealed partial class ThreadLocalNode : DelegateBaseNode, IThreadLocalNo
         ILocalFunctionNode function,
         IReadOnlyList<ITypeSymbol> typeParameters,
         
-        ILocalDiagLogger localDiagLogger,
+        LocalDiagLogger localDiagLogger,
         IContainerNode parentContainer,
         IRangeNode parentRange,
         IFunctionNode parentFunction,

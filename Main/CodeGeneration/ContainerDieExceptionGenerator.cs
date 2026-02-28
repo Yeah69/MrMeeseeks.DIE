@@ -5,16 +5,11 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
 
-internal interface IContainerDieExceptionGenerator 
-{
-    void Generate(Exception? exception);
-}
-
-internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGenerator
+internal sealed class ContainerDieExceptionGenerator
 {
     private readonly GeneratorExecutionContext _context;
     private readonly ContainerInfo _containerInfo;
-    private readonly IDiagLogger _diagLogger;
+    private readonly DiagLogger _diagLogger;
     private readonly WellKnownTypes _wellKnownTypes;
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
     private readonly INamedTypeSymbol _containerType;
@@ -26,7 +21,7 @@ internal sealed class ContainerDieExceptionGenerator : IContainerDieExceptionGen
         WellKnownTypes wellKnownTypes,
         WellKnownTypesCollections wellKnownTypesCollections,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        IDiagLogger diagLogger)
+        DiagLogger diagLogger)
     {
         _context = context;
         _containerInfo = containerInfo;

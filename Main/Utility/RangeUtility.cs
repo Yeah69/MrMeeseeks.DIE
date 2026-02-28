@@ -3,15 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal interface IRangeUtility
-{
-    bool IsAContainer(INamedTypeSymbol rangeType);
-    IReadOnlyList<AttributeData> GetRangeAttributes(INamedTypeSymbol rangeType);
-    IReadOnlyList<ISymbol> GetUnfilteredMembers(INamedTypeSymbol rangeType);
-    IReadOnlyList<ISymbol> GetEffectiveMembers(INamedTypeSymbol rangeType);
-}
-
-internal sealed class RangeUtility : IRangeUtility
+internal sealed class RangeUtility
 {
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 

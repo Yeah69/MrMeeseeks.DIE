@@ -22,8 +22,8 @@ internal sealed class UserDefinedElements : ITransientScopeInstance
         // dependencies
         WellKnownTypes wellKnownTypes,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        ILocalDiagLogger localDiagLogger,
-        IRangeUtility rangeUtility)
+        LocalDiagLogger localDiagLogger,
+        RangeUtility rangeUtility)
     {
         if (types.Range is { } range)
         {

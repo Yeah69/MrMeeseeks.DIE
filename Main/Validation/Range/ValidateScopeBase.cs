@@ -47,14 +47,6 @@ internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
 
         _notAllowedAttributeTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
             CustomSymbolEqualityComparer.Default,
-            wellKnownTypesAggregation.ContainerInstanceAbstractionAggregationAttribute,
-            wellKnownTypesAggregation.ContainerInstanceImplementationAggregationAttribute,
-            wellKnownTypesAggregation.FilterContainerInstanceAbstractionAggregationAttribute,
-            wellKnownTypesAggregation.FilterContainerInstanceImplementationAggregationAttribute,
-            wellKnownTypesAggregation.TransientScopeInstanceAbstractionAggregationAttribute,
-            wellKnownTypesAggregation.TransientScopeInstanceImplementationAggregationAttribute,
-            wellKnownTypesAggregation.FilterTransientScopeInstanceAbstractionAggregationAttribute,
-            wellKnownTypesAggregation.FilterTransientScopeInstanceImplementationAggregationAttribute,
             wellKnownTypesAggregation.TransientScopeRootAbstractionAggregationAttribute,
             wellKnownTypesAggregation.TransientScopeRootImplementationAggregationAttribute,
             wellKnownTypesAggregation.FilterTransientScopeRootAbstractionAggregationAttribute,

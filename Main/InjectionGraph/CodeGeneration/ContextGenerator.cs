@@ -12,6 +12,7 @@ internal sealed class ContextGenerator : IContainerInstance
     private const string ContainerNodeConstructorParameterName = "containerNode";
     private const string TransientScopeNodeConstructorParameterName = "transientScopeNode";
     private const string ScopeNodeConstructorParameterName = "scopeNode";
+    private const string ScopeNodeNameConstructorParameterName = "scopeNodeName";
     private readonly string _contextClassName;
     private readonly string _contextClassFullName;
     private readonly WellKnownTypes _wellKnownTypes;
@@ -33,6 +34,7 @@ internal sealed class ContextGenerator : IContainerInstance
         ContainerNodePropertyName = "ContainerNode";
         TransientScopeNodePropertyName = "TransientScopeNode";
         ScopeNodePropertyName = "ScopeNode";
+        ScopeNodeNamePropertyName = "ScopeNodeName";
     }
 
     internal void GenerateContextClass(StringBuilder code) =>
@@ -40,7 +42,7 @@ internal sealed class ContextGenerator : IContainerInstance
             $$"""
               private class {{_contextClassName}}
               {
-                internal {{_contextClassName}}({{_wellKnownTypes.Object.FullName()}} {{OverridesConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{OutwardFacingTypeNumberConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{CaseNumberConstructorParameterName}}, {{_wellKnownTypes.Object.WithNullableAnnotation(NullableAnnotation.Annotated).FullName()}} {{KeyConstructorParameterName}}, {{_wellKnownTypes.Object.FullName()}} {{ContainerNodeConstructorParameterName}}, {{_wellKnownTypes.Object.FullName()}} {{TransientScopeNodeConstructorParameterName}}, {{_wellKnownTypes.Object.FullName()}} {{ScopeNodeConstructorParameterName}})
+                internal {{_contextClassName}}({{_wellKnownTypes.Object.FullName()}} {{OverridesConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{OutwardFacingTypeNumberConstructorParameterName}}, {{_wellKnownTypes.Int32.FullName()}} {{CaseNumberConstructorParameterName}}, {{_wellKnownTypes.Object.WithNullableAnnotation(NullableAnnotation.Annotated).FullName()}} {{KeyConstructorParameterName}}, {{_wellKnownTypes.Object.FullName()}} {{ContainerNodeConstructorParameterName}}, {{_wellKnownTypes.Object.FullName()}} {{TransientScopeNodeConstructorParameterName}}, {{_wellKnownTypes.Object.FullName()}} {{ScopeNodeConstructorParameterName}}, {{_wellKnownTypes.String.FullName()}} {{ScopeNodeNameConstructorParameterName}})
                 {
                   {{OverridesPropertyName}} = {{OverridesConstructorParameterName}};
                   {{OutwardFacingTypeNumberPropertyName}} = {{OutwardFacingTypeNumberConstructorParameterName}};
@@ -49,6 +51,7 @@ internal sealed class ContextGenerator : IContainerInstance
                   {{ContainerNodePropertyName}} = {{ContainerNodeConstructorParameterName}};
                   {{TransientScopeNodePropertyName}} = {{TransientScopeNodeConstructorParameterName}};
                   {{ScopeNodePropertyName}} = {{ScopeNodeConstructorParameterName}};
+                  {{ScopeNodeNamePropertyName}} = {{ScopeNodeNameConstructorParameterName}};
                 }
                 internal {{_wellKnownTypes.Object.FullName()}} {{OverridesPropertyName}} { get; }
                 internal {{_wellKnownTypes.Int32.FullName()}} {{OutwardFacingTypeNumberPropertyName}} { get; }
@@ -57,13 +60,14 @@ internal sealed class ContextGenerator : IContainerInstance
                 internal {{_wellKnownTypes.Object.FullName()}} {{ContainerNodePropertyName}} { get; }
                 internal {{_wellKnownTypes.Object.FullName()}} {{TransientScopeNodePropertyName}} { get; }
                 internal {{_wellKnownTypes.Object.FullName()}} {{ScopeNodePropertyName}} { get; }
+                internal {{_wellKnownTypes.String.FullName()}} {{ScopeNodeNamePropertyName}} { get; }
               }
 
               """);
 
-    internal string GenerateInstanceCreation(string overrideInstanceCreation, string outwardFacingTypeNumber,
-        string caseNumber, string key, string containerNode, string transientScopeNode, string scopeNode) =>
-        $"new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreation}, {OutwardFacingTypeNumberConstructorParameterName}: {outwardFacingTypeNumber}, {CaseNumberConstructorParameterName}: {caseNumber}, {KeyConstructorParameterName}: {key}, {ContainerNodeConstructorParameterName}: {containerNode}, {TransientScopeNodeConstructorParameterName}: {transientScopeNode}, {ScopeNodeConstructorParameterName}: {scopeNode})";
+    internal string GenerateInstanceCreation(string overrideInstanceCreation, string outwardFacingTypeNumber, string caseNumber, string key, 
+        string containerNode, string transientScopeNode, string scopeNode, string scopeNodeName) =>
+        $"new {_contextClassFullName}({OverridesConstructorParameterName}: {overrideInstanceCreation}, {OutwardFacingTypeNumberConstructorParameterName}: {outwardFacingTypeNumber}, {CaseNumberConstructorParameterName}: {caseNumber}, {KeyConstructorParameterName}: {key}, {ContainerNodeConstructorParameterName}: {containerNode}, {TransientScopeNodeConstructorParameterName}: {transientScopeNode}, {ScopeNodeConstructorParameterName}: {scopeNode}, {ScopeNodeNameConstructorParameterName}: {scopeNodeName})";
 
     internal string GenerateCopyCreation(
         string? overrideInstanceCreation = null,
@@ -72,7 +76,8 @@ internal sealed class ContextGenerator : IContainerInstance
         string? key = null,
         string? containerNode = null,
         string? transientScopeNode = null,
-        string? scopeNode = null)
+        string? scopeNode = null,
+        string? scopeNodeName = null)
     {
         var overrideInstanceCreationString = overrideInstanceCreation ?? $"{ParameterName}.{OverridesPropertyName}";
         var outwardFacingTypeNumberString =
@@ -82,7 +87,8 @@ internal sealed class ContextGenerator : IContainerInstance
         var containerNodeString = containerNode ?? $"{ParameterName}.{ContainerNodePropertyName}";
         var transientScopeNodeString = transientScopeNode ?? $"{ParameterName}.{TransientScopeNodePropertyName}";
         var scopeNodeString = scopeNode ?? $"{ParameterName}.{ScopeNodePropertyName}";
-        return GenerateInstanceCreation(overrideInstanceCreationString, outwardFacingTypeNumberString, caseNumberString, keyString, containerNodeString, transientScopeNodeString, scopeNodeString);
+        var scopeNodeNameString = scopeNodeName ?? $"{ParameterName}.{ScopeNodeNamePropertyName}";
+        return GenerateInstanceCreation(overrideInstanceCreationString, outwardFacingTypeNumberString, caseNumberString, keyString, containerNodeString, transientScopeNodeString, scopeNodeString, scopeNodeNameString);
     }
     internal string GenerateCopyAssignment(
         string? overrideInstanceCreation = null,
@@ -91,8 +97,9 @@ internal sealed class ContextGenerator : IContainerInstance
         string? key = null,
         string? containerNode = null,
         string? transientScopeNode = null,
-        string? scopeNode = null) =>
-        $"{ParameterName} = {GenerateCopyCreation(overrideInstanceCreation, outwardFacingTypeNumber, caseNumber, key, containerNode, transientScopeNode, scopeNode)};";
+        string? scopeNode = null,
+        string? scopeNodeName = null) =>
+        $"{ParameterName} = {GenerateCopyCreation(overrideInstanceCreation, outwardFacingTypeNumber, caseNumber, key, containerNode, transientScopeNode, scopeNode, scopeNodeName)};";
 
     internal string ParameterName { get; }
     internal string FullNameAndParameterName { get; }
@@ -103,4 +110,5 @@ internal sealed class ContextGenerator : IContainerInstance
     internal string ContainerNodePropertyName { get; }
     internal string TransientScopeNodePropertyName { get; }
     internal string ScopeNodePropertyName { get; }
+    internal string ScopeNodeNamePropertyName { get; }
 }

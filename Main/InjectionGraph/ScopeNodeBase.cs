@@ -25,21 +25,26 @@ internal record ScopeRootDescription(TypeNode TypeNode, IFunction Function);
 internal abstract class ScopeNodeBase
 {
     private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
-    private readonly List<ScopedInstanceDescription> _scopedInstances = [];
+    private readonly Dictionary<TypeNode, ScopedInstanceDescription> _scopedInstances = [];
 
     internal ScopeNodeBase(ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)
     {
         _scopedInstanceInterfaceDescription = scopedInstanceInterfaceDescription;
-        ScopedInstances = _scopedInstances.AsReadOnly();
     }
-    
-    internal IReadOnlyList<ScopedInstanceDescription> ScopedInstances { get; }
 
-    internal void AddScopedInstance(TypeNode node) =>
-        _scopedInstances.Add(new(node, new ScopedInstanceFunction(node)
-        {
-            ExplicitInterface = new ExplicitInterfaceDescription.Generated($"{_scopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>")
-        }));
+    internal IReadOnlyCollection<ScopedInstanceDescription> ScopedInstances => _scopedInstances.Values;
+
+    internal void AddScopedInstance(TypeNode node)
+    {
+        if (_scopedInstances.ContainsKey(node))
+            return;
+        _scopedInstances[node] = new(
+            node,
+            new ScopedInstanceFunction(node)
+            {
+                ExplicitInterface = new ExplicitInterfaceDescription.Generated($"{_scopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>")
+            });
+    }
 }
 
 internal sealed class ContainerScopeNode(ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)

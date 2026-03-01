@@ -85,8 +85,54 @@ internal sealed class InjectionGraphBuilder(
             typeNode.ScopeNodeContext = newScopeNodeContext;
         }
 
-        if (edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type) is var scopeInstanceLevel and not ScopeLevel.None)
+        var scopeInstanceLevel = edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type);
+        typeNode.RegisterScopeInstanceConfiguration(scopeInstanceLevel, edgeContext.ScopeNode);
+
+        if (scopeInstanceLevel is not ScopeLevel.None)
         {
+            switch (scopeInstanceLevel)
+            {
+                case ScopeLevel.Scope:
+                    switch (edgeContext.ScopeNode)
+                    {
+                        case ScopeNodeContext.Container:
+                            scopeNodeManager.RegisterContainerInstance(typeNode);
+                            break;
+                        case ScopeNodeContext.Scope { ScopeName: var scopeName }:
+                            scopeNodeManager.RegisterScopedInstance(scopeName, typeNode);
+                            break;
+                        case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
+                            scopeNodeManager.RegisterScopedInstance(transientScopeName, typeNode);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    break;
+                case ScopeLevel.TransientScope:
+                    switch (edgeContext.ScopeNode)
+                    {
+                        case ScopeNodeContext.Container:
+                            scopeNodeManager.RegisterContainerInstance(typeNode);
+                            break;
+                        case ScopeNodeContext.Scope { TransientScopeName: {} transientScopeName }:
+                            scopeNodeManager.RegisterScopedInstance(transientScopeName, typeNode);
+                            break;
+                        case ScopeNodeContext.Scope { TransientScopeName: null }:
+                            scopeNodeManager.RegisterContainerInstance(typeNode);
+                            break;
+                        case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
+                            scopeNodeManager.RegisterScopedInstance(transientScopeName, typeNode);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    break;
+                case ScopeLevel.Container:
+                    scopeNodeManager.RegisterContainerInstance(typeNode);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
             switch (edgeContext.ScopeNode)
             {
                 case ScopeNodeContext.Container:
@@ -101,14 +147,6 @@ internal sealed class InjectionGraphBuilder(
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-
-            typeNode.ScopeNodeType = scopeInstanceLevel switch
-            {
-                ScopeLevel.Container => ScopeNodeType.Container,
-                ScopeLevel.Scope => ScopeNodeType.Scope,
-                ScopeLevel.TransientScope => ScopeNodeType.TransientScope,
-                _ => throw new ArgumentOutOfRangeException()
-            };
         }
         
         switch (typeNodeType)
@@ -150,7 +188,7 @@ internal sealed class InjectionGraphBuilder(
                 // or outgoing edges contain concrete enumerable
                 || typeNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode)
                 // or Type Node is scoped
-                || typeNode.ScopeNodeType is not ScopeNodeType.None
+                || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
                 // or Type Node is scope root
                 || typeNode.ScopeNodeContext is ScopeNodeContext.Scope or ScopeNodeContext.TransientScope)
                 NewFunctionIfNotAlready(typeNode);

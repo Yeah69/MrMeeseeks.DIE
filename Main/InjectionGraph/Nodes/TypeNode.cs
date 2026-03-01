@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -30,12 +31,13 @@ internal sealed class TypeNode(ITypeSymbol type)
 {
     private readonly List<TypeEdge> _incoming = [];
     private readonly List<ConcreteEdge> _outgoing = [];
+    private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _scopeInstanceConfiguration = [];
     
     internal ITypeSymbol Type { get; } = type;
     internal IReadOnlyList<TypeEdge> Incoming => _incoming;
     internal IReadOnlyList<ConcreteEdge> Outgoing => _outgoing;
-    internal ScopeNodeType ScopeNodeType { get; set; } = ScopeNodeType.None;
     internal ScopeNodeContext? ScopeNodeContext { get; set; }
+    internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> ScopeInstanceConfiguration => _scopeInstanceConfiguration;
     
     internal void AddIncoming(TypeEdge edge) => _incoming.Add(edge);
     internal void AddOutgoing(ConcreteEdge edge) => _outgoing.Add(edge);
@@ -50,5 +52,15 @@ internal sealed class TypeNode(ITypeSymbol type)
 
         edge = null;
         return false;
+    }
+
+    internal void RegisterScopeInstanceConfiguration(ScopeLevel scopeLevel, ScopeNodeContext scopeNodeContext)
+    {
+        if (!_scopeInstanceConfiguration.TryGetValue(scopeLevel, out var configuration))
+        {
+            configuration = [];
+            _scopeInstanceConfiguration[scopeLevel] = configuration;
+        }
+        configuration.Add(scopeNodeContext);
     }
 }

@@ -47,8 +47,8 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                 .First();
             var newContextAssignment = scopeNode switch
             {
-                ScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, scopeNode: Constants.ThisKeyword),
-                TransientScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword)
+                ScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\""),
+                TransientScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\"")
             };
             code.AppendLine(newContextAssignment);
             code.AppendLine($"return {containerReference}.{functionUtility.GenerateFunctionCall(calledCreateFunction, doScopedInstance: true, doScopeRoot: false)};");

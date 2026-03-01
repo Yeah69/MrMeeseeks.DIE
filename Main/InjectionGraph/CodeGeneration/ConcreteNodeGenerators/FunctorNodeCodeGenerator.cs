@@ -43,6 +43,7 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
             var containerNodeReference = _referenceGenerator.Generate("cnId");
             var transientScopeNodeReference = _referenceGenerator.Generate("tsnId");
             var scopeNodeReference = _referenceGenerator.Generate("snId");
+            var scopeNodeNameReference = _referenceGenerator.Generate("snnId");
 
             code.AppendLine(
                 $$"""
@@ -52,6 +53,7 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
                   {{_wellKnownTypes.Object.FullName()}} {{containerNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ContainerNodePropertyName}};
                   {{_wellKnownTypes.Object.FullName()}} {{transientScopeNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.TransientScopeNodePropertyName}};
                   {{_wellKnownTypes.Object.FullName()}} {{scopeNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ScopeNodePropertyName}};
+                  {{_wellKnownTypes.String.FullName()}} {{scopeNodeNameReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ScopeNodeNamePropertyName}};
                   """);
 
             var overrideParameters = overrideContext is OverrideContext.Any any
@@ -66,7 +68,8 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
                     key: keyReference,
                     containerNode: containerNodeReference,
                     transientScopeNode: transientScopeNodeReference,
-                    scopeNode: scopeNodeReference),
+                    scopeNode: scopeNodeReference,
+                    scopeNodeName: scopeNodeNameReference),
                 Constants.TrueKeyword,
                 Constants.TrueKeyword);
 

@@ -1,5 +1,4 @@
-﻿using System;
-using MrMeeseeks.DIE.Configuration.Attributes;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
@@ -10,60 +9,56 @@ internal class ScopeDependency : IScopeInstance;
 internal class TransientScopeDependency : ITransientScopeInstance;
 internal class ContainerDependency : IContainerInstance;
 
-internal class Scope : IScopeRoot
+internal class ScopeA
 {
-    internal required Dependency Dependency { get; init; }
-    internal required Dependency Dependency1 { get; init; }
-    internal required ScopeDependency ScopeDependency { get; init; }
-    internal required ScopeDependency ScopeDependency1 { get; init; }
-    internal required TransientScopeDependency TransientScopeDependency { get; init; }
-    internal required TransientScopeDependency TransientScopeDependency1 { get; init; }
-    internal required ContainerDependency ContainerScopeDependency { get; init; }
-    internal required ContainerDependency ContainerScopeDependency1 { get; init; }
-    internal required OnlyScopeInScopeDependency OnlyScopeInScopeDependency { get; init; }
-    internal required OnlyScopeInScopeDependency OnlyScopeInScopeDependency1 { get; init; }
 }
 
-internal class TransientScope : ITransientScopeRoot
+internal class ScopeB
 {
-    internal required Scope Scope { get; init; }
-    internal required Dependency Dependency { get; init; }
-    internal required Dependency Dependency1 { get; init; }
-    internal required ScopeDependency ScopeDependency { get; init; }
-    internal required ScopeDependency ScopeDependency1 { get; init; }
-    internal required TransientScopeDependency TransientScopeDependency { get; init; }
-    internal required TransientScopeDependency TransientScopeDependency1 { get; init; }
-    internal required ContainerDependency ContainerScopeDependency { get; init; }
-    internal required ContainerDependency ContainerScopeDependency1 { get; init; }
-    internal required OnlyScopeInScopeDependency OnlyScopeInScopeDependency { get; init; }
-    internal required OnlyScopeInScopeDependency OnlyScopeInScopeDependency1 { get; init; }
+}
+
+internal class ScopeC
+{
+}
+
+internal class TransientScopeA : ITransientScopeRoot
+{
+    internal required ScopeA Scope { get; init; }
+}
+
+internal class TransientScopeB : ITransientScopeRoot
+{
+    internal required ScopeB Scope { get; init; }
+}
+
+internal class TransientScopeC : ITransientScopeRoot
+{
+    internal required ScopeC Scope { get; init; }
 }
 
 internal class Parent
 {
-    internal required TransientScope TransientScope { get; init; }
-    internal required TransientScope TransientScope1 { get; init; }
-    internal required Scope Scope { get; init; }
-    internal required Func<int, string, Dependency> Dependency { get; init; }
-    internal required Dependency Dependency1 { get; init; }
-    internal required ScopeDependency ScopeDependency { get; init; }
-    internal required ScopeDependency ScopeDependency1 { get; init; }
-    internal required TransientScopeDependency TransientScopeDependency { get; init; }
-    internal required TransientScopeDependency TransientScopeDependency1 { get; init; }
-    internal required ContainerDependency ContainerScopeDependency { get; init; }
-    internal required ContainerDependency ContainerScopeDependency1 { get; init; }
-    internal required OnlyScopeInScopeDependency OnlyScopeInScopeDependency { get; init; }
-    internal required OnlyScopeInScopeDependency OnlyScopeInScopeDependency1 { get; init; }
+    internal required TransientScopeA TransientScopeA { get; init; }
+    internal required TransientScopeB TransientScopeB { get; init; }
+    internal required TransientScopeC TransientScopeC { get; init; }
 }
 
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container
 {
-    [FilterContainerInstanceImplementationAggregation(typeof(ScopeDependency))]
-    [ScopeInstanceImplementationAggregation(typeof(OnlyScopeInScopeDependency))]
-    [ContainerInstanceImplementationAggregation(typeof(Dependency), typeof(ScopeDependency))]
-    private sealed partial class DIE_DefaultScope;
-    [ContainerInstanceImplementationAggregation(typeof(OnlyScopeInScopeDependency))]
-    [ContainerInstanceImplementationAggregation(typeof(Dependency))]
-    private sealed partial class DIE_DefaultTransientScope;
+    [ScopeRootImplementationAggregation(typeof(ScopeA))]
+    [CustomScopeForRootTypes(typeof(TransientScopeA))]
+    private sealed partial class DIE_TransientScope_A;
+    [ScopeRootImplementationAggregation(typeof(ScopeB))]
+    [CustomScopeForRootTypes(typeof(TransientScopeB))]
+    private sealed partial class DIE_TransientScope_B;
+    [ScopeRootImplementationAggregation(typeof(ScopeC))]
+    [CustomScopeForRootTypes(typeof(TransientScopeC))]
+    private sealed partial class DIE_TransientScope_C;
+    [CustomScopeForRootTypes(typeof(ScopeA))]
+    private sealed partial class DIE_Scope_A;
+    [CustomScopeForRootTypes(typeof(ScopeB))]
+    private sealed partial class DIE_Scope_B;
+    [CustomScopeForRootTypes(typeof(ScopeC))]
+    private sealed partial class DIE_Scope_C;
 }

@@ -19,7 +19,6 @@ internal sealed class ValidateTransientScope : ValidateScopeBase, IValidateTrans
         ValidateUserDefinedFactoryField validateUserDefinedFactoryField,
         ValidateAttributes validateAttributes,
         WellKnownTypes wellKnownTypes,
-        WellKnownTypesAggregation wellKnownTypesAggregation,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
         LocalDiagLogger localDiagLogger,
         RangeUtility rangeUtility)
@@ -33,7 +32,6 @@ internal sealed class ValidateTransientScope : ValidateScopeBase, IValidateTrans
             validateUserDefinedFactoryField,
             validateAttributes,
             wellKnownTypes,
-            wellKnownTypesAggregation,
             wellKnownTypesMiscellaneous,
             localDiagLogger,
             rangeUtility)

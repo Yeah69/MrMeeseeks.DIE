@@ -145,7 +145,7 @@ internal static class ErrorLogData
         new(66,
             1,
             "Unexpected Exception (General)",
-            exception.ToString(),
+            $"{exception.StackTrace.Replace(Environment.NewLine, string.Empty)}",
             DieExceptionKind.NoneDIE);
     
     internal static DiagLogData ImpossibleException(Guid code) =>

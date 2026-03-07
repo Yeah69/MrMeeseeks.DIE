@@ -1,9 +1,7 @@
-﻿using MrMeeseeks.DIE.Configuration;
-using MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
+﻿using MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.Logging;
-using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
@@ -21,7 +19,6 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
     private readonly ScopeNodeBaseCodeGenerator _scopeNodeBaseCodeGenerator;
     private readonly ScopeNodeManager _scopeNodeManager;
     private readonly FunctionUtility _functionUtility;
-    private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
     private readonly OverrideContextManager _overrideContextManager;
     private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
     private readonly ContextGenerator _contextGenerator;
@@ -36,7 +33,6 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
         ScopeNodeBaseCodeGenerator scopeNodeBaseCodeGenerator,
         ScopeNodeManager scopeNodeManager,
         FunctionUtility functionUtility,
-        ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription,
         OverrideContextManager overrideContextManager,
         ConcreteFunctorNodeManager concreteFunctorNodeManager,
         ContextGenerator contextGenerator,
@@ -50,7 +46,6 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
         _scopeNodeBaseCodeGenerator = scopeNodeBaseCodeGenerator;
         _scopeNodeManager = scopeNodeManager;
         _functionUtility = functionUtility;
-        _scopedInstanceInterfaceDescription = scopedInstanceInterfaceDescription;
         _overrideContextManager = overrideContextManager;
         _concreteFunctorNodeManager = concreteFunctorNodeManager;
         _contextGenerator = contextGenerator;
@@ -62,9 +57,6 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
 
     public string Generate()
     {
-        var scopeNodeToContainerPropertyReference = _scopeNodeManager.Scopes.OfType<NonContainerScopeNode>()
-            .Concat(_scopeNodeManager.TransientScopes)
-            .ToImmutableDictionary(sn => sn, _ => _referenceGenerator.Generate("Container"));
         _code.AppendLine(
         $$"""
           #nullable enable
@@ -160,89 +152,8 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             
             var rootNode = function.RootNode;
 
-            if (rootNode.ScopeNodeContext is not null)
-            {
-                if (rootNode.ScopeNodeContext is ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName })
-                {
-                    var transientScopeNode = _scopeNodeManager.TransientScopes.First(s => s.Name == transientScopeName);
-                    var (_, transientScopeRootFunction) = transientScopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
-                    var transientScopeReference = _referenceGenerator.Generate("transientScope");
-                    _code.AppendLine($"if ({_functionUtility.DoScopeRootParameterName})");
-                    _code.AppendLine("{");
-                    _code.AppendLine($"{transientScopeName} {transientScopeReference} = new {transientScopeName}() {{ {scopeNodeToContainerPropertyReference[transientScopeNode]} = ({_containerInfo.FullName}) {_contextGenerator.ParameterName}.{_contextGenerator.ContainerNodePropertyName} }};");
-                    _code.AppendLine($"return {transientScopeReference}.{_functionUtility.GenerateFunctionCall(transientScopeRootFunction, doScopedInstance: true, doScopeRoot: true)};");
-                    
-                    _code.AppendLine("}");
-                }
-                if (rootNode.ScopeNodeContext is ScopeNodeContext.Scope { ScopeName: var scopeName })
-                {
-                    var scopeNode = _scopeNodeManager.Scopes.First(s => s.Name == scopeName);
-                    var (_, scopeRootFunction) = scopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
-                    var scopeReference = _referenceGenerator.Generate("scope");
-                    _code.AppendLine($"if ({_functionUtility.DoScopeRootParameterName})");
-                    _code.AppendLine("{");
-                    _code.AppendLine($"{scopeName} {scopeReference} = new {scopeName}() {{ {scopeNodeToContainerPropertyReference[scopeNode]} = ({_containerInfo.FullName}) {_contextGenerator.ParameterName}.{_contextGenerator.ContainerNodePropertyName} }};");
-                    _code.AppendLine($"return {scopeReference}.{_functionUtility.GenerateFunctionCall(scopeRootFunction, doScopedInstance: true, doScopeRoot: true)};");
-                    
-                    _code.AppendLine("}");
-                }
-            }
-
-            if (rootNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None))
-            {
-                // At this point it doesn't actually matter from which scope node (Container, Transient, Scope) the scoped instance is,
-                // because we just need any function for the call (which will have the same name everytime).
-                var (_, scopedInstanceFunction) = _scopeNodeManager.ContainerScopeNode.ScopedInstances
-                    .Concat(_scopeNodeManager.Scopes.SelectMany(s => s.ScopedInstances))
-                    .Concat(_scopeNodeManager.TransientScopes.SelectMany(ts => ts.ScopedInstances))
-                    .First(sid => CustomSymbolEqualityComparer.Default.Equals(sid.TypeNode.Type, rootNode.Type));
-                
-                _code.AppendLine($"if ({_functionUtility.DoScopedInstanceParameterName})");
-                _code.AppendLine("{");
-
-                if (rootNode.ScopeInstanceConfiguration.Count == 1)
-                    _code.AppendLine(CreateReturn(rootNode.ScopeInstanceConfiguration.First().Key));
-                else
-                    _code.AppendLine(string.Join($"{Environment.NewLine}else ", rootNode.ScopeInstanceConfiguration
-                        .Where(kvp => kvp.Key is not ScopeLevel.None)
-                        .Select(CreateIf)));
-                
-                _code.AppendLine("}");
-
-                string CreateIf(KeyValuePair<ScopeLevel, HashSet<ScopeNodeContext>> levelConfiguration)
-                {
-                    var level = levelConfiguration.Key;
-                    var contexts =  levelConfiguration.Value;
-                    var conditions = string.Join(" || ", contexts.Select(c =>
-                    {
-                        var scopeNodeName = c switch
-                        {
-                            ScopeNodeContext.Container => _containerInfo.Name,
-                            ScopeNodeContext.Scope scope => scope.ScopeName,
-                            ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName,
-                            _ => throw new ArgumentOutOfRangeException(nameof(c))
-                        };
-                        return $"{_contextGenerator.ParameterName}.{_contextGenerator.ScopeNodeNamePropertyName} == \"{scopeNodeName}\"";
-                    }));
-                    return $$"""
-                             if ({{conditions}})
-                             {
-                             {{CreateReturn(level)}}
-                             }
-                             """;
-                }
-
-                string CreateReturn(ScopeLevel scopeLevel)
-                {
-                    var contextProperty = scopeLevel switch
-                    {
-                        ScopeLevel.Container => _contextGenerator.ContainerNodePropertyName,
-                        ScopeLevel.TransientScope => _contextGenerator.TransientScopeNodePropertyName,
-                        ScopeLevel.Scope => _contextGenerator.ScopeNodePropertyName
-                    };
-                    return $"return (({_scopedInstanceInterfaceDescription.InterfaceName}<{rootNode.Type}>) {_contextGenerator.ParameterName}.{contextProperty}).{_functionUtility.GenerateFunctionCall(scopedInstanceFunction, doScopedInstance: true, doScopeRoot: true)};";
-                }
-            }
+            _scopeNodeBaseCodeGenerator.GenerateScopeRootEntry(_code, rootNode);
+            _scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode);
 
             var rootReference = _injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode);
             if (!rootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
@@ -313,7 +224,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             var scopeInheritance = scopeInheritanceElements.Any()
                 ? $" : {string.Join(", ", scopeInheritanceElements)}"
                 : "";
-            var containerReference = scopeNodeToContainerPropertyReference[scopeNode];
+            var containerReference = _scopeNodeBaseCodeGenerator.ScopeNodeToContainerPropertyReference[scopeNode];
             
             _code.AppendLine($"{Constants.PrivateKeyword} partial class {scopeNode.Name}{scopeInheritance}");
             _code.AppendLine("{");
@@ -331,7 +242,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             var scopeInheritance = scopeInheritanceElements.Any()
                 ? $" : {string.Join(", ", scopeInheritanceElements)}"
                 : "";
-            var containerReference = scopeNodeToContainerPropertyReference[scopeNode];
+            var containerReference = _scopeNodeBaseCodeGenerator.ScopeNodeToContainerPropertyReference[scopeNode];
             
             _code.AppendLine($"{Constants.PrivateKeyword} partial class {scopeNode.Name}{scopeInheritance}");
             _code.AppendLine("{");

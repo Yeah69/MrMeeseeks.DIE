@@ -31,12 +31,19 @@ internal sealed class TypeNode(ITypeSymbol type)
 {
     private readonly List<TypeEdge> _incoming = [];
     private readonly List<ConcreteEdge> _outgoing = [];
+    private readonly Dictionary<ScopeNodeContext, HashSet<ScopeNodeContext>> _scopeRootConfiguration = [];
     private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _scopeInstanceConfiguration = [];
     
     internal ITypeSymbol Type { get; } = type;
     internal IReadOnlyList<TypeEdge> Incoming => _incoming;
     internal IReadOnlyList<ConcreteEdge> Outgoing => _outgoing;
-    internal ScopeNodeContext? ScopeNodeContext { get; set; }
+    /// <summary>
+    /// Use scope root context (key) on all current contexts (value collection).
+    /// </summary>
+    internal IReadOnlyDictionary<ScopeNodeContext, HashSet<ScopeNodeContext>> ScopeRootConfiguration => _scopeRootConfiguration;
+    /// <summary>
+    /// Use scope instance level (key; None means "not a scope instance") on all current contexts (value collection).
+    /// </summary>
     internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> ScopeInstanceConfiguration => _scopeInstanceConfiguration;
     
     internal void AddIncoming(TypeEdge edge) => _incoming.Add(edge);
@@ -52,6 +59,16 @@ internal sealed class TypeNode(ITypeSymbol type)
 
         edge = null;
         return false;
+    }
+
+    internal void RegisterScopeRootConfiguration(ScopeNodeContext scopeRootContext, ScopeNodeContext currentScopeNodeContext)
+    {
+        if (!_scopeRootConfiguration.TryGetValue(scopeRootContext, out var configuration))
+        {
+            configuration = [];
+            _scopeRootConfiguration[scopeRootContext] = configuration;
+        }
+        configuration.Add(currentScopeNodeContext);
     }
 
     internal void RegisterScopeInstanceConfiguration(ScopeLevel scopeLevel, ScopeNodeContext scopeNodeContext)

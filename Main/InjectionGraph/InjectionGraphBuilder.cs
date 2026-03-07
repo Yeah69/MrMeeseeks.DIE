@@ -75,14 +75,15 @@ internal sealed class InjectionGraphBuilder(
 
         var typeNodeType = typeNode.Type;
 
-        if (typeNode.ScopeNodeContext is null 
-            && edgeContext.ScopeNode.CheckTypeProperties.ShouldBeScopeRoot(typeNode.Type) is var scopeNodeLevel and (ScopeLevel.Scope or ScopeLevel.TransientScope))
-        {
-            var newScopeNodeContext = scopeNodeManager.GetScopeNodeContext(edgeContext.ScopeNode, typeNode, scopeNodeLevel);
-                
-            edgeContext = edgeContext with { ScopeNode = newScopeNodeContext };
+        var scopeRootLevel = edgeContext.ScopeNode.CheckTypeProperties.ShouldBeScopeRoot(typeNode.Type);
 
-            typeNode.ScopeNodeContext = newScopeNodeContext;
+        if (scopeRootLevel is ScopeLevel.Scope or ScopeLevel.TransientScope)
+        {
+            var scopeRootContext = scopeNodeManager.GetScopeNodeContext(edgeContext.ScopeNode, typeNode, scopeRootLevel);
+                
+            edgeContext = edgeContext with { ScopeNode = scopeRootContext };
+
+            typeNode.RegisterScopeRootConfiguration(scopeRootContext, edgeContext.ScopeNode);
         }
 
         var scopeInstanceLevel = edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type);
@@ -187,10 +188,10 @@ internal sealed class InjectionGraphBuilder(
                 || typeNode.Incoming.Any(e => e.Source is ConcreteFunctorNode)
                 // or outgoing edges contain concrete enumerable
                 || typeNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode)
-                // or Type Node is scoped
+                // or Type Node is scope instance in some configurations
                 || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
-                // or Type Node is scope root
-                || typeNode.ScopeNodeContext is ScopeNodeContext.Scope or ScopeNodeContext.TransientScope)
+                // or Type Node is scope root in some configurations
+                || typeNode.ScopeRootConfiguration.Count > 0)
                 NewFunctionIfNotAlready(typeNode);
 
         foreach (var concreteEntryFunctionNode in _concreteEntryFunctionNodes)

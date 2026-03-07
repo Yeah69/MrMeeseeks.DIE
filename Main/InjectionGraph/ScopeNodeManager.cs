@@ -10,7 +10,7 @@ namespace MrMeeseeks.DIE.InjectionGraph;
 internal sealed class ScopeNodeManager : IContainerInstance
 {
     private readonly Dictionary<string, ScopeNodeBase> _scopeNodes = [];
-    private readonly Dictionary<NonContainerScopeNode, ScopeNodeContext> _scopeNodeContexts = [];
+    private readonly Dictionary<NonContainerScopeNode, Dictionary<ScopeNodeContext, ScopeNodeContext>> _scopeNodeContexts = [];
 
     private readonly Func<string, INamedTypeSymbol?, ScopeNode> _scopeFactory;
     private readonly Func<string, INamedTypeSymbol?, TransientScopeNode> _transientScopeFactory;
@@ -177,12 +177,27 @@ internal sealed class ScopeNodeManager : IContainerInstance
             ScopeLevel.TransientScope => GetTransientScope(typeNode.Type),
             _ => throw new ArgumentOutOfRangeException(new Guid("07D1B558-E50E-4C4F-9DF4-6B96700E911B").ToString())
         };
-        if (!_scopeNodeContexts.TryGetValue(scopeNode, out var context))
+        scopeNode.AddScopeRoot(typeNode);
+        if (_scopeNodeContexts.TryGetValue(scopeNode, out var contexts))
+        {
+            if (contexts.TryGetValue(previousScopeNodeContext, out var contextA))
+                return contextA;
+            contextA = CreateNewContext();
+            contexts[previousScopeNodeContext] = contextA;
+            return contextA;
+        }
+
+        contexts = [];
+        var contextB = CreateNewContext();
+        contexts[previousScopeNodeContext] = contextB;
+        _scopeNodeContexts[scopeNode] = contexts;
+        return contextB;
+
+        ScopeNodeContext CreateNewContext()
         {
             var oldTransientScopeName = previousScopeNodeContext is ScopeNodeContext.TransientScope(var name) ? name : null;
-            scopeNode.AddScopeRoot(typeNode);
             var scopeNodeConfigContext = _scopeCheckTypePropertiesFactory(scopeNode.Name, scopeNode.Type);
-            context = scopeNodeLevel switch
+            return scopeNodeLevel switch
             {
                 ScopeLevel.Scope => new ScopeNodeContext.Scope(scopeNode.Name, oldTransientScopeName)
                 {
@@ -196,10 +211,6 @@ internal sealed class ScopeNodeManager : IContainerInstance
                 },
                 _ => throw new ArgumentOutOfRangeException(new Guid("56CF73C9-AE92-4B6C-BB98-90713F5C817F").ToString())
             };
-            
-            _scopeNodeContexts[scopeNode] = context;
         }
-
-        return context;
     }
 }

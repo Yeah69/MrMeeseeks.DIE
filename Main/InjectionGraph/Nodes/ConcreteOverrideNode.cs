@@ -1,5 +1,4 @@
-﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
-using MrMeeseeks.DIE.MsContainer;
+﻿using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
@@ -37,8 +36,8 @@ internal sealed class ConcreteOverrideNode : IConcreteNode
 
     internal ConcreteOverrideNodeData Data { get; }
     
-    public override int GetHashCode() => Data.GetHashCode();
-    public override bool Equals(object? obj) => obj is ConcreteOverrideNode node && Data.Equals(node.Data);
-
-    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => [];
+    public override int GetHashCode() => 
+        Data.GetHashCode();
+    public override bool Equals(object? obj) => 
+        obj is ConcreteOverrideNode node && Data.Equals(node.Data);
 }

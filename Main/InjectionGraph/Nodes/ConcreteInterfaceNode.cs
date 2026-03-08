@@ -64,8 +64,10 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     internal IEnumerable<(ScopeNodeContext Node, ITypeSymbol KeyType, object KeyObject, int NextId)> KeyObjectToCaseNumbers =>
         _keyToNextCase.Select(kvp => (kvp.Key.Node, kvp.Key.KeyType, kvp.Key.KeyObject, kvp.Value.NextCaseId));
     
-    public override int GetHashCode() => Data.GetHashCode();
-    public override bool Equals(object? obj) => obj is ConcreteInterfaceNode node && Data.Equals(node.Data);
+    public override int GetHashCode() => 
+        Data.GetHashCode();
+    public override bool Equals(object? obj) => 
+        obj is ConcreteInterfaceNode node && Data.Equals(node.Data);
 
     private abstract record InnerCaseIdResponse
     {

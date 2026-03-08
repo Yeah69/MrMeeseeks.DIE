@@ -48,8 +48,10 @@ internal sealed class ConcreteFunctorNode : IConcreteNode
     internal IReadOnlyList<ITypeSymbol> FunctorParameterTypes { get; }
     internal TypeEdge ReturnedElement { get; }
     
-    public override int GetHashCode() => Data.GetHashCode();
-    public override bool Equals(object? obj) => obj is ConcreteFunctorNode node && Data.Equals(node.Data);
+    public override int GetHashCode() => 
+        Data.GetHashCode();
+    public override bool Equals(object? obj) => 
+        obj is ConcreteFunctorNode node && Data.Equals(node.Data);
 
     public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
         ReturnedElement.AddContext(context) 

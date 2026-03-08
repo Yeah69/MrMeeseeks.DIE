@@ -91,7 +91,8 @@ internal sealed class ConcreteImplementationNode : IConcreteNode
     
     public override int GetHashCode() => 
         Data.GetHashCode();
-    public override bool Equals(object? obj) => obj is ConcreteImplementationNode node && Data.Equals(node.Data);
+    public override bool Equals(object? obj) => 
+        obj is ConcreteImplementationNode node && Data.Equals(node.Data);
 
     public IReadOnlyList<(TypeNode TypeNode, Location Location, EdgeContext Context)> ConnectIfNotAlready(EdgeContext context)
     {

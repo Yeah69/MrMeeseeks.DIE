@@ -56,9 +56,11 @@ internal sealed class ConcreteEntryFunctionNode : IConcreteNode
 
     public ConcreteEntryFunctionNodeData Data { get; }
     
-    public override int GetHashCode() => Data.GetHashCode();
+    public override int GetHashCode() => 
+        Data.GetHashCode();
 
-    public override bool Equals(object? obj) => obj is ConcreteEntryFunctionNode node && Data.Equals(node.Data);
+    public override bool Equals(object? obj) => 
+        obj is ConcreteEntryFunctionNode node && Data.Equals(node.Data);
     
     public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
         ReturnType.AddContext(context) 

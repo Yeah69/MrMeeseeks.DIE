@@ -46,14 +46,16 @@ internal sealed class ConcreteKeyValuePairNode : IConcreteNode
         ValueEdge = typeEdgeFactory(this, typeNodeManager.GetOrAddNode(valueType));
     }
 
-    public ITypeSymbol KeyType { get; set; }
+    public ITypeSymbol KeyType { get; }
 
     public TypeEdge ValueEdge { get; }
     
     internal ConcreteKeyValuePairNodeData Data { get; }
     
-    public override int GetHashCode() => Data.GetHashCode();
-    public override bool Equals(object? obj) => obj is ConcreteKeyValuePairNode node && Data.Equals(node.Data);
+    public override int GetHashCode() => 
+        Data.GetHashCode();
+    public override bool Equals(object? obj) =>
+        obj is ConcreteKeyValuePairNode node && Data.Equals(node.Data);
 
     public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
         ValueEdge.AddContext(context) 

@@ -1,10 +1,5 @@
-﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
-using MrMeeseeks.DIE.MsContainer;
+﻿using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal sealed class ConcreteExceptionNode : IConcreteNode, IContainerInstance
-{
-    public IReadOnlyList<(TypeNode TypeNode, Location Location)> ConnectIfNotAlready(EdgeContext context) => 
-        [];
-}
+internal sealed class ConcreteExceptionNode : IConcreteNode, IContainerInstance;

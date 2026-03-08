@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes;
@@ -91,10 +90,13 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
     internal ITypeSymbol UnwrappedItemType { get; }
 
     internal ConcreteEnumerableNodeData Data { get; }
-    internal ConcurrentDictionary<ScopeNodeContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> CollectionCases => _collectionCases;
+    internal ConcurrentDictionary<ScopeNodeContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> CollectionCases => 
+        _collectionCases;
     
-    public override int GetHashCode() => Data.GetHashCode();
-    public override bool Equals(object? obj) => obj is ConcreteEnumerableNode other && Data.Equals(other.Data);
+    public override int GetHashCode() => 
+        Data.GetHashCode();
+    public override bool Equals(object? obj) => 
+        obj is ConcreteEnumerableNode other && Data.Equals(other.Data);
 
     public IReadOnlyList<(TypeNode TypeNode, EdgeContext NewContext, Location Location)> ConnectIfNotAlready(EdgeContext context)
     {

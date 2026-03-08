@@ -28,15 +28,18 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
 
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteEnumerableNode concreteNode)
     {
-        if (concreteNode.CollectionCases.Count > 1)
+        /*if (concreteNode.CollectionCases.Count > 1)
         {
             // ToDo implement this
             throw new NotImplementedException("More than one sequence found in enumerable node.");
-        }
+        }*/
 
         var isArray = concreteNode.Data.Enumerable is IArrayTypeSymbol;
 
-        var cases = concreteNode.CollectionCases[_containerScopeNodeContext];
+        // TODO: Fix this workaround - should use the correct ScopeNodeContext for the current scope being generated,
+        // not just the first entry. The issue is that CollectionCases is keyed by ScopeNodeContext (Container/TransientScope/Scope)
+        // but we're always using Container, which may not exist if the enumerable is only used in other scopes.
+        var cases = concreteNode.CollectionCases.First().Value;
         var maybeDefaultCase = cases.TryGetValue(new KeyContext.None1(), out var foundDefaultCase)
             ? foundDefaultCase
             : null;

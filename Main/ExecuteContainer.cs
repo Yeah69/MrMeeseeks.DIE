@@ -29,6 +29,7 @@ internal sealed class ExecuteContainer
     private readonly Lazy<IFilterForErrorRelevancyNodeVisitor> _filterForErrorRelevancyNodeVisitor;
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly IInjectionGraphCodeGenerator _injectionGraphCodeGenerator;
+    private readonly IInjectionGraphPlantUmlGenerator _injectionGraphPlantUmlGenerator;
     private readonly DiagLogger _diagLogger;
     private readonly ContainerInfo _containerInfo;
 
@@ -47,6 +48,7 @@ internal sealed class ExecuteContainer
         Lazy<IFilterForErrorRelevancyNodeVisitor> filterForErrorRelevancyNodeVisitor,
         IInjectionGraphBuilder injectionGraphBuilder,
         IInjectionGraphCodeGenerator injectionGraphCodeGenerator,
+        IInjectionGraphPlantUmlGenerator injectionGraphPlantUmlGenerator,
         DiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
@@ -62,6 +64,7 @@ internal sealed class ExecuteContainer
         _filterForErrorRelevancyNodeVisitor = filterForErrorRelevancyNodeVisitor;
         _injectionGraphBuilder = injectionGraphBuilder;
         _injectionGraphCodeGenerator = injectionGraphCodeGenerator;
+        _injectionGraphPlantUmlGenerator = injectionGraphPlantUmlGenerator;
         _diagLogger = diagLogger;
         _containerInfo = containerInfo;
     }
@@ -122,7 +125,11 @@ internal sealed class ExecuteContainer
                 .GetText();
             
             _context.AddSource(_containerInfo.GenerateHintPath(), injectionGraphSource);
-                
+
+            var plantUmlDiagram = _injectionGraphPlantUmlGenerator.Generate();
+            var plantUmlSource = SourceText.From($"/*\n{plantUmlDiagram}*/\n", Encoding.UTF8);
+            _context.AddSource(_containerInfo.GenerateHintPath(".PlantUml"), plantUmlSource);
+
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Analytics;
             if (_analyticsFlags.ResolutionGraph)
                 _resolutionGraphAnalyticsNodeVisitorFactory(null).VisitIContainerNode(_containerNode);

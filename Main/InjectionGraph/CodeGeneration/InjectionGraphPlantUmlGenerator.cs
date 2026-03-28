@@ -234,7 +234,10 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
                 parts.Add("Container");
                 break;
             case ScopeNodeContext.Scope scope:
-                parts.Add($"Scope:{scope.ScopeName}");
+                var scopeLabel = scope.TransientScopeName is not null
+                    ? $"Scope:{scope.ScopeName}@{scope.TransientScopeName}"
+                    : $"Scope:{scope.ScopeName}";
+                parts.Add(scopeLabel);
                 break;
             case ScopeNodeContext.TransientScope transientScope:
                 parts.Add($"TScope:{transientScope.TransientScopeName}");
@@ -271,7 +274,7 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
         {
             foreach (var concreteEdge in typeNode.Outgoing)
             {
-                if (concreteEdge.Target == _concreteExceptionNode)
+                if (Equals(concreteEdge.Target, _concreteExceptionNode))
                     return true;
             }
         }

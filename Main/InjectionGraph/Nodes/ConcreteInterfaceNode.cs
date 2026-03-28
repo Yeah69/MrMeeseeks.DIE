@@ -93,14 +93,14 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
             { ScopeNode: var node } =>
                 GetDefault(node)
         };
-        if (context.Key != new KeyContext.None1())
+        if (context.Key is not KeyContext.None1)
             context = context with { Key = new KeyContext.None1() };
         switch (innerCaseIdResponse)
         {
             case InnerCaseIdResponse.Success { NextCaseId: var nextCaseId, Edge: var nextEdge}:
-                context = nextCaseId is 0 
-                    ? context with { CaseChoice = new CaseChoiceContext.None2() }
-                    : context with { CaseChoice = new CaseChoiceContext.Single(Number, nextCaseId) };
+                context = context with { CaseChoice = nextCaseId is 0 
+                    ? new CaseChoiceContext.None2() 
+                    : new CaseChoiceContext.Single(Number, nextCaseId) };
 
                 return nextEdge.AddContext(context) 
                     ? new CaseIdResponse.Success(nextEdge.Target, Location.None, context)

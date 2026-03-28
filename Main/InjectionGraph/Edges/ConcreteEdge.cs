@@ -11,12 +11,10 @@ internal sealed class ConcreteEdge(TypeNode source, IConcreteNode target)
     
     internal bool AddContext(EdgeContext context)
     {
-        if (!_contexts.Contains(context))
-        {
-            _contexts.Add(context);
-            return true;
-        }
+        if (_contexts.Contains(context))
+            return false;
 
-        return false;
+        _contexts.Add(context);
+        return true;
     }
 }

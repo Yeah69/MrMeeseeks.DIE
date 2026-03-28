@@ -28,7 +28,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
         _wellKnownTypes = wellKnownTypes;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteInterfaceNode concreteNode)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteInterfaceNode concreteNode, string? reference = null)
     {
         if (concreteNode.DefaultImplementationsCaseNumbers.Any() || concreteNode.KeyObjectToCaseNumbers.Any())
         {
@@ -79,8 +79,8 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
             code.AppendLine("}");
         }
 
-        var reference = _referenceGenerator.Generate(concreteNode.Data.Interface);
-        code.AppendLine($"{concreteNode.Data.Interface.FullName()} {reference};");
+        var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Interface);
+        code.AppendLine($"{concreteNode.Data.Interface.FullName()} {actualReference};");
 
         var first = true;
         foreach (var interfaceNodeCase in concreteNode.Cases)
@@ -107,7 +107,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
 
             code.AppendLine(
                 $$"""
-                  {{reference}} = ({{concreteNode.Data.Interface.FullName()}}) {{innerReference}};
+                  {{actualReference}} = ({{concreteNode.Data.Interface.FullName()}}) {{innerReference}};
                   }
                   """);
         }
@@ -120,6 +120,6 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
               }
               """);
 
-        return reference;
+        return actualReference;
     }
 }

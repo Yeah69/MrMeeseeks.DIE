@@ -26,7 +26,7 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
         _keyUtility = keyUtility;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteEnumerableNode concreteNode)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteEnumerableNode concreteNode, string? reference = null)
     {
         /*if (concreteNode.CollectionCases.Count > 1)
         {
@@ -44,7 +44,7 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
             ? foundDefaultCase
             : null;
         var keyedCases = cases
-            .Where(kvp => kvp.Key != new KeyContext.None1())
+            .Where(kvp => !kvp.Key.Equals(new KeyContext.None1()))
             .Select(kvp => (KeyContext: (KeyContext.Single)kvp.Key, Result: kvp.Value))
             .ToImmutableArray();
 

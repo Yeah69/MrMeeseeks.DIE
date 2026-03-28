@@ -20,10 +20,10 @@ internal sealed class OverrideNodeCodeGenerator : IConcreteNodeCodeGenerator<Con
         _sharedNameRegistry = sharedNameRegistry;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteOverrideNode concreteNode)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteOverrideNode concreteNode, string? reference = null)
     {
-        var reference = _referenceGenerator.Generate(concreteNode.Data.Type);
-        code.AppendLine($"{concreteNode.Data.Type.FullName()} {reference} = (({_sharedNameRegistry.IOverrideInterfaceName}<{concreteNode.Data.Type.FullName()}>) {_contextGenerator.ParameterName}.{_contextGenerator.OverridesPropertyName}).Value();");
-        return reference;
+        var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Type);
+        code.AppendLine($"{concreteNode.Data.Type.FullName()} {actualReference} = (({_sharedNameRegistry.IOverrideInterfaceName}<{concreteNode.Data.Type.FullName()}>) {_contextGenerator.ParameterName}.{_contextGenerator.OverridesPropertyName}).Value();");
+        return actualReference;
     }
 }

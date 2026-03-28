@@ -28,9 +28,9 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
         _sharedNameRegistry = sharedNameRegistry;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteFunctorNode concreteNode)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteFunctorNode concreteNode, string? reference = null)
     {
-        var reference = _referenceGenerator.Generate(concreteNode.Data.Type);
+        var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Type);
         var parameterReferences = concreteNode.FunctorParameterTypes.Select(_ => _referenceGenerator.Generate("p")).ToArray();
         var parameterDeclaration = string.Join(", ", parameterReferences);
 
@@ -73,9 +73,9 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
                 Constants.TrueKeyword,
                 Constants.TrueKeyword);
 
-            code.AppendLine($"{concreteNode.Data.Type.FullName()} {reference} = ({parameterDeclaration}) => {_sharedNameRegistry.GetEntryFunctionName(concreteNode.ReturnedElement.Target.Type)}({parameters});");
+            code.AppendLine($"{concreteNode.Data.Type.FullName()} {actualReference} = ({parameterDeclaration}) => {_sharedNameRegistry.GetEntryFunctionName(concreteNode.ReturnedElement.Target.Type)}({parameters});");
         }
 
-        return reference;
+        return actualReference;
     }
 }

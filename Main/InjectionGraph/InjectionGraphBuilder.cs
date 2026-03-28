@@ -70,9 +70,6 @@ internal sealed class InjectionGraphBuilder(
         Queue<ResolutionStep> queue,
         Location currentResolvedLocation)
     {
-        if (typeNode.ContainsOutgoingEdgeFor(edgeContext))
-            return;
-
         var typeNodeType = typeNode.Type;
 
         var scopeRootLevel = edgeContext.ScopeNode.CheckTypeProperties.ShouldBeScopeRoot(typeNode.Type);
@@ -80,11 +77,14 @@ internal sealed class InjectionGraphBuilder(
         if (scopeRootLevel is ScopeLevel.Scope or ScopeLevel.TransientScope)
         {
             var scopeRootContext = scopeNodeManager.GetScopeNodeContext(edgeContext.ScopeNode, typeNode, scopeRootLevel);
-                
-            edgeContext = edgeContext with { ScopeNode = scopeRootContext };
 
             typeNode.RegisterScopeRootConfiguration(scopeRootContext, edgeContext.ScopeNode);
+                
+            edgeContext = edgeContext with { ScopeNode = scopeRootContext };
         }
+        
+        if (typeNode.ContainsOutgoingEdgeFor(edgeContext))
+            return;
 
         var scopeInstanceLevel = edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type);
         typeNode.RegisterScopeInstanceConfiguration(scopeInstanceLevel, edgeContext.ScopeNode);

@@ -17,11 +17,11 @@ internal sealed class ExceptionNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
         _wellKnownTypes = wellKnownTypes;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteExceptionNode concreteNode)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteExceptionNode concreteNode, string? reference = null)
     {
-        var reference = _referenceGenerator.Generate(typeNode.Type);
-        code.AppendLine($"{typeNode.Type.FullName()} {reference} = default!;");
+        var actualReference = reference ?? _referenceGenerator.Generate(typeNode.Type);
+        code.AppendLine($"{typeNode.Type.FullName()} {actualReference} = default!;");
         code.AppendLine($"throw new {_wellKnownTypes.Exception.FullName()}(\"Failed to resolve type {typeNode.Type.FullName()} during code generation.\");");
-        return reference;
+        return actualReference;
     }
 }

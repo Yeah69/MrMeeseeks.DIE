@@ -4,6 +4,7 @@ using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.Nodes;
 using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
@@ -18,6 +19,10 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
     ConcreteOverrideNodeManager concreteOverrideNodeManager,
     ConcreteKeyValuePairNodeManager concreteKeyValuePairNodeManager,
     OverrideContextManager overrideContextManager,
+    TypeSymbolUtility typeSymbolUtility,
+    CheckIterableTypes checkIterableTypes,
+    IdRegister idRegister,
+    WellKnownTypesCollections wellKnownTypesCollections,
     Lazy<ConcreteExceptionNode> concreteExceptionNode,
     Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory)
 {
@@ -187,7 +192,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         Queue<ResolutionStep> queue,
         Location currentResolvedLocation)
     {
-        var concreteEnumerableNodeData = new ConcreteEnumerableNodeData(Enumerable: currentType);
+        var concreteEnumerableNodeData = CreateData();
 
         var concreteEnumerableNode = concreteEnumerableNodeManager.GetOrAddNode(concreteEnumerableNodeData);
 
@@ -198,6 +203,68 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
                 node, 
                 newEdgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
+        return;
+
+        ConcreteEnumerableNodeData CreateData()
+        {
+            var maybeWrappedItemType = currentType switch
+            {
+                INamedTypeSymbol { IsGenericType: true, TypeArguments.Length: 1 } namedType => namedType.TypeArguments[0],
+                IArrayTypeSymbol arrayType => arrayType.ElementType,
+                _ => throw new InvalidOperationException(
+                    $"The enumerable type '{currentType}' is not supported. It must be a generic type with one type argument or an array type.")
+            };
+            ITypeSymbol? maybeKeyValuePairKeyType = null;
+            var isKeyValuePairWithCollectionValue = false;
+            var tempUnwrappedItemType = typeSymbolUtility.GetUnwrappedType(maybeWrappedItemType);
+            if (CustomSymbolEqualityComparer.Default.Equals(tempUnwrappedItemType.OriginalDefinition,
+                    wellKnownTypesCollections.KeyValuePair2)
+                && tempUnwrappedItemType is INamedTypeSymbol { TypeArguments: [var keyType0, var valueType] })
+            {
+                maybeKeyValuePairKeyType = keyType0;
+                tempUnwrappedItemType = typeSymbolUtility.GetUnwrappedType(valueType);
+                isKeyValuePairWithCollectionValue = checkIterableTypes.IsCollectionType(tempUnwrappedItemType);
+            }
+
+            var unwrappedItemType = tempUnwrappedItemType;
+            
+            // KeyValuePair involved
+            if (maybeKeyValuePairKeyType is {} keyValuePairKeyType && unwrappedItemType is INamedTypeSymbol { TypeKind: TypeKind.Interface } namedUnwrappedItemType)
+            {
+                var keyValues = (isKeyValuePairWithCollectionValue 
+                    ? edgeContext.ScopeNode.CheckTypeProperties.MapToKeyedMultipleImplementations(namedUnwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key)
+                    : edgeContext.ScopeNode.CheckTypeProperties.MapToKeyedImplementations(namedUnwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key))
+                    .ToImmutableArray();
+
+                var keyResult = new ConcreteEnumerableNodeData.Key(currentType, maybeWrappedItemType, keyValuePairKeyType, keyValues,
+                    edgeContext is { Key: not KeyContext.None1 } or { CaseChoice: not CaseChoiceContext.None2 });
+                
+                return keyResult;
+            }
+            var injectionKey = edgeContext.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } 
+                ? new InjectionKey(keyType, keyValue)
+                : null;
+            // Vanilla case: No KeyValuePair
+            if (unwrappedItemType is INamedTypeSymbol { TypeKind: TypeKind.Interface } interfaceType)
+            {
+                var outwardFacingId = idRegister.GetOutwardFacingTypeId(interfaceType);
+                var caseChoices = edgeContext.ScopeNode.CheckTypeProperties.MapToImplementations(interfaceType, injectionKey)
+                    .Select(i => idRegister.GetInitialCaseId(edgeContext.ScopeNode, interfaceType, i))
+                    .OfType<IdRegister.CaseIdResponse.Success>()
+                    .Select(s => new CaseChoiceContext.Single(outwardFacingId, s.NextCaseId))
+                    .ToImmutableArray();
+
+                var interfaceResult = new ConcreteEnumerableNodeData.Interface(currentType, maybeWrappedItemType, caseChoices,
+                    edgeContext is { Key: not KeyContext.None1 } or { CaseChoice: not CaseChoiceContext.None2 });
+
+                return interfaceResult;
+            }
+
+            var singlePlainItemResult = new ConcreteEnumerableNodeData.SinglePlainItem(currentType, maybeWrappedItemType,
+                edgeContext is { Key: not KeyContext.None1 } or { CaseChoice: not CaseChoiceContext.None2 });
+
+            return singlePlainItemResult;
+        }
     }
 
     internal void DefaultStep(TypeNode typeNode, EdgeContext edgeContext, Location currentResolvedLocation)

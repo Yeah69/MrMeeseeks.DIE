@@ -1,50 +1,136 @@
-﻿using System.Collections.Concurrent;
-using MrMeeseeks.DIE.InjectionGraph.Edges;
+﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.MsContainer;
-using MrMeeseeks.DIE.Nodes;
-using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal sealed record ConcreteEnumerableNodeData(ITypeSymbol Enumerable)
+internal abstract record ConcreteEnumerableNodeData(ITypeSymbol EnumerableType, ITypeSymbol MaybeWrappedItemType, bool PurgeKeyAndChoice)
 {
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        hash.Add(Enumerable, CustomSymbolEqualityComparer.IncludeNullability);
+        hash.Add(EnumerableType, CustomSymbolEqualityComparer.IncludeNullability);
+        hash.Add(MaybeWrappedItemType, CustomSymbolEqualityComparer.IncludeNullability);
+        hash.Add(PurgeKeyAndChoice);
         return hash.ToHashCode();
     }
 
-    public bool Equals(ConcreteEnumerableNodeData? other)
+    public virtual bool Equals(ConcreteEnumerableNodeData? other)
     {
         if (ReferenceEquals(this, other))
             return true;
         if (other is null)
             return false;
-        if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(Enumerable, other.Enumerable))
+        if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(EnumerableType, other.EnumerableType))
+            return false;
+        if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(MaybeWrappedItemType, other.MaybeWrappedItemType))
+            return false;
+        if (PurgeKeyAndChoice != other.PurgeKeyAndChoice)
             return false;
         return true;
+    }
+
+    internal sealed record Interface(ITypeSymbol EnumerableType, ITypeSymbol MaybeWrappedItemType, ImmutableArray<CaseChoiceContext.Single> Choices, bool PurgeKeyAndChoice)
+        : ConcreteEnumerableNodeData(EnumerableType, MaybeWrappedItemType, PurgeKeyAndChoice)
+    {
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(EnumerableType, CustomSymbolEqualityComparer.IncludeNullability);
+            hash.Add(MaybeWrappedItemType, CustomSymbolEqualityComparer.IncludeNullability);
+            hash.Add(PurgeKeyAndChoice);
+            foreach (var choice in Choices)
+                hash.Add(choice);
+            return hash.ToHashCode();
+        }
+
+        public bool Equals(Interface? other)
+        {
+            if (ReferenceEquals(this, other))
+                return true;
+            if (other is null)
+                return false;
+            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(EnumerableType, other.EnumerableType))
+                return false;
+            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(MaybeWrappedItemType, other.MaybeWrappedItemType))
+                return false;
+            if (PurgeKeyAndChoice != other.PurgeKeyAndChoice)
+                return false;
+            if (!Choices.SequenceEqual(other.Choices))
+                return false;
+            return true;
+        }
+    }
+
+    internal sealed record Key(ITypeSymbol EnumerableType, ITypeSymbol MaybeWrappedItemType, ITypeSymbol KeyType, ImmutableArray<object> KeyValues, bool PurgeKeyAndChoice)
+        : ConcreteEnumerableNodeData(EnumerableType, MaybeWrappedItemType, PurgeKeyAndChoice)
+    {
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(EnumerableType, CustomSymbolEqualityComparer.IncludeNullability);
+            hash.Add(MaybeWrappedItemType, CustomSymbolEqualityComparer.IncludeNullability);
+            hash.Add(PurgeKeyAndChoice);
+            hash.Add(KeyType, CustomSymbolEqualityComparer.IncludeNullability);
+            foreach (var keyValue in KeyValues)
+                hash.Add(keyValue);
+            return hash.ToHashCode();
+        }
+
+        public bool Equals(Key? other)
+        {
+            if (ReferenceEquals(this, other))
+                return true;
+            if (other is null)
+                return false;
+            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(EnumerableType, other.EnumerableType))
+                return false;
+            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(MaybeWrappedItemType, other.MaybeWrappedItemType))
+                return false;
+            if (PurgeKeyAndChoice != other.PurgeKeyAndChoice)
+                return false;
+            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(KeyType, other.KeyType))
+                return false;
+            if (!KeyValues.SequenceEqual(other.KeyValues))
+                return false;
+            return true;
+        }
+    }
+
+    internal sealed record SinglePlainItem(ITypeSymbol EnumerableType, ITypeSymbol MaybeWrappedItemType, bool PurgeKeyAndChoice)
+        : ConcreteEnumerableNodeData(EnumerableType, MaybeWrappedItemType, PurgeKeyAndChoice)
+    {
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(EnumerableType, CustomSymbolEqualityComparer.IncludeNullability);
+            hash.Add(MaybeWrappedItemType, CustomSymbolEqualityComparer.IncludeNullability);
+            hash.Add(PurgeKeyAndChoice);
+            return hash.ToHashCode();
+        }
+
+        public bool Equals(SinglePlainItem? other)
+        {
+            if (ReferenceEquals(this, other))
+                return true;
+            if (other is null)
+                return false;
+            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(EnumerableType, other.EnumerableType))
+                return false;
+            if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(MaybeWrappedItemType, other.MaybeWrappedItemType))
+                return false;
+            if (PurgeKeyAndChoice != other.PurgeKeyAndChoice)
+                return false;
+            return true;
+        }
     }
 }
 
 internal sealed class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteEnumerableNode> factory)
     : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IContainerInstance;
 
-internal abstract record ConcreteEnumerableResult
-{
-    internal sealed record Interface(ImmutableArray<CaseChoiceContext.Single> Choices) : ConcreteEnumerableResult;
-    internal sealed record Key(ITypeSymbol KeyType, ImmutableArray<object> KeyValues) : ConcreteEnumerableResult;
-
-    internal sealed record SinglePlainItem : ConcreteEnumerableResult;
-    
-    internal bool PurgeKeyAndChoice { get; set; }
-}
-
 internal sealed class ConcreteEnumerableNode : IConcreteNode
 {
-    private readonly IdRegister _idRegister;
-    private readonly ConcurrentDictionary<ScopeNodeContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> _collectionCases = [];
     private readonly Lazy<TypeEdge> _innerEdgeLazy;
 
     internal ConcreteEnumerableNode(
@@ -52,46 +138,16 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
         ConcreteEnumerableNodeData data,
 
         // dependencies
-        CheckIterableTypes checkIterableTypes,
-        IdRegister idRegister,
         TypeNodeManager typeNodeManager,
-        Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory,
-        TypeSymbolUtility typeSymbolUtility,
-        WellKnownTypesCollections wellKnownTypesCollections)
+        Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory)
     {
-        _idRegister = idRegister;
         Data = data;
-
-        var maybeWrappedItemType = data.Enumerable switch
-        {
-            INamedTypeSymbol { IsGenericType: true, TypeArguments.Length: 1 } namedType => namedType.TypeArguments[0],
-            IArrayTypeSymbol arrayType => arrayType.ElementType,
-            _ => throw new InvalidOperationException(
-                $"The enumerable type '{data.Enumerable}' is not supported. It must be a generic type with one type argument or an array type.")
-        };
-        var tempUnwrappedItemType = typeSymbolUtility.GetUnwrappedType(maybeWrappedItemType);
-        if (CustomSymbolEqualityComparer.Default.Equals(tempUnwrappedItemType.OriginalDefinition,
-                wellKnownTypesCollections.KeyValuePair2)
-            && tempUnwrappedItemType is INamedTypeSymbol { TypeArguments: [var keyType, var valueType] })
-        {
-            KeyValuePairKeyType = keyType;
-            tempUnwrappedItemType = typeSymbolUtility.GetUnwrappedType(valueType);
-            IsKeyValuePairWithCollectionValue = checkIterableTypes.IsCollectionType(tempUnwrappedItemType);
-        }
-
-        UnwrappedItemType = tempUnwrappedItemType;
-        _innerEdgeLazy = new Lazy<TypeEdge>(() => typeEdgeFactory(this, typeNodeManager.GetOrAddNode(maybeWrappedItemType)));
+        _innerEdgeLazy = new Lazy<TypeEdge>(() => typeEdgeFactory(this, typeNodeManager.GetOrAddNode(data.MaybeWrappedItemType)));
     }
 
     internal TypeEdge InnerEdge => _innerEdgeLazy.Value;
-    
-    internal ITypeSymbol? KeyValuePairKeyType { get; }
-    internal bool IsKeyValuePairWithCollectionValue { get; }
-    internal ITypeSymbol UnwrappedItemType { get; }
 
     internal ConcreteEnumerableNodeData Data { get; }
-    internal ConcurrentDictionary<ScopeNodeContext, ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>> CollectionCases => 
-        _collectionCases;
     
     public override int GetHashCode() => 
         Data.GetHashCode();
@@ -100,89 +156,46 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
 
     public IReadOnlyList<(TypeNode TypeNode, EdgeContext NewContext, Location Location)> ConnectIfNotAlready(EdgeContext context)
     {
-        // KeyValuePair involved
-        if (KeyValuePairKeyType is {} keyValuePairKeyType && UnwrappedItemType is INamedTypeSymbol { TypeKind: TypeKind.Interface } unwrappedItemType)
+        switch (Data)
         {
-            var keyValues = (IsKeyValuePairWithCollectionValue 
-                ? context.ScopeNode.CheckTypeProperties.MapToKeyedMultipleImplementations(unwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key)
-                : context.ScopeNode.CheckTypeProperties.MapToKeyedImplementations(unwrappedItemType, keyValuePairKeyType).Select(kvp => kvp.Key))
-                .ToImmutableArray();
-
-            var keyResult = _collectionCases.GetOrAdd(context.ScopeNode, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
-                .GetOrAdd(new KeyContext.None1(), new ConcreteEnumerableResult.Key(keyValuePairKeyType, keyValues));
-            keyResult.PurgeKeyAndChoice = context is { Key: not KeyContext.None1 } or { CaseChoice: not CaseChoiceContext.None2 };
-                
-            var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, EdgeContext NewContext, Location Location)>();
-            foreach (var value in keyValues)
+            // KeyValuePair involved
+            case ConcreteEnumerableNodeData.Key { KeyValues: var keyValues, KeyType: var keyType }:
             {
-                var newContext = context with { Key = new KeyContext.Single(keyValuePairKeyType, value) };
+                var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, EdgeContext NewContext, Location Location)>();
+                foreach (var value in keyValues)
+                {
+                    var newContext = context with { Key = new KeyContext.Single(keyType, value) };
                     
-                if (InnerEdge.AddContext(newContext))
-                    notYetConnectedTypeNodes.Add((InnerEdge.Target, newContext, Location.None));
+                    if (InnerEdge.AddContext(newContext))
+                        notYetConnectedTypeNodes.Add((InnerEdge.Target, newContext, Location.None));
+                }
+
+                return notYetConnectedTypeNodes;
             }
-
-            return notYetConnectedTypeNodes;
-        }
-        var injectionKey = context.Key is KeyContext.Single { Type: var keyType, Value: var keyValue } 
-            ? new InjectionKey(keyType, keyValue)
-            : null;
-        // Vanilla case: No KeyValuePair
-        if (UnwrappedItemType is INamedTypeSymbol { TypeKind: TypeKind.Interface } interfaceType)
-        {
-            var outwardFacingId = _idRegister.GetOutwardFacingTypeId(interfaceType);
-            var caseChoices = context.ScopeNode.CheckTypeProperties.MapToImplementations(interfaceType, injectionKey)
-                .Select(i => _idRegister.GetInitialCaseId(context.ScopeNode, interfaceType, i))
-                .OfType<IdRegister.CaseIdResponse.Success>()
-                .Select(s => new CaseChoiceContext.Single(outwardFacingId, s.NextCaseId))
-                .ToImmutableArray();
-
-            var interfaceResult = _collectionCases.GetOrAdd(context.ScopeNode, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
-                .GetOrAdd(context.Key, new ConcreteEnumerableResult.Interface(caseChoices));
-            interfaceResult.PurgeKeyAndChoice = context is { Key: not KeyContext.None1 } or { CaseChoice: not CaseChoiceContext.None2 };
-            
-            var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, EdgeContext NewContext, Location Location)>();
-            foreach (var caseChoice in caseChoices)
+            // Vanilla case: No KeyValuePair
+            case ConcreteEnumerableNodeData.Interface { Choices: var caseChoices}:
             {
-                var newContext = context with { CaseChoice = caseChoice };
+                var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, EdgeContext NewContext, Location Location)>();
+                foreach (var caseChoice in caseChoices)
+                {
+                    var newContext = context with { CaseChoice = caseChoice };
                 
-                if (InnerEdge.AddContext(newContext))
-                    notYetConnectedTypeNodes.Add((InnerEdge.Target, newContext, Location.None));
+                    if (InnerEdge.AddContext(newContext))
+                        notYetConnectedTypeNodes.Add((InnerEdge.Target, newContext, Location.None));
+                }
+
+                return notYetConnectedTypeNodes;
             }
-
-            return notYetConnectedTypeNodes;
-        }
-
-        var singlePlainItemResult = _collectionCases.GetOrAdd(context.ScopeNode, _ => new ConcurrentDictionary<KeyContext, ConcreteEnumerableResult>())
-            .GetOrAdd(context.Key, new ConcreteEnumerableResult.SinglePlainItem());
-        singlePlainItemResult.PurgeKeyAndChoice = context is { Key: not KeyContext.None1 } or { CaseChoice: not CaseChoiceContext.None2 };
-
-        var purgedContext = context with { CaseChoice = new CaseChoiceContext.None2(), Key = new KeyContext.None1() };
+            case ConcreteEnumerableNodeData.SinglePlainItem:
+            {
+                var purgedContext = context with { CaseChoice = new CaseChoiceContext.None2(), Key = new KeyContext.None1() };
         
-        if (InnerEdge.AddContext(purgedContext))
-            return [(InnerEdge.Target, purgedContext, Location.None)];
+                if (InnerEdge.AddContext(purgedContext))
+                    return [(InnerEdge.Target, purgedContext, Location.None)];
+                break;
+            }
+        }
 
         return [];
-        /*
-        if (!_sequences.TryGetValue(context.Domain, out var sequence))
-        {
-            sequence = [..sequenceData.Sequence];
-            _sequences[context.Domain] = sequence;
-        }
-        
-        var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, EdgeContext NewContext, Location Location)>();
-        foreach (var yield in sequence)
-        {
-            var newContext = yield switch
-            {
-                ConcreteEnumerableYield.Case(var outwardFacingTypeId, var caseId) => 
-                    context with { InitialCaseChoice = new InitialCaseChoiceContext.Single(outwardFacingTypeId, caseId) },
-                ConcreteEnumerableYield.Key(var keyType, var keyObject) =>
-                    context with { Key = new KeyContext.Single(keyType, keyObject) },
-                _ => throw new InvalidOperationException($"Unknown yield type: {yield.GetType()}")
-            };
-            if (InnerEdge.AddContext(newContext))
-                notYetConnectedTypeNodes.Add((InnerEdge.Target, newContext, Location.None));
-        }
-        return notYetConnectedTypeNodes;*/
     }
 }

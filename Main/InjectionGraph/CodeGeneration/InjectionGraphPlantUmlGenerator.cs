@@ -123,7 +123,7 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
         foreach (var node in _concreteEnumerableNodeManager.AllNodes)
         {
             var id = GetConcreteNodeId(node);
-            var label = SanitizeLabel($"Enum: {GetTypeDisplayName(node.Data.Enumerable)}");
+            var label = SanitizeLabel($"Enum: {GetTypeDisplayName(node.Data.EnumerableType)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Enumerable>>");
         }
 

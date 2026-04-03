@@ -30,6 +30,7 @@ internal sealed class ExecuteContainer
     private readonly IInjectionGraphBuilder _injectionGraphBuilder;
     private readonly IInjectionGraphCodeGenerator _injectionGraphCodeGenerator;
     private readonly IInjectionGraphPlantUmlGenerator _injectionGraphPlantUmlGenerator;
+    private readonly IDecorationChainPlantUmlGenerator _decorationChainPlantUmlGenerator;
     private readonly DiagLogger _diagLogger;
     private readonly ContainerInfo _containerInfo;
 
@@ -49,6 +50,7 @@ internal sealed class ExecuteContainer
         IInjectionGraphBuilder injectionGraphBuilder,
         IInjectionGraphCodeGenerator injectionGraphCodeGenerator,
         IInjectionGraphPlantUmlGenerator injectionGraphPlantUmlGenerator,
+        IDecorationChainPlantUmlGenerator decorationChainPlantUmlGenerator,
         DiagLogger diagLogger)
     {
         _errorDescriptionInsteadOfBuildFailure = generatorConfiguration.ErrorDescriptionInsteadOfBuildFailure;
@@ -65,6 +67,7 @@ internal sealed class ExecuteContainer
         _injectionGraphBuilder = injectionGraphBuilder;
         _injectionGraphCodeGenerator = injectionGraphCodeGenerator;
         _injectionGraphPlantUmlGenerator = injectionGraphPlantUmlGenerator;
+        _decorationChainPlantUmlGenerator = decorationChainPlantUmlGenerator;
         _diagLogger = diagLogger;
         _containerInfo = containerInfo;
     }
@@ -129,6 +132,10 @@ internal sealed class ExecuteContainer
             var plantUmlDiagram = _injectionGraphPlantUmlGenerator.Generate();
             var plantUmlSource = SourceText.From($"/*\n{plantUmlDiagram}*/\n", Encoding.UTF8);
             _context.AddSource(_containerInfo.GenerateHintPath(".PlantUml"), plantUmlSource);
+
+            var decorationChainPlantUmlDiagram = _decorationChainPlantUmlGenerator.Generate();
+            var decorationChainPlantUmlSource = SourceText.From($"/*\n{decorationChainPlantUmlDiagram}*/\n", Encoding.UTF8);
+            _context.AddSource(_containerInfo.GenerateHintPath(".DecorationChainPlantUml"), decorationChainPlantUmlSource);
 
             _currentExecutionPhaseSetter.Value = ExecutionPhase.Analytics;
             if (_analyticsFlags.ResolutionGraph)

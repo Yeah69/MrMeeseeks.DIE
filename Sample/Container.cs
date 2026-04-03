@@ -16,7 +16,17 @@ internal class One : IMany;
 internal class Two : IMany;
 internal class Three : IMany;
 
-internal class Decorator : IDecorator<IMany>, IMany
+internal class DecoratorX : IDecorator<IMany>, IMany
+{
+    internal required IMany Many { get; init; }
+}
+
+internal class DecoratorY : IDecorator<IMany>, IMany
+{
+    internal required IMany Many { get; init; }
+}
+
+internal class DecoratorZ : IDecorator<IMany>, IMany
 {
     internal required IMany Many { get; init; }
 }
@@ -62,12 +72,14 @@ internal class Parent
 internal sealed partial class Container
 {
     [ScopeRootImplementationAggregation(typeof(ScopeA))]
+    [DecoratorSequenceChoice(typeof(IMany), typeof(One), typeof(DecoratorX), typeof(DecoratorY))]
+    [DecoratorSequenceChoice(typeof(IMany), typeof(Two), typeof(DecoratorX), typeof(DecoratorY),  typeof(DecoratorZ))]
     [CustomScopeForRootTypes(typeof(TransientScopeA))]
-    [ImplementationCollectionChoice(typeof(IMany), typeof(One), typeof(Two))]
     private sealed partial class DIE_TransientScope_A;
     [ScopeRootImplementationAggregation(typeof(ScopeA))]
     [ScopeRootImplementationAggregation(typeof(ScopeB))]
-    [ImplementationCollectionChoice(typeof(IMany), typeof(One), typeof(Two))]
+    [DecoratorSequenceChoice(typeof(IMany), typeof(One), typeof(DecoratorY), typeof(DecoratorX))]
+    [DecoratorSequenceChoice(typeof(IMany), typeof(Two), typeof(DecoratorX), typeof(DecoratorZ),  typeof(DecoratorY))]
     [CustomScopeForRootTypes(typeof(TransientScopeB))]
     private sealed partial class DIE_TransientScope_B;
     [ScopeRootImplementationAggregation(typeof(ScopeC))]

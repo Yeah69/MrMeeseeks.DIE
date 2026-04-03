@@ -347,7 +347,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     .Select(kvp => kvp.Key));
             
             sequence = ToDecoration(unspecifiedSequence
-                .OrderBy(d => _decorationToOrdinal.TryGetValue(d, out var ordinal) ? ordinal : 0));
+                .OrderBy(d => _decorationToOrdinal.TryGetValue(d, out var ordinal) ? ordinal : 0)
+                .ThenBy(d => d.FullName()));
         }
 
         return sequence
@@ -459,8 +460,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             };
     }
 
-    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,
-        InjectionKey? injectionKey)
+    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey)
     {
         if (_currentlyConsideredTypes
             .ImplementationCollectionChoices
@@ -481,7 +481,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             ? FilterByInjectionKey(
                 GetClosedImplementations(
                     typeSymbol,
-                    [..implementations], 
+                    [..implementations.OrderBy(i => i.FullName())], 
                     false, 
                     false, 
                     false),

@@ -36,9 +36,10 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     private readonly IdRegister _idRegister;
     private readonly TypeNodeManager _typeNodeManager;
     private readonly Func<IConcreteNode, TypeNode, TypeEdge> _typeEdgeFactory;
-    private readonly Dictionary<int, InnerCaseIdResponse.Success> _caseToNextCase = [];
-    private readonly Dictionary<ScopeNodeContext, InnerCaseIdResponse.Success> _nodeToNextCase = [];
-    private readonly Dictionary<(ScopeNodeContext Node, ITypeSymbol KeyType, object KeyObject), InnerCaseIdResponse.Success> _keyToNextCase = [];
+    private readonly Dictionary<int, InnerCaseIdResponse.Success> _currentChainCaseToNextChainCase = [];
+    private readonly Dictionary<ScopeNodeContext, InnerCaseIdResponse.Success> _scopeNodeToNextCase = [];
+    private readonly Dictionary<(ScopeNodeContext Node, ITypeSymbol KeyType, object KeyObject), InnerCaseIdResponse.Success> _keyToNextChainCase = [];
+    private readonly Dictionary<int, TypeEdge> _typeCaseToEdge = [];
 
     internal ConcreteInterfaceNode(
         // parameters
@@ -57,12 +58,17 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
     }
     internal int Number { get; }
     internal ConcreteInterfaceNodeData Data { get; }
-    internal IEnumerable<(TypeEdge Edge, int Id, int NextId)> Cases => 
-        _caseToNextCase.Select(kvp => (kvp.Value.Edge, kvp.Key, kvp.Value.NextCaseId));
-    internal IEnumerable<(ScopeNodeContext Node, int NextId)> DefaultImplementationsCaseNumbers =>
-        _nodeToNextCase.Select(kvp => (kvp.Key, kvp.Value.NextCaseId));
-    internal IEnumerable<(ScopeNodeContext Node, ITypeSymbol KeyType, object KeyObject, int NextId)> KeyObjectToCaseNumbers =>
-        _keyToNextCase.Select(kvp => (kvp.Key.Node, kvp.Key.KeyType, kvp.Key.KeyObject, kvp.Value.NextCaseId));
+    internal IEnumerable<(int CurrentChainCase, int NextChainCase, int NextTypeCase)> NextChainCases => 
+        _currentChainCaseToNextChainCase.Select(kvp => (kvp.Key, NextCaseId: kvp.Value.NextChainCase, NextTypeCase: kvp.Value.CurrentTypeCase))
+            .OrderBy(x => x.Key);
+    internal IEnumerable<(ScopeNodeContext Node, int NextChainCase, int NextTypeCase)> InitialChainCase =>
+        _scopeNodeToNextCase.Select(kvp => (kvp.Key, NextCaseId: kvp.Value.NextChainCase, NextTypeCase: kvp.Value.CurrentTypeCase))
+            .OrderBy(x => x.NextCaseId);
+    internal IEnumerable<(ScopeNodeContext Node, ITypeSymbol KeyType, object KeyObject, int NextChainCase, int NextTypeCase)> KeyObjectToChainCase =>
+        _keyToNextChainCase.Select(kvp => (kvp.Key.Node, kvp.Key.KeyType, kvp.Key.KeyObject, NextCaseId: kvp.Value.NextChainCase, NextTypeCase: kvp.Value.CurrentTypeCase));
+    internal IEnumerable<(int TypeCase, TypeEdge Edge)> TypeCases =>
+        _typeCaseToEdge.Select(kvp => (kvp.Key, kvp.Value))
+            .OrderBy(x => x.Key);
     
     public override int GetHashCode() => 
         Data.GetHashCode();
@@ -71,7 +77,7 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
 
     private abstract record InnerCaseIdResponse
     {
-        internal sealed record Success(TypeEdge Edge, int NextCaseId) : InnerCaseIdResponse;
+        internal sealed record Success(TypeEdge Edge, int NextChainCase, int CurrentTypeCase) : InnerCaseIdResponse;
         internal sealed record Error(string ErrorMessage) : InnerCaseIdResponse;
     }
 
@@ -97,7 +103,7 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
             context = context with { Key = new KeyContext.None1() };
         switch (innerCaseIdResponse)
         {
-            case InnerCaseIdResponse.Success { NextCaseId: var nextCaseId, Edge: var nextEdge}:
+            case InnerCaseIdResponse.Success { NextChainCase: var nextCaseId, Edge: var nextEdge}:
                 context = context with { CaseChoice = nextCaseId is 0 
                     ? new CaseChoiceContext.None2() 
                     : new CaseChoiceContext.Single(Number, nextCaseId) };
@@ -113,8 +119,8 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
         
         InnerCaseIdResponse GetKeyedDefault(ScopeNodeContext scopeNode, ITypeSymbol keyType, object keyValue)
         {
-            if (_keyToNextCase.TryGetValue((scopeNode, keyType, keyValue), out var success))
-                return success;
+            if (_keyToNextChainCase.TryGetValue((scopeNode, keyType, keyValue), out var found))
+                return found;
             
             var targetImplementationResult =
                 // If there is a registered composite type for the current interface type, we use that as the implementation
@@ -134,55 +140,52 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation))
+            switch (_idRegister.GetInitialChainCase(scopeNode, Data.Interface, targetImplementation))
             {
-                case IdRegister.CaseIdResponse.Success { NextCaseId: var keyedCaseId }:
+                case IdRegister.ChainCaseIdResponse.Success { NextChainCase: var currentChainCase }:
                 {
-                    var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(Data.Interface));
-                    success = new InnerCaseIdResponse.Success(typeEdge, keyedCaseId);
-                    _keyToNextCase[(scopeNode, keyType, keyValue)] = success;
-
+                    var nextChainCaseResult = _idRegister.GetNextChainCase(currentChainCase);
+                    if (nextChainCaseResult is not IdRegister.ChainCaseIdResponse.Success { NextChainCase: var nextChainCase })
+                        return new InnerCaseIdResponse.Error(((IdRegister.ChainCaseIdResponse.Error)nextChainCaseResult).ErrorMessage);
+                    var response = HandleChainCase(currentChainCase, nextChainCase);
+                    if (response is not InnerCaseIdResponse.Success success)
+                        return response;
+                    _keyToNextChainCase[(scopeNode, keyType, keyValue)] = success;
                     return success;
                 }
-                case IdRegister.CaseIdResponse.Error { ErrorMessage: var message }:
+                case IdRegister.ChainCaseIdResponse.Error { ErrorMessage: var message }:
                     return new InnerCaseIdResponse.Error(message);
                 default:
                     return new InnerCaseIdResponse.Error("Unknown error");
             }
         }
         
-        InnerCaseIdResponse GetNextCase(int caseId)
+        InnerCaseIdResponse GetNextCase(int chainCase)
         {
-            if (_caseToNextCase.TryGetValue(caseId, out var success)) 
-                return success;
-
-            var type = _idRegister.GetTypeOfCaseId(caseId);
-            var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(type));
-            var nextCaseId = 0;
-            switch (_idRegister.GetNextCaseId(caseId))
-            {
-                case IdRegister.CaseIdResponse.Error error:
-                    return new InnerCaseIdResponse.Error(error.ErrorMessage);
-                case IdRegister.CaseIdResponse.NoNextCaseId:
-                    // Keep nextCaseId at 0
-                    break;
-                case IdRegister.CaseIdResponse.Success { NextCaseId: var nci }:
-                    nextCaseId = nci;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            if (_currentChainCaseToNextChainCase.TryGetValue(chainCase, out var found)) 
+                return found;
             
-            success = new InnerCaseIdResponse.Success(typeEdge, nextCaseId);
-            _caseToNextCase[caseId] = success;
-
-            return success;
+            switch (_idRegister.GetNextChainCase(chainCase))
+            {
+                case IdRegister.ChainCaseIdResponse.Success { NextChainCase: var nextChainCase }:
+                {
+                    var response = HandleChainCase(chainCase, nextChainCase);
+                    if (response is not InnerCaseIdResponse.Success success)
+                        return response;
+                    _currentChainCaseToNextChainCase[chainCase] = success;
+                    return success;
+                }
+                case IdRegister.ChainCaseIdResponse.Error { ErrorMessage: var message }:
+                    return new InnerCaseIdResponse.Error(message);
+                default:
+                    return new InnerCaseIdResponse.Error("Unknown error");
+            }
         }
         
         InnerCaseIdResponse GetDefault(ScopeNodeContext scopeNode)
         {
-            if (_nodeToNextCase.TryGetValue(scopeNode, out var success))
-                return success;
+            if (_scopeNodeToNextCase.TryGetValue(scopeNode, out var found))
+                return found;
             
             var targetImplementationResult =
                 // If there is a registered composite type for the current interface type, we use that as the implementation
@@ -202,21 +205,48 @@ internal sealed class ConcreteInterfaceNode : IConcreteNode
                 return new InnerCaseIdResponse.Error(logMessage);
             }
             
-            switch (_idRegister.GetInitialCaseId(scopeNode, Data.Interface, targetImplementation))
+            switch (_idRegister.GetInitialChainCase(scopeNode, Data.Interface, targetImplementation))
             {
-                case IdRegister.CaseIdResponse.Success { NextCaseId: var nodeCaseId }:
+                case IdRegister.ChainCaseIdResponse.Success { NextChainCase: var currentChainCase }:
                 {
-                    var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(Data.Interface));
-                    success = new InnerCaseIdResponse.Success(typeEdge, nodeCaseId);
-                    _nodeToNextCase[scopeNode] = success;
-
+                    var nextChainCaseResult = _idRegister.GetNextChainCase(currentChainCase);
+                    if (nextChainCaseResult is not IdRegister.ChainCaseIdResponse.Success { NextChainCase: var nextChainCase })
+                        return new InnerCaseIdResponse.Error(((IdRegister.ChainCaseIdResponse.Error)nextChainCaseResult).ErrorMessage);
+                    var response = HandleChainCase(currentChainCase, nextChainCase);
+                    if (response is not InnerCaseIdResponse.Success success)
+                        return response;
+                    _scopeNodeToNextCase[scopeNode] = success;
                     return success;
                 }
-                case IdRegister.CaseIdResponse.Error { ErrorMessage: var message }:
+                case IdRegister.ChainCaseIdResponse.Error { ErrorMessage: var message }:
                     return new InnerCaseIdResponse.Error(message);
                 default:
                     return new InnerCaseIdResponse.Error("Unknown error");
             }
+        }
+
+        InnerCaseIdResponse HandleChainCase(int currentChainCase, int nextChainCase)
+        {
+            int typeCase;
+            switch (_idRegister.GetTypeCase(currentChainCase))
+            {
+                case IdRegister.ChainCaseIdResponse.Success { NextChainCase: var tc }:
+                    typeCase = tc;
+                    break;
+                case IdRegister.ChainCaseIdResponse.Error error:
+                    return new InnerCaseIdResponse.Error(error.ErrorMessage);
+                default:
+                    return new InnerCaseIdResponse.Error("Unknown error");
+            }
+
+            if (_typeCaseToEdge.TryGetValue(typeCase, out var foundEdge)) 
+                return new InnerCaseIdResponse.Success(foundEdge, nextChainCase, typeCase);
+                    
+            var type = _idRegister.GetTypeOfTypeCase(typeCase);
+            var typeEdge = _typeEdgeFactory(this, _typeNodeManager.GetOrAddNode(type));
+            _typeCaseToEdge[typeCase] = typeEdge;
+
+            return new InnerCaseIdResponse.Success(typeEdge, nextChainCase, typeCase);
         }
     }
 }

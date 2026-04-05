@@ -184,9 +184,9 @@ internal sealed class InjectionGraphBuilder(
         foreach (var typeNode in typeNodeManager.AllTypeNodes)
             if (// if multiple incoming edges x contexts
                 typeNode.Incoming.SelectMany(i => i.Contexts).Count() > 1 
-                // or incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
+                // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
                 || typeNode.Incoming.Any(e => e.Source is ConcreteFunctorNode)
-                // or outgoing edges contain concrete enumerable
+                // or any outgoing edges contain concrete enumerable
                 || typeNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode)
                 // or Type Node is scope instance in some configurations
                 || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)

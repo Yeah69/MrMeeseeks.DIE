@@ -249,9 +249,9 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
             {
                 var outwardFacingId = idRegister.GetOutwardFacingTypeId(interfaceType);
                 var caseChoices = edgeContext.ScopeNode.CheckTypeProperties.MapToImplementations(interfaceType, injectionKey)
-                    .Select(i => idRegister.GetInitialCaseId(edgeContext.ScopeNode, interfaceType, i))
-                    .OfType<IdRegister.CaseIdResponse.Success>()
-                    .Select(s => new CaseChoiceContext.Single(outwardFacingId, s.NextCaseId))
+                    .Select(i => idRegister.GetInitialChainCase(edgeContext.ScopeNode, interfaceType, i))
+                    .OfType<IdRegister.ChainCaseIdResponse.Success>()
+                    .Select(s => new CaseChoiceContext.Single(outwardFacingId, s.NextChainCase))
                     .ToImmutableArray();
 
                 var interfaceResult = new ConcreteEnumerableNodeData.Interface(currentType, maybeWrappedItemType, caseChoices,

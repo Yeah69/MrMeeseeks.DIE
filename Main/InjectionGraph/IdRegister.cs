@@ -2,14 +2,12 @@
 using System.Threading;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
-using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
-internal sealed class IdRegister(LocalDiagLogger logger)
-    : IContainerInstance
+internal sealed class IdRegister : IContainerInstance
 {
     private int _outwardFacingTypeIdCounter;
     private readonly Dictionary<ITypeSymbol, int> _outwardFacingTypeIdMap = new(CustomSymbolEqualityComparer.Default);
@@ -61,14 +59,6 @@ internal sealed class IdRegister(LocalDiagLogger logger)
             })
             .Prepend(implementationType)
             .ToImmutableArray();
-        var scopeNodeName = scopeNode switch
-        {
-            ScopeNodeContext.Container => "Container",
-            ScopeNodeContext.Scope scope => scope.ScopeName,
-            ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName,
-            _ => throw new ArgumentOutOfRangeException(nameof(scopeNode))
-        };
-        logger.Warning(WarningLogData.Logging($"Chain({scopeNodeName},{interfaceType.Name},{implementationType.Name}): {string.Join(",", chain.Select(x => x.Name))}"), Location.None);
         var chainKey = new ChainKey(chain);
 
         var fistChainCase = _chainToChainCases
@@ -81,12 +71,9 @@ internal sealed class IdRegister(LocalDiagLogger logger)
         ImmutableArray<int> AddChainCases(ChainKey key)
         {
             var reversed = key.Chain.Reverse().ToImmutableArray();
-            logger.Warning(WarningLogData.Logging($"Reversed({scopeNodeName},{interfaceType.Name},{implementationType.Name}): {string.Join(",", reversed.Select(x => x.Name))}"), Location.None);
             var ret = reversed.Select(_ => Interlocked.Increment(ref _chainCaseCounter)).Append(0).ToImmutableArray();
-            logger.Warning(WarningLogData.Logging($"Ret({scopeNodeName},{interfaceType.Name},{implementationType.Name}): {string.Join(",", ret)}"), Location.None);
 
             var zip = ret.Zip(ret.Skip(1), (current, next) => (current, next)).ToImmutableArray();
-            logger.Warning(WarningLogData.Logging($"Zip({scopeNodeName},{interfaceType.Name},{implementationType.Name}): {string.Join(",", zip)}"), Location.None);
             
             foreach (var t in zip)
                _chainCaseToNextChainCase.AddOrUpdate(t.current, t.next, (_, next) => next);
@@ -97,7 +84,6 @@ internal sealed class IdRegister(LocalDiagLogger logger)
                     .GetOrAdd(type, t =>
                     {
                         var typeCase = Interlocked.Increment(ref _typeCaseCounter);
-                        logger.Warning(WarningLogData.Logging($"typeToTypeCase({scopeNodeName},{interfaceType.Name},{implementationType.Name}): {t.Name},{typeCase}"), Location.None);
                         _typeCaseToType.AddOrUpdate(typeCase, t, (_, tt) => tt);
                         return typeCase;
                     });
@@ -108,7 +94,6 @@ internal sealed class IdRegister(LocalDiagLogger logger)
                 var type = reversed[i];
                 var chainCase = ret[i];
                 var typeCase = _typeToTypeCase[interfaceType][type];
-                logger.Warning(WarningLogData.Logging($"chainCaseToTypeCase({scopeNodeName},{interfaceType.Name},{implementationType.Name}): {type.Name},{chainCase},{typeCase}"), Location.None);
                 _chainCaseToTypeCase.AddOrUpdate(chainCase, typeCase, (_, tc) => tc);
             }
             

@@ -58,7 +58,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
             var keyLiteral = _keyUtility.GenerateKeyLiteral(keyObjectToChainCase.KeyType, keyObjectToChainCase.KeyObject);
             code.AppendLine(
                 $$"""
-                  if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != {{concreteNode.Number}} && {{_contextGenerator.ParameterName}}.{{_contextGenerator.KeyPropertyName}}?.Equals({{keyLiteral}}) ?? false)
+                  if ({{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != {{concreteNode.Number}} && ({{_contextGenerator.ParameterName}}.{{_contextGenerator.KeyPropertyName}}?.Equals({{keyLiteral}}) ?? false))
                   {
                   {{_contextGenerator.GenerateCopyAssignment(
                           key: "null",

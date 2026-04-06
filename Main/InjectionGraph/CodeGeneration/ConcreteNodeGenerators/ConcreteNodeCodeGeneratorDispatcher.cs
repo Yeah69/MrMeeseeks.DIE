@@ -54,14 +54,17 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
         var edgeAndTargets = node.Outgoing.Select(e => (Edges: e, ConcreteNode: e.Target)).ToList();
         var maybeOverride = edgeAndTargets.Select(t => t.ConcreteNode).OfType<ConcreteOverrideNode>().SingleOrDefault();
         var nonOverrides = edgeAndTargets.Where(t => t.ConcreteNode is not ConcreteOverrideNode).ToList();
+        
+        if (maybeOverride is null && nonOverrides.Count == 1)
+            return GenerateSwitchBody(node, nonOverrides.Single().ConcreteNode, null);
+        if (maybeOverride is {} onlyOverride && nonOverrides.Count == 0)
+            return _overrideNodeCodeGenerator.Generate(code, node, onlyOverride);
+        
         var reference = _referenceGenerator.Generate("ref");
+        code.AppendLine($"{node.Type.FullName()} {reference};");
         
         if (maybeOverride is {} concreteOverrideNode)
         {
-            if (nonOverrides.Count == 0)
-                return _overrideNodeCodeGenerator.Generate(code, node, concreteOverrideNode);
-
-            code.AppendLine($"{node.Type.FullName()} {reference};");
             code.AppendLine($"if ({_contextGenerator.ParameterName}.{_contextGenerator.OverridesPropertyName} is {_sharedNameRegistry.IOverrideInterfaceName}<{concreteOverrideNode.Data.Type.FullName()}>)");
             code.AppendLine("{");
             _overrideNodeCodeGenerator.Generate(code, node, concreteOverrideNode, reference: reference);
@@ -80,7 +83,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
         void GenerateForNonOverrides()
         {
             if (nonOverrides is [var single])
-                GenerateSwitchBody(node, single.ConcreteNode);
+                GenerateSwitchBody(node, single.ConcreteNode, reference);
             else
             {
                 for (var i = 0; i < nonOverrides.Count; i++)
@@ -96,22 +99,22 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
                         code.AppendLine("else");
 
                     code.AppendLine("{");
-                    GenerateSwitchBody(node, concreteNode);
+                    GenerateSwitchBody(node, concreteNode, reference);
                     code.AppendLine("}");
                 }
             }
         }
         
-        void GenerateSwitchBody(TypeNode typeNode, IConcreteNode concreteNode) =>
-            _ = concreteNode switch
+        string GenerateSwitchBody(TypeNode typeNode, IConcreteNode concreteNode, string? maybeReference) =>
+            concreteNode switch
             {
-                ConcreteExceptionNode exceptionNode => _exceptionNodeCodeGenerator.Generate(code, typeNode, exceptionNode, reference),
-                ConcreteImplementationNode implementationNode => _implementationNodeCodeGenerator.Generate(code, typeNode, implementationNode, reference),
-                ConcreteFunctorNode functorNode => _functorNodeCodeGenerator.Generate(code, typeNode, functorNode, reference),
-                ConcreteInterfaceNode interfaceNode => _interfaceNodeCodeGenerator.Generate(code, typeNode, interfaceNode, reference),
-                ConcreteKeyValuePairNode keyValuePairNode => _keyValuePairNodeCodeGenerator.Generate(code, typeNode, keyValuePairNode, reference),
-                ConcreteEnumerableNode enumerableNode => _enumerableNodeCodeGenerator.Generate(code, typeNode, enumerableNode, reference),
-                ConcreteOverrideNode overrideNode => _overrideNodeCodeGenerator.Generate(code, typeNode, overrideNode, reference),
+                ConcreteExceptionNode exceptionNode => _exceptionNodeCodeGenerator.Generate(code, typeNode, exceptionNode, maybeReference),
+                ConcreteImplementationNode implementationNode => _implementationNodeCodeGenerator.Generate(code, typeNode, implementationNode, maybeReference),
+                ConcreteFunctorNode functorNode => _functorNodeCodeGenerator.Generate(code, typeNode, functorNode, maybeReference),
+                ConcreteInterfaceNode interfaceNode => _interfaceNodeCodeGenerator.Generate(code, typeNode, interfaceNode, maybeReference),
+                ConcreteKeyValuePairNode keyValuePairNode => _keyValuePairNodeCodeGenerator.Generate(code, typeNode, keyValuePairNode, maybeReference),
+                ConcreteEnumerableNode enumerableNode => _enumerableNodeCodeGenerator.Generate(code, typeNode, enumerableNode, maybeReference),
+                ConcreteOverrideNode overrideNode => _overrideNodeCodeGenerator.Generate(code, typeNode, overrideNode, maybeReference),
                 _ => ""
             };
         

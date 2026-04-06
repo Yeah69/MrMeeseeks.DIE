@@ -23,7 +23,7 @@ internal sealed class OverrideNodeCodeGenerator : IConcreteNodeCodeGenerator<Con
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteOverrideNode concreteNode, string? reference = null)
     {
         var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Type);
-        code.AppendLine($"{concreteNode.Data.Type.FullName()} {actualReference} = (({_sharedNameRegistry.IOverrideInterfaceName}<{concreteNode.Data.Type.FullName()}>) {_contextGenerator.ParameterName}.{_contextGenerator.OverridesPropertyName}).Value();");
+        code.AppendLine($"{(reference is null ? $"{concreteNode.Data.Type.FullName()} " : "")}{actualReference} = (({_sharedNameRegistry.IOverrideInterfaceName}<{concreteNode.Data.Type.FullName()}>) {_contextGenerator.ParameterName}.{_contextGenerator.OverridesPropertyName}).Value();");
         return actualReference;
     }
 }

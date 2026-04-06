@@ -1,34 +1,42 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal interface II;
-[InjectionKey(0)]
-internal class IX : II;
-[InjectionKey(1)]
-internal class IY : II;
-
-/*internal class A : IDecorator<II>, II
+internal class I
 {
-    internal required II I { get; init; }
+    internal I(int  value) =>
+        Value = value;
+    internal I(long valueLong) =>
+        ValueLong = valueLong;
+    internal int Value { get; }
+    internal long ValueLong { get; }
 }
 
-internal class B : IDecorator<II>, II
+internal class a(Func<int, I> iFactory) : IScopeRoot
 {
-    internal required II I { get; init; }
+    internal I I => iFactory(69);
 }
 
-internal class C : IDecorator<II>, II
+internal class b(Func<long, I> iFactory) : IScopeRoot
 {
-    internal required II I { get; init; }
-}*/
+    internal I I => iFactory(161L);
+}
 
 internal class Parent
 {
-    internal required IEnumerable<KeyValuePair<int, II>> Is { get; init; }
+    internal required a a { get; init; }
+    internal required b b { get; init; }
 }
 
 [CreateFunction(typeof(Parent), "Create")]
-internal sealed partial class Container;
+internal sealed partial class Container
+{
+    [ConstructorChoice(typeof(I), typeof(int))]
+    [CustomScopeForRootTypes(typeof(a))]
+    sealed partial class DIE_Scope_a;
+    [ConstructorChoice(typeof(I), typeof(long))]
+    [CustomScopeForRootTypes(typeof(b))]
+    sealed partial class DIE_Scope_b;
+}

@@ -22,6 +22,7 @@ internal sealed class ImplementationNodeCodeGenerator : IConcreteNodeCodeGenerat
 
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteImplementationNode concreteNode, string? reference = null)
     {
+        var referenceIsExternal = reference is not null;
         var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Implementation);
         var referenceOriginalContext = _referenceGenerator.Generate("originalContext");
         var referencePurgedContext = _referenceGenerator.Generate("purgedContext");
@@ -59,7 +60,7 @@ internal sealed class ImplementationNodeCodeGenerator : IConcreteNodeCodeGenerat
         }
 
         var implementationFullName = GetImplementationsFullName(concreteNode.Data.Implementation);
-        code.AppendLine($"{implementationFullName} {actualReference} = new {implementationFullName}({parameters}){objectInitializer};");
+        code.AppendLine($"{(referenceIsExternal ? "" : $"{implementationFullName} ")}{actualReference} = new {implementationFullName}({parameters}){objectInitializer};");
 
         return actualReference;
     }

@@ -25,12 +25,6 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
 
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteEnumerableNode concreteNode, string? reference = null)
     {
-        /*if (concreteNode.CollectionCases.Count > 1)
-        {
-            // ToDo implement this
-            throw new NotImplementedException("More than one sequence found in enumerable node.");
-        }*/
-
         var isArray = concreteNode.Data.EnumerableType is IArrayTypeSymbol;
         GenerateForResult(code, concreteNode, concreteNode.Data, isArray);
         return "";

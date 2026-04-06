@@ -73,7 +73,7 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
                 Constants.TrueKeyword,
                 Constants.TrueKeyword);
 
-            code.AppendLine($"{concreteNode.Data.Type.FullName()} {actualReference} = ({parameterDeclaration}) => {_sharedNameRegistry.GetEntryFunctionName(concreteNode.ReturnedElement.Target.Type)}({parameters});");
+            code.AppendLine($"{(reference is null ? $"{concreteNode.Data.Type.FullName()} " : "")} {actualReference} = ({parameterDeclaration}) => {_sharedNameRegistry.GetEntryFunctionName(concreteNode.ReturnedElement.Target.Type)}({parameters});");
         }
 
         return actualReference;

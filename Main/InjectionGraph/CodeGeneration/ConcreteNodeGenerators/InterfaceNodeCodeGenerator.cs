@@ -35,11 +35,12 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteInterfaceNode concreteNode, string? reference = null)
     {
         var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Interface);
+        var declarationPrefix = reference is null ? $"{concreteNode.Data.Interface.FullName()} " : "";
         if (concreteNode.TypeCases.Count() == 1)
         {
             var typeCase = concreteNode.TypeCases.First();
             var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge, typeCase.Edge.Target);
-            code.AppendLine($"{concreteNode.Data.Interface.FullName()} {actualReference} = ({concreteNode.Data.Interface.FullName()}) {innerReference};");
+            code.AppendLine($"{declarationPrefix}{actualReference} = ({concreteNode.Data.Interface.FullName()}) {innerReference};");
             return actualReference;
         }
         
@@ -127,7 +128,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
               """);
 
         first = true;
-        code.AppendLine($"{concreteNode.Data.Interface.FullName()} {actualReference};");
+        code.AppendLine($"{declarationPrefix}{actualReference};");
 
 
         foreach (var typeCase in concreteNode.TypeCases)

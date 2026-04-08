@@ -148,10 +148,13 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         else 
             properties = [];
         
+        var maybeInitializer = edgeContext.ScopeNode.CheckTypeProperties.GetInitializerFor(implementation);
+        
         var concreteImplementationNodeData = new ConcreteImplementationNodeData(
             implementation,
             constructor,
-            properties.OrderBy(p => p.Name).ToList());
+            properties.OrderBy(p => p.Name).ToList(),
+            maybeInitializer);
         
         var concreteImplementationNode = concreteImplementationNodeManager.GetOrAddNode(concreteImplementationNodeData);
         

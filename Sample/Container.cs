@@ -12,6 +12,8 @@ internal class I
         ValueLong = valueLong;
     internal int Value { get; }
     internal long ValueLong { get; }
+
+    internal void Initialize(int asdf) { }
 }
 
 internal class a(Func<int, I> iFactory) : IScopeRoot
@@ -19,9 +21,9 @@ internal class a(Func<int, I> iFactory) : IScopeRoot
     internal I I => iFactory(69);
 }
 
-internal class b(Func<long, I> iFactory) : IScopeRoot
+internal class b(Func<int, I> iFactory) : IScopeRoot
 {
-    internal I I => iFactory(161L);
+    internal I I => iFactory(161);
 }
 
 internal class Parent
@@ -30,13 +32,14 @@ internal class Parent
     internal required b b { get; init; }
 }
 
+[Initializer(typeof(I), nameof(I.Initialize))]
 [CreateFunction(typeof(Parent), "Create")]
 internal sealed partial class Container
 {
     [ConstructorChoice(typeof(I), typeof(int))]
     [CustomScopeForRootTypes(typeof(a))]
     sealed partial class DIE_Scope_a;
-    [ConstructorChoice(typeof(I), typeof(long))]
+    [ConstructorChoice(typeof(I), typeof(int))]
     [CustomScopeForRootTypes(typeof(b))]
     sealed partial class DIE_Scope_b;
 }

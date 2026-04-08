@@ -8,7 +8,8 @@ namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 internal sealed record ConcreteImplementationNodeData(
     INamedTypeSymbol Implementation,
     IMethodSymbol Constructor,
-    IReadOnlyList<IPropertySymbol> ObjectInitializerProperties)
+    IReadOnlyList<IPropertySymbol> ObjectInitializerProperties,
+    (INamedTypeSymbol Type, IMethodSymbol Method)? Initializer)
 {
     public override int GetHashCode()
     {
@@ -17,6 +18,11 @@ internal sealed record ConcreteImplementationNodeData(
         hash.Add(Constructor, CustomSymbolEqualityComparer.IncludeNullability);
         foreach (var property in ObjectInitializerProperties)
             hash.Add(property, CustomSymbolEqualityComparer.IncludeNullability);
+        if (Initializer is { } initializer)
+        {
+            hash.Add(initializer.Type, CustomSymbolEqualityComparer.Default);
+            hash.Add(initializer.Method, CustomSymbolEqualityComparer.Default);
+        }
         return hash.ToHashCode();
     }
 
@@ -35,6 +41,13 @@ internal sealed record ConcreteImplementationNodeData(
         for (var i = 0; i < ObjectInitializerProperties.Count; i++)
             if (!CustomSymbolEqualityComparer.IncludeNullability.Equals(ObjectInitializerProperties[i], other.ObjectInitializerProperties[i]))
                 return false;
+        if (Initializer is null && other.Initializer is not null 
+            || Initializer is not null && other.Initializer is null
+            ||  Initializer is not null 
+            && other.Initializer is not null 
+            && (!CustomSymbolEqualityComparer.Default.Equals(Initializer.Value.Type, other.Initializer.Value.Type)
+            || !CustomSymbolEqualityComparer.Default.Equals(Initializer.Value.Method, other.Initializer.Value.Method)))
+            return false;
         return true;
     }
 }
@@ -80,11 +93,26 @@ internal sealed class ConcreteImplementationNode : IConcreteNode
                 p.Locations.FirstOrDefault() ?? Location.None,
                 p.Type));
         ObjectInitializerAssignments = [..objectInitializerAssignments];
+        if (data.Initializer is { } initializer)
+        {
+            var initializerParameters = initializer.Method.Parameters
+                .Select(p => new Dependency(
+                    p.Name,
+                    typeEdgeFactory(this, typeNodeManager.GetOrAddNode(p.Type)),
+                    p.Locations.FirstOrDefault() ?? Location.None,
+                    p.Type));
+            InitializerParameters = [..initializerParameters];
+        }
+        else
+        {
+            InitializerParameters = [];
+        }
     }
     internal ConcreteImplementationNodeData Data { get; }
     internal ImmutableArray<Dependency> ConstructorParameters { get; }
     internal ImmutableArray<Dependency> ObjectInitializerAssignments { get; }
-    private IEnumerable<Dependency> AllDependencies => ConstructorParameters.Concat(ObjectInitializerAssignments);
+    internal ImmutableArray<Dependency> InitializerParameters { get; }
+    private IEnumerable<Dependency> AllDependencies => ConstructorParameters.Concat(ObjectInitializerAssignments).Concat(InitializerParameters);
     
     internal bool NeedsPurge { get; private set; }
     internal bool NeedsOriginalContextReference => AllDependencies.Any(dep => dep.PassOriginalChoiceContextId is not null);
@@ -103,7 +131,7 @@ internal sealed class ConcreteImplementationNode : IConcreteNode
         if (originalContext.CaseChoice is not CaseChoiceContext.None2)
             NeedsPurge = true;
         var notYetConnectedTypeNodes = new List<(TypeNode TypeNode, Location Location, EdgeContext Context)>();
-        foreach (var dependency in ConstructorParameters.Concat(ObjectInitializerAssignments))
+        foreach (var dependency in AllDependencies)
         {
             var pickedContext = context;
             if (originalContext.CaseChoice is CaseChoiceContext.Single { OutwardFacingTypeId: var outwardFacingTypeId }

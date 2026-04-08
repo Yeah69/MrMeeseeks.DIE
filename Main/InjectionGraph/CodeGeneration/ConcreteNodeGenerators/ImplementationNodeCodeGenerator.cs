@@ -61,6 +61,13 @@ internal sealed class ImplementationNodeCodeGenerator : IConcreteNodeCodeGenerat
 
         var implementationFullName = GetImplementationsFullName(concreteNode.Data.Implementation);
         code.AppendLine($"{(referenceIsExternal ? "" : $"{implementationFullName} ")}{actualReference} = new {implementationFullName}({parameters}){objectInitializer};");
+        
+        if (concreteNode.Data.Initializer is {} initializer)
+        {
+            var prefix = ""; // Todo should be "await" for (Value)Task-Initializer
+            var initializerParameters = string.Join(", ", concreteNode.InitializerParameters.Select(d => $"{d.Name}: {HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext)}"));
+            code.AppendLine($"{prefix}(({initializer.Type.FullName()}) {actualReference}).{initializer.Method.Name}({initializerParameters});");
+        }
 
         return actualReference;
     }

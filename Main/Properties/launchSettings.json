@@ -2,7 +2,7 @@
   "profiles": {
     "Main_Sample": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\Sample\\Sample.csproj"
+      "targetProject": "/home/yeah69/Documents/GitRepositories/MrMeeseeks.DIE/Sample/Sample.csproj"
     },
     "Main_Test": {
       "commandName": "DebugRoslynComponent",

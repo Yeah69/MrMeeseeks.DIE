@@ -1,18 +1,34 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal sealed class Disposable : IDisposable { public void Dispose() { } }
+internal interface IInterface<T0>
+{
+    IReadOnlyList<IInterface<T0>> Implementations { get; }
+}
 
-internal sealed class Class(ClassBelow _, Disposable __) : ITransientScopeRoot;
+internal sealed class BaseA<T0> : IInterface<T0>
+{
+    public IReadOnlyList<IInterface<T0>> Implementations => [this];
+}
 
-internal sealed class ClassBelow(ClassS _, Disposable __) : ITransientScopeRoot;
+internal sealed class BaseB<T0> : IInterface<T0>
+{
+    public IReadOnlyList<IInterface<T0>> Implementations => [this];
+}
 
-internal sealed class ClassS(ClassBelowS _, Disposable __) : IScopeRoot;
+// ReSharper disable once UnusedTypeParameter
+internal sealed class Composite<T0, T1> : IInterface<T0>, IComposite<IInterface<T0>>
+{
+    public IReadOnlyList<IInterface<T0>> Implementations { get; }
 
-internal sealed class ClassBelowS(Disposable __) : IScopeRoot;
+    internal Composite(
+        IReadOnlyList<IInterface<T0>> implementations) =>
+        Implementations = implementations;
+}
 
-[CreateFunction(typeof(Class), "Create")]
+[GenericParameterChoice(typeof(Composite<,>), "T1", typeof(string))]
+[CreateFunction(typeof(IInterface<int>), "Create")]
 internal sealed partial class Container;

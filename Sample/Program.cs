@@ -1,4 +1,5 @@
 ﻿using System;
+using MrMeeseeks.DIE.Sample;
 
 internal class Program
 {
@@ -6,7 +7,7 @@ internal class Program
     {
         try
         {
-            //using var container = Container<int>.DIE_CreateContainer(); 
+            using var container = Container.DIE_CreateContainer(); 
             //var asdf = container.Create();
             
             Console.WriteLine("Hello, World!");

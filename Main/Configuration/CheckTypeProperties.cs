@@ -333,8 +333,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         return list2.Count == 1 ? list2[0] : null;
     }
 
-    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,
-        InjectionKey? injectionKey)
+    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey)
     {
         if (_currentlyConsideredTypes
             .ImplementationCollectionChoices

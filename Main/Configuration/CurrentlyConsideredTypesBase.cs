@@ -620,7 +620,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
                     .ToImmutableArray();
 
             return _implementationTypeSetCache.All
-                .Where(implementation => implementation.OriginalDefinitionIfUnbound().AllBaseTypes().Any(i =>
+                .Where(implementation => implementation.OriginalDefinitionIfUnbound().AllBaseTypesAndSelf().Any(i =>
                     CustomSymbolEqualityComparer.Default.Equals(i.UnboundIfGeneric(), unbound)))
                 .Select(implementation => implementation.UnboundIfGeneric())
                 .Distinct(CustomSymbolEqualityComparer.Default)

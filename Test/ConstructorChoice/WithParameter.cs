@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
@@ -7,9 +6,9 @@ using Xunit;
 // ReSharper disable once CheckNamespace
 namespace MrMeeseeks.DIE.Test.ConstructorChoice.WithParameter;
 
-[ImplementationAggregation(typeof(FileInfo))]
-[ConstructorChoice(typeof(FileInfo), typeof(string))]
-[CreateFunction(typeof(Func<string, FileInfo>), "Create")]
+[ImplementationAggregation(typeof(Uri))]
+[ConstructorChoice(typeof(Uri), typeof(string))]
+[CreateFunction(typeof(Func<string, Uri>), "Create")]
 internal sealed partial class Container;
 
 public sealed class Tests
@@ -18,7 +17,7 @@ public sealed class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var fileInfo = container.Create()("C:\\Yeah.txt");
-        Assert.Equal("C:\\Yeah.txt", fileInfo.FullName);
+        var uri = container.Create()("https://example.com/path");
+        Assert.Equal("https://example.com/path", uri.OriginalString);
     }
 }

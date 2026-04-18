@@ -8,7 +8,7 @@ internal class Program
         try
         {
             using var container = Container.DIE_CreateContainer(); 
-            //var asdf = container.Create();
+            var asdf = container.Create<int,int,int>();
             
             Console.WriteLine("Hello, World!");
         }

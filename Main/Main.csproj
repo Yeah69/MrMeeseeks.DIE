@@ -35,9 +35,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="MrMeeseeks.Visitor" Version="1.1.0" PrivateAssets="all" />
-    <PackageReference Include="MsMeeseeks.DIE" Version="3.1.1" PrivateAssets="all" />
+    <PackageReference Include="MsMeeseeks.DIE" Version="3.3.9" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" PrivateAssets="all" />
-    <PackageReference Include="PolySharp" Version="1.14.1">
+    <PackageReference Include="PolySharp" Version="1.15.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

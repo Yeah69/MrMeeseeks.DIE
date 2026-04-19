@@ -1,4 +1,4 @@
-using System.IO;
+using System;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
@@ -9,22 +9,22 @@ namespace MrMeeseeks.DIE.Test.UserDefinedElements.FactoryMethod.WithParameterInS
 
 internal sealed class ScopeRoot : IScopeRoot
 {
-    public FileInfo Property { get; }
+    public Uri Property { get; }
 
-    internal ScopeRoot(FileInfo property) => Property = property;
+    internal ScopeRoot(Uri property) => Property = property;
 }
 
 [CreateFunction(typeof(ScopeRoot), "Create")]
 internal sealed partial class Container
 {
-    
-    
+
+
     // ReSharper disable once InconsistentNaming
     private sealed partial class DIE_DefaultScope
     {
         // ReSharper disable once InconsistentNaming
-        private string DIE_Factory_Path => "C:\\Yeah.txt";
-        private FileInfo DIE_Factory(string path) => new (path);
+        private string DIE_Factory_Url => "https://example.com/path";
+        private Uri DIE_Factory(string url) => new (url);
     }
 }
 
@@ -35,6 +35,6 @@ public sealed class Tests
     {
         await using var container = Container.DIE_CreateContainer();
         var scopeRoot = container.Create();
-        Assert.Equal("C:\\Yeah.txt", scopeRoot.Property.FullName);
+        Assert.Equal("https://example.com/path", scopeRoot.Property.OriginalString);
     }
 }

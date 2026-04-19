@@ -1,4 +1,4 @@
-using System.IO;
+using System;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
@@ -7,14 +7,14 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.UserDefinedElements.FactoryMethod.WithParameterInContainer;
 
 [FilterAllImplementationsAggregation]
-[ImplementationAggregation(typeof(FileInfo))]
-[CreateFunction(typeof(FileInfo), "Create")]
+[ImplementationAggregation(typeof(Uri))]
+[CreateFunction(typeof(Uri), "Create")]
 internal sealed partial class Container
 {
     // ReSharper disable once InconsistentNaming
-    private string DIE_Factory_Path => "C:\\Yeah.txt";
-    
-    private FileInfo DIE_Factory(string path) => new (path);
+    private string DIE_Factory_Url => "https://example.com/path";
+
+    private Uri DIE_Factory(string url) => new (url);
 }
 
 public sealed class Tests
@@ -23,7 +23,7 @@ public sealed class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var fileInfo = container.Create();
-        Assert.Equal("C:\\Yeah.txt", fileInfo.FullName);
+        var uri = container.Create();
+        Assert.Equal("https://example.com/path", uri.OriginalString);
     }
 }

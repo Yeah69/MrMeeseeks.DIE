@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
@@ -8,9 +7,10 @@ using Xunit;
 namespace MrMeeseeks.DIE.Test.Implementation.Aggregation.ExternalType;
 
 
-[AssemblyImplementationsAggregation(typeof(FileInfo))]
-[ImplementationAggregation(typeof(FileInfo))]
-[CreateFunction(typeof(Func<string, FileInfo>), "Create")]
+[AssemblyImplementationsAggregation(typeof(Uri))]
+[ImplementationAggregation(typeof(Uri))]
+[ConstructorChoice(typeof(Uri), typeof(string))]
+[CreateFunction(typeof(Func<string, Uri>), "Create")]
 internal sealed partial class Container;
 
 public sealed class Tests
@@ -19,10 +19,10 @@ public sealed class Tests
     public async Task Test()
     {
         await using var container = Container.DIE_CreateContainer();
-        var path = @"C:\HelloWorld.txt";
-        var fileInfo = container.Create()(path);
-        Assert.NotNull(fileInfo);
-        Assert.IsType<FileInfo>(fileInfo);
-        Assert.Equal(path, fileInfo.FullName);
+        var url = "https://example.com/path";
+        var uri = container.Create()(url);
+        Assert.NotNull(uri);
+        Assert.IsType<Uri>(uri);
+        Assert.Equal(url, uri.OriginalString);
     }
 }

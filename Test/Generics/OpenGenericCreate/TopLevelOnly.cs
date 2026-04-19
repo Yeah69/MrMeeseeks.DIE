@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Xunit;
 using MrMeeseeks.DIE.Configuration.Attributes;
@@ -32,8 +31,8 @@ public sealed class Tests
         Assert.IsType<Class<string>>(instance);
         Assert.IsType<Class<string, object, int, double, string>>(instanceMulti);
         var interfaceInstance = container.CreateInterface<DateTime>();
-        var interfaceInstanceMulti = container.CreateInterfaceMulti<uint, FileInfo, IDisposable, Func<string>, int>();
+        var interfaceInstanceMulti = container.CreateInterfaceMulti<uint, Uri, IDisposable, Func<string>, int>();
         Assert.IsType<Class<DateTime>>(interfaceInstance);
-        Assert.IsType<Class<uint, FileInfo, IDisposable, Func<string>, int>>(interfaceInstanceMulti);
+        Assert.IsType<Class<uint, Uri, IDisposable, Func<string>, int>>(interfaceInstanceMulti);
     }
 }

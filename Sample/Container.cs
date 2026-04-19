@@ -1,18 +1,48 @@
-﻿using System;
-using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.UserUtility;
+﻿using MrMeeseeks.DIE.Configuration.Attributes;
 
 namespace MrMeeseeks.DIE.Sample;
 
-internal sealed class Disposable : IDisposable { public void Dispose() { } }
+internal interface IInterface<T0>;
 
-internal sealed class Class(ClassBelow _, Disposable __) : ITransientScopeRoot;
+internal sealed class Dependency<T0> : IInterface<T0>;
 
-internal sealed class ClassBelow(ClassS _, Disposable __) : ITransientScopeRoot;
+internal interface IInterface<T3, T4, T5>
+{
+    
+    Dependency<T5> DependencyInit { get; }
+    Dependency<T4> DependencyConstrParam { get; }
+    Dependency<T3>? DependencyInitParam { get; }
+    IInterface<T5> InterfaceInit { get; init; }
+    IInterface<T4> InterfaceConstrParam { get; }
+    IInterface<T3>? InterfaceInitParam { get; }
+}
 
-internal sealed class ClassS(ClassBelowS _, Disposable __) : IScopeRoot;
+internal sealed class DependencyHolder<T0, T1, T2> : IInterface<T2, T1, T0>
+{
+    public required Dependency<T0> DependencyInit { get; init; }
+    public Dependency<T1> DependencyConstrParam { get; }
+    public Dependency<T2>? DependencyInitParam { get; private set; }
+    public required IInterface<T0> InterfaceInit { get; init; }
+    public IInterface<T1> InterfaceConstrParam { get; }
+    public IInterface<T2>? InterfaceInitParam { get; private set; }
+    
+    // ReSharper disable once UnusedParameter.Local
+    internal DependencyHolder(
+        Dependency<T1> dependencyConstrParam, 
+        IInterface<T1> interfaceConstrParam)
+    {
+        DependencyConstrParam = dependencyConstrParam;
+        InterfaceConstrParam = interfaceConstrParam;
+    }
 
-internal sealed class ClassBelowS(Disposable __) : IScopeRoot;
+    internal void Initialize(Dependency<T2> dependencyInitParam, IInterface<T2> interfaceInitParam)
+    {
+        DependencyInitParam = dependencyInitParam;
+        InterfaceInitParam = interfaceInitParam;
+    }
+}
 
-[CreateFunction(typeof(Class), "Create")]
+[Initializer(typeof(DependencyHolder<,,>), "Initialize")]
+[CreateFunction(typeof(DependencyHolder<,,>), "Create")]
+[CreateFunction(typeof(IInterface<,,>), "CreateInterface")]
 internal sealed partial class Container;

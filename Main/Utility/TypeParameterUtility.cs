@@ -187,9 +187,9 @@ internal sealed class TypeParameterUtility : ITypeParameterUtility, IContainerIn
               }
               """;
 
-        var languageVersion = (_compilation as CSharpCompilation)?.LanguageVersion ?? LanguageVersion.Default;
-        var syntaxTree =
-            CSharpSyntaxTree.ParseText(surrogateCode, new CSharpParseOptions(languageVersion: languageVersion));
+        var parseOptions = _compilation.SyntaxTrees.FirstOrDefault()?.Options as CSharpParseOptions
+            ?? new CSharpParseOptions(languageVersion: (_compilation as CSharpCompilation)?.LanguageVersion ?? LanguageVersion.Default);
+        var syntaxTree = CSharpSyntaxTree.ParseText(surrogateCode, parseOptions);
 
         var newCompilation = _compilation.AddSyntaxTrees(syntaxTree);
 

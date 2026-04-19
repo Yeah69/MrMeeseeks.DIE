@@ -18,9 +18,9 @@ jobs:
     steps:
     - uses: actions/checkout@main
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3.2.0
+      uses: actions/setup-dotnet@v5.2.0
       with:
-        dotnet-version: 8.0.406
+        dotnet-version: 10.0.202
     - run: set DOTNET_CLI_TELEMETRY_OPTOUT=1
     - name: Install dependencies
       run: dotnet restore .\MrMeeseeks.DIE.sln

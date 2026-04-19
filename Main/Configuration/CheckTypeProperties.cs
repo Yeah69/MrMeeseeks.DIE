@@ -86,8 +86,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     private readonly ITypeParameterUtility _typeParameterUtility;
     private readonly WellKnownTypes _wellKnownTypes;
     
-    private readonly Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = new();
-    private readonly Dictionary<INamedTypeSymbol, int> _decorationToOrdinal;
+    private readonly Dictionary<INamedTypeSymbol, IDictionary<ITypeSymbol, ISet<object>>> _typeToKeyToValue = new(CustomSymbolEqualityComparer.Default);
 
     internal CheckTypeProperties(
         ICurrentlyConsideredTypes currentlyConsideredTypes,
@@ -139,23 +138,6 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                     implementationType.OriginalDefinition, 
                     new Dictionary<ITypeSymbol, ISet<object>>{{keyType, new HashSet<object>{keyValue}}});
         }
-        
-        _decorationToOrdinal = currentlyConsideredTypes.DecoratorTypes
-            .SelectMany(d => d.GetAttributes().Select(a => (d, a)))
-            .Select(t =>
-            {
-                var (decorator, attribute) = t;
-                if (!currentlyConsideredTypes.DecorationOrdinalAttributeTypes.Any(a =>
-                        CustomSymbolEqualityComparer.Default.Equals(a, attribute.AttributeClass)))
-                    return ((INamedTypeSymbol DecorationImplementationType, int Ordinal)?)null;
-                return (
-                    DecorationImplementationType: decorator,
-                    Ordinal: attribute.ConstructorArguments[0].Value is int ordinal ? ordinal : 0);
-            })
-            .Where(t => t is not null)
-            .Select(t => t ?? throw new ImpossibleDieException())
-            .Concat(currentlyConsideredTypes.DecorationOrdinalChoices)
-            .ToDictionary(t => t.DecorationImplementationType, t => t.Ordinal);
     }
     
     public DisposalType ShouldDisposalBeManaged(INamedTypeSymbol implementationType)
@@ -167,11 +149,11 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         
         if (_wellKnownTypes.IAsyncDisposable is not null 
             && implementationType.OriginalDefinitionIfUnbound().AllInterfaces.Contains(_wellKnownTypes.IAsyncDisposable)
-            && !_currentlyConsideredTypes.AsyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
+            && !_currentlyConsideredTypes.IsAsyncTransient(implementationType.UnboundIfGeneric()))
             ret |= DisposalType.Async;
         
         if (implementationType.OriginalDefinitionIfUnbound().AllInterfaces.Contains(_wellKnownTypes.IDisposable)
-            && !_currentlyConsideredTypes.SyncTransientTypes.Contains(implementationType.UnboundIfGeneric()))
+            && !_currentlyConsideredTypes.IsSyncTransient(implementationType.UnboundIfGeneric()))
             ret |= DisposalType.Sync;
         
         return ret;
@@ -179,29 +161,31 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 
     public ScopeLevel ShouldBeScopeRoot(INamedTypeSymbol implementationType)
     {
-        if (_currentlyConsideredTypes.TransientScopeRootTypes.Contains(implementationType.UnboundIfGeneric()))
+        if (_currentlyConsideredTypes.IsTransientScopeRoot(implementationType.UnboundIfGeneric()))
             return ScopeLevel.TransientScope;
-        if (_currentlyConsideredTypes.ScopeRootTypes.Contains(implementationType.UnboundIfGeneric()))
+        if (_currentlyConsideredTypes.IsScopeRoot(implementationType.UnboundIfGeneric()))
             return ScopeLevel.Scope;
         return ScopeLevel.None;
     }
 
-    public bool ShouldBeComposite(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.InterfaceToComposite.ContainsKey(interfaceType.UnboundIfGeneric());
+    public bool ShouldBeComposite(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.HasComposite(interfaceType);
     public ScopeLevel GetScopeLevelFor(INamedTypeSymbol implementationType)
     {
         var unbound = implementationType.UnboundIfGeneric();
-        if (_currentlyConsideredTypes.ContainerInstanceTypes.Contains(unbound))
+        if (_currentlyConsideredTypes.IsContainerInstance(unbound))
             return ScopeLevel.Container;
-        if (_currentlyConsideredTypes.TransientScopeInstanceTypes.Contains(unbound))
+        if (_currentlyConsideredTypes.IsTransientScopeInstance(unbound))
             return ScopeLevel.TransientScope;
-        if (_currentlyConsideredTypes.ScopeInstanceTypes.Contains(unbound))
+        if (_currentlyConsideredTypes.IsScopeInstance(unbound))
             return ScopeLevel.Scope;
         return ScopeLevel.None;
     }
 
     public INamedTypeSymbol? GetCompositeFor(INamedTypeSymbol interfaceType)
     {
-        var compositeImplementation = _currentlyConsideredTypes.InterfaceToComposite[interfaceType.UnboundIfGeneric()];
+        var compositeImplementation = _currentlyConsideredTypes.GetCompositeFor(interfaceType);
+        if (compositeImplementation is null)
+            return null;
         var implementations = GetClosedImplementations(
             interfaceType, 
             [compositeImplementation], 
@@ -243,7 +227,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         };
     }
     
-    public bool ShouldBeDecorated(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.InterfaceToDecorators.ContainsKey(interfaceType.UnboundIfGeneric());
+    public bool ShouldBeDecorated(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.HasDecorators(interfaceType);
 
     public IReadOnlyList<INamedTypeSymbol> GetDecorationSequenceFor(INamedTypeSymbol interfaceType,
         INamedTypeSymbol implementationType)
@@ -264,10 +248,10 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 found = true;
             }
         }
-        
-        if (!found && _currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators))
+        var allDecorators = _currentlyConsideredTypes.GetDecoratorsFor(interfaceType);
+        if (!found && allDecorators.Length > 0)
             sequence = allDecorators
-                .OrderBy(d => _decorationToOrdinal.TryGetValue(d, out var ordinal) ? ordinal : 0);
+                .OrderBy(d => _currentlyConsideredTypes.GetDecorationOrdinal(d));
         
         return sequence
             .Select(imp =>
@@ -287,8 +271,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             .ToList();
     }
 
-    public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type,
-        InjectionKey? injectionKey)
+    public INamedTypeSymbol? MapToSingleFittingImplementation(INamedTypeSymbol type, InjectionKey? injectionKey)
     {
         var choice =
             _currentlyConsideredTypes.ImplementationChoices.TryGetValue(type.UnboundIfGeneric(), out var choice0)
@@ -317,8 +300,8 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 
         if (type is { TypeKind: not TypeKind.Interface, IsAbstract: false, IsStatic: false })
         {
-            if (_currentlyConsideredTypes.DecoratorTypes.Contains(type) ||
-                _currentlyConsideredTypes.CompositeTypes.Contains(type))
+            if (_currentlyConsideredTypes.IsDecorator(type) ||
+                _currentlyConsideredTypes.IsComposite(type))
                 // if concrete type is decorator or composite then just shortcut
                 return type;
             var possibleConcreteTypeImplementations = FilterByInjectionKey(
@@ -335,24 +318,22 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             return list.Count == 1 ? list[0] : null;
         }
 
-        var possibleImplementations = _currentlyConsideredTypes.ImplementationMap.TryGetValue(type.UnboundIfGeneric(), out var implementations) 
-            ? FilterByInjectionKey(
+        var implementations = _currentlyConsideredTypes.GetAllImplementingTypes(type);
+        var possibleImplementations = FilterByInjectionKey(
                 GetClosedImplementations(
                     type, 
                     [..implementations], 
                     true, 
                     false, 
                     false),
-                injectionKey)
-            : [];
+                injectionKey);
         
         var list2 = possibleImplementations.Take(2).ToList();
         
         return list2.Count == 1 ? list2[0] : null;
     }
 
-    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol,
-        InjectionKey? injectionKey)
+    public IReadOnlyList<INamedTypeSymbol> MapToImplementations(INamedTypeSymbol typeSymbol, InjectionKey? injectionKey)
     {
         if (_currentlyConsideredTypes
             .ImplementationCollectionChoices
@@ -368,17 +349,15 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 injectionKey).ToList();
         }
         
-        return _currentlyConsideredTypes.ImplementationMap.TryGetValue(typeSymbol.UnboundIfGeneric(),
-            out var implementations)
-            ? FilterByInjectionKey(
+        return FilterByInjectionKey(
                 GetClosedImplementations(
                     typeSymbol,
-                    [..implementations], 
+                    [.._currentlyConsideredTypes.GetAllImplementingTypes(typeSymbol.UnboundIfGeneric())], 
                     false, 
                     false, 
                     false),
-                injectionKey).ToList()
-            : Array.Empty<INamedTypeSymbol>();
+                injectionKey)
+            .ToList();
     }
     
     private IEnumerable<INamedTypeSymbol> FilterByInjectionKey(
@@ -424,15 +403,15 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             var unboundImplementation = implementation.UnboundIfGeneric();
             var originalImplementation = implementation.OriginalDefinitionIfUnbound();
             
-            var isCompositeImplementation = _currentlyConsideredTypes.CompositeTypes.Contains(unboundImplementation);
+            var isCompositeImplementation = _currentlyConsideredTypes.IsComposite(unboundImplementation);
             if (chooseComposite && !isCompositeImplementation || !chooseComposite && isCompositeImplementation)
                 continue;
-            var isDecoratorImplementation = _currentlyConsideredTypes.DecoratorTypes.Contains(unboundImplementation);
+            var isDecoratorImplementation = _currentlyConsideredTypes.IsDecorator(unboundImplementation);
             if (chooseDecorator && !isDecoratorImplementation || !chooseDecorator && isDecoratorImplementation)
                 continue;
             if (!chooseComposite 
                 && !chooseDecorator 
-                && !_currentlyConsideredTypes.AllConsideredImplementations.Contains(unboundImplementation))
+                && !_currentlyConsideredTypes.ImplementationConsidered(unboundImplementation))
                 continue;
             if (!implementation.IsGenericType)
             {
@@ -559,21 +538,27 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
 
     public (INamedTypeSymbol Type, IMethodSymbol Initializer)? GetInitializerFor(INamedTypeSymbol implementationType)
     {
-        if (_currentlyConsideredTypes.ImplementationToInitializer.TryGetValue(implementationType.UnboundIfGeneric(), out var tuple))
-        {
-            var abstractionType = implementationType
-                .AllDerivedTypesAndSelf()
-                .FirstOrDefault(t => CustomSymbolEqualityComparer.Default.Equals(t.UnboundIfGeneric(), tuple.Item1.UnboundIfGeneric()));
+        var initializerInfo = _currentlyConsideredTypes.GetInitializerFor(implementationType);
+        if (initializerInfo is null)
+            return null;
 
-            var initializerMethod = implementationType
-                .AllDerivedTypesAndSelf()
-                .SelectMany(t => t.GetMembers(tuple.Item2.Name))
-                .OfType<IMethodSymbol>()
-                .FirstOrDefault(m => CustomSymbolEqualityComparer.Default.Equals(m.OriginalDefinition, tuple.Item2.OriginalDefinition));
-            
-            return abstractionType is not null && initializerMethod is not null ? (abstractionType, initializerMethod) : null;
-        }
-        return null;
+        var (abstractionType, initializerMethodDef) = initializerInfo.Value;
+
+        var concreteAbstractionType = implementationType
+            .AllDerivedTypesAndSelf()
+            .FirstOrDefault(t => CustomSymbolEqualityComparer.Default.Equals(
+                t.UnboundIfGeneric(), abstractionType.UnboundIfGeneric()));
+
+        var initializerMethod = implementationType
+            .AllDerivedTypesAndSelf()
+            .SelectMany(t => t.GetMembers(initializerMethodDef.Name))
+            .OfType<IMethodSymbol>()
+            .FirstOrDefault(m => CustomSymbolEqualityComparer.Default.Equals(
+                m.OriginalDefinition, initializerMethodDef.OriginalDefinition));
+
+        return concreteAbstractionType is not null && initializerMethod is not null
+            ? (concreteAbstractionType, initializerMethod)
+            : null;
     }
 
     public IReadOnlyList<IPropertySymbol>? GetPropertyChoicesFor(INamedTypeSymbol implementationType)

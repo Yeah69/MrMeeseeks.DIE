@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Sample;
 
 internal class Program
 {
-    private static void Main()
+    private static async Task Main()
     {
         try
         {
             var container = Container.DIE_CreateContainer(); 
-            var parent = container.Create();
-
+            var parent = await container.Create();
+            
             Console.WriteLine("Hello, World!");
         }
         catch (Exception)

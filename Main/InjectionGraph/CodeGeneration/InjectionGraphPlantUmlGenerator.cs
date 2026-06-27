@@ -9,48 +9,22 @@ internal interface IInjectionGraphPlantUmlGenerator
     string Generate();
 }
 
-internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlGenerator
+internal sealed class InjectionGraphPlantUmlGenerator(
+    SyncGraphHolder syncGraphHolder,
+    AsyncGraphHolder asyncGraphHolder) : IInjectionGraphPlantUmlGenerator
 {
     private readonly StringBuilder _diagram = new();
-    private readonly TypeNodeManager _typeNodeManager;
-    private readonly ConcreteImplementationNodeManager _concreteImplementationNodeManager;
-    private readonly ConcreteInterfaceNodeManager _concreteInterfaceNodeManager;
-    private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
-    private readonly ConcreteEnumerableNodeManager _concreteEnumerableNodeManager;
-    private readonly ConcreteKeyValuePairNodeManager _concreteKeyValuePairNodeManager;
-    private readonly ConcreteOverrideNodeManager _concreteOverrideNodeManager;
-    private readonly ConcreteEntryFunctionNodeManager _concreteEntryFunctionNodeManager;
-    private readonly ConcreteExceptionNode _concreteExceptionNode;
+    private readonly SyncGraphRoot _syncGraphRoot = syncGraphHolder.Value;
+    private readonly AsyncGraphRoot _asyncGraphRoot = asyncGraphHolder.Value;
 
     private readonly Dictionary<TypeNode, string> _typeNodeIds = [];
     private readonly Dictionary<IConcreteNode, string> _concreteNodeIds = [];
     private int _nodeIdCounter;
 
-    public InjectionGraphPlantUmlGenerator(
-        TypeNodeManager typeNodeManager,
-        ConcreteImplementationNodeManager concreteImplementationNodeManager,
-        ConcreteInterfaceNodeManager concreteInterfaceNodeManager,
-        ConcreteFunctorNodeManager concreteFunctorNodeManager,
-        ConcreteEnumerableNodeManager concreteEnumerableNodeManager,
-        ConcreteKeyValuePairNodeManager concreteKeyValuePairNodeManager,
-        ConcreteOverrideNodeManager concreteOverrideNodeManager,
-        ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
-        ConcreteExceptionNode concreteExceptionNode)
-    {
-        _typeNodeManager = typeNodeManager;
-        _concreteImplementationNodeManager = concreteImplementationNodeManager;
-        _concreteInterfaceNodeManager = concreteInterfaceNodeManager;
-        _concreteFunctorNodeManager = concreteFunctorNodeManager;
-        _concreteEnumerableNodeManager = concreteEnumerableNodeManager;
-        _concreteKeyValuePairNodeManager = concreteKeyValuePairNodeManager;
-        _concreteOverrideNodeManager = concreteOverrideNodeManager;
-        _concreteEntryFunctionNodeManager = concreteEntryFunctionNodeManager;
-        _concreteExceptionNode = concreteExceptionNode;
-    }
-
     public string Generate()
     {
         _diagram.AppendLine("@startuml");
+        _diagram.AppendLine("allowmixing");
         _diagram.AppendLine();
         _diagram.AppendLine("' Styling");
         _diagram.AppendLine("skinparam rectangle {");
@@ -63,12 +37,30 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
         _diagram.AppendLine("  BackgroundColor<<Override>> Wheat");
         _diagram.AppendLine("  BackgroundColor<<EntryFunction>> LightCyan");
         _diagram.AppendLine("  BackgroundColor<<Exception>> Salmon");
+        _diagram.AppendLine("  BackgroundColor<<Task>> Orchid");
         _diagram.AppendLine("}");
         _diagram.AppendLine();
 
-        GenerateTypeNodes();
-        GenerateConcreteNodes();
-        GenerateEdges();
+        // Generate sync graph in its own namespace
+        if (HasAnyNodes(_syncGraphRoot))
+        {
+            _diagram.AppendLine("namespace Sync {");
+            GenerateGraphContent(_syncGraphRoot, "S_");
+            _diagram.AppendLine("}");
+            _diagram.AppendLine();
+        }
+
+        // Clear the node ID mappings for the async graph
+        _typeNodeIds.Clear();
+        _concreteNodeIds.Clear();
+
+        // Generate async graph in its own namespace
+        if (HasAnyNodes(_asyncGraphRoot))
+        {
+            _diagram.AppendLine("namespace Async {");
+            GenerateGraphContent(_asyncGraphRoot, "A_");
+            _diagram.AppendLine("}");
+        }
 
         _diagram.AppendLine();
         _diagram.AppendLine("@enduml");
@@ -76,86 +68,104 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
         return _diagram.ToString();
     }
 
-    private void GenerateTypeNodes()
+    private bool HasAnyNodes(IGraphRoot graphRoot) =>
+        graphRoot.TypeNodeManager.AllTypeNodes.Count != 0 ||
+        graphRoot.ConcreteEntryFunctionNodeManager.AllNodes.Count != 0 ||
+        graphRoot.ConcreteImplementationNodeManager.AllNodes.Count != 0 ||
+        graphRoot.ConcreteInterfaceNodeManager.AllNodes.Count != 0 ||
+        graphRoot.ConcreteFunctorNodeManager.AllNodes.Count != 0 ||
+        graphRoot.ConcreteEnumerableNodeManager.AllNodes.Count != 0 ||
+        graphRoot.ConcreteKeyValuePairNodeManager.AllNodes.Count != 0 ||
+        graphRoot.ConcreteOverrideNodeManager.AllNodes.Count != 0 ||
+        graphRoot.ConcreteTaskNodeManager.AllNodes.Count != 0;
+
+    private void GenerateGraphContent(IGraphRoot graphRoot, string nodePrefix)
+    {
+        GenerateTypeNodes(graphRoot, nodePrefix);
+        GenerateConcreteNodes(graphRoot, nodePrefix);
+        GenerateEdges(graphRoot);
+    }
+
+    private void GenerateTypeNodes(IGraphRoot graphRoot, string nodePrefix)
     {
         _diagram.AppendLine("' Type Nodes");
-        foreach (var typeNode in _typeNodeManager.AllTypeNodes)
+        foreach (var typeNode in graphRoot.TypeNodeManager.AllTypeNodes)
         {
-            var id = GetTypeNodeId(typeNode);
+            var id = GetTypeNodeId(typeNode, nodePrefix);
             var label = SanitizeLabel(GetTypeDisplayName(typeNode.Type));
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<TypeNode>>");
         }
         _diagram.AppendLine();
     }
 
-    private void GenerateConcreteNodes()
+    private void GenerateConcreteNodes(IGraphRoot graphRoot, string nodePrefix)
     {
         _diagram.AppendLine("' Concrete Nodes");
 
-        foreach (var node in _concreteEntryFunctionNodeManager.AllNodes)
+        foreach (var node in graphRoot.ConcreteEntryFunctionNodeManager.AllNodes)
         {
-            var id = GetConcreteNodeId(node);
+            var id = GetConcreteNodeId(node, nodePrefix);
             var label = SanitizeLabel($"Entry: {node.Data.Name}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<EntryFunction>>");
         }
 
-        foreach (var node in _concreteImplementationNodeManager.AllNodes)
+        foreach (var node in graphRoot.ConcreteImplementationNodeManager.AllNodes)
         {
-            var id = GetConcreteNodeId(node);
+            var id = GetConcreteNodeId(node, nodePrefix);
             var label = SanitizeLabel($"Impl: {GetTypeDisplayName(node.Data.Implementation)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Implementation>>");
         }
 
-        foreach (var node in _concreteInterfaceNodeManager.AllNodes)
+        foreach (var node in graphRoot.ConcreteInterfaceNodeManager.AllNodes)
         {
-            var id = GetConcreteNodeId(node);
+            var id = GetConcreteNodeId(node, nodePrefix);
             var label = SanitizeLabel($"Iface: {GetTypeDisplayName(node.Data.Interface)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Interface>>");
         }
 
-        foreach (var node in _concreteFunctorNodeManager.AllNodes)
+        foreach (var node in graphRoot.ConcreteFunctorNodeManager.AllNodes)
         {
-            var id = GetConcreteNodeId(node);
+            var id = GetConcreteNodeId(node, nodePrefix);
             var label = SanitizeLabel($"Func: {GetTypeDisplayName(node.Data.Type)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Functor>>");
         }
 
-        foreach (var node in _concreteEnumerableNodeManager.AllNodes)
+        foreach (var node in graphRoot.ConcreteEnumerableNodeManager.AllNodes)
         {
-            var id = GetConcreteNodeId(node);
+            var id = GetConcreteNodeId(node, nodePrefix);
             var label = SanitizeLabel($"Enum: {GetTypeDisplayName(node.Data.EnumerableType)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Enumerable>>");
         }
 
-        foreach (var node in _concreteKeyValuePairNodeManager.AllNodes)
+        foreach (var node in graphRoot.ConcreteKeyValuePairNodeManager.AllNodes)
         {
-            var id = GetConcreteNodeId(node);
+            var id = GetConcreteNodeId(node, nodePrefix);
             var label = SanitizeLabel($"KVP: {GetTypeDisplayName(node.Data.KeyValuePairType)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<KeyValuePair>>");
         }
 
-        foreach (var node in _concreteOverrideNodeManager.AllNodes)
+        foreach (var node in graphRoot.ConcreteOverrideNodeManager.AllNodes)
         {
-            var id = GetConcreteNodeId(node);
+            var id = GetConcreteNodeId(node, nodePrefix);
             var label = SanitizeLabel($"Override: {GetTypeDisplayName(node.Data.Type)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Override>>");
         }
 
-        if (HasExceptionNodeConnections())
+        if (HasExceptionNodeConnections(graphRoot))
         {
-            var id = GetConcreteNodeId(_concreteExceptionNode);
+            var id = GetConcreteNodeId(graphRoot.ConcreteExceptionNode, nodePrefix);
             _diagram.AppendLine($"rectangle \"Exception\" as {id} <<Exception>>");
         }
 
         _diagram.AppendLine();
     }
 
-    private void GenerateEdges()
+    private void GenerateEdges(IGraphRoot graphRoot)
     {
         _diagram.AppendLine("' Edges (TypeNode -> ConcreteNode via ConcreteEdge)");
-        foreach (var typeNode in _typeNodeManager.AllTypeNodes)
+        foreach (var typeNode in graphRoot.TypeNodeManager.AllTypeNodes)
         {
-            var typeNodeId = GetTypeNodeId(typeNode);
+            var typeNodeId = _typeNodeIds[typeNode];
             foreach (var concreteEdge in typeNode.Outgoing)
             {
                 if (!_concreteNodeIds.TryGetValue(concreteEdge.Target, out var targetId))
@@ -171,9 +181,9 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
 
         _diagram.AppendLine();
         _diagram.AppendLine("' Edges (ConcreteNode -> TypeNode via TypeEdge)");
-        foreach (var typeNode in _typeNodeManager.AllTypeNodes)
+        foreach (var typeNode in graphRoot.TypeNodeManager.AllTypeNodes)
         {
-            var typeNodeId = GetTypeNodeId(typeNode);
+            var typeNodeId = _typeNodeIds[typeNode];
             foreach (var typeEdge in typeNode.Incoming)
             {
                 if (!_concreteNodeIds.TryGetValue(typeEdge.Source, out var sourceId))
@@ -188,20 +198,20 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
         }
     }
 
-    private string GetTypeNodeId(TypeNode typeNode)
+    private string GetTypeNodeId(TypeNode typeNode, string nodePrefix)
     {
         if (_typeNodeIds.TryGetValue(typeNode, out var id))
             return id;
-        id = $"TN{_nodeIdCounter++}";
+        id = $"{nodePrefix}TN{_nodeIdCounter++}";
         _typeNodeIds[typeNode] = id;
         return id;
     }
 
-    private string GetConcreteNodeId(IConcreteNode concreteNode)
+    private string GetConcreteNodeId(IConcreteNode concreteNode, string nodePrefix)
     {
         if (_concreteNodeIds.TryGetValue(concreteNode, out var id))
             return id;
-        id = $"CN{_nodeIdCounter++}";
+        id = $"{nodePrefix}CN{_nodeIdCounter++}";
         _concreteNodeIds[concreteNode] = id;
         return id;
     }
@@ -268,13 +278,13 @@ internal sealed class InjectionGraphPlantUmlGenerator : IInjectionGraphPlantUmlG
         return parts.Count > 0 ? string.Join(", ", parts) : "Default";
     }
 
-    private bool HasExceptionNodeConnections()
+    private static bool HasExceptionNodeConnections(IGraphRoot graphRoot)
     {
-        foreach (var typeNode in _typeNodeManager.AllTypeNodes)
+        foreach (var typeNode in graphRoot.TypeNodeManager.AllTypeNodes)
         {
             foreach (var concreteEdge in typeNode.Outgoing)
             {
-                if (Equals(concreteEdge.Target, _concreteExceptionNode))
+                if (Equals(concreteEdge.Target, graphRoot.ConcreteExceptionNode))
                     return true;
             }
         }

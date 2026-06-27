@@ -6,7 +6,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 
-internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
+internal sealed class ConcreteNodeCodeGeneratorDispatcher : IScopeInstance
 {
     private readonly ContextGenerator _contextGenerator;
     private readonly SharedNameRegistry _sharedNameRegistry;
@@ -20,6 +20,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
     private readonly InterfaceNodeCodeGenerator _interfaceNodeCodeGenerator;
     private readonly KeyValuePairNodeCodeGenerator _keyValuePairNodeCodeGenerator;
     private readonly EnumerableNodeCodeGenerator _enumerableNodeCodeGenerator;
+    private readonly TaskNodeCodeGenerator _taskNodeCodeGenerator;
 
     internal ConcreteNodeCodeGeneratorDispatcher(
         ContextGenerator contextGenerator,
@@ -33,7 +34,8 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
         FunctorNodeCodeGenerator functorNodeCodeGenerator,
         InterfaceNodeCodeGenerator interfaceNodeCodeGenerator,
         KeyValuePairNodeCodeGenerator keyValuePairNodeCodeGenerator,
-        EnumerableNodeCodeGenerator enumerableNodeCodeGenerator)
+        EnumerableNodeCodeGenerator enumerableNodeCodeGenerator,
+        TaskNodeCodeGenerator taskNodeCodeGenerator)
     {
         _contextGenerator = contextGenerator;
         _sharedNameRegistry = sharedNameRegistry;
@@ -47,6 +49,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
         _interfaceNodeCodeGenerator = interfaceNodeCodeGenerator;
         _keyValuePairNodeCodeGenerator = keyValuePairNodeCodeGenerator;
         _enumerableNodeCodeGenerator = enumerableNodeCodeGenerator;
+        _taskNodeCodeGenerator = taskNodeCodeGenerator;
     }
 
     internal string GenerateForInjectionNode(StringBuilder code, TypeNode node)
@@ -115,6 +118,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IContainerInstance
                 ConcreteKeyValuePairNode keyValuePairNode => _keyValuePairNodeCodeGenerator.Generate(code, typeNode, keyValuePairNode, maybeReference),
                 ConcreteEnumerableNode enumerableNode => _enumerableNodeCodeGenerator.Generate(code, typeNode, enumerableNode, maybeReference),
                 ConcreteOverrideNode overrideNode => _overrideNodeCodeGenerator.Generate(code, typeNode, overrideNode, maybeReference),
+                ConcreteTaskNode taskNode => _taskNodeCodeGenerator.Generate(code, typeNode, taskNode, maybeReference),
                 _ => ""
             };
         

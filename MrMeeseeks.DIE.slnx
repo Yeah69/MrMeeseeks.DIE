@@ -1,5 +1,4 @@
 ﻿<Solution>
-  <Project Path="DebugWorkaround/DebugWorkaround.csproj" />
   <Project Path="Main\Main.csproj" />
   <Project Path="Sample\Sample.csproj" />
 </Solution>

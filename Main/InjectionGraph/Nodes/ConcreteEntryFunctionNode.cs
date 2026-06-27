@@ -36,9 +36,9 @@ internal sealed record ConcreteEntryFunctionNodeData(string Name, ITypeSymbol Re
 }
 
 internal sealed class ConcreteEntryFunctionNodeManager(Func<ConcreteEntryFunctionNodeData, ConcreteEntryFunctionNode> factory)
-    : ConcreteNodeManagerBase<ConcreteEntryFunctionNodeData, ConcreteEntryFunctionNode>(factory), IContainerInstance;
+    : ConcreteNodeManagerBase<ConcreteEntryFunctionNodeData, ConcreteEntryFunctionNode>(factory), IScopeInstance;
 
-internal sealed class ConcreteEntryFunctionNode : IConcreteNode
+internal sealed class ConcreteEntryFunctionNode : ConcreteNodeBase
 {
     internal ConcreteEntryFunctionNode(
         // parameters

@@ -5,20 +5,23 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 
-internal sealed class InjectionNodeGenerator : IContainerInstance
+internal sealed class InjectionNodeGenerator : IScopeInstance
 {
     private readonly ConcreteNodeCodeGeneratorDispatcher _concreteNodeCodeGeneratorDispatcher;
     private readonly ReferenceGenerator _referenceGenerator;
     private readonly FunctionUtility _functionUtility;
+    private readonly Synchronicity _synchronicity;
 
     internal InjectionNodeGenerator(
         ConcreteNodeCodeGeneratorDispatcher concreteNodeCodeGeneratorDispatcher,
         ReferenceGenerator referenceGenerator,
-        FunctionUtility functionUtility)
+        FunctionUtility functionUtility,
+        Synchronicity synchronicity)
     {
         _concreteNodeCodeGeneratorDispatcher = concreteNodeCodeGeneratorDispatcher;
         _referenceGenerator = referenceGenerator;
         _functionUtility = functionUtility;
+        _synchronicity = synchronicity;
     }
 
     public string GenerateForInjectionNode(StringBuilder code, TypeNode node) =>
@@ -30,7 +33,13 @@ internal sealed class InjectionNodeGenerator : IContainerInstance
         {
             var function = functionEdgeType.Function;
             var resultReference = _referenceGenerator.Generate(function.RootNode.Type);
-            code.AppendLine($"{function.RootNode.Type.FullName()} {resultReference} = {_functionUtility.GenerateFunctionCall(function, doScopedInstance: true, doScopeRoot: true)};");
+            var maybeAwait = function is AsyncTypeNodeFunction && edge.Source is not ConcreteTaskNode
+                ? "await "
+                : "";
+            var prefix = function is AsyncTypeNodeFunction { AsyncReturnType: {} asyncReturnType} && edge.Source is ConcreteTaskNode 
+                ? asyncReturnType.FullName()
+                : function.RootNode.Type.FullName();
+            code.AppendLine($"{prefix} {resultReference} = {maybeAwait}{_functionUtility.GenerateFunctionCall(function, doScopedInstance: true, doScopeRoot: true)};");
             return resultReference;
         }
         return GenerateForInjectionNode(code, node);

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.MsContainer;
@@ -6,7 +7,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal sealed class TypeNodeManager : IContainerInstance
+internal sealed class TypeNodeManager : IScopeInstance
 {
     private readonly Dictionary<ITypeSymbol, TypeNode> _nodes = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Func<ITypeSymbol,TypeNode> _factory;
@@ -25,14 +26,17 @@ internal sealed class TypeNodeManager : IContainerInstance
     }
     
     internal bool TryGetNode(ITypeSymbol type, [NotNullWhen(true)] out TypeNode? node) => _nodes.TryGetValue(type, out node);
+    internal void RemoveNode(TypeNode node) =>
+        _nodes.Remove(node.Type);
 }
 
-internal sealed class TypeNode(ITypeSymbol type)
+internal sealed class TypeNode(ITypeSymbol type) : INode
 {
     private readonly List<TypeEdge> _incoming = [];
     private readonly List<ConcreteEdge> _outgoing = [];
     private readonly Dictionary<ScopeNodeContext, HashSet<ScopeNodeContext>> _scopeRootConfiguration = [];
     private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _scopeInstanceConfiguration = [];
+    private readonly ConcurrentDictionary<int, HashSet<int>> _linkedResolutionIdsToFrom = []; 
     
     internal ITypeSymbol Type { get; } = type;
     internal IReadOnlyList<TypeEdge> Incoming => _incoming;
@@ -46,9 +50,19 @@ internal sealed class TypeNode(ITypeSymbol type)
     /// </summary>
     internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> ScopeInstanceConfiguration => _scopeInstanceConfiguration;
     
+    internal IReadOnlyDictionary<int, HashSet<int>> LinkedResolutionIdsToFrom => _linkedResolutionIdsToFrom;
+    
     internal void AddIncoming(TypeEdge edge) => _incoming.Add(edge);
     internal void AddOutgoing(ConcreteEdge edge) => _outgoing.Add(edge);
-    internal bool ContainsOutgoingEdgeFor(EdgeContext context) => _outgoing.Any(edge => edge.Contexts.Contains(context));
+    public void RemoveEdge(IEdge edge)
+    {
+        if (edge is TypeEdge typeEdge)
+            _incoming.Remove(typeEdge);
+        else if (edge is ConcreteEdge concreteEdge)
+            _outgoing.Remove(concreteEdge);
+    }
+    internal EdgeContext? ContainsOutgoingEdgeFor(EdgeContext context) => 
+        _outgoing.SelectMany(edge => edge.Contexts).FirstOrDefault(existing => existing.Equals(context));
     internal bool TryGetOutgoingEdgeFor(IConcreteNode concreteNode, [NotNullWhen(true)] out ConcreteEdge? edge)
     {
         foreach (var e in _outgoing.Where(e => Equals(e.Target, concreteNode)))
@@ -80,4 +94,9 @@ internal sealed class TypeNode(ITypeSymbol type)
         }
         configuration.Add(scopeNodeContext);
     }
+
+    internal void LinkResolutionIds(int from, int to) => 
+        _linkedResolutionIdsToFrom.GetOrAdd(to, _ => []).Add(from);
+
+    public IReadOnlyList<IEdge> IncomingEdges => _incoming;
 }

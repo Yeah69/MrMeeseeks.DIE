@@ -1,7 +1,7 @@
-﻿using MrMeeseeks.DIE.Configuration;
+﻿using System.Collections.Concurrent;
+using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
-using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -18,6 +18,8 @@ internal interface IInjectionGraphBuilder
         string entryFunctionName, 
         IReadOnlyList<ITypeSymbol> overrides,
         Location createFunctionAttributeLocation);
+
+    void BuildForAsyncGraph(SyncGraphRoot syncGraphRoot);
     void AssignFunctions();
 }
 
@@ -25,15 +27,26 @@ internal sealed class InjectionGraphBuilder(
     InjectionGraphBuilderResolutionSteps resolutionSteps,
     TypeNodeManager typeNodeManager,
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
+    ConcreteImplementationNodeManager concreteImplementationNodeManager,
+    ConcreteInterfaceNodeManager concreteInterfaceNodeManager,
+    ConcreteEnumerableNodeManager concreteEnumerableNodeManager,
+    ConcreteFunctorNodeManager concreteFunctorNodeManager,
+    ConcreteOverrideNodeManager concreteOverrideNodeManager,
+    ConcreteKeyValuePairNodeManager concreteKeyValuePairNodeManager,
+    ConcreteTaskNodeManager concreteTaskNodeManager,
+    ConcreteExceptionNode concreteExceptionNode,
     OverrideContextManager overrideContextManager,
     ScopeNodeContext.Container containerScopeNodeContext,
     ScopeNodeManager scopeNodeManager,
-    Func<TypeNode, Accessibility?, TypeNodeFunction> functionFactory,
+    ResolutionRegister resolutionRegister,
+    Synchronicity synchronicity,
+    Func<TypeNode, TypeNodeFunction> functionFactory,
+    Func<TypeNode, INamedTypeSymbol, AsyncTypeNodeFunction> asyncFunctionFactory,
     Func<ITypeNodeFunction, FunctionEdgeType> functionEdgeTypeFactory,
+    WellKnownTypes wellKnownTypes,
     WellKnownTypesCollections wellKnownTypesCollections)
-    : IInjectionGraphBuilder, IContainerInstance
+    : IInjectionGraphBuilder, IScopeInstance
 {
-    private readonly List<ConcreteEntryFunctionNode> _concreteEntryFunctionNodes = [];
     private readonly List<ITypeNodeFunction> _functions = [];
 
     public IReadOnlyList<ITypeNodeFunction> Functions => _functions;
@@ -49,18 +62,180 @@ internal sealed class InjectionGraphBuilder(
             containerScopeNodeContext,
             overrideContext,
             new KeyContext.None1(),
-            new CaseChoiceContext.None2());
+            new CaseChoiceContext.None2(),
+            resolutionRegister.GetNewResolutionId());
         var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, rootType, overrides);
         var concreteEntryFunctionNode = concreteEntryFunctionNodeManager.GetOrAddNode(concreteEntryFunctionNodeData);
-        _concreteEntryFunctionNodes.Add(concreteEntryFunctionNode);
         var rootTypeNodes = concreteEntryFunctionNode.ConnectIfNotAlready(rootEdgeContext).Select(t => t.TypeNode).ToList();
         var queue = new Queue<ResolutionStep>();
         foreach (var rootTypeNode in rootTypeNodes)
-            queue.Enqueue(new ResolutionStep(rootTypeNode, rootEdgeContext, createFunctionAttributeLocation));
+            queue.Enqueue(new(rootTypeNode, rootEdgeContext, createFunctionAttributeLocation));
         while (queue.Count > 0)
         {
             var (typeNode, edgeContext, currentResolvedLocation) = queue.Dequeue();
             MakeResolutionStep(typeNode, edgeContext, queue, currentResolvedLocation);
+        }
+    }
+
+    public void BuildForAsyncGraph(SyncGraphRoot syncGraphRoot)
+    {
+        var awaitedNodes = syncGraphRoot.AsyncAdjustments.AwaitedNodes;
+        var asyncResolutionIds = Adjust();
+        var syncEdges = syncGraphRoot.EdgeRegistry.Edges.ToImmutableArray();
+        var nodesMap = new ConcurrentDictionary<INode, INode>();
+        foreach (var syncEdge in syncEdges)
+        {
+            if (!syncEdge.Contexts.Any(c => asyncResolutionIds.Contains(c.ResolutionId)))
+                continue;
+            
+            var syncSource = syncEdge.SourceAsNode;
+            var syncTarget = syncEdge.TargetAsNode;
+            var asyncSource = nodesMap.GetOrAdd(syncSource, Copy);
+            var asyncTarget = nodesMap.GetOrAdd(syncTarget, Copy);
+
+            var asyncContexts = syncEdge.Contexts.Where(c => asyncResolutionIds.Contains(c.ResolutionId));
+
+            if (asyncSource is IConcreteNode sourceConcreteNode && asyncTarget is TypeNode)
+                foreach (var asyncContext in asyncContexts)
+                    switch (sourceConcreteNode)
+                    {
+                        case ConcreteEnumerableNode concreteEnumerableNode:
+                            concreteEnumerableNode.ConnectIfNotAlready(asyncContext);
+                            break;
+                        case ConcreteFunctorNode concreteFunctorNode:
+                            concreteFunctorNode.ConnectIfNotAlready(asyncContext);
+                            break;
+                        case ConcreteImplementationNode concreteImplementationNode:
+                            concreteImplementationNode.ConnectIfNotAlready(asyncContext);
+                            break;
+                        case ConcreteInterfaceNode concreteInterfaceNode:
+                            concreteInterfaceNode.ConnectIfNotAlready(asyncContext);
+                            break;
+                        case ConcreteKeyValuePairNode concreteKeyValuePairNode:
+                            concreteKeyValuePairNode.ConnectIfNotAlready(asyncContext);
+                            break;
+                        case ConcreteEntryFunctionNode concreteEntryFunctionNode:
+                            concreteEntryFunctionNode.ConnectIfNotAlready(asyncContext);
+                            break;
+                        case ConcreteTaskNode concreteTaskNode:
+                            concreteTaskNode.ConnectIfNotAlready(asyncContext);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+            else if (asyncSource is TypeNode sourceTypeNode && asyncTarget is IConcreteNode targetConcreteNode)
+                foreach (var asyncContext in asyncContexts)
+                    resolutionSteps.ConnectToTypeNodeIfNotAlready(targetConcreteNode, asyncContext, sourceTypeNode);
+
+            continue;
+
+            INode Copy(INode node) =>
+                node switch
+                {
+                    ConcreteEnumerableNode { Data: { } data0 } => concreteEnumerableNodeManager.GetOrAddNode(data0),
+                    ConcreteExceptionNode => concreteExceptionNode,
+                    ConcreteFunctorNode { Data: { } data1 } => concreteFunctorNodeManager.GetOrAddNode(data1),
+                    ConcreteImplementationNode { Data: { } data2 } => concreteImplementationNodeManager.GetOrAddNode(data2),
+                    ConcreteInterfaceNode { Data: { } data3 } => concreteInterfaceNodeManager.GetOrAddNode(data3),
+                    ConcreteKeyValuePairNode { Data: { } data4 } => concreteKeyValuePairNodeManager.GetOrAddNode(data4),
+                    ConcreteOverrideNode { Data: { } data5 } => concreteOverrideNodeManager.GetOrAddNode(data5),
+                    ConcreteEntryFunctionNode { Data: { } data6 } => concreteEntryFunctionNodeManager.GetOrAddNode(data6),
+                    ConcreteTaskNode { Data: { } data7 } => concreteTaskNodeManager.GetOrAddNode(data7),
+                    TypeNode { Type: { } type } => typeNodeManager.GetOrAddNode(type),
+                    _ => throw new ArgumentOutOfRangeException(nameof(node))
+                };
+        }
+
+        foreach (var syncEdge in syncEdges)
+        {
+            if (syncEdge.Contexts.Any(c => !asyncResolutionIds.Contains(c.ResolutionId)))
+                continue;
+            
+            syncEdge.SourceAsNode.RemoveEdge(syncEdge);
+            syncEdge.TargetAsNode.RemoveEdge(syncEdge);
+            syncGraphRoot.EdgeRegistry.Unregister(syncEdge);
+            
+            Cleanup(syncEdge.SourceAsNode);
+            Cleanup(syncEdge.TargetAsNode);
+            continue;
+
+            void Cleanup(INode node)
+            {
+                if (node is TypeNode { Outgoing.Count: 0 } typeNode)
+                    syncGraphRoot.TypeNodeManager.RemoveNode(typeNode);
+                if (node is IConcreteNode { IncomingEdges.Count: > 0 })
+                    return;
+                if (node is ConcreteEnumerableNode { Data: {} data })
+                    syncGraphRoot.ConcreteEnumerableNodeManager.RemoveNode(data);
+                if (node is ConcreteFunctorNode { Data: {} data0 })
+                    syncGraphRoot.ConcreteFunctorNodeManager.RemoveNode(data0);
+                if (node is ConcreteImplementationNode { Data: {} data1 })
+                    syncGraphRoot.ConcreteImplementationNodeManager.RemoveNode(data1);
+                if (node is ConcreteInterfaceNode { Data: {} data2 })
+                    syncGraphRoot.ConcreteInterfaceNodeManager.RemoveNode(data2);
+                if (node is ConcreteKeyValuePairNode { Data: {} data3 })
+                    syncGraphRoot.ConcreteKeyValuePairNodeManager.RemoveNode(data3);
+                if (node is ConcreteOverrideNode { Data: {} data4 })
+                    syncGraphRoot.ConcreteOverrideNodeManager.RemoveNode(data4);
+                if (node is ConcreteEntryFunctionNode { Data: {} data5 })
+                    syncGraphRoot.ConcreteEntryFunctionNodeManager.RemoveNode(data5);
+                if (node is ConcreteTaskNode { Data: {} data6 })
+                    syncGraphRoot.ConcreteTaskNodeManager.RemoveNode(data6);
+            }
+        }
+        return;
+
+        HashSet<int> Adjust()
+        {
+            EnhanceAwaitedNodes();
+            var set = new HashSet<int>();
+            foreach (var resolutionIds in awaitedNodes.Select(kvp => kvp.Value))
+                set.UnionWith(resolutionIds);
+            return set;
+
+            void EnhanceAwaitedNodes()
+            {
+                var outerQueue = new Queue<(INode, int)>(awaitedNodes.SelectMany(kvp => kvp.Value.Select(ri => (kvp.Key, ri))));
+                while (outerQueue.Count > 0)
+                {
+                    var (outerNode, resolutionId) = outerQueue.Dequeue();
+                    var innerQueue = new Queue<INode>();
+                    innerQueue.Enqueue(outerNode);
+                    
+                    var visitedNodes = new HashSet<INode>();
+                    while (innerQueue.Count > 0)
+                    {
+                        var currentNode = innerQueue.Dequeue();
+                        visitedNodes.Add(currentNode);
+                        if (currentNode is IConcreteNode currentConcreteNode)
+                        {
+                            var sequence = currentConcreteNode
+                                .IncomingEdges
+                                .Where(e => e.Contexts.Any(c => c.ResolutionId == resolutionId))
+                                .OfType<ConcreteEdge>()
+                                .Select(e => e.Source)
+                                .Where(n => !visitedNodes.Contains(n));
+                            foreach (var typeNode in sequence)
+                                innerQueue.Enqueue(typeNode);
+                        } 
+                        else if (currentNode is TypeNode currentTypeNode)
+                        {
+                            var sequence = currentTypeNode
+                                .IncomingEdges
+                                .Where(e => e.Contexts.Any(c => c.ResolutionId == resolutionId))
+                                .OfType<TypeEdge>()
+                                .Select(e => e.Source)
+                                .Where(n => !visitedNodes.Contains(n) && n is not ConcreteFunctorNode);
+                            foreach (var concreteNode in sequence)
+                                innerQueue.Enqueue(concreteNode);
+
+                            if (currentTypeNode.LinkedResolutionIdsToFrom.TryGetValue(resolutionId, out var linkedResolutionIds))
+                                foreach (var linkedResolutionId in linkedResolutionIds)
+                                    awaitedNodes.GetOrAdd(currentTypeNode, _ => []).Add(linkedResolutionId);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -82,9 +257,13 @@ internal sealed class InjectionGraphBuilder(
                 
             edgeContext = edgeContext with { ScopeNode = scopeRootContext };
         }
-        
-        if (typeNode.ContainsOutgoingEdgeFor(edgeContext))
+
+        if (typeNode.ContainsOutgoingEdgeFor(edgeContext) is { } existingEdgeContext)
+        {
+            if (existingEdgeContext.ResolutionId != edgeContext.ResolutionId)
+                typeNode.LinkResolutionIds(edgeContext.ResolutionId, existingEdgeContext.ResolutionId);
             return;
+        }
 
         var scopeInstanceLevel = edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type);
         typeNode.RegisterScopeInstanceConfiguration(scopeInstanceLevel, edgeContext.ScopeNode);
@@ -167,6 +346,11 @@ internal sealed class InjectionGraphBuilder(
             case INamedTypeSymbol { TypeKind: TypeKind.Interface } interfaceType:
                 resolutionSteps.InterfaceStep(interfaceType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
+            case INamedTypeSymbol taskType when
+                CustomSymbolEqualityComparer.Default.Equals(taskType.OriginalDefinition, wellKnownTypes.Task1)
+                || wellKnownTypes.ValueTask1 is {} valueTask1 && CustomSymbolEqualityComparer.Default.Equals(taskType.OriginalDefinition, valueTask1):
+                resolutionSteps.TaskStep(taskType, typeNode, edgeContext, queue, currentResolvedLocation);
+                break;
             case INamedTypeSymbol keyValuePairType when CustomSymbolEqualityComparer.Default.Equals(keyValuePairType.OriginalDefinition, wellKnownTypesCollections.KeyValuePair2):
                 resolutionSteps.KeyValuePairStep(keyValuePairType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
@@ -181,9 +365,17 @@ internal sealed class InjectionGraphBuilder(
 
     public void AssignFunctions()
     {
-        foreach (var typeNode in typeNodeManager.AllTypeNodes)
-            if (// if multiple incoming edges x contexts
-                typeNode.Incoming.SelectMany(i => i.Contexts).Count() > 1 
+        var allTypeNodes = typeNodeManager.AllTypeNodes.ToImmutableArray();
+        foreach (var typeNode in allTypeNodes)
+            if (// if multiple incoming edges x contexts, but current type not wrapped in a task
+                (typeNode.Incoming.SelectMany(i => i.Contexts).Skip(1).Any() /* Multiple incoming contexts */ 
+                 && (!CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.ValueTask1) 
+                     || !CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.Task1))) /* Type isn't wrapped into a task */
+                // In async mode, if current type not wrapped in a task, but any incoming edge lead to a task node
+                || (!synchronicity.IsSync /* Async */ 
+                    && typeNode.Incoming.Any(e => e.Source is ConcreteTaskNode) /* Any incoming node a task node*/
+                    && (!CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.ValueTask1) 
+                        || !CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.Task1))) /* Type isn't wrapped into a task */
                 // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
                 || typeNode.Incoming.Any(e => e.Source is ConcreteFunctorNode)
                 // or any outgoing edges contain concrete enumerable
@@ -194,15 +386,16 @@ internal sealed class InjectionGraphBuilder(
                 || typeNode.ScopeRootConfiguration.Count > 0)
                 NewFunctionIfNotAlready(typeNode);
 
-        foreach (var concreteEntryFunctionNode in _concreteEntryFunctionNodes)
+        foreach (var concreteEntryFunctionNode in concreteEntryFunctionNodeManager.AllNodes)
         {
-            if (concreteEntryFunctionNode.ReturnType is
-                {
-                    Target: { } rootTypeNode, 
-                    Type: DefaultEdgeType
-                } edge)
+            if (!synchronicity.IsSync /* Is Async */
+                && (CustomSymbolEqualityComparer.Default.Equals(concreteEntryFunctionNode.Data.ReturnType.OriginalDefinition, wellKnownTypes.ValueTask1)
+                    || CustomSymbolEqualityComparer.Default.Equals(concreteEntryFunctionNode.Data.ReturnType.OriginalDefinition, wellKnownTypes.Task1)))
+                continue;
+            
+            if (concreteEntryFunctionNode.ReturnType is { Target: { } rootTypeNode, Type: DefaultEdgeType } edge)
             {
-                var function = functionFactory(rootTypeNode, Accessibility.Private);
+                var function = CreateFunction(rootTypeNode);
                 _functions.Add(function);
                 edge.Type = functionEdgeTypeFactory(function);
             }
@@ -221,12 +414,23 @@ internal sealed class InjectionGraphBuilder(
                     .FirstOrDefault();
                 if (function is null)
                 {
-                    function = functionFactory(typedInjectionNode, Accessibility.Internal);
+                    function = CreateFunction(typedInjectionNode);
                     _functions.Add(function);
                 }
                 foreach (var incoming in typedInjectionNode.Incoming)
                     incoming.Type = functionEdgeTypeFactory(function);
             }
+        }
+
+        ITypeNodeFunction CreateFunction(TypeNode typedInjectionNode)
+        {
+            if (synchronicity.IsSync)
+                return functionFactory(typedInjectionNode);
+            
+            var taskWrappedType = wellKnownTypes.ValueTask1 is not null
+                ? wellKnownTypes.ValueTask1.Construct(typedInjectionNode.Type)
+                : wellKnownTypes.Task1.Construct(typedInjectionNode.Type);
+            return asyncFunctionFactory(typedInjectionNode, taskWrappedType);
         }
     }
 }

@@ -43,14 +43,14 @@ internal sealed class ScopeNodeBaseCodeGenerator(
         foreach ( var scopeRoot in scopeNode.ScopedRoots)
         {
             var function = scopeRoot.Function;
-            
+           
             code.AppendLine(functionUtility.GenerateHeader(function));
-            
+        
             code.AppendLine("{");
-            
+        
             // ToDo Disposal Handling
             // ToDo Async Handling
-            
+        
             var calledCreateFunction = scopeRoot.TypeNode.Incoming.Where(te => te.Type is FunctionEdgeType)
                 .Select(te => ((FunctionEdgeType) te.Type).Function)
                 .First();
@@ -61,7 +61,7 @@ internal sealed class ScopeNodeBaseCodeGenerator(
             };
             code.AppendLine(newContextAssignment);
             code.AppendLine($"return {containerReference}.{functionUtility.GenerateFunctionCall(calledCreateFunction, doScopedInstance: true, doScopeRoot: false)};");
-            
+        
             code.AppendLine("}");
         }
     }
@@ -75,13 +75,14 @@ internal sealed class ScopeNodeBaseCodeGenerator(
         {
             var typeSymbol = scopedInstance.TypeNode.Type;
             var function = scopedInstance.Function;
+            
             var scopedInstanceFieldReference = referenceGenerator.Generate("_scopedInstanceField", typeSymbol);
             var scopedInstanceLockFieldReference = referenceGenerator.Generate("_scopedInstanceLock", typeSymbol);
             code.AppendLine($"private {typeSymbol.FullName()}? {scopedInstanceFieldReference};");
             code.AppendLine($"private {semaphoreSlimFullName}? {scopedInstanceLockFieldReference} = new {semaphoreSlimFullName}(1);");
             
             code.AppendLine(functionUtility.GenerateHeader(function));
-            
+                
             code.AppendLine("{");
             
             // ToDo Disposal Handling

@@ -2,19 +2,5 @@
 
 namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal sealed class ConcreteEdge(TypeNode source, IConcreteNode target)
-{
-    private readonly List<EdgeContext> _contexts = [];
-    internal TypeNode Source { get; } = source;
-    internal IConcreteNode Target { get; } = target;
-    internal IReadOnlyList<EdgeContext> Contexts => _contexts;
-    
-    internal bool AddContext(EdgeContext context)
-    {
-        if (_contexts.Contains(context))
-            return false;
-
-        _contexts.Add(context);
-        return true;
-    }
-}
+internal sealed class ConcreteEdge(TypeNode source, IConcreteNode target, EdgeRegistry registry)
+    : EdgeBase<TypeNode, IConcreteNode>(source, target, registry);

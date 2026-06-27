@@ -7,7 +7,8 @@ namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 internal sealed class FunctionUtility(
     ReferenceGenerator referenceGenerator,
     ContextGenerator contextGenerator,
-    WellKnownTypes wellKnownTypes) : IContainerInstance
+    WellKnownTypes wellKnownTypes)
+    : IContainerInstance
 {
     internal string DoScopedInstanceParameterName { get; } = referenceGenerator.Generate("doScopedInstance");
     internal string DoScopeRootParameterName { get; } = referenceGenerator.Generate("doScopeRoot");
@@ -15,22 +16,24 @@ internal sealed class FunctionUtility(
     
     internal string GetName(IFunction function)
     {
-        if (!_namesMap.TryGetValue(function, out var name))
-        {
-            name = function switch
+        return _namesMap[function] = _namesMap.TryGetValue(function, out var name) 
+            ? name 
+            : GenerateName();
+
+        string GenerateName() =>
+            function switch
             {
                 FunctorEntryFunction functorEntryFunction => referenceGenerator.Generate("CreateEntry", functorEntryFunction.ReturnType),
                 ScopeRootFunction scopeRootFunction => referenceGenerator.Generate("CreateRoot", scopeRootFunction.ReturnType),
                 ScopedInstanceFunction => ScopedInstanceInterfaceDescription.FunctionName,
                 TypeNodeFunction typeNodeFunction => referenceGenerator.Generate("Create", typeNodeFunction.ReturnType),
+                AsyncTypeNodeFunction asyncTypeNodeFunction => referenceGenerator.Generate("Create", asyncTypeNodeFunction.ReturnType, "Async"),
                 _ => throw new ArgumentOutOfRangeException(nameof(function))
             };
-            _namesMap[function] = name;
-        }
-        return name;
     }
 
-    internal string GenerateFunctionCall(IFunction function, bool doScopedInstance, bool doScopeRoot) => $"{GetName(function)}({contextGenerator.ParameterName}, {DoScopedInstanceParameterName}: {(doScopedInstance ? Constants.TrueKeyword : Constants.FalseKeyword)}, {DoScopeRootParameterName}: {(doScopeRoot ? Constants.TrueKeyword : Constants.FalseKeyword)})";
+    internal string GenerateFunctionCall(IFunction function, bool doScopedInstance, bool doScopeRoot) => 
+        $"{GetName(function)}({contextGenerator.ParameterName}, {DoScopedInstanceParameterName}: {(doScopedInstance ? Constants.TrueKeyword : Constants.FalseKeyword)}, {DoScopeRootParameterName}: {(doScopeRoot ? Constants.TrueKeyword : Constants.FalseKeyword)})";
 
     internal string GenerateHeader(IFunction function)
     {
@@ -39,7 +42,7 @@ internal sealed class FunctionUtility(
             && explicitInterface.Equals(ExplicitInterfaceDescription.None4.Instance)
                 ? $"{SyntaxFacts.GetText(acc)} "
                 : "";
-        var asyncModifier = function.IsAsync
+        var asyncModifier = function is AsyncTypeNodeFunction
             ? "async "
             : "";
         var explicitInterfaceFullName = function.ExplicitInterface switch
@@ -47,7 +50,7 @@ internal sealed class FunctionUtility(
                 ExplicitInterfaceDescription.Generated generated => $"{generated.TypeFullName}.",
                 ExplicitInterfaceDescription.KnownType knownType => knownType.Type.FullName(),
                 ExplicitInterfaceDescription.None4 => "",
-                _ => throw new ArgumentOutOfRangeException("Should be impossible")
+                _ => throw new ArgumentOutOfRangeException()
             };
         var typeParameters = "";
         var typeParametersConstraints = "";
@@ -81,7 +84,10 @@ internal sealed class FunctionUtility(
         }
 
         var parametersText = $"{contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopedInstanceParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopeRootParameterName}";
-        var functionName = GetName(function);
-        return $"{accessibility}{asyncModifier}{function.ReturnType.FullName()} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
+        var functionName = $"{GetName(function)}";
+        var returnType = function is AsyncTypeNodeFunction asyncTypeNodeFunction
+            ? asyncTypeNodeFunction.AsyncReturnType.FullName()
+            : function.ReturnType.FullName();
+        return $"{accessibility}{asyncModifier}{returnType} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
     }
 }

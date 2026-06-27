@@ -1,4 +1,4 @@
-﻿namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
+﻿namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
 internal interface IEdgeType;
 

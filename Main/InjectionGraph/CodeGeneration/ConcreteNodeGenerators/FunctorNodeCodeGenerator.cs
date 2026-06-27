@@ -6,7 +6,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 
-internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<ConcreteFunctorNode>, IContainerInstance
+internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<ConcreteFunctorNode>, IScopeInstance
 {
     private readonly ReferenceGenerator _referenceGenerator;
     private readonly WellKnownTypes _wellKnownTypes;

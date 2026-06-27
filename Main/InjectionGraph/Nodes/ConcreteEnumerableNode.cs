@@ -127,9 +127,9 @@ internal abstract record ConcreteEnumerableNodeData(ITypeSymbol EnumerableType, 
 }
 
 internal sealed class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteEnumerableNode> factory)
-    : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IContainerInstance;
+    : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IScopeInstance;
 
-internal sealed class ConcreteEnumerableNode : IConcreteNode
+internal sealed class ConcreteEnumerableNode : ConcreteNodeBase
 {
     private readonly Lazy<TypeEdge> _innerEdgeLazy;
 
@@ -142,7 +142,7 @@ internal sealed class ConcreteEnumerableNode : IConcreteNode
         Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory)
     {
         Data = data;
-        _innerEdgeLazy = new Lazy<TypeEdge>(() => typeEdgeFactory(this, typeNodeManager.GetOrAddNode(data.MaybeWrappedItemType)));
+        _innerEdgeLazy = new(() => typeEdgeFactory(this, typeNodeManager.GetOrAddNode(data.MaybeWrappedItemType)));
     }
 
     internal TypeEdge InnerEdge => _innerEdgeLazy.Value;

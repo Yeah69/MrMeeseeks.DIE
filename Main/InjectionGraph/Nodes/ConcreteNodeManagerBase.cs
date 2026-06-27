@@ -18,4 +18,6 @@ internal abstract class ConcreteNodeManagerBase<TData, TConcreteNode>(Func<TData
     }
     
     internal bool TryGetNode(TData data, [NotNullWhen(true)] out TConcreteNode? node) => _nodes.TryGetValue(data, out node);
+    internal void RemoveNode(TData data) =>
+        _nodes.Remove(data);
 }

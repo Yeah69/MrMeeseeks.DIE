@@ -1,66 +1,31 @@
-﻿using MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
-using MrMeeseeks.DIE.InjectionGraph.Edges;
+﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
-using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 
-internal interface IInjectionGraphCodeGenerator
-{
-    string Generate();
-}
-
-internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeGenerator
+internal sealed class InjectionGraphCodeGenerator(
+    ContainerInfo containerInfo,
+    SyncGraphHolder syncGraphHolder,
+    AsyncGraphHolder asyncGraphHolder,
+    ScopeNodeBaseCodeGenerator scopeNodeBaseCodeGenerator,
+    ScopeNodeManager scopeNodeManager,
+    FunctionUtility functionUtility,
+    OverrideContextManager overrideContextManager,
+    ContextGenerator contextGenerator,
+    ReferenceGenerator referenceGenerator,
+    SharedNameRegistry sharedNameRegistry)
 {
     private readonly StringBuilder _code = new();
-    private readonly ContainerInfo _containerInfo;
-    private readonly IInjectionGraphBuilder _injectionGraphBuilder;
-    private readonly ScopeNodeBaseCodeGenerator _scopeNodeBaseCodeGenerator;
-    private readonly ScopeNodeManager _scopeNodeManager;
-    private readonly FunctionUtility _functionUtility;
-    private readonly OverrideContextManager _overrideContextManager;
-    private readonly ConcreteFunctorNodeManager _concreteFunctorNodeManager;
-    private readonly ContextGenerator _contextGenerator;
-    private readonly ReferenceGenerator _referenceGenerator;
-    private readonly LocalDiagLogger _logger;
-    private readonly InjectionNodeGenerator _injectionNodeGenerator;
-    private readonly SharedNameRegistry _sharedNameRegistry;
-
-    public InjectionGraphCodeGenerator(
-        ContainerInfo containerInfo,
-        IInjectionGraphBuilder injectionGraphBuilder,
-        ScopeNodeBaseCodeGenerator scopeNodeBaseCodeGenerator,
-        ScopeNodeManager scopeNodeManager,
-        FunctionUtility functionUtility,
-        OverrideContextManager overrideContextManager,
-        ConcreteFunctorNodeManager concreteFunctorNodeManager,
-        ContextGenerator contextGenerator,
-        ReferenceGenerator referenceGenerator,
-        LocalDiagLogger logger,
-        InjectionNodeGenerator injectionNodeGenerator,
-        SharedNameRegistry sharedNameRegistry)
-    {
-        _containerInfo = containerInfo;
-        _injectionGraphBuilder = injectionGraphBuilder;
-        _scopeNodeBaseCodeGenerator = scopeNodeBaseCodeGenerator;
-        _scopeNodeManager = scopeNodeManager;
-        _functionUtility = functionUtility;
-        _overrideContextManager = overrideContextManager;
-        _concreteFunctorNodeManager = concreteFunctorNodeManager;
-        _contextGenerator = contextGenerator;
-        _referenceGenerator = referenceGenerator;
-        _logger = logger;
-        _injectionNodeGenerator = injectionNodeGenerator;
-        _sharedNameRegistry = sharedNameRegistry;
-    }
+    private readonly SyncGraphRoot _syncGraphRoot = syncGraphHolder.Value;
+    private readonly AsyncGraphRoot _asyncGraphRoot = asyncGraphHolder.Value;
 
     public string Generate()
     {
         _code.AppendLine(
         $$"""
           #nullable enable
-          namespace {{_containerInfo.Namespace}}
+          namespace {{containerInfo.Namespace}}
           {
           """);
         
@@ -68,7 +33,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             ? $"<{string.Join(", ", containerNode.TypeParameters.Select(p => p.Name))}>"
             : ""; // ToDo generic types for the container */
         
-        foreach (var nestingParentName in _containerInfo.ContainingTypeNames)
+        foreach (var nestingParentName in containerInfo.ContainingTypeNames)
         {
             _code.AppendLine(
                 $$"""
@@ -77,7 +42,7 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                   """);
         }
 
-        var inheritanceElements = _scopeNodeBaseCodeGenerator.GetInheritanceHeaderElements(_scopeNodeManager.ContainerScopeNode, isContainer: true);
+        var inheritanceElements = scopeNodeBaseCodeGenerator.GetInheritanceHeaderElements(scopeNodeManager.ContainerScopeNode, isContainer: true);
 
         var inheritance = inheritanceElements.Any()
             ? $" : {string.Join(", ", inheritanceElements)}"
@@ -85,25 +50,25 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
 
         _code.AppendLine(
             $$"""
-              sealed partial class {{_containerInfo.Name}}{{inheritance}}
+              sealed partial class {{containerInfo.Name}}{{inheritance}}
               {
               """);
         
-        _contextGenerator.GenerateContextClass(_code);
+        contextGenerator.GenerateContextClass(_code);
 
-        _scopeNodeBaseCodeGenerator.GenerateInterface(_code);
+        scopeNodeBaseCodeGenerator.GenerateInterface(_code);
 
-        var constructors = _containerInfo.ContainerType.GetMembers().OfType<IMethodSymbol>()
+        var constructors = containerInfo.ContainerType.GetMembers().OfType<IMethodSymbol>()
             .Where(ms => ms.MethodKind == MethodKind.Constructor);
 
         foreach (var constructor in constructors)
         {
-            var containerReference = _referenceGenerator.Generate("container");
+            var containerReference = referenceGenerator.Generate("container");
             _code.AppendLine(
                 $$"""
-                  public static {{_containerInfo.ContainerType.FullName()}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Type.FullName()} {p.Name}"))}})
+                  public static {{containerInfo.ContainerType.FullName()}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Type.FullName()} {p.Name}"))}})
                   {
-                  {{_containerInfo.ContainerType.FullName()}} {{containerReference}} = new {{_containerInfo.ContainerType.FullName()}}({{string.Join(", ", constructor.Parameters.Select(p => p.Name))}});
+                  {{containerInfo.ContainerType.FullName()}} {{containerReference}} = new {{containerInfo.ContainerType.FullName()}}({{string.Join(", ", constructor.Parameters.Select(p => p.Name))}});
                   """);
             // ToDo add initialized instances
             _code.AppendLine(
@@ -113,104 +78,113 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
                   """);
         }
         
-        _scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, _scopeNodeManager.ContainerScopeNode, Constants.ThisKeyword);
+        scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNodeManager.ContainerScopeNode, Constants.ThisKeyword);
 
-        var typesGettingFunctorEntry = _concreteFunctorNodeManager.AllNodes
+        var typesGettingFunctorEntry = _syncGraphRoot.ConcreteFunctorNodeManager.AllNodes
+            .Concat(_asyncGraphRoot.ConcreteFunctorNodeManager.AllNodes)
             .Select(n => n.ReturnedElement.Target)
             .Distinct();
         foreach (var typeNode in typesGettingFunctorEntry)
         {
             var function = new FunctorEntryFunction(typeNode.Type);
-            var functionName = _functionUtility.GetName(function);
+            var functionName = functionUtility.GetName(function);
             _code.AppendLine(
                 $$"""
-                  {{_functionUtility.GenerateHeader(function)}}
+                  {{functionUtility.GenerateHeader(function)}}
                   {
                   """);
             if (typeNode.Incoming.Select(e => e.Type).OfType<FunctionEdgeType>().FirstOrDefault() is { } nextFunction)
             {
-                _code.AppendLine($"return {_functionUtility.GenerateFunctionCall(nextFunction.Function, doScopedInstance: true, doScopeRoot: true)};");
+                _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction.Function, doScopedInstance: true, doScopeRoot: true)};");
             }
             else
             {
                 _code.AppendLine($"throw new Exception(\"No function found for type {typeNode.Type.FullName()} during code generation.\");");
             }
             _code.AppendLine("}");
-            _sharedNameRegistry.AddEntryFunctionsForFunctorsMapping(typeNode.Type, functionName);
+            sharedNameRegistry.AddEntryFunctionsForFunctorsMapping(typeNode.Type, functionName);
         }
 
-        var entryCreateFunctionsMap = new Dictionary<string, string>();
-        foreach (var function in _injectionGraphBuilder.Functions)
+        var functionsAndGenerators = Enumerable.Empty<IGraphRoot>().Append(_syncGraphRoot).Append(_asyncGraphRoot)
+            .SelectMany(r => r.GraphBuilder.Functions.Select(f => (Function: f, Generator: r.InjectionNodeGenerator)));
+        foreach (var (function, injectionNodeGenerator) in functionsAndGenerators)
         {
-            var functionName = _functionUtility.GetName(function);
-
             _code.AppendLine(
                 $$"""
-                  {{_functionUtility.GenerateHeader(function)}}
+                  {{functionUtility.GenerateHeader(function)}}
                   {
                   """);
             
             var rootNode = function.RootNode;
 
-            _scopeNodeBaseCodeGenerator.GenerateScopeRootEntry(_code, rootNode);
-            _scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode);
+            scopeNodeBaseCodeGenerator.GenerateScopeRootEntry(_code, rootNode);
+            scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode);
 
-            var rootReference = _injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode);
+            var rootReference = injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode);
             if (!rootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
                 _code.AppendLine($"return {rootReference};");
             _code.AppendLine("}");
-            foreach (var entryCreateFunction in rootNode.Incoming.Select(e => e.Source).OfType<ConcreteEntryFunctionNode>())
-                entryCreateFunctionsMap[entryCreateFunction.Data.Name] = functionName;
         }
 
-        foreach (var (rootType, name, parameters, _) in _containerInfo.CreateFunctionData)
+        var entryCreateFunctionsMap = Enumerable.Empty<IGraphRoot>().Append(_syncGraphRoot).Append(_asyncGraphRoot)
+            .SelectMany(gr =>
+                gr.ConcreteEntryFunctionNodeManager.AllNodes.Select(n => (ConcreteEntryFunctionNode: n, gr.InjectionNodeGenerator, gr.Synchronicity.IsSync)))
+            .ToImmutableDictionary(t => t.ConcreteEntryFunctionNode.Data.Name, t => t);
+
+        foreach (var (rootType, name, parameters, _) in containerInfo.CreateFunctionData)
         {
-            if (entryCreateFunctionsMap.TryGetValue(name, out var innerFunctionName)
-                && _overrideContextManager.TryGetContext(parameters, out var overrideContext))
+            if (entryCreateFunctionsMap.TryGetValue(name, out var tuple)
+                && overrideContextManager.TryGetContext(parameters, out var overrideContext))
             {
-                var parametersWithName = parameters.Select(p => (Type: p, Name: _referenceGenerator.Generate(p))).ToArray();
+                var (entryFunctionNode, injectionNodeGenerator, isSync) =  tuple;
+                var parametersWithName = parameters.Select(p => (Type: p, Name: referenceGenerator.Generate(p))).ToArray();
                 var parametersOnDeclaration = string.Join(", ", parametersWithName.Select(t => $"{t.Type.FullName()} {t.Name}"));
-                var overridesName = _sharedNameRegistry.GetOverrideContextName(overrideContext);
+                var overridesName = sharedNameRegistry.GetOverrideContextName(overrideContext);
                 var overridesAssignment = overrideContext is OverrideContext.Any any 
                     ? string.Join(", ", any.Overrides.Select(p => parametersWithName.First(t => t.Type.Equals(p)).Name))
                     : "";
+                var maybeAsync = !isSync ? "async " : "";
+                var maybeAwait = !isSync ? "await " : "";
                 _code.AppendLine(
                     $$"""
-                      internal {{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
+                      internal {{maybeAsync}}{{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
                       {
-                      return {{innerFunctionName}}({{_contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null", containerNode: Constants.ThisKeyword, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{_containerInfo.Name}\"")}}, {{_functionUtility.DoScopedInstanceParameterName}}: {{Constants.TrueKeyword}}, {{_functionUtility.DoScopeRootParameterName}}: {{Constants.TrueKeyword}});
-                      }
+                      {{contextGenerator.FullNameAndParameterName}} = {{contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null", containerNode: Constants.ThisKeyword, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{containerInfo.Name}\"")}};
                       """);
+                var reference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(_code, entryFunctionNode.ReturnType, entryFunctionNode.ReturnType.Target);
+                _code.AppendLine($"return {maybeAwait}{reference};");
+                _code.AppendLine("}");
+                
             }
         }
 
-        var overrideGenericTypeName = _referenceGenerator.Generate("TValue");
-        if (_overrideContextManager.AllOverrideContexts.Any(o => o is OverrideContext.Any))
+        var overrideGenericTypeName = referenceGenerator.Generate("TValue");
+        if (overrideContextManager.AllOverrideContexts.Any(o => o is OverrideContext.Any))
             _code.AppendLine(
                 $$"""
-                  private interface {{_sharedNameRegistry.IOverrideInterfaceName}}<{{overrideGenericTypeName}}>
+                  private interface {{sharedNameRegistry.IOverrideInterfaceName}}<{{overrideGenericTypeName}}>
                   {
                   {{overrideGenericTypeName}} Value();
                   }
                   """);
         
-        foreach (var overrideContext in _overrideContextManager.AllOverrideContexts)
+        foreach (var overrideContext in overrideContextManager.AllOverrideContexts)
         {
             switch (overrideContext)
             {
                 case OverrideContext.None0:
-                    var noneTypeName = _sharedNameRegistry.GetOverrideContextName(overrideContext);
+                    var noneTypeName = sharedNameRegistry.GetOverrideContextName(overrideContext);
                     _code.AppendLine($"private record {noneTypeName};");
                     break;
                 case OverrideContext.Any any:
-                    var anyTypeName = _sharedNameRegistry.GetOverrideContextName(overrideContext);
+                    var anyTypeName = sharedNameRegistry.GetOverrideContextName(overrideContext);
                     var properties = any.Overrides.Select((o, i) => $"{o.FullName()} Value{i}");
-                    var interfaceAssignments = any.Overrides.Select(o => $"{_sharedNameRegistry.IOverrideInterfaceName}<{o.FullName()}>");
+                    var interfaceAssignments = any.Overrides.Select(o => $"{sharedNameRegistry.IOverrideInterfaceName}<{o.FullName()}>");
                     _code.AppendLine($"private record {anyTypeName}({string.Join(", ", properties)}) : {string.Join(", ", interfaceAssignments)}");
                     _code.AppendLine("{");
                     var i = 0;
                     foreach (var overrideType in any.Overrides)
-                        _code.AppendLine($"{overrideType.FullName()} {_sharedNameRegistry.IOverrideInterfaceName}<{overrideType.FullName()}>.Value() => Value{i++};");
+                        _code.AppendLine($"{overrideType.FullName()} {sharedNameRegistry.IOverrideInterfaceName}<{overrideType.FullName()}>.Value() => Value{i++};");
                     _code.AppendLine("}");
                     break;
                 default:
@@ -218,45 +192,45 @@ internal sealed partial class InjectionGraphCodeGenerator : IInjectionGraphCodeG
             }
         }
         
-        foreach (var scopeNode in _scopeNodeManager.TransientScopes)
+        foreach (var scopeNode in scopeNodeManager.TransientScopes)
         {
-            var scopeInheritanceElements = _scopeNodeBaseCodeGenerator.GetInheritanceHeaderElements(scopeNode, isContainer: false);
+            var scopeInheritanceElements = scopeNodeBaseCodeGenerator.GetInheritanceHeaderElements(scopeNode, isContainer: false);
             var scopeInheritance = scopeInheritanceElements.Any()
                 ? $" : {string.Join(", ", scopeInheritanceElements)}"
                 : "";
-            var containerReference = _scopeNodeBaseCodeGenerator.ScopeNodeToContainerPropertyReference[scopeNode];
+            var containerReference = scopeNodeBaseCodeGenerator.ScopeNodeToContainerPropertyReference[scopeNode];
             
             _code.AppendLine($"{Constants.PrivateKeyword} partial class {scopeNode.Name}{scopeInheritance}");
             _code.AppendLine("{");
-            _code.AppendLine($"{Constants.InternalKeyword} required {_containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; init; }}");
+            _code.AppendLine($"{Constants.InternalKeyword} required {containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; init; }}");
             
-            _scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
-            _scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);
+            scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
+            scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);
             
             _code.AppendLine("}");
         }
         
-        foreach (var scopeNode in _scopeNodeManager.Scopes)
+        foreach (var scopeNode in scopeNodeManager.Scopes)
         {
-            var scopeInheritanceElements = _scopeNodeBaseCodeGenerator.GetInheritanceHeaderElements(scopeNode, isContainer: false);
+            var scopeInheritanceElements = scopeNodeBaseCodeGenerator.GetInheritanceHeaderElements(scopeNode, isContainer: false);
             var scopeInheritance = scopeInheritanceElements.Any()
                 ? $" : {string.Join(", ", scopeInheritanceElements)}"
                 : "";
-            var containerReference = _scopeNodeBaseCodeGenerator.ScopeNodeToContainerPropertyReference[scopeNode];
+            var containerReference = scopeNodeBaseCodeGenerator.ScopeNodeToContainerPropertyReference[scopeNode];
             
             _code.AppendLine($"{Constants.PrivateKeyword} partial class {scopeNode.Name}{scopeInheritance}");
             _code.AppendLine("{");
-            _code.AppendLine($"{Constants.InternalKeyword} required {_containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; init; }}");
+            _code.AppendLine($"{Constants.InternalKeyword} required {containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; init; }}");
             
-            _scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
-            _scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);
+            scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
+            scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);
             
             _code.AppendLine("}");
         }
 
         _code.AppendLine("}");
 
-        _code.AppendLine(string.Join(Environment.NewLine, _containerInfo.ContainingTypeNames.Select(_ => "}")));
+        _code.AppendLine(string.Join(Environment.NewLine, containerInfo.ContainingTypeNames.Select(_ => "}")));
 
         _code.AppendLine(
             """

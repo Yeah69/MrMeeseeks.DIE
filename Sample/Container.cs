@@ -1,45 +1,22 @@
-﻿using System;
+﻿using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
 internal class I
 {
-    internal I(int  value) =>
-        Value = value;
-    internal I(long valueLong) =>
-        ValueLong = valueLong;
-    internal int Value { get; }
-    internal long ValueLong { get; }
-
-    internal void Initialize(int asdf) { }
-}
-
-internal class a(Func<int, I> iFactory) : IScopeRoot
-{
-    internal I I => iFactory(69);
-}
-
-internal class b(Func<int, I> iFactory) : IScopeRoot
-{
-    internal I I => iFactory(161);
+    internal ValueTask Initialize() => 
+        ValueTask.CompletedTask;
 }
 
 internal class Parent
 {
-    internal required a a { get; init; }
-    internal required b b { get; init; }
+    internal required I i { get; init; }
 }
 
-[Initializer(typeof(I), nameof(I.Initialize))]
-[CreateFunction(typeof(Parent), "Create")]
+//[Initializer(typeof(I), nameof(I.Initialize))]
+[CreateFunction(typeof(ValueTask<Task<ValueTask<Parent>>>), "Create")]
 internal sealed partial class Container
 {
-    [ConstructorChoice(typeof(I), typeof(int))]
-    [CustomScopeForRootTypes(typeof(a))]
-    sealed partial class DIE_Scope_a;
-    [ConstructorChoice(typeof(I), typeof(int))]
-    [CustomScopeForRootTypes(typeof(b))]
-    sealed partial class DIE_Scope_b;
+    
 }

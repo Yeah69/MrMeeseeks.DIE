@@ -1,50 +1,42 @@
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 
-internal sealed class ImplementationNodeCodeGenerator : IConcreteNodeCodeGenerator<ConcreteImplementationNode>, IContainerInstance
+internal sealed class ImplementationNodeCodeGenerator(
+    Lazy<InjectionNodeGenerator> injectionNodeGenerator,
+    ReferenceGenerator referenceGenerator,
+    ContextGenerator contextGenerator,
+    WellKnownTypes wellKnownTypes) 
+    : IConcreteNodeCodeGenerator<ConcreteImplementationNode>, IScopeInstance
 {
-    private readonly Lazy<InjectionNodeGenerator> _injectionNodeGenerator;
-    private readonly ReferenceGenerator _referenceGenerator;
-    private readonly ContextGenerator _contextGenerator;
-
-    internal ImplementationNodeCodeGenerator(
-        Lazy<InjectionNodeGenerator> injectionNodeGenerator,
-        ReferenceGenerator referenceGenerator,
-        ContextGenerator contextGenerator)
-    {
-        _injectionNodeGenerator = injectionNodeGenerator;
-        _referenceGenerator = referenceGenerator;
-        _contextGenerator = contextGenerator;
-    }
-
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteImplementationNode concreteNode, string? reference = null)
     {
         var referenceIsExternal = reference is not null;
-        var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Implementation);
-        var referenceOriginalContext = _referenceGenerator.Generate("originalContext");
-        var referencePurgedContext = _referenceGenerator.Generate("purgedContext");
+        var actualReference = reference ?? referenceGenerator.Generate(concreteNode.Data.Implementation);
+        var referenceOriginalContext = referenceGenerator.Generate("originalContext");
+        var referencePurgedContext = referenceGenerator.Generate("purgedContext");
 
         if (concreteNode.NeedsOriginalContextReference)
         {
             code.AppendLine(
                 $$"""
-                  var {{referenceOriginalContext}} = {{_contextGenerator.ParameterName}};
-                  {{_contextGenerator.ParameterName}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != 0
-                    ? {{_contextGenerator.GenerateCopyCreation(outwardFacingTypeNumber: "0", caseNumber: "0")}}
-                    : {{_contextGenerator.ParameterName}};
-                  var {{referencePurgedContext}} = {{_contextGenerator.ParameterName}};
+                  var {{referenceOriginalContext}} = {{contextGenerator.ParameterName}};
+                  {{contextGenerator.ParameterName}} = {{contextGenerator.ParameterName}}.{{contextGenerator.OutwardFacingTypeNumberPropertyName}} != 0
+                    ? {{contextGenerator.GenerateCopyCreation(outwardFacingTypeNumber: "0", caseNumber: "0")}}
+                    : {{contextGenerator.ParameterName}};
+                  var {{referencePurgedContext}} = {{contextGenerator.ParameterName}};
                   """);
         }
         else if (concreteNode.NeedsPurge)
         {
             code.AppendLine(
                 $$"""
-                  {{_contextGenerator.ParameterName}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} != 0
-                    ? {{_contextGenerator.GenerateCopyCreation(outwardFacingTypeNumber: "0", caseNumber: "0")}}
-                    : {{_contextGenerator.ParameterName}};
+                  {{contextGenerator.ParameterName}} = {{contextGenerator.ParameterName}}.{{contextGenerator.OutwardFacingTypeNumberPropertyName}} != 0
+                    ? {{contextGenerator.GenerateCopyCreation(outwardFacingTypeNumber: "0", caseNumber: "0")}}
+                    : {{contextGenerator.ParameterName}};
                   """);
         }
 
@@ -62,9 +54,12 @@ internal sealed class ImplementationNodeCodeGenerator : IConcreteNodeCodeGenerat
         var implementationFullName = GetImplementationsFullName(concreteNode.Data.Implementation);
         code.AppendLine($"{(referenceIsExternal ? "" : $"{implementationFullName} ")}{actualReference} = new {implementationFullName}({parameters}){objectInitializer};");
         
-        if (concreteNode.Data.Initializer is {} initializer)
+        if (concreteNode.Data.Initializer is { Method.ReturnType: {} returnType} initializer)
         {
-            var prefix = ""; // Todo should be "await" for (Value)Task-Initializer
+            var prefix = CustomSymbolEqualityComparer.Default.Equals(returnType, wellKnownTypes.Task)
+                         || CustomSymbolEqualityComparer.Default.Equals(returnType, wellKnownTypes.ValueTask)
+                ? "await "
+                : "";
             var initializerParameters = string.Join(", ", concreteNode.InitializerParameters.Select(d => $"{d.Name}: {HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext)}"));
             code.AppendLine($"{prefix}(({initializer.Type.FullName()}) {actualReference}).{initializer.Method.Name}({initializerParameters});");
         }
@@ -82,17 +77,17 @@ internal sealed class ImplementationNodeCodeGenerator : IConcreteNodeCodeGenerat
         {
             code.AppendLine(
                 $$"""
-                  {{_contextGenerator.ParameterName}} = {{referenceOriginalContext}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}} == {{dependency.PassOriginalChoiceContextId}}
+                  {{contextGenerator.ParameterName}} = {{referenceOriginalContext}}.{{contextGenerator.OutwardFacingTypeNumberPropertyName}} == {{dependency.PassOriginalChoiceContextId}}
                     ? {{referenceOriginalContext}}
-                    : {{_contextGenerator.ParameterName}};
+                    : {{contextGenerator.ParameterName}};
                   """);
         }
 
-        var ret = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, dependency.Edge, dependency.Edge.Target);
+        var ret = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, dependency.Edge, dependency.Edge.Target);
 
         if (dependency.PassOriginalChoiceContextId is not null)
         {
-            code.AppendLine($"{_contextGenerator.ParameterName} = {referencePurgedContext};");
+            code.AppendLine($"{contextGenerator.ParameterName} = {referencePurgedContext};");
         }
 
         return ret;

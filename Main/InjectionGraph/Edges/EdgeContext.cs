@@ -73,4 +73,16 @@ internal sealed record EdgeContext(
     ScopeNodeContext ScopeNode,
     OverrideContext Override,
     KeyContext Key,
-    CaseChoiceContext CaseChoice);
+    CaseChoiceContext CaseChoice,
+    int ResolutionId)
+{
+    public override int GetHashCode() => 
+        HashCode.Combine(ScopeNode, Override, Key, CaseChoice);
+
+    public bool Equals(EdgeContext? other) => 
+        other is not null 
+        && Equals(ScopeNode, other.ScopeNode) 
+        && Equals(Override, other.Override) 
+        && Equals(Key, other.Key) 
+        && Equals(CaseChoice, other.CaseChoice);
+}

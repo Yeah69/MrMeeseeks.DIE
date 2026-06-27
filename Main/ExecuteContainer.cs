@@ -27,8 +27,9 @@ internal sealed class ExecuteContainer
     private readonly AnalyticsFlags _analyticsFlags;
     private readonly Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> _resolutionGraphAnalyticsNodeVisitorFactory;
     private readonly Lazy<IFilterForErrorRelevancyNodeVisitor> _filterForErrorRelevancyNodeVisitor;
-    private readonly IInjectionGraphBuilder _injectionGraphBuilder;
-    private readonly IInjectionGraphCodeGenerator _injectionGraphCodeGenerator;
+    private readonly AsyncGraphRoot _asyncGraphRoot;
+    private readonly SyncGraphRoot _syncGraphRoot;
+    private readonly InjectionGraphCodeGenerator _injectionGraphCodeGenerator;
     private readonly IInjectionGraphPlantUmlGenerator _injectionGraphPlantUmlGenerator;
     private readonly DiagLogger _diagLogger;
     private readonly ContainerInfo _containerInfo;
@@ -46,8 +47,9 @@ internal sealed class ExecuteContainer
         AnalyticsFlags analyticsFlags,
         Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> resolutionGraphAnalyticsNodeVisitorFactory,
         Lazy<IFilterForErrorRelevancyNodeVisitor> filterForErrorRelevancyNodeVisitor,
-        IInjectionGraphBuilder injectionGraphBuilder,
-        IInjectionGraphCodeGenerator injectionGraphCodeGenerator,
+        SyncGraphHolder syncGraphHolder,
+        AsyncGraphHolder asyncGraphHolder,
+        InjectionGraphCodeGenerator injectionGraphCodeGenerator,
         IInjectionGraphPlantUmlGenerator injectionGraphPlantUmlGenerator,
         DiagLogger diagLogger)
     {
@@ -62,7 +64,8 @@ internal sealed class ExecuteContainer
         _analyticsFlags = analyticsFlags;
         _resolutionGraphAnalyticsNodeVisitorFactory = resolutionGraphAnalyticsNodeVisitorFactory;
         _filterForErrorRelevancyNodeVisitor = filterForErrorRelevancyNodeVisitor;
-        _injectionGraphBuilder = injectionGraphBuilder;
+        _asyncGraphRoot = asyncGraphHolder.Value;
+        _syncGraphRoot = syncGraphHolder.Value;
         _injectionGraphCodeGenerator = injectionGraphCodeGenerator;
         _injectionGraphPlantUmlGenerator = injectionGraphPlantUmlGenerator;
         _diagLogger = diagLogger;
@@ -109,13 +112,14 @@ internal sealed class ExecuteContainer
                 .GetText();
 
             //_context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);//*/
-            
+            var syncInjectionGraphBuilder = _syncGraphRoot.GraphBuilder;
+            var asyncInjectionGraphBuilder = _asyncGraphRoot.GraphBuilder;
             foreach (var (rootType, name, overrideTypes, attributesLocation) in _containerInfo.CreateFunctionData)
-            {
-                _injectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes, attributesLocation);
-            }
+                syncInjectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes, attributesLocation);
+            asyncInjectionGraphBuilder.BuildForAsyncGraph(_syncGraphRoot);
             
-            _injectionGraphBuilder.AssignFunctions();
+            syncInjectionGraphBuilder.AssignFunctions();
+            asyncInjectionGraphBuilder.AssignFunctions();
             
             var injectionGraphSource = CSharpSyntaxTree
                 .ParseText(SourceText.From(_injectionGraphCodeGenerator.Generate(), Encoding.UTF8))

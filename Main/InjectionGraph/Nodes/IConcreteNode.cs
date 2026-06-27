@@ -1,3 +1,8 @@
-﻿namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
+﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal interface IConcreteNode;
+namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
+
+internal interface IConcreteNode : INode
+{
+    void AddIncomingEdge(IEdge edge);
+}

@@ -29,9 +29,9 @@ internal sealed record ConcreteInterfaceNodeData(INamedTypeSymbol Interface)
 }
 
 internal sealed class ConcreteInterfaceNodeManager(Func<ConcreteInterfaceNodeData, ConcreteInterfaceNode> factory)
-    : ConcreteNodeManagerBase<ConcreteInterfaceNodeData, ConcreteInterfaceNode>(factory), IContainerInstance;
+    : ConcreteNodeManagerBase<ConcreteInterfaceNodeData, ConcreteInterfaceNode>(factory), IScopeInstance;
 
-internal sealed class ConcreteInterfaceNode : IConcreteNode
+internal sealed class ConcreteInterfaceNode : ConcreteNodeBase
 {
     private readonly IdRegister _idRegister;
     private readonly TypeNodeManager _typeNodeManager;

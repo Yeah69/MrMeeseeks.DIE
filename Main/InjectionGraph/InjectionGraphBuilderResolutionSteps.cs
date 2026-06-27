@@ -17,11 +17,15 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
     ConcreteEnumerableNodeManager concreteEnumerableNodeManager,
     ConcreteFunctorNodeManager concreteFunctorNodeManager,
     ConcreteOverrideNodeManager concreteOverrideNodeManager,
+    ConcreteTaskNodeManager concreteTaskNodeManager,
     ConcreteKeyValuePairNodeManager concreteKeyValuePairNodeManager,
     OverrideContextManager overrideContextManager,
     TypeSymbolUtility typeSymbolUtility,
     CheckIterableTypes checkIterableTypes,
     IdRegister idRegister,
+    AsyncAdjustments asyncAdjustments,
+    ResolutionRegister resolutionRegister,
+    WellKnownTypes wellKnownTypes,
     WellKnownTypesCollections wellKnownTypesCollections,
     Lazy<ConcreteExceptionNode> concreteExceptionNode,
     Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory)
@@ -44,10 +48,10 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         var concreteFunctorNodeData = new ConcreteFunctorNodeData(maybeFunctor);
         var concreteFunctorNode = concreteFunctorNodeManager.GetOrAddNode(concreteFunctorNodeData);
         var newOverrideContext = overrideContextManager.GetOrAddContext(concreteFunctorNode.FunctorParameterTypes);
-        var newEdgeContext = edgeContext with { Override = newOverrideContext };
+        var newEdgeContext = edgeContext with { Override = newOverrideContext, ResolutionId = resolutionRegister.GetNewResolutionId() };
         ConnectToTypeNodeIfNotAlready(concreteFunctorNode, newEdgeContext, typeNode);
         foreach (var (node, location) in concreteFunctorNode.ConnectIfNotAlready(newEdgeContext))
-            queue.Enqueue(new ResolutionStep(
+            queue.Enqueue(new(
                 node,
                 newEdgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
@@ -69,7 +73,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         var connectionResult = concreteInterfaceNode.ConnectIfNotAlready(edgeContext);
         
         if (connectionResult is ConcreteInterfaceNode.CaseIdResponse.Success { TypeNode: var newNode, Location: var newLocation, EdgeContext: var newEdgeContext})
-            queue.Enqueue(new ResolutionStep(
+            queue.Enqueue(new(
                 newNode, 
                 newEdgeContext, 
                 newLocation.Equals(Location.None) ? currentResolvedLocation : newLocation));
@@ -157,15 +161,39 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
             maybeInitializer);
         
         var concreteImplementationNode = concreteImplementationNodeManager.GetOrAddNode(concreteImplementationNodeData);
+
+        if (concreteImplementationNodeData.Initializer is { Method: {} method }
+            && (CustomSymbolEqualityComparer.Default.Equals(method.ReturnType.UnboundIfGeneric(), wellKnownTypes.Task)
+                || CustomSymbolEqualityComparer.Default.Equals(method.ReturnType.UnboundIfGeneric(), wellKnownTypes.ValueTask)))
+            asyncAdjustments.AddAwaitedNode(concreteImplementationNode, edgeContext.ResolutionId);
         
         ConnectToTypeNodeIfNotAlready(concreteImplementationNode, edgeContext, typeNode);
         
         foreach (var (node, location, context) in concreteImplementationNode.ConnectIfNotAlready(edgeContext))
-            queue.Enqueue(new ResolutionStep(
+            queue.Enqueue(new(
                 node, 
                 context,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
-                
+    }
+
+    internal void TaskStep(
+        INamedTypeSymbol currentType,
+        TypeNode typeNode,
+        EdgeContext edgeContext,
+        Queue<ResolutionStep> queue,
+        Location currentResolvedLocation)
+    {
+        var concreteTaskNodeData = new ConcreteTaskNodeData(currentType);
+        
+        var concreteTaskNode = concreteTaskNodeManager.GetOrAddNode(concreteTaskNodeData);
+        
+        ConnectToTypeNodeIfNotAlready(concreteTaskNode, edgeContext, typeNode);
+        
+        foreach (var (node, location) in concreteTaskNode.ConnectIfNotAlready(edgeContext))
+            queue.Enqueue(new(
+                node, 
+                edgeContext,
+                location.Equals(Location.None) ? currentResolvedLocation : location));
     }
 
     internal void KeyValuePairStep(
@@ -182,7 +210,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         ConnectToTypeNodeIfNotAlready(concreteKeyValuePairNode, edgeContext, typeNode);
         
         foreach (var (node, location) in concreteKeyValuePairNode.ConnectIfNotAlready(edgeContext))
-            queue.Enqueue(new ResolutionStep(
+            queue.Enqueue(new(
                 node, 
                 edgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
@@ -202,7 +230,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         ConnectToTypeNodeIfNotAlready(concreteEnumerableNode, edgeContext, typeNode);
         
         foreach (var (node, newEdgeContext, location) in concreteEnumerableNode.ConnectIfNotAlready(edgeContext))
-            queue.Enqueue(new ResolutionStep(
+            queue.Enqueue(new(
                 node, 
                 newEdgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
@@ -281,12 +309,13 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
             currentResolvedLocation);
     }
         
-    private void ConnectToTypeNodeIfNotAlready(IConcreteNode concreteNode, EdgeContext edgeContextToContinueWith, TypeNode typeNode)
+    internal void ConnectToTypeNodeIfNotAlready(IConcreteNode concreteNode, EdgeContext edgeContextToContinueWith, TypeNode typeNode)
     {
         if (!typeNode.TryGetOutgoingEdgeFor(concreteNode, out var existingEdge))
         {
             existingEdge = concreteEdgeFactory(typeNode, concreteNode);
             typeNode.AddOutgoing(existingEdge);
+            concreteNode.AddIncomingEdge(existingEdge);
         }
 
         existingEdge.AddContext(edgeContextToContinueWith);

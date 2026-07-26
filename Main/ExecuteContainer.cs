@@ -27,8 +27,9 @@ internal sealed class ExecuteContainer
     private readonly AnalyticsFlags _analyticsFlags;
     private readonly Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> _resolutionGraphAnalyticsNodeVisitorFactory;
     private readonly Lazy<IFilterForErrorRelevancyNodeVisitor> _filterForErrorRelevancyNodeVisitor;
-    private readonly AsyncGraphRoot _asyncGraphRoot;
+    private readonly RawGraphRoot _rawGraphRoot;
     private readonly SyncGraphRoot _syncGraphRoot;
+    private readonly AsyncGraphRoot _asyncGraphRoot;
     private readonly InjectionGraphCodeGenerator _injectionGraphCodeGenerator;
     private readonly IInjectionGraphPlantUmlGenerator _injectionGraphPlantUmlGenerator;
     private readonly DiagLogger _diagLogger;
@@ -47,6 +48,7 @@ internal sealed class ExecuteContainer
         AnalyticsFlags analyticsFlags,
         Func<IImmutableSet<INode>?, IResolutionGraphAnalyticsNodeVisitor> resolutionGraphAnalyticsNodeVisitorFactory,
         Lazy<IFilterForErrorRelevancyNodeVisitor> filterForErrorRelevancyNodeVisitor,
+        RawGraphHolder rawGraphHolder,
         SyncGraphHolder syncGraphHolder,
         AsyncGraphHolder asyncGraphHolder,
         InjectionGraphCodeGenerator injectionGraphCodeGenerator,
@@ -64,8 +66,9 @@ internal sealed class ExecuteContainer
         _analyticsFlags = analyticsFlags;
         _resolutionGraphAnalyticsNodeVisitorFactory = resolutionGraphAnalyticsNodeVisitorFactory;
         _filterForErrorRelevancyNodeVisitor = filterForErrorRelevancyNodeVisitor;
-        _asyncGraphRoot = asyncGraphHolder.Value;
         _syncGraphRoot = syncGraphHolder.Value;
+        _asyncGraphRoot = asyncGraphHolder.Value;
+        _rawGraphRoot = rawGraphHolder.Value;
         _injectionGraphCodeGenerator = injectionGraphCodeGenerator;
         _injectionGraphPlantUmlGenerator = injectionGraphPlantUmlGenerator;
         _diagLogger = diagLogger;
@@ -112,11 +115,18 @@ internal sealed class ExecuteContainer
                 .GetText();
 
             //_context.AddSource($"{_containerInfo.Namespace}.{_containerInfo.Name}.g.cs", containerSource);//*/
+            var rawInjectionGraphBuilder = _rawGraphRoot.GraphBuilder;
             var syncInjectionGraphBuilder = _syncGraphRoot.GraphBuilder;
             var asyncInjectionGraphBuilder = _asyncGraphRoot.GraphBuilder;
+            
             foreach (var (rootType, name, overrideTypes, attributesLocation) in _containerInfo.CreateFunctionData)
-                syncInjectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes, attributesLocation);
-            asyncInjectionGraphBuilder.BuildForAsyncGraph(_syncGraphRoot);
+                rawInjectionGraphBuilder.BuildForRootType(rootType, name, overrideTypes, attributesLocation);
+            
+            var asyncResolutionIds = rawInjectionGraphBuilder.GetSplitData();
+            syncInjectionGraphBuilder.BuildForSyncGraph(_rawGraphRoot, asyncResolutionIds);
+            asyncInjectionGraphBuilder.BuildForAsyncGraphNew(_rawGraphRoot, asyncResolutionIds);
+            
+            syncInjectionGraphBuilder.AddCrossGraphReferences(_asyncGraphRoot);
             
             syncInjectionGraphBuilder.AssignFunctions();
             asyncInjectionGraphBuilder.AssignFunctions();

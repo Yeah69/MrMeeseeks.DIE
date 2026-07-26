@@ -11,18 +11,18 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
 {
     private readonly Lazy<InjectionNodeGenerator> _injectionNodeGenerator;
     private readonly ReferenceGenerator _referenceGenerator;
-    private readonly Synchronicity _synchronicity;
+    private readonly GraphTypeHolder _graphTypeHolder;
     private readonly WellKnownTypes _wellKnownTypes;
 
     internal TaskNodeCodeGenerator(
         Lazy<InjectionNodeGenerator> injectionNodeGenerator,
         ReferenceGenerator referenceGenerator,
-        Synchronicity synchronicity,
+        GraphTypeHolder graphTypeHolder,
         WellKnownTypes wellKnownTypes)
     {
         _injectionNodeGenerator = injectionNodeGenerator;
         _referenceGenerator = referenceGenerator;
-        _synchronicity = synchronicity;
+        _graphTypeHolder = graphTypeHolder;
         _wellKnownTypes = wellKnownTypes;
     }
 
@@ -31,11 +31,23 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
         var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.TaskType);
         var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge, concreteNode.InnerEdge.Target);
         var prefix = reference is null ? $"{concreteNode.Data.TaskType.FullName()} " : "";
-        if (_synchronicity.IsSync)
+        if (_graphTypeHolder.Type is GraphType.Sync)
         {
-            code.AppendLine(CustomSymbolEqualityComparer.Default.Equals(concreteNode.Data.TaskType.OriginalDefinition, _wellKnownTypes.ValueTask1)
-                ? $"{prefix}{actualReference} = new {concreteNode.Data.TaskType.FullName()}({_wellKnownTypes.Task.FullName()}.FromResult({innerReference}));"
-                : $"{prefix}{actualReference} = {_wellKnownTypes.Task.FullName()}.{nameof(Task.FromResult)}({innerReference});");
+            if (concreteNode.InnerEdge.Type is FunctionEdgeType { Function: AsyncTypeNodeFunction { AsyncReturnType: { } asyncReturnType } })
+            {
+                if (CustomSymbolEqualityComparer.Default.Equals(asyncReturnType,typeNode.Type))
+                    code.AppendLine($"{prefix}{actualReference} = {innerReference};");
+                else if (CustomSymbolEqualityComparer.Default.Equals(asyncReturnType.OriginalDefinition, _wellKnownTypes.ValueTask1))
+                    code.AppendLine($"{prefix}{actualReference} = {innerReference}.{nameof(ValueTask<>.AsTask)}();");
+                else if (CustomSymbolEqualityComparer.Default.Equals(asyncReturnType.OriginalDefinition, _wellKnownTypes.Task1))
+                    code.AppendLine($"{prefix}{actualReference} = new {concreteNode.Data.TaskType.FullName()}({innerReference});");
+                else
+                    throw new ArgumentException();
+            }
+            else
+                code.AppendLine(CustomSymbolEqualityComparer.Default.Equals(concreteNode.Data.TaskType.OriginalDefinition, _wellKnownTypes.ValueTask1)
+                    ? $"{prefix}{actualReference} = new {concreteNode.Data.TaskType.FullName()}({_wellKnownTypes.Task.FullName()}.FromResult({innerReference}));"
+                    : $"{prefix}{actualReference} = {_wellKnownTypes.Task.FullName()}.{nameof(Task.FromResult)}({innerReference});");
         }
         else if (concreteNode.InnerEdge.Type is FunctionEdgeType { Function: AsyncTypeNodeFunction { AsyncReturnType: { } asyncReturnType } })
         {

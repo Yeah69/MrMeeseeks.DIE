@@ -1,5 +1,6 @@
 ﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
@@ -13,6 +14,7 @@ internal sealed class InjectionGraphCodeGenerator(
     FunctionUtility functionUtility,
     OverrideContextManager overrideContextManager,
     ContextGenerator contextGenerator,
+    TypeSymbolUtility typeSymbolUtility,
     ReferenceGenerator referenceGenerator,
     SharedNameRegistry sharedNameRegistry)
 {
@@ -97,6 +99,10 @@ internal sealed class InjectionGraphCodeGenerator(
             {
                 _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction.Function, doScopedInstance: true, doScopeRoot: true)};");
             }
+            else if (typeSymbolUtility.IsTaskType(typeNode.Type) && typeNode.Outgoing is [{ Target: ConcreteTaskNode { InnerEdge.Type: FunctionEdgeType nextFunction0 } }])
+            {
+                _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0.Function, doScopedInstance: true, doScopeRoot: true)};");
+            }
             else
             {
                 _code.AppendLine($"throw new Exception(\"No function found for type {typeNode.Type.FullName()} during code generation.\");");
@@ -128,7 +134,7 @@ internal sealed class InjectionGraphCodeGenerator(
 
         var entryCreateFunctionsMap = Enumerable.Empty<IGraphRoot>().Append(_syncGraphRoot).Append(_asyncGraphRoot)
             .SelectMany(gr =>
-                gr.ConcreteEntryFunctionNodeManager.AllNodes.Select(n => (ConcreteEntryFunctionNode: n, gr.InjectionNodeGenerator, gr.Synchronicity.IsSync)))
+                gr.ConcreteEntryFunctionNodeManager.AllNodes.Select(n => (ConcreteEntryFunctionNode: n, gr.InjectionNodeGenerator, GraphType: gr.GraphTypeHolder.Type)))
             .ToImmutableDictionary(t => t.ConcreteEntryFunctionNode.Data.Name, t => t);
 
         foreach (var (rootType, name, parameters, _) in containerInfo.CreateFunctionData)
@@ -136,15 +142,15 @@ internal sealed class InjectionGraphCodeGenerator(
             if (entryCreateFunctionsMap.TryGetValue(name, out var tuple)
                 && overrideContextManager.TryGetContext(parameters, out var overrideContext))
             {
-                var (entryFunctionNode, injectionNodeGenerator, isSync) =  tuple;
+                var (entryFunctionNode, injectionNodeGenerator, graphType) = tuple;
                 var parametersWithName = parameters.Select(p => (Type: p, Name: referenceGenerator.Generate(p))).ToArray();
                 var parametersOnDeclaration = string.Join(", ", parametersWithName.Select(t => $"{t.Type.FullName()} {t.Name}"));
                 var overridesName = sharedNameRegistry.GetOverrideContextName(overrideContext);
                 var overridesAssignment = overrideContext is OverrideContext.Any any 
                     ? string.Join(", ", any.Overrides.Select(p => parametersWithName.First(t => t.Type.Equals(p)).Name))
                     : "";
-                var maybeAsync = !isSync ? "async " : "";
-                var maybeAwait = !isSync ? "await " : "";
+                var maybeAsync = graphType is GraphType.Async ? "async " : "";
+                var maybeAwait = graphType is GraphType.Async ? "await " : "";
                 _code.AppendLine(
                     $$"""
                       internal {{maybeAsync}}{{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})

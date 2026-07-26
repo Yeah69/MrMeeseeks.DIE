@@ -19,16 +19,16 @@ internal interface IGraphRoot
     ConcreteExceptionNode ConcreteExceptionNode { get; }
     TypeNodeManager TypeNodeManager { get; }
     EdgeRegistry EdgeRegistry { get; }
-    Synchronicity Synchronicity { get; }
+    GraphTypeHolder GraphTypeHolder { get; }
     InjectionNodeGenerator InjectionNodeGenerator { get; }
 }
 
 internal abstract class GraphRootBase : IGraphRoot
 {
-    internal GraphRootBase(Synchronicity synchronicity, bool isSync)
+    internal GraphRootBase(GraphTypeHolder graphTypeHolder, GraphType type)
     {
-        synchronicity.IsSync = isSync;
-        Synchronicity = synchronicity;
+        graphTypeHolder.Type = type;
+        GraphTypeHolder = graphTypeHolder;
     }
 
     public required IInjectionGraphBuilder GraphBuilder { get; init; }
@@ -44,13 +44,20 @@ internal abstract class GraphRootBase : IGraphRoot
     public required TypeNodeManager TypeNodeManager { get; init; }
     public required AsyncAdjustments AsyncAdjustments { get; init; }
     public required EdgeRegistry EdgeRegistry { get; init; }
-    public Synchronicity Synchronicity { get; }
+    public GraphTypeHolder GraphTypeHolder { get; }
     public required InjectionNodeGenerator InjectionNodeGenerator { get; init; }
 }
 
-internal sealed class SyncGraphRoot(Synchronicity synchronicity) : GraphRootBase(synchronicity, true), IScopeRoot;
+internal sealed class RawGraphRoot(GraphTypeHolder graphTypeHolder) : GraphRootBase(graphTypeHolder, GraphType.Raw), IScopeRoot;
 
-internal sealed class AsyncGraphRoot(Synchronicity synchronicity) : GraphRootBase(synchronicity, false), IScopeRoot;
+internal sealed class SyncGraphRoot(GraphTypeHolder graphTypeHolder) : GraphRootBase(graphTypeHolder, GraphType.Sync), IScopeRoot;
+
+internal sealed class AsyncGraphRoot(GraphTypeHolder graphTypeHolder) : GraphRootBase(graphTypeHolder, GraphType.Async), IScopeRoot;
+
+internal sealed class RawGraphHolder : IContainerInstance
+{
+    internal required RawGraphRoot Value { get; init; }
+}
 
 internal sealed class SyncGraphHolder : IContainerInstance
 {
@@ -62,7 +69,14 @@ internal sealed class AsyncGraphHolder : IContainerInstance
     internal required AsyncGraphRoot Value { get; init; }
 }
 
-internal sealed class Synchronicity : IScopeInstance
+internal enum GraphType
 {
-    internal bool IsSync { get; set; }
+    Raw,
+    Sync,
+    Async
+}
+
+internal sealed class GraphTypeHolder : IScopeInstance
+{
+    internal GraphType Type { get; set; }
 }

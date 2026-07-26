@@ -11,4 +11,7 @@ internal sealed class TypeEdge : EdgeBase<IConcreteNode, TypeNode>
     }
 
     internal IEdgeType Type { get; set; }
+    
+    internal void ReplaceTarget(TypeNode newTarget) => 
+        Target = newTarget;
 }

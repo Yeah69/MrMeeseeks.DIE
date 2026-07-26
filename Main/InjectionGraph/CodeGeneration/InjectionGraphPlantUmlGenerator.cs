@@ -11,7 +11,8 @@ internal interface IInjectionGraphPlantUmlGenerator
 
 internal sealed class InjectionGraphPlantUmlGenerator(
     SyncGraphHolder syncGraphHolder,
-    AsyncGraphHolder asyncGraphHolder) : IInjectionGraphPlantUmlGenerator
+    AsyncGraphHolder asyncGraphHolder) 
+    : IInjectionGraphPlantUmlGenerator
 {
     private readonly StringBuilder _diagram = new();
     private readonly SyncGraphRoot _syncGraphRoot = syncGraphHolder.Value;
@@ -50,9 +51,7 @@ internal sealed class InjectionGraphPlantUmlGenerator(
             _diagram.AppendLine();
         }
 
-        // Clear the node ID mappings for the async graph
-        _typeNodeIds.Clear();
-        _concreteNodeIds.Clear();
+        // Don't clear node ID mappings - we need them for cross-graph edge generation
 
         // Generate async graph in its own namespace
         if (HasAnyNodes(_asyncGraphRoot))
@@ -60,7 +59,11 @@ internal sealed class InjectionGraphPlantUmlGenerator(
             _diagram.AppendLine("namespace Async {");
             GenerateGraphContent(_asyncGraphRoot, "A_");
             _diagram.AppendLine("}");
+            _diagram.AppendLine();
         }
+
+        // Generate cross-graph edges (Sync -> Async)
+        GenerateCrossGraphEdges();
 
         _diagram.AppendLine();
         _diagram.AppendLine("@enduml");
@@ -151,6 +154,13 @@ internal sealed class InjectionGraphPlantUmlGenerator(
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Override>>");
         }
 
+        foreach (var node in graphRoot.ConcreteTaskNodeManager.AllNodes)
+        {
+            var id = GetConcreteNodeId(node, nodePrefix);
+            var label = SanitizeLabel($"Task: {GetTypeDisplayName(node.Data.TaskType)}");
+            _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Task>>");
+        }
+
         if (HasExceptionNodeConnections(graphRoot))
         {
             var id = GetConcreteNodeId(graphRoot.ConcreteExceptionNode, nodePrefix);
@@ -194,6 +204,46 @@ internal sealed class InjectionGraphPlantUmlGenerator(
                     var contextLabel = FormatEdgeContext(context);
                     _diagram.AppendLine($"{sourceId} --> {typeNodeId} : \"{contextLabel}\"");
                 }
+            }
+        }
+    }
+
+    private void GenerateCrossGraphEdges()
+    {
+        var hasCrossGraphEdges = false;
+
+        // Cross-graph edges are TypeEdges in the sync graph's EdgeRegistry
+        // whose Target has been replaced to point to an async graph TypeNode
+        foreach (var edge in _syncGraphRoot.EdgeRegistry.Edges)
+        {
+            if (edge is not TypeEdge typeEdge)
+                continue;
+
+            // Check if target is in async graph (not in sync graph's TypeNodeManager)
+            if (_syncGraphRoot.TypeNodeManager.AllTypeNodes.Contains(typeEdge.Target))
+                continue;
+
+            // Check if target is in async graph
+            if (!_asyncGraphRoot.TypeNodeManager.AllTypeNodes.Contains(typeEdge.Target))
+                continue;
+
+            // Get IDs - source should have S_ prefix, target should have A_ prefix
+            if (!_concreteNodeIds.TryGetValue(typeEdge.Source, out var sourceId))
+                continue;
+            if (!_typeNodeIds.TryGetValue(typeEdge.Target, out var targetId))
+                continue;
+
+            if (!hasCrossGraphEdges)
+            {
+                _diagram.AppendLine("' Cross-graph edges (Sync -> Async)");
+                hasCrossGraphEdges = true;
+            }
+
+            foreach (var context in typeEdge.Contexts)
+            {
+                var contextLabel = FormatEdgeContext(context);
+                // Use fully qualified namespace names for cross-graph references
+                _diagram.AppendLine($"Sync.{sourceId} --> Async.{targetId} : \"{contextLabel}\"");
             }
         }
     }

@@ -11,11 +11,11 @@ internal class I
 
 internal class Parent
 {
-    internal required I i { get; init; }
+    internal required Task<ValueTask<I>> i { get; init; }
 }
 
-//[Initializer(typeof(I), nameof(I.Initialize))]
-[CreateFunction(typeof(ValueTask<Task<ValueTask<Parent>>>), "Create")]
+[Initializer(typeof(I), nameof(I.Initialize))]
+[CreateFunction(typeof(ValueTask<Parent>), "Create")]
 internal sealed partial class Container
 {
     

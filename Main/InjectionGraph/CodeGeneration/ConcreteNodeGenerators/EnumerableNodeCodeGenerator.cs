@@ -81,7 +81,7 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
                 return [.. keyedSequence];
 
             case ConcreteEnumerableNodeData.SinglePlainItem:
-                string singlePlainItemReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                var singlePlainItemReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
                 if (!isArray)
                     code.AppendLine($"yield return {singlePlainItemReference};");
                 return [singlePlainItemReference];

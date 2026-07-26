@@ -1,6 +1,5 @@
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.SourceGeneratorUtility;
-using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Utility;
 
@@ -8,7 +7,7 @@ internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContai
 {
     internal ITypeSymbol GetUnwrappedType(ITypeSymbol type)
     {
-        if (IsWrapTypeOfSingleGenericType(type)
+        if (IsOtherWrapType(type)
             && type is INamedTypeSymbol namedType)
             return GetUnwrappedType(namedType.TypeArguments.First());
 
@@ -18,14 +17,33 @@ internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContai
         return type;
     }
     internal bool IsWrapType(ITypeSymbol type) =>
-        IsWrapTypeOfSingleGenericType(type) || IsFuncDelegate(type);
+        IsFuncDelegate(type) || IsTaskType(type) || IsOtherWrapType(type);
 
-    private static bool IsFuncDelegate(ITypeSymbol type) =>
-        type.TypeKind == TypeKind.Delegate && type.FullName().StartsWith("global::System.Func<", StringComparison.Ordinal);
-
-    private bool IsWrapTypeOfSingleGenericType(ITypeSymbol type) =>
+    public bool IsTaskType(ITypeSymbol type) =>
         wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
-        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1)
-        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)
+        || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1);
+
+    public bool IsFuncDelegate(ITypeSymbol type) =>
+        type.TypeKind == TypeKind.Delegate 
+        && (CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func1)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func2)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func3)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func4)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func5)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func6)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func7)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func8)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func9)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func10)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func11)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func12)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func13)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func14)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func15)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func16)
+            || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Func17));
+
+    private bool IsOtherWrapType(ITypeSymbol type) =>
+        CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Lazy1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ThreadLocal1);
 }

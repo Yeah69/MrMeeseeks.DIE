@@ -10,18 +10,18 @@ internal sealed class InjectionNodeGenerator : IScopeInstance
     private readonly ConcreteNodeCodeGeneratorDispatcher _concreteNodeCodeGeneratorDispatcher;
     private readonly ReferenceGenerator _referenceGenerator;
     private readonly FunctionUtility _functionUtility;
-    private readonly Synchronicity _synchronicity;
+    private readonly GraphTypeHolder _graphTypeHolder;
 
     internal InjectionNodeGenerator(
         ConcreteNodeCodeGeneratorDispatcher concreteNodeCodeGeneratorDispatcher,
         ReferenceGenerator referenceGenerator,
         FunctionUtility functionUtility,
-        Synchronicity synchronicity)
+        GraphTypeHolder graphTypeHolder)
     {
         _concreteNodeCodeGeneratorDispatcher = concreteNodeCodeGeneratorDispatcher;
         _referenceGenerator = referenceGenerator;
         _functionUtility = functionUtility;
-        _synchronicity = synchronicity;
+        _graphTypeHolder = graphTypeHolder;
     }
 
     public string GenerateForInjectionNode(StringBuilder code, TypeNode node) =>

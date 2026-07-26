@@ -187,12 +187,13 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         
         var concreteTaskNode = concreteTaskNodeManager.GetOrAddNode(concreteTaskNodeData);
         
-        ConnectToTypeNodeIfNotAlready(concreteTaskNode, edgeContext, typeNode);
+        var newEdgeContext = edgeContext with { ResolutionId = resolutionRegister.GetNewResolutionId() };
+        ConnectToTypeNodeIfNotAlready(concreteTaskNode, newEdgeContext, typeNode);
         
-        foreach (var (node, location) in concreteTaskNode.ConnectIfNotAlready(edgeContext))
+        foreach (var (node, location) in concreteTaskNode.ConnectIfNotAlready(newEdgeContext))
             queue.Enqueue(new(
                 node, 
-                edgeContext,
+                newEdgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
     }
 

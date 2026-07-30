@@ -8,7 +8,7 @@ internal class Program
     {
         try
         {
-            var container = Container.DIE_CreateContainer(); 
+            var container = MixedSynchronicity.Container.DIE_CreateContainer(); 
             var parent = await container.Create();
             
             Console.WriteLine("Hello, World!");

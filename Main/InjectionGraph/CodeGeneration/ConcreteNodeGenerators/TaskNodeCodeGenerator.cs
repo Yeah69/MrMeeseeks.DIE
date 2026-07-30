@@ -34,16 +34,7 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
         if (_graphTypeHolder.Type is GraphType.Sync)
         {
             if (concreteNode.InnerEdge.Type is FunctionEdgeType { Function: AsyncTypeNodeFunction { AsyncReturnType: { } asyncReturnType } })
-            {
-                if (CustomSymbolEqualityComparer.Default.Equals(asyncReturnType,typeNode.Type))
-                    code.AppendLine($"{prefix}{actualReference} = {innerReference};");
-                else if (CustomSymbolEqualityComparer.Default.Equals(asyncReturnType.OriginalDefinition, _wellKnownTypes.ValueTask1))
-                    code.AppendLine($"{prefix}{actualReference} = {innerReference}.{nameof(ValueTask<>.AsTask)}();");
-                else if (CustomSymbolEqualityComparer.Default.Equals(asyncReturnType.OriginalDefinition, _wellKnownTypes.Task1))
-                    code.AppendLine($"{prefix}{actualReference} = new {concreteNode.Data.TaskType.FullName()}({innerReference});");
-                else
-                    throw new ArgumentException();
-            }
+                WrapIntoTaskTypeFromAsyncFunctionCall(asyncReturnType);
             else
                 code.AppendLine(CustomSymbolEqualityComparer.Default.Equals(concreteNode.Data.TaskType.OriginalDefinition, _wellKnownTypes.ValueTask1)
                     ? $"{prefix}{actualReference} = new {concreteNode.Data.TaskType.FullName()}({_wellKnownTypes.Task.FullName()}.FromResult({innerReference}));"
@@ -51,18 +42,26 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
         }
         else if (concreteNode.InnerEdge.Type is FunctionEdgeType { Function: AsyncTypeNodeFunction { AsyncReturnType: { } asyncReturnType } })
         {
-            var innerIsValueTask = CustomSymbolEqualityComparer.Default.Equals(asyncReturnType.OriginalDefinition, _wellKnownTypes.ValueTask1);
-            var outerIsValueTask = CustomSymbolEqualityComparer.Default.Equals(concreteNode.Data.TaskType.OriginalDefinition, _wellKnownTypes.ValueTask1);
             code.AppendLine($"await {_wellKnownTypes.Task.FullName()}.{nameof(Task.Yield)}();");
-            if (innerIsValueTask ==  outerIsValueTask)
-                code.AppendLine($"{prefix}{actualReference} = {innerReference};");
-            else if (innerIsValueTask && !outerIsValueTask)
-                code.AppendLine($"{prefix}{actualReference} = {innerReference}.{nameof(ValueTask<>.AsTask)}();");
-            else if (!innerIsValueTask && outerIsValueTask)
-                code.AppendLine($"{prefix}{actualReference} = new {concreteNode.Data.TaskType.FullName()}({innerReference});");
+            WrapIntoTaskTypeFromAsyncFunctionCall(asyncReturnType);
         }
         else
             throw new ArgumentException();
         return actualReference;
+
+        void WrapIntoTaskTypeFromAsyncFunctionCall(INamedTypeSymbol asyncReturnType)
+        {
+            var innerIsValueTask = CustomSymbolEqualityComparer.Default.Equals(asyncReturnType.OriginalDefinition, _wellKnownTypes.ValueTask1);
+            var outerIsValueTask = CustomSymbolEqualityComparer.Default.Equals(concreteNode.Data.TaskType.OriginalDefinition, _wellKnownTypes.ValueTask1);
+
+            var assignedValue = (innerIsValueTask, outerIsValueTask) switch
+            {
+                (true, true) or (false, false) => innerReference,
+                (true, false) => $"{innerReference}.{nameof(ValueTask<>.AsTask)}()",
+                (false, true) => $"new {concreteNode.Data.TaskType.FullName()}({innerReference})"
+            };
+            
+            code.AppendLine($"{prefix}{actualReference} = {assignedValue};");
+        }
     }
 }

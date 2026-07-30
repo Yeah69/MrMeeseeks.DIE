@@ -19,6 +19,7 @@ internal interface IInjectionGraphBuilder
         IReadOnlyList<ITypeSymbol> overrides,
         Location createFunctionAttributeLocation);
 
+    // resolve unused method
     void BuildForAsyncGraph(SyncGraphRoot syncGraphRoot);
     void BuildForAsyncGraphNew(RawGraphRoot syncGraphRoot, HashSet<int> asyncResolutionIds);
     void BuildForSyncGraph(RawGraphRoot syncGraphRoot, HashSet<int> asyncResolutionIds);
@@ -283,6 +284,11 @@ internal sealed class InjectionGraphBuilder(
             var rawTarget = rawEdge.TargetAsNode;
             var asyncSource = nodesMap.GetOrAdd(rawSource, Copy);
             var asyncTarget = nodesMap.GetOrAdd(rawTarget, Copy);
+            
+            if (rawSource is TypeNode rawSourceTypeNode && asyncSource is TypeNode asyncSourceTypeNode)
+                AdjustTypeNode(rawSourceTypeNode, asyncSourceTypeNode);
+            if (rawTarget is TypeNode rawTargetTypeNode && asyncSource is TypeNode asyncTargetTypeNode)
+                AdjustTypeNode(rawTargetTypeNode, asyncTargetTypeNode);
 
             var asyncContexts = rawEdge.Contexts.Where(c => asyncResolutionIds.Contains(c.ResolutionId));
 
@@ -335,9 +341,22 @@ internal sealed class InjectionGraphBuilder(
                     TypeNode { Type: { } type } => typeNodeManager.GetOrAddNode(type),
                     _ => throw new ArgumentOutOfRangeException(nameof(node))
                 };
+
+            // todo unify the sync version with this
+            void AdjustTypeNode(TypeNode rawTypeNode, TypeNode copyTypeNode)
+            {
+                foreach (var keyValuePair in rawTypeNode.ScopeInstanceConfiguration)
+                    foreach (var scopeNodeContext in keyValuePair.Value)
+                        copyTypeNode.RegisterScopeInstanceConfiguration(keyValuePair.Key, scopeNodeContext);
+
+                foreach (var keyValuePair in rawTypeNode.ScopeRootConfiguration)
+                    foreach (var scopeNodeContext in keyValuePair.Value)
+                        copyTypeNode.RegisterScopeRootConfiguration(keyValuePair.Key, scopeNodeContext);
+            }
         }
     }
 
+    // todo split into subclasses
     public void BuildForSyncGraph(RawGraphRoot rawGraphRoot, HashSet<int> asyncResolutionIds)
     {
         var rawEdges = rawGraphRoot.EdgeRegistry.Edges.ToImmutableArray();
@@ -351,6 +370,11 @@ internal sealed class InjectionGraphBuilder(
             var rawTarget = rawEdge.TargetAsNode;
             var syncSource = nodesMap.GetOrAdd(rawSource, Copy);
             var syncTarget = nodesMap.GetOrAdd(rawTarget, Copy);
+            
+            if (rawSource is TypeNode rawSourceTypeNode && syncSource is TypeNode syncSourceTypeNode)
+                AdjustTypeNode(rawSourceTypeNode, syncSourceTypeNode);
+            if (rawTarget is TypeNode rawTargetTypeNode && syncTarget is TypeNode syncTargetTypeNode)
+                AdjustTypeNode(rawTargetTypeNode, syncTargetTypeNode);
 
             var syncContexts = rawEdge.Contexts.Where(c => !asyncResolutionIds.Contains(c.ResolutionId));
 
@@ -403,6 +427,17 @@ internal sealed class InjectionGraphBuilder(
                     TypeNode { Type: { } type } => typeNodeManager.GetOrAddNode(type),
                     _ => throw new ArgumentOutOfRangeException(nameof(node))
                 };
+
+            void AdjustTypeNode(TypeNode rawTypeNode, TypeNode copyTypeNode)
+            {
+                foreach (var keyValuePair in rawTypeNode.ScopeInstanceConfiguration)
+                    foreach (var scopeNodeContext in keyValuePair.Value)
+                        copyTypeNode.RegisterScopeInstanceConfiguration(keyValuePair.Key, scopeNodeContext);
+
+                foreach (var keyValuePair in rawTypeNode.ScopeRootConfiguration)
+                    foreach (var scopeNodeContext in keyValuePair.Value)
+                        copyTypeNode.RegisterScopeRootConfiguration(keyValuePair.Key, scopeNodeContext);
+            }
         }
     }
 

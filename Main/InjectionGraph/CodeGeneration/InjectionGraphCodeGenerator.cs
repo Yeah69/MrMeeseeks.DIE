@@ -96,17 +96,12 @@ internal sealed class InjectionGraphCodeGenerator(
                   {
                   """);
             if (typeNode.Incoming.Select(e => e.Type).OfType<FunctionEdgeType>().FirstOrDefault() is { } nextFunction)
-            {
                 _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction.Function, doScopedInstance: true, doScopeRoot: true)};");
-            }
             else if (typeSymbolUtility.IsTaskType(typeNode.Type) && typeNode.Outgoing is [{ Target: ConcreteTaskNode { InnerEdge.Type: FunctionEdgeType nextFunction0 } }])
-            {
                 _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0.Function, doScopedInstance: true, doScopeRoot: true)};");
-            }
             else
-            {
                 _code.AppendLine($"throw new Exception(\"No function found for type {typeNode.Type.FullName()} during code generation.\");");
-            }
+            
             _code.AppendLine("}");
             sharedNameRegistry.AddEntryFunctionsForFunctorsMapping(typeNode.Type, functionName);
         }

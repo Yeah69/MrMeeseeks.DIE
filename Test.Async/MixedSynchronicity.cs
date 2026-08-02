@@ -34,7 +34,7 @@ public sealed partial class MixedSynchronicity
 
     internal sealed class Parent
     {
-        internal required ValueTask<ScopeRootSync> Sync { get; init; }
+        internal required ScopeRootSync Sync { get; init; }
         internal required ValueTask<ScopeRootAsync> Async { get; init; }
     }
 
@@ -58,9 +58,9 @@ public sealed partial class MixedSynchronicity
         public async Task Test()
         {
             var container = Container.DIE_CreateContainer();
-            var parent = await container.Create();
-            Assert.True((await parent.Sync).Dependency.IsInitialized);
-            Assert.True((await parent.Async).Dependency.IsInitialized);
+            var parent = container.Create();
+            Assert.True(parent.Sync.Dependency.IsInitializedSync);
+            Assert.True((await parent.Async).Dependency.IsInitializedAsync);
         }
     }
 }

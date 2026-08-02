@@ -28,7 +28,7 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
         _sharedNameRegistry = sharedNameRegistry;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteFunctorNode concreteNode, string? reference = null)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteFunctorNode concreteNode, bool sync, string? reference = null)
     {
         var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Type);
         var parameterReferences = concreteNode.FunctorParameterTypes.Select(_ => _referenceGenerator.Generate("p")).ToArray();

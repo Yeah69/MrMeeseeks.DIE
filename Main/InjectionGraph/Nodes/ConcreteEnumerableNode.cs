@@ -127,7 +127,7 @@ internal abstract record ConcreteEnumerableNodeData(ITypeSymbol EnumerableType, 
 }
 
 internal sealed class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteEnumerableNode> factory)
-    : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IScopeInstance;
+    : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IContainerInstance;
 
 internal sealed class ConcreteEnumerableNode : ConcreteNodeBase
 {

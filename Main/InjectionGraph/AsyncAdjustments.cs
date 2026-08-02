@@ -4,7 +4,7 @@ using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
-internal sealed class AsyncAdjustments : IScopeInstance
+internal sealed class AsyncAdjustments : IContainerInstance
 {
     private readonly ConcurrentDictionary<INode, HashSet<int>> _awaitedNodes = [];
     

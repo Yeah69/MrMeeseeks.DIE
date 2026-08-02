@@ -52,16 +52,19 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IScopeInstance
         _taskNodeCodeGenerator = taskNodeCodeGenerator;
     }
 
-    internal string GenerateForInjectionNode(StringBuilder code, TypeNode node)
+    internal string GenerateForInjectionNode(StringBuilder code, TypeNode node, bool sync)
     {
-        var edgeAndTargets = node.Outgoing.Select(e => (Edges: e, ConcreteNode: e.Target)).ToList();
+        var edgeAndTargets = node.Outgoing
+            .Where(e => sync && e is ConcreteSyncEdge || !sync && e is ConcreteAsyncEdge)
+            .Select(e => (Edges: e, ConcreteNode: e.Target))
+            .ToList();
         var maybeOverride = edgeAndTargets.Select(t => t.ConcreteNode).OfType<ConcreteOverrideNode>().SingleOrDefault();
         var nonOverrides = edgeAndTargets.Where(t => t.ConcreteNode is not ConcreteOverrideNode).ToList();
         
         if (maybeOverride is null && nonOverrides.Count == 1)
             return GenerateSwitchBody(node, nonOverrides.Single().ConcreteNode, null);
         if (maybeOverride is {} onlyOverride && nonOverrides.Count == 0)
-            return _overrideNodeCodeGenerator.Generate(code, node, onlyOverride);
+            return _overrideNodeCodeGenerator.Generate(code, node, onlyOverride, sync: sync);
         
         var reference = _referenceGenerator.Generate("ref");
         code.AppendLine($"{node.Type.FullName()} {reference};");
@@ -70,7 +73,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IScopeInstance
         {
             code.AppendLine($"if ({_contextGenerator.ParameterName}.{_contextGenerator.OverridesPropertyName} is {_sharedNameRegistry.IOverrideInterfaceName}<{concreteOverrideNode.Data.Type.FullName()}>)");
             code.AppendLine("{");
-            _overrideNodeCodeGenerator.Generate(code, node, concreteOverrideNode, reference: reference);
+            _overrideNodeCodeGenerator.Generate(code, node, concreteOverrideNode, sync: sync, reference: reference);
             code.AppendLine("}");
             code.AppendLine("else");
             code.AppendLine("{");
@@ -111,14 +114,14 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IScopeInstance
         string GenerateSwitchBody(TypeNode typeNode, IConcreteNode concreteNode, string? maybeReference) =>
             concreteNode switch
             {
-                ConcreteExceptionNode exceptionNode => _exceptionNodeCodeGenerator.Generate(code, typeNode, exceptionNode, maybeReference),
-                ConcreteImplementationNode implementationNode => _implementationNodeCodeGenerator.Generate(code, typeNode, implementationNode, maybeReference),
-                ConcreteFunctorNode functorNode => _functorNodeCodeGenerator.Generate(code, typeNode, functorNode, maybeReference),
-                ConcreteInterfaceNode interfaceNode => _interfaceNodeCodeGenerator.Generate(code, typeNode, interfaceNode, maybeReference),
-                ConcreteKeyValuePairNode keyValuePairNode => _keyValuePairNodeCodeGenerator.Generate(code, typeNode, keyValuePairNode, maybeReference),
-                ConcreteEnumerableNode enumerableNode => _enumerableNodeCodeGenerator.Generate(code, typeNode, enumerableNode, maybeReference),
-                ConcreteOverrideNode overrideNode => _overrideNodeCodeGenerator.Generate(code, typeNode, overrideNode, maybeReference),
-                ConcreteTaskNode taskNode => _taskNodeCodeGenerator.Generate(code, typeNode, taskNode, maybeReference),
+                ConcreteExceptionNode exceptionNode => _exceptionNodeCodeGenerator.Generate(code, typeNode, exceptionNode, sync: sync, reference: maybeReference),
+                ConcreteImplementationNode implementationNode => _implementationNodeCodeGenerator.Generate(code, typeNode, implementationNode, sync: sync, reference: maybeReference),
+                ConcreteFunctorNode functorNode => _functorNodeCodeGenerator.Generate(code, typeNode, functorNode, sync: sync, reference: maybeReference),
+                ConcreteInterfaceNode interfaceNode => _interfaceNodeCodeGenerator.Generate(code, typeNode, interfaceNode, sync: sync, reference: maybeReference),
+                ConcreteKeyValuePairNode keyValuePairNode => _keyValuePairNodeCodeGenerator.Generate(code, typeNode, keyValuePairNode, sync: sync, reference: maybeReference),
+                ConcreteEnumerableNode enumerableNode => _enumerableNodeCodeGenerator.Generate(code, typeNode, enumerableNode, sync: sync, reference: maybeReference),
+                ConcreteOverrideNode overrideNode => _overrideNodeCodeGenerator.Generate(code, typeNode, overrideNode, sync: sync, reference: maybeReference),
+                ConcreteTaskNode taskNode => _taskNodeCodeGenerator.Generate(code, typeNode, taskNode, sync: sync, reference: maybeReference),
                 _ => ""
             };
         

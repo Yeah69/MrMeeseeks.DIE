@@ -33,7 +33,7 @@ public sealed partial class MixedSynchronicity
 
     internal sealed class Parent
     {
-        internal required ValueTask<ScopeRootSync> Sync { get; init; }
+        internal required ScopeRootSync Sync { get; init; }
         internal required ValueTask<ScopeRootAsync> Async { get; init; }
     }
 

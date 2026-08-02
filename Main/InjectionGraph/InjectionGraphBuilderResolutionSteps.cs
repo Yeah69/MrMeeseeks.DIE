@@ -28,7 +28,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
     WellKnownTypes wellKnownTypes,
     WellKnownTypesCollections wellKnownTypesCollections,
     Lazy<ConcreteExceptionNode> concreteExceptionNode,
-    Func<TypeNode, IConcreteNode, ConcreteEdge> concreteEdgeFactory)
+    Func<TypeNode, IConcreteNode, ConcreteSyncEdge> concreteSyncEdgeFactory)
 {
     internal void OverrideStep(TypeNode typeNode, EdgeContext edgeContext)
     {
@@ -187,8 +187,9 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         
         var concreteTaskNode = concreteTaskNodeManager.GetOrAddNode(concreteTaskNodeData);
         
+        ConnectToTypeNodeIfNotAlready(concreteTaskNode, edgeContext, typeNode);
+        
         var newEdgeContext = edgeContext with { ResolutionId = resolutionRegister.GetNewResolutionId() };
-        ConnectToTypeNodeIfNotAlready(concreteTaskNode, newEdgeContext, typeNode);
         
         foreach (var (node, location) in concreteTaskNode.ConnectIfNotAlready(newEdgeContext))
             queue.Enqueue(new(
@@ -314,7 +315,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
     {
         if (!typeNode.TryGetOutgoingEdgeFor(concreteNode, out var existingEdge))
         {
-            existingEdge = concreteEdgeFactory(typeNode, concreteNode);
+            existingEdge = concreteSyncEdgeFactory(typeNode, concreteNode);
             typeNode.AddOutgoing(existingEdge);
             concreteNode.AddIncomingEdge(existingEdge);
         }

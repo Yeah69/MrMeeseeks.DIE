@@ -62,6 +62,16 @@ internal sealed class ScopedInstanceFunction(TypeNode scopedInstanceElement) : I
     public TypeNode RootNode { get; } = scopedInstanceElement;
 }
 
+internal sealed class AsyncScopedInstanceFunction(TypeNode scopedInstanceElement, INamedTypeSymbol asyncReturnType) : ITypeNodeFunction
+{
+    public Accessibility? Accessibility => null;
+    public required ExplicitInterfaceDescription ExplicitInterface { get; init; }
+    public ITypeParameterSymbol[] TypeParameters { get; } = [];
+    public ITypeSymbol ReturnType => RootNode.Type;
+    public TypeNode RootNode { get; } = scopedInstanceElement;
+    public INamedTypeSymbol AsyncReturnType => asyncReturnType;
+}
+
 internal sealed class ScopeRootFunction(TypeNode scopeRootElement) : ITypeNodeFunction
 {
     public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Internal;
@@ -69,4 +79,15 @@ internal sealed class ScopeRootFunction(TypeNode scopeRootElement) : ITypeNodeFu
     public ITypeParameterSymbol[] TypeParameters { get; } = [];
     public ITypeSymbol ReturnType => RootNode.Type;
     public TypeNode RootNode { get; } = scopeRootElement;
+}
+
+// todo cleanup/unify async function types
+internal sealed class AsyncScopeRootFunction(TypeNode scopeRootElement, INamedTypeSymbol asyncReturnType) : ITypeNodeFunction
+{
+    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Internal;
+    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
+    public ITypeParameterSymbol[] TypeParameters { get; } = [];
+    public ITypeSymbol ReturnType => RootNode.Type;
+    public TypeNode RootNode { get; } = scopeRootElement;
+    public INamedTypeSymbol AsyncReturnType => asyncReturnType;
 }

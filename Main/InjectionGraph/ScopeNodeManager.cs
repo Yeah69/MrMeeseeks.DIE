@@ -14,7 +14,8 @@ internal sealed class ScopeNodeManager : IContainerInstance
 
     private readonly Func<string, INamedTypeSymbol?, ScopeNode> _scopeFactory;
     private readonly Func<string, INamedTypeSymbol?, TransientScopeNode> _transientScopeFactory;
-    private readonly Func<string, INamedTypeSymbol?, ScopeNodeConfigContext> _scopeCheckTypePropertiesFactory;
+    private readonly Func<string, INamedTypeSymbol?, ScopeInfo> _scopeInfoFactory;
+    private readonly Func<string, INamedTypeSymbol?, ScopeInfo, ScopeNodeConfigContext> _scopeCheckTypePropertiesFactory;
     private readonly Lazy<ScopeNode> _defaultScope;
     private readonly Lazy<TransientScopeNode> _defaultTransientScope;
     private readonly Dictionary<ITypeSymbol, ScopeNode> _customScopes;
@@ -27,12 +28,14 @@ internal sealed class ScopeNodeManager : IContainerInstance
         Func<ContainerScopeNode> containerScopeNodeFactory,
         Func<string, INamedTypeSymbol?, ScopeNode> scopeFactory,
         Func<string, INamedTypeSymbol?, TransientScopeNode> transientScopeFactory,
-        Func<string, INamedTypeSymbol?, ScopeNodeConfigContext> scopeCheckTypePropertiesFactory,
+        Func<string, INamedTypeSymbol?, ScopeInfo> scopeInfoFactory,
+        Func<string, INamedTypeSymbol?, ScopeInfo, ScopeNodeConfigContext> scopeCheckTypePropertiesFactory,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         ContainerScopeNode = containerScopeNodeFactory();
         _scopeFactory = scopeFactory;
         _transientScopeFactory = transientScopeFactory;
+        _scopeInfoFactory = scopeInfoFactory;
         _scopeCheckTypePropertiesFactory = scopeCheckTypePropertiesFactory;
         _defaultScope = new Lazy<ScopeNode>(
             () =>
@@ -196,7 +199,8 @@ internal sealed class ScopeNodeManager : IContainerInstance
         ScopeNodeContext CreateNewContext()
         {
             var oldTransientScopeName = previousScopeNodeContext is ScopeNodeContext.TransientScope(var name) ? name : null;
-            var scopeNodeConfigContext = _scopeCheckTypePropertiesFactory(scopeNode.Name, scopeNode.Type);
+            var scopeInfo = new ScopeInfo(scopeNode.Name, scopeNode.Type);
+            var scopeNodeConfigContext = _scopeCheckTypePropertiesFactory(scopeNode.Name, scopeNode.Type, scopeInfo);
             return scopeNodeLevel switch
             {
                 ScopeLevel.Scope => new ScopeNodeContext.Scope(scopeNode.Name, oldTransientScopeName)

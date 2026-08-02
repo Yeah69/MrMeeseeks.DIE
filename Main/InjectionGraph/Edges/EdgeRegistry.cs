@@ -2,7 +2,7 @@ using MrMeeseeks.DIE.MsContainer;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal sealed class EdgeRegistry : IScopeInstance
+internal sealed class EdgeRegistry : IContainerInstance
 {
     private readonly List<IEdge> _edges = [];
     internal IReadOnlyList<IEdge> Edges => _edges;

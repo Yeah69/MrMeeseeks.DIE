@@ -7,7 +7,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal sealed class TypeNodeManager : IScopeInstance
+internal sealed class TypeNodeManager : IContainerInstance
 {
     private readonly Dictionary<ITypeSymbol, TypeNode> _nodes = new(CustomSymbolEqualityComparer.IncludeNullability);
     private readonly Func<ITypeSymbol,TypeNode> _factory;
@@ -51,6 +51,10 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
     internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> ScopeInstanceConfiguration => _scopeInstanceConfiguration;
     
     internal IReadOnlyDictionary<int, HashSet<int>> LinkedResolutionIdsToFrom => _linkedResolutionIdsToFrom;
+    
+    internal ITypeNodeFunction? SyncFunction { get; set; }
+    
+    internal ITypeNodeFunction? AsyncFunction { get; set; }
     
     internal void AddIncoming(TypeEdge edge) => _incoming.Add(edge);
     internal void AddOutgoing(ConcreteEdge edge) => _outgoing.Add(edge);

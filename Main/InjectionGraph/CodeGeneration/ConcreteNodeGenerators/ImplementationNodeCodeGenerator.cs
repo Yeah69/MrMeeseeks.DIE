@@ -12,7 +12,7 @@ internal sealed class ImplementationNodeCodeGenerator(
     WellKnownTypes wellKnownTypes) 
     : IConcreteNodeCodeGenerator<ConcreteImplementationNode>, IScopeInstance
 {
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteImplementationNode concreteNode, string? reference = null)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteImplementationNode concreteNode, bool sync, string? reference = null)
     {
         var referenceIsExternal = reference is not null;
         var actualReference = reference ?? referenceGenerator.Generate(concreteNode.Data.Implementation);
@@ -41,14 +41,14 @@ internal sealed class ImplementationNodeCodeGenerator(
         }
 
         // Constructor
-        var parameters = string.Join(", ", concreteNode.ConstructorParameters.Select(d => HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext)));
+        var parameters = string.Join(", ", concreteNode.ConstructorParameters.Select(d => HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext, sync: sync)));
 
         // Object initializer
         var objectInitializer = "";
         if (concreteNode.ObjectInitializerAssignments.Length > 0)
         {
             var propertyNodeAssignments = concreteNode.ObjectInitializerAssignments;
-            objectInitializer = $" {{ {string.Join(", ", propertyNodeAssignments.Select(d => $"{d.Name} = {HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext)}"))} }}";
+            objectInitializer = $" {{ {string.Join(", ", propertyNodeAssignments.Select(d => $"{d.Name} = {HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext, sync: sync)}"))} }}";
         }
 
         var implementationFullName = GetImplementationsFullName(concreteNode.Data.Implementation);
@@ -60,7 +60,7 @@ internal sealed class ImplementationNodeCodeGenerator(
                          || CustomSymbolEqualityComparer.Default.Equals(returnType, wellKnownTypes.ValueTask)
                 ? "await "
                 : "";
-            var initializerParameters = string.Join(", ", concreteNode.InitializerParameters.Select(d => $"{d.Name}: {HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext)}"));
+            var initializerParameters = string.Join(", ", concreteNode.InitializerParameters.Select(d => $"{d.Name}: {HandleImplementationDependency(code, d, referenceOriginalContext, referencePurgedContext, sync: sync)}"));
             code.AppendLine($"{prefix}(({initializer.Type.FullName()}) {actualReference}).{initializer.Method.Name}({initializerParameters});");
         }
 
@@ -71,7 +71,8 @@ internal sealed class ImplementationNodeCodeGenerator(
         StringBuilder code,
         ConcreteImplementationNode.Dependency dependency,
         string referenceOriginalContext,
-        string referencePurgedContext)
+        string referencePurgedContext,
+        bool sync)
     {
         if (dependency.PassOriginalChoiceContextId is not null)
         {
@@ -83,7 +84,7 @@ internal sealed class ImplementationNodeCodeGenerator(
                   """);
         }
 
-        var ret = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, dependency.Edge, dependency.Edge.Target);
+        var ret = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, dependency.Edge, dependency.Edge.Target, sync: sync);
 
         if (dependency.PassOriginalChoiceContextId is not null)
         {

@@ -42,27 +42,31 @@ internal sealed class ScopeNodeBaseCodeGenerator(
     {
         foreach ( var scopeRoot in scopeNode.ScopedRoots)
         {
-            var function = scopeRoot.Function;
-           
-            code.AppendLine(functionUtility.GenerateHeader(function));
-        
-            code.AppendLine("{");
-        
-            // ToDo Disposal Handling
-            // ToDo Async Handling
-        
-            var calledCreateFunction = scopeRoot.TypeNode.Incoming.Where(te => te.Type is FunctionEdgeType)
-                .Select(te => ((FunctionEdgeType) te.Type).Function)
-                .First();
-            var newContextAssignment = scopeNode switch
+            if (scopeRoot.TypeNode.SyncFunction is { } syncFunction)
+                GenerateFunction(scopeRoot.SyncFunction, syncFunction);
+            else if (scopeRoot.TypeNode.AsyncFunction is { } asyncFunction)
+                GenerateFunction(scopeRoot.AsyncFunction, asyncFunction);
+            continue;
+            
+            void GenerateFunction(IFunction outerFunction, IFunction innerFunction)
             {
-                ScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\""),
-                TransientScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\"")
-            };
-            code.AppendLine(newContextAssignment);
-            code.AppendLine($"return {containerReference}.{functionUtility.GenerateFunctionCall(calledCreateFunction, doScopedInstance: true, doScopeRoot: false)};");
+                code.AppendLine(functionUtility.GenerateHeader(outerFunction));
         
-            code.AppendLine("}");
+                code.AppendLine("{");
+        
+                // ToDo Disposal Handling
+                // ToDo Async Handling
+            
+                var newContextAssignment = scopeNode switch
+                {
+                    ScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\""),
+                    TransientScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\"")
+                };
+                code.AppendLine(newContextAssignment);
+                code.AppendLine($"return {containerReference}.{functionUtility.GenerateFunctionCall(innerFunction, doScopedInstance: true, doScopeRoot: false)};");
+        
+                code.AppendLine("}");
+            }
         }
     }
     
@@ -74,48 +78,53 @@ internal sealed class ScopeNodeBaseCodeGenerator(
         foreach ( var scopedInstance in scopeNodeBase.ScopedInstances)
         {
             var typeSymbol = scopedInstance.TypeNode.Type;
-            var function = scopedInstance.Function;
-            
-            var scopedInstanceFieldReference = referenceGenerator.Generate("_scopedInstanceField", typeSymbol);
-            var scopedInstanceLockFieldReference = referenceGenerator.Generate("_scopedInstanceLock", typeSymbol);
-            code.AppendLine($"private {typeSymbol.FullName()}? {scopedInstanceFieldReference};");
-            code.AppendLine($"private {semaphoreSlimFullName}? {scopedInstanceLockFieldReference} = new {semaphoreSlimFullName}(1);");
-            
-            code.AppendLine(functionUtility.GenerateHeader(function));
-                
-            code.AppendLine("{");
-            
-            // ToDo Disposal Handling
-            
-            code.AppendLine($"if(!{objectFullName}.{nameof(ReferenceEquals)}({scopedInstanceFieldReference}, {Constants.NullKeyword}))");
-            code.AppendLine($"return {scopedInstanceFieldReference};");
-            // ToDo Async Handling
-            code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceLockFieldReference}?.{nameof(SemaphoreSlim.Wait)}();");
-            code.AppendLine("try");
-            code.AppendLine("{");
-            
-            code.AppendLine($"if(!{objectFullName}.{nameof(ReferenceEquals)}({scopedInstanceFieldReference}, {Constants.NullKeyword}))");
-            code.AppendLine($"return {scopedInstanceFieldReference};");
-            
-            var calledCreateFunction = scopedInstance.TypeNode.Incoming.Where(te => te.Type is FunctionEdgeType)
-                .Select(te => ((FunctionEdgeType) te.Type).Function)
-                .First();
-            code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceFieldReference} = {containerReference}.{functionUtility.GenerateFunctionCall(calledCreateFunction, doScopedInstance: false, doScopeRoot: false)};");
 
-            code.AppendLine("}");
-            code.AppendLine("finally");
-            code.AppendLine("{");
-            code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceLockFieldReference}?.{nameof(SemaphoreSlim.Release)}();");
-            code.AppendLine("}");
-            
-            code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceLockFieldReference} = {Constants.NullKeyword};");
-            code.AppendLine($"return {Constants.ThisKeyword}.{scopedInstanceFieldReference};");
-            
-            code.AppendLine("}");
+            if (scopedInstance.TypeNode.SyncFunction is { } syncFunction)
+                GenerateFunction(scopedInstance.SyncFunction, syncFunction);
+            else if (scopedInstance.TypeNode.AsyncFunction is { } asyncFunction)
+                GenerateFunction(scopedInstance.AsyncFunction, asyncFunction);
+            continue;
+
+            void GenerateFunction(IFunction outerFunction, IFunction innerFunction)
+            {
+                var scopedInstanceFieldReference = referenceGenerator.Generate("_scopedInstanceField", typeSymbol);
+                var scopedInstanceLockFieldReference = referenceGenerator.Generate("_scopedInstanceLock", typeSymbol);
+                code.AppendLine($"private {typeSymbol.FullName()}? {scopedInstanceFieldReference};");
+                code.AppendLine($"private {semaphoreSlimFullName}? {scopedInstanceLockFieldReference} = new {semaphoreSlimFullName}(1);");
+                
+                code.AppendLine(functionUtility.GenerateHeader(outerFunction));
+                    
+                code.AppendLine("{");
+                
+                // ToDo Disposal Handling
+                
+                code.AppendLine($"if(!{objectFullName}.{nameof(ReferenceEquals)}({scopedInstanceFieldReference}, {Constants.NullKeyword}))");
+                code.AppendLine($"return {scopedInstanceFieldReference};");
+                // ToDo Async Handling
+                code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceLockFieldReference}?.{nameof(SemaphoreSlim.Wait)}();");
+                code.AppendLine("try");
+                code.AppendLine("{");
+                
+                code.AppendLine($"if(!{objectFullName}.{nameof(ReferenceEquals)}({scopedInstanceFieldReference}, {Constants.NullKeyword}))");
+                code.AppendLine($"return {scopedInstanceFieldReference};");
+                    
+                code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceFieldReference} = {containerReference}.{functionUtility.GenerateFunctionCall(innerFunction, doScopedInstance: false, doScopeRoot: false)};");
+
+                code.AppendLine("}");
+                code.AppendLine("finally");
+                code.AppendLine("{");
+                code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceLockFieldReference}?.{nameof(SemaphoreSlim.Release)}();");
+                code.AppendLine("}");
+                
+                code.AppendLine($"{Constants.ThisKeyword}.{scopedInstanceLockFieldReference} = {Constants.NullKeyword};");
+                code.AppendLine($"return {Constants.ThisKeyword}.{scopedInstanceFieldReference};");
+                
+                code.AppendLine("}");
+            }
         }
     }
 
-    internal void GenerateScopeRootEntry(StringBuilder code, TypeNode rootNode)
+    internal void GenerateScopeRootEntry(StringBuilder code, TypeNode rootNode, bool sync)
     {
         if (rootNode.ScopeRootConfiguration.Count == 0) 
             return;
@@ -163,21 +172,29 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                 case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
                 {
                     var transientScopeNode = scopeNodeManager.TransientScopes.First(s => s.Name == transientScopeName);
-                    var (_, transientScopeRootFunction) = transientScopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
+                    var (_, syncFunction, asyncFunction) = transientScopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
                     var transientScopeReference = referenceGenerator.Generate("transientScope");
+                    var calledFunction = sync
+                        ? syncFunction
+                        : asyncFunction;
+                    var await = !sync ? "await " : "";
                     return $$"""
                              {{transientScopeName}} {{transientScopeReference}} = new {{transientScopeName}}() { {{ScopeNodeToContainerPropertyReference[transientScopeNode]}} = ({{containerInfo.FullName}}) {{contextGenerator.ParameterName}}.{{contextGenerator.ContainerNodePropertyName}} };
-                             return {{transientScopeReference}}.{{functionUtility.GenerateFunctionCall(transientScopeRootFunction, doScopedInstance: true, doScopeRoot: true)}};
+                             return {{await}}{{transientScopeReference}}.{{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)}};
                              """;
                 }
                 case ScopeNodeContext.Scope { ScopeName: var scopeName }:
                 {
                     var scopeNode = scopeNodeManager.Scopes.First(s => s.Name == scopeName);
-                    var (_, scopeRootFunction) = scopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
+                    var (_, syncFunction, asyncFunction) = scopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
                     var scopeReference = referenceGenerator.Generate("scope");
+                    var calledFunction = sync
+                        ? syncFunction
+                        : asyncFunction;
+                    var await = !sync ? "await " : "";
                     return $$"""
                              {{scopeName}} {{scopeReference}} = new {{scopeName}}() { {{ScopeNodeToContainerPropertyReference[scopeNode]}} = ({{containerInfo.FullName}}) {{contextGenerator.ParameterName}}.{{contextGenerator.ContainerNodePropertyName}} };
-                             return {{scopeReference}}.{{functionUtility.GenerateFunctionCall(scopeRootFunction, doScopedInstance: true, doScopeRoot: true)}};
+                             return {{await}}{{scopeReference}}.{{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)}};
                              """;
                 }
                 default:
@@ -188,14 +205,14 @@ internal sealed class ScopeNodeBaseCodeGenerator(
         }
     }
 
-    internal void GenerateScopedInstanceEntry(StringBuilder code, TypeNode rootNode)
+    internal void GenerateScopedInstanceEntry(StringBuilder code, TypeNode rootNode, bool sync)
     {
         if (!rootNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)) 
             return;
         
         // At this point it doesn't actually matter from which scope node (Container, Transient, Scope) the scoped instance is,
         // because we just need any function for the call (which will have the same name everytime).
-        var (_, scopedInstanceFunction) = scopeNodeManager.ContainerScopeNode.ScopedInstances
+        var (_, syncFunction, asyncFunction) = scopeNodeManager.ContainerScopeNode.ScopedInstances
             .Concat(scopeNodeManager.Scopes.SelectMany(s => s.ScopedInstances))
             .Concat(scopeNodeManager.TransientScopes.SelectMany(ts => ts.ScopedInstances))
             .First(sid => CustomSymbolEqualityComparer.Default.Equals(sid.TypeNode.Type, rootNode.Type));
@@ -245,7 +262,10 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                 ScopeLevel.TransientScope => contextGenerator.TransientScopeNodePropertyName,
                 ScopeLevel.Scope => contextGenerator.ScopeNodePropertyName
             };
-            return $"return (({scopedInstanceInterfaceDescription.InterfaceName}<{rootNode.Type}>) {contextGenerator.ParameterName}.{contextProperty}).{functionUtility.GenerateFunctionCall(scopedInstanceFunction, doScopedInstance: true, doScopeRoot: true)};";
+            var calledFunction = sync
+                ? syncFunction
+                : asyncFunction;
+            return $"return (({scopedInstanceInterfaceDescription.InterfaceName}<{rootNode.Type}>) {contextGenerator.ParameterName}.{contextProperty}).{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)};";
         }
     }
 }

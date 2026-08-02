@@ -2,4 +2,4 @@
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal sealed class ConcreteExceptionNode : ConcreteNodeBase, IScopeInstance;
+internal sealed class ConcreteExceptionNode : ConcreteNodeBase, IContainerInstance;

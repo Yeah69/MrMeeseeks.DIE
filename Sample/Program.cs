@@ -9,7 +9,10 @@ internal class Program
         try
         {
             var container = MixedSynchronicity.Container.DIE_CreateContainer(); 
-            var parent = await container.Create();
+            var parent = container.Create();
+
+            var sync = parent.Sync;
+            var async = await parent.Async;
             
             Console.WriteLine("Hello, World!");
         }

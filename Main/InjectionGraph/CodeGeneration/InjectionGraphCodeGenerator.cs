@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.InjectionGraph.Edges;
+﻿using MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
+using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
@@ -7,8 +8,10 @@ namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 
 internal sealed class InjectionGraphCodeGenerator(
     ContainerInfo containerInfo,
-    SyncGraphHolder syncGraphHolder,
-    AsyncGraphHolder asyncGraphHolder,
+    ConcreteFunctorNodeManager concreteFunctorNodeManager,
+    ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
+    InjectionGraphBuilder injectionGraphBuilder,
+    InjectionNodeGenerator injectionNodeGenerator,
     ScopeNodeBaseCodeGenerator scopeNodeBaseCodeGenerator,
     ScopeNodeManager scopeNodeManager,
     FunctionUtility functionUtility,
@@ -19,8 +22,6 @@ internal sealed class InjectionGraphCodeGenerator(
     SharedNameRegistry sharedNameRegistry)
 {
     private readonly StringBuilder _code = new();
-    private readonly SyncGraphRoot _syncGraphRoot = syncGraphHolder.Value;
-    private readonly AsyncGraphRoot _asyncGraphRoot = asyncGraphHolder.Value;
 
     public string Generate()
     {
@@ -82,8 +83,7 @@ internal sealed class InjectionGraphCodeGenerator(
         
         scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNodeManager.ContainerScopeNode, Constants.ThisKeyword);
 
-        var typesGettingFunctorEntry = _syncGraphRoot.ConcreteFunctorNodeManager.AllNodes
-            .Concat(_asyncGraphRoot.ConcreteFunctorNodeManager.AllNodes)
+        var typesGettingFunctorEntry = concreteFunctorNodeManager.AllNodes
             .Select(n => n.ReturnedElement.Target)
             .Distinct();
         foreach (var typeNode in typesGettingFunctorEntry)
@@ -95,10 +95,10 @@ internal sealed class InjectionGraphCodeGenerator(
                   {{functionUtility.GenerateHeader(function)}}
                   {
                   """);
-            if (typeNode.Incoming.Select(e => e.Type).OfType<FunctionEdgeType>().FirstOrDefault() is { } nextFunction)
-                _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction.Function, doScopedInstance: true, doScopeRoot: true)};");
-            else if (typeSymbolUtility.IsTaskType(typeNode.Type) && typeNode.Outgoing is [{ Target: ConcreteTaskNode { InnerEdge.Type: FunctionEdgeType nextFunction0 } }])
-                _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0.Function, doScopedInstance: true, doScopeRoot: true)};");
+            if (typeNode.SyncFunction is { } nextFunction)
+                _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction, doScopedInstance: true, doScopeRoot: true)};");
+            else if (typeSymbolUtility.IsTaskType(typeNode.Type) && typeNode.Outgoing is [{ Target: ConcreteTaskNode { InnerEdge.Target.AsyncFunction: {} nextFunction0 } }])
+                _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0, doScopedInstance: true, doScopeRoot: true)};");
             else
                 _code.AppendLine($"throw new Exception(\"No function found for type {typeNode.Type.FullName()} during code generation.\");");
             
@@ -106,9 +106,7 @@ internal sealed class InjectionGraphCodeGenerator(
             sharedNameRegistry.AddEntryFunctionsForFunctorsMapping(typeNode.Type, functionName);
         }
 
-        var functionsAndGenerators = Enumerable.Empty<IGraphRoot>().Append(_syncGraphRoot).Append(_asyncGraphRoot)
-            .SelectMany(r => r.GraphBuilder.Functions.Select(f => (Function: f, Generator: r.InjectionNodeGenerator)));
-        foreach (var (function, injectionNodeGenerator) in functionsAndGenerators)
+        foreach (var function in injectionGraphBuilder.Functions)
         {
             _code.AppendLine(
                 $$"""
@@ -118,42 +116,38 @@ internal sealed class InjectionGraphCodeGenerator(
             
             var rootNode = function.RootNode;
 
-            scopeNodeBaseCodeGenerator.GenerateScopeRootEntry(_code, rootNode);
-            scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode);
+            var sync = function is not AsyncTypeNodeFunction;
+            scopeNodeBaseCodeGenerator.GenerateScopeRootEntry(_code, rootNode, sync: sync);
+            scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode, sync: sync);
 
-            var rootReference = injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode);
+            var rootReference = injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode, sync: function is not AsyncTypeNodeFunction);
             if (!rootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
                 _code.AppendLine($"return {rootReference};");
             _code.AppendLine("}");
         }
 
-        var entryCreateFunctionsMap = Enumerable.Empty<IGraphRoot>().Append(_syncGraphRoot).Append(_asyncGraphRoot)
-            .SelectMany(gr =>
-                gr.ConcreteEntryFunctionNodeManager.AllNodes.Select(n => (ConcreteEntryFunctionNode: n, gr.InjectionNodeGenerator, GraphType: gr.GraphTypeHolder.Type)))
-            .ToImmutableDictionary(t => t.ConcreteEntryFunctionNode.Data.Name, t => t);
-
+        var entryCreateFunctionsMap = concreteEntryFunctionNodeManager.AllNodes
+            .ToImmutableDictionary(x => x.Data.Name, x => x);
+        
         foreach (var (rootType, name, parameters, _) in containerInfo.CreateFunctionData)
         {
-            if (entryCreateFunctionsMap.TryGetValue(name, out var tuple)
+            if (entryCreateFunctionsMap.TryGetValue(name, out var entryFunctionNode)
                 && overrideContextManager.TryGetContext(parameters, out var overrideContext))
             {
-                var (entryFunctionNode, injectionNodeGenerator, graphType) = tuple;
                 var parametersWithName = parameters.Select(p => (Type: p, Name: referenceGenerator.Generate(p))).ToArray();
                 var parametersOnDeclaration = string.Join(", ", parametersWithName.Select(t => $"{t.Type.FullName()} {t.Name}"));
                 var overridesName = sharedNameRegistry.GetOverrideContextName(overrideContext);
                 var overridesAssignment = overrideContext is OverrideContext.Any any 
                     ? string.Join(", ", any.Overrides.Select(p => parametersWithName.First(t => t.Type.Equals(p)).Name))
                     : "";
-                var maybeAsync = graphType is GraphType.Async ? "async " : "";
-                var maybeAwait = graphType is GraphType.Async ? "await " : "";
                 _code.AppendLine(
                     $$"""
-                      internal {{maybeAsync}}{{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
+                      internal {{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
                       {
                       {{contextGenerator.FullNameAndParameterName}} = {{contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null", containerNode: Constants.ThisKeyword, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{containerInfo.Name}\"")}};
                       """);
-                var reference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(_code, entryFunctionNode.ReturnType, entryFunctionNode.ReturnType.Target);
-                _code.AppendLine($"return {maybeAwait}{reference};");
+                var reference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(_code, entryFunctionNode.ReturnType, entryFunctionNode.ReturnType.Target, sync: true);
+                _code.AppendLine($"return {reference};");
                 _code.AppendLine("}");
                 
             }

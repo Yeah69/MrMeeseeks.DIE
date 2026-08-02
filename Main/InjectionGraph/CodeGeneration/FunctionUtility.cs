@@ -28,6 +28,8 @@ internal sealed class FunctionUtility(
                 ScopedInstanceFunction => ScopedInstanceInterfaceDescription.FunctionName,
                 TypeNodeFunction typeNodeFunction => referenceGenerator.Generate("Create", typeNodeFunction.ReturnType),
                 AsyncTypeNodeFunction asyncTypeNodeFunction => referenceGenerator.Generate("Create", asyncTypeNodeFunction.ReturnType, "Async"),
+                AsyncScopedInstanceFunction asyncScopedInstanceFunction => referenceGenerator.Generate("Create", asyncScopedInstanceFunction.ReturnType, "Async"),
+                AsyncScopeRootFunction asyncScopeRootFunction => referenceGenerator.Generate("Create", asyncScopeRootFunction.ReturnType, "Async"),
                 _ => throw new ArgumentOutOfRangeException(nameof(function))
             };
     }
@@ -85,9 +87,13 @@ internal sealed class FunctionUtility(
 
         var parametersText = $"{contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopedInstanceParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopeRootParameterName}";
         var functionName = $"{GetName(function)}";
-        var returnType = function is AsyncTypeNodeFunction asyncTypeNodeFunction
-            ? asyncTypeNodeFunction.AsyncReturnType.FullName()
-            : function.ReturnType.FullName();
+        var returnType = function switch
+        {
+            AsyncTypeNodeFunction asyncTypeNodeFunction => asyncTypeNodeFunction.AsyncReturnType.FullName(),
+            AsyncScopeRootFunction asyncScopeRootFunction => asyncScopeRootFunction.AsyncReturnType.FullName(),
+            AsyncScopedInstanceFunction asyncScopedInstanceFunction => asyncScopedInstanceFunction.AsyncReturnType.FullName(),
+            _ => function.ReturnType.FullName()
+        };
         return $"{accessibility}{asyncModifier}{returnType} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
     }
 }

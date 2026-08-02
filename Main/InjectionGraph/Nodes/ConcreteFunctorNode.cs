@@ -26,7 +26,7 @@ internal sealed record ConcreteFunctorNodeData(INamedTypeSymbol Type)
 }
 
 internal sealed class ConcreteFunctorNodeManager(Func<ConcreteFunctorNodeData, ConcreteFunctorNode> factory)
-    : ConcreteNodeManagerBase<ConcreteFunctorNodeData, ConcreteFunctorNode>(factory), IScopeInstance;
+    : ConcreteNodeManagerBase<ConcreteFunctorNodeData, ConcreteFunctorNode>(factory), IContainerInstance;
 
 internal sealed class ConcreteFunctorNode : ConcreteNodeBase
 {

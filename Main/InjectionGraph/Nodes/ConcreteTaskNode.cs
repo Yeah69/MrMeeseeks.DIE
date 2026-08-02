@@ -27,7 +27,7 @@ internal sealed record ConcreteTaskNodeData(INamedTypeSymbol TaskType)
 }
 
 internal sealed class ConcreteTaskNodeManager(Func<ConcreteTaskNodeData, ConcreteTaskNode> factory)
-    : ConcreteNodeManagerBase<ConcreteTaskNodeData, ConcreteTaskNode>(factory), IScopeInstance;
+    : ConcreteNodeManagerBase<ConcreteTaskNodeData, ConcreteTaskNode>(factory), IContainerInstance;
 
 internal sealed class ConcreteTaskNode : ConcreteNodeBase
 {

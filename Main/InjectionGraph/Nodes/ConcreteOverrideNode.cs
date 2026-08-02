@@ -25,7 +25,7 @@ internal sealed record ConcreteOverrideNodeData(ITypeSymbol Type)
 }
 
 internal sealed class ConcreteOverrideNodeManager(Func<ConcreteOverrideNodeData, ConcreteOverrideNode> factory)
-    : ConcreteNodeManagerBase<ConcreteOverrideNodeData, ConcreteOverrideNode>(factory), IScopeInstance;
+    : ConcreteNodeManagerBase<ConcreteOverrideNodeData, ConcreteOverrideNode>(factory), IContainerInstance;
 
 internal sealed class ConcreteOverrideNode : ConcreteNodeBase
 {

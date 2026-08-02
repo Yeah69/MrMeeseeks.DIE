@@ -18,14 +18,16 @@ internal class ScopedInstanceInterfaceDescription(ReferenceGenerator referenceGe
     internal string InterfaceName { get; } = referenceGenerator.Generate("ScopedInstance");
 }
 
-internal record ScopedInstanceDescription(TypeNode TypeNode, IFunction Function);
+internal record ScopedInstanceDescription(TypeNode TypeNode, IFunction SyncFunction, IFunction AsyncFunction);
 
-internal record ScopeRootDescription(TypeNode TypeNode, IFunction Function);
+internal record ScopeRootDescription(TypeNode TypeNode, IFunction SyncFunction, IFunction AsyncFunction);
 
 internal abstract class ScopeNodeBase
 {
     private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
     private readonly Dictionary<TypeNode, ScopedInstanceDescription> _scopedInstances = [];
+    
+    public required WellKnownTypes WellKnownTypes { protected get; init; }
 
     internal ScopeNodeBase(ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)
     {
@@ -38,9 +40,16 @@ internal abstract class ScopeNodeBase
     {
         if (_scopedInstances.ContainsKey(node))
             return;
+        var taskWrappedType = WellKnownTypes.ValueTask1 is not null
+            ? WellKnownTypes.ValueTask1.Construct(node.Type)
+            : WellKnownTypes.Task1.Construct(node.Type);
         _scopedInstances[node] = new(
             node,
             new ScopedInstanceFunction(node)
+            {
+                ExplicitInterface = new ExplicitInterfaceDescription.Generated($"{_scopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>")
+            },
+            new AsyncScopedInstanceFunction(node, taskWrappedType)
             {
                 ExplicitInterface = new ExplicitInterfaceDescription.Generated($"{_scopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>")
             });
@@ -63,7 +72,12 @@ internal abstract class NonContainerScopeNode(
     internal void AddScopeRoot(TypeNode node)
     {
         if (!_scopeRoots.ContainsKey(node))
-            _scopeRoots[node] = new(node, new ScopeRootFunction(node));
+        {
+            var taskWrappedType = WellKnownTypes.ValueTask1 is not null
+                ? WellKnownTypes.ValueTask1.Construct(node.Type)
+                : WellKnownTypes.Task1.Construct(node.Type);
+            _scopeRoots[node] = new(node, new ScopeRootFunction(node), new AsyncScopeRootFunction(node, taskWrappedType));
+        }
     }
 }
 

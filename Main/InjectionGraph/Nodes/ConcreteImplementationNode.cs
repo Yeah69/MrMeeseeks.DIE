@@ -53,7 +53,7 @@ internal sealed record ConcreteImplementationNodeData(
 }
 
 internal sealed class ConcreteImplementationNodeManager(Func<ConcreteImplementationNodeData, ConcreteImplementationNode> factory)
-    : ConcreteNodeManagerBase<ConcreteImplementationNodeData, ConcreteImplementationNode>(factory), IScopeInstance;
+    : ConcreteNodeManagerBase<ConcreteImplementationNodeData, ConcreteImplementationNode>(factory), IContainerInstance;
 
 internal sealed class ConcreteImplementationNode : ConcreteNodeBase
 {

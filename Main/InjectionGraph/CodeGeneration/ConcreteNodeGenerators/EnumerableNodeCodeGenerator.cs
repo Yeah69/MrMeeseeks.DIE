@@ -23,10 +23,10 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
         _keyUtility = keyUtility;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteEnumerableNode concreteNode, string? reference = null)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteEnumerableNode concreteNode, bool sync, string? reference = null)
     {
         var isArray = concreteNode.Data.EnumerableType is IArrayTypeSymbol;
-        GenerateForResult(code, concreteNode, concreteNode.Data, isArray);
+        GenerateForResult(code, concreteNode, concreteNode.Data, isArray, sync: sync);
         return "";
     }
 
@@ -34,9 +34,10 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
         StringBuilder code,
         ConcreteEnumerableNode enumerableNode,
         ConcreteEnumerableNodeData nodeData,
-        bool isArray)
+        bool isArray,
+        bool sync)
     {
-        var references = GetResultReferences(code, enumerableNode, nodeData, isArray);
+        var references = GetResultReferences(code, enumerableNode, nodeData, isArray, sync: sync);
 
         code.AppendLine(isArray
             ? $"return new {enumerableNode.Data.EnumerableType.FullName()} {{ {string.Join(", ", references)} }};"
@@ -47,7 +48,8 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
         StringBuilder code,
         ConcreteEnumerableNode enumerableNode,
         ConcreteEnumerableNodeData nodeData,
-        bool isArray)
+        bool isArray,
+        bool sync)
     {
         if (nodeData.PurgeKeyAndChoice)
             code.AppendLine(_contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: "0", caseNumber: "0", key: "null"));
@@ -61,7 +63,7 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
                         outwardFacingTypeNumber: single.OutwardFacingTypeId.ToString(CultureInfo.InvariantCulture),
                         caseNumber: single.CaseId.ToString(CultureInfo.InvariantCulture),
                         key: "null"));
-                    var reference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                    var reference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target, sync: sync);
                     if (!isArray)
                         code.AppendLine($"yield return {reference};");
                     return reference;
@@ -73,7 +75,7 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
                 {
                     string keyLiteral = _keyUtility.GenerateKeyLiteral(key.KeyType, value);
                     code.AppendLine(_contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: "0", caseNumber: "0", key: keyLiteral));
-                    var reference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                    var reference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target, sync: sync);
                     if (!isArray)
                         code.AppendLine($"yield return {reference};");
                     return reference;
@@ -81,7 +83,7 @@ internal sealed class EnumerableNodeCodeGenerator : IConcreteNodeCodeGenerator<C
                 return [.. keyedSequence];
 
             case ConcreteEnumerableNodeData.SinglePlainItem:
-                var singlePlainItemReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target);
+                var singlePlainItemReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target, sync: sync);
                 if (!isArray)
                     code.AppendLine($"yield return {singlePlainItemReference};");
                 return [singlePlainItemReference];

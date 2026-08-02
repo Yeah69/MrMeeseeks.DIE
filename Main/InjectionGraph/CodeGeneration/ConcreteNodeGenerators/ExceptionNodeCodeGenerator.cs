@@ -17,7 +17,7 @@ internal sealed class ExceptionNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
         _wellKnownTypes = wellKnownTypes;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteExceptionNode concreteNode, string? reference = null)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteExceptionNode concreteNode, bool sync, string? reference = null)
     {
         var actualReference = reference ?? _referenceGenerator.Generate(typeNode.Type);
         code.AppendLine($"{(reference is null ? $"{typeNode.Type.FullName()} " : "")}{actualReference} = default!;");

@@ -32,14 +32,14 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
         _wellKnownTypes = wellKnownTypes;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteInterfaceNode concreteNode, string? reference = null)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteInterfaceNode concreteNode, bool sync, string? reference = null)
     {
         var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Interface);
         var declarationPrefix = reference is null ? $"{concreteNode.Data.Interface.FullName()} " : "";
         if (concreteNode.TypeCases.Count() == 1)
         {
             var typeCase = concreteNode.TypeCases.First();
-            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge, typeCase.Edge.Target);
+            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge, typeCase.Edge.Target, sync: sync);
             code.AppendLine($"{declarationPrefix}{actualReference} = ({concreteNode.Data.Interface.FullName()}) {innerReference};");
             return actualReference;
         }
@@ -142,7 +142,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
                   if ({{typeCaseReference}} == {{typeCase.TypeCase}})
                   {
                   """);
-            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge, typeCase.Edge.Target);
+            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge, typeCase.Edge.Target, sync: sync);
             code.AppendLine(
                 $$"""
                   {{actualReference}} = ({{concreteNode.Data.Interface.FullName()}}) {{innerReference}};

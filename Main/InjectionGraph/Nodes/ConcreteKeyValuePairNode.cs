@@ -27,7 +27,7 @@ internal sealed record ConcreteKeyValuePairNodeData(INamedTypeSymbol KeyValuePai
 }
 
 internal sealed class ConcreteKeyValuePairNodeManager(Func<ConcreteKeyValuePairNodeData, ConcreteKeyValuePairNode> factory)
-    : ConcreteNodeManagerBase<ConcreteKeyValuePairNodeData, ConcreteKeyValuePairNode>(factory), IScopeInstance;
+    : ConcreteNodeManagerBase<ConcreteKeyValuePairNodeData, ConcreteKeyValuePairNode>(factory), IContainerInstance;
 
 internal sealed class ConcreteKeyValuePairNode : ConcreteNodeBase
 {

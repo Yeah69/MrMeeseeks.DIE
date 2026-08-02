@@ -20,11 +20,11 @@ internal sealed class KeyValuePairNodeCodeGenerator : IConcreteNodeCodeGenerator
         _contextGenerator = contextGenerator;
     }
 
-    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteKeyValuePairNode concreteNode, string? reference = null)
+    public string Generate(StringBuilder code, TypeNode typeNode, ConcreteKeyValuePairNode concreteNode, bool sync, string? reference = null)
     {
         var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.KeyValuePairType);
         var keyReference = $"({concreteNode.KeyType.FullName()}) {_contextGenerator.ParameterName}.{_contextGenerator.KeyPropertyName}!";
-        var valueReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.ValueEdge, concreteNode.ValueEdge.Target);
+        var valueReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.ValueEdge, concreteNode.ValueEdge.Target, sync: sync);
         code.AppendLine($"{(reference is null ? $"{concreteNode.Data.KeyValuePairType.FullName()} " : "")}{actualReference} = new {concreteNode.Data.KeyValuePairType.FullName()}({keyReference}, {valueReference});");
         return actualReference;
     }

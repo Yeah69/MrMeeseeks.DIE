@@ -20,20 +20,24 @@ internal sealed class FunctionUtility(
             ? name 
             : GenerateName();
 
-        string GenerateName() =>
-            function switch
+        string GenerateName()
+        {
+            var async = function.Sync ? "" : "Async";
+            return function switch
             {
-                FunctorEntryFunction functorEntryFunction => referenceGenerator.Generate("CreateEntry", functorEntryFunction.ReturnType),
-                ScopeRootFunction scopeRootFunction => referenceGenerator.Generate("CreateRoot", scopeRootFunction.ReturnType),
+                FunctorEntryFunction functorEntryFunction => referenceGenerator.Generate("CreateEntry", functorEntryFunction.SyncReturnType, async),
+                ScopeRootFunction scopeRootFunction => referenceGenerator.Generate("CreateRoot", scopeRootFunction.SyncReturnType, async),
                 ScopedInstanceFunction => ScopedInstanceInterfaceDescription.FunctionName,
-                TypeNodeFunction typeNodeFunction => referenceGenerator.Generate("Create", typeNodeFunction.ReturnType),
-                AsyncTypeNodeFunction asyncTypeNodeFunction => referenceGenerator.Generate("Create", asyncTypeNodeFunction.ReturnType, "Async"),
-                AsyncScopedInstanceFunction asyncScopedInstanceFunction => referenceGenerator.Generate("Create", asyncScopedInstanceFunction.ReturnType, "Async"),
-                AsyncScopeRootFunction asyncScopeRootFunction => referenceGenerator.Generate("Create", asyncScopeRootFunction.ReturnType, "Async"),
-                _ => throw new ArgumentOutOfRangeException(nameof(function))
+                _ => referenceGenerator.Generate("Create", function.SyncReturnType, async)
             };
+        }
     }
-
+    
+    internal ITypeSymbol MakeItAnAsyncReturnType(ITypeSymbol syncReturnType) => 
+        wellKnownTypes.ValueTask1 is not null
+            ? wellKnownTypes.ValueTask1.Construct(syncReturnType)
+            : wellKnownTypes.Task1.Construct(syncReturnType);
+    
     internal string GenerateFunctionCall(IFunction function, bool doScopedInstance, bool doScopeRoot) => 
         $"{GetName(function)}({contextGenerator.ParameterName}, {DoScopedInstanceParameterName}: {(doScopedInstance ? Constants.TrueKeyword : Constants.FalseKeyword)}, {DoScopeRootParameterName}: {(doScopeRoot ? Constants.TrueKeyword : Constants.FalseKeyword)})";
 
@@ -44,9 +48,9 @@ internal sealed class FunctionUtility(
             && explicitInterface.Equals(ExplicitInterfaceDescription.None4.Instance)
                 ? $"{SyntaxFacts.GetText(acc)} "
                 : "";
-        var asyncModifier = function is AsyncTypeNodeFunction
-            ? "async "
-            : "";
+        var asyncModifier = function.Sync
+            ? ""
+            : "async ";
         var explicitInterfaceFullName = function.ExplicitInterface switch
             {
                 ExplicitInterfaceDescription.Generated generated => $"{generated.TypeFullName}.",
@@ -87,13 +91,7 @@ internal sealed class FunctionUtility(
 
         var parametersText = $"{contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopedInstanceParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopeRootParameterName}";
         var functionName = $"{GetName(function)}";
-        var returnType = function switch
-        {
-            AsyncTypeNodeFunction asyncTypeNodeFunction => asyncTypeNodeFunction.AsyncReturnType.FullName(),
-            AsyncScopeRootFunction asyncScopeRootFunction => asyncScopeRootFunction.AsyncReturnType.FullName(),
-            AsyncScopedInstanceFunction asyncScopedInstanceFunction => asyncScopedInstanceFunction.AsyncReturnType.FullName(),
-            _ => function.ReturnType.FullName()
-        };
+        var returnType = (function.AsyncReturnType ?? function.SyncReturnType).FullName();
         return $"{accessibility}{asyncModifier}{returnType} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";
     }
 }

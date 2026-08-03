@@ -1,4 +1,5 @@
-﻿using MrMeeseeks.DIE.InjectionGraph.Nodes;
+﻿using MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
+using MrMeeseeks.DIE.InjectionGraph.Nodes;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
@@ -7,7 +8,9 @@ internal interface IFunction
     Accessibility? Accessibility { get; }
     ExplicitInterfaceDescription ExplicitInterface { get; }
     ITypeParameterSymbol[] TypeParameters { get; }
-    ITypeSymbol ReturnType { get; }
+    ITypeSymbol SyncReturnType { get; }
+    ITypeSymbol? AsyncReturnType { get; }
+    bool Sync { get; }
 }
 
 internal interface ITypeNodeFunction : IFunction
@@ -26,68 +29,61 @@ internal abstract record ExplicitInterfaceDescription
     internal sealed record Generated(string TypeFullName) : ExplicitInterfaceDescription;
 }
 
-internal sealed class TypeNodeFunction(TypeNode rootElement) : ITypeNodeFunction
+internal abstract class FunctionBase(
+    Accessibility? accessibility,
+    ExplicitInterfaceDescription explicitInterface,
+    ITypeParameterSymbol[] typeParameters,
+    ITypeSymbol syncReturnType,
+    bool sync, 
+    
+    FunctionUtility functionUtility) 
+    : IFunction
 {
-    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Private;
-    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
-    public ITypeParameterSymbol[] TypeParameters { get; } = [];
-    public ITypeSymbol ReturnType => RootNode.Type;
+    public Accessibility? Accessibility { get; } = accessibility;
+    public ExplicitInterfaceDescription ExplicitInterface { get; } = explicitInterface;
+    public ITypeParameterSymbol[] TypeParameters { get; } = typeParameters;
+    public ITypeSymbol SyncReturnType { get; } = syncReturnType;
+    public ITypeSymbol? AsyncReturnType { get; } = sync ? null : functionUtility.MakeItAnAsyncReturnType(syncReturnType);
+    public bool Sync => 
+        AsyncReturnType is null;
+}
+
+internal sealed class TypeNodeFunction(
+    TypeNode rootElement,
+    bool sync,
+    
+    FunctionUtility functionUtility) 
+    : FunctionBase(Microsoft.CodeAnalysis.Accessibility.Private, ExplicitInterfaceDescription.None4.Instance, [], rootElement.Type, sync, functionUtility), 
+        ITypeNodeFunction
+{
     public TypeNode RootNode { get; } = rootElement;
 }
 
-internal sealed class AsyncTypeNodeFunction(TypeNode rootElement, INamedTypeSymbol asyncReturnType) : ITypeNodeFunction
-{
-    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Private;
-    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
-    public ITypeParameterSymbol[] TypeParameters { get; } = [];
-    public ITypeSymbol ReturnType => RootNode.Type;
-    public TypeNode RootNode { get; } = rootElement;
-    public INamedTypeSymbol AsyncReturnType => asyncReturnType;
-}
+internal sealed class FunctorEntryFunction(
+    ITypeSymbol returnType,
 
-internal sealed class FunctorEntryFunction(ITypeSymbol returnType) : IFunction
-{
-    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Private;
-    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
-    public ITypeParameterSymbol[] TypeParameters { get; } = [];
-    public ITypeSymbol ReturnType => returnType;
-}
+    FunctionUtility functionUtility)
+    : FunctionBase(Microsoft.CodeAnalysis.Accessibility.Private, ExplicitInterfaceDescription.None4.Instance, [], returnType, sync: true, functionUtility);
 
-internal sealed class ScopedInstanceFunction(TypeNode scopedInstanceElement) : ITypeNodeFunction
+internal sealed class ScopedInstanceFunction(
+    TypeNode scopedInstanceElement, 
+    ExplicitInterfaceDescription explicitInterfaceDescription,
+    bool sync,
+    
+    FunctionUtility functionUtility) 
+    : FunctionBase(accessibility: null, explicitInterfaceDescription, [], scopedInstanceElement.Type, sync, functionUtility),
+        ITypeNodeFunction
 {
-    public Accessibility? Accessibility => null;
-    public required ExplicitInterfaceDescription ExplicitInterface { get; init; }
-    public ITypeParameterSymbol[] TypeParameters { get; } = [];
-    public ITypeSymbol ReturnType => RootNode.Type;
     public TypeNode RootNode { get; } = scopedInstanceElement;
 }
 
-internal sealed class AsyncScopedInstanceFunction(TypeNode scopedInstanceElement, INamedTypeSymbol asyncReturnType) : ITypeNodeFunction
+internal sealed class ScopeRootFunction(
+    TypeNode scopeRootElement,
+    bool sync,
+    
+    FunctionUtility functionUtility)
+    : FunctionBase(Microsoft.CodeAnalysis.Accessibility.Internal, ExplicitInterfaceDescription.None4.Instance, [], scopeRootElement.Type, sync, functionUtility), 
+        ITypeNodeFunction
 {
-    public Accessibility? Accessibility => null;
-    public required ExplicitInterfaceDescription ExplicitInterface { get; init; }
-    public ITypeParameterSymbol[] TypeParameters { get; } = [];
-    public ITypeSymbol ReturnType => RootNode.Type;
-    public TypeNode RootNode { get; } = scopedInstanceElement;
-    public INamedTypeSymbol AsyncReturnType => asyncReturnType;
-}
-
-internal sealed class ScopeRootFunction(TypeNode scopeRootElement) : ITypeNodeFunction
-{
-    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Internal;
-    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
-    public ITypeParameterSymbol[] TypeParameters { get; } = [];
-    public ITypeSymbol ReturnType => RootNode.Type;
     public TypeNode RootNode { get; } = scopeRootElement;
-}
-
-// todo cleanup/unify async function types
-internal sealed class AsyncScopeRootFunction(TypeNode scopeRootElement, INamedTypeSymbol asyncReturnType) : ITypeNodeFunction
-{
-    public Accessibility? Accessibility => Microsoft.CodeAnalysis.Accessibility.Internal;
-    public ExplicitInterfaceDescription ExplicitInterface => ExplicitInterfaceDescription.None4.Instance;
-    public ITypeParameterSymbol[] TypeParameters { get; } = [];
-    public ITypeSymbol ReturnType => RootNode.Type;
-    public TypeNode RootNode { get; } = scopeRootElement;
-    public INamedTypeSymbol AsyncReturnType => asyncReturnType;
 }

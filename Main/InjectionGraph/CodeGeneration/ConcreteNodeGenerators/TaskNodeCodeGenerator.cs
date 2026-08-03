@@ -28,7 +28,7 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
         var prefix = reference is null ? $"{concreteNode.Data.TaskType.FullName()} " : "";
         if (sync)
         {
-            if (concreteNode.InnerEdge.Target.AsyncFunction is AsyncTypeNodeFunction { AsyncReturnType: { } asyncReturnType })
+            if (concreteNode.InnerEdge.Target.AsyncFunction is { AsyncReturnType: INamedTypeSymbol asyncReturnType })
             {
                 var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge, concreteNode.InnerEdge.Target, sync: false);
                 WrapIntoTaskTypeFromAsyncFunctionCall(asyncReturnType, innerReference);
@@ -41,7 +41,7 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
                     : $"{prefix}{actualReference} = {_wellKnownTypes.Task.FullName()}.{nameof(Task.FromResult)}({innerReference});");
             }
         }
-        else if (concreteNode.InnerEdge.Target.AsyncFunction is AsyncTypeNodeFunction { AsyncReturnType: { } asyncReturnType })
+        else if (concreteNode.InnerEdge.Target.AsyncFunction is { AsyncReturnType: INamedTypeSymbol asyncReturnType })
         {
             var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge, concreteNode.InnerEdge.Target, sync: sync);
             code.AppendLine($"await {_wellKnownTypes.Task.FullName()}.{nameof(Task.Yield)}();");

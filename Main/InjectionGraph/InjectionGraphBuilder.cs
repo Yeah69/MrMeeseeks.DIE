@@ -34,8 +34,7 @@ internal sealed class InjectionGraphBuilder(
     EdgeRegistry edgeRegistry,
     TypeSymbolUtility typeSymbolUtility,
     AsyncAdjustments asyncAdjustments,
-    Func<TypeNode, TypeNodeFunction> functionFactory,
-    Func<TypeNode, INamedTypeSymbol, AsyncTypeNodeFunction> asyncFunctionFactory,
+    Func<TypeNode, bool, TypeNodeFunction> functionFactory,
     Func<TypeNode, IConcreteNode, ConcreteAsyncEdge> concreteAsyncEdgeFactory,
     WellKnownTypes wellKnownTypes,
     WellKnownTypesCollections wellKnownTypesCollections)
@@ -335,7 +334,7 @@ internal sealed class InjectionGraphBuilder(
         {
             if (concreteEntryFunctionNode.ReturnType is { Target: { } rootTypeNode })
             {
-                var function = CreateFunction(rootTypeNode, sync: true);
+                var function = functionFactory(rootTypeNode, true);
                 _functions.Add(function);
                 rootTypeNode.SyncFunction = function;
             }
@@ -347,24 +346,13 @@ internal sealed class InjectionGraphBuilder(
         {
             if (sync && typedInjectionNode.SyncFunction is null || !sync && typedInjectionNode.AsyncFunction is null)
             {
-                var function = CreateFunction(typedInjectionNode, sync);
+                var function = functionFactory(typedInjectionNode, sync);
                 _functions.Add(function);
                 if (sync)
                     typedInjectionNode.SyncFunction = function;
                 else
                     typedInjectionNode.AsyncFunction = function;
             }
-        }
-
-        ITypeNodeFunction CreateFunction(TypeNode typedInjectionNode, bool sync)
-        {
-            if (sync)
-                return functionFactory(typedInjectionNode);
-            
-            var taskWrappedType = wellKnownTypes.ValueTask1 is not null
-                ? wellKnownTypes.ValueTask1.Construct(typedInjectionNode.Type)
-                : wellKnownTypes.Task1.Construct(typedInjectionNode.Type);
-            return asyncFunctionFactory(typedInjectionNode, taskWrappedType);
         }
     }
 }

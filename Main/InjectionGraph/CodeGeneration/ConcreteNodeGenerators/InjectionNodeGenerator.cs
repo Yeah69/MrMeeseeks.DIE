@@ -33,10 +33,10 @@ internal sealed class InjectionNodeGenerator : IContainerInstance
             return GenerateForInjectionNode(code, node, sync: sync);
         
         var resultReference = _referenceGenerator.Generate(function.RootNode.Type);
-        var maybeAwait = function is AsyncTypeNodeFunction && edge.Source is not ConcreteTaskNode
+        var maybeAwait = !function.Sync && edge.Source is not ConcreteTaskNode
             ? "await "
             : "";
-        var prefix = function is AsyncTypeNodeFunction { AsyncReturnType: {} asyncReturnType} && edge.Source is ConcreteTaskNode 
+        var prefix = function is { AsyncReturnType: {} asyncReturnType} && edge.Source is ConcreteTaskNode 
             ? asyncReturnType.FullName()
             : function.RootNode.Type.FullName();
         code.AppendLine($"{prefix} {resultReference} = {maybeAwait}{_functionUtility.GenerateFunctionCall(function, doScopedInstance: true, doScopeRoot: true)};");

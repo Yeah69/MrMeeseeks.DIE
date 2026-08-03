@@ -19,6 +19,7 @@ internal sealed class InjectionGraphCodeGenerator(
     ContextGenerator contextGenerator,
     TypeSymbolUtility typeSymbolUtility,
     ReferenceGenerator referenceGenerator,
+    Func<ITypeSymbol, FunctorEntryFunction> functorEntryFunctionFactory,
     SharedNameRegistry sharedNameRegistry)
 {
     private readonly StringBuilder _code = new();
@@ -88,7 +89,7 @@ internal sealed class InjectionGraphCodeGenerator(
             .Distinct();
         foreach (var typeNode in typesGettingFunctorEntry)
         {
-            var function = new FunctorEntryFunction(typeNode.Type);
+            var function = functorEntryFunctionFactory(typeNode.Type);
             var functionName = functionUtility.GetName(function);
             _code.AppendLine(
                 $$"""
@@ -116,11 +117,10 @@ internal sealed class InjectionGraphCodeGenerator(
             
             var rootNode = function.RootNode;
 
-            var sync = function is not AsyncTypeNodeFunction;
-            scopeNodeBaseCodeGenerator.GenerateScopeRootEntry(_code, rootNode, sync: sync);
-            scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode, sync: sync);
+            scopeNodeBaseCodeGenerator.GenerateScopeRootEntry(_code, rootNode, sync: function.Sync);
+            scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode, sync: function.Sync);
 
-            var rootReference = injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode, sync: function is not AsyncTypeNodeFunction);
+            var rootReference = injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode, sync: function.Sync);
             if (!rootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
                 _code.AppendLine($"return {rootReference};");
             _code.AppendLine("}");

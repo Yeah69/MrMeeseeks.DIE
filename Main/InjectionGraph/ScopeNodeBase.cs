@@ -24,15 +24,11 @@ internal record ScopeRootDescription(TypeNode TypeNode, IFunction SyncFunction, 
 
 internal abstract class ScopeNodeBase
 {
-    private readonly ScopedInstanceInterfaceDescription _scopedInstanceInterfaceDescription;
     private readonly Dictionary<TypeNode, ScopedInstanceDescription> _scopedInstances = [];
     
     public required WellKnownTypes WellKnownTypes { protected get; init; }
-
-    internal ScopeNodeBase(ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)
-    {
-        _scopedInstanceInterfaceDescription = scopedInstanceInterfaceDescription;
-    }
+    internal required ScopedInstanceInterfaceDescription ScopedInstanceInterfaceDescription { private get; init; }
+    internal required Func<TypeNode, ExplicitInterfaceDescription, bool, ScopedInstanceFunction> ScopedInstanceFunctionFactory { private get; init; }
 
     internal IReadOnlyCollection<ScopedInstanceDescription> ScopedInstances => _scopedInstances.Values;
 
@@ -40,55 +36,40 @@ internal abstract class ScopeNodeBase
     {
         if (_scopedInstances.ContainsKey(node))
             return;
-        var taskWrappedType = WellKnownTypes.ValueTask1 is not null
-            ? WellKnownTypes.ValueTask1.Construct(node.Type)
-            : WellKnownTypes.Task1.Construct(node.Type);
+        var explicitInterfaceDescription =
+            new ExplicitInterfaceDescription.Generated($"{ScopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>");
         _scopedInstances[node] = new(
             node,
-            new ScopedInstanceFunction(node)
-            {
-                ExplicitInterface = new ExplicitInterfaceDescription.Generated($"{_scopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>")
-            },
-            new AsyncScopedInstanceFunction(node, taskWrappedType)
-            {
-                ExplicitInterface = new ExplicitInterfaceDescription.Generated($"{_scopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>")
-            });
+            ScopedInstanceFunctionFactory(node, explicitInterfaceDescription, true/* Sync */),
+            ScopedInstanceFunctionFactory(node, explicitInterfaceDescription, false/* Async */));
     }
 }
 
-internal sealed class ContainerScopeNode(ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)
-    : ScopeNodeBase(scopedInstanceInterfaceDescription);
+internal sealed class ContainerScopeNode : ScopeNodeBase;
 
 internal abstract class NonContainerScopeNode(
     INamedTypeSymbol? type,
-    string name,
-    ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription) 
-    : ScopeNodeBase(scopedInstanceInterfaceDescription)
+    string name) 
+    : ScopeNodeBase
 {
     private readonly Dictionary<TypeNode, ScopeRootDescription> _scopeRoots = [];
+    internal required Func<TypeNode, bool, ScopeRootFunction> ScopeRootFunctionFactory { private get; init; }
     internal string Name { get; } = name;
     internal INamedTypeSymbol? Type { get; } = type;
     internal IEnumerable<ScopeRootDescription> ScopedRoots => _scopeRoots.Values;
     internal void AddScopeRoot(TypeNode node)
     {
         if (!_scopeRoots.ContainsKey(node))
-        {
-            var taskWrappedType = WellKnownTypes.ValueTask1 is not null
-                ? WellKnownTypes.ValueTask1.Construct(node.Type)
-                : WellKnownTypes.Task1.Construct(node.Type);
-            _scopeRoots[node] = new(node, new ScopeRootFunction(node), new AsyncScopeRootFunction(node, taskWrappedType));
-        }
+            _scopeRoots[node] = new(node, ScopeRootFunctionFactory(node, true/*Sync*/), ScopeRootFunctionFactory(node, false/*Async*/));
     }
 }
 
 internal sealed class ScopeNode(
     INamedTypeSymbol? type,
-    string name,
-    ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription)
-    : NonContainerScopeNode(type, name, scopedInstanceInterfaceDescription);
+    string name)
+    : NonContainerScopeNode(type, name);
 
 internal sealed class TransientScopeNode(
     INamedTypeSymbol? type,
-    string name,
-    ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription) 
-    : NonContainerScopeNode(type, name, scopedInstanceInterfaceDescription);
+    string name) 
+    : NonContainerScopeNode(type, name);

@@ -62,8 +62,11 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                     ScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\""),
                     TransientScopeNode => contextGenerator.GenerateCopyAssignment(containerNode: containerReference, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{scopeNode.Name}\"")
                 };
+                var await = outerFunction.Sync
+                    ? ""
+                    : "await ";
                 code.AppendLine(newContextAssignment);
-                code.AppendLine($"return {containerReference}.{functionUtility.GenerateFunctionCall(innerFunction, doScopedInstance: true, doScopeRoot: false)};");
+                code.AppendLine($"return {await}{containerReference}.{functionUtility.GenerateFunctionCall(innerFunction, doScopedInstance: true, doScopeRoot: false)};");
         
                 code.AppendLine("}");
             }

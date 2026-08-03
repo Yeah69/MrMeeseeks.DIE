@@ -8,7 +8,7 @@ internal class Program
     {
         try
         {
-            var container = MixedSynchronicity.Container.DIE_CreateContainer(); 
+            var container = MixedSynchronicityScopedInstance.Container.DIE_CreateContainer(); 
             var parent = container.Create();
 
             var sync = parent.Sync;

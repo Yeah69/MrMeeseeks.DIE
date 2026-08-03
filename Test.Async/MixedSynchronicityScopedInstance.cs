@@ -1,8 +1,9 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test.Async;
 
 public sealed partial class MixedSynchronicityScopedInstance
 {
@@ -51,5 +52,22 @@ public sealed partial class MixedSynchronicityScopedInstance
         [Initializer(typeof(ITaskInitializer), nameof(ITaskInitializer.InitializeAsync))]
         [CustomScopeForRootTypes(typeof(ScopeRootAsync))]
         private sealed partial class DIE_Scope_Async;
+    }
+
+    public sealed class Tests
+    {
+        [Fact]
+        public async Task Test()
+        {
+            var container = MixedSynchronicityScopedInstance.Container.DIE_CreateContainer();
+            var parent = container.Create();
+            var sync = parent.Sync;
+            var async = await parent.Async;
+            Assert.True(sync.Dependency0.IsInitializedSync);
+            Assert.True(async.Dependency0.IsInitializedAsync);
+            Assert.True(sync.Dependency0 == sync.Dependency1);
+            Assert.True(async.Dependency0 == async.Dependency1);
+            Assert.True(sync.Dependency0 != async.Dependency0);
+        }
     }
 }

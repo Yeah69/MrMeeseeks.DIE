@@ -14,8 +14,10 @@ internal enum ScopeNodeType
 
 internal class ScopedInstanceInterfaceDescription(ReferenceGenerator referenceGenerator) : IContainerInstance
 {
-    internal const string FunctionName = "Get";
-    internal string InterfaceName { get; } = referenceGenerator.Generate("ScopedInstance");
+    internal const string SyncFunctionName = "Get";
+    internal string SyncInterfaceName { get; } = referenceGenerator.Generate("SyncScopedInstance");
+    internal const string AsyncFunctionName = "GetAsync";
+    internal string AsyncInterfaceName { get; } = referenceGenerator.Generate("AsyncScopedInstance");
 }
 
 internal record ScopedInstanceDescription(TypeNode TypeNode, IFunction SyncFunction, IFunction AsyncFunction);
@@ -36,12 +38,16 @@ internal abstract class ScopeNodeBase
     {
         if (_scopedInstances.ContainsKey(node))
             return;
-        var explicitInterfaceDescription =
-            new ExplicitInterfaceDescription.Generated($"{ScopedInstanceInterfaceDescription.InterfaceName}<{node.Type.FullName()}>");
         _scopedInstances[node] = new(
             node,
-            ScopedInstanceFunctionFactory(node, explicitInterfaceDescription, true/* Sync */),
-            ScopedInstanceFunctionFactory(node, explicitInterfaceDescription, false/* Async */));
+            ScopedInstanceFunctionFactory(
+                node, 
+                new ExplicitInterfaceDescription.Generated($"{ScopedInstanceInterfaceDescription.SyncInterfaceName}<{node.Type.FullName()}>"), 
+                true/* Sync */),
+            ScopedInstanceFunctionFactory(
+                node, 
+                new ExplicitInterfaceDescription.Generated($"{ScopedInstanceInterfaceDescription.AsyncInterfaceName}<{node.Type.FullName()}>"), 
+                false/* Async */));
     }
 }
 

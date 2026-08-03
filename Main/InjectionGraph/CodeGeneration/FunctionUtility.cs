@@ -27,7 +27,8 @@ internal sealed class FunctionUtility(
             {
                 FunctorEntryFunction functorEntryFunction => referenceGenerator.Generate("CreateEntry", functorEntryFunction.SyncReturnType, async),
                 ScopeRootFunction scopeRootFunction => referenceGenerator.Generate("CreateRoot", scopeRootFunction.SyncReturnType, async),
-                ScopedInstanceFunction => ScopedInstanceInterfaceDescription.FunctionName,
+                ScopedInstanceFunction when function.Sync => ScopedInstanceInterfaceDescription.SyncFunctionName,
+                ScopedInstanceFunction when !function.Sync => ScopedInstanceInterfaceDescription.AsyncFunctionName,
                 _ => referenceGenerator.Generate("Create", function.SyncReturnType, async)
             };
         }

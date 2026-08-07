@@ -54,7 +54,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher : IScopeInstance
 
     internal string GenerateForInjectionNode(StringBuilder code, TypeNode node, bool sync)
     {
-        var edgeAndTargets = node.Outgoing
+        var edgeAndTargets = node.OutgoingConcreteEdges
             .Where(e => sync && e is ConcreteSyncEdge || !sync && e is ConcreteAsyncEdge)
             .Select(e => (Edges: e, ConcreteNode: e.Target))
             .ToList();

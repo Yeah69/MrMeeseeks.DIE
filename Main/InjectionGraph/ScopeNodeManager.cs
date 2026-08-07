@@ -9,12 +9,11 @@ namespace MrMeeseeks.DIE.InjectionGraph;
 
 internal sealed class ScopeNodeManager : IContainerInstance
 {
-    private readonly Dictionary<string, ScopeNodeBase> _scopeNodes = [];
+    private readonly Dictionary<string, NonContainerScopeNode> _scopeNodes = [];
     private readonly Dictionary<NonContainerScopeNode, Dictionary<ScopeNodeContext, ScopeNodeContext>> _scopeNodeContexts = [];
 
     private readonly Func<string, INamedTypeSymbol?, ScopeNode> _scopeFactory;
     private readonly Func<string, INamedTypeSymbol?, TransientScopeNode> _transientScopeFactory;
-    private readonly Func<string, INamedTypeSymbol?, ScopeInfo> _scopeInfoFactory;
     private readonly Func<string, INamedTypeSymbol?, ScopeInfo, ScopeNodeConfigContext> _scopeCheckTypePropertiesFactory;
     private readonly Lazy<ScopeNode> _defaultScope;
     private readonly Lazy<TransientScopeNode> _defaultTransientScope;
@@ -28,14 +27,12 @@ internal sealed class ScopeNodeManager : IContainerInstance
         Func<ContainerScopeNode> containerScopeNodeFactory,
         Func<string, INamedTypeSymbol?, ScopeNode> scopeFactory,
         Func<string, INamedTypeSymbol?, TransientScopeNode> transientScopeFactory,
-        Func<string, INamedTypeSymbol?, ScopeInfo> scopeInfoFactory,
         Func<string, INamedTypeSymbol?, ScopeInfo, ScopeNodeConfigContext> scopeCheckTypePropertiesFactory,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         ContainerScopeNode = containerScopeNodeFactory();
         _scopeFactory = scopeFactory;
         _transientScopeFactory = transientScopeFactory;
-        _scopeInfoFactory = scopeInfoFactory;
         _scopeCheckTypePropertiesFactory = scopeCheckTypePropertiesFactory;
         _defaultScope = new Lazy<ScopeNode>(
             () =>
@@ -120,6 +117,9 @@ internal sealed class ScopeNodeManager : IContainerInstance
         
         if (!_scopeRootTypeToScopeType.TryGetValue(scopeRootType, out var scopeType)) 
             return _defaultScope.Value;
+
+        if (_scopeNodes.TryGetValue(scopeType.Name, out var scopeNode))
+            return scopeNode;
         
         var ret = _scopeFactory(scopeType.Name, scopeType);
         _customScopes[scopeRootType] = ret;
@@ -134,6 +134,9 @@ internal sealed class ScopeNodeManager : IContainerInstance
 
         if (!_transientScopeRootTypeToScopeType.TryGetValue(transientScopeRootType, out var transientScopeType)) 
             return _defaultTransientScope.Value;
+
+        if (_scopeNodes.TryGetValue(transientScopeType.Name, out var scopeNode))
+            return scopeNode;
         
         var ret = _transientScopeFactory(transientScopeType.Name, transientScopeType);
         _customTransientScopes[transientScopeRootType] = ret;
@@ -217,4 +220,10 @@ internal sealed class ScopeNodeManager : IContainerInstance
             };
         }
     }
+
+    internal bool IsScopeType(INamedTypeSymbol scopeType) =>
+        _scopeRootTypeToScopeType.Values.Any(t => CustomSymbolEqualityComparer.Default.Equals(t, scopeType))
+        || _transientScopeRootTypeToScopeType.Values.Any(t => CustomSymbolEqualityComparer.Default.Equals(t, scopeType))
+        || CustomSymbolEqualityComparer.Default.Equals(_defaultScope.Value.Type, scopeType)
+        || CustomSymbolEqualityComparer.Default.Equals(_defaultTransientScope.Value.Type, scopeType);
 }

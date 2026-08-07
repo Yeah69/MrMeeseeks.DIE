@@ -26,25 +26,31 @@ internal sealed class TypeNodeManager : IContainerInstance
     }
     
     internal bool TryGetNode(ITypeSymbol type, [NotNullWhen(true)] out TypeNode? node) => _nodes.TryGetValue(type, out node);
-    internal void RemoveNode(TypeNode node) =>
-        _nodes.Remove(node.Type);
 }
 
 internal sealed class TypeNode(ITypeSymbol type) : INode
 {
-    private readonly List<TypeEdge> _incoming = [];
-    private readonly List<ConcreteEdge> _outgoing = [];
-    private readonly Dictionary<ScopeNodeContext, HashSet<ScopeNodeContext>> _scopeRootConfiguration = [];
+    private readonly List<TypeEdge> _incomingTypeEdges = [];
+    private readonly List<TypeTypeEdge> _incomingTypeTypeEdges = [];
+    private readonly List<ConcreteEdge> _outgoingConcreteEdges = [];
+    private readonly Dictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> _scopeRootConfiguration = [];
     private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _scopeInstanceConfiguration = [];
     private readonly ConcurrentDictionary<int, HashSet<int>> _linkedResolutionIdsToFrom = []; 
     
     internal ITypeSymbol Type { get; } = type;
-    internal IReadOnlyList<TypeEdge> Incoming => _incoming;
-    internal IReadOnlyList<ConcreteEdge> Outgoing => _outgoing;
+    internal IReadOnlyList<IEdge> Incoming => [.._incomingTypeEdges, .._incomingTypeTypeEdges];
+    internal IReadOnlyList<TypeEdge> IncomingTypeEdges => _incomingTypeEdges;
+    internal IReadOnlyList<TypeTypeEdge> IncomingTypeTypeEdges => _incomingTypeTypeEdges;
+
+    internal IReadOnlyList<IEdge> Outgoing => ScopeRootConcreteEdge is null 
+        ? OutgoingConcreteEdges 
+        : [..OutgoingConcreteEdges, .._scopeRootConfiguration.Values.Select(c => c.ScopeRootTypeTypeEdge).OfType<TypeTypeEdge>()];
+    internal IReadOnlyList<ConcreteEdge> OutgoingConcreteEdges => _outgoingConcreteEdges;
+    internal ConcreteEdge? ScopeRootConcreteEdge { get; set; }
     /// <summary>
     /// Use scope root context (key) on all current contexts (value collection).
     /// </summary>
-    internal IReadOnlyDictionary<ScopeNodeContext, HashSet<ScopeNodeContext>> ScopeRootConfiguration => _scopeRootConfiguration;
+    internal IReadOnlyDictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> ScopeRootConfiguration => _scopeRootConfiguration;
     /// <summary>
     /// Use scope instance level (key; None means "not a scope instance") on all current contexts (value collection).
     /// </summary>
@@ -56,20 +62,24 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
     
     internal ITypeNodeFunction? AsyncFunction { get; set; }
     
-    internal void AddIncoming(TypeEdge edge) => _incoming.Add(edge);
-    internal void AddOutgoing(ConcreteEdge edge) => _outgoing.Add(edge);
+    internal void AddIncomingTypeEdge(TypeEdge edge) => 
+        _incomingTypeEdges.Add(edge);
+    internal void AddIncomingTypeTypeEdge(TypeTypeEdge edge) => 
+        _incomingTypeTypeEdges.Add(edge);
+    internal void AddRegularOutgoing(ConcreteEdge edge) =>
+        _outgoingConcreteEdges.Add(edge);
     public void RemoveEdge(IEdge edge)
     {
         if (edge is TypeEdge typeEdge)
-            _incoming.Remove(typeEdge);
+            _incomingTypeEdges.Remove(typeEdge);
         else if (edge is ConcreteEdge concreteEdge)
-            _outgoing.Remove(concreteEdge);
+            _outgoingConcreteEdges.Remove(concreteEdge);
     }
     internal EdgeContext? ContainsOutgoingEdgeFor(EdgeContext context) => 
-        _outgoing.SelectMany(edge => edge.Contexts).FirstOrDefault(existing => existing.Equals(context));
+        _outgoingConcreteEdges.SelectMany(edge => edge.Contexts).FirstOrDefault(existing => existing.Equals(context));
     internal bool TryGetOutgoingEdgeFor(IConcreteNode concreteNode, [NotNullWhen(true)] out ConcreteEdge? edge)
     {
-        foreach (var e in _outgoing.Where(e => Equals(e.Target, concreteNode)))
+        foreach (var e in _outgoingConcreteEdges.Where(e => Equals(e.Target, concreteNode)))
         {
             edge = e;
             return true;
@@ -79,14 +89,19 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
         return false;
     }
 
-    internal void RegisterScopeRootConfiguration(ScopeNodeContext scopeRootContext, ScopeNodeContext currentScopeNodeContext)
+    internal TypeTypeEdge? RegisterScopeRootConfiguration(
+        ScopeNodeContext scopeRootContext, 
+        ScopeNodeContext currentScopeNodeContext, 
+        Func<TypeTypeEdge?> typeTypeEdgeFactory)
     {
         if (!_scopeRootConfiguration.TryGetValue(scopeRootContext, out var configuration))
         {
-            configuration = [];
+            var typeTypeEdge = typeTypeEdgeFactory();
+            configuration = ([], typeTypeEdge);
             _scopeRootConfiguration[scopeRootContext] = configuration;
         }
-        configuration.Add(currentScopeNodeContext);
+        configuration.PreviousScopeNodeContexts.Add(currentScopeNodeContext);
+        return configuration.ScopeRootTypeTypeEdge;
     }
 
     internal void RegisterScopeInstanceConfiguration(ScopeLevel scopeLevel, ScopeNodeContext scopeNodeContext)
@@ -102,5 +117,5 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
     internal void LinkResolutionIds(int from, int to) => 
         _linkedResolutionIdsToFrom.GetOrAdd(to, _ => []).Add(from);
 
-    public IReadOnlyList<IEdge> IncomingEdges => _incoming;
+    public IReadOnlyList<IEdge> IncomingEdges => _incomingTypeEdges;
 }

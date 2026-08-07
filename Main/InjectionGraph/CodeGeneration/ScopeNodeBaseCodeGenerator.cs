@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration;
+using MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -12,6 +13,7 @@ internal sealed class ScopeNodeBaseCodeGenerator(
     FunctionUtility functionUtility,
     ContainerInfo containerInfo,
     ScopedInstanceInterfaceDescription scopedInstanceInterfaceDescription,
+    InjectionNodeGenerator injectionNodeGenerator,
     ContextGenerator contextGenerator,
     ReferenceGenerator referenceGenerator,
     WellKnownTypes wellKnownTypes,
@@ -169,22 +171,17 @@ internal sealed class ScopeNodeBaseCodeGenerator(
         
         code.AppendLine($"if ({functionUtility.DoScopeRootParameterName})");
         code.AppendLine("{");
-        
-        if (rootNode.ScopeRootConfiguration.Count == 1)
-            code.AppendLine(CreateReturn(rootNode.ScopeRootConfiguration.First().Key));
-        else
-            code.AppendLine(string.Join($"{Environment.NewLine}else ", rootNode.ScopeRootConfiguration
-                .Select(CreateIf)));
-        
-        code.AppendLine("}");
 
-        return;
-        
-        string CreateIf(KeyValuePair<ScopeNodeContext, HashSet<ScopeNodeContext>> rootConfiguration)
+        var firstIteration = true;
+        foreach (var keyValuePair in rootNode.ScopeRootConfiguration)
         {
-            var rootContext = rootConfiguration.Key;
-            var contexts =  rootConfiguration.Value;
-            var conditions = string.Join(" || ", contexts.Select(c =>
+            if (firstIteration)
+                firstIteration = false;
+            else
+                code.Append("else ");
+            var rootContext = keyValuePair.Key;
+            var value =  keyValuePair.Value;
+            var conditions = string.Join(" || ", value.PreviousScopeNodeContexts.Select(c =>
             {
                 var scopeNodeName = c switch
                 {
@@ -195,52 +192,72 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                 };
                 return $"{contextGenerator.ParameterName}.{contextGenerator.ScopeNodeNamePropertyName} == \"{scopeNodeName}\"";
             }));
-            return $$"""
-                     if ({{conditions}})
-                     {
-                     {{CreateReturn(rootContext)}}
-                     }
-                     """;
-        }
+            code.AppendLine($"if ({conditions})");
+            code.AppendLine("{");
 
-        string CreateReturn(ScopeNodeContext scopeRootContext)
-        {
-            switch (scopeRootContext)
+            var (scopeNode, calledFunction) = GetScopeNodeAndFunction();
+
+            if (value.ScopeRootTypeTypeEdge is { Target: var scopeRootTypeNode } typeTypeEdge)
             {
-                case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
-                {
-                    var transientScopeNode = scopeNodeManager.TransientScopes.First(s => s.Name == transientScopeName);
-                    var (_, syncFunction, asyncFunction) = transientScopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
-                    var transientScopeReference = referenceGenerator.Generate("transientScope");
-                    var calledFunction = sync
-                        ? syncFunction
-                        : asyncFunction;
-                    var await = !sync ? "await " : "";
-                    return $$"""
-                             {{transientScopeName}} {{transientScopeReference}} = new {{transientScopeName}}() { {{ScopeNodeToContainerPropertyReference[transientScopeNode]}} = ({{containerInfo.FullName}}) {{contextGenerator.ParameterName}}.{{contextGenerator.ContainerNodePropertyName}} };
-                             return {{await}}{{transientScopeReference}}.{{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)}};
-                             """;
-                }
-                case ScopeNodeContext.Scope { ScopeName: var scopeName }:
-                {
-                    var scopeNode = scopeNodeManager.Scopes.First(s => s.Name == scopeName);
-                    var (_, syncFunction, asyncFunction) = scopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
-                    var scopeReference = referenceGenerator.Generate("scope");
-                    var calledFunction = sync
-                        ? syncFunction
-                        : asyncFunction;
-                    var await = !sync ? "await " : "";
-                    return $$"""
-                             {{scopeName}} {{scopeReference}} = new {{scopeName}}() { {{ScopeNodeToContainerPropertyReference[scopeNode]}} = ({{containerInfo.FullName}}) {{contextGenerator.ParameterName}}.{{contextGenerator.ContainerNodePropertyName}} };
-                             return {{await}}{{scopeReference}}.{{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)}};
-                             """;
-                }
-                default:
-                    throw new ArgumentException($"Parameter should be either {nameof(ScopeNodeContext.TransientScope)} or {nameof(ScopeNodeContext.Scope)} here, but is {scopeRootContext.GetType().FullName}", nameof(scopeRootContext));
-                    
+                var rootReference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(code, typeTypeEdge, scopeRootTypeNode, sync: sync);
+                var await = !sync ? "await " : "";
+                code.AppendLine($"{rootReference}.{ScopeNodeToContainerPropertyReference[scopeNode]} = ({containerInfo.FullName}) {contextGenerator.ParameterName}.{contextGenerator.ContainerNodePropertyName};");
+                code.AppendLine($"return {await}{rootReference}.{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)};");
             }
+            else
+            {
+                var await = !sync ? "await " : "";
+                switch (rootContext)
+                {
+                    case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
+                    {
+                        var transientScopeReference = referenceGenerator.Generate("transientScope");
+                        code.AppendLine(
+                            $$"""
+                              {{transientScopeName}} {{transientScopeReference}} = new {{transientScopeName}}() { {{ScopeNodeToContainerPropertyReference[scopeNode]}} = ({{containerInfo.FullName}}) {{contextGenerator.ParameterName}}.{{contextGenerator.ContainerNodePropertyName}} };
+                              return {{await}}{{transientScopeReference}}.{{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)}};
+                              """);
+                        break;
+                    }
+                    case ScopeNodeContext.Scope { ScopeName: var scopeName }:
+                    {
+                        var scopeReference = referenceGenerator.Generate("scope");
+                        code.AppendLine(
+                            $$"""
+                              {{scopeName}} {{scopeReference}} = new {{scopeName}}() { {{ScopeNodeToContainerPropertyReference[scopeNode]}} = ({{containerInfo.FullName}}) {{contextGenerator.ParameterName}}.{{contextGenerator.ContainerNodePropertyName}} };
+                              return {{await}}{{scopeReference}}.{{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)}};
+                              """);
+                        break;
+                    }
+                    default:
+                        throw new ArgumentException($"Parameter should be either {nameof(ScopeNodeContext.TransientScope)} or {nameof(ScopeNodeContext.Scope)} here, but is {rootContext.GetType().FullName}", nameof(rootContext));
+                        
+                }
+            }
+            
+            code.AppendLine("}");
+            continue;
 
+            (NonContainerScopeNode, IFunction) GetScopeNodeAndFunction()
+            {
+                NonContainerScopeNode scopeNode = rootContext switch
+                {
+                    ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName } => 
+                        scopeNodeManager.TransientScopes.First(s => s.Name == transientScopeName),
+                    ScopeNodeContext.Scope { ScopeName: var scopeName } => 
+                        scopeNodeManager.Scopes.First(s => s.Name == scopeName),
+                    _ => throw new ArgumentException(
+                        $"Parameter should be either {nameof(ScopeNodeContext.TransientScope)} or {nameof(ScopeNodeContext.Scope)} here, but is {rootContext.GetType().FullName}",
+                        nameof(rootContext))
+                };
+                var (_, syncFunction, asyncFunction) = scopeNode.ScopedRoots.First(sr => CustomSymbolEqualityComparer.Default.Equals(sr.TypeNode.Type, rootNode.Type));
+                return (
+                    scopeNode, 
+                    sync ? syncFunction : asyncFunction);
+            }
         }
+        
+        code.AppendLine("}");
     }
 
     internal void GenerateScopedInstanceEntry(StringBuilder code, TypeNode rootNode, bool sync)

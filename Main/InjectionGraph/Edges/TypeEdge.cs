@@ -6,8 +6,5 @@ internal sealed class TypeEdge : EdgeBase<IConcreteNode, TypeNode>
 {
     public TypeEdge(IConcreteNode source, TypeNode target, EdgeRegistry registry) 
         : base(source, target, registry) => 
-        target.AddIncoming(this);
-
-    internal void ReplaceTarget(TypeNode newTarget) => 
-        Target = newTarget;
+        target.AddIncomingTypeEdge(this);
 }

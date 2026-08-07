@@ -98,7 +98,7 @@ internal sealed class InjectionGraphCodeGenerator(
                   """);
             if (typeNode.SyncFunction is { } nextFunction)
                 _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction, doScopedInstance: true, doScopeRoot: true)};");
-            else if (typeSymbolUtility.IsTaskType(typeNode.Type) && typeNode.Outgoing is [{ Target: ConcreteTaskNode { InnerEdge.Target.AsyncFunction: {} nextFunction0 } }])
+            else if (typeSymbolUtility.IsTaskType(typeNode.Type) && typeNode.OutgoingConcreteEdges is [{ Target: ConcreteTaskNode { InnerEdge.Target.AsyncFunction: {} nextFunction0 } }])
                 _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0, doScopedInstance: true, doScopeRoot: true)};");
             else
                 _code.AppendLine($"throw new Exception(\"No function found for type {typeNode.Type.FullName()} during code generation.\");");
@@ -121,7 +121,7 @@ internal sealed class InjectionGraphCodeGenerator(
             scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode, sync: function.Sync);
 
             var rootReference = injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode, sync: function.Sync);
-            if (!rootNode.Outgoing.Any(e => e.Target is ConcreteEnumerableNode))
+            if (!rootNode.OutgoingConcreteEdges.Any(e => e.Target is ConcreteEnumerableNode))
                 _code.AppendLine($"return {rootReference};");
             _code.AppendLine("}");
         }
@@ -197,7 +197,7 @@ internal sealed class InjectionGraphCodeGenerator(
             
             _code.AppendLine($"{Constants.PrivateKeyword} partial class {scopeNode.Name}{scopeInheritance}");
             _code.AppendLine("{");
-            _code.AppendLine($"{Constants.InternalKeyword} required {containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; init; }}");
+            _code.AppendLine($"{Constants.InternalKeyword} {containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; set; }} = {Constants.NullKeyword}!;");
             
             scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
             scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);
@@ -215,7 +215,7 @@ internal sealed class InjectionGraphCodeGenerator(
             
             _code.AppendLine($"{Constants.PrivateKeyword} partial class {scopeNode.Name}{scopeInheritance}");
             _code.AppendLine("{");
-            _code.AppendLine($"{Constants.InternalKeyword} required {containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; init; }}");
+            _code.AppendLine($"{Constants.InternalKeyword} {containerInfo.FullName} {containerReference} {{ {Constants.PrivateKeyword} get; set; }} = {Constants.NullKeyword}!;");
             
             scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
             scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);

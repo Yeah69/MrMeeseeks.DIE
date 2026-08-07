@@ -23,7 +23,7 @@ internal sealed class InjectionNodeGenerator : IContainerInstance
     public string GenerateForInjectionNode(StringBuilder code, TypeNode node, bool sync) =>
         _concreteNodeCodeGeneratorDispatcher.GenerateForInjectionNode(code, node, sync);
 
-    public string CallFunctionOrGenerateForInjectionNode(StringBuilder code, TypeEdge edge, TypeNode node, bool sync)
+    public string CallFunctionOrGenerateForInjectionNode(StringBuilder code, IEdge edge, TypeNode node, bool sync)
     {
         var maybeFunction = sync 
             ? node.SyncFunction 
@@ -33,10 +33,10 @@ internal sealed class InjectionNodeGenerator : IContainerInstance
             return GenerateForInjectionNode(code, node, sync: sync);
         
         var resultReference = _referenceGenerator.Generate(function.RootNode.Type);
-        var maybeAwait = !function.Sync && edge.Source is not ConcreteTaskNode
+        var maybeAwait = !function.Sync && edge.SourceAsNode is not ConcreteTaskNode
             ? "await "
             : "";
-        var prefix = function is { AsyncReturnType: {} asyncReturnType} && edge.Source is ConcreteTaskNode 
+        var prefix = function is { AsyncReturnType: {} asyncReturnType} && edge.SourceAsNode is ConcreteTaskNode 
             ? asyncReturnType.FullName()
             : function.RootNode.Type.FullName();
         code.AppendLine($"{prefix} {resultReference} = {maybeAwait}{_functionUtility.GenerateFunctionCall(function, doScopedInstance: true, doScopeRoot: true)};");

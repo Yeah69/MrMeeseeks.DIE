@@ -25,6 +25,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
     IdRegister idRegister,
     AsyncAdjustments asyncAdjustments,
     ResolutionRegister resolutionRegister,
+    ScopeNodeManager scopeNodeManager,
     WellKnownTypes wellKnownTypes,
     WellKnownTypesCollections wellKnownTypesCollections,
     Lazy<ConcreteExceptionNode> concreteExceptionNode,
@@ -100,20 +101,26 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         var implementationResult = edgeContext.ScopeNode.CheckTypeProperties.MapToSingleFittingImplementation(currentType, key);
         if (implementationResult is not ImplementationResult.Single { Implementation: { } implementation })
         {
-            ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
-            var logMessage = implementationResult switch
+            if (scopeNodeManager.IsScopeType(currentType))
+                // Exception for the (transient) scope types, they don't have to be configured
+                implementation = currentType;
+            else
             {
-                ImplementationResult.None5 => $"Class: No implementation registered for \"{currentType.FullName()}\".",
-                ImplementationResult.Multiple { Implementations: var implementations} => $"Class: Multiple implementations registered for \"{currentType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
-                _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
-            };
-            containerDiagLogger.Error(
-                ErrorLogData.ResolutionException(
-                    logMessage,
-                    currentType,
-                    ImmutableStack<INamedTypeSymbol>.Empty), 
-                currentResolvedLocation);
-            return;
+                ConnectToTypeNodeIfNotAlready(concreteExceptionNode.Value, edgeContext, typeNode);
+                var logMessage = implementationResult switch
+                {
+                    ImplementationResult.None5 => $"Class: No implementation registered for \"{currentType.FullName()}\".",
+                    ImplementationResult.Multiple { Implementations: var implementations} => $"Class: Multiple implementations registered for \"{currentType.FullName()}\": {string.Join(", ", implementations.Select(i => i.FullName()))}.",
+                    _ => throw new InvalidOperationException("Unexpected SingleImplementationResult")
+                };
+                containerDiagLogger.Error(
+                    ErrorLogData.ResolutionException(
+                        logMessage,
+                        currentType,
+                        ImmutableStack<INamedTypeSymbol>.Empty), 
+                    currentResolvedLocation);
+                return;
+            }
         }
         
         // Constructor
@@ -316,7 +323,7 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         if (!typeNode.TryGetOutgoingEdgeFor(concreteNode, out var existingEdge))
         {
             existingEdge = concreteSyncEdgeFactory(typeNode, concreteNode);
-            typeNode.AddOutgoing(existingEdge);
+            typeNode.AddRegularOutgoing(existingEdge);
             concreteNode.AddIncomingEdge(existingEdge);
         }
 

@@ -74,6 +74,7 @@ internal sealed record EdgeContext(
     OverrideContext Override,
     KeyContext Key,
     CaseChoiceContext CaseChoice,
+    string? ScopeRootFullNameForScope /* This is only set for resolution scope types  */,
     int ResolutionId)
 {
     public override int GetHashCode() => 
@@ -84,5 +85,6 @@ internal sealed record EdgeContext(
         && Equals(ScopeNode, other.ScopeNode) 
         && Equals(Override, other.Override) 
         && Equals(Key, other.Key) 
-        && Equals(CaseChoice, other.CaseChoice);
+        && Equals(CaseChoice, other.CaseChoice)
+        && Equals(ScopeRootFullNameForScope, other.ScopeRootFullNameForScope);
 }

@@ -8,11 +8,11 @@ internal class Program
     {
         try
         {
-            var container = MixedSynchronicityScopedInstance.Container.DIE_CreateContainer(); 
+            var container = MixedSynchronicityScopes.Container.DIE_CreateContainer(); 
             var parent = container.Create();
 
-            var sync = parent.Sync;
-            var async = await parent.Async;
+            //var sync = parent.Sync;
+            //var async = await parent.Async;
             
             Console.WriteLine("Hello, World!");
         }

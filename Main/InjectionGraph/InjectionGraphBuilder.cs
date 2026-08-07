@@ -4,6 +4,7 @@ using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
+using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph;
 
@@ -36,6 +37,7 @@ internal sealed class InjectionGraphBuilder(
     AsyncAdjustments asyncAdjustments,
     Func<TypeNode, bool, TypeNodeFunction> functionFactory,
     Func<TypeNode, IConcreteNode, ConcreteAsyncEdge> concreteAsyncEdgeFactory,
+    Func<(TypeNode, TypeNode), TypeTypeEdge> typeTypeEdgeFactory,
     WellKnownTypes wellKnownTypes,
     WellKnownTypesCollections wellKnownTypesCollections)
     : IInjectionGraphBuilder, IContainerInstance
@@ -57,6 +59,7 @@ internal sealed class InjectionGraphBuilder(
             overrideContext,
             new KeyContext.None1(),
             new CaseChoiceContext.None2(),
+            ScopeRootFullNameForScope: null,
             resolutionRegister.GetNewResolutionId());
         var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, rootType, overrides);
         var concreteEntryFunctionNode = concreteEntryFunctionNodeManager.GetOrAddNode(concreteEntryFunctionNodeData);
@@ -96,7 +99,7 @@ internal sealed class InjectionGraphBuilder(
                 var concreteAsyncEdge = concreteAsyncEdgeFactory(concreteSyncEdge.Source, concreteSyncEdge.Target);
                 foreach (var asyncContext in asyncContextsGroup)
                     concreteAsyncEdge.AddContext(asyncContext);
-                concreteSyncEdge.Source.AddOutgoing(concreteAsyncEdge);
+                concreteSyncEdge.Source.AddRegularOutgoing(concreteAsyncEdge);
             }
 
             if (syncContextsGroup.Length == 0)
@@ -135,8 +138,7 @@ internal sealed class InjectionGraphBuilder(
                             var sequence = currentConcreteNode
                                 .IncomingEdges
                                 .Where(e => e.Contexts.Any(c => c.ResolutionId == resolutionId))
-                                .OfType<ConcreteSyncEdge>()
-                                .Select(e => e.Source)
+                                .Select(e => e.SourceAsNode)
                                 .Where(n => !visitedNodes.Contains(n));
                             foreach (var typeNode in sequence)
                                 innerQueue.Enqueue(typeNode);
@@ -146,8 +148,7 @@ internal sealed class InjectionGraphBuilder(
                             var sequence = currentTypeNode
                                 .IncomingEdges
                                 .Where(e => e.Contexts.Any(c => c.ResolutionId == resolutionId))
-                                .OfType<TypeEdge>()
-                                .Select(e => e.Source)
+                                .Select(e => e.SourceAsNode)
                                 .Where(n => !visitedNodes.Contains(n));
                             foreach (var concreteNode in sequence)
                                 innerQueue.Enqueue(concreteNode);
@@ -174,11 +175,28 @@ internal sealed class InjectionGraphBuilder(
 
         if (scopeRootLevel is ScopeLevel.Scope or ScopeLevel.TransientScope)
         {
-            var scopeRootContext = scopeNodeManager.GetScopeNodeContext(edgeContext.ScopeNode, typeNode, scopeRootLevel);
+            var scopeNodeContext = scopeNodeManager.GetScopeNodeContext(edgeContext.ScopeNode, typeNode, scopeRootLevel);
+            var edgeContextForScopeRoot = edgeContext with { ScopeRootFullNameForScope = typeNode.Type.FullName() };
+            typeNode.RegisterScopeRootConfiguration(scopeNodeContext, edgeContext.ScopeNode, CreateTypeTypeEdge);
 
-            typeNode.RegisterScopeRootConfiguration(scopeRootContext, edgeContext.ScopeNode);
-                
-            edgeContext = edgeContext with { ScopeNode = scopeRootContext };
+            TypeTypeEdge? CreateTypeTypeEdge()
+            {
+                var scopeNode = scopeRootLevel is ScopeLevel.Scope 
+                    ? scopeNodeManager.GetScope(typeNode.Type)
+                    : scopeNodeManager.GetTransientScope(typeNode.Type);
+
+                TypeTypeEdge? scopeRootTypeTypeEdge = null;
+                if (scopeNode.Type is { } scopeType)
+                {
+                    var scopeRootTypeNode = typeNodeManager.GetOrAddNode(scopeType);
+                    scopeRootTypeTypeEdge = typeTypeEdgeFactory((typeNode, scopeRootTypeNode));
+                    scopeRootTypeTypeEdge.AddContext(edgeContextForScopeRoot);
+                    queue.Enqueue(new (scopeRootTypeNode, edgeContextForScopeRoot, currentResolvedLocation));
+                }
+                return scopeRootTypeTypeEdge;
+            }
+
+            edgeContext = edgeContext with { ScopeNode = scopeNodeContext };
         }
 
         if (typeNode.ContainsOutgoingEdgeFor(edgeContext) is { } existingEdgeContext)
@@ -291,8 +309,8 @@ internal sealed class InjectionGraphBuilder(
         var allTypeNodes = typeNodeManager.AllTypeNodes.ToImmutableArray();
         foreach (var typeNode in allTypeNodes)
         {
-            var concreteSyncEdges = typeNode.Outgoing.OfType<ConcreteSyncEdge>().ToImmutableArray();
-            var concreteAsyncEdges = typeNode.Outgoing.OfType<ConcreteAsyncEdge>().ToImmutableArray();
+            var concreteSyncEdges = typeNode.OutgoingConcreteEdges.OfType<ConcreteSyncEdge>().ToImmutableArray();
+            var concreteAsyncEdges = typeNode.OutgoingConcreteEdges.OfType<ConcreteAsyncEdge>().ToImmutableArray();
             var typeNodeIsNotWrappedIntoATask =
                 !CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.ValueTask1) 
                 || !CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.Task1);
@@ -302,7 +320,7 @@ internal sealed class InjectionGraphBuilder(
                 if (// if multiple incoming edges, but current type not wrapped in a task
                     syncIncomingEdges.Length > 1 /* Multiple incoming contexts */ && typeNodeIsNotWrappedIntoATask
                     // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
-                    || syncIncomingEdges.Any(e => e.Source is ConcreteFunctorNode)
+                    || syncIncomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
                     // or any outgoing edges contain concrete enumerable
                     || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNode)
                     // or Type Node is scope instance in some configurations
@@ -317,9 +335,9 @@ internal sealed class InjectionGraphBuilder(
                 if (// if multiple incoming edges, but current type not wrapped in a task
                     asyncIncomingEdges.Length > 1 /* Multiple incoming contexts */ && typeNodeIsNotWrappedIntoATask
                     // In async mode, if current type not wrapped in a task, but any incoming edge lead to a task node
-                    || (asyncIncomingEdges.Any(e => e.Source is ConcreteTaskNode) /* Any incoming node a task node */ && typeNodeIsNotWrappedIntoATask)
+                    || (asyncIncomingEdges.Any(e => e.SourceAsNode is ConcreteTaskNode) /* Any incoming node a task node */ && typeNodeIsNotWrappedIntoATask)
                     // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
-                    || asyncIncomingEdges.Any(e => e.Source is ConcreteFunctorNode)
+                    || asyncIncomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
                     // or any outgoing edges contain concrete enumerable
                     || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNode)
                     // or Type Node is scope instance in some configurations

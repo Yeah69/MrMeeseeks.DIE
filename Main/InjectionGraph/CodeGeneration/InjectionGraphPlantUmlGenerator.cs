@@ -169,19 +169,19 @@ internal sealed class InjectionGraphPlantUmlGenerator(
 
     private void GenerateEdges()
     {
-        _diagram.AppendLine("' Edges (TypeNode -> ConcreteNode via ConcreteEdge)");
+        _diagram.AppendLine("' Edges (TypeNode -> ConcreteNode)");
         foreach (var typeNode in typeNodeManager.AllTypeNodes)
         {
             var typeNodeId = _typeNodeIds[typeNode];
-            foreach (var concreteEdge in typeNode.Outgoing)
+            foreach (var edge in typeNode.OutgoingConcreteEdges)
             {
-                if (!_concreteNodeIds.TryGetValue(concreteEdge.Target, out var targetId))
+                if (!_concreteNodeIds.TryGetValue(edge.Target, out var targetId))
                     continue;
 
                 // Indicate sync vs async edge
-                var edgeStyle = concreteEdge is ConcreteAsyncEdge ? "[#blue,dashed]" : "";
+                var edgeStyle = edge is ConcreteAsyncEdge ? "[#blue,dashed]" : "";
 
-                foreach (var context in concreteEdge.Contexts)
+                foreach (var context in edge.Contexts)
                 {
                     var contextLabel = FormatEdgeContext(context);
                     _diagram.AppendLine($"{typeNodeId} -{edgeStyle}-> {targetId} : \"{contextLabel}\"");
@@ -194,15 +194,41 @@ internal sealed class InjectionGraphPlantUmlGenerator(
         foreach (var typeNode in typeNodeManager.AllTypeNodes)
         {
             var typeNodeId = _typeNodeIds[typeNode];
-            foreach (var typeEdge in typeNode.Incoming)
+            foreach (var edge in typeNode.IncomingTypeEdges)
             {
-                if (!_concreteNodeIds.TryGetValue(typeEdge.Source, out var sourceId))
+                if (!_concreteNodeIds.TryGetValue(edge.Source, out var sourceId))
                     continue;
 
-                foreach (var context in typeEdge.Contexts)
+                foreach (var context in edge.Contexts)
                 {
                     var contextLabel = FormatEdgeContext(context);
                     _diagram.AppendLine($"{sourceId} --> {typeNodeId} : \"{contextLabel}\"");
+                }
+            }
+        }
+
+        _diagram.AppendLine();
+        _diagram.AppendLine("' Edges (TypeNode -> TypeNode via TypeTypeEdge)");
+        foreach (var typeNode in typeNodeManager.AllTypeNodes)
+        {
+            var typeNodeId = _typeNodeIds[typeNode];
+            foreach (var edge in typeNode.IncomingTypeTypeEdges)
+            {
+                if (!_typeNodeIds.TryGetValue(edge.Source, out var sourceId))
+                    continue;
+
+                if (edge.Contexts.Count == 0)
+                {
+                    // Render edge without context label
+                    _diagram.AppendLine($"{sourceId} -[#purple,dotted]-> {typeNodeId}");
+                }
+                else
+                {
+                    foreach (var context in edge.Contexts)
+                    {
+                        var contextLabel = FormatEdgeContext(context);
+                        _diagram.AppendLine($"{sourceId} -[#purple,dotted]-> {typeNodeId} : \"{contextLabel}\"");
+                    }
                 }
             }
         }
@@ -294,7 +320,7 @@ internal sealed class InjectionGraphPlantUmlGenerator(
         {
             foreach (var concreteEdge in typeNode.Outgoing)
             {
-                if (Equals(concreteEdge.Target, concreteExceptionNode))
+                if (Equals(concreteEdge.TargetAsNode, concreteExceptionNode))
                     return true;
             }
         }

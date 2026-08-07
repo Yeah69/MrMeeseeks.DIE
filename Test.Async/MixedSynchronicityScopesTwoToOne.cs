@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
+using Xunit;
 
-namespace MrMeeseeks.DIE.Sample;
+namespace MrMeeseeks.DIE.Test.Async;
 
-public sealed partial class MixedSynchronicityScopes
+public sealed partial class MixedSynchronicityScopesTwoToOne
 {
     internal sealed class SyncDependency : IInitializer
     {
@@ -65,6 +66,24 @@ public sealed partial class MixedSynchronicityScopes
         private sealed partial class DIE_Scope_Async
         {
             internal DIE_Scope_Async(AsyncDependency asyncDependency){}
+        }
+    }
+
+    public sealed class Tests
+    {
+        [Fact]
+        public async Task Test()
+        {
+            var container = Container.DIE_CreateContainer();
+            var parent = container.Create();
+            var syncSync = parent.SyncSync;
+            var asyncAsync = await parent.AsyncAsync;
+            var syncAsync = await parent.SyncAsync;
+            var asyncSync = await parent.AsyncSync;
+            Assert.True(syncSync.Dependency.IsInitialized);
+            Assert.True(asyncAsync.Dependency.IsInitialized);
+            Assert.True(syncAsync.Dependency.IsInitialized);
+            Assert.True(asyncSync.Dependency.IsInitialized);
         }
     }
 }

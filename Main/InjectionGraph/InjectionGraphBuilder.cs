@@ -67,8 +67,10 @@ internal sealed class InjectionGraphBuilder(
         var queue = new Queue<ResolutionStep>();
         foreach (var rootTypeNode in rootTypeNodes)
             queue.Enqueue(new(rootTypeNode, rootEdgeContext, createFunctionAttributeLocation));
-        while (queue.Count > 0)
+        var i = 0;
+        while (queue.Count > 0 && i < 100)
         {
+            i++;
             var (typeNode, edgeContext, currentResolvedLocation) = queue.Dequeue();
             MakeResolutionStep(typeNode, edgeContext, queue, currentResolvedLocation);
         }
@@ -281,6 +283,9 @@ internal sealed class InjectionGraphBuilder(
             case IArrayTypeSymbol arrayType:
                 resolutionSteps.EnumerableStep(arrayType, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
+            case INamedTypeSymbol { Name: "IAsyncEnumerable" } asyncEnumerableType when CustomSymbolEqualityComparer.IncludeNullability.Equals(typeNodeType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1):
+                resolutionSteps.AsyncEnumerableStep(asyncEnumerableType, typeNode, edgeContext, queue, currentResolvedLocation);
+                break;
             case INamedTypeSymbol { TypeArguments.Length: >= 1 } functor when typeSymbolUtility.IsFuncDelegate(functor):
                 resolutionSteps.FunctorStep(functor, typeNode, edgeContext, queue, currentResolvedLocation);
                 break;
@@ -322,7 +327,7 @@ internal sealed class InjectionGraphBuilder(
                     // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
                     || syncIncomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
                     // or any outgoing edges contain concrete enumerable
-                    || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNode)
+                    || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNodeBase)
                     // or Type Node is scope instance in some configurations
                     || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
                     // or Type Node is scope root in some configurations
@@ -339,7 +344,7 @@ internal sealed class InjectionGraphBuilder(
                     // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
                     || asyncIncomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
                     // or any outgoing edges contain concrete enumerable
-                    || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNode)
+                    || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNodeBase)
                     // or Type Node is scope instance in some configurations
                     || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
                     // or Type Node is scope root in some configurations

@@ -221,12 +221,11 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
     public bool ShouldBeComposite(INamedTypeSymbol interfaceType) => _currentlyConsideredTypes.HasComposite(interfaceType);
     public ScopeLevel GetScopeLevelFor(ITypeSymbol implementationType)
     {
-        var unbound = implementationType.UnboundIfGeneric();
-        if (_currentlyConsideredTypes.IsContainerInstance(unbound))
+        if (_currentlyConsideredTypes.IsContainerInstance(implementationType.UnboundIfGeneric()))
             return ScopeLevel.Container;
-        if (_currentlyConsideredTypes.IsTransientScopeInstance(unbound))
+        if (_currentlyConsideredTypes.IsTransientScopeInstance(implementationType.UnboundIfGeneric()))
             return ScopeLevel.TransientScope;
-        if (_currentlyConsideredTypes.IsScopeInstance(unbound))
+        if (_currentlyConsideredTypes.IsScopeInstance(implementationType.UnboundIfGeneric()))
             return ScopeLevel.Scope;
         return ScopeLevel.None;
     }
@@ -318,9 +317,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         
         if (!found)
         {
-            var unspecifiedSequence = _currentlyConsideredTypes.InterfaceToDecorators.TryGetValue(interfaceType.UnboundIfGeneric(), out var allDecorators)
-                ? allDecorators
-                : Enumerable.Empty<INamedTypeSymbol>();
+            var unspecifiedSequence = _currentlyConsideredTypes.GetDecoratorsFor(interfaceType);
             
             var implementationsBaseTypes = implementationType
                 .AllDerivedTypesAndSelf()
@@ -330,10 +327,11 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             unspecifiedSequence = unspecifiedSequence.Concat(
                 _currentlyConsideredTypes.InterceptorChoices
                     .Where(kvp => kvp.Value.Any(imp => implementationsBaseTypes.Contains(imp.UnboundIfGeneric())))
-                    .Select(kvp => kvp.Key));
+                    .Select(kvp => kvp.Key))
+                .ToImmutableArray();
             
             sequence = ToDecoration(unspecifiedSequence
-                .OrderBy(d => _decorationToOrdinal.TryGetValue(d, out var ordinal) ? ordinal : 0)
+                .OrderBy(d => _currentlyConsideredTypes.GetDecorationOrdinal(d))
                 .ThenBy(d => d.FullName()));
         }
 
@@ -367,7 +365,7 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
         IEnumerable<Decoration> ToDecoration(IEnumerable<INamedTypeSymbol> source) =>
             source.Select(imp =>
             {
-                if (_currentlyConsideredTypes.DecoratorTypes.Contains(imp, CustomSymbolEqualityComparer.Default))
+                if (_currentlyConsideredTypes.IsDecorator(imp))
                     return new Decoration.Decorator(imp);
                 if (_currentlyConsideredTypes.InterceptorChoices.Keys.Contains(imp, CustomSymbolEqualityComparer.Default))
                     return new Decoration.Interceptor(imp);

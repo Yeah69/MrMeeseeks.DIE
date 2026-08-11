@@ -1,70 +1,41 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using MrMeeseeks.DIE.UserUtility;
 
 namespace MrMeeseeks.DIE.Sample;
 
+internal interface IDependency
+{
+    bool IsInitialized { get; }
+}
+    
+internal abstract class AsyncDependencyBase : IDependency//, ITaskInitializer
+{
+    public bool IsInitialized { get; private set; }
+    
+    /*async Task ITaskInitializer.InitializeAsync()
+    {
+        await Task.Delay(500);
+        IsInitialized = true;
+    }//*/
+}
+
+internal sealed class AsyncDependencyA : AsyncDependencyBase;
+
+internal sealed class AsyncDependencyB : AsyncDependencyBase;
+
+internal sealed class AsyncDependencyC : AsyncDependencyBase;
+
 public sealed partial class MixedSynchronicityScopes
 {
-    internal sealed class SyncDependency : IInitializer
-    {
-        public bool IsInitialized { get; private set; }
-    
-        void IInitializer.Initialize() => 
-            IsInitialized = true;
-    }
-    internal sealed class AsyncDependency : ITaskInitializer
-    {
-        public bool IsInitialized { get; private set; }
-    
-        async Task ITaskInitializer.InitializeAsync()
-        {
-            await Task.Delay(500);
-            IsInitialized = true;
-        }
-    }
-
-    internal sealed class ScopeRootSyncSync : IScopeRoot
-    {
-        internal required SyncDependency Dependency { get; init; }
-    }
-
-    internal sealed class ScopeRootAsyncAsync : IScopeRoot
-    {
-        internal required AsyncDependency Dependency { get; init; }
-    }
-
-    internal sealed class ScopeRootSyncAsync : IScopeRoot
-    {
-        internal required SyncDependency Dependency { get; init; }
-    }
-
-    internal sealed class ScopeRootAsyncSync : IScopeRoot
-    {
-        internal required AsyncDependency Dependency { get; init; }
-    }
 
     internal sealed class Parent
     {
-        internal required ScopeRootSyncSync SyncSync { get; init; }
-        internal required ValueTask<ScopeRootAsyncAsync> AsyncAsync { get; init; }
-        internal required ValueTask<ScopeRootSyncAsync> SyncAsync { get; init; }
-        internal required ValueTask<ScopeRootAsyncSync> AsyncSync { get; init; }
+        internal required IEnumerable<IDependency> Dependencies { get; init; }
     }
 
+    [ImplementationCollectionChoice(typeof(IDependency), typeof(AsyncDependencyA), typeof(AsyncDependencyB), typeof(AsyncDependencyC))]
     [CreateFunction(typeof(Parent), "Create")]
-    internal sealed partial class Container
-    {
-        [CustomScopeForRootTypes(typeof(ScopeRootSyncSync), typeof(ScopeRootAsyncSync))]
-        private sealed partial class DIE_Scope_Sync
-        {
-            internal DIE_Scope_Sync(SyncDependency syncDependency){}
-        }
-
-        [CustomScopeForRootTypes(typeof(ScopeRootAsyncAsync), typeof(ScopeRootSyncAsync))]
-        private sealed partial class DIE_Scope_Async
-        {
-            internal DIE_Scope_Async(AsyncDependency asyncDependency){}
-        }
-    }
+    internal sealed partial class Container;
 }

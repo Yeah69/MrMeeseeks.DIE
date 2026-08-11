@@ -16,6 +16,7 @@ internal sealed class InjectionGraphPlantUmlGenerator(
     ConcreteInterfaceNodeManager concreteInterfaceNodeManager,
     ConcreteFunctorNodeManager concreteFunctorNodeManager,
     ConcreteEnumerableNodeManager concreteEnumerableNodeManager,
+    ConcreteAsyncEnumerableNodeManager concreteAsyncEnumerableNodeManager,
     ConcreteKeyValuePairNodeManager concreteKeyValuePairNodeManager,
     ConcreteOverrideNodeManager concreteOverrideNodeManager,
     ConcreteTaskNodeManager concreteTaskNodeManager,

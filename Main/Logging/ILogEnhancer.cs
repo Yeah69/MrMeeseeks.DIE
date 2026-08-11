@@ -1,7 +1,6 @@
 using MrMeeseeks.DIE.Extensions;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Nodes.Functions;
-using MrMeeseeks.DIE.Nodes.Ranges;
 
 namespace MrMeeseeks.DIE.Logging;
 
@@ -35,20 +34,20 @@ internal sealed class ContainerLevelLogEnhancerDecorator : ILogEnhancer, IDecora
 {
     private readonly ICurrentExecutionPhase _currentExecutionPhase;
     private readonly ILogEnhancer _decoratedEnhancer;
-    private readonly Lazy<string> _containerPart;
+    private readonly string _containerPart;
 
     internal ContainerLevelLogEnhancerDecorator(
-        Lazy<IContainerNode> parentContainer,
+        ContainerInfo containerInfo,
         ICurrentExecutionPhase currentExecutionPhase,
         ILogEnhancer decoratedEnhancer)
     {
         _currentExecutionPhase = currentExecutionPhase;
         _decoratedEnhancer = decoratedEnhancer;
-        _containerPart = parentContainer.Select(c => c.Name);
+        _containerPart = containerInfo.Name;
     }
 
     public string Enhance(string message) => 
-        $"[P:{_currentExecutionPhase.Value.ToString()}][C:{_containerPart.Value}]{_decoratedEnhancer.Enhance(message)}";
+        $"[P:{_currentExecutionPhase.Value.ToString()}][C:{_containerPart}]{_decoratedEnhancer.Enhance(message)}";
 }
 
 internal sealed class ExecuteLevelLogEnhancerDecorator : ILogEnhancer, IDecorator<ILogEnhancer>

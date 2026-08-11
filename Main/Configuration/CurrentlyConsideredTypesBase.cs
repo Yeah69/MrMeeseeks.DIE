@@ -12,12 +12,10 @@ internal sealed class ContainerCurrentlyConsideredTypes : CurrentlyConsideredTyp
     internal ContainerCurrentlyConsideredTypes(
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache,
-        LocalDiagLogger localDiagLogger)
+        ImplementationCache implementationCache)
     : base(
         [assemblyTypesFromAttributes, containerTypesFromAttributes],
-        implementationTypeSetCache,
-        localDiagLogger)
+        implementationCache)
     {
     }
 }
@@ -30,12 +28,10 @@ internal sealed class ScopeCurrentlyConsideredTypes : CurrentlyConsideredTypesBa
         IAssemblyTypesFromAttributes assemblyTypesFromAttributes,
         IContainerTypesFromAttributes containerTypesFromAttributes,
         IScopeTypesFromAttributes scopeTypesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache,
-        LocalDiagLogger localDiagLogger)
+        ImplementationCache implementationCache)
         : base(
             [assemblyTypesFromAttributes, containerTypesFromAttributes, scopeTypesFromAttributes],
-            implementationTypeSetCache,
-            localDiagLogger)
+            implementationCache)
     {
     }
 }
@@ -56,11 +52,11 @@ internal interface ICurrentlyConsideredTypes
     
     bool IsSyncTransient(INamedTypeSymbol type);
     bool IsAsyncTransient(INamedTypeSymbol type);
-    bool IsContainerInstance(INamedTypeSymbol type);
-    bool IsTransientScopeInstance(INamedTypeSymbol type);
-    bool IsScopeInstance(INamedTypeSymbol type);
-    bool IsTransientScopeRoot(INamedTypeSymbol type);
-    bool IsScopeRoot(INamedTypeSymbol type);
+    bool IsContainerInstance(ITypeSymbol type);
+    bool IsTransientScopeInstance(ITypeSymbol type);
+    bool IsScopeInstance(ITypeSymbol type);
+    bool IsTransientScopeRoot(ITypeSymbol type);
+    bool IsScopeRoot(ITypeSymbol type);
     bool IsComposite(INamedTypeSymbol implementationType);
     bool HasComposite(INamedTypeSymbol interfaceType);
     INamedTypeSymbol? GetCompositeFor(INamedTypeSymbol interfaceType);
@@ -76,17 +72,16 @@ internal interface ICurrentlyConsideredTypes
 internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
 {
     private readonly IReadOnlyList<ITypesFromAttributesBase> _typesFromAttributes;
-    private readonly IImplementationTypeSetCache _implementationTypeSetCache;
+    private readonly ImplementationCache _implementationTypeSetCache;
     private readonly Lazy<IImmutableSet<INamedTypeSymbol>> _compositeAbstractionInterfaces;
     private readonly Lazy<IImmutableSet<INamedTypeSymbol>> _decoratorAbstractionInterfaces;
 
     protected CurrentlyConsideredTypesBase(
         IReadOnlyList<ITypesFromAttributesBase> typesFromAttributes,
-        IImplementationTypeSetCache implementationTypeSetCache,
-        LocalDiagLogger localDiagLogger)
+        ImplementationCache implementationCache)
     {
         _typesFromAttributes = typesFromAttributes;
-        _implementationTypeSetCache = implementationTypeSetCache;
+        _implementationTypeSetCache = implementationCache;
         IImmutableSet<INamedTypeSymbol> allImplementations = ImmutableHashSet<INamedTypeSymbol>.Empty;
 
         foreach (var types in typesFromAttributes)
@@ -96,23 +91,23 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             else
             {
                 allImplementations = allImplementations.Except(
-                    types.FilterImplementation);
+                    types.FilterImplementation.OfType<INamedTypeSymbol>());
                 allImplementations = types.FilterAssemblyImplementations.Aggregate(
                     allImplementations, 
-                    (current, assembly) => current.Except(implementationTypeSetCache.ForAssembly(assembly)));
+                    (current, assembly) => current.Except(implementationCache.ForAssembly(assembly)));
             }
 
             if (types.AllImplementations)
             {
-                allImplementations = implementationTypeSetCache.All;
+                allImplementations = implementationCache.All;
             }
             else
             {
                 allImplementations = allImplementations.Union(
-                    types.Implementation);
+                    types.Implementation.OfType<INamedTypeSymbol>());
                 allImplementations = types.AssemblyImplementations.Aggregate(
                     allImplementations, 
-                    (current, assembly) => current.Union(implementationTypeSetCache.ForAssembly(assembly)));
+                    (current, assembly) => current.Union(implementationCache.ForAssembly(assembly)));
             }
         }
 
@@ -125,8 +120,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             var result = ImmutableHashSet<INamedTypeSymbol>.Empty;
             foreach (var types in _typesFromAttributes)
             {
-                result = result.Except(types.FilterCompositeAbstraction.Select(c => c.UnboundIfGeneric()));
-                result = result.Union(types.CompositeAbstraction.Select(c => c.UnboundIfGeneric()));
+                result = result.Except(types.FilterCompositeAbstraction.OfType<INamedTypeSymbol>().Select(c => c.UnboundIfGeneric()));
+                result = result.Union(types.CompositeAbstraction.OfType<INamedTypeSymbol>().Select(c => c.UnboundIfGeneric()));
             }
             return result;
         });
@@ -162,8 +157,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             var result = ImmutableHashSet<INamedTypeSymbol>.Empty;
             foreach (var types in _typesFromAttributes)
             {
-                result = result.Except(types.FilterDecoratorAbstraction.Select(c => c.UnboundIfGeneric()));
-                result = result.Union(types.DecoratorAbstraction.Select(c => c.UnboundIfGeneric()));
+                result = result.Except(types.FilterDecoratorAbstraction.OfType<INamedTypeSymbol>().Select(c => c.UnboundIfGeneric()));
+                result = result.Union(types.DecoratorAbstraction.OfType<INamedTypeSymbol>().Select(c => c.UnboundIfGeneric()));
             }
             return result;
         });
@@ -233,7 +228,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         
         foreach (var typesFromAttribute in typesFromAttributes)
         {
-            foreach (var type in typesFromAttribute.FilterImplementationChoices)
+            foreach (var type in typesFromAttribute.FilterImplementationChoices.OfType<INamedTypeSymbol>())
                 implementationChoices.Remove(type);
 
             foreach (var (type, choice) in typesFromAttribute.ImplementationChoices)
@@ -247,7 +242,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         
         foreach (var typesFromAttribute in typesFromAttributes)
         {
-            foreach (var type in typesFromAttribute.FilterImplementationCollectionChoices)
+            foreach (var type in typesFromAttribute.FilterImplementationCollectionChoices.OfType<INamedTypeSymbol>())
                 implementationCollectionChoices.Remove(type);
 
             foreach (var (type, choice) in typesFromAttribute.ImplementationCollectionChoices)
@@ -386,7 +381,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             x => x.TransientImplementation,
             x => x.FilterTransientImplementation);
 
-    public bool IsContainerInstance(INamedTypeSymbol type) =>
+    public bool IsContainerInstance(ITypeSymbol type) =>
         HasProperty(
             type,
             x => x.ContainerInstanceAbstraction,
@@ -394,7 +389,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             x => x.ContainerInstanceImplementation,
             x => x.FilterContainerInstanceImplementation);
 
-    public bool IsTransientScopeInstance(INamedTypeSymbol type) =>
+    public bool IsTransientScopeInstance(ITypeSymbol type) =>
         HasProperty(
             type,
             x => x.TransientScopeInstanceAbstraction,
@@ -402,7 +397,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             x => x.TransientScopeInstanceImplementation,
             x => x.FilterTransientScopeInstanceImplementation);
 
-    public bool IsScopeInstance(INamedTypeSymbol type) =>
+    public bool IsScopeInstance(ITypeSymbol type) =>
         HasProperty(
             type,
             x => x.ScopeInstanceAbstraction,
@@ -410,7 +405,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             x => x.ScopeInstanceImplementation,
             x => x.FilterScopeInstanceImplementation);
 
-    public bool IsTransientScopeRoot(INamedTypeSymbol type) =>
+    public bool IsTransientScopeRoot(ITypeSymbol type) =>
         HasProperty(
             type,
             x => x.TransientScopeRootAbstraction,
@@ -418,7 +413,7 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
             x => x.TransientScopeRootImplementation,
             x => x.FilterTransientScopeRootImplementation);
 
-    public bool IsScopeRoot(INamedTypeSymbol type) =>
+    public bool IsScopeRoot(ITypeSymbol type) =>
         HasProperty(
             type,
             x => x.ScopeRootAbstraction,
@@ -438,8 +433,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
                 unbound,
                 t => t.CompositeAbstraction,
                 t => t.FilterCompositeAbstraction,
-                _ => ImmutableHashSet<INamedTypeSymbol>.Empty,
-                _ => ImmutableHashSet<INamedTypeSymbol>.Empty);
+                _ => ImmutableHashSet<ITypeSymbol>.Empty,
+                _ => ImmutableHashSet<ITypeSymbol>.Empty);
     }
     
     private readonly ConcurrentDictionary<INamedTypeSymbol, INamedTypeSymbol?> _interfaceToCompositeCache =
@@ -487,8 +482,8 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
                 unbound,
                 t => t.DecoratorAbstraction,
                 t => t.FilterDecoratorAbstraction,
-                _ => ImmutableHashSet<INamedTypeSymbol>.Empty,
-                _ => ImmutableHashSet<INamedTypeSymbol>.Empty);
+                _ => ImmutableHashSet<ITypeSymbol>.Empty,
+                _ => ImmutableHashSet<ITypeSymbol>.Empty);
     }
     
     private readonly ConcurrentDictionary<INamedTypeSymbol, ImmutableArray<INamedTypeSymbol>> _interfaceToDecoratorsCache =
@@ -597,16 +592,18 @@ internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
         }
     }
 
-    private bool HasProperty(INamedTypeSymbol type,
-        Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> propertyGivingAbstractTypesGetter, 
-        Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> filteredPropertyGivingAbstractTypesGetter,
-        Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> propertyGivingImplementationTypesGetter, 
-        Func<ITypesFromAttributesBase, IImmutableSet<INamedTypeSymbol>> filteredPropertyGivingImplementationTypesGetter)
+    private bool HasProperty(ITypeSymbol type,
+        Func<ITypesFromAttributesBase, IImmutableSet<ITypeSymbol>> propertyGivingAbstractTypesGetter, 
+        Func<ITypesFromAttributesBase, IImmutableSet<ITypeSymbol>> filteredPropertyGivingAbstractTypesGetter,
+        Func<ITypesFromAttributesBase, IImmutableSet<ITypeSymbol>> propertyGivingImplementationTypesGetter, 
+        Func<ITypesFromAttributesBase, IImmutableSet<ITypeSymbol>> filteredPropertyGivingImplementationTypesGetter)
     {
         var unbound = type.UnboundIfGeneric();
-        var lazyDerivedTypes = new Lazy<ImmutableHashSet<INamedTypeSymbol>>(() => 
-            type.OriginalDefinition.AllDerivedTypesAndSelf().Select(t =>
-                t.UnboundIfGeneric()).ToImmutableHashSet<INamedTypeSymbol>(CustomSymbolEqualityComparer.Default));
+        var lazyDerivedTypes = new Lazy<ImmutableHashSet<ITypeSymbol>>(() =>
+            type is INamedTypeSymbol namedTypeSymbol
+                ? namedTypeSymbol.OriginalDefinition.AllDerivedTypesAndSelf().Select(t =>
+                    t.UnboundIfGeneric()).ToImmutableHashSet<ITypeSymbol>(CustomSymbolEqualityComparer.Default)
+                : [type]);
         foreach (var typesFromAttributes in _typesFromAttributes.Reverse())
         {
             if (propertyGivingImplementationTypesGetter(typesFromAttributes).Any(i => CustomSymbolEqualityComparer.Default.Equals(i.UnboundIfGeneric(), unbound)))

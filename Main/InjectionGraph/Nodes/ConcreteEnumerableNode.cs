@@ -129,11 +129,14 @@ internal abstract record ConcreteEnumerableNodeData(ITypeSymbol EnumerableType, 
 internal sealed class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteEnumerableNode> factory)
     : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteEnumerableNode>(factory), IContainerInstance;
 
-internal sealed class ConcreteEnumerableNode : ConcreteNodeBase
+internal sealed class ConcreteAsyncEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteAsyncEnumerableNode> factory)
+    : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteAsyncEnumerableNode>(factory), IContainerInstance;
+
+internal abstract class ConcreteEnumerableNodeBase : ConcreteNodeBase
 {
     private readonly Lazy<TypeEdge> _innerEdgeLazy;
 
-    internal ConcreteEnumerableNode(
+    internal ConcreteEnumerableNodeBase(
         // parameters
         ConcreteEnumerableNodeData data,
 
@@ -199,3 +202,21 @@ internal sealed class ConcreteEnumerableNode : ConcreteNodeBase
         return [];
     }
 }
+
+internal sealed class ConcreteEnumerableNode(
+    // parameters
+    ConcreteEnumerableNodeData data,
+
+    // dependencies
+    TypeNodeManager typeNodeManager,
+    Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory) 
+    : ConcreteEnumerableNodeBase(data, typeNodeManager, typeEdgeFactory);
+
+internal sealed class ConcreteAsyncEnumerableNode(
+    // parameters
+    ConcreteEnumerableNodeData data,
+
+    // dependencies
+    TypeNodeManager typeNodeManager,
+    Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory) 
+    : ConcreteEnumerableNodeBase(data, typeNodeManager, typeEdgeFactory);

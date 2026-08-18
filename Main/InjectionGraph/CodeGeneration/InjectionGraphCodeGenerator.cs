@@ -121,7 +121,7 @@ internal sealed class InjectionGraphCodeGenerator(
             scopeNodeBaseCodeGenerator.GenerateScopedInstanceEntry(_code, rootNode, sync: function.Sync);
 
             var rootReference = injectionNodeGenerator.GenerateForInjectionNode(_code, rootNode, sync: function.Sync);
-            if (!rootNode.OutgoingConcreteEdges.Any(e => e.Target is ConcreteEnumerableNode))
+            if (!rootNode.OutgoingConcreteEdges.Any(e => e.Target is ConcreteEnumerableNodeBase))
                 _code.AppendLine($"return {rootReference};");
             _code.AppendLine("}");
         }
@@ -146,7 +146,7 @@ internal sealed class InjectionGraphCodeGenerator(
                       {
                       {{contextGenerator.FullNameAndParameterName}} = {{contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null", containerNode: Constants.ThisKeyword, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{containerInfo.Name}\"")}};
                       """);
-                var reference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(_code, entryFunctionNode.ReturnType, entryFunctionNode.ReturnType.Target, sync: true);
+                var reference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(_code, entryFunctionNode.ReturnType.Target, entryFunctionNode.ReturnType.Source, sync: true);
                 _code.AppendLine($"return {reference};");
                 _code.AppendLine("}");
                 

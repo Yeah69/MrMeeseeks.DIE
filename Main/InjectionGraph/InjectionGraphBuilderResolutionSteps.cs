@@ -193,16 +193,16 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
     {
         var concreteTaskNodeData = new ConcreteTaskNodeData(currentType);
         
+        edgeContext = edgeContext with { ResolutionId = resolutionRegister.GetNewResolutionId() };
+        
         var concreteTaskNode = concreteTaskNodeManager.GetOrAddNode(concreteTaskNodeData);
         
         ConnectToTypeNodeIfNotAlready(concreteTaskNode, edgeContext, typeNode);
         
-        var newEdgeContext = edgeContext with { ResolutionId = resolutionRegister.GetNewResolutionId() };
-        
-        foreach (var (node, location) in concreteTaskNode.ConnectIfNotAlready(newEdgeContext))
+        foreach (var (node, location) in concreteTaskNode.ConnectIfNotAlready(edgeContext))
             queue.Enqueue(new(
                 node, 
-                newEdgeContext,
+                edgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
     }
 
@@ -254,20 +254,18 @@ internal sealed class InjectionGraphBuilderResolutionSteps(
         Location currentResolvedLocation)
     {
         var concreteEnumerableNodeData = CreateEnumerableNodeData(currentType, edgeContext);
+       
+        edgeContext = edgeContext with { ResolutionId = resolutionRegister.GetNewResolutionId() };
 
         var concreteAsyncEnumerableNode = concreteAsyncEnumerableNodeManager.GetOrAddNode(concreteEnumerableNodeData);
 
         ConnectToTypeNodeIfNotAlready(concreteAsyncEnumerableNode, edgeContext, typeNode);
         
-        var newResolutionId = resolutionRegister.GetNewResolutionId();
         foreach (var (node, newEdgeContext, location) in concreteAsyncEnumerableNode.ConnectIfNotAlready(edgeContext))
-        {
-            var newNewEdgeContext = newEdgeContext with { ResolutionId = newResolutionId };
             queue.Enqueue(new(
                 node, 
-                newNewEdgeContext,
+                newEdgeContext,
                 location.Equals(Location.None) ? currentResolvedLocation : location));
-        }
     }
 
     private ConcreteEnumerableNodeData CreateEnumerableNodeData(ITypeSymbol currentType, EdgeContext edgeContext)

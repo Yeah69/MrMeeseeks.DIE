@@ -155,7 +155,7 @@ internal abstract class ConcreteEnumerableNodeBase : ConcreteNodeBase
     public override int GetHashCode() => 
         Data.GetHashCode();
     public override bool Equals(object? obj) => 
-        obj is ConcreteEnumerableNode other && Data.Equals(other.Data);
+        obj is ConcreteEnumerableNodeBase other && Data.Equals(other.Data);
 
     public IReadOnlyList<(TypeNode TypeNode, EdgeContext NewContext, Location Location)> ConnectIfNotAlready(EdgeContext context)
     {
@@ -209,8 +209,12 @@ internal sealed class ConcreteEnumerableNode(
 
     // dependencies
     TypeNodeManager typeNodeManager,
-    Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory) 
-    : ConcreteEnumerableNodeBase(data, typeNodeManager, typeEdgeFactory);
+    Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory)
+    : ConcreteEnumerableNodeBase(data, typeNodeManager, typeEdgeFactory)
+{
+    public override bool Equals(object? obj) => 
+        obj is ConcreteEnumerableNode && base.Equals(obj);
+}
 
 internal sealed class ConcreteAsyncEnumerableNode(
     // parameters
@@ -219,4 +223,8 @@ internal sealed class ConcreteAsyncEnumerableNode(
     // dependencies
     TypeNodeManager typeNodeManager,
     Func<IConcreteNode, TypeNode, TypeEdge> typeEdgeFactory) 
-    : ConcreteEnumerableNodeBase(data, typeNodeManager, typeEdgeFactory);
+    : ConcreteEnumerableNodeBase(data, typeNodeManager, typeEdgeFactory)
+{
+    public override bool Equals(object? obj) => 
+        obj is ConcreteAsyncEnumerableNode && base.Equals(obj);
+}

@@ -197,9 +197,9 @@ internal sealed class ScopeNodeBaseCodeGenerator(
 
             var (scopeNode, calledFunction) = GetScopeNodeAndFunction();
 
-            if (value.ScopeRootTypeTypeEdge is { Target: var scopeRootTypeNode } typeTypeEdge)
+            if (value.ScopeRootTypeTypeEdge is { Target: var scopeRootTypeNode, Source: var source })
             {
-                var rootReference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(code, typeTypeEdge, scopeRootTypeNode, sync: sync);
+                var rootReference = injectionNodeGenerator.CallFunctionOrGenerateForInjectionNode(code, scopeRootTypeNode, source: source, sync: sync);
                 var await = !sync ? "await " : "";
                 code.AppendLine($"{rootReference}.{ScopeNodeToContainerPropertyReference[scopeNode]} = ({containerInfo.FullName}) {contextGenerator.ParameterName}.{contextGenerator.ContainerNodePropertyName};");
                 code.AppendLine($"return {await}{rootReference}.{functionUtility.GenerateFunctionCall(calledFunction, doScopedInstance: true, doScopeRoot: true)};");

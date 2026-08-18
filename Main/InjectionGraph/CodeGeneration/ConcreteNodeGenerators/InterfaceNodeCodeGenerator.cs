@@ -39,7 +39,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
         if (concreteNode.TypeCases.Count() == 1)
         {
             var typeCase = concreteNode.TypeCases.First();
-            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge, typeCase.Edge.Target, sync: sync);
+            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge.Target, typeCase.Edge.Source, sync: sync);
             code.AppendLine($"{declarationPrefix}{actualReference} = ({concreteNode.Data.Interface.FullName()}) {innerReference};");
             return actualReference;
         }
@@ -142,7 +142,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
                   if ({{typeCaseReference}} == {{typeCase.TypeCase}})
                   {
                   """);
-            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge, typeCase.Edge.Target, sync: sync);
+            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, typeCase.Edge.Target, typeCase.Edge.Source, sync: sync);
             code.AppendLine(
                 $$"""
                   {{actualReference}} = ({{concreteNode.Data.Interface.FullName()}}) {{innerReference}};

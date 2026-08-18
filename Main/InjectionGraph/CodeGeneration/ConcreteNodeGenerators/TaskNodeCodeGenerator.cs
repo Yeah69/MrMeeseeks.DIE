@@ -30,12 +30,12 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
         {
             if (concreteNode.InnerEdge.Target.AsyncFunction is { AsyncReturnType: INamedTypeSymbol asyncReturnType })
             {
-                var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge, concreteNode.InnerEdge.Target, sync: false);
+                var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge.Target, concreteNode.InnerEdge.Source, sync: false);
                 WrapIntoTaskTypeFromAsyncFunctionCall(asyncReturnType, innerReference);
             }
             else
             {
-                var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge, concreteNode.InnerEdge.Target, sync: sync);
+                var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge.Target, concreteNode.InnerEdge.Source, sync: sync);
                 code.AppendLine(CustomSymbolEqualityComparer.Default.Equals(concreteNode.Data.TaskType.OriginalDefinition, _wellKnownTypes.ValueTask1)
                     ? $"{prefix}{actualReference} = new {concreteNode.Data.TaskType.FullName()}({_wellKnownTypes.Task.FullName()}.FromResult({innerReference}));"
                     : $"{prefix}{actualReference} = {_wellKnownTypes.Task.FullName()}.{nameof(Task.FromResult)}({innerReference});");
@@ -43,7 +43,7 @@ internal sealed class TaskNodeCodeGenerator : IConcreteNodeCodeGenerator<Concret
         }
         else if (concreteNode.InnerEdge.Target.AsyncFunction is { AsyncReturnType: INamedTypeSymbol asyncReturnType })
         {
-            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge, concreteNode.InnerEdge.Target, sync: sync);
+            var innerReference = _injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, concreteNode.InnerEdge.Target, concreteNode.InnerEdge.Source, sync: sync);
             code.AppendLine($"await {_wellKnownTypes.Task.FullName()}.{nameof(Task.Yield)}();");
             WrapIntoTaskTypeFromAsyncFunctionCall(asyncReturnType, innerReference);
             // Todo async but no function

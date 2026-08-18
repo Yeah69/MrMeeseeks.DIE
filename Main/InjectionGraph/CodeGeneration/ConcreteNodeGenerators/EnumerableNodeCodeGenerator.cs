@@ -30,7 +30,7 @@ internal abstract class EnumerableNodeCodeGeneratorBase(
                         outwardFacingTypeNumber: single.OutwardFacingTypeId.ToString(CultureInfo.InvariantCulture),
                         caseNumber: single.CaseId.ToString(CultureInfo.InvariantCulture),
                         key: "null"));
-                    var reference = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target, sync: sync);
+                    var reference = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge.Target, enumerableNode.InnerEdge.Source, sync: sync);
                     if (!isArray)
                         code.AppendLine($"yield return {reference};");
                     return reference;
@@ -42,7 +42,7 @@ internal abstract class EnumerableNodeCodeGeneratorBase(
                 {
                     string keyLiteral = keyUtility.GenerateKeyLiteral(key.KeyType, value);
                     code.AppendLine(contextGenerator.GenerateCopyAssignment(outwardFacingTypeNumber: "0", caseNumber: "0", key: keyLiteral));
-                    var reference = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target, sync: sync);
+                    var reference = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge.Target, enumerableNode.InnerEdge.Source, sync: sync);
                     if (!isArray)
                         code.AppendLine($"yield return {reference};");
                     return reference;
@@ -50,7 +50,7 @@ internal abstract class EnumerableNodeCodeGeneratorBase(
                 return [.. keyedSequence];
 
             case ConcreteEnumerableNodeData.SinglePlainItem:
-                var singlePlainItemReference = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge, enumerableNode.InnerEdge.Target, sync: sync);
+                var singlePlainItemReference = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, enumerableNode.InnerEdge.Target, enumerableNode.InnerEdge.Source, sync: sync);
                 if (!isArray)
                     code.AppendLine($"yield return {singlePlainItemReference};");
                 return [singlePlainItemReference];

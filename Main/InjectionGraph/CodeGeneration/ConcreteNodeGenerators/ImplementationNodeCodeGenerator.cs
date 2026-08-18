@@ -84,7 +84,7 @@ internal sealed class ImplementationNodeCodeGenerator(
                   """);
         }
 
-        var ret = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, dependency.Edge, dependency.Edge.Target, sync: sync);
+        var ret = injectionNodeGenerator.Value.CallFunctionOrGenerateForInjectionNode(code, dependency.Edge.Target, dependency.Edge.Source, sync: sync);
 
         if (dependency.PassOriginalChoiceContextId is not null)
         {

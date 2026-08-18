@@ -35,6 +35,7 @@ internal sealed class InjectionGraphBuilder(
     EdgeRegistry edgeRegistry,
     TypeSymbolUtility typeSymbolUtility,
     AsyncAdjustments asyncAdjustments,
+    ConnectedResolutionIdsRegistry  connectedResolutionIdsRegistry,
     Func<TypeNode, bool, TypeNodeFunction> functionFactory,
     Func<TypeNode, IConcreteNode, ConcreteAsyncEdge> concreteAsyncEdgeFactory,
     Func<(TypeNode, TypeNode), TypeTypeEdge> typeTypeEdgeFactory,
@@ -43,7 +44,7 @@ internal sealed class InjectionGraphBuilder(
     : IInjectionGraphBuilder, IContainerInstance
 {
     private readonly List<ITypeNodeFunction> _functions = [];
-    private HashSet<int> _asyncResolutionIds = [];
+    private ImmutableHashSet<int> _asyncResolutionIds = [];
 
     public IReadOnlyList<ITypeNodeFunction> Functions => _functions;
 
@@ -78,8 +79,10 @@ internal sealed class InjectionGraphBuilder(
 
     public void SplitAsyncConcreteEdges()
     {
-        var awaitedNodes = asyncAdjustments.AwaitedNodes;
-        Adjust();
+        _asyncResolutionIds =
+        [
+            .. asyncAdjustments.AwaitedNodes.Values.SelectMany(v => v).Distinct().SelectMany(connectedResolutionIdsRegistry.GetConnectedResolutionIdsAndSelf)
+        ];
 
         var concreteSyncEdges = edgeRegistry.Edges.OfType<ConcreteSyncEdge>().ToImmutableArray();
         
@@ -109,58 +112,6 @@ internal sealed class InjectionGraphBuilder(
                 concreteSyncEdge.Source.RemoveEdge(concreteSyncEdge);
                 concreteSyncEdge.Target.RemoveEdge(concreteSyncEdge);
                 edgeRegistry.Unregister(concreteSyncEdge);
-            }
-        }
-
-        return;
-
-        void Adjust()
-        {
-            EnhanceAwaitedNodes();
-            foreach (var resolutionIds in awaitedNodes.Select(kvp => kvp.Value))
-                _asyncResolutionIds.UnionWith(resolutionIds);
-            return;
-
-            void EnhanceAwaitedNodes()
-            {
-                var outerQueue = new Queue<(INode, int)>(awaitedNodes.SelectMany(kvp => kvp.Value.Select(ri => (kvp.Key, ri))));
-                while (outerQueue.Count > 0)
-                {
-                    var (outerNode, resolutionId) = outerQueue.Dequeue();
-                    var innerQueue = new Queue<INode>();
-                    innerQueue.Enqueue(outerNode);
-                    
-                    var visitedNodes = new HashSet<INode>();
-                    while (innerQueue.Count > 0)
-                    {
-                        var currentNode = innerQueue.Dequeue();
-                        visitedNodes.Add(currentNode);
-                        if (currentNode is IConcreteNode currentConcreteNode)
-                        {
-                            var sequence = currentConcreteNode
-                                .IncomingEdges
-                                .Where(e => e.Contexts.Any(c => c.ResolutionId == resolutionId))
-                                .Select(e => e.SourceAsNode)
-                                .Where(n => !visitedNodes.Contains(n));
-                            foreach (var typeNode in sequence)
-                                innerQueue.Enqueue(typeNode);
-                        } 
-                        else if (currentNode is TypeNode currentTypeNode)
-                        {
-                            var sequence = currentTypeNode
-                                .IncomingEdges
-                                .Where(e => e.Contexts.Any(c => c.ResolutionId == resolutionId))
-                                .Select(e => e.SourceAsNode)
-                                .Where(n => !visitedNodes.Contains(n));
-                            foreach (var concreteNode in sequence)
-                                innerQueue.Enqueue(concreteNode);
-
-                            if (currentTypeNode.LinkedResolutionIdsToFrom.TryGetValue(resolutionId, out var linkedResolutionIds))
-                                foreach (var linkedResolutionId in linkedResolutionIds)
-                                    awaitedNodes.GetOrAdd(currentTypeNode, _ => []).Add(linkedResolutionId);
-                        }
-                    }
-                }
             }
         }
     }
@@ -203,8 +154,11 @@ internal sealed class InjectionGraphBuilder(
 
         if (typeNode.ContainsOutgoingEdgeFor(edgeContext) is { } existingEdgeContext)
         {
-            if (existingEdgeContext.ResolutionId != edgeContext.ResolutionId)
-                typeNode.LinkResolutionIds(edgeContext.ResolutionId, existingEdgeContext.ResolutionId);
+            if (existingEdgeContext.ResolutionId != edgeContext.ResolutionId
+                && !CustomSymbolEqualityComparer.Default.Equals(typeNodeType.OriginalDefinition, wellKnownTypes.ValueTask1)
+                && !CustomSymbolEqualityComparer.Default.Equals(typeNodeType.OriginalDefinition, wellKnownTypes.Task1)
+                && !CustomSymbolEqualityComparer.Default.Equals(typeNodeType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1))
+                connectedResolutionIdsRegistry.RegisterConnection(existingEdgeContext.ResolutionId, edgeContext.ResolutionId);
             return;
         }
 
@@ -344,7 +298,7 @@ internal sealed class InjectionGraphBuilder(
                     // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
                     || asyncIncomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
                     // or any outgoing edges contain concrete enumerable
-                    || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNodeBase)
+                    || concreteAsyncEdges.Any(e => e.Target is ConcreteEnumerableNodeBase)
                     // or Type Node is scope instance in some configurations
                     || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
                     // or Type Node is scope root in some configurations

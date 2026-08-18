@@ -42,6 +42,7 @@ internal sealed class InjectionGraphPlantUmlGenerator(
         _diagram.AppendLine("  BackgroundColor<<Interface>> LightYellow");
         _diagram.AppendLine("  BackgroundColor<<Functor>> LightCoral");
         _diagram.AppendLine("  BackgroundColor<<Enumerable>> LightPink");
+        _diagram.AppendLine("  BackgroundColor<<AsyncEnumerable>> HotPink");
         _diagram.AppendLine("  BackgroundColor<<KeyValuePair>> LightGray");
         _diagram.AppendLine("  BackgroundColor<<Override>> Wheat");
         _diagram.AppendLine("  BackgroundColor<<EntryFunction>> LightCyan");
@@ -70,6 +71,7 @@ internal sealed class InjectionGraphPlantUmlGenerator(
         concreteInterfaceNodeManager.AllNodes.Count != 0 ||
         concreteFunctorNodeManager.AllNodes.Count != 0 ||
         concreteEnumerableNodeManager.AllNodes.Count != 0 ||
+        concreteAsyncEnumerableNodeManager.AllNodes.Count != 0 ||
         concreteKeyValuePairNodeManager.AllNodes.Count != 0 ||
         concreteOverrideNodeManager.AllNodes.Count != 0 ||
         concreteTaskNodeManager.AllNodes.Count != 0;
@@ -136,6 +138,13 @@ internal sealed class InjectionGraphPlantUmlGenerator(
             var id = GetConcreteNodeId(node);
             var label = SanitizeLabel($"Enum: {GetTypeDisplayName(node.Data.EnumerableType)}");
             _diagram.AppendLine($"rectangle \"{label}\" as {id} <<Enumerable>>");
+        }
+
+        foreach (var node in concreteAsyncEnumerableNodeManager.AllNodes)
+        {
+            var id = GetConcreteNodeId(node);
+            var label = SanitizeLabel($"AsyncEnum: {GetTypeDisplayName(node.Data.EnumerableType)}");
+            _diagram.AppendLine($"rectangle \"{label}\" as {id} <<AsyncEnumerable>>");
         }
 
         foreach (var node in concreteKeyValuePairNodeManager.AllNodes)
@@ -275,6 +284,8 @@ internal sealed class InjectionGraphPlantUmlGenerator(
     {
         var parts = new List<string>();
 
+        parts.Add($"R:{context.ResolutionId}");
+
         switch (context.ScopeNode)
         {
             case ScopeNodeContext.Container:
@@ -312,7 +323,7 @@ internal sealed class InjectionGraphPlantUmlGenerator(
                 break;
         }
 
-        return parts.Count > 0 ? string.Join(", ", parts) : "Default";
+        return string.Join(", ", parts);
     }
 
     private bool HasExceptionNodeConnections()

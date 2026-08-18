@@ -35,7 +35,6 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
     private readonly List<ConcreteEdge> _outgoingConcreteEdges = [];
     private readonly Dictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> _scopeRootConfiguration = [];
     private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _scopeInstanceConfiguration = [];
-    private readonly ConcurrentDictionary<int, HashSet<int>> _linkedResolutionIdsToFrom = []; 
     
     internal ITypeSymbol Type { get; } = type;
     internal IReadOnlyList<IEdge> Incoming => [.._incomingTypeEdges, .._incomingTypeTypeEdges];
@@ -55,8 +54,6 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
     /// Use scope instance level (key; None means "not a scope instance") on all current contexts (value collection).
     /// </summary>
     internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> ScopeInstanceConfiguration => _scopeInstanceConfiguration;
-    
-    internal IReadOnlyDictionary<int, HashSet<int>> LinkedResolutionIdsToFrom => _linkedResolutionIdsToFrom;
     
     internal ITypeNodeFunction? SyncFunction { get; set; }
     
@@ -113,9 +110,6 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
         }
         configuration.Add(scopeNodeContext);
     }
-
-    internal void LinkResolutionIds(int from, int to) => 
-        _linkedResolutionIdsToFrom.GetOrAdd(to, _ => []).Add(from);
 
     public IReadOnlyList<IEdge> IncomingEdges => _incomingTypeEdges;
 }

@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis.CSharp;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
@@ -7,7 +8,8 @@ namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
 internal sealed class FunctionUtility(
     ReferenceGenerator referenceGenerator,
     ContextGenerator contextGenerator,
-    WellKnownTypes wellKnownTypes)
+    WellKnownTypes wellKnownTypes,
+    WellKnownTypesCollections wellKnownTypesCollections)
     : IContainerInstance
 {
     internal string DoScopedInstanceParameterName { get; } = referenceGenerator.Generate("doScopedInstance");
@@ -34,8 +36,10 @@ internal sealed class FunctionUtility(
         }
     }
     
-    internal ITypeSymbol MakeItAnAsyncReturnType(ITypeSymbol syncReturnType) => 
-        wellKnownTypes.ValueTask1 is not null
+    internal ITypeSymbol MakeItAnAsyncReturnType(ITypeSymbol syncReturnType) =>
+        CustomSymbolEqualityComparer.Default.Equals(syncReturnType.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1)
+        ? syncReturnType /* IAsyncEnumerable<T> is an async wrapper already */
+        : wellKnownTypes.ValueTask1 is not null
             ? wellKnownTypes.ValueTask1.Construct(syncReturnType)
             : wellKnownTypes.Task1.Construct(syncReturnType);
     

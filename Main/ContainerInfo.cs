@@ -28,7 +28,9 @@ internal sealed class ContainerInfo : IContainerLevelOnlyContainerInstance
         RangeUtility rangeUtility)
     {
         Name = containerClass.Name;
-        Namespace = containerClass.ContainingNamespace.FullName();
+        Namespace = containerClass.ContainingNamespace?.IsGlobalNamespace ?? true 
+            ? null
+            : containerClass.ContainingNamespace?.FullName();
         ContainerType = containerClass;
 
         CreateFunctionData = rangeUtility.GetRangeAttributes(containerClass)
@@ -75,13 +77,13 @@ internal sealed class ContainerInfo : IContainerLevelOnlyContainerInstance
         else
             FullName = containerClass.FullName();
         
-        var namespaceName = containerClass.ContainingNamespace.FullName();
-        var nestingPart = ContainingTypeNames.Length > 0 ? $".{string.Join(".", ContainingTypeNames)}" : string.Empty;
-        _hintPathPrefix = $"{namespaceName}{nestingPart}.{containerClass.Name}";
+        var nestingPart = ContainingTypeNames.Length > 0 ? string.Join(".", ContainingTypeNames) : string.Empty;
+        var prefix = Namespace is not null ? $"{Namespace}.{nestingPart}" : nestingPart;
+        _hintPathPrefix = prefix == string.Empty ? containerClass.Name : $"{prefix}.{containerClass.Name}";
     }
 
     public string Name { get; }
-    public string Namespace { get; }
+    public string? Namespace { get; }
     public string FullName { get; }
     public INamedTypeSymbol ContainerType { get; }
     public IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }

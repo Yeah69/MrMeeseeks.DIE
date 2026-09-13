@@ -59,7 +59,7 @@ public sealed partial class MixedSynchronicityScopedInstance
         [Fact]
         public async Task Test()
         {
-            var container = MixedSynchronicityScopedInstance.Container.DIE_CreateContainer();
+            var container = Container.DIE_CreateContainer();
             var parent = container.Create();
             var sync = parent.Sync;
             var async = await parent.Async;

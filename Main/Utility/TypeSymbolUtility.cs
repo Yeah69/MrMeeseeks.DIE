@@ -7,7 +7,7 @@ internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContai
 {
     internal ITypeSymbol GetUnwrappedType(ITypeSymbol type)
     {
-        if (IsOtherWrapType(type)
+        if ((IsTaskType(type) || IsOtherWrapType(type))
             && type is INamedTypeSymbol namedType)
             return GetUnwrappedType(namedType.TypeArguments.First());
 

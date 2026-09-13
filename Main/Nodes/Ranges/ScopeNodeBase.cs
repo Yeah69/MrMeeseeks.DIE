@@ -61,7 +61,9 @@ internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
     {
         ParentContainer = parentContainer;
         ScopeManager = scopeManager;
-        FullName = $"{parentContainer.Namespace}.{parentContainer.Name}.{scopeInfo.Name}";
+        FullName = parentContainer.Namespace is not null 
+            ? $"{parentContainer.Namespace}.{parentContainer.Name}.{scopeInfo.Name}"
+            : $"{parentContainer.Name}.{scopeInfo.Name}";
         ContainerFullName = parentContainer.FullName;
         ContainerReference = referenceGenerator.Generate("Container");
         ImplementationType = scopeInfo.ScopeType;

@@ -26,12 +26,13 @@ internal sealed class InjectionGraphCodeGenerator(
 
     public string Generate()
     {
-        _code.AppendLine(
-        $$"""
-          #nullable enable
-          namespace {{containerInfo.Namespace}}
-          {
-          """);
+        _code.AppendLine("#nullable enable");
+        if (containerInfo.Namespace is not null)
+            _code.AppendLine(
+                $$"""
+                  namespace {{containerInfo.Namespace}}
+                  {
+                  """);
         
         /*var genericParameters = _rangeNode is IContainerNode containerNode && containerNode.TypeParameters.Any()
             ? $"<{string.Join(", ", containerNode.TypeParameters.Select(p => p.Name))}>"
@@ -227,11 +228,10 @@ internal sealed class InjectionGraphCodeGenerator(
 
         _code.AppendLine(string.Join(Environment.NewLine, containerInfo.ContainingTypeNames.Select(_ => "}")));
 
-        _code.AppendLine(
-            """
-            }
-            #nullable disable
-            """);
+        if (containerInfo.Namespace is not null)
+            _code.AppendLine("}");
+        
+        _code.AppendLine("#nullable disable");
         
         return _code.ToString();
     }

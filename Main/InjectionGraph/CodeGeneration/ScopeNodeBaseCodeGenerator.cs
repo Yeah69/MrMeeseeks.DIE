@@ -17,6 +17,8 @@ internal sealed class ScopeNodeBaseCodeGenerator(
     ContextGenerator contextGenerator,
     ReferenceGenerator referenceGenerator,
     WellKnownTypes wellKnownTypes,
+    TypeNodeManager typeNodeManager,
+    Func<TypeNode, ExplicitInterfaceDescription, bool, ScopedInstanceFunction> scopedInstanceFunctionFactory,
     ScopeNodeManager scopeNodeManager)
 {
     internal ImmutableDictionary<NonContainerScopeNode, string> ScopeNodeToContainerPropertyReference =>
@@ -28,14 +30,12 @@ internal sealed class ScopeNodeBaseCodeGenerator(
     {
         var prefix = isContainer ? $"{containerInfo.Name}." : string.Empty;
         return [
-            ..scopeNodeBase
-                .ScopedInstances
-                .Where(si => si.TypeNode.Outgoing.Any(o => o is ConcreteSyncEdge { Contexts: {} contexts } && contexts.Any(c => MatchingContext(scopeNodeBase, c))))
-                .Select(si => $"{prefix}{scopedInstanceInterfaceDescription.SyncInterfaceName}<{si.TypeNode.Type.FullName()}>"),
-            ..scopeNodeBase
-                .ScopedInstances
-                .Where(si => si.TypeNode.Outgoing.Any(o => o is ConcreteAsyncEdge { Contexts: {} contexts } && contexts.Any(c => MatchingContext(scopeNodeBase, c))))
-                .Select(si => $"{prefix}{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{si.TypeNode.Type.FullName()}>")];
+            ..scopeNodeManager
+                .GetSyncScopedInstanceTypesFor(scopeNodeBase)
+                .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.SyncInterfaceName}<{t.FullName()}>"),
+            ..scopeNodeManager
+                .GetAsyncScopedInstanceTypesFor(scopeNodeBase)
+                .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{t.FullName()}>")];
     }
 
     private bool MatchingContext(ScopeNodeBase scopeNodeBase, EdgeContext context) =>
@@ -106,22 +106,35 @@ internal sealed class ScopeNodeBaseCodeGenerator(
         var semaphoreSlimFullName = wellKnownTypes.SemaphoreSlim.FullName();
         var objectFullName = wellKnownTypes.Object.FullName();
 
-        foreach ( var scopedInstance in scopeNodeBase.ScopedInstances)
+        var groups = scopeNodeManager.GetSyncScopedInstanceTypesFor(scopeNodeBase)
+            .Select(t => scopedInstanceFunctionFactory(
+                typeNodeManager.GetOrAddNode(t),
+                new ExplicitInterfaceDescription.Generated($"{scopedInstanceInterfaceDescription.SyncInterfaceName}<{t.FullName()}>"), 
+                true/* Sync */))
+            .Concat(scopeNodeManager.GetAsyncScopedInstanceTypesFor(scopeNodeBase)
+                .Select(t => scopedInstanceFunctionFactory(
+                    typeNodeManager.GetOrAddNode(t),
+                    new ExplicitInterfaceDescription.Generated($"{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{t.FullName()}>"), 
+                    false/* Async */)))
+            .GroupBy(x => x.RootNode.Type);
+        
+        foreach (var group in groups)
         {
-            var typeSymbol = scopedInstance.TypeNode.Type;
+            var typeSymbol = group.Key;
             
             var scopedInstanceFieldReference = referenceGenerator.Generate("_scopedInstanceField", typeSymbol);
             code.AppendLine($"private {typeSymbol.FullName()}? {scopedInstanceFieldReference};");
             var scopedInstanceLockFieldReference = referenceGenerator.Generate("_scopedInstanceLock", typeSymbol);
             code.AppendLine($"private {semaphoreSlimFullName}? {scopedInstanceLockFieldReference} = new {semaphoreSlimFullName}(1);");
-            
 
-            if (scopedInstance.TypeNode.SyncFunction is { } syncFunction
-                && scopedInstance.TypeNode.Outgoing.Any(e => e is ConcreteSyncEdge { Contexts: {} contexts } && contexts.Any(c => MatchingContext(scopeNodeBase, c))))
-                GenerateFunction(scopedInstance.SyncFunction, syncFunction);
-            if (scopedInstance.TypeNode.AsyncFunction is { } asyncFunction
-                && scopedInstance.TypeNode.Outgoing.Any(e => e is ConcreteAsyncEdge { Contexts: {} contexts } && contexts.Any(c => MatchingContext(scopeNodeBase, c))))
-                GenerateFunction(scopedInstance.AsyncFunction, asyncFunction);
+            var scopedInstanceFunctions = group.ToImmutableDictionary(x => x.Sync);
+            var syncFunction = scopedInstanceFunctions.TryGetValue(true, out var function) ? function : null;
+            var asyncFunction = scopedInstanceFunctions.TryGetValue(false, out var function0) ? function0 : null;
+
+            if (syncFunction?.RootNode.SyncFunction is { } innerSyncFunction && syncFunction is {} outerSyncFunction)
+                GenerateFunction(outerSyncFunction, innerSyncFunction);
+            if (asyncFunction?.RootNode.AsyncFunction is { } innerAsyncFunction && asyncFunction is {} outerAsyncFunction)
+                GenerateFunction(outerAsyncFunction, innerAsyncFunction);
             continue;
 
             void GenerateFunction(IFunction outerFunction, IFunction innerFunction)
@@ -166,14 +179,16 @@ internal sealed class ScopeNodeBaseCodeGenerator(
 
     internal void GenerateScopeRootEntry(StringBuilder code, TypeNode rootNode, bool sync)
     {
-        if (rootNode.ScopeRootConfiguration.Count == 0) 
+        var scopeRootConfiguration = sync ? rootNode.SyncScopeRootConfiguration : rootNode.AsyncScopeRootConfiguration;
+        
+        if (scopeRootConfiguration.Count == 0) 
             return;
         
         code.AppendLine($"if ({functionUtility.DoScopeRootParameterName})");
         code.AppendLine("{");
 
         var firstIteration = true;
-        foreach (var keyValuePair in rootNode.ScopeRootConfiguration)
+        foreach (var keyValuePair in scopeRootConfiguration)
         {
             if (firstIteration)
                 firstIteration = false;
@@ -262,23 +277,17 @@ internal sealed class ScopeNodeBaseCodeGenerator(
 
     internal void GenerateScopedInstanceEntry(StringBuilder code, TypeNode rootNode, bool sync)
     {
-        if (!rootNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)) 
+        var scopeInstanceConfiguration = sync ? rootNode.SyncScopeInstanceConfiguration : rootNode.AsyncScopeInstanceConfiguration;
+        if (!scopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)) 
             return;
-        
-        // At this point it doesn't actually matter from which scope node (Container, Transient, Scope) the scoped instance is,
-        // because we just need any function for the call (which will have the same name everytime).
-        var (_, syncFunction, asyncFunction) = scopeNodeManager.ContainerScopeNode.ScopedInstances
-            .Concat(scopeNodeManager.Scopes.SelectMany(s => s.ScopedInstances))
-            .Concat(scopeNodeManager.TransientScopes.SelectMany(ts => ts.ScopedInstances))
-            .First(sid => CustomSymbolEqualityComparer.Default.Equals(sid.TypeNode.Type, rootNode.Type));
 
         code.AppendLine($"if ({functionUtility.DoScopedInstanceParameterName})");
         code.AppendLine("{");
 
-        if (rootNode.ScopeInstanceConfiguration.Count == 1)
-            code.AppendLine(CreateReturn(rootNode.ScopeInstanceConfiguration.First().Key));
+        if (scopeInstanceConfiguration.Count == 1)
+            code.AppendLine(CreateReturn(scopeInstanceConfiguration.First().Key));
         else
-            code.AppendLine(string.Join($"{Environment.NewLine}else ", rootNode.ScopeInstanceConfiguration
+            code.AppendLine(string.Join($"{Environment.NewLine}else ", scopeInstanceConfiguration
                 .Where(kvp => kvp.Key is not ScopeLevel.None)
                 .Select(CreateIf)));
 
@@ -318,8 +327,14 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                 ScopeLevel.Scope => contextGenerator.ScopeNodePropertyName
             };
             var calledFunction = sync
-                ? syncFunction
-                : asyncFunction;
+                ? scopedInstanceFunctionFactory(
+                    rootNode, 
+                    new ExplicitInterfaceDescription.Generated($"{scopedInstanceInterfaceDescription.SyncInterfaceName}<{rootNode.Type.FullName()}>"),
+                    true/* Sync */)
+                : scopedInstanceFunctionFactory(
+                    rootNode, 
+                    new ExplicitInterfaceDescription.Generated($"{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{rootNode.Type.FullName()}>"), 
+                    false/* Async */);
             var castType = sync
                 ? $"{scopedInstanceInterfaceDescription.SyncInterfaceName}<{rootNode.Type}>"
                 : $"{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{rootNode.Type}>";

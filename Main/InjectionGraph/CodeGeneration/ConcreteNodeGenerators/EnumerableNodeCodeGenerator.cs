@@ -92,7 +92,8 @@ internal sealed class EnumerableNodeCodeGenerator(
 internal sealed class AsyncEnumerableNodeCodeGenerator(
     Lazy<InjectionNodeGenerator> injectionNodeGenerator,
     ContextGenerator contextGenerator,
-    KeyUtility keyUtility) 
+    KeyUtility keyUtility,
+    WellKnownTypesCollections wellKnownTypesCollections) 
     : EnumerableNodeCodeGeneratorBase(injectionNodeGenerator, contextGenerator, keyUtility), IConcreteNodeCodeGenerator<ConcreteAsyncEnumerableNode>, IScopeInstance
 {
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteAsyncEnumerableNode concreteNode, bool sync, string? reference = null)
@@ -112,7 +113,7 @@ internal sealed class AsyncEnumerableNodeCodeGenerator(
         var references = GetResultReferences(code, enumerableNode, nodeData, isArray, sync: sync);
 
         code.AppendLine(isArray
-            ? $"return new {enumerableNode.Data.EnumerableType.FullName()} {{ {string.Join(", ", references)} }}.ToAsyncEnumerable();"
+            ? $"return {wellKnownTypesCollections.AsyncEnumerable!.FullName()}.ToAsyncEnumerable(new {enumerableNode.Data.MaybeWrappedItemType.FullName()}[] {{ {string.Join(", ", references)} }});"
             : "yield break;");
     }
 }

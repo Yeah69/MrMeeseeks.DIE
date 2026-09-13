@@ -7,6 +7,7 @@ internal sealed record WellKnownTypesCollections(
     // ReSharper disable InconsistentNaming
     INamedTypeSymbol IEnumerable1, // .NET Standard 2.0
     INamedTypeSymbol? IAsyncEnumerable1, // .NET Standard 2.1
+    INamedTypeSymbol? AsyncEnumerable, // .NET Standard 2.1
     // ReSharper restore InconsistentNaming
     INamedTypeSymbol ArraySegment1, // .NET Standard 2.0
     INamedTypeSymbol Enumerable, // .NET Standard 2.0
@@ -59,6 +60,7 @@ internal sealed record WellKnownTypesCollections(
         return new WellKnownTypesCollections(
             IEnumerable1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IEnumerable`1"),
             IAsyncEnumerable1: compilation.GetTypeByMetadataName("System.Collections.Generic.IAsyncEnumerable`1"),
+            AsyncEnumerable: compilation.GetTypeByMetadataNameOrThrow("System.Linq.AsyncEnumerable"),
             ArraySegment1: compilation.GetTypeByMetadataNameOrThrow("System.ArraySegment`1"),
             Enumerable: compilation.GetTypeByMetadataNameOrThrow("System.Linq.Enumerable"),
             IList1: compilation.GetTypeByMetadataNameOrThrow("System.Collections.Generic.IList`1"),

@@ -131,7 +131,7 @@ object "{{keyValuePair.Key.FactoryName}}" as {{keyValuePair.Value}}
         
         if (!Directory.Exists(_dirPath))
             Directory.CreateDirectory(_dirPath);
-        var fileNamePart = $"{_containerInfo.Namespace}{_containerInfo.Name}";
+        var fileNamePart = _containerInfo.Namespace is not null ? $"{_containerInfo.Namespace}.{_containerInfo.Name}" : _containerInfo.Name;
         File.WriteAllText(
             _relevantNodes is null 
                 ? _paths.AnalyticsResolutionGraph(fileNamePart) 

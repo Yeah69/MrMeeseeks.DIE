@@ -114,6 +114,9 @@ internal sealed class InjectionGraphBuilder(
                 edgeRegistry.Unregister(concreteSyncEdge);
             }
         }
+        
+        foreach (var typeNode in typeNodeManager.AllTypeNodes)
+            typeNode.SplitScopeBasedConfigurations();
     }
 
     private void MakeResolutionStep(
@@ -164,67 +167,6 @@ internal sealed class InjectionGraphBuilder(
 
         var scopeInstanceLevel = edgeContext.ScopeNode.CheckTypeProperties.GetScopeLevelFor(typeNode.Type);
         typeNode.RegisterScopeInstanceConfiguration(scopeInstanceLevel, edgeContext.ScopeNode);
-
-        if (scopeInstanceLevel is not ScopeLevel.None)
-        {
-            switch (scopeInstanceLevel)
-            {
-                case ScopeLevel.Scope:
-                    switch (edgeContext.ScopeNode)
-                    {
-                        case ScopeNodeContext.Container:
-                            scopeNodeManager.RegisterContainerInstance(typeNode);
-                            break;
-                        case ScopeNodeContext.Scope { ScopeName: var scopeName }:
-                            scopeNodeManager.RegisterScopedInstance(scopeName, typeNode);
-                            break;
-                        case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
-                            scopeNodeManager.RegisterScopedInstance(transientScopeName, typeNode);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    break;
-                case ScopeLevel.TransientScope:
-                    switch (edgeContext.ScopeNode)
-                    {
-                        case ScopeNodeContext.Container:
-                            scopeNodeManager.RegisterContainerInstance(typeNode);
-                            break;
-                        case ScopeNodeContext.Scope { TransientScopeName: {} transientScopeName }:
-                            scopeNodeManager.RegisterScopedInstance(transientScopeName, typeNode);
-                            break;
-                        case ScopeNodeContext.Scope { TransientScopeName: null }:
-                            scopeNodeManager.RegisterContainerInstance(typeNode);
-                            break;
-                        case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
-                            scopeNodeManager.RegisterScopedInstance(transientScopeName, typeNode);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    break;
-                case ScopeLevel.Container:
-                    scopeNodeManager.RegisterContainerInstance(typeNode);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            switch (edgeContext.ScopeNode)
-            {
-                case ScopeNodeContext.Container:
-                    scopeNodeManager.RegisterContainerInstance(typeNode);
-                    break;
-                case ScopeNodeContext.Scope { ScopeName: var scopeName }:
-                    scopeNodeManager.RegisterScopedInstance(scopeName, typeNode);
-                    break;
-                case ScopeNodeContext.TransientScope { TransientScopeName: var transientScopeName }:
-                    scopeNodeManager.RegisterScopedInstance(transientScopeName, typeNode);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
         
         switch (typeNodeType)
         {
@@ -268,43 +210,43 @@ internal sealed class InjectionGraphBuilder(
         var allTypeNodes = typeNodeManager.AllTypeNodes.ToImmutableArray();
         foreach (var typeNode in allTypeNodes)
         {
-            var concreteSyncEdges = typeNode.OutgoingConcreteEdges.OfType<ConcreteSyncEdge>().ToImmutableArray();
-            var concreteAsyncEdges = typeNode.OutgoingConcreteEdges.OfType<ConcreteAsyncEdge>().ToImmutableArray();
+            var outgoingSyncEdges = typeNode.OutgoingConcreteEdges.OfType<ConcreteSyncEdge>().ToImmutableArray<IEdge>();
+            var outgoingAsyncEdges = typeNode.OutgoingConcreteEdges.OfType<ConcreteAsyncEdge>().ToImmutableArray<IEdge>();
             var typeNodeIsNotWrappedIntoATask =
                 !CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.ValueTask1) 
                 || !CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, wellKnownTypes.Task1);
-            if (concreteSyncEdges.Length > 0)
+            if (outgoingSyncEdges.Length > 0)
             {
-                var syncIncomingEdges = typeNode.Incoming.Where(e => e.Contexts.Any(c => !_asyncResolutionIds.Contains(c.ResolutionId))).ToImmutableArray();
-                if (// if multiple incoming edges, but current type not wrapped in a task
-                    syncIncomingEdges.Length > 1 /* Multiple incoming contexts */ && typeNodeIsNotWrappedIntoATask
-                    // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
-                    || syncIncomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
-                    // or any outgoing edges contain concrete enumerable
-                    || concreteSyncEdges.Any(e => e.Target is ConcreteEnumerableNodeBase)
-                    // or Type Node is scope instance in some configurations
-                    || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
-                    // or Type Node is scope root in some configurations
-                    || typeNode.ScopeRootConfiguration.Count > 0)
+                var incomingSyncEdges = typeNode.Incoming.Where(e => e.Contexts.Any(c => !_asyncResolutionIds.Contains(c.ResolutionId))).ToImmutableArray();
+                if (CommonCriteria(incomingSyncEdges, outgoingSyncEdges, typeNode.SyncScopeInstanceConfiguration, typeNode.SyncScopeRootConfiguration))
                     NewFunctionIfNotAlready(typeNode, sync: true);
             }
-            if (concreteAsyncEdges.Length > 0)
+            if (outgoingAsyncEdges.Length > 0)
             {
-                var asyncIncomingEdges = typeNode.Incoming.Where(e => e.Contexts.Any(c => _asyncResolutionIds.Contains(c.ResolutionId))).ToImmutableArray();
-                if (// if multiple incoming edges, but current type not wrapped in a task
-                    asyncIncomingEdges.Length > 1 /* Multiple incoming contexts */ && typeNodeIsNotWrappedIntoATask
-                    // In async mode, if current type not wrapped in a task, but any incoming edge lead to a task node
-                    || (asyncIncomingEdges.Any(e => e.SourceAsNode is ConcreteTaskNode) /* Any incoming node a task node */ && typeNodeIsNotWrappedIntoATask)
-                    // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
-                    || asyncIncomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
-                    // or any outgoing edges contain concrete enumerable
-                    || concreteAsyncEdges.Any(e => e.Target is ConcreteEnumerableNodeBase)
-                    // or Type Node is scope instance in some configurations
-                    || typeNode.ScopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
-                    // or Type Node is scope root in some configurations
-                    || typeNode.ScopeRootConfiguration.Count > 0)
+                var incomingAsyncEdges = typeNode.Incoming.Where(e => e.Contexts.Any(c => _asyncResolutionIds.Contains(c.ResolutionId))).ToImmutableArray();
+                if (CommonCriteria(incomingAsyncEdges, outgoingAsyncEdges, typeNode.AsyncScopeInstanceConfiguration, typeNode.AsyncScopeRootConfiguration)
+                    // In async mode, if any outgoing edge lead to a task node
+                    || incomingAsyncEdges.Any(e => e.SourceAsNode is ConcreteTaskNode) /* Any outgoing node a task node */)
                     NewFunctionIfNotAlready(typeNode, sync: false);
             }
+
+            continue;
+
+            bool CommonCriteria(
+                ImmutableArray<IEdge> incomingEdges, 
+                ImmutableArray<IEdge> outgoingEdges,
+                IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> scopeInstanceConfiguration,
+                IReadOnlyDictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> scopeRootConfiguration) =>
+                // if multiple incoming edges, but current type not wrapped in a task
+                incomingEdges.Length > 1 /* Multiple incoming contexts */ && typeNodeIsNotWrappedIntoATask
+                // or any incoming edge is from a concrete functor (Func, Lazy, ThreadLocal)
+                || incomingEdges.Any(e => e.SourceAsNode is ConcreteFunctorNode)
+                // or any outgoing edges contain concrete enumerable
+                || outgoingEdges.Any(e => e.TargetAsNode is ConcreteEnumerableNodeBase)
+                // or Type Node is scope instance in some configurations
+                || scopeInstanceConfiguration.Any(kvp => kvp.Key is not ScopeLevel.None)
+                // or Type Node is scope root in some configurations
+                || scopeRootConfiguration.Count > 0;
         }
 
         foreach (var concreteEntryFunctionNode in concreteEntryFunctionNodeManager.AllNodes)

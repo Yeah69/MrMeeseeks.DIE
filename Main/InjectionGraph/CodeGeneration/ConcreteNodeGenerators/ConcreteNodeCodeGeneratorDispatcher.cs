@@ -1,7 +1,9 @@
+using System.Threading.Tasks;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
@@ -20,20 +22,25 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher(
     KeyValuePairNodeCodeGenerator keyValuePairNodeCodeGenerator,
     EnumerableNodeCodeGenerator enumerableNodeCodeGenerator,
     AsyncEnumerableNodeCodeGenerator asyncEnumerableNodeCodeGenerator,
-    TaskNodeCodeGenerator taskNodeCodeGenerator)
+    FunctionUtility functionUtility,
+    TaskNodeCodeGenerator taskNodeCodeGenerator,
+    WellKnownTypes wellKnownTypes)
     : IScopeInstance
 {
     internal string GenerateForInjectionNode(StringBuilder code, TypeNode node, bool sync)
     {
         var edgeAndTargets = node.OutgoingConcreteEdges
-            .Where(e => sync && e is ConcreteSyncEdge || !sync && e is ConcreteAsyncEdge)
+            .Where(e => sync && e is ConcreteSyncEdge 
+                        || !sync && e is ConcreteAsyncEdge
+                        || e.Target is ConcreteTaskNode concreteTaskNode && GetSyncToAsyncForTaskNodeCase(concreteTaskNode) is not null
+                        || e.Target is ConcreteAsyncEnumerableNode && GetSyncToAsyncForAsyncEnumerableNodeCase() is not null)
             .Select(e => (Edges: e, ConcreteNode: e.Target))
             .ToList();
         var maybeOverride = edgeAndTargets.Select(t => t.ConcreteNode).OfType<ConcreteOverrideNode>().SingleOrDefault();
         var nonOverrides = edgeAndTargets.Where(t => t.ConcreteNode is not ConcreteOverrideNode).ToList();
         
         if (maybeOverride is null && nonOverrides.Count == 1)
-            return GenerateSwitchBody(node, nonOverrides.Single().ConcreteNode, null);
+            return GenerateSwitchBody(nonOverrides.Single().ConcreteNode, null);
         if (maybeOverride is {} onlyOverride && nonOverrides.Count == 0)
             return overrideNodeCodeGenerator.Generate(code, node, onlyOverride, sync: sync);
         
@@ -60,7 +67,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher(
         void GenerateForNonOverrides()
         {
             if (nonOverrides is [var single])
-                GenerateSwitchBody(node, single.ConcreteNode, reference);
+                GenerateSwitchBody(single.ConcreteNode, reference);
             else
             {
                 for (var i = 0; i < nonOverrides.Count; i++)
@@ -76,26 +83,78 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher(
                         code.AppendLine("else");
 
                     code.AppendLine("{");
-                    GenerateSwitchBody(node, concreteNode, reference);
+                    GenerateSwitchBody(concreteNode, reference);
                     code.AppendLine("}");
                 }
             }
         }
         
-        string GenerateSwitchBody(TypeNode typeNode, IConcreteNode concreteNode, string? maybeReference) =>
+        string GenerateSwitchBody(IConcreteNode concreteNode, string? maybeReference) =>
             concreteNode switch
             {
-                ConcreteExceptionNode exceptionNode => exceptionNodeCodeGenerator.Generate(code, typeNode, exceptionNode, sync: sync, reference: maybeReference),
-                ConcreteImplementationNode implementationNode => implementationNodeCodeGenerator.Generate(code, typeNode, implementationNode, sync: sync, reference: maybeReference),
-                ConcreteFunctorNode functorNode => functorNodeCodeGenerator.Generate(code, typeNode, functorNode, sync: sync, reference: maybeReference),
-                ConcreteInterfaceNode interfaceNode => interfaceNodeCodeGenerator.Generate(code, typeNode, interfaceNode, sync: sync, reference: maybeReference),
-                ConcreteKeyValuePairNode keyValuePairNode => keyValuePairNodeCodeGenerator.Generate(code, typeNode, keyValuePairNode, sync: sync, reference: maybeReference),
-                ConcreteEnumerableNode enumerableNode => enumerableNodeCodeGenerator.Generate(code, typeNode, enumerableNode, sync: sync, reference: maybeReference),
-                ConcreteAsyncEnumerableNode asyncEnumerableNode => asyncEnumerableNodeCodeGenerator.Generate(code, typeNode, asyncEnumerableNode, sync: sync, reference: maybeReference),
-                ConcreteOverrideNode overrideNode => overrideNodeCodeGenerator.Generate(code, typeNode, overrideNode, sync: sync, reference: maybeReference),
-                ConcreteTaskNode taskNode => taskNodeCodeGenerator.Generate(code, typeNode, taskNode, sync: sync, reference: maybeReference),
+                ConcreteExceptionNode exceptionNode => exceptionNodeCodeGenerator.Generate(code, node, exceptionNode, sync: sync, reference: maybeReference),
+                ConcreteImplementationNode implementationNode => implementationNodeCodeGenerator.Generate(code, node, implementationNode, sync: sync, reference: maybeReference),
+                ConcreteFunctorNode functorNode => functorNodeCodeGenerator.Generate(code, node, functorNode, sync: sync, reference: maybeReference),
+                ConcreteInterfaceNode interfaceNode => interfaceNodeCodeGenerator.Generate(code, node, interfaceNode, sync: sync, reference: maybeReference),
+                ConcreteKeyValuePairNode keyValuePairNode => keyValuePairNodeCodeGenerator.Generate(code, node, keyValuePairNode, sync: sync, reference: maybeReference),
+                ConcreteEnumerableNode enumerableNode => enumerableNodeCodeGenerator.Generate(code, node, enumerableNode, sync: sync, reference: maybeReference),
+                ConcreteAsyncEnumerableNode asyncEnumerableNode => GenerateSwitchBodyAsyncEnumerableNodeCase(asyncEnumerableNode, maybeReference),
+                ConcreteOverrideNode overrideNode => overrideNodeCodeGenerator.Generate(code, node, overrideNode, sync: sync, reference: maybeReference),
+                ConcreteTaskNode taskNode => GenerateSwitchBodyTaskNodeCase(taskNode, maybeReference),
                 _ => ""
             };
+
+        string GenerateSwitchBodyTaskNodeCase(ConcreteTaskNode taskNode, string? maybeReference)
+        {
+            if (GetSyncToAsyncForTaskNodeCase(taskNode) is not var (asyncFunction, asyncReturnType))
+                return taskNodeCodeGenerator.Generate(code, node, taskNode, sync: sync, reference: maybeReference);
+            
+            var innerIsValueTask = CustomSymbolEqualityComparer.Default.Equals(asyncReturnType.OriginalDefinition, wellKnownTypes.ValueTask1);
+            var outerIsValueTask = CustomSymbolEqualityComparer.Default.Equals(node.Type.OriginalDefinition, wellKnownTypes.ValueTask1);
+
+            var innerReference = CallFunction(asyncFunction, prefix: asyncReturnType.FullName(), await: false, maybeReference);
+            
+            if (innerIsValueTask == outerIsValueTask)
+                return innerReference;
+            
+            var outerReference = maybeReference ?? referenceGenerator.Generate(node.Type);
+            var outerFullName = node.Type.FullName();
+
+            var assignedValue = outerIsValueTask && !innerIsValueTask
+                ? $"new {outerFullName}({innerReference})"
+                : $"{innerReference}.{nameof(ValueTask<>.AsTask)}()";
+            
+            code.AppendLine($"{outerFullName} {outerReference} = {assignedValue};");
+            return outerReference;
+        }
+
+        (ITypeNodeFunction Function, ITypeSymbol ReturnType)? GetSyncToAsyncForTaskNodeCase(ConcreteTaskNode taskNode) =>
+            sync && taskNode is { InnerEdge.TargetAsNode: TypeNode { AsyncFunction: { AsyncReturnType: { } asyncReturnType } asyncFunction } }
+                ? (asyncFunction, asyncReturnType)
+                : null;
+
+        string GenerateSwitchBodyAsyncEnumerableNodeCase(ConcreteAsyncEnumerableNode asyncEnumerableNode, string? maybeReference) =>
+            GetSyncToAsyncForAsyncEnumerableNodeCase() is var (asyncFunction, asyncReturnType)
+                ? CallFunction(asyncFunction, asyncReturnType.FullName(), await: false, maybeReference)
+                : asyncEnumerableNodeCodeGenerator.Generate(code, node, asyncEnumerableNode, sync: sync, reference: maybeReference);
+
+        (ITypeNodeFunction Function, ITypeSymbol ReturnType)? GetSyncToAsyncForAsyncEnumerableNodeCase() =>
+            sync && node is { Outgoing: [{ TargetAsNode: ConcreteAsyncEnumerableNode }], AsyncFunction: { AsyncReturnType: {} asyncReturnType } asyncFunction}
+                ? (asyncFunction, asyncReturnType)
+                : null;
+
+        string CallFunction(ITypeNodeFunction function, string prefix, bool await, string? maybeReference)
+        {
+            var resultReference = maybeReference ?? referenceGenerator.Generate(function.RootNode.Type);
+            var maybeAwait = await
+                ? "await "
+                : " ";
+            var leftSide = maybeReference is not null
+                ? resultReference
+                : $"{prefix} {resultReference}";
+            code.AppendLine($"{leftSide} = {maybeAwait}{functionUtility.GenerateFunctionCall(function, doScopedInstance: true, doScopeRoot: true)};");
+            return resultReference;
+        }
         
         string GenerateContextMatchCondition(EdgeContext context)
         {

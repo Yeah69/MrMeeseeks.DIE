@@ -30,12 +30,14 @@ internal sealed class ContainerNodeGenerator : RangeNodeGenerator, IContainerNod
     {
         base.PreClass(code);
 
-        code.AppendLine(
-            $$"""
-              #nullable enable
-              namespace {{_containerNode.Namespace}}
-              {
-              """);
+        code.AppendLine("#nullable enable");
+        
+        if (_containerNode.Namespace is not null)
+            code.AppendLine(
+                $$"""
+                  namespace {{_containerNode.Namespace}}
+                  {
+                  """);
     }
 
     protected override string InterfaceAssignment => _containerNode.TransientScopeInterface.FullName;
@@ -74,10 +76,9 @@ internal sealed class ContainerNodeGenerator : RangeNodeGenerator, IContainerNod
     {
         base.PostClass(code);
 
-        code.AppendLine(
-            """
-            }
-            #nullable disable
-            """);
+        if (_containerNode.Namespace is not null)
+            code.AppendLine("}");
+        
+        code.AppendLine("#nullable disable");
     }
 }

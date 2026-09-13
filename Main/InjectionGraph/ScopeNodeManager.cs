@@ -15,6 +15,7 @@ internal sealed class ScopeNodeManager : IContainerInstance
     private readonly Func<string, INamedTypeSymbol?, ScopeNode> _scopeFactory;
     private readonly Func<string, INamedTypeSymbol?, TransientScopeNode> _transientScopeFactory;
     private readonly Func<string, INamedTypeSymbol?, ScopeInfo, ScopeNodeConfigContext> _scopeCheckTypePropertiesFactory;
+    private readonly TypeNodeManager _typeNodeManager;
     private readonly Lazy<ScopeNode> _defaultScope;
     private readonly Lazy<TransientScopeNode> _defaultTransientScope;
     private readonly Dictionary<ITypeSymbol, ScopeNode> _customScopes;
@@ -28,12 +29,14 @@ internal sealed class ScopeNodeManager : IContainerInstance
         Func<string, INamedTypeSymbol?, ScopeNode> scopeFactory,
         Func<string, INamedTypeSymbol?, TransientScopeNode> transientScopeFactory,
         Func<string, INamedTypeSymbol?, ScopeInfo, ScopeNodeConfigContext> scopeCheckTypePropertiesFactory,
+        TypeNodeManager typeNodeManager,
         WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous)
     {
         ContainerScopeNode = containerScopeNodeFactory();
         _scopeFactory = scopeFactory;
         _transientScopeFactory = transientScopeFactory;
         _scopeCheckTypePropertiesFactory = scopeCheckTypePropertiesFactory;
+        _typeNodeManager = typeNodeManager;
         _defaultScope = new Lazy<ScopeNode>(
             () =>
             {
@@ -169,12 +172,6 @@ internal sealed class ScopeNodeManager : IContainerInstance
     internal ScopeNodeBase ContainerScopeNode { get; }
     internal ScopeNodeBase this[string name] => _scopeNodes[name];
 
-    internal void RegisterContainerInstance(TypeNode node) =>
-        ContainerScopeNode.AddScopedInstance(node);
-
-    internal void RegisterScopedInstance(string scopeName, TypeNode node) => 
-        _scopeNodes[scopeName].AddScopedInstance(node);
-
     internal ScopeNodeContext GetScopeNodeContext(ScopeNodeContext previousScopeNodeContext, TypeNode typeNode, ScopeLevel scopeNodeLevel)
     {
         var scopeNode = scopeNodeLevel switch
@@ -226,4 +223,45 @@ internal sealed class ScopeNodeManager : IContainerInstance
         || _transientScopeRootTypeToScopeType.Values.Any(t => CustomSymbolEqualityComparer.Default.Equals(t, scopeType))
         || CustomSymbolEqualityComparer.Default.Equals(_defaultScope.Value.Type, scopeType)
         || CustomSymbolEqualityComparer.Default.Equals(_defaultTransientScope.Value.Type, scopeType);
+
+
+    internal IReadOnlyList<ITypeSymbol> GetSyncScopedInstanceTypesFor(ScopeNodeBase scopeNode) =>
+        GetScopedInstanceTypesFor(scopeNode, sync: true);
+    
+    internal IReadOnlyList<ITypeSymbol> GetAsyncScopedInstanceTypesFor(ScopeNodeBase scopeNode) =>
+        GetScopedInstanceTypesFor(scopeNode, sync: false);
+
+    private IReadOnlyList<ITypeSymbol> GetScopedInstanceTypesFor(ScopeNodeBase scopeNode, bool sync)
+    {
+        IReadOnlyList<ITypeSymbol> asdf =
+        [
+            .. _typeNodeManager
+                .AllTypeNodes
+                .Where(t => GetConfiguration(t)
+                    .Where(c => c.Key is not ScopeLevel.None)
+                    .SelectMany(x => x.Value.Select(y => (ScopeLevel: x.Key, Context: y)))
+                    .Any(IsMatch))
+                .Select(t => t.Type)
+        ];
+        
+        return asdf;
+        
+        IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> GetConfiguration(TypeNode typeNode) => sync
+            ? typeNode.SyncScopeInstanceConfiguration
+            : typeNode.AsyncScopeInstanceConfiguration;
+        
+        bool IsMatch((ScopeLevel ScopeLevel, ScopeNodeContext Context) tuple) =>
+            (tuple.ScopeLevel, scopeNode, tuple.Context) switch
+            {
+                (ScopeLevel.Container, InjectionGraph.ContainerScopeNode, _) => true,
+                (ScopeLevel.TransientScope, InjectionGraph.ContainerScopeNode, ScopeNodeContext.Container) => true,
+                (ScopeLevel.TransientScope, InjectionGraph.ContainerScopeNode, ScopeNodeContext.Scope { TransientScopeName: null }) => true,
+                (ScopeLevel.TransientScope, TransientScopeNode { Name: var leftName }, ScopeNodeContext.TransientScope { TransientScopeName: var rightName }) when leftName == rightName => true,
+                (ScopeLevel.TransientScope, TransientScopeNode { Name: var leftName }, ScopeNodeContext.Scope { TransientScopeName: {} rightName }) when leftName == rightName => true,
+                (ScopeLevel.Scope, InjectionGraph.ContainerScopeNode, ScopeNodeContext.Container) => true,
+                (ScopeLevel.Scope, TransientScopeNode { Name: var leftName }, ScopeNodeContext.TransientScope { TransientScopeName: var rightName }) when leftName == rightName => true,
+                (ScopeLevel.Scope, ScopeNode { Name: var leftName }, ScopeNodeContext.Scope { ScopeName: var rightName }) when leftName == rightName => true,
+                _ => false
+            };
+    }
 }

@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.MsContainer;
@@ -34,7 +33,11 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
     private readonly List<TypeTypeEdge> _incomingTypeTypeEdges = [];
     private readonly List<ConcreteEdge> _outgoingConcreteEdges = [];
     private readonly Dictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> _scopeRootConfiguration = [];
+    private readonly Dictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> _syncScopeRootConfiguration = [];
+    private readonly Dictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> _asyncScopeRootConfiguration = [];
     private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _scopeInstanceConfiguration = [];
+    private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _syncScopeInstanceConfiguration = [];
+    private readonly Dictionary<ScopeLevel, HashSet<ScopeNodeContext>> _asyncScopeInstanceConfiguration = [];
     
     internal ITypeSymbol Type { get; } = type;
     internal IReadOnlyList<IEdge> Incoming => [.._incomingTypeEdges, .._incomingTypeTypeEdges];
@@ -49,11 +52,19 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
     /// <summary>
     /// Use scope root context (key) on all current contexts (value collection).
     /// </summary>
-    internal IReadOnlyDictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> ScopeRootConfiguration => _scopeRootConfiguration;
+    internal IReadOnlyDictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> SyncScopeRootConfiguration => _syncScopeRootConfiguration;
+    /// <summary>
+    /// Use scope root context (key) on all current contexts (value collection).
+    /// </summary>
+    internal IReadOnlyDictionary<ScopeNodeContext, (HashSet<ScopeNodeContext> PreviousScopeNodeContexts, TypeTypeEdge? ScopeRootTypeTypeEdge)> AsyncScopeRootConfiguration => _asyncScopeRootConfiguration;
     /// <summary>
     /// Use scope instance level (key; None means "not a scope instance") on all current contexts (value collection).
     /// </summary>
-    internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> ScopeInstanceConfiguration => _scopeInstanceConfiguration;
+    internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> SyncScopeInstanceConfiguration => _syncScopeInstanceConfiguration;
+    /// <summary>
+    /// Use scope instance level (key; None means "not a scope instance") on all current contexts (value collection).
+    /// </summary>
+    internal IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> AsyncScopeInstanceConfiguration => _asyncScopeInstanceConfiguration;
     
     internal ITypeNodeFunction? SyncFunction { get; set; }
     
@@ -86,7 +97,7 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
         return false;
     }
 
-    internal TypeTypeEdge? RegisterScopeRootConfiguration(
+    internal void RegisterScopeRootConfiguration(
         ScopeNodeContext scopeRootContext, 
         ScopeNodeContext currentScopeNodeContext, 
         Func<TypeTypeEdge?> typeTypeEdgeFactory)
@@ -98,7 +109,6 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
             _scopeRootConfiguration[scopeRootContext] = configuration;
         }
         configuration.PreviousScopeNodeContexts.Add(currentScopeNodeContext);
-        return configuration.ScopeRootTypeTypeEdge;
     }
 
     internal void RegisterScopeInstanceConfiguration(ScopeLevel scopeLevel, ScopeNodeContext scopeNodeContext)
@@ -109,6 +119,34 @@ internal sealed class TypeNode(ITypeSymbol type) : INode
             _scopeInstanceConfiguration[scopeLevel] = configuration;
         }
         configuration.Add(scopeNodeContext);
+    }
+
+    internal void SplitScopeBasedConfigurations()
+    {
+        foreach (var currentScopeInstanceConfiguration in _scopeInstanceConfiguration)
+        {
+            var sync = new HashSet<ScopeNodeContext>(currentScopeInstanceConfiguration.Value.Where(Predicate<ConcreteSyncEdge>));
+            var async = new HashSet<ScopeNodeContext>(currentScopeInstanceConfiguration.Value.Where(Predicate<ConcreteAsyncEdge>));
+            
+            if (sync.Count > 0)
+                _syncScopeInstanceConfiguration.Add(currentScopeInstanceConfiguration.Key, sync);
+            if (async.Count > 0)
+                _asyncScopeInstanceConfiguration.Add(currentScopeInstanceConfiguration.Key, async);
+        }
+
+        foreach (var currentScopeRootConfiguration in _scopeRootConfiguration)
+        {
+            if (Predicate<ConcreteSyncEdge>(currentScopeRootConfiguration.Key))
+                _syncScopeRootConfiguration.Add(currentScopeRootConfiguration.Key, currentScopeRootConfiguration.Value);
+            if (Predicate<ConcreteAsyncEdge>(currentScopeRootConfiguration.Key))
+                _asyncScopeRootConfiguration.Add(currentScopeRootConfiguration.Key, currentScopeRootConfiguration.Value);
+        }
+
+        return;
+
+        bool Predicate<T>(ScopeNodeContext scopeNodeContext) where T : ConcreteEdge => Outgoing
+            .OfType<T>()
+            .Any(e => e.Contexts.Any(c => Equals(c.ScopeNode, scopeNodeContext)));
     }
 
     public IReadOnlyList<IEdge> IncomingEdges => _incomingTypeEdges;

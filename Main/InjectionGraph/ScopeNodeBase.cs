@@ -6,9 +6,9 @@ namespace MrMeeseeks.DIE.InjectionGraph;
 internal class ScopedInstanceInterfaceDescription(ReferenceGenerator referenceGenerator) : IContainerInstance
 {
     internal const string SyncFunctionName = "Get";
-    internal string SyncInterfaceName { get; } = referenceGenerator.Generate("SyncScopedInstance");
+    internal string SyncInterfaceName { get; } = referenceGenerator.Generate("ISyncScopedInstance");
     internal const string AsyncFunctionName = "GetAsync";
-    internal string AsyncInterfaceName { get; } = referenceGenerator.Generate("AsyncScopedInstance");
+    internal string AsyncInterfaceName { get; } = referenceGenerator.Generate("IAsyncScopedInstance");
 }
 
 internal record ScopeRootDescription(TypeNode TypeNode, IFunction SyncFunction, IFunction AsyncFunction);

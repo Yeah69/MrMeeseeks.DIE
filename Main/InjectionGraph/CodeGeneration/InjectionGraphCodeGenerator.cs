@@ -2,6 +2,7 @@
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.Utility;
+using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration;
@@ -20,7 +21,8 @@ internal sealed class InjectionGraphCodeGenerator(
     TypeSymbolUtility typeSymbolUtility,
     ReferenceGenerator referenceGenerator,
     Func<ITypeSymbol, FunctorEntryFunction> functorEntryFunctionFactory,
-    SharedNameRegistry sharedNameRegistry)
+    SharedNameRegistry sharedNameRegistry,
+    WellKnownTypes wellKnownTypes)
 {
     private readonly StringBuilder _code = new();
 
@@ -100,7 +102,14 @@ internal sealed class InjectionGraphCodeGenerator(
             if (typeNode.SyncFunction is { } nextFunction)
                 _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction, doScopedInstance: true, doScopeRoot: true)};");
             else if (typeSymbolUtility.IsTaskType(typeNode.Type) && typeNode.OutgoingConcreteEdges is [{ Target: ConcreteTaskNode { InnerEdge.Target.AsyncFunction: {} nextFunction0 } }])
-                _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0, doScopedInstance: true, doScopeRoot: true)};");
+            {
+                if (CustomSymbolEqualityComparer.Default.Equals(typeNode.Type.OriginalDefinition, nextFunction0.AsyncReturnType?.OriginalDefinition))
+                    _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0, doScopedInstance: true, doScopeRoot: true)};");
+                else if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.ValueTask1, nextFunction0.AsyncReturnType?.OriginalDefinition))
+                    _code.AppendLine($"return {functionUtility.GenerateFunctionCall(nextFunction0, doScopedInstance: true, doScopeRoot: true)}.AsTask();");
+                else if (CustomSymbolEqualityComparer.Default.Equals(wellKnownTypes.Task1, nextFunction0.AsyncReturnType?.OriginalDefinition))
+                    _code.AppendLine($"return new {typeNode.Type.FullName()}({functionUtility.GenerateFunctionCall(nextFunction0, doScopedInstance: true, doScopeRoot: true)});");
+            }
             else
                 _code.AppendLine($"throw new Exception(\"No function found for type {typeNode.Type.FullName()} during code generation.\");");
             
@@ -226,7 +235,7 @@ internal sealed class InjectionGraphCodeGenerator(
 
         _code.AppendLine("}");
 
-        _code.AppendLine(string.Join(Environment.NewLine, containerInfo.ContainingTypeNames.Select(_ => "}")));
+        _code.AppendLine(string.Join(Environment.NewLine, Enumerable.Repeat("}", containerInfo.ContainingTypeNames.Length)));
 
         if (containerInfo.Namespace is not null)
             _code.AppendLine("}");

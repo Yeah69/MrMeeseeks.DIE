@@ -67,7 +67,7 @@ public sealed partial class MixedSynchronicityScopedInstanceMore
         internal required ScopeRootSync_Container Sync_Container { get; init; }
         internal required ValueTask<ScopeRootAsync_Container> Async_Container { get; init; } 
         internal required ScopeRootSync_TransientScope Sync_TransientScope { get; init; }
-        //internal required Task<ScopeRootAsync_TransientScope> Async_TransientScope { get; init; } // Todo check why this leads to deadlock
+        //internal required ValueTask<ScopeRootAsync_TransientScope> Async_TransientScope { get; init; } // Todo check why this leads to deadlock
         internal required ScopeRootSync_Scope Sync_Scope { get; init; }
         internal required ValueTask<ScopeRootAsync_Scope> Async_Scope { get; init; }
         internal required ScopeRootSync_Transient Sync_Transient { get; init; }

@@ -3,7 +3,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Utility;
 
-internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContainerInstance
+internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes, WellKnownTypesCollections wellKnownTypesCollections) : IContainerInstance
 {
     internal ITypeSymbol GetUnwrappedType(ITypeSymbol type)
     {
@@ -22,6 +22,9 @@ internal sealed class TypeSymbolUtility(WellKnownTypes wellKnownTypes) : IContai
     public bool IsTaskType(ITypeSymbol type) =>
         wellKnownTypes.ValueTask1 is not null && CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.ValueTask1)
         || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypes.Task1);
+
+    public bool IsAsyncWrapperType(ITypeSymbol type) =>
+        IsTaskType(type) || CustomSymbolEqualityComparer.Default.Equals(type.OriginalDefinition, wellKnownTypesCollections.IAsyncEnumerable1);
 
     public bool IsFuncDelegate(ITypeSymbol type) =>
         type.TypeKind == TypeKind.Delegate 

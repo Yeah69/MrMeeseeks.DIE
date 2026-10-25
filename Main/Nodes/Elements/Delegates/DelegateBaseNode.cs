@@ -65,7 +65,7 @@ internal abstract class DelegateBaseNode : IDelegateBaseNode
             || _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.ValueTask) && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.ValueTask), _innerType.FullName())
             || _function.ReturnTypeStatus.HasFlag(ReturnTypeStatus.Task)      && Equals(_function.ReturnedTypeFullName(ReturnTypeStatus.Task), _innerType.FullName()))
             return;
-        _localDiagLogger.Error(ErrorLogData.SyncToAsyncCallCompilationError(
+        _localDiagLogger.Error(ErrorLogData.FunctionHasToReturnAnAsyncTypeCompilationError(
             "Func/Lazy/ThreadLocal injections need to have a sync function generated or its return type should be wrapped by a ValueTask/Task."),
             Location.None);
     }

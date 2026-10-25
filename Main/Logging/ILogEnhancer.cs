@@ -56,5 +56,5 @@ internal sealed class ExecuteLevelLogEnhancerDecorator : ILogEnhancer, IDecorato
 
     internal ExecuteLevelLogEnhancerDecorator(ILogEnhancer decoratedEnhancer) => _decoratedEnhancer = decoratedEnhancer;
 
-    public string Enhance(string message) => $"[{Constants.DieAbbreviation}]{_decoratedEnhancer.Enhance(message)}";
+    public string Enhance(string message) => $"[{Constants.DieAbbreviation}] {_decoratedEnhancer.Enhance(message)}";
 }

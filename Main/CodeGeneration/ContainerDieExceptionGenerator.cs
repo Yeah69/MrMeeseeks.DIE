@@ -5,71 +5,74 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
 
-internal sealed class ContainerDieExceptionGenerator
+internal sealed class ContainerDieExceptionGenerator(
+    GeneratorExecutionContext context,
+    ContainerInfo containerInfo,
+    WellKnownTypes wellKnownTypes,
+    WellKnownTypesCollections wellKnownTypesCollections,
+    WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
+    DiagLogger diagLogger)
 {
-    private readonly GeneratorExecutionContext _context;
-    private readonly ContainerInfo _containerInfo;
-    private readonly DiagLogger _diagLogger;
-    private readonly WellKnownTypes _wellKnownTypes;
-    private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
-    private readonly INamedTypeSymbol _containerType;
-    private readonly WellKnownTypesCollections _wellKnownTypesCollections;
-
-    internal ContainerDieExceptionGenerator(
-        GeneratorExecutionContext context,
-        ContainerInfo containerInfo,
-        WellKnownTypes wellKnownTypes,
-        WellKnownTypesCollections wellKnownTypesCollections,
-        WellKnownTypesMiscellaneous wellKnownTypesMiscellaneous,
-        DiagLogger diagLogger)
-    {
-        _context = context;
-        _containerInfo = containerInfo;
-        _diagLogger = diagLogger;
-        _wellKnownTypes = wellKnownTypes;
-        _wellKnownTypesMiscellaneous = wellKnownTypesMiscellaneous;
-        _wellKnownTypesCollections = wellKnownTypesCollections;
-        _containerType = containerInfo.ContainerType;
-    }
-
     public void Generate(Exception? exception)
     {
-        var asyncDisposableBit = _wellKnownTypes.IAsyncDisposable is not null
-            ? $"{_wellKnownTypes.IAsyncDisposable.FullName()}, "
+        var containerType = containerInfo.ContainerType;
+        
+        var asyncDisposableBit = wellKnownTypes.IAsyncDisposable is not null
+            ? $"{wellKnownTypes.IAsyncDisposable.FullName()}, "
             : "";
         
-        var genericParameters = _containerType.TypeParameters.Length == 0
+        var genericParameters = containerType.TypeParameters.Length == 0
             ? ""
-            : $"<{string.Join(", ", _containerType.TypeParameters.Select(p => p.Name))}>";
+            : $"<{string.Join(", ", containerType.TypeParameters.Select(p => p.Name))}>";
         
-        var generatedContainer = new StringBuilder()
-            .AppendLine($$"""
-                #nullable enable
-                namespace {{_containerType.ContainingNamespace.FullName()}}
-                {
-                partial class {{_containerType.Name}}{{genericParameters}} : {{asyncDisposableBit}}{{_wellKnownTypes.IDisposable.FullName()}}
-                {
-                """);
+        var generatedContainer = new StringBuilder().AppendLine("#nullable enable");
         
-        foreach (var constructor in _containerType.InstanceConstructors)
+        if (containerInfo.Namespace is not null)
+            generatedContainer.AppendLine(
+                $$"""
+                  namespace {{containerInfo.Namespace}}
+                  {
+                  """);
+        
+        foreach (var nestingParentName in containerInfo.ContainingTypeNames)
+        {
+            generatedContainer.AppendLine(
+                $$"""
+                  partial class {{nestingParentName}}
+                  {
+                  """);
+        }
+
+        generatedContainer.AppendLine(
+            $$"""
+              partial class {{containerType.Name}}{{genericParameters}} : {{asyncDisposableBit}}{{wellKnownTypes.IDisposable.FullName()}}
+              {
+              """);
+        
+        foreach (var constructor in containerType.InstanceConstructors)
             generatedContainer.AppendLine($$"""
-                public static {{_containerType.FullName()}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Type.FullName()} {p.Name}"))}})
+                public static {{containerType.FullName()}} {{Constants.CreateContainerFunctionName}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Type.FullName()} {p.Name}"))}})
                 {
-                return new {{_containerType.FullName()}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Name}: {p.Name}"))}});
+                return new {{containerType.FullName()}}({{string.Join(", ", constructor.Parameters.Select(p => $"{p.Name}: {p.Name}"))}});
                 }
                 """);
-        var listOfKinds = _wellKnownTypesCollections.List1.Construct(_wellKnownTypesMiscellaneous.DieExceptionKind);
+        var listOfKinds = wellKnownTypesCollections.List1.Construct(wellKnownTypesMiscellaneous.DieExceptionKind);
 
         generatedContainer.AppendLine($$"""
-            public {{listOfKinds.FullName()}} ExceptionKinds_0_0 { get; } = new {{listOfKinds.FullName()}}() { {{string.Join(", ", _diagLogger.ErrorKinds.Select(k => $"{_wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{k.ToString()}"))}} };
-            public {{_wellKnownTypes.String.FullName()}}[] DieBuildErrorCodes { get; } = new {{_wellKnownTypes.String.FullName()}}[] { {{string.Join(", ", _diagLogger.DieBuildErrorCodes.Select(c => $"\"{c}\""))}} };
+            public {{listOfKinds.FullName()}} ExceptionKinds_0_0 { get; } = new {{listOfKinds.FullName()}}() { {{string.Join(", ", diagLogger.ErrorKinds.Select(k => $"{wellKnownTypesMiscellaneous.DieExceptionKind.FullName()}.{k.ToString()}"))}} };
+            public {{wellKnownTypes.String.FullName()}}[] DieBuildErrorCodes { get; } = new {{wellKnownTypes.String.FullName()}}[] { {{string.Join(", ", diagLogger.DieBuildErrorCodes.Select(c => $"\"{c}\""))}} };
             public string ExceptionToString_0_1 => @"{{exception?.ToString() ?? "no exception"}}";
             public void Dispose(){}
-            {{(_wellKnownTypes.ValueTask is not null ? $"public {_wellKnownTypes.ValueTask.FullName()} DisposeAsync() => new {_wellKnownTypes.ValueTask.FullName()}();" : "")}}
+            {{(wellKnownTypes.ValueTask is not null ? $"public {wellKnownTypes.ValueTask.FullName()} DisposeAsync() => new {wellKnownTypes.ValueTask.FullName()}();" : "")}}
             }
-            }
-            #nullable disable
             """);
+        
+        if (containerInfo.Namespace is not null)
+            generatedContainer.AppendLine("}");
+        
+        generatedContainer.AppendLine(string.Join(Environment.NewLine, Enumerable.Repeat("}", containerInfo.ContainingTypeNames.Length)));
+        
+        generatedContainer.AppendLine("#nullable disable");
 
         var containerSource = CSharpSyntaxTree
             .ParseText(SourceText.From(generatedContainer.ToString(), Encoding.UTF8))
@@ -77,6 +80,6 @@ internal sealed class ContainerDieExceptionGenerator
             .NormalizeWhitespace()
             .SyntaxTree
             .GetText();
-        _context.AddSource(_containerInfo.GenerateHintPath(suffix: ".Exception"), containerSource);
+        context.AddSource(containerInfo.GenerateHintPath(suffix: ".Exception"), containerSource);
     }
 }

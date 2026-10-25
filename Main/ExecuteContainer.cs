@@ -116,6 +116,12 @@ internal sealed class ExecuteContainer
             _injectionGraphBuilder.SplitAsyncConcreteEdges();
             
             _injectionGraphBuilder.AssignFunctions();
+
+            if (_diagLogger.ErrorsIssued)
+            {
+                ErrorExit(null, _containerNode);
+                return;
+            }
             
             var injectionGraphSource = CSharpSyntaxTree
                 .ParseText(SourceText.From(_injectionGraphCodeGenerator.Generate(), Encoding.UTF8))

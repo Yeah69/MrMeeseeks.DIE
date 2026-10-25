@@ -1,6 +1,7 @@
 ﻿using MrMeeseeks.DIE.Configuration;
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
+using MrMeeseeks.DIE.Logging;
 using MrMeeseeks.DIE.MsContainer;
 using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
@@ -28,6 +29,7 @@ internal sealed class InjectionGraphBuilder(
     InjectionGraphBuilderResolutionSteps resolutionSteps,
     TypeNodeManager typeNodeManager,
     ConcreteEntryFunctionNodeManager concreteEntryFunctionNodeManager,
+    ConcreteFunctorNodeManager concreteFunctorNodeManager,
     OverrideContextManager overrideContextManager,
     ScopeNodeContext.Container containerScopeNodeContext,
     ScopeNodeManager scopeNodeManager,
@@ -36,6 +38,7 @@ internal sealed class InjectionGraphBuilder(
     TypeSymbolUtility typeSymbolUtility,
     AsyncAdjustments asyncAdjustments,
     ConnectedResolutionIdsRegistry  connectedResolutionIdsRegistry,
+    LocalDiagLogger localDiagLogger,
     Func<TypeNode, bool, TypeNodeFunction> functionFactory,
     Func<TypeNode, IConcreteNode, ConcreteAsyncEdge> concreteAsyncEdgeFactory,
     Func<(TypeNode, TypeNode), TypeTypeEdge> typeTypeEdgeFactory,
@@ -117,6 +120,34 @@ internal sealed class InjectionGraphBuilder(
         
         foreach (var typeNode in typeNodeManager.AllTypeNodes)
             typeNode.SplitScopeBasedConfigurations();
+
+        var faultyEntryFunctions = concreteEntryFunctionNodeManager.AllNodes
+            .Where(n => !typeSymbolUtility.IsAsyncWrapperType(n.Data.ReturnType) && n.ReturnType.Target.Outgoing
+                .OfType<ConcreteAsyncEdge>()
+                .SelectMany(ae => ae.Contexts)
+                .Any(aec => n.ReturnType.Contexts.Any(c => c.ResolutionId == aec.ResolutionId)));
+        
+        foreach (var concreteEntryFunctionNode in faultyEntryFunctions)
+        {
+            localDiagLogger.Error(ErrorLogData.FunctionHasToReturnAnAsyncTypeCompilationError(
+                    $"Entry function with return type {concreteEntryFunctionNode.Data.ReturnType.FullName()} needs to be wrapped into an async type."),
+                Location.None);
+        }
+
+        var faultyFunctors = concreteFunctorNodeManager.AllNodes
+            .Where(n => 
+                !typeSymbolUtility.IsAsyncWrapperType(n.ReturnedElement.Target.Type) 
+                && n.ReturnedElement.Target.Outgoing
+                    .OfType<ConcreteAsyncEdge>()
+                    .SelectMany(ae => ae.Contexts)
+                    .Any(aec => n.ReturnedElement.Contexts.Any(c => c.ResolutionId == aec.ResolutionId)));
+        
+        foreach (var concreteFunctorNode in faultyFunctors)
+        {
+            localDiagLogger.Error(ErrorLogData.FunctionHasToReturnAnAsyncTypeCompilationError(
+                    $"Func-injection with return type {concreteFunctorNode.Data.Type.FullName()} needs to be wrapped into an async type."),
+                Location.None);
+        }
     }
 
     private void MakeResolutionStep(

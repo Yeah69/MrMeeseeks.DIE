@@ -162,10 +162,10 @@ internal static class ErrorLogData
             message,
             DieExceptionKind.Compilation);
 
-    internal static DiagLogData SyncToAsyncCallCompilationError(string message) =>
+    internal static DiagLogData FunctionHasToReturnAnAsyncTypeCompilationError(string message) =>
         new(65,
             1,
-            "Sync Call To Async Function Error",
+            "Function Has to Return an Async Type",
             message,
             DieExceptionKind.Resolution);
 

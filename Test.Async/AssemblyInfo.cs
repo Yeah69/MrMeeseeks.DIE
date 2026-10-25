@@ -21,7 +21,7 @@ using MrMeeseeks.DIE.UserUtility;
 
 [assembly:AllImplementationsAggregation]
 
-//[assembly:ErrorDescriptionInsteadOfBuildFailure]
+[assembly:ErrorDescriptionInsteadOfBuildFailure]
 
 [assembly:InvocationDescriptionMapping(typeof(InvocationDescriptionAttribute))]
 

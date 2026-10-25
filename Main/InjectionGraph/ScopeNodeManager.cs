@@ -233,7 +233,7 @@ internal sealed class ScopeNodeManager : IContainerInstance
 
     private IReadOnlyList<ITypeSymbol> GetScopedInstanceTypesFor(ScopeNodeBase scopeNode, bool sync)
     {
-        IReadOnlyList<ITypeSymbol> asdf =
+        return
         [
             .. _typeNodeManager
                 .AllTypeNodes
@@ -243,8 +243,6 @@ internal sealed class ScopeNodeManager : IContainerInstance
                     .Any(IsMatch))
                 .Select(t => t.Type)
         ];
-        
-        return asdf;
         
         IReadOnlyDictionary<ScopeLevel, HashSet<ScopeNodeContext>> GetConfiguration(TypeNode typeNode) => sync
             ? typeNode.SyncScopeInstanceConfiguration

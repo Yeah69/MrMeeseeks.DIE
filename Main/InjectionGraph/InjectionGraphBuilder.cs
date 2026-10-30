@@ -71,10 +71,8 @@ internal sealed class InjectionGraphBuilder(
         var queue = new Queue<ResolutionStep>();
         foreach (var rootTypeNode in rootTypeNodes)
             queue.Enqueue(new(rootTypeNode, rootEdgeContext, createFunctionAttributeLocation));
-        var i = 0;
-        while (queue.Count > 0 && i < 100)
+        while (queue.Count > 0)
         {
-            i++;
             var (typeNode, edgeContext, currentResolvedLocation) = queue.Dequeue();
             MakeResolutionStep(typeNode, edgeContext, queue, currentResolvedLocation);
         }

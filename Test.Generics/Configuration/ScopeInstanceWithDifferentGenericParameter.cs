@@ -1,0 +1,40 @@
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using MrMeeseeks.DIE.UserUtility;
+using Xunit;
+
+namespace MrMeeseeks.DIE.Test.Generics.Configuration;
+
+public sealed partial class ScopeInstanceWithDifferentGenericParameter
+{
+    // ReSharper disable once UnusedTypeParameter
+    internal sealed class Class<T0> : IScopeInstance;
+
+    internal sealed class ScopeRoot : IScopeRoot
+    {
+        public Class<int> Dependency0 { get; }
+        public Class<string> Dependency1 { get; }
+
+        internal ScopeRoot(
+            Class<int> dependency0,
+            Class<string> dependency1)
+        {
+            Dependency0 = dependency0;
+            Dependency1 = dependency1;
+        }
+    }
+
+    [CreateFunction(typeof(ScopeRoot), "Create")]
+    internal sealed partial class Container;
+
+    public sealed class Tests
+    {
+        [Fact]
+        public async Task Test()
+        {
+            await using var container = Container.DIE_CreateContainer();
+            var scopeRoot = container.Create();
+            Assert.NotSame(scopeRoot.Dependency0, scopeRoot.Dependency1);
+        }
+    }
+}

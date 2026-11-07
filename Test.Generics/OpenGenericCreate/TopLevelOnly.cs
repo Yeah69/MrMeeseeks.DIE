@@ -1,0 +1,40 @@
+using System;
+using System.Threading.Tasks;
+using MrMeeseeks.DIE.Configuration.Attributes;
+using Xunit;
+
+namespace MrMeeseeks.DIE.Test.Generics.OpenGenericCreate;
+
+public sealed partial class TopLevelOnly
+{
+    internal interface IInterface<T0>;
+
+    internal interface IInterface<T0, T1, T2, T3, T4>;
+
+    internal sealed class Class<T0> : IInterface<T0>;
+
+    internal sealed class Class<T0, T1, T2, T3, T4> : IInterface<T0, T1, T2, T3, T4>;
+
+    [CreateFunction(typeof(Class<>), "Create")]
+    [CreateFunction(typeof(Class<,,,,>), "CreateMulti")]
+    [CreateFunction(typeof(IInterface<>), "CreateInterface")]
+    [CreateFunction(typeof(IInterface<,,,,>), "CreateInterfaceMulti")]
+    internal sealed partial class Container;
+
+    public sealed class Tests
+    {
+        [Fact]
+        public async Task Test()
+        {
+            await using var container = Container.DIE_CreateContainer();
+            var instance = container.Create<string>();
+            var instanceMulti = container.CreateMulti<string, object, int, double, string>();
+            Assert.IsType<Class<string>>(instance);
+            Assert.IsType<Class<string, object, int, double, string>>(instanceMulti);
+            var interfaceInstance = container.CreateInterface<DateTime>();
+            var interfaceInstanceMulti = container.CreateInterfaceMulti<uint, Uri, IDisposable, Func<string>, int>();
+            Assert.IsType<Class<DateTime>>(interfaceInstance);
+            Assert.IsType<Class<uint, Uri, IDisposable, Func<string>, int>>(interfaceInstanceMulti);
+        }
+    }
+}

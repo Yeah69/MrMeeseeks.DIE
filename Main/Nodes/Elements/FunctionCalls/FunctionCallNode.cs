@@ -15,7 +15,7 @@ internal interface IFunctionCallNode : IElementNode
     IFunctionNode CalledFunction { get; }
 }
 
-internal abstract class FunctionCallNode : IFunctionCallNode
+internal closed class FunctionCallNode : IFunctionCallNode
 {
     protected FunctionCallNode(
         string? ownerReference,

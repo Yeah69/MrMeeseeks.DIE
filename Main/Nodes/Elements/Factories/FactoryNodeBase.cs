@@ -12,7 +12,7 @@ internal interface IFactoryNodeBase : IElementNode
     bool Awaited { get; }
 }
 
-internal abstract class FactoryNodeBase : IFactoryNodeBase
+internal closed class FactoryNodeBase : IFactoryNodeBase
 {
     internal FactoryNodeBase(
         // parameters

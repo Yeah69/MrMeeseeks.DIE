@@ -8,7 +8,7 @@ namespace MrMeeseeks.DIE.Nodes.Functions;
 
 internal interface IReturningFunctionNode : IFunctionNode;
 
-internal abstract class ReturningFunctionNodeBase : FunctionNodeBase, IReturningFunctionNode
+internal closed class ReturningFunctionNodeBase : FunctionNodeBase, IReturningFunctionNode
 {
     protected readonly ITypeSymbol TypeSymbol;
 

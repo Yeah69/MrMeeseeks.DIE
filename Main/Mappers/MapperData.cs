@@ -2,7 +2,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Mappers;
 
-internal abstract record MapperData;
+internal closed record MapperData;
 
 internal sealed record VanillaMapperData : MapperData;
 internal sealed record OverridingMapperData(ImmutableQueue<(INamedTypeSymbol, Override)> Override) : MapperData;

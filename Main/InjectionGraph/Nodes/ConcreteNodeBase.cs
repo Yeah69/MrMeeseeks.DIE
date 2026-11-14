@@ -2,7 +2,7 @@ using MrMeeseeks.DIE.InjectionGraph.Edges;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal abstract class ConcreteNodeBase : IConcreteNode
+internal closed class ConcreteNodeBase : IConcreteNode
 {
     private readonly List<IEdge> _incomingEdges = [];
     public IReadOnlyList<IEdge> IncomingEdges => _incomingEdges;

@@ -14,7 +14,7 @@ internal interface IInitialOrdinarySubDisposalNode : IInitialSubDisposalNode;
 
 internal interface IInitialTransientScopeSubDisposalNode : IInitialSubDisposalNode;
 
-internal abstract class InitialSubDisposalNode : IInitialSubDisposalNode
+internal closed class InitialSubDisposalNode : IInitialSubDisposalNode
 {
     private readonly Lazy<string> _reference;
 

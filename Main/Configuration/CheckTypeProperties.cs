@@ -59,14 +59,14 @@ internal sealed class ScopeCheckTypeProperties : CheckTypeProperties, IScopeChec
     }
 }
 
-internal abstract record ImplementationResult
+internal closed record ImplementationResult
 {
     internal sealed record None5 : ImplementationResult;
     internal sealed record Single(INamedTypeSymbol Implementation) : ImplementationResult;
     internal sealed record Multiple(IReadOnlyList<INamedTypeSymbol> Implementations) : ImplementationResult;
 }
 
-internal abstract record ConstructorResult
+internal closed record ConstructorResult
 {
     internal sealed record ChoiceFailedNone : ConstructorResult;
     internal sealed record ChoiceFailedMultiple(IReadOnlyList<IMethodSymbol> Constructors) : ConstructorResult;
@@ -100,7 +100,7 @@ internal interface ICheckTypeProperties
     bool IsContextPassingType(ITypeSymbol typeSymbol);
 }
 
-internal abstract class CheckTypeProperties : ICheckTypeProperties
+internal closed class CheckTypeProperties : ICheckTypeProperties
 {
     private readonly ICurrentlyConsideredTypes _currentlyConsideredTypes;
     private readonly InjectablePropertyExtractor _injectablePropertyExtractor;

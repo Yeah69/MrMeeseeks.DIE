@@ -75,13 +75,13 @@ internal sealed class ConcreteInterfaceNode : ConcreteNodeBase
     public override bool Equals(object? obj) => 
         obj is ConcreteInterfaceNode node && Data.Equals(node.Data);
 
-    private abstract record InnerCaseIdResponse
+    private closed record InnerCaseIdResponse
     {
         internal sealed record Success(TypeEdge Edge, int NextChainCase, int CurrentTypeCase) : InnerCaseIdResponse;
         internal sealed record Error(string ErrorMessage) : InnerCaseIdResponse;
     }
 
-    internal abstract record CaseIdResponse
+    internal closed record CaseIdResponse
     {
         internal sealed record Success(TypeNode TypeNode, Location Location, EdgeContext EdgeContext) :  CaseIdResponse;
         internal sealed record Error(string ErrorMessage) : CaseIdResponse;

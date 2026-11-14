@@ -8,7 +8,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.Mappers;
 
-internal abstract record Override
+internal closed record Override
 {
     internal sealed record Implementation(INamedTypeSymbol ImplementationType) : Override;
     internal sealed record Interceptor(INamedTypeSymbol InterceptorType) : Override;

@@ -16,7 +16,7 @@ internal interface IMultiFunctionNodeBase : IReturningFunctionNode
     string ItemTypeFullName { get; }
 }
 
-internal abstract class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMultiFunctionNodeBase
+internal closed class MultiFunctionNodeBase : ReturningFunctionNodeBase, IMultiFunctionNodeBase
 {
     private readonly Func<IElementNodeMapper> _typeToElementNodeMapperFactory;
     private readonly Func<IElementNodeMapperBase, (INamedTypeSymbol, INamedTypeSymbol), IOverridingElementNodeWithDecorationMapper> _overridingElementNodeWithDecorationMapperFactory;

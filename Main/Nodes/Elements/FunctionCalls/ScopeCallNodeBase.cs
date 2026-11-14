@@ -12,7 +12,7 @@ internal interface IScopeCallNodeBase : IFunctionCallNode
 
 internal sealed record ScopeCallNodeOuterMapperParam(IElementNodeMapperBase Mapper);
 
-internal abstract class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
+internal closed class ScopeCallNodeBase : FunctionCallNode, IScopeCallNodeBase
 {
     private readonly IScopeNodeBase _scope;
     private readonly IElementNodeMapperBase _scopeImplementationMapper;

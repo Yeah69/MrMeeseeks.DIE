@@ -1,7 +1,7 @@
 namespace MrMeeseeks.DIE.Utility;
 
 
-internal abstract class TypeParameterConstraintsDisplayBase
+internal closed class TypeParameterConstraintsDisplayBase
 {
     protected abstract string GetName(ITypeParameterSymbol typeParameter);
     

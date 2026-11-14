@@ -16,7 +16,7 @@ internal closed record ScopeNodeContext
     internal required UserDefinedElements UserDefinedElements { get; init; }
 }
 
-internal abstract record OverrideContext
+internal closed record OverrideContext
 {
     internal sealed record None0 : OverrideContext;
     internal sealed record Any(ImmutableArray<ITypeSymbol> Overrides) : OverrideContext;
@@ -57,13 +57,13 @@ internal sealed class OverrideContextManager : IContainerInstance
     }
 }
 
-internal abstract record KeyContext
+internal closed record KeyContext
 {
     internal sealed record None1 : KeyContext;
     internal sealed record Single(ITypeSymbol Type, object Value) : KeyContext;
 }
 
-internal abstract record CaseChoiceContext
+internal closed record CaseChoiceContext
 {
     internal sealed record None2 : CaseChoiceContext;
     internal sealed record Single(int OutwardFacingTypeId, int CaseId) : CaseChoiceContext;

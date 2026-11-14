@@ -17,7 +17,7 @@ internal sealed class IdRegister : IContainerInstance
             ? id
             : _outwardFacingTypeIdMap[outwardFacingType] = Interlocked.Increment(ref _outwardFacingTypeIdCounter);
 
-    internal abstract record ChainCaseIdResponse
+    internal closed record ChainCaseIdResponse
     {
         internal sealed record Success(int NextChainCase) : ChainCaseIdResponse;
         internal sealed record Error(string ErrorMessage) : ChainCaseIdResponse;

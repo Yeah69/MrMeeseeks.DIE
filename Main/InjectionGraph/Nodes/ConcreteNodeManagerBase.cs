@@ -2,7 +2,7 @@
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal abstract class ConcreteNodeManagerBase<TData, TConcreteNode>(Func<TData, TConcreteNode> factory)
+internal closed class ConcreteNodeManagerBase<TData, TConcreteNode>(Func<TData, TConcreteNode> factory)
 {
     private readonly Dictionary<TData, TConcreteNode> _nodes = [];
     

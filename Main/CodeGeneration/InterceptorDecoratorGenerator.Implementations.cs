@@ -4,7 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.CodeGeneration;
 
-internal abstract class ImplementationBodyGeneratorBase
+internal closed class ImplementationBodyGeneratorBase
 {
     private readonly SyncImplementationBase _syncImplementation;
     private readonly InterceptionDecoratorData _interceptionDecoratorData;

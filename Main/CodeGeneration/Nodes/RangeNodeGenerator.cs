@@ -11,7 +11,7 @@ namespace MrMeeseeks.DIE.CodeGeneration.Nodes;
 
 internal interface IRangeNodeGenerator : INodeGenerator;
 
-internal abstract class RangeNodeGenerator : IRangeNodeGenerator
+internal closed class RangeNodeGenerator : IRangeNodeGenerator
 {
     private readonly IRangeNode _rangeNode;
     private readonly IContainerNode _containerNode;

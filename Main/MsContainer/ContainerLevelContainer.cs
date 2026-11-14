@@ -91,11 +91,11 @@ internal sealed partial class ContainerLevelContainer
 
     [ImplementationChoice(typeof(IRangeNode), typeof(ScopeNode))]
     [InitializedInstances(typeof(ReferenceGenerator))]
-    private abstract class ScopeObject;
+    private closed class ScopeObject;
     
     [ImplementationChoice(typeof(ICheckTypeProperties), typeof(ScopeCheckTypeProperties))]
     [InitializedInstances(typeof(ScopeInfo))]
-    private abstract class TransientScopeBase : ScopeObject
+    private closed class TransientScopeBase : ScopeObject
     {
         [UserDefinedConstructorParametersInjection(typeof(UserDefinedElements))]
         protected static void DIE_ConstrParams_UserDefinedElements(
@@ -118,7 +118,7 @@ internal sealed partial class ContainerLevelContainer
     private sealed partial class DIE_TransientScope_TransientScopeNodeRoot : TransientScopeBase;
 
     [DecoratorSequenceChoice(typeof(ILogEnhancer), typeof(ILogEnhancer), typeof(FunctionLevelLogEnhancerDecorator), typeof(ContainerLevelLogEnhancerDecorator), typeof(ExecuteLevelLogEnhancerDecorator))]
-    private abstract class ScopeBase : ScopeObject
+    private closed class ScopeBase : ScopeObject
     {
         protected readonly IRangeNode DIE_Factory_parentRange;
         protected readonly ICheckTypeProperties DIE_Factory_checkTypeProperties;

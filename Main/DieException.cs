@@ -22,7 +22,7 @@ internal enum ExecutionPhase
     Analytics
 }
 
-public abstract class DieException : Exception
+public closed class DieException : Exception
 {
     public abstract DieExceptionKind Kind { get; }
 

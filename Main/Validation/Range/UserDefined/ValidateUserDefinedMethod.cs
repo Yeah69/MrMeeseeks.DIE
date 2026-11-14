@@ -8,7 +8,7 @@ internal interface IValidateUserDefinedMethod
     void Validate(IMethodSymbol method, INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
 }
 
-internal abstract class ValidateUserDefinedMethod : IValidateUserDefinedMethod
+internal closed class ValidateUserDefinedMethod : IValidateUserDefinedMethod
 {
     protected readonly LocalDiagLogger LocalDiagLogger;
 

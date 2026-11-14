@@ -10,7 +10,7 @@ namespace MrMeeseeks.DIE.Validation.Range;
 
 internal interface IValidateScopeBase : IValidateRange;
 
-internal abstract class ValidateScopeBase : ValidateRange, IValidateScopeBase
+internal closed class ValidateScopeBase : ValidateRange, IValidateScopeBase
 {
     private readonly WellKnownTypesMiscellaneous _wellKnownTypesMiscellaneous;
 

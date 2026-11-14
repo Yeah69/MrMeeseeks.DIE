@@ -16,7 +16,7 @@ internal interface IScopeNodeBase : IRangeNode
     string ContainerFullName { get; }
 }
 
-internal abstract class ScopeNodeBase : RangeNode, IScopeNodeBase
+internal closed class ScopeNodeBase : RangeNode, IScopeNodeBase
 {
     internal ScopeNodeBase(
         ScopeInfo scopeInfo,

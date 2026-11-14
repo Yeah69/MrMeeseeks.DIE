@@ -7,7 +7,7 @@ internal interface IScopeNodeBaseGenerator : IRangeNodeGenerator
     
 }
 
-internal abstract class ScopeNodeBaseGenerator : RangeNodeGenerator, IScopeNodeBaseGenerator
+internal closed class ScopeNodeBaseGenerator : RangeNodeGenerator, IScopeNodeBaseGenerator
 {
     protected ScopeNodeBaseGenerator(
         IRangeNode rangeNode,

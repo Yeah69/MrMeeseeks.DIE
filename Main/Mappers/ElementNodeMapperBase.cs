@@ -29,7 +29,7 @@ internal sealed record ImplementationMappingConfiguration(
     bool CheckForRangedInstance,
     bool CheckForInitializedInstance);
 
-internal abstract class ElementNodeMapperBase : IElementNodeMapperBase
+internal closed class ElementNodeMapperBase : IElementNodeMapperBase
 {
     private readonly IContainerNode _parentContainer;
     private readonly IOverridesMappingPart _overridesMappingPart;

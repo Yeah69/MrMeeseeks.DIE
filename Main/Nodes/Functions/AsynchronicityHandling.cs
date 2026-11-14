@@ -68,7 +68,7 @@ internal sealed class AsynchronicityHandlingFactory
     }
 }
 
-internal abstract class AsynchronicityHandlingBase : IAsynchronicityHandling
+internal closed class AsynchronicityHandlingBase : IAsynchronicityHandling
 {
     internal AsynchronicityHandlingBase(
         // parameters

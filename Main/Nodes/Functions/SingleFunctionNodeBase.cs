@@ -12,7 +12,7 @@ internal interface ISingleFunctionNode : IReturningFunctionNode
     IElementNode ReturnedElement { get; }
 }
 
-internal abstract class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISingleFunctionNode
+internal closed class SingleFunctionNodeBase : ReturningFunctionNodeBase, ISingleFunctionNode
 {
     public SingleFunctionNodeBase(
         // parameters

@@ -2,7 +2,7 @@ using MrMeeseeks.DIE.InjectionGraph.Nodes;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal abstract class EdgeBase<TSource, TTarget> 
+internal closed class EdgeBase<TSource, TTarget> 
     : IEdge
     where TSource : INode 
     where TTarget : INode

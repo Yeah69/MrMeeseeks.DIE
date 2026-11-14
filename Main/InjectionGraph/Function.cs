@@ -30,7 +30,7 @@ internal closed record ExplicitInterfaceDescription
     internal sealed record Generated(string TypeFullName) : ExplicitInterfaceDescription;
 }
 
-internal abstract class FunctionBase(
+internal closed class FunctionBase(
     Accessibility? accessibility,
     ExplicitInterfaceDescription explicitInterface,
     ITypeSymbol syncReturnType,

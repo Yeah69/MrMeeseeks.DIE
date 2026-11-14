@@ -13,11 +13,11 @@ internal class ScopedInstanceInterfaceDescription(ReferenceGenerator referenceGe
 
 internal record ScopeRootDescription(TypeNode TypeNode, IFunction SyncFunction, IFunction AsyncFunction);
 
-internal abstract class ScopeNodeBase;
+internal closed class ScopeNodeBase;
 
 internal sealed class ContainerScopeNode : ScopeNodeBase;
 
-internal abstract class NonContainerScopeNode(
+internal closed class NonContainerScopeNode(
     INamedTypeSymbol? type,
     string name) 
     : ScopeNodeBase

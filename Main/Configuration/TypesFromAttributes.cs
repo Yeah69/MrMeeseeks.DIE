@@ -171,7 +171,7 @@ internal sealed class ScopeTypesFromAttributes : TypesFromAttributesBase, IScope
     }
 }
 
-internal abstract class TypesFromAttributesBase : ITypesFromAttributesBase
+internal closed class TypesFromAttributesBase : ITypesFromAttributesBase
 {
     private readonly INamedTypeSymbol? _rangeType;
     private readonly INamedTypeSymbol? _containerType;

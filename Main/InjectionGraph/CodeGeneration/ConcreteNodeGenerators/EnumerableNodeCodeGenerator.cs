@@ -6,7 +6,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 
-internal abstract class EnumerableNodeCodeGeneratorBase(
+internal closed class EnumerableNodeCodeGeneratorBase(
     Lazy<InjectionNodeGenerator> injectionNodeGenerator,
     ContextGenerator contextGenerator,
     KeyUtility keyUtility)

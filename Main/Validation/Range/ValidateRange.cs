@@ -13,7 +13,7 @@ internal interface IValidateRange
     void Validate(INamedTypeSymbol rangeType, INamedTypeSymbol containerType);
 }
 
-internal abstract class ValidateRange : IValidateRange
+internal closed class ValidateRange : IValidateRange
 {
     private readonly IValidateUserDefinedAddForDisposalSync _validateUserDefinedAddForDisposalSync;
     private readonly IValidateUserDefinedAddForDisposalAsync _validateUserDefinedAddForDisposalAsync;

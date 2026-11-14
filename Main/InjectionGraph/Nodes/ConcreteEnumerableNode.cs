@@ -4,7 +4,7 @@ using MrMeeseeks.SourceGeneratorUtility;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Nodes;
 
-internal abstract record ConcreteEnumerableNodeData(ITypeSymbol EnumerableType, ITypeSymbol MaybeWrappedItemType, bool PurgeKeyAndChoice)
+internal closed record ConcreteEnumerableNodeData(ITypeSymbol EnumerableType, ITypeSymbol MaybeWrappedItemType, bool PurgeKeyAndChoice)
 {
     public override int GetHashCode()
     {
@@ -132,7 +132,7 @@ internal sealed class ConcreteEnumerableNodeManager(Func<ConcreteEnumerableNodeD
 internal sealed class ConcreteAsyncEnumerableNodeManager(Func<ConcreteEnumerableNodeData, ConcreteAsyncEnumerableNode> factory)
     : ConcreteNodeManagerBase<ConcreteEnumerableNodeData, ConcreteAsyncEnumerableNode>(factory), IContainerInstance;
 
-internal abstract class ConcreteEnumerableNodeBase : ConcreteNodeBase
+internal closed class ConcreteEnumerableNodeBase : ConcreteNodeBase
 {
     private readonly Lazy<TypeEdge> _innerEdgeLazy;
 

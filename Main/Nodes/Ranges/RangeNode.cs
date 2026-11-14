@@ -64,7 +64,7 @@ internal interface IRangeNode : INode
     bool GenerateEmptyConstructor { get; }
 }
 
-internal abstract class RangeNode : IRangeNode
+internal closed class RangeNode : IRangeNode
 {
     private readonly MapperDataToFunctionKeyTypeConverter _mapperDataToFunctionKeyTypeConverter;
     protected readonly TypeParameterUtility TypeParameterUtility;

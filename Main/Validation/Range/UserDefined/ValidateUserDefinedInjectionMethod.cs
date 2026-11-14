@@ -6,7 +6,7 @@ namespace MrMeeseeks.DIE.Validation.Range.UserDefined;
 
 internal interface IValidateUserDefinedInjectionMethod : IValidateUserDefinedMethod;
 
-internal abstract class ValidateUserDefinedInjectionMethod : ValidateUserDefinedMethod, IValidateUserDefinedInjectionMethod
+internal closed class ValidateUserDefinedInjectionMethod : ValidateUserDefinedMethod, IValidateUserDefinedInjectionMethod
 {
     protected abstract INamedTypeSymbol InjectionAttribute { get; }
 

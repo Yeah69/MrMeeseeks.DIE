@@ -24,7 +24,7 @@ internal enum AsyncAwaitStatus
     Yes
 }
 
-internal abstract class FunctionNodeBase : IFunctionNode
+internal closed class FunctionNodeBase : IFunctionNode
 {
     private readonly IContainerNode _parentContainer;
     private readonly Lazy<IFunctionNodeGenerator> _functionNodeGenerator;

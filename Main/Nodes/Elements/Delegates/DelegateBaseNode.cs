@@ -12,7 +12,7 @@ internal interface IDelegateBaseNode : IElementNode
     void CheckSynchronicity();
 }
 
-internal abstract class DelegateBaseNode : IDelegateBaseNode
+internal closed class DelegateBaseNode : IDelegateBaseNode
 {
     private readonly ILocalFunctionNode _function;
     private readonly IReadOnlyList<ITypeSymbol> _typeParameters;

@@ -14,7 +14,7 @@ internal interface IRangedInstanceFunctionGroupNodeBase : INode
     IRangedInstanceFunctionNode BuildFunction(IFunctionNode callingFunction);
 }
 
-internal abstract class RangedInstanceFunctionGroupNodeBase : IRangedInstanceFunctionGroupNodeBase
+internal closed class RangedInstanceFunctionGroupNodeBase : IRangedInstanceFunctionGroupNodeBase
 {
     internal RangedInstanceFunctionGroupNodeBase(
         // parameters

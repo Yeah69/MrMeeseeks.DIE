@@ -69,7 +69,7 @@ internal interface ICurrentlyConsideredTypes
     ImmutableArray<INamedTypeSymbol> GetAllImplementingTypes(INamedTypeSymbol type);
 }
 
-internal abstract class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
+internal closed class CurrentlyConsideredTypesBase : ICurrentlyConsideredTypes
 {
     private readonly IReadOnlyList<ITypesFromAttributesBase> _typesFromAttributes;
     private readonly ImplementationCache _implementationTypeSetCache;

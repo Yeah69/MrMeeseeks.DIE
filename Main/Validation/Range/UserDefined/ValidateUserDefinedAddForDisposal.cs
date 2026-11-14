@@ -35,7 +35,7 @@ internal sealed class ValidateUserDefinedAddForDisposalAsync : ValidateUserDefin
 
 internal interface IValidateUserDefinedAddForDisposalBase : IValidateUserDefinedMethod;
 
-internal abstract class ValidateUserDefinedAddForDisposalBase : ValidateUserDefinedMethod, IValidateUserDefinedAddForDisposalBase
+internal closed class ValidateUserDefinedAddForDisposalBase : ValidateUserDefinedMethod, IValidateUserDefinedAddForDisposalBase
 {
     internal ValidateUserDefinedAddForDisposalBase(LocalDiagLogger localDiagLogger) : base(localDiagLogger)
     {

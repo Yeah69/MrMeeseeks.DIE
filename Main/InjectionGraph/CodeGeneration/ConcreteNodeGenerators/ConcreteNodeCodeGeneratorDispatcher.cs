@@ -162,8 +162,7 @@ internal sealed class ConcreteNodeCodeGeneratorDispatcher(
             {
                 ScopeNodeContext.Container => containerInfo.Name,
                 ScopeNodeContext.Scope scope => scope.ScopeName,
-                ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName,
-                _ => throw new ArgumentOutOfRangeException(nameof(context.ScopeNode))
+                ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName
             };
 
             var conditions = new List<string> { $"{contextGenerator.ParameterName}.{contextGenerator.ScopeNodeNamePropertyName} == \"{scopeNodeName}\"" };

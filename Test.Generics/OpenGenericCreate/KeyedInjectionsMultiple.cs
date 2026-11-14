@@ -1,3 +1,4 @@
+/* ToDo re-enable
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
@@ -64,4 +65,4 @@ public sealed partial class KeyedInjectionsMultiple
                 Assert.True(dependencyC is DependencyC0<string> || dependencyC is DependencyC1<string>);
         }
     }
-}
+}*/

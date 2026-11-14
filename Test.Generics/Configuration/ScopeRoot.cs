@@ -10,20 +10,20 @@ public sealed partial class ScopeRoot
     internal sealed class ScopeInstance : IScopeInstance;
 
     // ReSharper disable once UnusedTypeParameter
-    internal sealed class ScopeRoot<T0> : IScopeRoot
+    internal sealed class ScopeRootType<T0> : IScopeRoot
     {
         public ScopeInstance ScopeInstance { get; }
 
-        internal ScopeRoot(ScopeInstance scopeInstance) => ScopeInstance = scopeInstance;
+        internal ScopeRootType(ScopeInstance scopeInstance) => ScopeInstance = scopeInstance;
     }
 
     internal sealed class Root
     {
-        public ScopeRoot<int> ScopeRoot { get; }
+        public ScopeRootType<int> ScopeRoot { get; }
         public ScopeInstance ScopeInstance { get; }
 
         internal Root(
-            ScopeRoot<int> scopeRoot,
+            ScopeRootType<int> scopeRoot,
             ScopeInstance scopeInstance)
         {
             ScopeRoot = scopeRoot;

@@ -36,6 +36,7 @@ internal sealed class InjectionGraphBuilder(
     ResolutionRegister resolutionRegister,
     EdgeRegistry edgeRegistry,
     TypeSymbolUtility typeSymbolUtility,
+    TypeParameterUtility typeParameterUtility,
     AsyncAdjustments asyncAdjustments,
     ConnectedResolutionIdsRegistry  connectedResolutionIdsRegistry,
     LocalDiagLogger localDiagLogger,
@@ -57,6 +58,8 @@ internal sealed class InjectionGraphBuilder(
         IReadOnlyList<ITypeSymbol> overrides,
         Location createFunctionAttributeLocation)
     {
+        var actualRootType = typeParameterUtility.EquipWithMappedTypeParameters(rootType);
+        var customizedRootType = typeParameterUtility.ReplaceTypeParametersByCustom(actualRootType.OriginalDefinitionIfUnbound());
         var overrideContext = overrideContextManager.GetOrAddContext(overrides);
         var rootEdgeContext = new EdgeContext(
             containerScopeNodeContext,
@@ -65,7 +68,7 @@ internal sealed class InjectionGraphBuilder(
             new CaseChoiceContext.None2(),
             ScopeRootFullNameForScope: null,
             resolutionRegister.GetNewResolutionId());
-        var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, rootType, overrides);
+        var concreteEntryFunctionNodeData = new ConcreteEntryFunctionNodeData(entryFunctionName, customizedRootType, overrides);
         var concreteEntryFunctionNode = concreteEntryFunctionNodeManager.GetOrAddNode(concreteEntryFunctionNodeData);
         var rootTypeNodes = concreteEntryFunctionNode.ConnectIfNotAlready(rootEdgeContext).Select(t => t.TypeNode).ToList();
         var queue = new Queue<ResolutionStep>();

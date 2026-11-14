@@ -29,13 +29,28 @@ internal sealed class ScopeNodeBaseCodeGenerator(
     internal ImmutableArray<string> GetInheritanceHeaderElements(ScopeNodeBase scopeNodeBase, bool isContainer)
     {
         var prefix = isContainer ? $"{containerInfo.Name}." : string.Empty;
-        return [
-            ..scopeNodeManager
-                .GetSyncScopedInstanceTypesFor(scopeNodeBase)
-                .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.SyncInterfaceName}<{t.FullName()}>"),
-            ..scopeNodeManager
-                .GetAsyncScopedInstanceTypesFor(scopeNodeBase)
-                .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{t.FullName()}>")];
+        return wellKnownTypes.IAsyncDisposable is { } iAsyncDisposable
+            ?
+            [
+                wellKnownTypes.IDisposable.FullName(),
+                iAsyncDisposable.FullName(),
+                .. scopeNodeManager
+                    .GetSyncScopedInstanceTypesFor(scopeNodeBase)
+                    .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.SyncInterfaceName}<{t.FullName()}>"),
+                .. scopeNodeManager
+                    .GetAsyncScopedInstanceTypesFor(scopeNodeBase)
+                    .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{t.FullName()}>")
+            ]
+            :
+            [
+                wellKnownTypes.IDisposable.FullName(),
+                .. scopeNodeManager
+                    .GetSyncScopedInstanceTypesFor(scopeNodeBase)
+                    .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.SyncInterfaceName}<{t.FullName()}>"),
+                .. scopeNodeManager
+                    .GetAsyncScopedInstanceTypesFor(scopeNodeBase)
+                    .Select(t => $"{prefix}{scopedInstanceInterfaceDescription.AsyncInterfaceName}<{t.FullName()}>")
+            ];
     }
 
     private bool MatchingContext(ScopeNodeBase scopeNodeBase, EdgeContext context) =>
@@ -202,8 +217,7 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                 {
                     ScopeNodeContext.Container => containerInfo.Name,
                     ScopeNodeContext.Scope scope => scope.ScopeName,
-                    ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName,
-                    _ => throw new ArgumentOutOfRangeException(nameof(c))
+                    ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName
                 };
                 return $"{contextGenerator.ParameterName}.{contextGenerator.ScopeNodeNamePropertyName} == \"{scopeNodeName}\"";
             }));
@@ -305,8 +319,7 @@ internal sealed class ScopeNodeBaseCodeGenerator(
                 {
                     ScopeNodeContext.Container => containerInfo.Name,
                     ScopeNodeContext.Scope scope => scope.ScopeName,
-                    ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName,
-                    _ => throw new ArgumentOutOfRangeException(nameof(c))
+                    ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName
                 };
                 return $"{contextGenerator.ParameterName}.{contextGenerator.ScopeNodeNamePropertyName} == \"{scopeNodeName}\"";
             }));

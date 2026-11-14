@@ -6,7 +6,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.Configuration;
 
-internal abstract record Decoration(INamedTypeSymbol Type)
+internal closed record Decoration(INamedTypeSymbol Type)
 {
     internal sealed record Decorator(INamedTypeSymbol Type) : Decoration(Type);
     internal sealed record Interceptor(INamedTypeSymbol Type) : Decoration(Type);
@@ -524,6 +524,12 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
                 && !chooseDecorator 
                 && !_currentlyConsideredTypes.ImplementationConsidered(unboundImplementation))
                 continue;
+
+            if (ContainingAncestorsHaveTypeParameters(implementation))
+            {
+                continue; // Not supported (yet?)
+            }
+
             if (!implementation.IsGenericType)
             {
                 if (implementation
@@ -590,8 +596,16 @@ internal abstract class CheckTypeProperties : ICheckTypeProperties
             }
 
             continue;
-            
-            
+
+
+            bool ContainingAncestorsHaveTypeParameters(INamedTypeSymbol typeSymbol)
+            {
+                if (typeSymbol.ContainingType is { } containingType)
+                {
+                    return containingType.TypeParameters.Length > 0 || ContainingAncestorsHaveTypeParameters(containingType);
+                }
+                return false;
+            }
 
             IEnumerable<INamedTypeSymbol> GetAllSubstituteCombinations(
                 IImmutableQueue<(int Index, IImmutableSet<INamedTypeSymbol> Substitutes)> currentSubstituteQueue)

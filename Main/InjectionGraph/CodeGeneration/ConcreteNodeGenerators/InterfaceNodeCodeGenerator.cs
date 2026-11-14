@@ -81,8 +81,7 @@ internal sealed class InterfaceNodeCodeGenerator : IConcreteNodeCodeGenerator<Co
             {
                 ScopeNodeContext.Container => _containerInfo.Name,
                 ScopeNodeContext.Scope scope => scope.ScopeName,
-                ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName,
-                _ => throw new ArgumentOutOfRangeException(nameof(initialChainCase.Node))
+                ScopeNodeContext.TransientScope transientScope => transientScope.TransientScopeName
             };
             
             code.AppendLine(

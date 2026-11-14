@@ -1,39 +1,17 @@
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using MrMeeseeks.DIE.Configuration.Attributes;
-using MrMeeseeks.DIE.UserUtility;
 
-public sealed partial class MixedSynchronicityEntryFunction
+namespace MrMeeseeks.DIE.Sample;
+
+public sealed partial class Double
 {
-    internal sealed class Dependency : ITaskInitializer
-    {
-        public bool IsInitialized { get; private set; }
-    
-        async Task ITaskInitializer.InitializeAsync()
-        {
-            await Task.Delay(500);
-            IsInitialized = true;
-        }
-    }
+    // ReSharper disable once UnusedTypeParameter
+    internal interface IInterface<T0>;
 
-    internal sealed class Sync : IScopeRoot
-    {
-        internal required Dependency Dependency { get; init; }
-    }
+    // ReSharper disable once UnusedTypeParameter
+    internal sealed class Class<T0, T1> : IInterface<T0>;
 
-    internal sealed class Async : IScopeRoot
-    {
-        internal required Dependency Dependency { get; init; }
-    }
-    
-    [CreateFunction(typeof(Sync), "CreateSync")]
-    [CreateFunction(typeof(ValueTask<Async>), "CreateAsync")]
-    internal sealed partial class Container
-    {
-        [FilterInitializer(typeof(ITaskInitializer))]
-        [CustomScopeForRootTypes(typeof(Sync))]
-        private sealed partial  class DIE_Scope_Sync;
-        
-        [CustomScopeForRootTypes(typeof(Async))]
-        private sealed partial class DIE_Scope_Async;
-    }
+    [GenericParameterSubstitutesChoice(typeof(Class<,>), "T1", typeof(int), typeof(string))]
+    [CreateFunction(typeof(IReadOnlyList<IInterface<int>>), "Create")]
+    internal sealed partial class Container;
 }

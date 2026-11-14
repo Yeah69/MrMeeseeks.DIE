@@ -54,8 +54,7 @@ internal sealed class IdRegister : IContainerInstance
             .Select(d => d switch
             {
                 Decoration.Decorator decorator => decorator.Type,
-                Decoration.Interceptor interceptor => interceptor.Type,
-                _ => throw new ArgumentOutOfRangeException(nameof(d))
+                Decoration.Interceptor interceptor => interceptor.Type
             })
             .Prepend(implementationType)
             .ToImmutableArray();

@@ -27,6 +27,7 @@ internal sealed class FunctionUtility(
             var async = function.Sync ? "" : "Async";
             return function switch
             {
+                CreateEntryFunction { Name: var n } => n,
                 FunctorEntryFunction functorEntryFunction => referenceGenerator.Generate("CreateEntry", functorEntryFunction.SyncReturnType, async),
                 ScopeRootFunction scopeRootFunction => referenceGenerator.Generate("CreateRoot", scopeRootFunction.SyncReturnType, async),
                 ScopedInstanceFunction when function.Sync => ScopedInstanceInterfaceDescription.SyncFunctionName,
@@ -43,8 +44,24 @@ internal sealed class FunctionUtility(
             ? wellKnownTypes.ValueTask1.Construct(syncReturnType)
             : wellKnownTypes.Task1.Construct(syncReturnType);
     
-    internal string GenerateFunctionCall(IFunction function, bool doScopedInstance, bool doScopeRoot) => 
-        $"{GetName(function)}({contextGenerator.ParameterName}, {DoScopedInstanceParameterName}: {(doScopedInstance ? Constants.TrueKeyword : Constants.FalseKeyword)}, {DoScopeRootParameterName}: {(doScopeRoot ? Constants.TrueKeyword : Constants.FalseKeyword)})";
+    internal string GenerateFunctionCall(IFunction function, bool doScopedInstance, bool doScopeRoot)
+    {
+        var typeParameters = function.TypeParameters switch
+        {
+            [] => "",
+            [..] tp => $"<{string.Join(", ", tp.Select(p => p.Name))}>"
+        };
+        var parameters = string.Join(
+            ", ", 
+            contextGenerator.ParameterName, 
+            GenerateBoolParameter(DoScopedInstanceParameterName, doScopedInstance),
+            GenerateBoolParameter(DoScopeRootParameterName, doScopeRoot));
+        
+        return $"{GetName(function)}{typeParameters}({parameters})";
+
+        string GenerateBoolParameter(string label, bool value) =>
+            $"{label}: {(value ? Constants.TrueKeyword : Constants.FalseKeyword)}";
+    }
 
     internal string GenerateHeader(IFunction function)
     {
@@ -60,8 +77,7 @@ internal sealed class FunctionUtility(
             {
                 ExplicitInterfaceDescription.Generated generated => $"{generated.TypeFullName}.",
                 ExplicitInterfaceDescription.KnownType knownType => knownType.Type.FullName(),
-                ExplicitInterfaceDescription.None4 => "",
-                _ => throw new ArgumentOutOfRangeException()
+                ExplicitInterfaceDescription.None4 => ""
             };
         var typeParameters = "";
         var typeParametersConstraints = "";
@@ -94,7 +110,11 @@ internal sealed class FunctionUtility(
                 }));
         }
 
-        var parametersText = $"{contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopedInstanceParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopeRootParameterName}";
+        var parametersText = function switch
+        {
+            CreateEntryFunction { Parameters: var parameters} => string.Join(", ", parameters.Select(t => $"{t.Type.FullName()} {t.Name}")),
+            _ => $"{contextGenerator.FullNameAndParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopedInstanceParameterName}, {wellKnownTypes.Boolean.FullName()} {DoScopeRootParameterName}"
+        };
         var functionName = $"{GetName(function)}";
         var returnType = (function.AsyncReturnType ?? function.SyncReturnType).FullName();
         return $"{accessibility}{asyncModifier}{returnType} {explicitInterfaceFullName}{functionName}{typeParameters}({parametersText}){typeParametersConstraints}";

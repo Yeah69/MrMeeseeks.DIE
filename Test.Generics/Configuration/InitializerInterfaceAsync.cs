@@ -19,7 +19,7 @@ public sealed partial class InitializerInterfaceAsync
         public bool IsInitialized { get; private set; }
     }
 
-    [CreateFunction(typeof(Dependency<int>), "Create")]
+    [CreateFunction(typeof(ValueTask<Dependency<int>>), "Create")]
     internal sealed partial class Container;
 
     public sealed class Tests

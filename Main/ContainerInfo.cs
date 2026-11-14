@@ -5,17 +5,6 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE;
 
-internal interface IContainerInfo
-{
-    string Name { get; }
-    string Namespace { get; }
-    string FullName { get; }
-    INamedTypeSymbol ContainerType { get; }
-    IReadOnlyList<(ITypeSymbol, string, IReadOnlyList<ITypeSymbol>, Location)> CreateFunctionData { get; }
-    ImmutableArray<string> ContainingTypeNames { get; }
-    string GenerateHintPath(string suffix = "");
-}
-
 internal sealed class ContainerInfo : IContainerLevelOnlyContainerInstance
 {
     private readonly string _hintPathPrefix;
@@ -72,6 +61,8 @@ internal sealed class ContainerInfo : IContainerLevelOnlyContainerInstance
             }
             fullNameBuilder.Append('.');
             fullNameBuilder.Append(containerClass.Name);
+            if (containerClass.TypeParameters.Length > 0)
+                fullNameBuilder.Append($"<{string.Join(", ",  containerClass.TypeParameters.Select(t => t.Name))}>");
             FullName = fullNameBuilder.ToString();
         }
         else

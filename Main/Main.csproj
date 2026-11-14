@@ -13,6 +13,7 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     <NoWarn>$(NoWarn);RS1024</NoWarn> <!-- RS1024 is about the SymbolEqualityComparer which is replaced by the custom alternative -->
+    <LangVersion>15</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -37,7 +38,7 @@
     <PackageReference Include="MrMeeseeks.Visitor" Version="1.1.0" PrivateAssets="all" />
     <PackageReference Include="MsMeeseeks.DIE" Version="3.3.9" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" PrivateAssets="all" />
-    <PackageReference Include="PolySharp" Version="1.16.0">
+    <PackageReference Include="PolySharp" Version="1.17.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

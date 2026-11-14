@@ -6,7 +6,7 @@ using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.Edges;
 
-internal abstract record ScopeNodeContext
+internal closed record ScopeNodeContext
 {
     internal sealed record Container : ScopeNodeContext, IContainerInstance;
     internal sealed record TransientScope(string TransientScopeName) : ScopeNodeContext;

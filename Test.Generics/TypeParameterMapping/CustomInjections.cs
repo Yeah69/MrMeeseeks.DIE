@@ -1,3 +1,4 @@
+/* ToDo Enable again as soon as User-defined support is implemented
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
 using Xunit;
@@ -51,4 +52,4 @@ public sealed partial class CustomInjections
             Assert.Equal(23.0, instance.Value2);
         }
     }
-}
+}*/

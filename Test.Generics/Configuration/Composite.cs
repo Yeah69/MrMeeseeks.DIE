@@ -24,16 +24,16 @@ public sealed partial class Composite
     }
 
     // ReSharper disable once UnusedTypeParameter
-    internal sealed class Composite<T0> : IInterface, IComposite<IInterface>
+    internal sealed class CompositeType<T0> : IInterface, IComposite<IInterface>
     {
         public IReadOnlyList<IInterface> Implementations { get; }
 
-        internal Composite(
+        internal CompositeType(
             IReadOnlyList<IInterface> implementations) =>
             Implementations = implementations;
     }
 
-    [GenericParameterChoice(typeof(Composite<>), "T0", typeof(int))]
+    [GenericParameterChoice(typeof(CompositeType<>), "T0", typeof(int))]
     [CreateFunction(typeof(IInterface), "Create")]
     internal sealed partial class Container;
 
@@ -44,7 +44,7 @@ public sealed partial class Composite
         {
             await using var container = Container.DIE_CreateContainer();
             var composite = container.Create();
-            Assert.IsType<Composite<int>>(composite);
+            Assert.IsType<CompositeType<int>>(composite);
         }
     }
 }

@@ -19,7 +19,7 @@ public sealed partial class InitializerImplementationAsyncValue
     }
 
     [Initializer(typeof(Dependency<>), nameof(Dependency<int>.InitializeAsync))]
-    [CreateFunction(typeof(Dependency<int>), "Create")]
+    [CreateFunction(typeof(Task<Dependency<int>>), "Create")]
     internal sealed partial class Container;
 
     public sealed class Tests

@@ -1,59 +1,47 @@
 using MrMeeseeks.DIE.InjectionGraph.Edges;
 using MrMeeseeks.DIE.InjectionGraph.Nodes;
 using MrMeeseeks.DIE.MsContainer;
+using MrMeeseeks.DIE.Utility;
 using MrMeeseeks.SourceGeneratorUtility;
 using MrMeeseeks.SourceGeneratorUtility.Extensions;
 
 namespace MrMeeseeks.DIE.InjectionGraph.CodeGeneration.ConcreteNodeGenerators;
 
-internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<ConcreteFunctorNode>, IScopeInstance
+internal sealed class FunctorNodeCodeGenerator(
+    ContextGenerator contextGenerator,
+    OverrideContextManager overrideContextManager,
+    ReferenceGenerator referenceGenerator,
+    SharedNameRegistry sharedNameRegistry,
+    TypeParameterUtility typeParameterUtility,
+    WellKnownTypes wellKnownTypes)
+    : IConcreteNodeCodeGenerator<ConcreteFunctorNode>, IScopeInstance
 {
-    private readonly ReferenceGenerator _referenceGenerator;
-    private readonly WellKnownTypes _wellKnownTypes;
-    private readonly ContextGenerator _contextGenerator;
-    private readonly OverrideContextManager _overrideContextManager;
-    private readonly SharedNameRegistry _sharedNameRegistry;
-
-    internal FunctorNodeCodeGenerator(
-        ReferenceGenerator referenceGenerator,
-        WellKnownTypes wellKnownTypes,
-        ContextGenerator contextGenerator,
-        OverrideContextManager overrideContextManager,
-        SharedNameRegistry sharedNameRegistry)
-    {
-        _referenceGenerator = referenceGenerator;
-        _wellKnownTypes = wellKnownTypes;
-        _contextGenerator = contextGenerator;
-        _overrideContextManager = overrideContextManager;
-        _sharedNameRegistry = sharedNameRegistry;
-    }
-
     public string Generate(StringBuilder code, TypeNode typeNode, ConcreteFunctorNode concreteNode, bool sync, string? reference = null)
     {
-        var actualReference = reference ?? _referenceGenerator.Generate(concreteNode.Data.Type);
-        var parameterReferences = concreteNode.FunctorParameterTypes.Select(_ => _referenceGenerator.Generate("p")).ToArray();
+        var actualReference = reference ?? referenceGenerator.Generate(concreteNode.Data.Type);
+        var parameterReferences = concreteNode.FunctorParameterTypes.Select(_ => referenceGenerator.Generate("p")).ToArray();
         var parameterDeclaration = string.Join(", ", parameterReferences);
 
-        if (_overrideContextManager.TryGetContext(concreteNode.FunctorParameterTypes, out var overrideContext)
-            && _sharedNameRegistry.TryGetOverrideContextName(overrideContext, out var overrideContextName))
+        if (overrideContextManager.TryGetContext(concreteNode.FunctorParameterTypes, out var overrideContext)
+            && sharedNameRegistry.TryGetOverrideContextName(overrideContext, out var overrideContextName))
         {
-            var outwardFacingTypeIdReference = _referenceGenerator.Generate("oId");
-            var initialCaseIdReference = _referenceGenerator.Generate("cId");
-            var keyReference = _referenceGenerator.Generate("kId");
-            var containerNodeReference = _referenceGenerator.Generate("cnId");
-            var transientScopeNodeReference = _referenceGenerator.Generate("tsnId");
-            var scopeNodeReference = _referenceGenerator.Generate("snId");
-            var scopeNodeNameReference = _referenceGenerator.Generate("snnId");
+            var outwardFacingTypeIdReference = referenceGenerator.Generate("oId");
+            var initialCaseIdReference = referenceGenerator.Generate("cId");
+            var keyReference = referenceGenerator.Generate("kId");
+            var containerNodeReference = referenceGenerator.Generate("cnId");
+            var transientScopeNodeReference = referenceGenerator.Generate("tsnId");
+            var scopeNodeReference = referenceGenerator.Generate("snId");
+            var scopeNodeNameReference = referenceGenerator.Generate("snnId");
 
             code.AppendLine(
                 $$"""
-                  {{_wellKnownTypes.Int32.FullName()}} {{outwardFacingTypeIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.OutwardFacingTypeNumberPropertyName}};
-                  {{_wellKnownTypes.Int32.FullName()}} {{initialCaseIdReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.CaseNumberPropertyName}};
-                  {{_wellKnownTypes.Object.WithNullableAnnotation(NullableAnnotation.Annotated).FullName()}} {{keyReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.KeyPropertyName}};
-                  {{_wellKnownTypes.Object.FullName()}} {{containerNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ContainerNodePropertyName}};
-                  {{_wellKnownTypes.Object.FullName()}} {{transientScopeNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.TransientScopeNodePropertyName}};
-                  {{_wellKnownTypes.Object.FullName()}} {{scopeNodeReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ScopeNodePropertyName}};
-                  {{_wellKnownTypes.String.FullName()}} {{scopeNodeNameReference}} = {{_contextGenerator.ParameterName}}.{{_contextGenerator.ScopeNodeNamePropertyName}};
+                  {{wellKnownTypes.Int32.FullName()}} {{outwardFacingTypeIdReference}} = {{contextGenerator.ParameterName}}.{{contextGenerator.OutwardFacingTypeNumberPropertyName}};
+                  {{wellKnownTypes.Int32.FullName()}} {{initialCaseIdReference}} = {{contextGenerator.ParameterName}}.{{contextGenerator.CaseNumberPropertyName}};
+                  {{wellKnownTypes.Object.WithNullableAnnotation(NullableAnnotation.Annotated).FullName()}} {{keyReference}} = {{contextGenerator.ParameterName}}.{{contextGenerator.KeyPropertyName}};
+                  {{wellKnownTypes.Object.FullName()}} {{containerNodeReference}} = {{contextGenerator.ParameterName}}.{{contextGenerator.ContainerNodePropertyName}};
+                  {{wellKnownTypes.Object.FullName()}} {{transientScopeNodeReference}} = {{contextGenerator.ParameterName}}.{{contextGenerator.TransientScopeNodePropertyName}};
+                  {{wellKnownTypes.Object.FullName()}} {{scopeNodeReference}} = {{contextGenerator.ParameterName}}.{{contextGenerator.ScopeNodePropertyName}};
+                  {{wellKnownTypes.String.FullName()}} {{scopeNodeNameReference}} = {{contextGenerator.ParameterName}}.{{contextGenerator.ScopeNodeNamePropertyName}};
                   """);
 
             var overrideParameters = overrideContext is OverrideContext.Any any
@@ -61,7 +49,7 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
                 : "";
 
             var parameters = string.Join(", ",
-                _contextGenerator.GenerateInstanceCreation(
+                contextGenerator.GenerateInstanceCreation(
                     overrideInstanceCreation: $"new {overrideContextName}({overrideParameters})",
                     outwardFacingTypeNumber: outwardFacingTypeIdReference,
                     caseNumber: initialCaseIdReference,
@@ -73,7 +61,13 @@ internal sealed class FunctorNodeCodeGenerator : IConcreteNodeCodeGenerator<Conc
                 Constants.TrueKeyword,
                 Constants.TrueKeyword);
 
-            code.AppendLine($"{(reference is null ? $"{concreteNode.Data.Type.FullName()} " : "")} {actualReference} = ({parameterDeclaration}) => {_sharedNameRegistry.GetEntryFunctionName(concreteNode.ReturnedElement.Target.Type)}({parameters});");
+            var genericTypeParameters = typeParameterUtility.ExtractTypeParameters(concreteNode.ReturnedElement.Target.Type) switch
+            {
+                [] => "",
+                [..] items => $"<{string.Join(", ", items.Select(i => i.Name))}>" 
+            };
+            
+            code.AppendLine($"{(reference is null ? $"{concreteNode.Data.Type.FullName()} " : "")} {actualReference} = ({parameterDeclaration}) => {sharedNameRegistry.GetEntryFunctionName(concreteNode.ReturnedElement.Target.Type)}{genericTypeParameters}({parameters});");
         }
 
         return actualReference;

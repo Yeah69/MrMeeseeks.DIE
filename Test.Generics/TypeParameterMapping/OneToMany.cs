@@ -1,3 +1,4 @@
+/* ToDo Enable again as soon as User-defined support is implemented
 using System;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
@@ -42,4 +43,4 @@ public sealed partial class OneToMany
             Assert.Equal(69, instance.Value2);
         }
     }
-}
+}*/

@@ -20,9 +20,10 @@ internal sealed class InjectionGraphCodeGenerator(
     ContextGenerator contextGenerator,
     TypeSymbolUtility typeSymbolUtility,
     ReferenceGenerator referenceGenerator,
+    Func<ITypeSymbol, string, (ITypeSymbol Type, string Name)[], CreateEntryFunction> createEntryFunctionFactory,
     Func<ITypeSymbol, FunctorEntryFunction> functorEntryFunctionFactory,
     SharedNameRegistry sharedNameRegistry,
-    WellKnownTypes wellKnownTypes)
+    WellKnownTypes wellKnownTypes) : IDisposable
 {
     private readonly StringBuilder _code = new();
 
@@ -36,10 +37,6 @@ internal sealed class InjectionGraphCodeGenerator(
                   {
                   """);
         
-        /*var genericParameters = _rangeNode is IContainerNode containerNode && containerNode.TypeParameters.Any()
-            ? $"<{string.Join(", ", containerNode.TypeParameters.Select(p => p.Name))}>"
-            : ""; // ToDo generic types for the container */
-        
         foreach (var nestingParentName in containerInfo.ContainingTypeNames)
         {
             _code.AppendLine(
@@ -48,16 +45,20 @@ internal sealed class InjectionGraphCodeGenerator(
                   {
                   """);
         }
-
+        
+        var genericParameters = containerInfo.ContainerType.TypeParameters.Any()
+            ? $"<{string.Join(", ", containerInfo.ContainerType.TypeParameters.Select(p => p.Name))}>"
+            : "";
+        
         var inheritanceElements = scopeNodeBaseCodeGenerator.GetInheritanceHeaderElements(scopeNodeManager.ContainerScopeNode, isContainer: true);
-
+        
         var inheritance = inheritanceElements.Any()
             ? $" : {string.Join(", ", inheritanceElements)}"
             : "";
 
         _code.AppendLine(
             $$"""
-              sealed partial class {{containerInfo.Name}}{{inheritance}}
+              sealed partial class {{containerInfo.Name}}{{genericParameters}}{{inheritance}}
               {
               """);
         
@@ -139,20 +140,20 @@ internal sealed class InjectionGraphCodeGenerator(
         var entryCreateFunctionsMap = concreteEntryFunctionNodeManager.AllNodes
             .ToImmutableDictionary(x => x.Data.Name, x => x);
         
-        foreach (var (rootType, name, parameters, _) in containerInfo.CreateFunctionData)
+        foreach (var (_, name, parameters, _) in containerInfo.CreateFunctionData)
         {
             if (entryCreateFunctionsMap.TryGetValue(name, out var entryFunctionNode)
                 && overrideContextManager.TryGetContext(parameters, out var overrideContext))
             {
                 var parametersWithName = parameters.Select(p => (Type: p, Name: referenceGenerator.Generate(p))).ToArray();
-                var parametersOnDeclaration = string.Join(", ", parametersWithName.Select(t => $"{t.Type.FullName()} {t.Name}"));
                 var overridesName = sharedNameRegistry.GetOverrideContextName(overrideContext);
                 var overridesAssignment = overrideContext is OverrideContext.Any any 
                     ? string.Join(", ", any.Overrides.Select(p => parametersWithName.First(t => t.Type.Equals(p)).Name))
                     : "";
+                var createEntryFunction = createEntryFunctionFactory(entryFunctionNode.Data.ReturnType, name, parametersWithName);
                 _code.AppendLine(
                     $$"""
-                      internal {{rootType.FullName()}} {{name}}({{parametersOnDeclaration}})
+                      {{functionUtility.GenerateHeader(createEntryFunction)}}
                       {
                       {{contextGenerator.FullNameAndParameterName}} = {{contextGenerator.GenerateInstanceCreation(overrideInstanceCreation: $"new {overridesName}({overridesAssignment})", outwardFacingTypeNumber: "0", caseNumber: "0", key: "null", containerNode: Constants.ThisKeyword, transientScopeNode: Constants.ThisKeyword, scopeNode: Constants.ThisKeyword, scopeNodeName: $"\"{containerInfo.Name}\"")}};
                       """);
@@ -211,6 +212,11 @@ internal sealed class InjectionGraphCodeGenerator(
             
             scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
             scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);
+
+            // ToDo replace with real disposal handling
+            _code.AppendLine("public void Dispose() {}");
+            if (wellKnownTypes.IAsyncDisposable is not null)
+                _code.AppendLine("public global::System.Threading.Tasks.ValueTask DisposeAsync() => global::System.Threading.Tasks.ValueTask.CompletedTask;");
             
             _code.AppendLine("}");
         }
@@ -229,9 +235,20 @@ internal sealed class InjectionGraphCodeGenerator(
             
             scopeNodeBaseCodeGenerator.GenerateScopeRootFunctions(_code, scopeNode, containerReference);
             scopeNodeBaseCodeGenerator.GenerateScopedInstanceFunctions(_code, scopeNode, containerReference);
+
+            // ToDo replace with real disposal handling
+            _code.AppendLine("public void Dispose() {}");
+            if (wellKnownTypes.IAsyncDisposable is not null)
+                _code.AppendLine("public global::System.Threading.Tasks.ValueTask DisposeAsync() => global::System.Threading.Tasks.ValueTask.CompletedTask;");
             
             _code.AppendLine("}");
         }
+
+        // ToDo replace with real disposal handling
+        _code.AppendLine("public void Dispose() {}");
+        if (wellKnownTypes.IAsyncDisposable is not null)
+            _code.AppendLine("public global::System.Threading.Tasks.ValueTask DisposeAsync() => global::System.Threading.Tasks.ValueTask.CompletedTask;");
+            
 
         _code.AppendLine("}");
 
@@ -244,5 +261,9 @@ internal sealed class InjectionGraphCodeGenerator(
         
         return _code.ToString();
     }
-    
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
+    }
 }

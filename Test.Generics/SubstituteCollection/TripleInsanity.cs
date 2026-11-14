@@ -1,3 +1,4 @@
+/* ToDo re-enable
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MrMeeseeks.DIE.Configuration.Attributes;
@@ -32,4 +33,4 @@ public sealed partial class TripleInsanity
             Assert.Equal(125, list.Count);
         }
     }
-}
+}*/

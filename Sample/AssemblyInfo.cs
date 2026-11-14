@@ -47,10 +47,13 @@ using MrMeeseeks.DIE.UserUtility;
 [assembly:ConstructorChoice(typeof(SortedSet<>), typeof(IEnumerable<>))]
 [assembly:ConstructorChoice(typeof(Stack<>), typeof(IEnumerable<>))]
 [assembly:ConstructorChoice(typeof(Collection<>), typeof(IList<>))]
+
 [assembly:ImplementationChoice(typeof(IList<>), typeof(List<>))]
 [assembly:ImplementationChoice(typeof(IReadOnlyCollection<>), typeof(ReadOnlyCollection<>))]
 [assembly:ImplementationChoice(typeof(IReadOnlyList<>), typeof(ReadOnlyCollection<>))]
 [assembly:ImplementationChoice(typeof(ICollection<>), typeof(Collection<>))]
+[assembly:ImplementationChoice(typeof(IReadOnlyDictionary<,>), typeof(ReadOnlyDictionary<,>))]
+
 
 namespace MrMeeseeks.DIE.Sample;
 
